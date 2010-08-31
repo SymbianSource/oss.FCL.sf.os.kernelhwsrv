@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -24,6 +24,10 @@
 #include "t_usblib.h"
 #include <e32svr.h>
 #include "u32std.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "t_usbcscTraces.h"
+#endif
 
 //#define DEBUGVERSION
 
@@ -309,13 +313,18 @@ void TestBufferConstruction(TAltSetConfig* aAltSetConfig)
 	TUsbcScChunkHeader chunkHeader(gChunk);
 
 	DEBUGPRINT(test.Printf(_L("iBuffers at 0x%x, iAltSettings at 0x%x\n"),chunkHeader.iBuffers, chunkHeader.iAltSettings));
+	DEBUGPRINT(OstTraceExt2(TRACE_NORMAL, TESTBUFFERCONSTRUCTION_TESTBUFFERCONSTRUCTION, "iBuffers at 0x%x, iAltSettings at 0x%x\n",chunkHeader.iBuffers, chunkHeader.iAltSettings));
 
 	test_Equal(gChunk.Base()+ sizeof(TUint)*2, chunkHeader.iBuffers);
 
 	DEBUGPRINT(test.Printf(_L("iBuffers: EP0Out: 0x%x EP0In: 0x%x\n"), chunkHeader.iBuffers->Ep0Out()->Offset(),  
 																	chunkHeader.iBuffers->Ep0In()->Offset()));
+	DEBUGPRINT(OstTraceExt2(TRACE_NORMAL, TESTBUFFERCONSTRUCTION_TESTBUFFERCONSTRUCTION_DUP01, "iBuffers: EP0Out: 0x%x EP0In: 0x%x\n", chunkHeader.iBuffers->Ep0Out()->Offset(),  
+																	chunkHeader.iBuffers->Ep0In()->Offset()));
  													
 	DEBUGPRINT(test.Printf(_L("iAltSettings: Number of: %d First offset: 0x%x \n"), chunkHeader.iAltSettings->iNumOfAltSettings,  
+																	chunkHeader.iAltSettings->iAltTableOffset[0]));
+	DEBUGPRINT(OstTraceExt2(TRACE_NORMAL, TESTBUFFERCONSTRUCTION_TESTBUFFERCONSTRUCTION_DUP02, "iAltSettings: Number of: %d First offset: 0x%x \n", chunkHeader.iAltSettings->iNumOfAltSettings,  
 																	chunkHeader.iAltSettings->iAltTableOffset[0]));
 	
 	test_Compare(aAltSetConfig->iNumOfAltSet, ==, chunkHeader.iAltSettings->iNumOfAltSettings);
@@ -325,12 +334,15 @@ void TestBufferConstruction(TAltSetConfig* aAltSetConfig)
 		{
 		TInt inEps = 0, outEps = 0;
 		DEBUGPRINT(test.Printf(_L("Alternate Setting %d offset: 0x%x \n"), i, chunkHeader.iAltSettings->iAltTableOffset[i]));
+		DEBUGPRINT(OstTraceExt2(TRACE_NORMAL, TESTBUFFERCONSTRUCTION_TESTBUFFERCONSTRUCTION_DUP03, "Alternate Setting %d offset: 0x%x \n", i, chunkHeader.iAltSettings->iAltTableOffset[i]));
 
 		TInt8* endpoint = (TInt8*) (chunkHeader.iAltSettings->iAltTableOffset[i] + (TInt) gChunk.Base());
 		for (int j = 1; j <= chunkHeader.GetNumberOfEndpoints(i); j++)
 			{
 			TUsbcScHdrEndpointRecord* endpointInf = (TUsbcScHdrEndpointRecord*) &(endpoint[j * chunkHeader.iAltSettings->iEpRecordSize]);
 			DEBUGPRINT(test.Printf(_L("Endpoint %d owns buffer %d BufferOffset 0x%x Dir %d Type %d\n"), j, endpointInf->iBufferNo, chunkHeader.iBuffers->Buffers(endpointInf->iBufferNo)->Offset(), 
+						endpointInf->Direction(), endpointInf->Type()));
+			DEBUGPRINT(OstTraceExt5(TRACE_NORMAL, TESTBUFFERCONSTRUCTION_TESTBUFFERCONSTRUCTION_DUP04, "Endpoint %d owns buffer %d BufferOffset 0x%x Dir %d Type %d\n", j, endpointInf->iBufferNo, chunkHeader.iBuffers->Buffers(endpointInf->iBufferNo)->Offset(), 
 						endpointInf->Direction(), endpointInf->Type()));
 			if (endpointInf->Direction() == KUsbScHdrEpDirectionOut)
 				{
@@ -343,6 +355,8 @@ void TestBufferConstruction(TAltSetConfig* aAltSetConfig)
 			}
 
 		DEBUGPRINT(test.Printf(_L("Test if Alternate Setting %d  has %d endpoints (%d Out Endpoint(s) and %d In Endpoint(s)) \n"), i, aAltSetConfig->iEpsDesc[i].iNumOfEp,
+				aAltSetConfig->iEpsDesc[i].iNumOfOutEp, aAltSetConfig->iEpsDesc[i].iNumOfInEp));
+		DEBUGPRINT(OstTraceExt4(TRACE_NORMAL, TESTBUFFERCONSTRUCTION_TESTBUFFERCONSTRUCTION_DUP05, "Test if Alternate Setting %d  has %d endpoints (%d Out Endpoint(s) and %d In Endpoint(s)) \n", i, aAltSetConfig->iEpsDesc[i].iNumOfEp,
 				aAltSetConfig->iEpsDesc[i].iNumOfOutEp, aAltSetConfig->iEpsDesc[i].iNumOfInEp));
 
 		test_Compare(chunkHeader.GetNumberOfEndpoints(i), ==, aAltSetConfig->iEpsDesc[i].iNumOfEp);
@@ -384,6 +398,7 @@ CActiveConsole::~CActiveConsole()
 void CActiveConsole::GetCharacter()
 	{
 	test.Printf(_L("\n \n ***** Press Escape to exit ***** \n \n"));
+	OstTrace0(TRACE_NORMAL, CACTIVECONSOLE_GETCHARACTER, "\n \n ***** Press Escape to exit ***** \n \n");
 
 	test.Console()->Read(iStatus);
 	SetActive();
@@ -392,15 +407,18 @@ void CActiveConsole::GetCharacter()
 void CActiveConsole::DoCancel()
 	{
 	DEBUGPRINT(test.Printf(_L("CActiveConsole::DoCancel\n")));
+	DEBUGPRINT(OstTrace0(TRACE_NORMAL, CACTIVECONSOLE_DOCANCEL, "CActiveConsole::DoCancel\n"));
 	test.Console()->ReadCancel();
 	}
 
 void CActiveConsole::RunL()
 	{
 	DEBUGPRINT(test.Printf(_L("\n CActiveConsole::RunL\n")));
+	DEBUGPRINT(OstTrace0(TRACE_NORMAL, CACTIVECONSOLE_RUNL, "\n CActiveConsole::RunL\n"));
 	if (test.Console()->KeyCode() == EKeyEscape)
 		{
 		test.Printf(_L("CActiveConsole: ESC key pressed -> stopping active scheduler...\n"));
+		OstTrace0(TRACE_NORMAL, CACTIVECONSOLE_RUNL_DUP01, "CActiveConsole: ESC key pressed -> stopping active scheduler...\n");
 		CActiveScheduler::Stop();
 		return;
 		}
@@ -412,18 +430,21 @@ CActiveDeviceStateNotifier::CActiveDeviceStateNotifier()
 	: CActive(EPriorityHigh)
 	{
 	DEBUGPRINT(test.Printf(_L("CActiveDeviceStateNotifier::CActiveDeviceStateNotifier() \n")));
+	DEBUGPRINT(OstTrace0(TRACE_NORMAL, CACTIVEDEVICESTATENOTIFIER_CACTIVEDEVICESTATENOTIFIER, "CActiveDeviceStateNotifier::CActiveDeviceStateNotifier() \n"));
 	CActiveScheduler::Add(this);
 	}
 
 CActiveDeviceStateNotifier::~CActiveDeviceStateNotifier()
 	{
 	DEBUGPRINT(test.Printf(_L("CActiveDeviceStateNotifier::~CActiveDeviceStateNotifier() \n")));
+	DEBUGPRINT(OstTrace0(TRACE_NORMAL, CACTIVEDEVICESTATENOTIFIER_DCACTIVEDEVICESTATENOTIFIER, "CActiveDeviceStateNotifier::~CActiveDeviceStateNotifier() \n"));
 	Cancel();
 	}
 
 void CActiveDeviceStateNotifier::DoCancel()
 	{
 	DEBUGPRINT(test.Printf(_L("CActiveDeviceStateNotifier::DoCancel\n")));
+	DEBUGPRINT(OstTrace0(TRACE_NORMAL, CACTIVEDEVICESTATENOTIFIER_DOCANCEL, "CActiveDeviceStateNotifier::DoCancel\n"));
 	gPort.AlternateDeviceStatusNotifyCancel();
 	}
 
@@ -436,38 +457,49 @@ void CActiveDeviceStateNotifier::Activate()
 void CActiveDeviceStateNotifier::RunL()
 	{
 	DEBUGPRINT(test.Printf(_L("CActiveDeviceStateNotifier::RunL() \n")));
+	DEBUGPRINT(OstTrace0(TRACE_NORMAL, CACTIVEDEVICESTATENOTIFIER_RUNL, "CActiveDeviceStateNotifier::RunL() \n"));
 	if (!(iDeviceState & KUsbAlternateSetting))
 		{
 		switch (iDeviceState)
 			{
 		case EUsbcDeviceStateUndefined:
 			DEBUGPRINT(test.Printf(_L("Device State notifier: Undefined \n")));
+			DEBUGPRINT(OstTrace0(TRACE_NORMAL, CACTIVEDEVICESTATENOTIFIER_RUNL_DUP01, "Device State notifier: Undefined \n"));
 			break;
 		case EUsbcDeviceStateAttached:
 			DEBUGPRINT(test.Printf(_L("Device State notifier: Attached \n")));
+			DEBUGPRINT(OstTrace0(TRACE_NORMAL, CACTIVEDEVICESTATENOTIFIER_RUNL_DUP02, "Device State notifier: Attached \n"));
 			break;
 		case EUsbcDeviceStatePowered:
 			DEBUGPRINT(test.Printf(_L("Device State notifier: Powered \n")));
+			DEBUGPRINT(OstTrace0(TRACE_NORMAL, CACTIVEDEVICESTATENOTIFIER_RUNL_DUP03, "Device State notifier: Powered \n"));
 			break;
 		case EUsbcDeviceStateDefault:
 			DEBUGPRINT(test.Printf(_L("Device State notifier: Default \n")));
+			DEBUGPRINT(OstTrace0(TRACE_NORMAL, CACTIVEDEVICESTATENOTIFIER_RUNL_DUP04, "Device State notifier: Default \n"));
 			break;
 		case EUsbcDeviceStateAddress:
 			DEBUGPRINT(test.Printf(_L("Device State notifier: Address \n")));
+			DEBUGPRINT(OstTrace0(TRACE_NORMAL, CACTIVEDEVICESTATENOTIFIER_RUNL_DUP05, "Device State notifier: Address \n"));
 			break;
 		case EUsbcDeviceStateConfigured:
 			DEBUGPRINT(test.Printf(_L("Device State notifier: Configured \n")));
+			DEBUGPRINT(OstTrace0(TRACE_NORMAL, CACTIVEDEVICESTATENOTIFIER_RUNL_DUP06, "Device State notifier: Configured \n"));
 			break;
 		case EUsbcDeviceStateSuspended:
 			DEBUGPRINT(test.Printf(_L("Device State notifier: Suspended \n")));
+			DEBUGPRINT(OstTrace0(TRACE_NORMAL, CACTIVEDEVICESTATENOTIFIER_RUNL_DUP07, "Device State notifier: Suspended \n"));
 			break;
 		default:
 			DEBUGPRINT(test.Printf(_L("Device State notifier: !!!! NOT RECOGNISED !!!! \n")));
+			DEBUGPRINT(OstTrace0(TRACE_NORMAL, CACTIVEDEVICESTATENOTIFIER_RUNL_DUP08, "Device State notifier: !!!! NOT RECOGNISED !!!! \n"));
 			}
 		}
 	else if (iDeviceState & KUsbAlternateSetting)
 		{
 		test.Printf(_L("Device State notifier: Alternate interface setting has changed: now %d \n"),
+					iDeviceState & ~KUsbAlternateSetting);
+		OstTrace1(TRACE_NORMAL, CACTIVEDEVICESTATENOTIFIER_RUNL_DUP09, "Device State notifier: Alternate interface setting has changed: now %d \n",
 					iDeviceState & ~KUsbAlternateSetting);
 		}
 	Activate();
@@ -480,25 +512,30 @@ CActiveStallNotifier::CActiveStallNotifier()
 	  iEndpointState(0)
 	{
 	DEBUGPRINT(test.Printf(_L("CActiveStallNotifier::CActiveStallNotifier() \n")));
+	DEBUGPRINT(OstTrace0(TRACE_NORMAL, CACTIVESTALLNOTIFIER_CACTIVESTALLNOTIFIER, "CActiveStallNotifier::CActiveStallNotifier() \n"));
 	CActiveScheduler::Add(this);
 	}
 
 CActiveStallNotifier::~CActiveStallNotifier()
 	{
 	DEBUGPRINT(test.Printf(_L("CActiveStallNotifier::~CActiveStallNotifier() \n")));
+	DEBUGPRINT(OstTrace0(TRACE_NORMAL, CACTIVESTALLNOTIFIER_DCACTIVESTALLNOTIFIER, "CActiveStallNotifier::~CActiveStallNotifier() \n"));
 	Cancel();
 	}
 
 void CActiveStallNotifier::DoCancel()
 	{
 	DEBUGPRINT(test.Printf(_L("CActiveStallNotifier::DoCancel() \n")));
+	DEBUGPRINT(OstTrace0(TRACE_NORMAL, CACTIVESTALLNOTIFIER_DOCANCEL, "CActiveStallNotifier::DoCancel() \n"));
 	gPort.EndpointStatusNotifyCancel();
 	}
 
 void CActiveStallNotifier::RunL()
 	{
 	DEBUGPRINT(test.Printf(_L("CActiveStallNotifier::RunL() \n")));
+	DEBUGPRINT(OstTrace0(TRACE_NORMAL, CACTIVESTALLNOTIFIER_RUNL, "CActiveStallNotifier::RunL() \n"));
 	test.Printf(_L("StallNotifier Endpointstate 0x%x\n"), iEndpointState);
+	OstTrace1(TRACE_NORMAL, CACTIVESTALLNOTIFIER_RUNL_DUP01, "StallNotifier Endpointstate 0x%x\n", iEndpointState);
 	Activate();
 	}
 
@@ -523,6 +560,7 @@ TInterface::TInterface()
 TInterface::~TInterface()
 	{
 	DEBUGPRINT(test.Printf(_L("TInterface::~TInterface()\n")));
+	DEBUGPRINT(OstTrace0(TRACE_NORMAL, TINTERFACE_DTINTERFACE, "TInterface::~TInterface()\n"));
 	iAlternateSetting.Reset();
 	}
 
@@ -538,6 +576,7 @@ void TInterface::SetActiveAlternateSetting(TInt aSettingNum, TBool aStartNextInA
 		{
 		IncrementAltSettingChangeSequenceNum();
 		test.Printf(_L("ALTERNATE SETTING CHANGE! Calling StartNextInAlternateSetting() \n"));
+		OstTrace0(TRACE_NORMAL, TINTERFACE_SETACTIVEALTERNATESETTING, "ALTERNATE SETTING CHANGE! Calling StartNextInAlternateSetting() \n");
 		TInt r = gPort.StartNextInAlternateSetting();
 		test_Compare((r&0xFFFF), ==, aSettingNum);
 		}
@@ -563,6 +602,7 @@ TAlternateSetting::TAlternateSetting(TInt aAltSetNum)
 TAlternateSetting::~TAlternateSetting()
 	{
 	DEBUGPRINT(test.Printf(_L("TAlternateSetting::~TAlternateSetting() \n")));
+	DEBUGPRINT(OstTrace0(TRACE_NORMAL, TALTERNATESETTING_DTALTERNATESETTING, "TAlternateSetting::~TAlternateSetting() \n"));
 	iEndpoints.Reset();
 	}
 
@@ -609,8 +649,10 @@ void TAlternateSetting::Activate(TBool aStartNextInAltSet)
 		}
 
 	if (gSpecTest == EAltSet)
+	    {
 		test.Printf(_L("On host side, on the Interface Tab, Change to a differnt Alternate Setting and read or write from an endpoint in the new alternate setting \n\n"));
-
+		OstTrace0(TRACE_NORMAL, TALTERNATESETTING_ACTIVATE, "On host side, on the Interface Tab, Change to a differnt Alternate Setting and read or write from an endpoint in the new alternate setting \n\n");
+        }
 	if (aStartNextInAltSet)
 		{
 		iEndpoints[0].iSettingChangeReceived = EFalse;
@@ -651,6 +693,8 @@ void CActiveRW::QueueRequests()
 	{
 	DEBUGPRINT(test.Printf(_L("CActiveRW::QueueRequests() for Buffer number iBufNum %d AlternateSetting %d iDirection %d\n"),
 												iBuffer->iBufNum, iAltSetting->GetAlternateSetting(), iDirection));
+	DEBUGPRINT(OstTraceExt3(TRACE_NORMAL, CACTIVERW_QUEUEREQUESTS, "CActiveRW::QueueRequests() for Buffer number iBufNum %d AlternateSetting %d iDirection %d\n",
+												iBuffer->iBufNum, iAltSetting->GetAlternateSetting(), iDirection));
 	if (!IsActive())
 		{
 		if (iDirection != KUsbScHdrEpDirectionIn)
@@ -669,6 +713,7 @@ void CActiveRW::QueueRequests()
 void TAlternateSetting::SetChangeRequestFlag(CActiveRW *aEp)
 	{
 	DEBUGPRINT(test.Printf(_L("Set ChangeRequestFlag to True for Buffer Number = %d \n"), aEp->iBuffer->iBufNum));
+	DEBUGPRINT(OstTrace1(TRACE_NORMAL, TALTERNATESETTING_SETCHANGEREQUESTFLAG, "Set ChangeRequestFlag to True for Buffer Number = %d \n", aEp->iBuffer->iBufNum));
 
 	TInt countOfEndpoints = iEndpoints.Count();
 
@@ -717,12 +762,15 @@ CActiveRW::CActiveRW(TInt aEndpointNum, TInt aDirection, TBuffer* aBuffer)
 CActiveRW::~CActiveRW()
 	{
 	DEBUGPRINT(test.Printf(_L("CActiveRW::~CActiveRW\n")));
+	DEBUGPRINT(OstTrace0(TRACE_NORMAL, CACTIVERW_DCACTIVERW, "CActiveRW::~CActiveRW\n"));
 	Cancel();
 	}
 
 void CActiveRW::DoCancel()
 	{
 	DEBUGPRINT(test.Printf(_L("CActiveRW::DoCancel for Buffer number iBufNum %d AlternateSetting %d\n"),
+												iBuffer->iBufNum, iAltSetting->GetAlternateSetting()));
+	DEBUGPRINT(OstTraceExt2(TRACE_NORMAL, CACTIVERW_DOCANCEL, "CActiveRW::DoCancel for Buffer number iBufNum %d AlternateSetting %d\n",
 												iBuffer->iBufNum, iAltSetting->GetAlternateSetting()));
 	if (IsActive())
 		{
@@ -829,6 +877,7 @@ void TestBufferHandling()
 		TUsbcScChunkHeader chunkHeader(gChunk);
 		
 		test.Printf(_L("\n \n Trying hardware\nPlease start the Host side application...\n"));
+		OstTrace0(TRACE_NORMAL, TESTBUFFERHANDLING_TESTBUFFERHANDLING, "\n \n Trying hardware\nPlease start the Host side application...\n");
 
 		TRequestStatus status;
 		gPort.ReEnumerate(status);
@@ -839,6 +888,7 @@ void TestBufferHandling()
 		if (r != KErrNone)
 			{
 			test.Printf(_L("Error %d on querying device state"), r);
+			OstTrace1(TRACE_NORMAL, TESTBUFFERHANDLING_TESTBUFFERHANDLING_DUP01, "Error %d on querying device state", r);
 			}
 		else
 			{
@@ -851,6 +901,15 @@ void TestBufferHandling()
 							((device_state == EUsbcDeviceStateConfigured) ? _S("Configured") :
 							 ((device_state == EUsbcDeviceStateSuspended) ? _S("Suspended") :
 							  _S("Unknown")))))))));
+			DEBUGPRINT(OstTraceExt1(TRACE_NORMAL, TESTBUFFERHANDLING_TESTBUFFERHANDLING_DUP02, "Current device state: %s \n",
+						(device_state == EUsbcDeviceStateUndefined) ? _L("Undefined") :
+						((device_state == EUsbcDeviceStateAttached) ? _L("Attached") :
+						 ((device_state == EUsbcDeviceStatePowered) ? _L("Powered") :
+						  ((device_state == EUsbcDeviceStateDefault) ? _L("Default") :
+						   ((device_state == EUsbcDeviceStateAddress) ? _L("Address") :
+							((device_state == EUsbcDeviceStateConfigured) ? _L("Configured") :
+							 ((device_state == EUsbcDeviceStateSuspended) ? _L("Suspended") :
+							  _L("Unknown")))))))));
 			}
 
 		CActiveScheduler* myScheduler = new (ELeave) CActiveScheduler();
@@ -906,6 +965,8 @@ void TestBufferHandling()
 				TUsbcScHdrEndpointRecord* endpointInf = (TUsbcScHdrEndpointRecord*) &(iEp[epNum * chunkHeader.iAltSettings->iEpRecordSize]);
 				DEBUGPRINT(test.Printf(_L("Endpoint %d owns buffer %d BufferOffset 0x%x Dir %d Type %d\n"), epNum, endpointInf->iBufferNo, chunkHeader.iBuffers->Buffers(endpointInf->iBufferNo)->Offset(), 
 							endpointInf->Direction(), endpointInf->Type()));
+				DEBUGPRINT(OstTraceExt5(TRACE_NORMAL, TESTBUFFERHANDLING_TESTBUFFERHANDLING_DUP03, "Endpoint %d owns buffer %d BufferOffset 0x%x Dir %d Type %d\n", epNum, endpointInf->iBufferNo, chunkHeader.iBuffers->Buffers(endpointInf->iBufferNo)->Offset(), 
+							endpointInf->Direction(), endpointInf->Type()));
 				CActiveRW *EndpointRW = new CActiveRW(epNum, endpointInf->Direction(), bufferArray[endpointInf->iBufferNo]);
 				alternateSetting->AddEndpoint(*EndpointRW);
 				array[count++] = EndpointRW;
@@ -919,8 +980,10 @@ void TestBufferHandling()
 //		User::After(2000000);
 		
 		test.Printf(_L("Cleaning Up \n"));
+		OstTrace0(TRACE_NORMAL, USER_AFTER, "Cleaning Up \n");
 	
 		test.Printf(_L("Delete endpoint array \n"));
+		OstTrace0(TRACE_NORMAL, USER_AFTER_DUP01, "Delete endpoint array \n");
 		for(TInt i = 0;  i < count; i++)
 			{
 			delete array[i];
@@ -928,6 +991,7 @@ void TestBufferHandling()
 		delete [] array;
 
 		test.Printf(_L("Delete altset array \n"));
+		OstTrace0(TRACE_NORMAL, USER_AFTER_DUP02, "Delete altset array \n");
 		for (TInt i = 0; i < number; i++)
 			{
 			delete altSetArray[i];
@@ -937,11 +1001,13 @@ void TestBufferHandling()
 		delete interface1;
 	
 		test.Printf(_L("Delete buffer array \n"));
+		OstTrace0(TRACE_NORMAL, USER_AFTER_DUP03, "Delete buffer array \n");
 		for(TInt i = 0; i < chunkHeader.iBuffers->NumberOfBuffers(); i++)
 			{
 			delete bufferArray[i];
 			}
 		test.Printf(_L("Delete buffer ep0 \n"));
+		OstTrace0(TRACE_NORMAL, USER_AFTER_DUP04, "Delete buffer ep0 \n");
 		delete bufferEp0;
 	
 		delete myEndpointStateNotifier;
@@ -951,6 +1017,7 @@ void TestBufferHandling()
 	__UHEAP_MARKEND;
 
 		test.Printf(_L("Uninstalling scheduler \n"));
+		OstTrace0(TRACE_NORMAL, USER_AFTER_DUP05, "Uninstalling scheduler \n");
 
 		CActiveScheduler::Install(NULL); // Uninstalling the scheduler
 		delete myScheduler;			
@@ -1007,11 +1074,13 @@ void TBuffer::SendEP0Packet(TInt aLength)
 		data[i]=testString[strPos];
 		}
 	test.Printf(_L("Sending data....."));
+	OstTrace0(TRACE_NORMAL, TBUFFER_SENDEP0PACKET, "Sending data.....");
 	// copy data into buffer TO DO
 	gPort.WriteData(KUsbcScEndpointZero,  iBufferOffset, aLength, 0, iEndpoint->iStatus);
 	User::WaitForRequest(iEndpoint->iStatus);
 	test_KErrNone(iEndpoint->iStatus.Int());
 	test.Printf(_L("Sent!\n"));
+	OstTrace0(TRACE_NORMAL, TBUFFER_SENDEP0PACKET_DUP01, "Sent!\n");
 	}
 
 _LIT(KUndefined,"Undefined"); _LIT(KAttached,"KAttached"); _LIT(KPowered,"KPowered"); _LIT(KDefault,"Default");
@@ -1021,6 +1090,8 @@ const TDesC* const KStates[8] = {&KUndefined,&KAttached,&KPowered,&KDefault,&KAd
 void TBuffer::SetUpHeader()
 	{
 	DEBUGPRINT(test.Printf(_L("CActiveRW::SetUpHeader() for Buffer %d belonging to Endpoint %d in Alternate Setting %d \n"), 
+								iBufNum, iEndpoint->GetEndpointNumber(), iEndpoint->GetAlternateSettingOfEndpoint()));
+	DEBUGPRINT(OstTraceExt3(TRACE_NORMAL, TBUFFER_SETUPHEADER, "CActiveRW::SetUpHeader() for Buffer %d belonging to Endpoint %d in Alternate Setting %d \n", 
 								iBufNum, iEndpoint->GetEndpointNumber(), iEndpoint->GetAlternateSettingOfEndpoint()));
 	TUsbcScChunkHeader chunkHeader(gChunk);
 	TUsbcScHdrEndpointRecord* epInfo;
@@ -1042,9 +1113,11 @@ void TBuffer::SetUpHeader()
 
 			iMaxBufferSize = chunkHeader.iBuffers->Ep0Out()->Size();
 			DEBUGPRINT(test.Printf(_L("MaxBufferSize %d \n"), iMaxBufferSize));
+			DEBUGPRINT(OstTrace1(TRACE_NORMAL, TBUFFER_SETUPHEADER_DUP01, "MaxBufferSize %d \n", iMaxBufferSize));
 
 			TUint ep0MaxPacketSize = gPort.EndpointZeroMaxPacketSizes();
 			DEBUGPRINT(test.Printf(_L("ep0 Max Packet Size = %d\n"), ep0MaxPacketSize));
+			DEBUGPRINT(OstTrace1(TRACE_NORMAL, TBUFFER_SETUPHEADER_DUP02, "ep0 Max Packet Size = %d\n", ep0MaxPacketSize));
 
 			iMaxPacketSize = (ep0MaxPacketSize == KUsbEpSize64) ? 64 :
 				((ep0MaxPacketSize == KUsbEpSize32) ? 32 :
@@ -1053,7 +1126,10 @@ void TBuffer::SetUpHeader()
 				
 			test_Compare(iMaxPacketSize,>,0);
 			if (gSpecTest == EEp0)
+				{
 				test.Printf(_L("Writing from buffer %d \n On host side, on the Class or Vendor Request Tab, send a Vendor request from an Interface on Device-to-Host or Host-to-Device(to an Interface) \n\n"), iBufNum);
+				OstTrace1(TRACE_NORMAL, TBUFFER_SETUPHEADER_DUP03, "Writing from buffer %d \n On host side, on the Class or Vendor Request Tab, send a Vendor request from an Interface on Device-to-Host or Host-to-Device(to an Interface) \n\n", iBufNum);
+				}
 			iEndpoint->QueueRequests();
 			}
 		}
@@ -1067,6 +1143,7 @@ void TBuffer::SetUpHeader()
 		iMaxPacketSize = EpSize(endpointSizeDescriptor[KEpDesc_PacketSizeOffset], endpointSizeDescriptor[KEpDesc_PacketSizeOffset+1]);
 		test_Compare(iMaxPacketSize,>,0);
 		DEBUGPRINT(test.Printf(_L("Endpoint %d Max Packet Size = %d\n"), iEndpoint->GetEndpointNumber(), iMaxPacketSize));
+		DEBUGPRINT(OstTraceExt2(TRACE_NORMAL, TBUFFER_SETUPHEADER_DUP04, "Endpoint %d Max Packet Size = %d\n", iEndpoint->GetEndpointNumber(), iMaxPacketSize));
 	
 		if (iEndpoint->GetDirection() == KUsbScHdrEpDirectionOut)
 			{
@@ -1080,7 +1157,10 @@ void TBuffer::SetUpHeader()
  				iMaxBufferSize = buff->Size();
 
 				if (gSpecTest == EBufRead)
+					{
 					test.Printf(_L("Reading from buffer %d \n On host side, on the Pipes Tab, please select endpoint %d and read from a file and send to pipe\n"), iBufNum, iEndpoint->GetEndpointNumber());
+					OstTraceExt2(TRACE_NORMAL, TBUFFER_SETUPHEADER_DUP05, "Reading from buffer %d \n On host side, on the Pipes Tab, please select endpoint %d and read from a file and send to pipe\n", iBufNum, iEndpoint->GetEndpointNumber());
+					}
 				iEndpoint->QueueRequests();
 				}
 			}
@@ -1107,7 +1187,10 @@ void TBuffer::SetUpHeader()
 					}
 				buffer[iLength-1] = '$'; 
 				if (gSpecTest == EBufWrite)
+					{
 					test.Printf(_L("Writing from buffer %d \n On host side, on the Pipes Tab, please select endpoint %d and read from pipe and write to file \n"), iBufNum, iEndpoint->GetEndpointNumber());
+					OstTraceExt2(TRACE_NORMAL, TBUFFER_SETUPHEADER_DUP06, "Writing from buffer %d \n On host side, on the Pipes Tab, please select endpoint %d and read from pipe and write to file \n", iBufNum, iEndpoint->GetEndpointNumber());
+					}
 				iEndpoint->QueueRequests();
 				}
 			}
@@ -1132,6 +1215,8 @@ void CActiveRW::StartWrite()
 void CActiveRW::RunL()
 	{
 	DEBUGPRINT(test.Printf(_L("CActiveRW::RunL for Buffer number iBufNum %d AlternateSetting %d iDirection %d\n"),
+												iBuffer->iBufNum, iAltSetting->GetAlternateSetting(), iDirection));
+	DEBUGPRINT(OstTraceExt3(TRACE_NORMAL, CACTIVERW_RUNL, "CActiveRW::RunL for Buffer number iBufNum %d AlternateSetting %d iDirection %d\n",
 												iBuffer->iBufNum, iAltSetting->GetAlternateSetting(), iDirection));
 	test_Compare(IsActive(), ==, EFalse);
 	if ((iLogicalEndpointNum == 0) || (iDirection == KUsbScHdrEpDirectionOut))	//RunL for ReadData
@@ -1168,6 +1253,7 @@ void CActiveRW::RunL()
 		if (iStatus.Int() != KErrCancel)
 			{
 			test.Printf(_L("%c"), sym[iBuffer->iBufNum]);
+			OstTraceExt1(TRACE_NORMAL, CACTIVERW_RUNL_DUP01, "%c", sym[iBuffer->iBufNum]);
 			StartWrite();
 			}
 		}
@@ -1179,9 +1265,11 @@ void TBuffer::ProcessData()
 	iOldTail = iHeader->iTail;
 
 	DEBUGPRINT(test.Printf(_L("iHeader->iTail 0x%x, iHeader->iHead 0x%x \n"), iHeader->iTail, iHeader->iHead));
+	DEBUGPRINT(OstTraceExt2(TRACE_NORMAL, TBUFFER_PROCESSDATA, "iHeader->iTail 0x%x, iHeader->iHead 0x%x \n", iHeader->iTail, iHeader->iHead));
 	if (iHeader->iTail == iHeader->iHead)
 		{
 			test.Printf(_L("No data after available, but returned.  iHead 0x%x \n"),iHeader->iHead);
+			OstTrace1(TRACE_NORMAL, TBUFFER_PROCESSDATA_DUP01, "No data after available, but returned.  iHead 0x%x \n",iHeader->iHead);
 			test(0);
 		}
 	
@@ -1197,9 +1285,14 @@ void TBuffer::ProcessData()
 				iEp0Phase=EReady;
 				gPort.SendEp0StatusPacket();
 				if (iTransfer->iBytes) {test.Printf(_L("EP0 Data: "));}
+				if (iTransfer->iBytes) {OstTrace0(TRACE_NORMAL, TBUFFER_PROCESSDATA_DUP02, "EP0 Data: ");}
 				for (TUint ii=0; ii<iTransfer->iBytes; ii++)
+					{
 					test.Printf(_L(" 0x%2x "),iTransfer->iData.b[ii]);
+					OstTrace1(TRACE_NORMAL, TBUFFER_PROCESSDATA_DUP03, " 0x%2x ",iTransfer->iData.b[ii]);
+					}
 				test.Printf(_L("\n\n"));
+				OstTrace0(TRACE_NORMAL, TBUFFER_PROCESSDATA_DUP04, "\n\n");
 				}
 			else
 				{
@@ -1207,19 +1300,23 @@ void TBuffer::ProcessData()
 					{
 					TInt s = *iTransfer->iData.i;
 					test.Printf(_L("STATE CHANGE! %d : %S \n"),s,((s<0) || (s>7))?KStates[8]:KStates[s]);
+					OstTraceExt2(TRACE_NORMAL, TBUFFER_PROCESSDATA_DUP05, "STATE CHANGE! %d : %S \n",s,((s<0) || (s>7))?(*KStates[8]):(*KStates[s]));
 					}
 				else
 					{
 					iSetup = (Sep0SetupPacket* ) iTransfer->iData.b;
 					test.Printf(_L("EP0 Command: t %x r %x v %x i %x l %x :"), iSetup->iRequestType, iSetup->iRequest, iSetup->iwValue, iSetup->iwIndex, iSetup->iWlength);
+					OstTraceExt5(TRACE_NORMAL, TBUFFER_PROCESSDATA_DUP06, "EP0 Command: t %x r %x v %x i %x l %x :", iSetup->iRequestType, iSetup->iRequest, iSetup->iwValue, iSetup->iwIndex, iSetup->iWlength);
 					if ((iSetup->iRequestType&KDeviceToHost))// && (iSetup->iWlength>0)) //Temp To do remove
 						{
 						test.Printf(_L("EP0 Command: Device to Host\n"));
+						OstTrace0(TRACE_NORMAL, TBUFFER_PROCESSDATA_DUP07, "EP0 Command: Device to Host\n");
 						SendEP0Packet(iSetup->iWlength);
 						}
 					else
 						{
 						test.Printf(_L("EP0 Command: Host to Device.  0x%x bytes\n"), iSetup->iWlength);
+						OstTrace1(TRACE_NORMAL, TBUFFER_PROCESSDATA_DUP08, "EP0 Command: Host to Device.  0x%x bytes\n", iSetup->iWlength);
 						iEp0Phase=EDataIn;
 						}
 					}
@@ -1230,6 +1327,7 @@ void TBuffer::ProcessData()
 			if ((++iTickCount)>100)
 				{
 				test.Printf(_L("%c"), sym[iBufNum]);
+				OstTraceExt1(TRACE_NORMAL, TBUFFER_PROCESSDATA_DUP09, "%c", sym[iBufNum]);
 				iTickCount=0;
 				}
 			}
@@ -1237,9 +1335,11 @@ void TBuffer::ProcessData()
 	else
 		{
 		test.Printf(_L("Empty Transfer received for buffer Num = %d  as = %d\n"), iBufNum, iTransfer->iAltSetting);
+		OstTraceExt2(TRACE_NORMAL, TBUFFER_PROCESSDATA_DUP10, "Empty Transfer received for buffer Num = %d  as = %d\n", iBufNum, iTransfer->iAltSetting);
 		if (iPrevAltSeq  >= iTransfer->iAltSettingSeq)
 			{
 			test.Printf(_L("Empty Transfer *WAS NOT* an alt setting change!\n"));
+			OstTrace0(TRACE_NORMAL, TBUFFER_PROCESSDATA_DUP11, "Empty Transfer *WAS NOT* an alt setting change!\n");
 			iPrevAltSeq = iTransfer->iAltSettingSeq;
 			}
 		}
@@ -1250,7 +1350,10 @@ void TBuffer::ProcessData()
 			{
 			DEBUGPRINT(test.Printf(_L("Current Alternate Setting of Endpoint = %d iTransfer->iAltSetting = %d iTransfer->iAltSettingSeq = %d \n"), 
 								iEndpoint->GetAlternateSettingOfEndpoint(), iTransfer->iAltSetting, iTransfer->iAltSettingSeq));
+			DEBUGPRINT(OstTraceExt3(TRACE_NORMAL, TBUFFER_PROCESSDATA_DUP12, "Current Alternate Setting of Endpoint = %d iTransfer->iAltSetting = %d iTransfer->iAltSettingSeq = %d \n", 
+								iEndpoint->GetAlternateSettingOfEndpoint(), iTransfer->iAltSetting, iTransfer->iAltSettingSeq));
 			test.Printf(_L("Empty Transfer received for buffer Num = %d \n"), iBufNum);
+			OstTrace1(TRACE_NORMAL, TBUFFER_PROCESSDATA_DUP13, "Empty Transfer received for buffer Num = %d \n", iBufNum);
 			test_Compare(iEndpoint->GetInterfaceAltSettingChangeSequenceNum(), +1== , iTransfer->iAltSettingSeq);
 
 
@@ -1276,10 +1379,12 @@ void TBuffer::ProcessData()
 			//Function checks if alternate setting change request flag for all endpoints of this Alternate Setting is set to true
 			TBool settingRequestReceivedForAllEps = iEndpoint->CheckFlagForAllOutEndpoints();
 			DEBUGPRINT(test.Printf(_L("SettingRequestReceivedForAllEps = %d \n"),settingRequestReceivedForAllEps));
+			DEBUGPRINT(OstTrace1(TRACE_NORMAL, TBUFFER_PROCESSDATA_DUP14, "SettingRequestReceivedForAllEps = %d \n",settingRequestReceivedForAllEps));
 			if(settingRequestReceivedForAllEps)
 				{
 				// change alternative setting
 				test.Printf(_L("AS!\n"));
+				OstTrace0(TRACE_NORMAL, TBUFFER_PROCESSDATA_DUP15, "AS!\n");
 				iEndpoint->CallChangeAlternateSetting(iTransfer->iAltSetting);
 				}
 			}
@@ -1296,6 +1401,7 @@ void TBuffer::ProcessData()
 				{
 				test_Compare((TInt) (iTransfer->iNext), >=,   startOfBuf );
 				DEBUGPRINT(test.Printf(_L("Endpoint Buffer of size %d is filled. Next transfer from Start of Buffer \n"), iMaxBufferSize));
+				DEBUGPRINT(OstTrace1(TRACE_NORMAL, TBUFFER_PROCESSDATA_DUP16, "Endpoint Buffer of size %d is filled. Next transfer from Start of Buffer \n", iMaxBufferSize));
 				}	
 
 			//Checking that no data or information goes beyond the end address of the buffer
@@ -1317,6 +1423,7 @@ void TBuffer::ProcessData()
 				test_Compare(iHeader->iTail, >=,  startOfBuf);
 				}
 			DEBUGPRINT(test.Printf(_L("Previous Sequence Number 0x%x Current Sequence Number 0x%x \n"), iPrevSequence, iTransfer->iSequence));
+			DEBUGPRINT(OstTraceExt2(TRACE_NORMAL, TBUFFER_PROCESSDATA_DUP17, "Previous Sequence Number 0x%x Current Sequence Number 0x%x \n", iPrevSequence, iTransfer->iSequence));
 			test_Compare((iTransfer->iSequence - iPrevSequence), ==, 1);
 			iPrevSequence = iTransfer->iSequence;
 #endif
@@ -1328,18 +1435,27 @@ void TBuffer::ProcessData()
 				test.Printf(_L("Recieved packet Hash ID 0x%x Sequence Number 0x%x Bytes 0x%x Flags 0x%x Next 0x%x Alternate Setting Seq 0x%x  Current Alternate Setting 0x%x \n"), 
 				iTransfer->iHashId,iTransfer->iSequence, iTransfer->iBytes, iTransfer->iFlags, iTransfer->iNext, 
 				iTransfer->iAltSettingSeq, iTransfer->iAltSetting);
+				OstTraceExt5(TRACE_NORMAL, TBUFFER_PROCESSDATA_DUP18, "Recieved packet Hash ID 0x%x Sequence Number 0x%x Bytes 0x%x Flags 0x%x Next 0x%x ", 
+				iTransfer->iHashId,iTransfer->iSequence, iTransfer->iBytes, iTransfer->iFlags, iTransfer->iNext);
+				OstTraceExt2(TRACE_NORMAL, TBUFFER_PROCESSDATA_DUP22, "Alternate Setting Seq 0x%x  Current Alternate Setting 0x%x \n", 
+				iTransfer->iAltSettingSeq, iTransfer->iAltSetting);
 #else
 				test.Printf(_L("Recieved packet Bytes 0x%x Flags 0x%x Next 0x%x Alternate Setting Seq 0x%x  Current Alternate Setting 0x%x \n"), 
 				iTransfer->iBytes, iTransfer->iFlags,
 				iTransfer->iNext, iTransfer->iAltSettingSeq, iTransfer->iAltSetting );
+				OstTraceExt5(TRACE_NORMAL, TBUFFER_PROCESSDATA_DUP19, "Recieved packet Bytes 0x%x Flags 0x%x Next 0x%x Alternate Setting Seq 0x%x  Current Alternate Setting 0x%x \n", 
+				iTransfer->iBytes, iTransfer->iFlags,
+				iTransfer->iNext, (TUint)iTransfer->iAltSettingSeq, (TUint)iTransfer->iAltSetting );
 #endif
 				if (gVerbose>1)
 					{
 					for (TUint ii=0; ii<iTransfer->iBytes; ii++)
 						{
 						test.Printf(_L(" %c "),iTransfer->iData.b[ii]);
+						OstTraceExt1(TRACE_NORMAL, TBUFFER_PROCESSDATA_DUP20, " %c ",iTransfer->iData.b[ii]);
 						}
 					test.Printf(_L("\n"));
+					OstTrace0(TRACE_NORMAL, TBUFFER_PROCESSDATA_DUP21, "\n");
 					}
 				} // if verbose
 
@@ -1392,17 +1508,20 @@ static void TestCancel()
 	if (gRealHardware)
 		{		
 		test.Printf(_L("\n\n Trying hardware\nPlease start the Host side application...\n"));
+		OstTrace0(TRACE_NORMAL, TESTCANCEL_TESTCANCEL, "\n\n Trying hardware\nPlease start the Host side application...\n");
 
 
 		gPort.ReEnumerate(status);
 		User::WaitForRequest(status);
 		test.Printf(_L("Enumerated status = %d\n"), status.Int());
+		OstTrace1(TRACE_NORMAL, TESTCANCEL_TESTCANCEL_DUP01, "Enumerated status = %d\n", status.Int());
 	
 		test.Next(_L("ReadCancel Test after enumeration\n"));
 		do  // Drain out all data in buffer first, then queue cancel
 			{
 			r = gPort.ReadDataNotify(outBuffNum,status);
 			DEBUGPRINT(test.Printf(_L("header->iTail 0x%x header->iHead 0x%x\n"), header->iTail, header->iHead));
+			DEBUGPRINT(OstTraceExt2(TRACE_NORMAL, TESTCANCEL_TESTCANCEL_DUP02, "header->iTail 0x%x header->iHead 0x%x\n", header->iTail, header->iHead));
 			transfer = (TUsbcScTransferHeader*) (header->iTail + base);
 			header->iTail = transfer->iNext;
 			}
@@ -1416,6 +1535,7 @@ static void TestCancel()
 		test.Next(_L("WriteCancel Test after enumeration\n"));
 
 		test.Printf(_L("Generating test data %x %d\n"), buffer, inBuffNum);
+		OstTraceExt2(TRACE_NORMAL, TESTCANCEL_TESTCANCEL_DUP03, "Generating test data %x %d\n", (TUint)buffer, inBuffNum);
 		for (TUint i=0; i<length; i++)
 			{
 			buffer[i]=i;
@@ -1494,6 +1614,7 @@ static void TestInvalidAPI()
 
 	// Testing with invalid buffer values
 	test.Printf(_L("Test Buffer Writing with invalid buffer values\n"));
+	OstTrace0(TRACE_NORMAL, TESTINVALIDAPI_TESTINVALIDAPI, "Test Buffer Writing with invalid buffer values\n");
 	gPort.WriteData(out_buf,  bufferOffset, length, 0, status);
 	User::WaitForRequest(status);
 	test_Compare(status.Int(), ==, KErrArgument);
@@ -1508,6 +1629,7 @@ static void TestInvalidAPI()
 /*
 	// Unaligned argument 
 	test.Printf(_L("Test Buffer Writing with invalid buffer offsets\n"));
+	OstTrace0(TRACE_NORMAL, TESTINVALIDAPI_TESTINVALIDAPI_DUP01, "Test Buffer Writing with invalid buffer offsets\n");
 	gPort.WriteData(in_buf,  bufferOffset + sizeof(TUint), length, 0,status);
 	User::WaitForRequest(status);
 	test_Compare(status.Int(), ==, KErrArgument);
@@ -1548,10 +1670,12 @@ static void TestSetInterface()
 	test_KErrNone(r);		
 	
 	test.Printf(_L("Release Interface %d\n"), --altSetNo);
+	OstTrace1(TRACE_NORMAL, TESTSETINTERFACE_TESTSETINTERFACE, "Release Interface %d\n", --altSetNo);
 	r = gPort.ReleaseInterface(altSetNo);
 	test_Compare(r, !=, KErrNone);				
 
 	test.Printf(_L("Release Interface %d\n"), ++altSetNo);
+	OstTrace1(TRACE_NORMAL, TESTSETINTERFACE_TESTSETINTERFACE_DUP01, "Release Interface %d\n", ++altSetNo);
 	r = gPort.ReleaseInterface(altSetNo);					
 	test_KErrNone(r);
 	
@@ -1567,6 +1691,7 @@ static void TestSetInterface()
 
 	// Should not be allowed to release Interface once Chunk Realized
 	test.Printf(_L("Release Interface %d \n"), altSetNo);
+	OstTrace1(TRACE_NORMAL, TESTSETINTERFACE_TESTSETINTERFACE_DUP02, "Release Interface %d \n", altSetNo);
 	r = gPort.ReleaseInterface(altSetNo);
 	test_Compare(r, ==, KErrUsbAlreadyRealized);	
 	CloseChannel();
@@ -1638,6 +1763,7 @@ static void TestSetInterface()
 	altSetConfig->iEpsDesc[0] = temp; //{2,1,1};
 
 	test.Printf(_L("Check chunk still populated with one interface\n")); 
+	OstTrace0(TRACE_NORMAL, TESTSETINTERFACE_TESTSETINTERFACE_DUP03, "Check chunk still populated with one interface\n"); 
 	TestBufferConstruction(altSetConfig);
 
 	CloseChannel();
@@ -1656,6 +1782,7 @@ static void TestSetInterface()
 	test_Compare(r, !=, KErrNone);		
 
 	test.Printf(_L("Check chunk still populated with one interface \n")); 
+	OstTrace0(TRACE_NORMAL, TESTSETINTERFACE_TESTSETINTERFACE_DUP04, "Check chunk still populated with one interface \n"); 
 	TestBufferConstruction(altSetConfig);
 
 	CloseChannel();
@@ -1673,6 +1800,7 @@ static void TestSetInterface()
 	altSetConfig->iEpsDesc[0] = temp2; //{0,0,0};
 	
 	test.Printf(_L("Check chunk not populated with any valid data as all interfaces would be destroyed \n")); 
+	OstTrace0(TRACE_NORMAL, TESTSETINTERFACE_TESTSETINTERFACE_DUP05, "Check chunk not populated with any valid data as all interfaces would be destroyed \n"); 
 	TestBufferConstruction(altSetConfig);
 
 	CloseChannel();
@@ -1731,21 +1859,35 @@ void CheckDeviceCapabilities()
 	gSupportsHighSpeed = d_caps().iHighSpeed;
 
 	test.Printf(_L("USB device capabilities:\n"));
+	OstTrace0(TRACE_NORMAL, CHECKDEVICECAPABILITIES_CHECKDEVICECAPABILITIES, "USB device capabilities:\n");
 	test.Printf(_L("Number of endpoints:                %d\n"), numOfEndPoints);
+	OstTrace1(TRACE_NORMAL, CHECKDEVICECAPABILITIES_CHECKDEVICECAPABILITIES_DUP01, "Number of endpoints:                %d\n", numOfEndPoints);
 	test.Printf(_L("Supports Software-Connect:          %s\n"),
 				d_caps().iConnect ? _S("yes") : _S("no"));
+	OstTraceExt1(TRACE_NORMAL, CHECKDEVICECAPABILITIES_CHECKDEVICECAPABILITIES_DUP02, "Supports Software-Connect:          %s\n",
+				d_caps().iConnect ? _L("yes") : _L("no"));
 	test.Printf(_L("Device is Self-Powered:             %s\n"),
 				d_caps().iSelfPowered ? _S("yes") : _S("no"));
+	OstTraceExt1(TRACE_NORMAL, CHECKDEVICECAPABILITIES_CHECKDEVICECAPABILITIES_DUP03, "Device is Self-Powered:             %s\n",
+				d_caps().iSelfPowered ? _L("yes") : _L("no"));
 	test.Printf(_L("Supports Remote-Wakeup:             %s\n"),
 				d_caps().iRemoteWakeup ? _S("yes") : _S("no"));
+	OstTraceExt1(TRACE_NORMAL, CHECKDEVICECAPABILITIES_CHECKDEVICECAPABILITIES_DUP04, "Supports Remote-Wakeup:             %s\n",
+				d_caps().iRemoteWakeup ? _L("yes") : _L("no"));
 	test.Printf(_L("Supports High-speed:                %s\n"),
 				gSupportsHighSpeed ? _S("yes") : _S("no"));
+	OstTraceExt1(TRACE_NORMAL, CHECKDEVICECAPABILITIES_CHECKDEVICECAPABILITIES_DUP05, "Supports High-speed:                %s\n",
+				gSupportsHighSpeed ? _L("yes") : _L("no"));
 	test.Printf(_L("Supports unpowered cable detection: %s\n"),
 				(d_caps().iFeatureWord1 & KUsbDevCapsFeatureWord1_CableDetectWithoutPower) ?
 				_S("yes") : _S("no"));
+	OstTraceExt1(TRACE_NORMAL, CHECKDEVICECAPABILITIES_CHECKDEVICECAPABILITIES_DUP06, "Supports unpowered cable detection: %s\n",
+				(d_caps().iFeatureWord1 & KUsbDevCapsFeatureWord1_CableDetectWithoutPower) ?
+				_L("yes") : _L("no"));
 
 	test_Compare(numOfEndPoints, >=, 2);
 	test.Printf(_L("(Device has sufficient endpoints.)\n"));
+	OstTrace0(TRACE_NORMAL, CHECKDEVICECAPABILITIES_CHECKDEVICECAPABILITIES_DUP07, "(Device has sufficient endpoints.)\n");
 		
 	// Endpoint caps
 	test.Next(_L("Query USB endpoint caps"));
@@ -1755,6 +1897,7 @@ void CheckDeviceCapabilities()
 	test_KErrNone(r);
 
 	test.Printf(_L("USB device endpoint capabilities:\n"));
+	OstTrace0(TRACE_NORMAL, CHECKDEVICECAPABILITIES_CHECKDEVICECAPABILITIES_DUP08, "USB device endpoint capabilities:\n");
 
 	TInt dir;
 	for (TInt i = 0; i < numOfEndPoints; i++)
@@ -1763,32 +1906,48 @@ void CheckDeviceCapabilities()
 		dir = caps->iTypesAndDir;
 		test.Printf(_L("Endpoint: SizeBf= 0x%08x Type/Dir= 0x%08x"),
 					caps->iSizes, dir);
+		OstTraceExt2(TRACE_NORMAL, CHECKDEVICECAPABILITIES_CHECKDEVICECAPABILITIES_DUP09, "Endpoint: SizeBf= 0x%08x Type/Dir= 0x%08x",
+					caps->iSizes, dir);
 		
 		if (dir&KUsbEpDirIn)
+		    {
 			test.Printf(_L(" In "));
+			OstTrace0(TRACE_NORMAL, CHECKDEVICECAPABILITIES_CHECKDEVICECAPABILITIES_DUP10, " In ");
+			}
 		if (dir&KUsbEpDirOut)
+		    {
 			test.Printf(_L(" Out"));
+			OstTrace0(TRACE_NORMAL, CHECKDEVICECAPABILITIES_CHECKDEVICECAPABILITIES_DUP11, " Out");
+			}
 		if (dir&KUsbEpDirBidirect)
+			{
 			test.Printf(_L(" Bi "));
+			OstTrace0(TRACE_NORMAL, CHECKDEVICECAPABILITIES_CHECKDEVICECAPABILITIES_DUP12, " Bi ");
+			}
 
 		if (dir&KUsbEpTypeControl)
 			{
 			test.Printf(_L(" Control"));
+			OstTrace0(TRACE_NORMAL, CHECKDEVICECAPABILITIES_CHECKDEVICECAPABILITIES_DUP13, " Control");
 			}
 		if (dir&KUsbEpTypeIsochronous)
 			{
 			test.Printf(_L(" Isochronus"));
+			OstTrace0(TRACE_NORMAL, CHECKDEVICECAPABILITIES_CHECKDEVICECAPABILITIES_DUP14, " Isochronus");
 			}
 		if (dir&KUsbEpTypeBulk)
 			{
 			test.Printf(_L(" Bulk"));		
+			OstTrace0(TRACE_NORMAL, CHECKDEVICECAPABILITIES_CHECKDEVICECAPABILITIES_DUP15, " Bulk");		
 			}
 		if (dir&KUsbEpTypeInterrupt)
 			{
 			test.Printf(_L(" Interrupt"));
+			OstTrace0(TRACE_NORMAL, CHECKDEVICECAPABILITIES_CHECKDEVICECAPABILITIES_DUP16, " Interrupt");
 			}
 
 		test.Printf(_L("\n"));
+		OstTrace0(TRACE_NORMAL, CHECKDEVICECAPABILITIES_CHECKDEVICECAPABILITIES_DUP17, "\n");
 
 		if (caps->iHighBandwidth)
 			{
@@ -1806,6 +1965,7 @@ void CheckDeviceCapabilities()
 TInt SettingOne(TInt aAltSetNo)
 	{
 	test.Printf(_L("RTEST: Interigate Endpoint Capabilities (S1)\n"));
+	OstTrace0(TRACE_NORMAL, SETTINGONE_SETTINGONE, "RTEST: Interigate Endpoint Capabilities (S1)\n");
 	TInt r;
 	TUsbcScInterfaceInfoBuf ifc;
 	// Endpoint 0
@@ -1818,6 +1978,7 @@ TInt SettingOne(TInt aAltSetNo)
 	ifc().iEndpointData[1].iSize = KUsbEpSize64;
 	
 	test.Printf(_L("RTEST: Setting up interface %d with two endpoints (s1)\n"), aAltSetNo);
+	OstTrace1(TRACE_NORMAL, SETTINGONE_SETTINGONE_DUP01, "RTEST: Setting up interface %d with two endpoints (s1)\n", aAltSetNo);
 	_LIT16(string, "T_USBCSC Test Interface");
 	ifc().iString = const_cast<TDesC16*>(&string);
 	ifc().iTotalEndpointsUsed = 2;
@@ -1835,6 +1996,7 @@ TInt SettingOne(TInt aAltSetNo)
 TInt SettingTwo(TInt aAltSetNo)
 	{
 	test.Printf(_L("RTEST: Interigate Endpoint Capabilities (S2)\n"));
+	OstTrace0(TRACE_NORMAL, SETTINGTWO_SETTINGTWO, "RTEST: Interigate Endpoint Capabilities (S2)\n");
 	TUsbcScInterfaceInfoBuf ifc;
 	TInt ep_found = 0; 
 	if (gInterruptInEpFound)
@@ -1864,6 +2026,7 @@ TInt SettingTwo(TInt aAltSetNo)
 		} while (++ep_found < 5);
 	
 	test.Printf(_L("Setting up interface %d with Five Endpoints (s2)\n"), aAltSetNo);
+	OstTrace1(TRACE_NORMAL, SETTINGTWO_SETTINGTWO_DUP01, "Setting up interface %d with Five Endpoints (s2)\n", aAltSetNo);
 	_LIT16(string, "T_USBSC API Test Interface");
 	ifc().iString = const_cast<TDesC16*>(&string);
 	ifc().iTotalEndpointsUsed = ep_found;
@@ -1878,6 +2041,7 @@ TInt SettingTwo(TInt aAltSetNo)
 TInt SettingThreeIn(TInt aAltSetNo)
 	{
 	test.Printf(_L("RTEST: Interigate Endpoint Capabilities (S3)\n"));
+	OstTrace0(TRACE_NORMAL, SETTINGTHREEIN_SETTINGTHREEIN, "RTEST: Interigate Endpoint Capabilities (S3)\n");
 	TInt r;
 	TUsbcScInterfaceInfoBuf ifc;
 	TInt ep_found = 0; 
@@ -1889,6 +2053,7 @@ TInt SettingThreeIn(TInt aAltSetNo)
 		} while (++ep_found < 3);
 	
 	test.Printf(_L("Setting up interface %d with three Bulk In endpoints(s3)\n"), aAltSetNo);
+	OstTrace1(TRACE_NORMAL, SETTINGTHREEIN_SETTINGTHREEIN_DUP01, "Setting up interface %d with three Bulk In endpoints(s3)\n", aAltSetNo);
 	_LIT16(string, "T_USBCSC Test Interface");
 	ifc().iString = const_cast<TDesC16*>(&string);
 	ifc().iTotalEndpointsUsed = ep_found;
@@ -1904,6 +2069,7 @@ TInt SettingThreeIn(TInt aAltSetNo)
 TInt SettingFourOut(TInt aAltSetNo)
 	{
 	test.Printf(_L("RTEST: Interigate Endpoint Capabilities (S4)\n"));
+	OstTrace0(TRACE_NORMAL, SETTINGFOUROUT_SETTINGFOUROUT, "RTEST: Interigate Endpoint Capabilities (S4)\n");
 	TInt r;
 	TUsbcScInterfaceInfoBuf ifc;
 	TInt ep_found = 0; 
@@ -1915,6 +2081,7 @@ TInt SettingFourOut(TInt aAltSetNo)
 		} while (++ep_found < 3);
 	
 	test.Printf(_L("Setting up interface %d with three Bulk Out endpoints(s4)\n"), aAltSetNo);
+	OstTrace1(TRACE_NORMAL, SETTINGFOUROUT_SETTINGFOUROUT_DUP01, "Setting up interface %d with three Bulk Out endpoints(s4)\n", aAltSetNo);
 	_LIT16(string, "T_USBCSC Test Interface");
 	ifc().iString = const_cast<TDesC16*>(&string);
 	ifc().iTotalEndpointsUsed = ep_found;
@@ -1930,6 +2097,7 @@ TInt SettingFourOut(TInt aAltSetNo)
 TInt SettingFive(TInt aAltSetNo)
 	{
 	test.Printf(_L("RTEST: Interigate Endpoint Capabilities (S5)\n"));
+	OstTrace0(TRACE_NORMAL, SETTINGFIVE_SETTINGFIVE, "RTEST: Interigate Endpoint Capabilities (S5)\n");
 	TUsbcScInterfaceInfoBuf ifc;
 	TInt ep_found = 0; 
 	if (gInterruptInEpFound)
@@ -1965,6 +2133,7 @@ TInt SettingFive(TInt aAltSetNo)
 	ifc().iEndpointData[ep_found].iSize  = KUsbEpSize64;
 	
 	test.Printf(_L("Setting up interface %d with Five Endpoints(s5)\n"), aAltSetNo);
+	OstTrace1(TRACE_NORMAL, SETTINGFIVE_SETTINGFIVE_DUP01, "Setting up interface %d with Five Endpoints(s5)\n", aAltSetNo);
 	_LIT16(string, "T_USBSC API Test Interface");
 	ifc().iString = const_cast<TDesC16*>(&string);
 	ifc().iTotalEndpointsUsed = ep_found;
@@ -1981,6 +2150,7 @@ TInt InvalidSettingOne(TInt aAltSetNo) // Invalid Interface - request more than 
 									   // and will however return with an error, not because we are requesting one more than what is available of an interrupt endpoint
 	{
 	test.Printf(_L("RTEST: Interigate Endpoint Capabilities (I1)\n"));
+	OstTrace0(TRACE_NORMAL, INVALIDSETTINGONE_INVALIDSETTINGONE, "RTEST: Interigate Endpoint Capabilities (I1)\n");
 	TUsbcScInterfaceInfoBuf ifc;
 	TInt interruptInEpFound = gInterruptInEpFound + 1;
 
@@ -2012,6 +2182,7 @@ TInt InvalidSettingTwo(TInt aAltSetNo) //Invalid Setting by requesting an endpoi
 									   //Only control endpoints are bi-directional. Request any other type which has bidirectional capability.
 	{
 	test.Printf(_L("RTEST: Interigate Endpoint Capabilities (I2)\n"));
+	OstTrace0(TRACE_NORMAL, INVALIDSETTINGTWO_INVALIDSETTINGTWO, "RTEST: Interigate Endpoint Capabilities (I2)\n");
 
 	TUsbcScInterfaceInfoBuf ifc;
 	// Endpoint 0
@@ -2039,6 +2210,7 @@ TInt InvalidSettingTwo(TInt aAltSetNo) //Invalid Setting by requesting an endpoi
 TInt InvalidSettingThree(TInt aAltSetNo)
 	{
 	test.Printf(_L("RTEST: Interigate Endpoint Capabilities (I3)\n"));
+	OstTrace0(TRACE_NORMAL, INVALIDSETTINGTHREE_INVALIDSETTINGTHREE, "RTEST: Interigate Endpoint Capabilities (I3)\n");
 	TInt r;
 	TUsbcScInterfaceInfoBuf ifc;
 	TInt ep_found = 0; 
@@ -2056,6 +2228,7 @@ TInt InvalidSettingThree(TInt aAltSetNo)
 		} while (++ep_found < 5);
 	
 	test.Printf(_L("RTEST: Setting up interface %d, with invalid setting three (I3).\n"), aAltSetNo);
+	OstTrace1(TRACE_NORMAL, INVALIDSETTINGTHREE_INVALIDSETTINGTHREE_DUP01, "RTEST: Setting up interface %d, with invalid setting three (I3).\n", aAltSetNo);
 	_LIT16(string, "T_USBCSC Test Interface");
 	ifc().iString = const_cast<TDesC16*>(&string);
 	ifc().iTotalEndpointsUsed = ep_found+1;
@@ -2124,6 +2297,7 @@ static void	TestDeviceQualifierDescriptor()
 	if (!gSupportsHighSpeed)
 		{
 		test.Printf(_L("*** Not supported - skipping Device_Qualifier descriptor tests\n"));
+		OstTrace0(TRACE_NORMAL, TESTDEVICEQUALIFIERDESCRIPTOR_TESTDEVICEQUALIFIERDESCRIPTOR, "*** Not supported - skipping Device_Qualifier descriptor tests\n");
 		test.End();
 		return;
 		}
@@ -2199,6 +2373,7 @@ static void	TestOtherSpeedConfigurationDescriptor()
 	if (!gSupportsHighSpeed)
 		{
 		test.Printf(_L("*** Not supported - skipping Other_Speed_Configuration desc tests\n"));
+		OstTrace0(TRACE_NORMAL, TESTOTHERSPEEDCONFIGURATIONDESCRIPTOR_TESTOTHERSPEEDCONFIGURATIONDESCRIPTOR, "*** Not supported - skipping Other_Speed_Configuration desc tests\n");
 		test.End();
 		return;
 		}
@@ -2331,6 +2506,7 @@ static void TestAlternateInterfaceManipulation()
 	if (!SupportsAlternateInterfaces())
 		{
 		test.Printf(_L("*** Not supported - skipping alternate interface settings tests\n"));
+		OstTrace0(TRACE_NORMAL, TESTALTERNATEINTERFACEMANIPULATION_TESTALTERNATEINTERFACEMANIPULATION, "*** Not supported - skipping alternate interface settings tests\n");
 		test.End();
 		return;
 		}
@@ -2428,6 +2604,7 @@ static void TestExtendedEndpointDescriptor()
 	if (!SupportsAlternateInterfaces())
 		{
 		test.Printf(_L("*** Not supported - skipping Extended Endpoint descriptor tests\n"));
+		OstTrace0(TRACE_NORMAL, TESTEXTENDEDENDPOINTDESCRIPTOR_TESTEXTENDEDENDPOINTDESCRIPTOR, "*** Not supported - skipping Extended Endpoint descriptor tests\n");
 		test.End();
 		return;
 		}
@@ -2477,6 +2654,7 @@ static void TestStandardStringDescriptors()
 	TInt r = gPort.GetStringDescriptorLangId(rd_langid_orig);
 	test_KErrNone(r);
 	test.Printf(_L("Original LANGID code: 0x%04X\n"), rd_langid_orig);
+	OstTrace1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS, "Original LANGID code: 0x%04X\n", rd_langid_orig);
 
 	test.Next(_L("SetStringDescriptorLangId()"));
 	TUint16 wr_langid = 0x0809;								// English (UK) Language ID
@@ -2490,6 +2668,7 @@ static void TestStandardStringDescriptors()
 	r = gPort.GetStringDescriptorLangId(rd_langid);
 	test_KErrNone(r);
 	test.Printf(_L("New LANGID code: 0x%04X\n"), rd_langid);
+	OstTrace1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP01, "New LANGID code: 0x%04X\n", rd_langid);
 
 	test.Next(_L("Compare LANGID codes"));
 	test(rd_langid == wr_langid);
@@ -2510,11 +2689,13 @@ static void TestStandardStringDescriptors()
 	if (r == KErrNone)
 		{
 		test.Printf(_L("Original Manufacturer string: \"%lS\"\n"), &rd_str_orig);
+		OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP02, "Original Manufacturer string: \"%lS\"\n", rd_str_orig);
 		restore_string = ETrue;
 		}
 	else
 		{
 		test.Printf(_L("No Manufacturer string set\n"));
+		OstTrace0(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP03, "No Manufacturer string set\n");
 		restore_string = EFalse;
 		}
 
@@ -2529,6 +2710,7 @@ static void TestStandardStringDescriptors()
 	r = gPort.GetManufacturerStringDescriptor(rd_str);
 	test_KErrNone(r);
 	test.Printf(_L("New Manufacturer string: \"%lS\"\n"), &rd_str);
+	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP04, "New Manufacturer string: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Manufacturer strings"));
 	r = rd_str.Compare(wr_str);
@@ -2546,6 +2728,7 @@ static void TestStandardStringDescriptors()
 	r = gPort.GetManufacturerStringDescriptor(rd_str);
 	test_KErrNone(r);
 	test.Printf(_L("New Manufacturer string: \"%lS\"\n"), &rd_str);
+	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP05, "New Manufacturer string: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Manufacturer strings"));
 	r = rd_str.Compare(wr_str);
@@ -2576,6 +2759,7 @@ static void TestStandardStringDescriptors()
 	if (r == KErrNone)
 		{
 		test.Printf(_L("Old Product string: \"%lS\"\n"), &rd_str_orig);
+		OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP06, "Old Product string: \"%lS\"\n", rd_str_orig);
 		restore_string = ETrue;
 		}
 	else
@@ -2593,6 +2777,7 @@ static void TestStandardStringDescriptors()
 	r = gPort.GetProductStringDescriptor(rd_str);
 	test_KErrNone(r);
 	test.Printf(_L("New Product string: \"%lS\"\n"), &rd_str);
+	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP07, "New Product string: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Product strings"));
 	r = rd_str.Compare(wr_str);
@@ -2610,6 +2795,7 @@ static void TestStandardStringDescriptors()
 	r = gPort.GetProductStringDescriptor(rd_str);
 	test_KErrNone(r);
 	test.Printf(_L("New Product string: \"%lS\"\n"), &rd_str);
+	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP08, "New Product string: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Product strings"));
 	r = rd_str.Compare(wr_str);
@@ -2640,6 +2826,7 @@ static void TestStandardStringDescriptors()
 	if (r == KErrNone)
 		{
 		test.Printf(_L("Old Serial Number: \"%lS\"\n"), &rd_str_orig);
+		OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP09, "Old Serial Number: \"%lS\"\n", rd_str_orig);
 		restore_string = ETrue;
 		}
 	else
@@ -2657,6 +2844,7 @@ static void TestStandardStringDescriptors()
 	r = gPort.GetSerialNumberStringDescriptor(rd_str);
 	test_KErrNone(r);
 	test.Printf(_L("New Serial Number: \"%lS\"\n"), &rd_str);
+	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP10, "New Serial Number: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Serial Number strings"));
 	r = rd_str.Compare(wr_str);
@@ -2674,6 +2862,7 @@ static void TestStandardStringDescriptors()
 	r = gPort.GetSerialNumberStringDescriptor(rd_str);
 	test_KErrNone(r);
 	test.Printf(_L("New Serial Number: \"%lS\"\n"), &rd_str);
+	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP11, "New Serial Number: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Serial Number strings"));
 	r = rd_str.Compare(wr_str);
@@ -2704,6 +2893,7 @@ static void TestStandardStringDescriptors()
 	if (r == KErrNone)
 		{
 		test.Printf(_L("Old Configuration string: \"%lS\"\n"), &rd_str_orig);
+		OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP12, "Old Configuration string: \"%lS\"\n", rd_str_orig);
 		restore_string = ETrue;
 		}
 	else
@@ -2721,6 +2911,7 @@ static void TestStandardStringDescriptors()
 	r = gPort.GetConfigurationStringDescriptor(rd_str);
 	test_KErrNone(r);
 	test.Printf(_L("New Configuration string: \"%lS\"\n"), &rd_str);
+	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP13, "New Configuration string: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Configuration strings"));
 	r = rd_str.Compare(wr_str);
@@ -2738,6 +2929,7 @@ static void TestStandardStringDescriptors()
 	r = gPort.GetConfigurationStringDescriptor(rd_str);
 	test_KErrNone(r);
 	test.Printf(_L("New Configuration string: \"%lS\"\n"), &rd_str);
+	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP14, "New Configuration string: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Configuration strings"));
 	r = rd_str.Compare(wr_str);
@@ -2788,6 +2980,7 @@ static void TestArbitraryStringDescriptors()
 	r = gPort.GetStringDescriptor(stridx1, rd_str);
 	test_KErrNone(r);
 	test.Printf(_L("New test string @ idx %d: \"%lS\"\n"), stridx1, &rd_str);
+	OstTraceExt2(TRACE_NORMAL, TESTARBITRARYSTRINGDESCRIPTORS_TESTARBITRARYSTRINGDESCRIPTORS, "New test string @ idx %d: \"%lS\"\n", stridx1, rd_str);
 
 	test.Next(_L("Compare test strings 1"));
 	r = rd_str.Compare(wr_str);
@@ -2825,6 +3018,7 @@ static void TestArbitraryStringDescriptors()
 	r = gPort.GetStringDescriptor(stridx2, rd_str);
 	test_KErrNone(r);
 	test.Printf(_L("New test string @ idx %d: \"%lS\"\n"), stridx2, &rd_str);
+	OstTraceExt2(TRACE_NORMAL, TESTARBITRARYSTRINGDESCRIPTORS_TESTARBITRARYSTRINGDESCRIPTORS_DUP01, "New test string @ idx %d: \"%lS\"\n", stridx2, rd_str);
 
 	test.Next(_L("Compare test strings 2"));
 	r = rd_str.Compare(wr_str);
@@ -2847,6 +3041,7 @@ static void TestArbitraryStringDescriptors()
 	r = gPort.GetStringDescriptor(stridx3, rd_str);
 	test_KErrNone(r);
 	test.Printf(_L("New test string @ idx %d: \"%lS\"\n"), stridx3, &rd_str);
+	OstTraceExt2(TRACE_NORMAL, TESTARBITRARYSTRINGDESCRIPTORS_TESTARBITRARYSTRINGDESCRIPTORS_DUP02, "New test string @ idx %d: \"%lS\"\n", stridx3, rd_str);
 
 	test.Next(_L("Compare test strings 3"));
 	r = rd_str.Compare(wr_str);
@@ -2887,6 +3082,10 @@ static TEndpointState QueryEndpointState(TInt aEndpoint)
 				(ep_state == EEndpointStateNotStalled) ? _S("Not stalled") :
 				((ep_state == EEndpointStateStalled) ? _S("Stalled") :
 				 _S("Unknown...")));
+	OstTraceExt2(TRACE_NORMAL, QUERYENDPOINTSTATE_QUERYENDPOINTSTATE, "Endpoint %d state: %s\n", aEndpoint,
+				(ep_state == EEndpointStateNotStalled) ? _L("Not stalled") :
+				((ep_state == EEndpointStateStalled) ? _L("Stalled") :
+				 _L("Unknown...")));
 	return ep_state;
 	}
 
@@ -2897,6 +3096,7 @@ static void TestEndpointStallStatus()
 	if (!SupportsEndpointStall())
 		{
 		test.Printf(_L("*** Not supported - skipping endpoint stall status tests\n"));
+		OstTrace0(TRACE_NORMAL, TESTENDPOINTSTALLSTATUS_TESTENDPOINTSTALLSTATUS, "*** Not supported - skipping endpoint stall status tests\n");
 		test.End();
 		return;
 		}
@@ -2951,10 +3151,12 @@ static void TestEndpointStatusNotify()
 		if ((epStateBitmap & (1 << i)) == EEndpointStateNotStalled)
 			{
 			test.Printf(_L("EndpointStatusNotify: Ep %d NOT STALLED\n"), i);
+			OstTrace1(TRACE_NORMAL, TESTENDPOINTSTATUSNOTIFY_TESTENDPOINTSTATUSNOTIFY, "EndpointStatusNotify: Ep %d NOT STALLED\n", i);
 			}
 		else
 			{
 			test.Printf(_L("EndpointStatusNotify: Ep %d STALLED\n"), i);
+			OstTrace1(TRACE_NORMAL, TESTENDPOINTSTATUSNOTIFY_TESTENDPOINTSTATUSNOTIFY_DUP01, "EndpointStatusNotify: Ep %d STALLED\n", i);
 			}
 		}
 
@@ -2977,6 +3179,7 @@ static void TestAlternateDeviceStatusNotify()
 		{
 		TUint setting = (deviceState & ~KUsbAlternateSetting);
 		test.Printf(_L("Alternate setting change to setting %d - unexpected"), setting);
+		OstTrace1(TRACE_NORMAL, TESTALTERNATEDEVICESTATUSNOTIFY_TESTALTERNATEDEVICESTATUSNOTIFY, "Alternate setting change to setting %d - unexpected", setting);
 		test(EFalse);
 		}
 	else
@@ -2985,31 +3188,40 @@ static void TestAlternateDeviceStatusNotify()
 			{
 		case EUsbcDeviceStateUndefined:
 			test.Printf(_L("TestAlternateDeviceStatusNotify: Undefined state\n"));
+			OstTrace0(TRACE_NORMAL, TESTALTERNATEDEVICESTATUSNOTIFY_TESTALTERNATEDEVICESTATUSNOTIFY_DUP01, "TestAlternateDeviceStatusNotify: Undefined state\n");
 			break;
 		case EUsbcDeviceStateAttached:
 			test.Printf(_L("TestAlternateDeviceStatusNotify: Attached state\n"));
+			OstTrace0(TRACE_NORMAL, TESTALTERNATEDEVICESTATUSNOTIFY_TESTALTERNATEDEVICESTATUSNOTIFY_DUP02, "TestAlternateDeviceStatusNotify: Attached state\n");
 			break;
 		case EUsbcDeviceStatePowered:
 			test.Printf(_L("TestAlternateDeviceStatusNotify: Powered state\n"));
+			OstTrace0(TRACE_NORMAL, TESTALTERNATEDEVICESTATUSNOTIFY_TESTALTERNATEDEVICESTATUSNOTIFY_DUP03, "TestAlternateDeviceStatusNotify: Powered state\n");
 			break;
 		case EUsbcDeviceStateDefault:
 			test.Printf(_L("TestAlternateDeviceStatusNotify: Default state\n"));
+			OstTrace0(TRACE_NORMAL, TESTALTERNATEDEVICESTATUSNOTIFY_TESTALTERNATEDEVICESTATUSNOTIFY_DUP04, "TestAlternateDeviceStatusNotify: Default state\n");
 			break;
 		case EUsbcDeviceStateAddress:
 			test.Printf(_L("TestAlternateDeviceStatusNotify: Address state\n"));
+			OstTrace0(TRACE_NORMAL, TESTALTERNATEDEVICESTATUSNOTIFY_TESTALTERNATEDEVICESTATUSNOTIFY_DUP05, "TestAlternateDeviceStatusNotify: Address state\n");
 			break;
 		case EUsbcDeviceStateConfigured:
 			test.Printf(_L("TestAlternateDeviceStatusNotify: Configured state\n"));
+			OstTrace0(TRACE_NORMAL, TESTALTERNATEDEVICESTATUSNOTIFY_TESTALTERNATEDEVICESTATUSNOTIFY_DUP06, "TestAlternateDeviceStatusNotify: Configured state\n");
 			break;
 		case EUsbcDeviceStateSuspended:
 			test.Printf(_L("TestAlternateDeviceStatusNotify: Suspended state\n"));
+			OstTrace0(TRACE_NORMAL, TESTALTERNATEDEVICESTATUSNOTIFY_TESTALTERNATEDEVICESTATUSNOTIFY_DUP07, "TestAlternateDeviceStatusNotify: Suspended state\n");
 			break;
 		case EUsbcNoState:
 			test.Printf(_L("TestAlternateDeviceStatusNotify: State buffering error\n"));
+			OstTrace0(TRACE_NORMAL, TESTALTERNATEDEVICESTATUSNOTIFY_TESTALTERNATEDEVICESTATUSNOTIFY_DUP08, "TestAlternateDeviceStatusNotify: State buffering error\n");
 			test(EFalse);
 			break;
 		default:
 			test.Printf(_L("TestAlternateDeviceStatusNotify: Unknown state\n"));
+			OstTrace0(TRACE_NORMAL, TESTALTERNATEDEVICESTATUSNOTIFY_TESTALTERNATEDEVICESTATUSNOTIFY_DUP09, "TestAlternateDeviceStatusNotify: Unknown state\n");
 			test(EFalse);
 			}
 		}
@@ -3141,6 +3353,7 @@ void UnloadDriver()
 void SetupBulkInterfaces(TUint aInterfaceNo,TUint nReadEps, TUint nWriteEps)
 	{
 	test.Printf(_L("SetupBulkInterfaces: %d, %d, %d\n"),aInterfaceNo,nReadEps,nWriteEps);
+	OstTraceExt3(TRACE_NORMAL, SETUPBULKINTERFACES_SETUPBULKINTERFACES, "SetupBulkInterfaces: %u, %u, %u\n",aInterfaceNo,nReadEps,nWriteEps);
 	TUsbcScInterfaceInfoBuf ifc;
 	TUint i;
 	for(i=0; i<nWriteEps;i++)
@@ -3171,20 +3384,31 @@ void SetupBulkInterfaces(TUint aInterfaceNo,TUint nReadEps, TUint nWriteEps)
 void PrintBILTestOptions()
 	{
 	test.Printf(_L("Select an option\n"));
+	OstTrace0(TRACE_NORMAL, PRINTBILTESTOPTIONS_PRINTBILTESTOPTIONS, "Select an option\n");
 	test.Printf(_L("1.Test BIL API\n"));	//unimplemented
+	OstTrace0(TRACE_NORMAL, PRINTBILTESTOPTIONS_PRINTBILTESTOPTIONS_DUP01, "1.Test BIL API\n");	//unimplemented
 	test.Printf(_L("2.Test BIL Read Write\n"));
+	OstTrace0(TRACE_NORMAL, PRINTBILTESTOPTIONS_PRINTBILTESTOPTIONS_DUP02, "2.Test BIL Read Write\n");
 	test.Printf(_L("3.Test EP0 using BIL API's\n"));
+	OstTrace0(TRACE_NORMAL, PRINTBILTESTOPTIONS_PRINTBILTESTOPTIONS_DUP03, "3.Test EP0 using BIL API's\n");
 	test.Printf(_L("4.Test AlternateSetting Change BIL API's\n"));	//unimplemented	
+	OstTrace0(TRACE_NORMAL, PRINTBILTESTOPTIONS_PRINTBILTESTOPTIONS_DUP04, "4.Test AlternateSetting Change BIL API's\n");	//unimplemented	
 	test.Printf(_L("5.Run All\n"));
+	OstTrace0(TRACE_NORMAL, PRINTBILTESTOPTIONS_PRINTBILTESTOPTIONS_DUP05, "5.Run All\n");
 	test.Printf(_L("6.Quit\n"));
+	OstTrace0(TRACE_NORMAL, PRINTBILTESTOPTIONS_PRINTBILTESTOPTIONS_DUP06, "6.Quit\n");
 	}
 
 void PrintWriteOptions()
 	{
 	test.Printf(_L("Select an option\n"));
+	OstTrace0(TRACE_NORMAL, PRINTWRITEOPTIONS_PRINTWRITEOPTIONS, "Select an option\n");
 	test.Printf(_L("1.Test single buffer write\n"));
+	OstTrace0(TRACE_NORMAL, PRINTWRITEOPTIONS_PRINTWRITEOPTIONS_DUP01, "1.Test single buffer write\n");
 	test.Printf(_L("2.Test double buffer write\n"));
+	OstTrace0(TRACE_NORMAL, PRINTWRITEOPTIONS_PRINTWRITEOPTIONS_DUP02, "2.Test double buffer write\n");
 	test.Printf(_L("3.Test multiple queing write\n"));
+	OstTrace0(TRACE_NORMAL, PRINTWRITEOPTIONS_PRINTWRITEOPTIONS_DUP03, "3.Test multiple queing write\n");
 	}
 
 
@@ -3211,18 +3435,31 @@ void PrintSetupPkt(Sep0SetupPacket* setup)
 	if(setup != NULL)
 		{
 		test.Printf(_L("EP0 command:\n"));
+		OstTrace0(TRACE_NORMAL, PRINTSETUPPKT_PRINTSETUPPKT, "EP0 command:\n");
 		test.Printf(_L("Direction: %S, "),KLitDirections[(setup->iRequestType>>KDirBit) & 0x1]);
+		OstTraceExt1(TRACE_NORMAL, PRINTSETUPPKT_PRINTSETUPPKT_DUP01, "Direction: %S, ",*KLitDirections[(setup->iRequestType>>KDirBit) & 0x1]);
 		test.Printf(_L("Request type: %S, "), KLitType[((setup->iRequestType>>KReqTypeBit) & 0x3)]);
+		OstTraceExt1(TRACE_NORMAL, PRINTSETUPPKT_PRINTSETUPPKT_DUP02, "Request type: %S, ", *KLitType[((setup->iRequestType>>KReqTypeBit) & 0x3)]);
 
 		if (setup->iRequestType & KRecepientReservedMask)
+			{
 			test.Printf(_L("Recepient: Unknown (0x%x), "), setup->iRequestType & KRecepientMask);
+			OstTrace1(TRACE_NORMAL, PRINTSETUPPKT_PRINTSETUPPKT_DUP03, "Recepient: Unknown (0x%x), ", setup->iRequestType & KRecepientMask);
+			}
 		else
+			{
 			test.Printf(_L("Recepient: %S\n"), KLitDest[(setup->iRequestType & KRecepientMask)]);
+			OstTraceExt1(TRACE_NORMAL, PRINTSETUPPKT_PRINTSETUPPKT_DUP04, "Recepient: %S\n", *KLitDest[(setup->iRequestType & KRecepientMask)]);
+			}
 
 		test.Printf(_L("bRequest:0x%x, "),setup->iRequest);
+		OstTrace1(TRACE_NORMAL, PRINTSETUPPKT_PRINTSETUPPKT_DUP05, "bRequest:0x%x, ",setup->iRequest);
 		test.Printf(_L("wValue:0x%x, "),setup->iwValue);
+		OstTrace1(TRACE_NORMAL, PRINTSETUPPKT_PRINTSETUPPKT_DUP06, "wValue:0x%x, ",setup->iwValue);
 		test.Printf(_L("wIndex:0x%x, "),setup->iwIndex);
+		OstTrace1(TRACE_NORMAL, PRINTSETUPPKT_PRINTSETUPPKT_DUP07, "wIndex:0x%x, ",setup->iwIndex);
 		test.Printf(_L("wLength:0x%x\n"),setup->iWlength);
+		OstTrace1(TRACE_NORMAL, PRINTSETUPPKT_PRINTSETUPPKT_DUP08, "wLength:0x%x\n",setup->iWlength);
 		}
 	}
 
@@ -3236,6 +3473,7 @@ void WriteDataToBuffer(TAny* aBufferStartAddr,TUint aLength,TDes8& aWriteBuf)
 		aWriteBuf.Append(i);			//data is duplicated here in writebuffer and sc location, cant think of anyth better at the moment;
 		*(scBufferAddr) = i;
 		//test.Printf(_L("Addr:0x%x, data[i]:%d "),scBufferAddr,*(scBufferAddr));
+		//OstTraceExt2(TRACE_NORMAL, WRITEDATATOBUFFER_WRITEDATATOBUFFER, "Addr:0x%x, data[i]:%d ",scBufferAddr,*(scBufferAddr));
 		scBufferAddr += 1;
 		}	
 	}
@@ -3243,6 +3481,7 @@ void BILWrite(TDes8& aWriteBuf)
 	{
 	TInt ret = KErrNone;
 	test.Printf(_L("TestBILWrite\n"));
+	OstTrace0(TRACE_NORMAL, BILWRITE_BILWRITE, "TestBILWrite\n");
 	TEndpointBuffer epBuf;
 	const TUint KWriteEp = 1;
 	TRequestStatus status;
@@ -3263,18 +3502,23 @@ void BILWrite(TDes8& aWriteBuf)
 			case '1':
 				//case 1: Write a buffer fulll of data to USBIO demo app: Total data written- 1xBuffersize
 				test.Printf(_L("Length to be written: %d\n"),length);
+				OstTrace1(TRACE_NORMAL, BILWRITE_BILWRITE_DUP01, "Length to be written: %d\n",length);
 				WriteDataToBuffer(buffer,length,aWriteBuf);
 				//need to check allignment
 				test.Printf(_L("Data ready to be written out, Start 'read to file' on an IN endpoint onthe  USBIO demo application then press a key when ready to proceed\n"));
+				OstTrace0(TRACE_NORMAL, BILWRITE_BILWRITE_DUP02, "Data ready to be written out, Start 'read to file' on an IN endpoint onthe  USBIO demo application then press a key when ready to proceed\n");
 				test.Getch();
 				test_KErrNone(epBuf.WriteBuffer(buffer,length,ETrue,status));
 				//Note-Till here is common for all options and can be put in a common place. Repeating the code for the sake of better understanding
 				User::WaitForRequest(status);
 				if(gVerbose)
 					test.Printf(_L("Write status %d\n"),status.Int());
+					OstTrace1(TRACE_NORMAL, BILWRITE_BILWRITE_DUP03, "Write status %d\n",status.Int());
 				test_KErrNone(status.Int());
 				test.Printf(_L("Total bytes written:%d\n"),aWriteBuf.Length());
+				OstTrace1(TRACE_NORMAL, BILWRITE_BILWRITE_DUP04, "Total bytes written:%d\n",aWriteBuf.Length());
 				test.Printf(_L("Stop writing at the USBIO demo dialog window, Press a key to continue##\n"));
+				OstTrace0(TRACE_NORMAL, BILWRITE_BILWRITE_DUP05, "Stop writing at the USBIO demo dialog window, Press a key to continue##\n");
 				test.Getch();
 				break;
 
@@ -3282,6 +3526,7 @@ void BILWrite(TDes8& aWriteBuf)
 				//case 2: Write a buffer fulll of data to USBIO demo app wait until it is written out, write a second buffer full of data: Total data written- 2xBuffersize
 				WriteDataToBuffer(buffer,length,aWriteBuf);
 				test.Printf(_L("Data ready to be written out, Start the write mode on USBIO demo application and press a key when ready to proceed\n"));
+				OstTrace0(TRACE_NORMAL, BILWRITE_BILWRITE_DUP06, "Data ready to be written out, Start the write mode on USBIO demo application and press a key when ready to proceed\n");
 				test.Getch();
 				ret = epBuf.WriteBuffer(buffer,length,EFalse,status);
 				test_KErrNone(ret);
@@ -3295,7 +3540,9 @@ void BILWrite(TDes8& aWriteBuf)
 				test_KErrNone(status.Int());
 
 				test.Printf(_L("Total bytes written:%d\n"),aWriteBuf.Length());
+				OstTrace1(TRACE_NORMAL, BILWRITE_BILWRITE_DUP07, "Total bytes written:%d\n",aWriteBuf.Length());
 				test.Printf(_L("Stop writing at the USBIO demo dialog window,Press a key to continue\n"));
+				OstTrace0(TRACE_NORMAL, BILWRITE_BILWRITE_DUP08, "Stop writing at the USBIO demo dialog window,Press a key to continue\n");
 				test.Getch();
 				break;
 
@@ -3303,6 +3550,7 @@ void BILWrite(TDes8& aWriteBuf)
 				//case 3: Write maxpacketsize (64 bytes) of data to USBIO demo app, queue remianing data in buffer (full buffer length-maxpacket size), wait for results: Total data written- 1xBuffersize
 				WriteDataToBuffer(buffer,64,aWriteBuf);
 				test.Printf(_L("Data ready to be written out, Start the write mode on USBIO demo application and press a key when ready to proceed\n"));
+				OstTrace0(TRACE_NORMAL, BILWRITE_BILWRITE_DUP09, "Data ready to be written out, Start the write mode on USBIO demo application and press a key when ready to proceed\n");
 				test.Getch();
 
 				ret = epBuf.WriteBuffer(buffer,64,EFalse,status1);
@@ -3318,7 +3566,9 @@ void BILWrite(TDes8& aWriteBuf)
 				test_KErrNone(status2.Int());
 				
 				test.Printf(_L("Total bytes written: %d\n"),aWriteBuf.Length());
+				OstTrace1(TRACE_NORMAL, BILWRITE_BILWRITE_DUP10, "Total bytes written: %d\n",aWriteBuf.Length());
 				test.Printf(_L("Stop writing at the USBIO demo dialog window,Press a key to continue\n"));
+				OstTrace0(TRACE_NORMAL, BILWRITE_BILWRITE_DUP11, "Stop writing at the USBIO demo dialog window,Press a key to continue\n");
 				test.Getch();
 				break;
 				
@@ -3336,6 +3586,7 @@ void BILWrite(TDes8& aWriteBuf)
 void BILRead(TDes8& aReadBuf)
 	{
 	test.Printf(_L("TestBILRead\n"));
+	OstTrace0(TRACE_NORMAL, BILREAD_BILREAD, "TestBILRead\n");
 	TEndpointBuffer epBuf;
 	const TUint KReadEp = 2;
 	TRequestStatus status;
@@ -3343,6 +3594,7 @@ void BILRead(TDes8& aReadBuf)
 	//Open endpoint
 	gPort.OpenEndpoint(epBuf,KReadEp);
 	test.Printf(_L("Open endpoint results for read endpoint\n"));
+	OstTrace0(TRACE_NORMAL, BILREAD_BILREAD_DUP01, "Open endpoint results for read endpoint\n");
 
 	//call GetBuffer, loop as long as EoF is not received
 	TAny *readBuf;
@@ -3356,7 +3608,10 @@ void BILRead(TDes8& aReadBuf)
 		TInt ret = KErrGeneral;
 		ret = epBuf.GetBuffer(readBuf,aSize,aZlp,status);
 		if(gVerbose)
+			{
 			test.Printf(_L("Getbuffer call returned %d, aSize: %d, aZlp: %d\n"),ret, aSize,aZlp);
+			OstTraceExt3(TRACE_NORMAL, BILREAD_BILREAD_DUP02, "Getbuffer call returned %d, aSize: %u, aZlp: %d\n",ret, aSize,aZlp);
+			}
 		
 		if(ret == KErrCompletion)
 			{
@@ -3368,6 +3623,7 @@ void BILRead(TDes8& aReadBuf)
 			{
 			test_KErrNone(ret);
 			test.Printf(_L("Waiting for Data, Data read so far: %d\n"),aReadBuf.Length());
+			OstTrace1(TRACE_NORMAL, BILREAD_BILREAD_DUP03, "Waiting for Data, Data read so far: %d\n",aReadBuf.Length());
 			User::WaitForRequest(status);
 			}
 		}
@@ -3383,6 +3639,7 @@ TBool CompareBuffs(TDes8& aReadBuf, TDes8& aWriteBuf)
 	if(wrLength != rdLength)
 		{
 		test.Printf(_L("Error: Disparity between length of data written and read back!"));
+		OstTrace0(TRACE_NORMAL, BILREAD_BILREAD_DUP04, "Error: Disparity between length of data written and read back!");
 		return EFalse;
 		}
 	for(TInt i=0; i < wrLength; i++)
@@ -3390,7 +3647,10 @@ TBool CompareBuffs(TDes8& aReadBuf, TDes8& aWriteBuf)
 		if (aReadBuf[i] != aWriteBuf[i])
 			{
 			test.Printf(_L("Error: for i = %d:"), i);
+			OstTrace1(TRACE_NORMAL, BILREAD_BILREAD_DUP05, "Error: for i = %d:", i);
 			test.Printf(_L("aReadBuf: %d != aWriteBuf: %d"),
+								aReadBuf[i], aWriteBuf[i]);
+			OstTraceExt2(TRACE_NORMAL, BILREAD_BILREAD_DUP06, "aReadBuf: %d != aWriteBuf: %d",
 								aReadBuf[i], aWriteBuf[i]);
 			return EFalse;
 			}
@@ -3413,39 +3673,52 @@ void TestBILReadWrite()
 
 	test.Next(_L("TestBILReadWrite"));
 	test.Printf(_L("Open global USB channel"));
+	OstTrace0(TRACE_NORMAL, TESTBILREADWRITE_TESTBILREADWRITE, "Open global USB channel");
 	TInt r = gPort.Open(0);
 	test_KErrNone(r);
 	//Test for a simple interface with 2 endpoints
 	test.Printf(_L("Set up interface\n"));
+	OstTrace0(TRACE_NORMAL, TESTBILREADWRITE_TESTBILREADWRITE_DUP01, "Set up interface\n");
 	SetupBulkInterfaces(0,1,1);
 	RChunk *tChunk = &gChunk;
 	test.Printf(_L("Finalize Interface\n"));
+	OstTrace0(TRACE_NORMAL, TESTBILREADWRITE_TESTBILREADWRITE_DUP02, "Finalize Interface\n");
 	gPort.FinalizeInterface(tChunk);
 
 	if(gRealHardware)
 		{
 		test.Printf(_L("Please Start the USBIO demo application on the host side \n"));
+		OstTrace0(TRACE_NORMAL, TESTBILREADWRITE_TESTBILREADWRITE_DUP03, "Please Start the USBIO demo application on the host side \n");
 		gPort.ReEnumerate(status);
 		User::WaitForRequest(status);
 		test.Printf(_L("Enumerated. status = %d\n"), status.Int());
+		OstTrace1(TRACE_NORMAL, TESTBILREADWRITE_TESTBILREADWRITE_DUP04, "Enumerated. status = %d\n", status.Int());
 		test.Printf(_L("The following test attempts to write data to the host application. USBIO demo application is used on the PC side.\
 						Using USBIO demo app, user should capture data to a file. When prompted, use USBIO application to send the recorded file back to device.\
 						The device side application will compare the data and show the result\n"));
+		OstTrace0(TRACE_NORMAL, TESTBILREADWRITE_TESTBILREADWRITE_DUP05, "The following test attempts to write data to the host application. USBIO demo application is used on the PC side."\
+						L"Using USBIO demo app, user should capture data to a file. When prompted, use USBIO application to send the recorded file back to device."\
+						L"The device side application will compare the data and show the result\n");
 		test.Printf(_L("Test Write using BIL apis\n"));
+		OstTrace0(TRACE_NORMAL, TESTBILREADWRITE_TESTBILREADWRITE_DUP06, "Test Write using BIL apis\n");
 		BILWrite(iWriteBuf);
 	
 		test.Printf(_L("Test Read using BIL api's\n"));
+		OstTrace0(TRACE_NORMAL, TESTBILREADWRITE_TESTBILREADWRITE_DUP07, "Test Read using BIL api's\n");
 		BILRead(iReadBuf);
 
 		test.Printf(_L("Compare Read and Write buffers\n"));
+		OstTrace0(TRACE_NORMAL, TESTBILREADWRITE_TESTBILREADWRITE_DUP08, "Compare Read and Write buffers\n");
 		TBool ret = CompareBuffs(iReadBuf, iWriteBuf);
 		if(!ret)
 			{
 			test.Printf(_L("!!warning- compare buffers found discrepancies!\n"));
+			OstTrace0(TRACE_NORMAL, TESTBILREADWRITE_TESTBILREADWRITE_DUP09, "!!warning- compare buffers found discrepancies!\n");
 			}
 		}
 	gChunk.Close();
 	test.Printf(_L("Close global USB channel\n"));
+	OstTrace0(TRACE_NORMAL, TESTBILREADWRITE_TESTBILREADWRITE_DUP10, "Close global USB channel\n");
 	gPort.Close();
 	}
 
@@ -3456,15 +3729,19 @@ void TestBILAlternateSettingChange()
 
 	test.Next(_L("BIL Alternate Setting Change"));
 	test.Printf(_L("Open global USB channel"));
+	OstTrace0(TRACE_NORMAL, TESTBILALTERNATESETTINGCHANGE_TESTBILALTERNATESETTINGCHANGE, "Open global USB channel");
 	TInt r = gPort.Open(0);
 	test_KErrNone(r);
 	//Test for a simple interface with 2 endpoints
 	test.Printf(_L("Set up interface 0\n"));
+	OstTrace0(TRACE_NORMAL, TESTBILALTERNATESETTINGCHANGE_TESTBILALTERNATESETTINGCHANGE_DUP01, "Set up interface 0\n");
 	SetupBulkInterfaces(0,1,1);
 	test.Printf(_L("Set up interface 1\n"));
+	OstTrace0(TRACE_NORMAL, TESTBILALTERNATESETTINGCHANGE_TESTBILALTERNATESETTINGCHANGE_DUP02, "Set up interface 1\n");
 	SetupBulkInterfaces(1,1,1);
 	RChunk *tChunk = &gChunk;
 	test.Printf(_L("Finalize Interface\n"));
+	OstTrace0(TRACE_NORMAL, TESTBILALTERNATESETTINGCHANGE_TESTBILALTERNATESETTINGCHANGE_DUP03, "Finalize Interface\n");
 	gPort.FinalizeInterface(tChunk);
 
 	if(gRealHardware)
@@ -3472,9 +3749,11 @@ void TestBILAlternateSettingChange()
 		gPort.ReEnumerate(status);
 		User::WaitForRequest(status);
 		test.Printf(_L("Enumerated. status = %d\n"), status.Int());
+		OstTrace1(TRACE_NORMAL, TESTBILALTERNATESETTINGCHANGE_TESTBILALTERNATESETTINGCHANGE_DUP04, "Enumerated. status = %d\n", status.Int());
 		}
 	gChunk.Close();
 	test.Printf(_L("Close global USB channel\n"));
+	OstTrace0(TRACE_NORMAL, TESTBILALTERNATESETTINGCHANGE_TESTBILALTERNATESETTINGCHANGE_DUP05, "Close global USB channel\n");
 	gPort.Close();
 	}
 
@@ -3501,6 +3780,7 @@ void TestBILEp0()
 	if(gRealHardware)
 		{
 		test.Printf(_L("With USBIO, open and configure the device, then send then and then recieve at lest 4 class/vendor requests to interface 0\n"));
+		OstTrace0(TRACE_NORMAL, TESTBILEP0_TESTBILEP0, "With USBIO, open and configure the device, then send then and then recieve at lest 4 class/vendor requests to interface 0\n");
 
 		TBool passed=EFalse;
 		TBool error=EFalse;
@@ -3539,8 +3819,10 @@ void TestBILEp0()
 				if (test.Console()->KeyCode() == EKeyEscape)
 					break;
 				else
+					{
 					test.Printf(_L("Press escape to end EP0 testing\n"));	
-
+					OstTrace0(TRACE_NORMAL, TESTBILEP0_TESTBILEP0_DUP01, "Press escape to end EP0 testing\n");	
+					}
 				test.Console()->Read(keyStatus);
 				}
 
@@ -3548,7 +3830,10 @@ void TestBILEp0()
 				{
 				ret = epBuf.GetBuffer((TAny*&)readBuf,aSize,aZlp,status);
 				if(gVerbose)
+				    {
 					test.Printf(_L("Getbuffer returned %d, aSize: %d, aZlp: %d\n"),ret, aSize,aZlp);
+					OstTraceExt3(TRACE_NORMAL, TESTBILEP0_TESTBILEP0_DUP02, "Getbuffer returned %d, aSize: %d, aZlp: %d\n",ret, aSize,aZlp);
+					}
 				}
 
 			if (ret==KErrNone)
@@ -3563,6 +3848,7 @@ void TestBILEp0()
 				{
 				TInt state = *((TInt*) readBuf);
 				test.Printf(_L("Status Change:! %d : %S \n"),state,((state<0) || (state>7))?KStates[8]:KStates[state]);
+				OstTraceExt2(TRACE_NORMAL, TESTBILEP0_TESTBILEP0_DUP03, "Status Change:! %d : %S \n",state,((state<0) || (state>7))?*KStates[8]:*KStates[state]);
 				test_Equal(aSize, 4);
 				goodStateChange++;
 				}
@@ -3575,6 +3861,7 @@ void TestBILEp0()
 					if (aSize!=8)
 						{
 						test.Printf(_L("Error: Malformed control packet of size %d.\n"),aSize);
+						OstTrace1(TRACE_NORMAL, TESTBILEP0_TESTBILEP0_DUP04, "Error: Malformed control packet of size %d.\n",aSize);
 						error = ETrue;
 						}
 					else
@@ -3586,6 +3873,7 @@ void TestBILEp0()
 							{
 							// Send data
 							test.Printf(_L("Sending %d bytes of data value increasing from 0x0 in 1 step. Verify data is received at the host\n"),setup->iWlength);
+							OstTrace1(TRACE_NORMAL, TESTBILEP0_TESTBILEP0_DUP05, "Sending %d bytes of data value increasing from 0x0 in 1 step. Verify data is received at the host\n",setup->iWlength);
 							TUint8 *ep0Buffer; // = (TUint8 *)epBuf.Ep0In()BufferStart;
 							TUint ep0Length;
 							epBuf.GetInBufferRange(((TAny*&)ep0Buffer),ep0Length);
@@ -3611,6 +3899,7 @@ void TestBILEp0()
 								{
 								gPort.SendEp0StatusPacket();
 								test.Printf(_L("No Data.\n"));
+								OstTrace0(TRACE_NORMAL, TESTBILEP0_TESTBILEP0_DUP06, "No Data.\n");
 								}
 							} // end HostToDevice type
 						} //packet Correct length
@@ -3625,6 +3914,7 @@ void TestBILEp0()
 					if (aZlp && dataLength)
 						{
 						test.Printf(_L("\nError: ZLP received before enough data is read out!\nFailing Test!\n"));
+						OstTrace0(TRACE_NORMAL, TESTBILEP0_TESTBILEP0_DUP07, "\nError: ZLP received before enough data is read out!\nFailing Test!\n");
 						error=ETrue;
 						phase=0;
 						}
@@ -3634,11 +3924,14 @@ void TestBILEp0()
 						gPort.SendEp0StatusPacket();
 						//Print read out values
 						test.Printf(_L("Data Read:"));
+						OstTrace0(TRACE_NORMAL, TESTBILEP0_TESTBILEP0_DUP08, "Data Read:");
 						for(TInt i=0; i < iReadBuf.Length(); i++)
 							{
 							test.Printf(_L("0x%x "),iReadBuf[i]);
+							OstTrace1(TRACE_NORMAL, TESTBILEP0_TESTBILEP0_DUP09, "0x%x ",iReadBuf[i]);
 							}
 						test.Printf(_L("\n"));
+						OstTrace0(TRACE_NORMAL, TESTBILEP0_TESTBILEP0_DUP10, "\n");
 						goodReads++;
 						}
 
@@ -3655,14 +3948,19 @@ void TestBILEp0()
 			{
 			if (!error)
 				test.Printf(_L("\nInsifishant reads/writes where seen to work, to pass test.\n"));
+				OstTrace0(TRACE_NORMAL, TESTBILEP0_TESTBILEP0_DUP11, "\nInsifishant reads/writes where seen to work, to pass test.\n");
 								
 			test.Printf(_L("\n ***************\n"));
+			OstTrace0(TRACE_NORMAL, TESTBILEP0_TESTBILEP0_DUP12, "\n ***************\n");
 			test.Printf(_L(" * FAILED TEST *\n"));
+			OstTrace0(TRACE_NORMAL, TESTBILEP0_TESTBILEP0_DUP13, " * FAILED TEST *\n");
 			test.Printf(_L(" ***************\n\nKey to Continue."));
+			OstTrace0(TRACE_NORMAL, TESTBILEP0_TESTBILEP0_DUP14, " ***************\n\nKey to Continue.");
 			}
 		else
 			{
 			test.Printf(_L("\nIf the USBIO demo application responded as expected, then this can be called a passed test.\n\nKey to Continue.\n"));		
+			OstTrace0(TRACE_NORMAL, TESTBILEP0_TESTBILEP0_DUP15, "\nIf the USBIO demo application responded as expected, then this can be called a passed test.\n\nKey to Continue.\n");		
 			}
 
 		//Note- A disturbing fact! If host aborts data transmission and send a new setup packet, the userside is clueless as to what it's reading is
@@ -3671,6 +3969,7 @@ void TestBILEp0()
 		} // end if-real-hardware
 	gChunk.Close();
 	test.Printf(_L("Close global USB channel\n"));
+	OstTrace0(TRACE_NORMAL, TESTBILEP0_TESTBILEP0_DUP16, "Close global USB channel\n");
 	gPort.Close();
 	} // end funcion
 
@@ -3928,7 +4227,10 @@ void StartTests(void)
 		if (gSpecTest>=EBilRw)
 			TestBIL();
 		else
+			{
 			test.Printf(_L("No such option \n"));
+			OstTrace0(TRACE_NORMAL, STARTTESTS_STARTTESTS, "No such option \n");
+			}
 	}
 
 
@@ -4015,8 +4317,11 @@ TInt ParseCommandLine()
 			if ((token==_L("help")) || (token==_L("-h")) || (token==_L("/h")) || (token==_L("-?")) || (token==_L("/?")))
 				{
 				test.Printf(_L("\nThis tests the Shared chunk version of the USBC driver.  It focuses on the elements specific to this driver and should be used in conjuntion with other USBC tests in order to validate the driver.\n\n"));
+				OstTrace0(TRACE_NORMAL, PARSECOMMANDLINE_PARSECOMMANDLINE, "\nThis tests the Shared chunk version of the USBC driver.  It focuses on the elements specific to this driver and should be used in conjuntion with other USBC tests in order to validate the driver.\n\n");
 				test.Printf(_L("\n -h : Help.\n -r : test on Real hardware\n -v : Verbose\n -V : Very verbose\n-t <test> : Run a specific test.\n"));   
+				OstTrace0(TRACE_NORMAL, PARSECOMMANDLINE_PARSECOMMANDLINE_DUP01, "\n -h : Help.\n -r : test on Real hardware\n -v : Verbose\n -V : Very verbose\n-t <test> : Run a specific test.\n");   
 				test.Printf(_L("\nAvailable tests:  buf_read, buf_write, ep0, altset, interface, cancel, api, descriptor, bil_rw, bil_ep0, bil_alt\n"));
+				OstTrace0(TRACE_NORMAL, PARSECOMMANDLINE_PARSECOMMANDLINE_DUP02, "\nAvailable tests:  buf_read, buf_write, ep0, altset, interface, cancel, api, descriptor, bil_rw, bil_ep0, bil_alt\n");
 				err=KErrCancel;
 				}
 			else
@@ -4101,8 +4406,12 @@ TInt ParseCommandLine()
 		if (err!=KErrNone)
 			{
 			if (err==KErrArgument)
+				{
 				test.Printf(_L("\nUnknown argument '%S%s%S'\n"), &token, (subtoken.Length()==0)?"":" ", &subtoken);
+				OstTraceExt3(TRACE_NORMAL, PARSECOMMANDLINE_PARSECOMMANDLINE_DUP03, "\nUnknown argument '%S%S%S'\n", token, (subtoken.Length()==0)?_L(""):_L(" "), subtoken);
+				}
 			test.Printf(_L("\nUsage:  t_usbcsc [-hrvVt]\n\n"));
+			OstTrace0(TRACE_NORMAL, PARSECOMMANDLINE_PARSECOMMANDLINE_DUP04, "\nUsage:  t_usbcsc [-hrvVt]\n\n");
 			test.Getch();
 			return err;
 			}
@@ -4124,6 +4433,7 @@ GLDEF_C TInt E32Main()
 	if (r != KErrNone)
 		{
 		test.Printf(_L("Unable to get Platform ID. Skipping tests\n"));
+		OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN, "Unable to get Platform ID. Skipping tests\n");
 		return KErrNone;
 		}
 	if (SupportsUsb() && (muid != HAL::EMachineUid_Lubbock))
@@ -4133,6 +4443,7 @@ GLDEF_C TInt E32Main()
 	else
 		{
 		test.Printf(_L("USB is not supported on this platform.  Skipping test\n"));
+		OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN_DUP01, "USB is not supported on this platform.  Skipping test\n");
 		}
 	
    	test.End();

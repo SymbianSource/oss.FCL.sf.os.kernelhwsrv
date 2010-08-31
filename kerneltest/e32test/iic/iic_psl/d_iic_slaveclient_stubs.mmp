@@ -1,0 +1,53 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/d_iic_slaveclient_stubs.mmp
+// created for code coverage tests
+
+#include "kernel/kern_ext.mmh"
+
+target         iic_slaveclient_stubs.ldd
+targettype     ldd
+
+//These macros are only used for channel creation
+//In the code coverage tests, we need all three types of channels
+//(Master, Slave, MasterSlave) to be tested, so enable both macros here.
+macro MASTER_MODE
+macro SLAVE_MODE
+
+macro IIC_SIMULATED_PSL
+
+macro STANDALONE_CHANNEL
+macro IIC_STUBS
+
+sourcepath     .
+source         iic_slaveclient.cpp
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+// un-comment the following if debug printing is required
+//macro LOG_SLAVECLIENT
+
+library spi_ctrless.lib
+library i2c_slavestubs_ctrless.lib
+
+uid			0x100000af 0x10286b4e
+VENDORID 0x70000001
+
+capability		all
+epocallowdlldata
+
+start wins
+win32_headers
+end
+
+SMPSAFE

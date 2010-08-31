@@ -75,7 +75,6 @@ enum TTestProcessFunctions
 
 _LIT(KTestPanicCategory,"TEST PANIC");
 _LIT(KTestProcessName,"TestName");
-_LIT(KTestProcessName2,"TestName2");
 
 
 TInt DoTestProcess(TInt aTestNum,TInt aArg1,TInt aArg2)

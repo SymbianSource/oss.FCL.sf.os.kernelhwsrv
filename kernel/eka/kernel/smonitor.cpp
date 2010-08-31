@@ -322,7 +322,7 @@ void Monitor::DumpThreadData(DThread* pT)
 		}
 	PrintLine(buf);
 	Printf("Default priority %d WaitLink Priority %d\r\n",pT->iDefaultPriority,pT->iWaitLink.iPriority);
-	Printf("ExitInfo %d,%d,%lS\r\n",pT->iExitType,pT->iExitReason,&pT->iExitCategory);
+	Printf("ExitInfo %d,%d,%S\r\n",pT->iExitType,pT->iExitReason,&pT->iExitCategory);
 	Printf("Flags %08x, Handles %08x\r\n",pT->iFlags,&pT->iHandles);
 	Printf("Supervisor stack base %08x size %x\r\n", pT->iSupervisorStack, pT->iSupervisorStackSize);
 	Printf("User stack base %08x size %x\r\n", pT->iUserStackRunAddress, pT->iUserStackSize);
@@ -493,7 +493,7 @@ EXPORT_C void Monitor::DumpExceptionStacks()
  
 void Monitor::DumpProcessData(DProcess* pP)
 	{
-	Printf("ExitInfo %d,%d,%lS\r\n",pP->iExitType,pP->iExitReason,&pP->iExitCategory);
+	Printf("ExitInfo %d,%d,%S\r\n",pP->iExitType,pP->iExitReason,&pP->iExitCategory);
 	Printf("Flags %08x, Handles %08x, Attributes %08x\r\n",pP->iFlags,&pP->iHandles,pP->iAttributes);
 	Printf("DataBssChunk %08x, CodeSeg %08x\r\n",pP->iDataBssStackChunk,pP->iCodeSeg);
 	Printf("DllLock %08x, Process Lock %08x SID %08x\r\n",pP->iDllLock,pP->iProcessLock,pP->iS.iSecureId);

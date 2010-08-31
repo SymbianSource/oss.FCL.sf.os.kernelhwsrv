@@ -28,9 +28,11 @@ linkas				iic_testpsl.pdd
 
 sourcepath			../../../../kernel/eka/drivers/iic
 source				iic.cpp iic_transaction.cpp
+sourcepath			.
+source				iic_testpsl.cpp
 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
-USERINCLUDE		../../../../kernel/eka/drivers/iic
+USERINCLUDE		. ../../../../kernel/eka/drivers/iic
 
 // un-comment the following if BTRACE output is required
 macro IIC_INSTRUMENTATION_MACRO

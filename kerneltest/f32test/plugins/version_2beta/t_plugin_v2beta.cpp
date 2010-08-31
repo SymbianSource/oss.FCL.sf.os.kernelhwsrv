@@ -172,7 +172,7 @@ void TestFileAccessDuringEncryptionPluginL()
 
 		}
 	else
-		if ((gFileSystemExtensionLoaded || name.CompareF(_L("Win32"))==0)&& r == KErrNotSupported)
+		if ((gFileSystemExtensionLoaded || F32_Test_Utils::Is_Win32(TheFs,driveNum)) && r == KErrNotSupported)
 			{
 			test.Printf(_L("File system extension does not support local buffers\n"));
 			file.Close();
@@ -449,7 +449,7 @@ GLDEF_C void CallTestsL()
 	// run T_FILE with trace plugin installed
 
 #if defined(__WINS__)	// only in WINS to save time
-TestLoadingOfTracePlugin();
+	TestLoadingOfTracePlugin();
 
 	RProcess p;
 
@@ -464,11 +464,11 @@ TestLoadingOfTracePlugin();
 	p.Logon(status);
 	p.Resume();
 	User::WaitForRequest(status);
-TestUnloadingOfTracePlugin();
+	TestUnloadingOfTracePlugin();
 #endif // __WINS__
 
 	// Cannot format drive C: so skip this test on that drive
-	if (!F32_Test_Utils::Is_Win32(TheFs, EDriveC))
+	if (!F32_Test_Utils::Is_SimulatedSystemDrive(TheFs, EDriveC))
 	    {
         TestLoadingOfFormatPlugin();
         TestFormatDriveIntercept();

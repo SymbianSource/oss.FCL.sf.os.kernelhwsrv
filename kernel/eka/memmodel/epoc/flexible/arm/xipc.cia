@@ -33,8 +33,11 @@
 extern "C" void __FaultIpcClientNotNull();  // defined in ckernel.cpp
 #endif
 
-
+#ifdef _DEBUG
+__NAKED__ TInt DoThreadReadAndParseDesHeader(DThread* aThread, const TAny* aSrc, TDesHeader& aDest)
+#else
 __NAKED__ TInt DThread::ReadAndParseDesHeader(const TAny* aSrc, TDesHeader& aDest)
+#endif
 	{
 	ASM_ASSERT_PAGING_SAFE;
 	// save state including 'this', aSrc and sDest. Double word aligns the stack 
@@ -61,8 +64,8 @@ __NAKED__ TInt DThread::ReadAndParseDesHeader(const TAny* aSrc, TDesHeader& aDes
 	// Check a reference could be opened on target process's os asid, failed if r0 < 0.
 	asm("cmp r0, #0");
 	asm("bmi readParseDesHeader_ExitErr");
-
 	asm("mov r10, r0");			// r10 = os asid of current process
+
 	asm("ldmia sp!, {r0-r2}");	// r0 = this, r1 = aSrc, r2 = aDest
 	
 	__ASM_CLI(); // disable all interrupts

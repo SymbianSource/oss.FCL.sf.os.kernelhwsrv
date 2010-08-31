@@ -1,0 +1,54 @@
+#------------------------------------------------------------------------------
+# Large Array Settings Test file for use with the 'hcrmd' tool.
+#
+
+#------------------------------------------------------------------------------
+# Signed Integer array 32-bit tests
+#
+@
+cuid: 0xee000001
+eid:  121
+type: ArrayInt32
+flags: 0x0000
+arrval: 2147483647
+arrval: 2147483647
+.
+@
+cuid: 0xee000001
+eid:  122
+type: ArrayInt32
+flags: 0x0000
+arrval: 1
+.
+@
+cuid: 0xee000001
+eid:  123
+type: ArrayInt32
+flags: 0x0000
+arrval: -2147483648
+arrval: -2147483648
+arrval: -2147483648
+.
+
+
+#------------------------------------------------------------------------------
+# Unsigned Integer array 32-bit tests
+#
+@
+cuid: 0xee000004
+eid:  131
+type: ArrayUInt32
+flags: 0x0000
+arrval: 4294967295
+arrval: 4294967295
+arrval: 4294967295
+arrval: 4294967295
+.
+
+@
+cuid: 0xee000004
+eid:  132
+type: ArrayUInt32
+flags: 0x0000
+arrval: 0
+.

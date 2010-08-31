@@ -15,6 +15,7 @@
 // 
 //
 
+#define	__E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include <e32rom.h>
@@ -452,12 +453,12 @@ LOCAL_C void buildRomImageL()
 //
 	test.Next(_L("Create root mem dir"));
 	TRAPD(r,TheRootDir=CMemDir::NewL());
-	test(r==KErrNone);
+	test_KErrNone(r);
 //
 	test.Next(_L("Load directory structure"));
 	TheLevel=(-1);
 	TRAP(r,TheRootDir->LoadDirL(n));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(TheLevel==(-1));
 //
 	delete buf;
@@ -553,11 +554,11 @@ GLDEF_C void CallTestsL(void)
 		test.End();
 		return;
 		}
-	test(r==KErrNone || r==KErrNotFound);
+	test_Value(r, r == KErrNone || r==KErrNotFound);
 //
 	test.Next(_L("Generating ROM image"));
 	TRAP(r,buildRomImageL());
-	test(r==KErrNone);
+	test_KErrNone(r);
 //
 	test.Next(_L("Basing the rom image"));
 	baseRomImage();
@@ -566,7 +567,7 @@ GLDEF_C void CallTestsL(void)
 	b+=TheFileName;
 	test.Next(b);
 	r=TheFile.Replace(TheFs,TheFileName,EFileStream|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	writeRomImage();
 	TheFile.Close();
 	delete TheRootDir;

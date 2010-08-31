@@ -70,8 +70,10 @@ EXPORT_C void Cache::SyncMemoryAfterDmaRead(TLinAddr aBase, TUint aSize, TUint32
 
 EXPORT_C void Cache::AtomicSyncMemory()
 	{
-	CHECK_PRECONDITIONS(MASK_INTERRUPTS_DISABLED,"Cache::AtomicSyncMemory");				
-	__KTRACE_OPT(KMMU,Kern::Printf("Cache::AtomicSyncMemory"));
+	// This methos is called during reboot or power down sequence and therefore is not allowed
+	// to do Kernel calls that may hold spin lock - such as Kern::Print or precondition checkings.
+	// CHECK_PRECONDITIONS(MASK_INTERRUPTS_DISABLED,"Cache::AtomicSyncMemory");				
+	// __KTRACE_OPT(KMMU,Kern::Printf("Cache::AtomicSyncMemory"));
 
 	InternalCache::CleanAndInvalidate_DCache_All();
 
@@ -80,6 +82,29 @@ EXPORT_C void Cache::AtomicSyncMemory()
 #endif //__HAS_EXTERNAL_CACHE__
 	}
 
+EXPORT_C void Cache::CpuRetires()
+	{
+	// This methos is called during reboot or power down sequence and therefore is not allowed
+	// to do Kernel calls that may hold spin lock - such as Kern::Print or precondition checkings.
+	// CHECK_PRECONDITIONS(MASK_INTERRUPTS_DISABLED,"Cache::CpuRetires");				
+
+	InternalCache::CleanAndInvalidate_DCache_All();
+
+#if  !defined(__SMP__) & defined(__HAS_EXTERNAL_CACHE__)
+	ExternalCache::AtomicSync();
+#endif	
+	}
+
+EXPORT_C void Cache::KernelRetires()
+	{
+	// This methos is called during reboot or power down sequence and therefore is not allowed
+	// to do Kernel calls that may hold spin lock - such as Kern::Print or precondition checkings.
+	// CHECK_PRECONDITIONS(MASK_INTERRUPTS_DISABLED,"Cache::KernelRetires");				
+
+#if  defined(__SMP__) & defined(__HAS_EXTERNAL_CACHE__)
+	ExternalCache::AtomicSync();
+#endif
+	}
 
 EXPORT_C TInt Cache::GetThresholds(TCacheThresholds& aThresholds, TUint aCacheType)
 	{

@@ -132,9 +132,12 @@ TInt DSDAuxiliaryPowerControlFactory::Install()
 
 void DSDAuxiliaryPowerControlFactory::GetCaps(TDes8& aDes) const
 //
-// Stub - overriding pure virtual
+// Get capabilities - overriding pure virtual
 //
 	{
+	TCapsTestV01 b;
+	b.iVersion=TVersion(KMajorVersionNumber,KMinorVersionNumber,KBuildVersionNumber);
+    Kern::InfoCopy(aDes,(TUint8*)&b,sizeof(b));
 	}
 
 /**

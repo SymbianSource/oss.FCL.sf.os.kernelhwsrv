@@ -12,7 +12,7 @@
 //
 // Description:
 // e32\include\drivers\resourcecontrol.h
-// 
+//
 // WARNING: This file contains some APIs which are internal and are subject
 //          to change without notice. Such APIs should therefore not be used
 //          outside the Kernel and Hardware Services package.
@@ -133,16 +133,22 @@ _LIT8(KParentResource, "ParentResource");
 /* Macro to add dynamic resource to appropriate containers. Used only in extended version */
 #define ADD_TO_RESOURCE_CONTAINER(list, res, resId, resIdCount)				\
 	{																		\
-	TUint16 growBy = (list).GrowBy();										\
+	TInt growBy = (list).GrowBy();										\
 	if(!growBy)																\
-		(list).Initialise((TUint16)PRM_DYNAMIC_RESOURCE_INITIAL_SIZE);		\
-	if((list).Add(res, resId) == KErrNoMemory)								\
+		(list).Initialise(PRM_DYNAMIC_RESOURCE_INITIAL_SIZE);		\
+    TInt r = (list).Add(res, resId);                                        \
+	if(r == KErrNoMemory)								                    \
 		{																	\
-		TInt r = (list).ReSize(growBy);										\
-		if(r != KErrNone)													\
-			return r;														\
-		(list).Add(res, resId);												\
+		r = (list).ReSize(growBy);										    \
+        if(r == KErrNone)                                                   \
+            {                                                               \
+            r = (list).Add(res, resId);										\
+            }                                                               \
 		}																	\
+    if(r != KErrNone)                                                       \
+        {                                                                   \
+        return r;                                                           \
+        }                                                                   \
 	res->iResourceId |= resId;												\
 	resId = res->iResourceId;												\
 	resIdCount++;															\
@@ -154,24 +160,24 @@ _LIT8(KParentResource, "ParentResource");
 	switch((resId >> RESOURCE_BIT_IN_ID_CHECK) & 0x3)											\
 		{																						\
 		case PRM_STATIC_RESOURCE:																\
-			if(resId > iStaticResourceArrayEntries)												\
+			if((TInt)resId > iStaticResourceArray.Count())										\
 				UNLOCK_RETURN(KErrNotFound);													\
 			res = iStaticResourceArray[resId - 1];												\
 			if(!res)																			\
 				UNLOCK_RETURN(KErrNotFound);													\
 			break;																				\
 		case PRM_STATIC_DEPENDENCY_RESOURCE:													\
-			if((TUint16)(resId & ID_INDEX_BIT_MASK) > iStaticResDependencyCount)				\
+			if((TInt)(resId & ID_INDEX_BIT_MASK) > iStaticResDependencyArray.Count())	\
 				UNLOCK_RETURN(KErrNotFound);													\
-			res = iStaticResDependencyArray[(TUint16)(resId & ID_INDEX_BIT_MASK)  - 1];			\
+			res = iStaticResDependencyArray[(resId & ID_INDEX_BIT_MASK)  - 1];			\
 			break;																				\
 		case PRM_DYNAMIC_RESOURCE:																\
-			res = iDynamicResourceList[(TUint16)(resId & ID_INDEX_BIT_MASK)];					\
+			res = iDynamicResourceList[(resId & ID_INDEX_BIT_MASK)];					\
 			if(!res)																			\
 				UNLOCK_RETURN(KErrNotFound);													\
 			break;																				\
 		case PRM_DYNAMIC_DEPENDENCY_RESOURCE:													\
-			res = iDynamicResDependencyList[(TUint16)(resId & ID_INDEX_BIT_MASK)];				\
+			res = iDynamicResDependencyList[(resId & ID_INDEX_BIT_MASK)];				\
 			if(!res)																			\
 				UNLOCK_RETURN(KErrNotFound);													\
 			break;																				\
@@ -185,9 +191,9 @@ _LIT8(KParentResource, "ParentResource");
    it is called from the same thread. */
 #define VALIDATE_CLIENT(t)																						\
 	if(aClientId & USER_SIDE_CLIENT_BIT_MASK)																	\
-		pC = iUserSideClientList[(TUint16)(aClientId & ID_INDEX_BIT_MASK)];										\
+		pC = iUserSideClientList[(aClientId & ID_INDEX_BIT_MASK)];										\
 	else																										\
-		pC = iClientList[(TUint16)(aClientId & ID_INDEX_BIT_MASK)];												\
+		pC = iClientList[(aClientId & ID_INDEX_BIT_MASK)];												\
 	if(!pC)																										\
 		{																										\
 		__KTRACE_OPT(KRESMANAGER, Kern::Printf("Client ID not Found"));											\
@@ -210,9 +216,9 @@ _LIT8(KParentResource, "ParentResource");
 /** Macro to get the target client from appropriate client list based on bit 14 of client ID. */
 #define GET_TARGET_CLIENT()																				\
 	if(aTargetClientId & USER_SIDE_CLIENT_BIT_MASK) 													\
-		pC = iUserSideClientList[(TUint16)(aTargetClientId & ID_INDEX_BIT_MASK)];	    				\
+		pC = iUserSideClientList[(aTargetClientId & ID_INDEX_BIT_MASK)];	    				\
 	else																								\
-		pC = iClientList[(TUint16)(aTargetClientId & ID_INDEX_BIT_MASK)];								\
+		pC = iClientList[(aTargetClientId & ID_INDEX_BIT_MASK)];								\
 	if(!pC)																								\
 		{																								\
 		__KTRACE_OPT(KRESMANAGER, Kern::Printf("Target Client ID not found"));							\
@@ -318,16 +324,16 @@ template <class T>
 class DResourceCon : public DBase
 	{
 public:
-    inline TInt Initialise(TUint16 aInitialSize);
+    inline TInt Initialise(TInt aInitialSize);
     inline void Delete();
-    inline T*  operator[](TUint16 aIndex);
-    inline TInt Remove(T* aObj, TUint16 aIndex);
+    inline T*  operator[](TInt aIndex);
+    inline TInt Remove(T* aObj, TInt aIndex);
     inline TInt Add(T* aObj, TUint &aId);
     inline TInt Find(T*& anEntry, TDesC& aName);
-    inline TInt ReSize(TUint16 aGrowBy);
-    inline TUint16 Count() {return iCount;}
-    inline TUint16 Allocd() {return iAllocated;}
-	inline TUint16 GrowBy() {return iGrowBy;}
+    inline TInt ReSize(TInt aGrowBy);
+    inline TInt Count() {return iCount;}
+    inline TInt Allocd() {return iAllocated;}
+	inline TInt GrowBy() {return iGrowBy;}
 private:
     TUint16 iGrowBy; //Size to grow the size of the array.
     TUint16 iAllocated;  //Size of the array
@@ -454,7 +460,6 @@ public:
     virtual TInt RegisterResourcesForIdle(TInt aPowerControllerId, TUint aNumResources, TPtr* aBuf);
     static void Panic(TUint8 aPanic);
     virtual TInt GetInterface(TUint aClientId, TUint aInterfaceId, TAny* aParam1, TAny* aParam2, TAny* aParam3);
-	virtual ~DPowerResourceController();
 	/**@internalComponent*/
 	void CompleteNotifications(TInt aClientId, DStaticPowerResource* aResource, TInt aState, TInt aReturnCode, TInt aLevelOwnerId, TBool aLock = ETrue);
 #ifdef PRM_ENABLE_EXTENDED_VERSION
@@ -481,12 +486,12 @@ protected:
 							  NKern::ThreadLeaveCS();}
 #ifdef PRM_ENABLE_EXTENDED_VERSION
 	//Default implementation, PSL re-implements these if features supported
-	virtual TInt DoRegisterStaticResourcesDependency(DStaticPowerResourceD**& aStaticResourceDArray, TUint16& aStaticResourceDCount);
+	virtual TInt DoRegisterStaticResourcesDependency(RPointerArray <DStaticPowerResourceD> & aStaticResourceDArray);
 #endif
 private:
     // pure virtual implemented by PSL - to be called by PIL
     virtual TInt DoInitController()=0;
-    virtual TInt DoRegisterStaticResources(DStaticPowerResource**& aStaticResourceArray, TUint16& aStaticResourceCount)=0;
+    virtual TInt DoRegisterStaticResources(RPointerArray <DStaticPowerResource> & aStaticResourceArray)=0;
     /**@internalComponent*/
     TInt CheckLevelAndAddClient(SPowerResourceClient* pC, TPowerRequest* Request);
     static void MsgQFunc(TAny* aPtr);
@@ -523,18 +528,16 @@ private:
 	TInt GetDependentsIdForResource(TUint aResourceId, TAny* aInfo, TUint* aNumDepResources);
 	TInt HandleResourceRegistration(TPowerRequest& aReq);
 #endif
-public:
-	DMutex* iResourceMutex;
 protected:
-    TDfcQue* iDfcQ;
+	DMutex* iResourceMutex;
+	TDfcQue* iDfcQ;
     TMessageQue *iMsgQ;
 #ifdef PRM_ENABLE_EXTENDED_VERSION
 	TDfcQue* iDfcQDependency;
 	TMessageQue* iMsgQDependency;
 	TBool iDfcQDependencyLock;
 #endif
-private:
-    DStaticPowerResource** iStaticResourceArray;
+	RPointerArray <DStaticPowerResource> iStaticResourceArray;
     DResourceCon<SPowerResourceClient> iClientList;
     DResourceCon<SPowerResourceClient> iUserSideClientList;
 #ifdef RESOURCE_MANAGER_SIMULATED_PSL
@@ -552,19 +555,18 @@ private:
     TUint16 iClientLevelPoolGrowBy;
     TUint16 iRequestPoolCount;
     TUint16 iRequestPoolGrowBy;
-    TUint16 iStaticResourceArrayEntries; //Number of entries in the array including holes if any.
 	TUint16 iStaticResourceCount;  //Actual number of static resources registered (valid entries).
 	TUint	iReserved2; //Reserved for future use
 #ifdef PRM_ENABLE_EXTENDED_VERSION
-	DResourceCon<DDynamicPowerResource> iDynamicResourceList;
-	DResourceCon<DDynamicPowerResourceD> iDynamicResDependencyList;
-	DStaticPowerResourceD** iStaticResDependencyArray;
+	DResourceCon<DDynamicPowerResource>   iDynamicResourceList;
+	DResourceCon<DDynamicPowerResourceD>  iDynamicResDependencyList;
+	RPointerArray <DStaticPowerResourceD> iStaticResDependencyArray;
 	SPowerResourceClientLevel* iResourceLevelPool;
 	TUint16 iResourceLevelPoolCount;
-	TUint16 iStaticResDependencyCount;
 	TUint16 iDynamicResourceCount;
-	TUint8 iDynamicResDependencyCount;
-	TUint8 iSpare2;
+	TUint8  iDynamicResDependencyCount;
+	TUint8  iSpare1;
+	TUint16 iSpare2;
 	TUint  iReserved3; //Reserved for future use.
 #endif
 	};

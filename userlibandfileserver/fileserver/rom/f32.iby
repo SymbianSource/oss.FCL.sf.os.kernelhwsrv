@@ -17,8 +17,6 @@
 secondary=\Epoc32\Release\##MAIN##\##BUILD##\efile.exe  sys\bin\efile.exe  FIXED HEAPMAX(0x80000)
 file=\Epoc32\Release\##MAIN##\##BUILD##\efsrv.dll       sys\bin\efsrv.dll
 
-device[VARID]=\Epoc32\Release\##KMAIN##\##BUILD##\d_ftrace.ldd          sys\bin\d_ftrace.ldd
-
 #ifdef WITH_EXFAT
 file=\Epoc32\Release\##MAIN##\##BUILD##\exfat.fsy       sys\bin\exfat.fsy
 #endif
@@ -80,7 +78,7 @@ file=\Epoc32\Release\##SMAIN##\##BUILD##\ecomp.fsy  sys\bin\ecomp.fsy
 file=\Epoc32\Release\##SMAIN##\##BUILD##\erofs.fsy  sys\bin\erofs.fsy
 #endif
 
-#ifdef SYMBIAN_EXCLUDE_USB
+#ifndef __USB
 REM Feature USB is not included in this ROM
 #else
 #ifdef WITH_MASS_STORAGE
@@ -95,4 +93,4 @@ file=\epoc32\release\##MAIN##\##BUILD##\usbhostmsclient.dll     sys\bin\usbhostm
 file=\epoc32\release\##MAIN##\##BUILD##\usbhostmssrv.exe    sys\bin\usbhostmssrv.exe
 #endif //SYMBIAN_INCLUDE_USB_OTG_HOST
 #endif //WITH_MASS_STORAGE
-#endif //SYMBIAN_EXCLUDE_USB
+#endif //__USB

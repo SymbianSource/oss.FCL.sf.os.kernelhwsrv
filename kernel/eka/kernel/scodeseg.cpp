@@ -671,7 +671,7 @@ TInt DCodeSeg::Create(TCodeSegCreateInfo& aInfo, DProcess* aProcess)
 	const TInt KValidAttrMask =
 		ECodeSegAttKernel | ECodeSegAttGlobal | ECodeSegAttFixed | ECodeSegAttABIMask | ECodeSegAttHDll | ECodeSegAttExpVer | ECodeSegAttNmdExpData | ECodeSegAttSMPSafe;
 	
-	__KTRACE_OPT(KDLL,Kern::Printf("DCodeSeg::Create %08x file %lS ver %08x process %O",this,&aInfo.iFileName,aInfo.iModuleVersion,aProcess));
+	__KTRACE_OPT(KDLL,Kern::Printf("DCodeSeg::Create %08x file %S ver %08x process %O",this,&aInfo.iFileName,aInfo.iModuleVersion,aProcess));
 	TInt32 uid1=aInfo.iUids.iUid[0].iUid;
 	if (uid1!=KDynamicLibraryUidValue && uid1!=KExecutableImageUidValue)
 		return KErrNotSupported;
@@ -1420,7 +1420,7 @@ TInt ExecHandler::CodeSegCreate(TCodeSegCreateInfo& aInfo)
 	{
 	TCodeSegCreateInfo info;
 	kumemget32(&info, &aInfo, sizeof(info));
-	__KTRACE_OPT2(KEXEC,KDLL,Kern::Printf("Exec::CodeSegCreate %lS ver %08x", &info.iFileName, info.iModuleVersion));
+	__KTRACE_OPT2(KEXEC,KDLL,Kern::Printf("Exec::CodeSegCreate %S ver %08x", &info.iFileName, info.iModuleVersion));
 	__KTRACE_OPT(KDLL,DumpCodeSegCreateInfo(info));
 	K::CheckFileServerAccess();			// only F32 can use this exec function
 	info.iHandle=NULL;
@@ -1448,7 +1448,7 @@ TInt ExecHandler::CodeSegLoaded(TCodeSegCreateInfo& aInfo)
 	{
 	TCodeSegCreateInfo info;
 	kumemget32(&info, &aInfo, sizeof(info));
-	__KTRACE_OPT2(KEXEC,KDLL,Kern::Printf("Exec::CodeSegLoaded %lS ver %08x", &info.iFileName, info.iModuleVersion));
+	__KTRACE_OPT2(KEXEC,KDLL,Kern::Printf("Exec::CodeSegLoaded %S ver %08x", &info.iFileName, info.iModuleVersion));
 	__KTRACE_OPT(KDLL,DumpCodeSegCreateInfo(info));
 	DCodeSeg* pS=DCodeSeg::VerifyCallerAndHandle(info.iHandle);
 	Kern::AccessCode();
@@ -1667,7 +1667,7 @@ TInt ExecHandler::ProcessCreate(TProcessCreateInfo& aInfo, const TDesC* aCommand
 	{
 	TProcessCreateInfo info;
 	kumemget32(&info, &aInfo, sizeof(info));
-	__KTRACE_OPT2(KEXEC,KDLL,Kern::Printf("Exec::ProcessCreate %lS ver %08x", &info.iFileName, info.iModuleVersion));
+	__KTRACE_OPT2(KEXEC,KDLL,Kern::Printf("Exec::ProcessCreate %S ver %08x", &info.iFileName, info.iModuleVersion));
 	__KTRACE_OPT(KDLL,DumpProcessCreateInfo(info));
 	K::CheckFileServerAccess();			// only F32 can use this exec function
 	if (info.iHandle)
@@ -1782,7 +1782,7 @@ EXPORT_C TInt Kern::ProcessCreate(DProcess*& aProcess, TProcessCreateInfo& aInfo
 				// must remove thread
 				DThread* pT=_LOFF(aProcess->iThreadQ.First()->Deque(),DThread,iProcessLink);
 				pT->iProcessLink.iNext=NULL;
-				pT->Release();
+				pT->Stillborn();
 				}
 			aProcess->Release();
 			}
@@ -1794,7 +1794,7 @@ TInt ExecHandler::ProcessLoaded(TProcessCreateInfo& aInfo)
 	{
 	TProcessCreateInfo info;
 	kumemget32(&info, &aInfo, sizeof(info));
-	__KTRACE_OPT2(KEXEC,KDLL,Kern::Printf("Exec::ProcessLoaded %lS ver %08x", &info.iFileName, info.iModuleVersion));
+	__KTRACE_OPT2(KEXEC,KDLL,Kern::Printf("Exec::ProcessLoaded %S ver %08x", &info.iFileName, info.iModuleVersion));
 	__KTRACE_OPT(KDLL,DumpProcessCreateInfo(info));
 	K::CheckFileServerAccess();			// only F32 can use this exec function
 	NKern::LockSystem();

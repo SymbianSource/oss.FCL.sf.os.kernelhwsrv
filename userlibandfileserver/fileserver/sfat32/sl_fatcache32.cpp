@@ -699,6 +699,7 @@ TUint32 CFat32LruCachePage::ReadFromMediaL(TUint32 aFatIndex)
 
 /**
     Writes FAT cache page sector to the media (to all copies of the FAT)
+
     @param  aSector page sector number
 */
 void CFat32LruCachePage::DoWriteSectorL(TUint32 aSector)

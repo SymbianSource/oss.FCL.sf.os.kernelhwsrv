@@ -153,11 +153,12 @@ extern "C" void NKCrashHandler(TInt aPhase, const TAny* a0, TInt a1)
 	{
 	if (aPhase==0)
 		{
-		Cache::AtomicSyncMemory();
+		Cache::CpuRetires();
 		return;
 		}
+	Cache::KernelRetires();
 #ifdef __SMP__
-	SFullArmRegSet* regs = (SFullArmRegSet*)SubScheduler().i_Regs;
+	SFullArmRegSet* regs = SubScheduler().iSSX.iRegs;
 #else
 	SFullArmRegSet* regs = (SFullArmRegSet*)TheScheduler.i_Regs;
 #endif

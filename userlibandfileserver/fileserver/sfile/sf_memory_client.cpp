@@ -144,7 +144,7 @@ EXPORT_C void CCacheMemoryClient::Reset()
 
 	iTouchedRegionFlag = 0;
 	iReusablePagePool.Close();
-	iReusablePagePool.Reserve(iReservedRegionMarkInSegs);
+	r = iReusablePagePool.Reserve(iReservedRegionMarkInSegs);
     if (r != KErrNone)
         {
         ASSERT(0);
@@ -174,7 +174,8 @@ EXPORT_C TUint8* CCacheMemoryClient::AllocateAndLockSegments(TUint32 aSegmentCou
        	return addr;
        	}
     
-	// if we have used up reserved region, get new pages from reusable pool first
+    TBool touchedMore = EFalse;
+	// if we have touched beyond reserved region, get new pages from reusable pool first
     if (iReusablePagePool.Count())
     	{
 		addr = iReusablePagePool[0];
@@ -185,7 +186,7 @@ EXPORT_C TUint8* CCacheMemoryClient::AllocateAndLockSegments(TUint32 aSegmentCou
     else
     	{
     	addr = iBase + (iTouchedRegionFlag << iSegSizeInBytesLog2);
-    	iTouchedRegionFlag += aSegmentCount;
+    	touchedMore = ETrue;
 //       	__PRINT2(_L("!! GROW TOUCHED SEGS: addr=0x%x, touched=%d"), addr, iTouchedRegionFlag);
     	}
 	
@@ -201,6 +202,10 @@ EXPORT_C TUint8* CCacheMemoryClient::AllocateAndLockSegments(TUint32 aSegmentCou
 	if (r != KErrNone)
 		return NULL;
 
+	if (touchedMore)
+	    {
+	    iTouchedRegionFlag += aSegmentCount;
+	    }
 	return addr;
 	}
 

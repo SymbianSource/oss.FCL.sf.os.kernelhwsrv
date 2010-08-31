@@ -765,6 +765,23 @@ void TSubScheduler::QueueDfcs()
 						}
 					ss->iExIDfcLock.UnlockOnly();
 					if (kick)
+						{
+						TScheduler& s = TheScheduler;
+						TUint32 cpuMask = 1u<<cpu;
+						if (!(s.iThreadAcceptCpus & cpuMask))	// deal with case where target CPU is shutting down or has already shut down
+							{
+							TInt irq = s.iGenIPILock.LockIrqSave();
+							if (!(s.iIpiAcceptCpus & cpuMask))
+								{
+								s.iCCReactivateCpus |= cpuMask;
+								kick = FALSE;
+								}
+							s.iGenIPILock.UnlockIrqRestore(irq);
+							if (!kick)
+								s.iCCReactivateDfc.DoEnque();	// arrange for target CPU to be powered on
+							}
+						}
+					if (kick)
 						send_resched_ipi(cpu);
 					NKern::EnableAllInterrupts();	// let interrupts in
 					if (orig >= 8)

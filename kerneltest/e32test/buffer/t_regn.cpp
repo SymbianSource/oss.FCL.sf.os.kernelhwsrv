@@ -641,7 +641,6 @@ void TestRRegion::TestErrors()
 	RRegion rgnErr,rgnErr2;
 	RRegion rgn;
 	TRect rect(1,2,3,4),rect2;
-	const TRect* rList;
 	TPoint pnt;
 
 	rgnErr.ForceError();
@@ -711,7 +710,6 @@ void TestRRegion::TestErrors()
 	test(rect2.iTl.iX==0 && rect2.iBr.iY==0);
 
 	test(rgnErr.Count()==0);
-	rList=rgnErr.RectangleList();
 	rgn.Close();
 	rgnErr.Close();
 	rgnErr2.Close();

@@ -144,14 +144,10 @@ public:
 	void SetDrivePath(const TDesC& aDes);
 	static void NewLine();
 	static TKeyCode OutputStringToConsole(TBool aPageSwitch,TRefByValue<const TDesC> aFmt,...);
+	static TKeyCode OutputStringToConsole(TBool aPageSwitch, const TDesC& aBuf);
 	static TKeyCode OutputStringToConsole(const TDesC& aNotification,TBool aPageSwitch,TRefByValue<const TDesC> aFmt,...);
 
-    static TKeyCode WriteBufToConsole(TBool aPageSwitch, const TDesC& aBuf);
-    static TKeyCode WriteBufToConsole(TBool aPageSwitch, const TDesC& aBuf, const TDesC& aNotification);
-
-
     static void Printf(TRefByValue<const TDesC16> aFmt, ...);
-    static void Print(const TDesC16& aBuf);
     static void SetDbgConsoleEcho(TBool aOn) {iDbgPrint = aOn;}
 
 public:
@@ -278,7 +274,7 @@ public:
 private:		
 	static TInt ShowDirectoryTree(TDes& aPath,TUint aSwitches,TDes& aTreeGraph);
 	static TBool Certain();	
-	static TBool OutputContentsToConsole(RPointerArray<HBufC>& aText,TUint aSwitches);
+	static void OutputContentsToConsole(RPointerArray<HBufC>& aText,TUint aSwitches);
 	static void OutputDirContentL(CDir* aDirList,RPointerArray<HBufC>& aText,TUint aSwitches);	
 	};
 

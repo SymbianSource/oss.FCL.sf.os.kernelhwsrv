@@ -86,11 +86,11 @@ EXPORT_C TLinAddr X86::IrqStackTop(TInt aCpu)
 	{
 	TLinAddr a = 0;
 	if (aCpu>=0 && aCpu<KMaxCpus)
-		a = TLinAddr(TheSubSchedulers[aCpu].i_IrqStackTop);
+		a = TLinAddr(TheSubSchedulers[aCpu].iSSX.iIrqStackTop);
 	else
 		{
 		TInt irq = NKern::DisableAllInterrupts();
-		a = TLinAddr(SubScheduler().i_IrqStackTop);
+		a = TLinAddr(SubScheduler().iSSX.iIrqStackTop);
 		NKern::RestoreInterrupts(irq);
 		}
 	return a;
@@ -150,9 +150,9 @@ void X86::Init1Interrupts()
 		SetTssDescriptor(&cp.iGdt[5+i], &cd.iTss);
 
 		TSubScheduler& ss = TheSubSchedulers[i];
-		ss.i_IrqNestCount = (TAny*)(-1);
-		ss.i_IrqStackTop = (TAny*)esp;
-		ss.i_Tss = &cd.iTss;
+		ss.iSSX.iIrqNestCount = (TLinAddr)(-1);
+		ss.iSSX.iIrqStackTop = (TLinAddr)esp;
+		ss.iSSX.iTss = &cd.iTss;
 		}
 
 	X86::DefaultCR0 = get_cr0();

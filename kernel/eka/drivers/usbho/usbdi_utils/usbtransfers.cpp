@@ -38,7 +38,7 @@ RUsbTransferDescriptor::RUsbTransferDescriptor(TTransferType aType, TInt aMaxSiz
 /**
 Releases resources allocated to this transfer descriptor.
 */
-void RUsbTransferDescriptor::Close()
+EXPORT_C void RUsbTransferDescriptor::Close()
 	{
 	// Do nothing - the buffer is owned by the {R,D}UsbInterface.
 	// This is provided in case the descriptor owns resources in future.

@@ -43,7 +43,6 @@ _LIT(testName,"t_resmanus");
 
 TBuf<16> gTestName(testName);
 
-GLDEF_D RTest gTest(testName);
 GLDEF_D RBusDevResManUs gChannel;
 
 TUint8 KNoOfGetStateRequests = 5;
@@ -74,6 +73,116 @@ TInt gSharedResStateDelta = -1;
 #endif
 
 TBool gUseCached = EFalse;
+
+class RTestSafe: public RTest
+	{
+public:
+	RTestSafe(const TDesC &aTitle) :
+		RTest(aTitle), iCleanUpLevelMask (0), iFailHdnFunc(NULL)
+		{
+		}
+	RTestSafe(const TDesC &aTitle, void(*func)(RTestSafe &aTest)) :
+		RTest(aTitle), iFailHdnFunc(func)
+		{
+		}
+
+	// new version of operator(int), which calls our cleanup handler if check has failed
+	void operator()(TInt aResult)
+		{
+		if(!aResult && iFailHdnFunc)
+			iFailHdnFunc(*this);
+		RTest::operator ()(aResult);
+		}
+
+	void operator()(TInt aResult, TInt aLineNum)
+		{
+		if(!aResult && iFailHdnFunc)
+			iFailHdnFunc(*this);
+		RTest::operator ()(aResult, aLineNum);
+		}
+
+	void operator()(TInt aResult, TInt aLineNum, const TText* aFileName)
+		{
+		if(!aResult && iFailHdnFunc)
+			iFailHdnFunc(*this);
+		RTest::operator ()(aResult, aLineNum, aFileName);
+		}
+
+	// new version of End, which calls handler before exit..
+	void End()
+		{
+		if(iFailHdnFunc)
+			iFailHdnFunc(*this);
+		RTest::End();
+		}
+
+	void SetCleanupFlag(TUint aFlag)
+		{
+		iCleanUpLevelMask |= 1 << aFlag;
+		}
+
+	TBool CleanupNeeded(TUint aFlag)
+		{
+		return (iCleanUpLevelMask & (1 << aFlag)) >> aFlag;
+		}
+
+	TUint iCleanUpLevelMask;
+	void (*iFailHdnFunc)(RTestSafe &aTest);
+	};
+
+// cleanup handler
+enum TCleanupLevels
+	{
+	EPddLoaded = 0,
+	ELddLoaded,
+	EChannelOpened
+	};
+
+
+void TestCleanup(RTestSafe &aTest)
+	{
+	// cleanup for all 3 levels..
+	if(aTest.CleanupNeeded(EChannelOpened))
+		{
+		gChannel.Close();
+		}
+
+	if(aTest.CleanupNeeded(ELddLoaded))
+		{
+		User::FreeLogicalDevice(KLddRootName);
+		}
+
+	if(aTest.CleanupNeeded(EPddLoaded))
+		{
+		User::FreePhysicalDevice(PDD_NAME);
+		}
+	}
+
+// global gTest object..
+RTestSafe gTest(testName, &TestCleanup);
+
+LOCAL_C TInt CheckCaps()
+	{
+	TInt r = KErrNone;
+	RDevice d;
+	TPckgBuf<TCapsDevResManUs> caps;
+	r = d.Open(KLddRootName);
+	if(r == KErrNone)
+		{
+		d.GetCaps(caps);
+		d.Close();
+
+		TVersion ver = caps().version;
+		if(ver.iMajor != 1 || ver.iMinor != 0 || ver.iBuild != KE32BuildVersionNumber)
+			{
+			gTest.Printf(_L("Capabilities returned wrong version"));
+			gTest.Printf(_L("Expected(1, 0, %d), got (%d , %d, %d)"),
+			                KE32BuildVersionNumber, ver.iMajor, ver.iMinor, ver.iBuild);
+			r = KErrGeneral;
+			}
+		}
+	return r;
+	}
 
 LOCAL_C TInt OpenChannel(TDesC16& aName, RBusDevResManUs& aChannel)
 	{
@@ -1139,7 +1248,7 @@ LOCAL_C TInt TestGetClientGetResourceInfo()
 		}
 
 
-	// Fourth invocation - examine effect of orignal client requesting a level for 
+	// Fourth invocation - examine effect of oryginal client requesting a level for 
 	// the Shared resource
 	if(gHaveSharedRes)
 		{
@@ -1184,7 +1293,6 @@ LOCAL_C TInt TestGetClientGetResourceInfo()
 			return r;
 			}
 		}
-
 
 	// Close the temporary channels
 	channelTwo.Close();
@@ -1343,8 +1451,10 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 	TInt r = KErrNone;
 
 	TRequestStatus status;
+	TRequestStatus status2;
 	TBool cached = gUseCached;
 	TInt readValue = 0;
+	TInt readValue2 = 0;
 	TInt levelOwnerId = 0;
 	TInt testNo = 0;
 
@@ -1524,10 +1634,20 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 
 	// 8) Call API to get the state of a long latency resource then call API without operation-type qualifier to cancel the request.
 	gTest.Printf(_L("TestGetSetResourceStateOps, starting test %d\n"),testNo++);
+	
+	// NOTE: Cancel operation can only remove request which is still inside the resource controller
+	// message queue. If the queue is empty, the resource controller may process the request very quickly
+	// after it is sent. It may cause the test fail. To solve this, two get long latency resource state 
+	// requests are submitted. So that the second one must be inside the resource controller. 
+	// And we will always test the second request
+	
 	gChannel.GetResourceState(status,gLongLatencyResource,cached,&readValue,&levelOwnerId);
+	gChannel.GetResourceState(status2,gLongLatencyResource,cached,&readValue2,&levelOwnerId);
 	gChannel.CancelAsyncOperation(&status);
+	gChannel.CancelAsyncOperation(&status2);
 	User::WaitForRequest(status);
-	if(status.Int() != KErrCancel)
+	User::WaitForRequest(status2);
+	if(status2.Int() != KErrCancel)
 		{
 		gTest.Printf(_L("TestGetSetResourceStateOps, cancelled get state status = %d\n"),r);
 		return r;
@@ -1535,11 +1655,21 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 
 	// 9) Call API to modify the state of the long latency resource then call API without operation-type qualifier to cancel the request.
 	gTest.Printf(_L("TestGetSetResourceStateOps, starting test %d\n"),testNo++);
+	
+	// NOTE: Cancel operation can only remove request which is still inside the resource controller
+	// message queue. If the queue is empty, the resource controller may process the request very quickly
+	// after it is sent. It may cause the test fail. To solve this, two get long latency resource state 
+	// requests are submitted. So that the second one must be inside the resource controller. 
+	// And we will always test the second request
+		
 	newLevel = (TUint)(readValue + gAsyncResStateDelta);
 	gChannel.ChangeResourceState(status,gLongLatencyResource,newLevel);
+	gChannel.ChangeResourceState(status2,gLongLatencyResource,newLevel);
 	gChannel.CancelAsyncOperation(&status);
+	gChannel.CancelAsyncOperation(&status2);
 	User::WaitForRequest(status);
-	if(status.Int() != KErrCancel)
+	User::WaitForRequest(status2);
+	if(status2.Int() != KErrCancel)
 		{
 		gTest.Printf(_L("TestGetSetResourceStateOps, cancelled change state status = %d\n"),r);
 		return r;
@@ -1597,7 +1727,12 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 	for(i=0;i<KLoopVarN;i++)
 		{
 		User::WaitForRequest(getReqStatus[i]);
-		if((r=getReqStatus[i].Int()) != KErrCancel)
+
+	// NOTE: Cancel operation can only remove request which is still inside the resource controller
+	// message queue. If the queue is empty, the resource controller may process the request very quickly
+	// after it is sent. It may cause the test fail. To solve this, we skip the test for request 0.
+			
+		if(i>0 && ((r=getReqStatus[i].Int()) != KErrCancel))
 			{
 			gTest.Printf(_L("TestGetSetResourceStateOps, cancelled get state status[%d] = %d\n"),i,r);
 			return r;
@@ -1615,7 +1750,12 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 	for(i=0;i<KLoopVarM;i++)
 		{
 		User::WaitForRequest(setReqStatus[i]);
-		if((r=setReqStatus[i].Int()) != KErrCancel)
+		
+	// NOTE: Cancel operation can only remove request which is still inside the resource controller
+	// message queue. If the queue is empty, the resource controller may process the request very quickly 
+	// after it is sent. It may cause the test fail. To solve this, we skip the test for request 0.
+		
+		if(i>0 && ((r=setReqStatus[i].Int()) != KErrCancel))
 			{
 			gTest.Printf(_L("TestGetSetResourceStateOps, cancelled change state status[%d] = %d\n"),i,r);
 			return r;
@@ -1691,7 +1831,12 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 	for(i=0;i<KLoopVarN;i++)
 		{
 		User::WaitForRequest(getReqStatus[i]);
-		if((r=getReqStatus[i].Int()) != KErrCancel)
+
+	// NOTE: Cancel operation can only remove request which is still inside the resource controller
+	// message queue. If the queue is empty, the resource controller may process the request very quickly 
+	// after it is sent. It may cause the test fail. To solve this, we skip the test for request 0.
+		
+		if(i>0 && ((r=getReqStatus[i].Int()) != KErrCancel))
 			{
 			gTest.Printf(_L("TestGetSetResourceStateOps, cancelled get state status[%d] = %d\n"),i,r);
 			return r;
@@ -1844,8 +1989,16 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 		r=gChannel.CancelGetResourceState(getReqStatus[i]);
 		if(r!=KErrNone)
 			{
-			gTest.Printf(_L("TestGetSetResourceStateOps, CancelGetResourceState for index %d returned %d\n"),i,r);
-			return r;
+
+	// NOTE: Cancel operation can only remove request which is still inside the resource controller
+	// message queue. If the queue is empty, the resource controller may process the request very quickly 
+	// after it is sent. It may cause the test fail. To solve this, we skip the test for request 0.
+			
+			if(i!=0)
+				{
+				gTest.Printf(_L("TestGetSetResourceStateOps, CancelGetResourceState for index %d returned %d\n"),i,r);
+				return r;
+				}
 			}
 		}
 	for(i=0;i<KLoopVarM;i++)
@@ -1868,7 +2021,12 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 	for(i=0;i<KLoopVarN;i++)
 		{
 		User::WaitForRequest(getReqStatus[i]);
-		if((r=getReqStatus[i].Int()) != KErrCancel)
+
+	// NOTE: Cancel operation can only remove request which is still inside the resource controller
+	// message queue. If the queue is empty, the resource controller may process the request very quickly 
+	// after it is sent. It may cause the test fail. To solve this, we skip the test for request 0.
+		
+		if(i>0 && ((r=getReqStatus[i].Int()) != KErrCancel))
 			{
 			gTest.Printf(_L("TestGetSetResourceStateOps, cancelled get state status[%d] = %d\n"),i,r);
 			return r;
@@ -2873,7 +3031,7 @@ LOCAL_C TInt TestThreadExclusiveAccess()
 		gTest.Printf(_L("TestThreadExclusiveAccess: Duplicate with EOwnerProcess returned %d\n"),r);
 		if(r==KErrNone)
 			r=KErrGeneral;
-		return r;
+		return r; // return error which is neither KErrNone nor KErrAccessDenied
 		}
 	pirateChannel = gChannel;
 	if((r=pirateChannel.Duplicate(RThread(),EOwnerThread))!=KErrNone)
@@ -2997,7 +3155,7 @@ TInt Thread2Fn(TAny* /* */)
 		{
 		if(r==KErrNone)
 			r=KErrGeneral;
-		return r;
+		return r; // return error which is neither KErrPermissionDenied nor KErrGeneral
 		}
 	else
 		r=KErrNone; // Ensure misleading result is not propagated
@@ -3077,7 +3235,7 @@ TInt Thread2Fn(TAny* /* */)
 			{
 			if(r==KErrNone)
 				r=KErrGeneral;
-			return r;
+			return r; // return error which is neither KErrPermissionDenied nor KErrGeneral
 			}
 		else
 			r=KErrNone; // Ensure misleading result is not propagated
@@ -3771,7 +3929,7 @@ LOCAL_C TInt TestTransientHandling()
 		if((r=gChannel.GetInfoOnClientsUsingResource(gSharedResource, numClients, &infoPtrs, EFalse))!=KErrNotReady)
 			{
 			gTest.Printf(_L("TestTransientHandling: GetInfoOnClientsUsingResource (for gSharedResource) returned %d\n"),r);
-			return r;
+			return KErrGeneral;
 			}
 		infoPtrs.Close();
 		}
@@ -4080,104 +4238,82 @@ EXPORT_C TInt E32Main()
 //
 // Main
 //
-    {
+	{
+	gTest.Title();
 	gTest.Start(_L("Test Power Resource Manager user side API\n"));
-  
-	TInt r = KErrNone;
 
 	// Test attempted load of PDD
-    gTest.Next(_L("**Load PDD\n"));
-    r=User::LoadPhysicalDevice(PDD_NAME);
-    if((r!=KErrNone)&&(r!=KErrAlreadyExists))
-		{
-		gTest.Printf(_L("User::LoadPhysicalDevice error %d\n"),r);
-		}
-	else
-		{
-		// Test attempted load of LDD
-		gTest.Next(_L("**Load LDD\n"));
-		r=User::LoadLogicalDevice(LDD_NAME);
-		if((r!=KErrNone)&&(r!=KErrAlreadyExists))
-			gTest.Printf(_L("User::LoadLogicalDevice error - expected %d, got %d\n"),KErrAlreadyExists,r);
-		}
-    if((r==KErrNone)||(r==KErrAlreadyExists))
-		{
-		r = KErrNone; // Re-initialise in case set to KErrAlreadyExists
-		//
-		// Need a channel open for the following tests
-		gTest.Next(_L("**OpenAndRegisterChannel\n"));
-		r=OpenAndRegisterChannel();
-		if (r==KErrNone)
-			{
-			// Get the version of the ResourceController
-			TUint version;
-			if((r=gChannel.GetResourceControllerVersion(version))!=KErrNone)
-				{
-				gTest.Printf(_L("TestTransientHandling: GetResourceControllerVersion returned %d\n"),r);
-				return r;
-				}
-			gTest.Printf(_L("TestTransientHandling: ResourceController version =0x%x\n"),version);
-			}
-		if (r==KErrNone)
-			{
-			gTest.Next(_L("**TestThreadExclusiveAccess\n"));
-			r=TestThreadExclusiveAccess();
-			}
-		if (r==KErrNone)
-			{
-			gTest.Next(_L("**TestGetClientGetResourceInfo - initial state\n"));
-			r=TestGetClientGetResourceInfo();
-			}
-		if (r==KErrNone)
-			{
-			gTest.Next(_L("**TestGetSetResourceStateOps\n"));
-			r=TestGetSetResourceStateOps();
-			}
-		if (r==KErrNone)
-			{
-			gTest.Next(_L("**TestGetClientGetResourceInfo - after changing stateof Async resource\n"));
-			r=TestGetClientGetResourceInfo();
-			}
-		if (r==KErrNone)
-			{
-			gTest.Next(_L("**TestGetSetResourceStateQuota\n"));
-			r=TestGetSetResourceStateQuota();
-			}
-		if (r==KErrNone)
-			{
-			gTest.Next(_L("**TestNotificationOps\n"));
-			r=TestNotificationOps();
-			}
-		if (r==KErrNone)
-			{
-			gTest.Next(_L("**TestNotificationQuota\n"));
-			r=TestNotificationQuota();
-			}
-		if (r==KErrNone)
-			{
-			// Should be no change since last invocation (assuming that
-			// no clients other than those in this test)
-			gTest.Next(_L("**TestGetClientGetResourceInfo - last invocation\n"));
-			r=TestGetClientGetResourceInfo();
-			}
-		if (r==KErrNone)
-			{
-			gTest.Next(_L("**TestAdditionalThread\n"));
-			r=TestAdditionalThread();
-			}
-		if (r==KErrNone)
-			{
-			gTest.Next(_L("**TestTransientHandling\n"));
-			r=TestTransientHandling();
-			}
-		}
-	gChannel.Close();
+	gTest.Next(_L("**Load PDD\n"));
+	TInt r = User::LoadPhysicalDevice(PDD_NAME);
+	gTest((r == KErrNone) || (r == KErrAlreadyExists));
+	gTest.SetCleanupFlag(EPddLoaded);
 
-    User::FreeLogicalDevice(KLddRootName);
-    User::FreePhysicalDevice(PDD_NAME);	
-	User::After(100000);	// Allow idle thread to run for driver unloading
+	// Test attempted load of LDD
+	gTest.Next(_L("**Load LDD\n"));
+	r = User::LoadLogicalDevice(LDD_NAME);
+	gTest((r == KErrNone) || (r == KErrAlreadyExists));
+	r = KErrNone; // Re-initialise in case set to KErrAlreadyExists
+	gTest.SetCleanupFlag(ELddLoaded);
+
+	// test caps
+	gTest(CheckCaps() == KErrNone);
+
+	// Need a channel open for the following tests
+	gTest.Next(_L("**OpenAndRegisterChannel\n"));
+	r = OpenAndRegisterChannel();
+	gTest(r == KErrNone);
+	gTest.SetCleanupFlag(EChannelOpened);
+
+	// Get the version of the ResourceController
+	TUint version;
+	r = gChannel.GetResourceControllerVersion(version);
+	gTest.Printf(_L("TestTransientHandling: ResourceController version =0x%x\n"), version);
+	gTest(r == KErrNone);
+
+	gTest.Next(_L("**TestThreadExclusiveAccess\n"));
+	r = TestThreadExclusiveAccess();
+	gTest(r == KErrNone);
+
+	gTest.Next(_L("**TestGetClientGetResourceInfo - initial state\n"));
+	r = TestGetClientGetResourceInfo();
+	gTest(r == KErrNone);
+
+	gTest.Next(_L("**TestGetSetResourceStateOps\n"));
+	r = TestGetSetResourceStateOps();
+	gTest(r == KErrNone);
+
+	gTest.Next(_L("**TestGetClientGetResourceInfo - after changing stateof Async resource\n"));
+	r = TestGetClientGetResourceInfo();
+	gTest(r == KErrNone);
+
+	gTest.Next(_L("**TestGetSetResourceStateQuota\n"));
+	r = TestGetSetResourceStateQuota();
+	gTest(r == KErrNone);
+
+	gTest.Next(_L("**TestNotificationOps\n"));
+	r = TestNotificationOps();
+	gTest(r == KErrNone);
+
+	gTest.Next(_L("**TestNotificationQuota\n"));
+	r = TestNotificationQuota();
+	gTest(r == KErrNone);
+
+	// Should be no change since last invocation (assuming that
+	// no clients other than those in this test)
+	gTest.Next(_L("**TestGetClientGetResourceInfo - last invocation\n"));
+	r = TestGetClientGetResourceInfo();
+	gTest(r == KErrNone);
+
+	gTest.Next(_L("**TestAdditionalThread\n"));
+	r = TestAdditionalThread();
+	gTest(r == KErrNone);
+
+	gTest.Next(_L("**TestTransientHandling\n"));
+	r = TestTransientHandling();
+	gTest(r == KErrNone);
 
 	gTest.End();
-	return r;
-    }
+	return KErrNone;
+	}
+
 

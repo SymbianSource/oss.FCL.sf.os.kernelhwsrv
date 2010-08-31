@@ -676,7 +676,6 @@ void random_isr(unsigned n)
 	random_isr_msg* m;
 	unsigned extra = 1;
 	unsigned count = 1;
-	int r;
 	if (!(n%11))
 		++count;
 	if (!(n%13))
@@ -688,7 +687,7 @@ void random_isr(unsigned n)
 		m->random_isr_number = n;
 		extra *= n;
 		m->extra = extra;
-		r = send_msg(L1_TASK, &m->header);
+		send_msg(L1_TASK, &m->header);
 		}
 	if (random_sem_signal_count && !--random_sem_signal_count)
 		{

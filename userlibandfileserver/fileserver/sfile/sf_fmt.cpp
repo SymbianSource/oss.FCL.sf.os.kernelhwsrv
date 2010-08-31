@@ -17,6 +17,10 @@
 
 #include "sf_std.h"
 
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "sf_fmtTraces.h"
+#endif
+
 LOCAL_C CFormatCB* GetFormatFromHandle(TInt aHandle,CSessionFs* aSession)
 //
 // Get the format control block from aHandle
@@ -466,9 +470,11 @@ TInt TFsFormatNext::DoRequestL(CFsRequest* aRequest)
 	TPtr8 pStep((TUint8*)&format->CurrentStep(),sizeof(TInt));
 	aRequest->ReadL(KMsgPtr0,pStep);
 
-	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECFormatCBDoFormatStepL, EF32TraceUidFileSys, format);
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFORMATCBDOFORMATSTEPL, "this %x", format);
+
 	TRAP(r,format->DoFormatStepL());
-	TRACERET2(UTF::EBorder, UTraceModuleFileSys::ECFormatCBDoFormatStepLRet, EF32TraceUidFileSys, r, format->CurrentStep());
+
+	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFORMATCBDOFORMATSTEPLRET, "r %d  iCurrentStep %d", r, (TUint) format->CurrentStep());
 
 	if (r==KErrNone)
 		aRequest->WriteL(KMsgPtr0,pStep);

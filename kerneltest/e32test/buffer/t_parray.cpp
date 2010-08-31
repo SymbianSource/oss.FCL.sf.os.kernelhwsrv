@@ -80,9 +80,12 @@ LOCAL_C void testAllMethods(CArrayPak<TText>& aPakVar)
 	test(TRUE);
 	TKeyArrayPak kk(sizeof(TText),ECmpNormal,0);
 	TKeyArrayVar vv(sizeof(TText),ECmpNormal,0);
+	TKeyArrayPak hh(sizeof(TText),ECmpNormal);
 	test(TRUE);
 	TRAPD(res,aPakVar.SortL(vv));
 	test(res==KErrNone);
+	TRAPD(err,aPakVar.SortL(hh));
+	test(err==KErrNone);
 	const TText* aa=_S("a");
 	aPakVar.InsertL(0,*aa,sizeof(TText));
 	TBuf<0x10> des1(1);

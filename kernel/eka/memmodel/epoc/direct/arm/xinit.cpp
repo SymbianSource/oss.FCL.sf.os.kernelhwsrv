@@ -77,10 +77,10 @@ void M::GetAPBootInfo(TInt aCpu, volatile SAPBootInfo* aInfo)
 	volatile SArmAPBootInfo& info = *(volatile SArmAPBootInfo*)aInfo;
 	TSubScheduler& ss = SubScheduler();
 	TUint32 delta = aCpu*0x2000;
-	info.iInitR13Fiq = TLinAddr(ss.i_FiqStackTop) + delta;
-	info.iInitR13Irq = TLinAddr(ss.i_IrqStackTop) + delta;
-	info.iInitR13Abt = TLinAddr(ss.i_AbtStackTop) + delta;
-	info.iInitR13Und = TLinAddr(ss.i_UndStackTop) + delta;
+	info.iInitR13Fiq = TLinAddr(ss.iSSX.iFiqStackTop) + delta;
+	info.iInitR13Irq = TLinAddr(ss.iSSX.iIrqStackTop) + delta;
+	info.iInitR13Abt = TLinAddr(ss.iSSX.iAbtStackTop) + delta;
+	info.iInitR13Und = TLinAddr(ss.iSSX.iUndStackTop) + delta;
 	}
 
 void M::Init2AP()

@@ -1,4 +1,4 @@
-// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -143,51 +143,65 @@ typedef TestParamType* TestParamPtr;
 
 #define TUSB_PRINT(string) \
 		do { \
-		iConsole->Printf(_L(string)); \
-		iConsole->Printf(_L("\n")); \
-		RDebug::Print(_L(string)); \
+			if (iConsole) \
+			{			\
+		    iConsole->Printf(_L(string)); \
+		    iConsole->Printf(_L("\n")); \
+			} \
 		} while (0)
 
 #define TUSB_PRINT1(string, a) \
 		do { \
-		iConsole->Printf(_L(string), (a)); \
-		iConsole->Printf(_L("\n")); \
-		RDebug::Print(_L(string), (a)); \
+		if (iConsole) \
+			{			\
+			iConsole->Printf(_L(string), (a)); \
+			iConsole->Printf(_L("\n")); \
+			}	\
 		} while (0)
 
 #define TUSB_PRINT2(string, a, b) \
 		do { \
-		iConsole->Printf(_L(string), (a), (b)); \
-		iConsole->Printf(_L("\n")); \
-		RDebug::Print(_L(string), (a), (b)); \
+			if (iConsole) \
+			{			\
+			iConsole->Printf(_L(string), (a), (b)); \
+			iConsole->Printf(_L("\n")); \
+			}	\
 		} while (0)
 
 #define TUSB_PRINT3(string, a, b, c) \
 		do { \
-		iConsole->Printf(_L(string), (a), (b), (c)); \
-		iConsole->Printf(_L("\n")); \
-		RDebug::Print(_L(string), (a), (b), (c)); \
+			if (iConsole) \
+			{			\
+			iConsole->Printf(_L(string), (a), (b), (c)); \
+			iConsole->Printf(_L("\n")); \
+			}	\
 		} while (0)
 
 #define TUSB_PRINT4(string, a, b, c, d) \
 		do { \
-		iConsole->Printf(_L(string), (a), (b), (c), (d)); \
-		iConsole->Printf(_L("\n")); \
-		RDebug::Print(_L(string), (a), (b), (c), (d)); \
+			if (iConsole) \
+			{			\
+			iConsole->Printf(_L(string), (a), (b), (c), (d)); \
+			iConsole->Printf(_L("\n")); \
+			}	\
 		} while (0)
 
 #define TUSB_PRINT5(string, a, b, c, d, e) \
 		do { \
-		iConsole->Printf(_L(string), (a), (b), (c), (d), (e)); \
-		iConsole->Printf(_L("\n")); \
-		RDebug::Print(_L(string), (a), (b), (c), (d), (e)); \
+			if (iConsole) \
+			{			\
+			iConsole->Printf(_L(string), (a), (b), (c), (d), (e)); \
+			iConsole->Printf(_L("\n")); \
+			}	\
 		} while (0)
 
 #define TUSB_PRINT6(string, a, b, c, d, e, f) \
 		do { \
-		iConsole->Printf(_L(string), (a), (b), (c), (d), (e), (f)); \
-		iConsole->Printf(_L("\n")); \
-		RDebug::Print(_L(string), (a), (b), (c), (d), (e), (f)); \
+			if (iConsole) \
+			{			\
+			iConsole->Printf(_L(string), (a), (b), (c), (d), (e), (f)); \
+			iConsole->Printf(_L("\n")); \
+			}	\
 		} while (0)
 
 #define TUSB_VERBOSE_PRINT(string) \
@@ -242,9 +256,11 @@ typedef TestParamType* TestParamPtr;
 		do { \
 		if (gVerbose) \
 			{ \
-			aConsole->Printf(_L(string)); \
-			aConsole->Printf(_L("\n")); \
-			RDebug::Print(_L(string)); \
+				if (iConsole) \
+				{			\
+				aConsole->Printf(_L(string)); \
+				aConsole->Printf(_L("\n")); \
+				}	\
 			} \
 		} while (0)
 
@@ -252,8 +268,6 @@ typedef TestParamType* TestParamPtr;
 		do { \
 			TInt totalSize = 0; \
 			TInt numCells = User::AllocSize (totalSize); \
-			RDebug::Print(_L(string)); \
-			RDebug::Print(_L(" Heap Cells %d Size %d\n"),numCells,totalSize); \
 		} while (0)
 	
 #endif	// __GENERAL_H__

@@ -147,22 +147,27 @@ void HcrSimGetSettings(SSettingC* aRepository, TUint aNumberOfSettings)
 				{
 				TBuf8<KMaxSettingLength> dval;
 				TUint8* pval;
-				pval = (TUint8*) User::Alloc(setting->iName.iLen);
+				TUint16 maxLen = setting->iName.iLen == 0 ? (TUint16)4: setting->iName.iLen; 
+				
+				pval = (TUint8*) User::Alloc(maxLen);
 				test_NotNull(pval);
 				//
 				r = HcrSimTest.GetData(id, dval);
 				test_KErrNone(r);
 				//
 				TUint16 actuallength;
-				r = HcrSimTest.GetData(id, setting->iName.iLen, pval, actuallength);
+				r = HcrSimTest.GetData(id, maxLen, pval, actuallength);
 				test_KErrNone(r);
 				//
-				test_Equal(0, Mem::Compare(
-						setting->iValue.iPtr.iData, setting->iName.iLen,
-						pval, actuallength));
-				test_Equal(0, Mem::Compare(
-						setting->iValue.iPtr.iData, setting->iName.iLen,
-						dval.Ptr(), dval.Length()));
+				if(setting->iName.iLen > 0)
+				    {
+                    test_Equal(0, Mem::Compare(
+				        setting->iValue.iPtr.iData, setting->iName.iLen,
+				        pval, actuallength));
+                    test_Equal(0, Mem::Compare(
+				        setting->iValue.iPtr.iData, setting->iName.iLen,
+				        dval.Ptr(), dval.Length()));
+				    }
 				User::Free(pval);
 				break;
 				}
@@ -170,35 +175,41 @@ void HcrSimGetSettings(SSettingC* aRepository, TUint aNumberOfSettings)
 				{
 				TBuf8<KMaxSettingLength> dval;
 				TText8* pval;
-				pval = (TText8*) User::Alloc(setting->iName.iLen);
+				TUint16 maxLen = setting->iName.iLen == 0 ? (TUint16)4: setting->iName.iLen;
+				
+				pval = (TText8*) User::Alloc(maxLen);
 				test_NotNull(pval);
 				//
 				r = HcrSimTest.GetString(id, dval);
 				test_KErrNone(r);
 				//
 				TUint16 actuallength;
-				r = HcrSimTest.GetString(id, setting->iName.iLen, pval, actuallength);
+				r = HcrSimTest.GetString(id, maxLen, pval, actuallength);
 				test_KErrNone(r);
-				//
-				test_Equal(0, Mem::Compare(
-						setting->iValue.iPtr.iString8, setting->iName.iLen,
-						pval, actuallength));
-				test_Equal(0, Mem::Compare(
-						setting->iValue.iPtr.iString8, setting->iName.iLen,
-						dval.Ptr(), dval.Length()));
+
+				if(setting->iName.iLen > 0)
+				    {
+                    test_Equal(0, Mem::Compare(
+				        setting->iValue.iPtr.iString8, setting->iName.iLen,
+				        pval, actuallength));
+                    test_Equal(0, Mem::Compare(
+				        setting->iValue.iPtr.iString8, setting->iName.iLen,
+				        dval.Ptr(), dval.Length()));
+				    }
 				User::Free(pval);
 				break;
 				}
 			case ETypeArrayInt32:
 				{
 				TInt32* pval;
-				pval = (TInt32*) User::Alloc(setting->iName.iLen);
+				TUint16 maxLen = setting->iName.iLen == 0 ? (TUint16)4: setting->iName.iLen;
+				pval = (TInt32*) User::Alloc(maxLen);
 				test_NotNull(pval);
 				//
 				TUint16 actuallength;
-				r = HcrSimTest.GetArray(id, setting->iName.iLen, pval, actuallength);
+				r = HcrSimTest.GetArray(id, maxLen, pval, actuallength);
 				test_KErrNone(r);
-				//
+
 				test_Equal(setting->iName.iLen, actuallength);
 				TInt32* pexpected = setting->iValue.iPtr.iArrayInt32;
 				TUint i;
@@ -212,12 +223,14 @@ void HcrSimGetSettings(SSettingC* aRepository, TUint aNumberOfSettings)
 			case ETypeArrayUInt32:
 				{
 				TUint32* pval;
-				pval = (TUint32*) User::Alloc(setting->iName.iLen);
+				TUint16 maxLen = setting->iName.iLen == 0 ? (TUint16)4: setting->iName.iLen;
+				pval = (TUint32*) User::Alloc(maxLen);
 				test_NotNull(pval);
 				//
 				TUint16 actuallength;
-				r = HcrSimTest.GetArray(id, setting->iName.iLen, pval, actuallength);
+				r = HcrSimTest.GetArray(id, maxLen, pval, actuallength);
 				test_KErrNone(r);
+				
 				//
 				test_Equal(setting->iName.iLen, actuallength);
 				TUint32* pexpected = setting->iValue.iPtr.iArrayUInt32;
@@ -426,7 +439,135 @@ void HcrSimGetSettingsNegative(SSettingC* aRepository, TUint aNumberOfSettings)
 			r = HcrSimTest.GetUInt(id, val);
 			test_Equal(KErrArgument, r);
 			}
+
+		
+		
+		if(setting->iName.iType == ETypeBinData)
+		    {
+		    TUint8* valBuf;
+		    TUint8* nullBuf = NULL;
+
+		    
+		    //
+		    TUint16 actuallength;
+
+		    TSettingId id(setting->iName.iId.iCat, setting->iName.iId.iKey);
+		    valBuf = (TUint8*) User::Alloc(KMaxSettingLength);
+		    test_NotNull(valBuf);
+
+		    //MaxLength = 0
+		    r = HcrSimTest.GetData(id, 0, valBuf, actuallength);
+		    test_Equal(KErrArgument, r);
+
+		    //buffer is not provided
+		    r = HcrSimTest.GetData(id, KMaxSettingLength, nullBuf, actuallength);
+		    test_Equal(KErrArgument, r);
+		    
+		    //neither buffer is provided nor MaxLength is not zero 
+		    r = HcrSimTest.GetData(id, 0, nullBuf, actuallength);
+		    test_Equal(KErrArgument, r);
+
+
+		    //descriptor MaxLength is zero
+		    //Default constructor sets the MaxLength to zero, so we don't need to call Create(0)
+		    //We also don't need to call Close() for this buffer as well.
+		    RBuf8 nullDes;
+		    r = HcrSimTest.GetData(id, nullDes);
+		    test_Equal(KErrArgument, r);
+
+		    //
+		    User::Free(valBuf);
+		    }
+
+		
+		if(setting->iName.iType == ETypeText8)
+		    {
+		    TUint8* valBuf;
+		    TUint8* nullBuf = NULL;
+		    //
+		    TUint16 actuallength;
+
+		    TSettingId id(setting->iName.iId.iCat, setting->iName.iId.iKey);
+		    valBuf = (TUint8*) User::Alloc(KMaxSettingLength);
+		    test_NotNull(valBuf);
+
+		    //MaxLength = 0
+		    r = HcrSimTest.GetString(id, 0, valBuf, actuallength);
+		    test_Equal(KErrArgument, r);
+
+		    //buffer is not provided
+		    r = HcrSimTest.GetString(id, KMaxSettingLength, nullBuf, actuallength);
+		    test_Equal(KErrArgument, r);
+		    
+		    //neither buffer is not provided nor the aMaxLen is not non-zero
+		    r = HcrSimTest.GetString(id, 0, nullBuf, actuallength);
+		    test_Equal(KErrArgument, r);
+
+
+		    //descriptor MaxLength is zero
+		    //Default constructor sets the MaxLength to zero, so we don't need to call Create(0)
+		    //We also don't need to call Close() for this buffer as well.
+		    RBuf8 nullDesc;
+		    r = HcrSimTest.GetString(id, nullDesc);
+		    test_Equal(KErrArgument, r);
+		    //
+		    User::Free(valBuf);
+		    }
+
+		if(setting->iName.iType == ETypeArrayInt32)
+		    {
+		    TInt32* valBuf;
+		    TInt32* nullBuf = NULL;
+		    valBuf = (TInt32*)User::Alloc(4*KMaxSettingLength);
+		    test_NotNull(valBuf);
+
+		    TUint16 actuallength;
+		    TSettingId id(setting->iName.iId.iCat, setting->iName.iId.iKey);
+
+		    //MaxLength = 0
+		    r = HcrSimTest.GetArray(id, 0, valBuf, actuallength);
+		    test_Equal(KErrArgument, r);
+
+		    //buffer is not provided
+		    r = HcrSimTest.GetArray(id, KMaxSettingLength, nullBuf, actuallength);
+		    test_Equal(KErrArgument, r);
+		    
+		    //neither buffer is not provided nor aMaxLen is not non-zero
+		    r = HcrSimTest.GetArray(id, 0, nullBuf, actuallength);
+		    test_Equal(KErrArgument, r);
+
+
+		    User::Free(valBuf);
+		    }
+
+		if(setting->iName.iType == ETypeArrayUInt32)
+		    {
+		    TUint32* valBuf;
+		    TUint32* nullBuf = NULL;
+		    valBuf = (TUint32*)User::Alloc(4*KMaxSettingLength);
+		    test_NotNull(valBuf);
+
+		    TUint16 actuallength;
+		    TSettingId id(setting->iName.iId.iCat, setting->iName.iId.iKey);
+
+		    //MaxLength = 0
+		    r = HcrSimTest.GetArray(id, 0, valBuf, actuallength);
+		    test_Equal(KErrArgument, r);
+
+		    //buffer is not provided
+		    r = HcrSimTest.GetArray(id, KMaxSettingLength,nullBuf, actuallength);
+		    test_Equal(KErrArgument, r);
+		    
+		    //neither buffer is not provided nor aMaxLen is not non-zero
+		    r = HcrSimTest.GetArray(id, 0, nullBuf, actuallength);
+		    test_Equal(KErrArgument, r);
+
+
+		    User::Free(valBuf);
+		    }
+
 		}
+
 	}
 
 void HcrSimSettingProperties(SSettingC* aRepository, TUint aNumberOfSettings)
@@ -814,6 +955,68 @@ void HcrSimMultipleGet(SSettingC* aRepository, TUint aNumberOfSettings)
 	User::Free(vals);
 	User::Free(types);
 	User::Free(errs);
+
+	
+#ifdef _DEBUG
+	test.Next(_L("Multiple Get on all settings, aIds[] is not ordered"));
+	    nosettings = 0;
+	    for (setting = aRepository; setting < aRepository + aNumberOfSettings; setting++)
+	        {
+	        if (setting->iName.iType < 0x00010000)
+	            {
+	            nosettings++;
+	            }
+	        }
+	    test_Compare(2, <, nosettings);
+	    
+	    ids = (SSettingId*) User::Alloc(sizeof(SSettingId) * nosettings);
+	    test_NotNull(ids);
+	    vals = (TInt32*) User::Alloc(sizeof(TInt32) * nosettings);
+	    test_NotNull(vals);
+	    types = (TSettingType*) User::Alloc(sizeof(TSettingType) * nosettings);
+	    test_NotNull(types);
+	    errs = (TInt*) User::Alloc(sizeof(TInt) * nosettings);
+	    test_NotNull(errs);
+	    
+	    n = 0;
+
+	    for (setting = aRepository; setting < aRepository + aNumberOfSettings; setting++)
+	        {
+	        if (setting->iName.iType < 0x00010000)
+	            {
+	            ids[n].iCat = setting->iName.iId.iCat;
+	            ids[n].iKey = setting->iName.iId.iKey;
+	            n++;
+	            }
+	        }
+	    test_Equal(nosettings, n);
+	    
+	    //Swap two neigbours elements in the middle of the user array
+	    HCR::SSettingId tmpSet;
+	    TUint swappedIndex = (n >> 1) - 1;
+	    //Make a copy of one of the swaped element
+	    tmpSet.iCat = ids[swappedIndex].iCat;
+	    tmpSet.iKey = ids[swappedIndex].iKey;
+	    
+	    //Initialized that element with the values of the next one
+	    ids[swappedIndex].iCat = ids[swappedIndex + 1].iCat;
+	    ids[swappedIndex].iKey = ids[swappedIndex + 1].iKey;
+	    
+	    //Write back data from the temproary element
+	    ids[swappedIndex + 1].iCat = tmpSet.iCat;
+	    ids[swappedIndex + 1].iKey = tmpSet.iKey;
+
+	    r = HcrSimTest.GetWordSettings(nosettings, ids, vals, types, errs);
+
+	    //HCR returns KErrArgument because ids array was not properly ordered
+	    test_Equal(KErrArgument, r);
+
+	    User::Free(ids);
+	    User::Free(vals);
+	    User::Free(types);
+	    User::Free(errs);
+#endif
+	
 
 	test.Next(_L("Multiple Get on a large setting"));
 	if (largesetting.iKey)
@@ -2430,6 +2633,500 @@ void HcrRealTests(const TDesC& aDriver)
 	test.End();
 	}
 
+void HcrCatRecodsExampleTest(const TDesC& aDriver)
+    {
+    using namespace HCR;
+
+   
+    test.Start(_L("HCR Record Structured Category Test"));
+    test.Next(_L("Load HCR Test driver"));
+    
+    test.Printf(_L("%S\n"), &aDriver);
+    TInt r;
+    
+    _LIT8(KTestCatRecordsRepos, "filerepos_cds.dat");
+
+    r = User::LoadLogicalDevice(aDriver);
+    if (r == KErrAlreadyExists)
+        {
+        test.Printf(_L("Unload Device Driver and load it again\n"));
+        r = User::FreeLogicalDevice(aDriver);
+        test_KErrNone(r);
+        r = User::LoadLogicalDevice(aDriver);
+        test_KErrNone(r);
+        }
+    else
+        {
+        test_KErrNone(r);
+        }
+
+    test.Next(_L("Open test channel"));
+    r = HcrSimTest.Open(aDriver);
+    test_KErrNone(r);
+
+    test.Next(_L("Initialise HCR"));
+    //r = HcrSimTest.InitExtension();
+    // *** The NULL Repository ***
+    r = HcrSimTest.InitExtension(ETestNullRepository);
+    test_KErrNone(r);
+
+    test.Next(_L("Load Test File repository"));
+    r = HcrSimTest.SwitchRepository(KTestCatRecordsRepos, HCRInternal::ECoreRepos);
+    test_KErrNone(r);
+    r = HcrSimTest.CheckIntegrity();
+    test_KErrNone(r);
+
+
+
+    struct TAccelCaps
+        {
+        TUint32 iManufactureId;
+        TUint16 iDeviceId;
+        char* iDevName;
+        TUint16 iDataRate;
+        TUint16 iResolution;
+        TUint16 iScale;
+        };
+
+    const TInt KCapsField_Manufacturer = 1;
+    const TInt KCapsField_Device = 2;
+    const TInt KCapsField_Name = 3;
+    const TInt KCapsField_DataRate = 4;
+    const TInt KCapsField_Resolution = 5;
+    const TInt KCapsField_Scale = 6;
+
+    const TInt KMaxNumAccelerateDevices = 2;
+    const TInt KNumElementsInRow = 6;
+
+    const TInt KKiSemiIndex = 0;
+    const TInt KSpecCo4gIndex = 1;
+    char KKiSemiIncDevName[] = "KI Semi Inc 8g Accelerometer";
+    const TUint16 KKiSemiIncDevNameLength = sizeof(KKiSemiIncDevName) - 1;
+    char KSpecCo4gDevName[] = "SPE Co 4g Accelerometer";
+    const TUint16 KSpecCo4gDevNameLength = sizeof(KSpecCo4gDevName) - 1;
+
+    TAccelCaps* capsStructs = new TAccelCaps[KMaxNumAccelerateDevices];
+
+    test_NotNull(capsStructs);
+
+    //Initialisation with the sample data
+    //KI SemiInc 8g
+    capsStructs[KKiSemiIndex].iManufactureId = 0x12003335;
+    capsStructs[KKiSemiIndex].iDeviceId = 0x2001;
+    capsStructs[KKiSemiIndex].iDevName = KKiSemiIncDevName; 
+    capsStructs[KKiSemiIndex].iDataRate = 20;
+    capsStructs[KKiSemiIndex].iResolution = 8;
+    capsStructs[KKiSemiIndex].iScale = 8;
+    //SPE Co 4g
+    capsStructs[KSpecCo4gIndex].iManufactureId = 0x72103301;
+    capsStructs[KSpecCo4gIndex].iDeviceId = 0x0012;
+    capsStructs[KSpecCo4gIndex].iDevName = KSpecCo4gDevName; 
+    capsStructs[KSpecCo4gIndex].iDataRate = 50;
+    capsStructs[KSpecCo4gIndex].iResolution = 16;
+    capsStructs[KSpecCo4gIndex].iScale = 4;
+
+    
+    //Setting the value
+    TUint32 mask = 0x0000ffff;
+    const TUint32 KKiSemiPattern = 0x00010000u;
+    const TUint32 KSpecCo4gPattern = 0x00020000u;
+    const HCR::TCategoryUid category = 0x00000001u;
+
+    //SettingId container, it's used further down in the retrieve operations
+    HCR::TSettingId setId(category,0);
+    
+    //Test Repository elements Ids data
+    HCR::SSettingId repIds[KMaxNumAccelerateDevices][KNumElementsInRow] =
+            {
+                    {
+                            {0x01, 65537}, {0x01, 65538}, {0x01, 65539},
+                            {0x01, 65540}, {0x01, 65541}, {0x01, 65542}
+                    },
+                    {
+                            {0x01, 131073}, {0x01, 131074}, {0x01, 131075},
+                            {0x01, 131076}, {0x01, 131077}, {0x01, 131078}
+                    }
+            };
+    
+
+
+    HCR::TElementId* ids = new TElementId[KNumElementsInRow];
+    test_NotNull(ids);
+    HCR::TSettingType* types = new TSettingType[KNumElementsInRow];
+    test_NotNull(types);
+    TUint16* lengths = new TUint16[KNumElementsInRow];
+    test_NotNull(lengths);
+
+    //------------------------------------------------------------------
+    //Retrieve "ManufactureId" (column request) values for all devices
+    //------------------------------------------------------------------
+    r = HcrSimTest.FindSettings(category, KMaxNumAccelerateDevices, mask, 
+            KCapsField_Manufacturer, ids, types, lengths);
+    //Assert against the error
+    test_Compare(r,>=,0);
+
+    //Check the number of elements
+    test_Equal(KMaxNumAccelerateDevices, r);
+
+    // Check the ids, lengths and types
+    test_Equal(repIds[KKiSemiIndex][KCapsField_Manufacturer - 1].iKey, ids[KKiSemiIndex]);
+    test_Equal(HCR::ETypeUInt32, types[KKiSemiIndex]);
+    test_Equal(0,lengths[KKiSemiIndex]);
+    
+
+    // Check the ids, lengths and types
+    test_Equal(repIds[KSpecCo4gIndex][KCapsField_Manufacturer - 1].iKey, ids[KSpecCo4gIndex]);
+    test_Equal(HCR::ETypeUInt32, types[KSpecCo4gIndex]);
+    test_Equal(0,lengths[KSpecCo4gIndex]);
+
+    
+    //----------------------------
+    //Get all ManufactureId values
+    //----------------------------
+    TUint32 manufId;
+    //KiSemi
+    setId.iKey = ids[KKiSemiIndex];
+    r = HcrSimTest.GetUInt(setId,  manufId);
+    test_KErrNone(r);
+    test_Equal(capsStructs[KKiSemiIndex].iManufactureId,  manufId);
+  
+    //SpecCo 
+    setId.iKey = ids[KSpecCo4gIndex];
+    r = HcrSimTest.GetUInt(setId,  manufId);
+    test_KErrNone(r);
+    test_Equal(capsStructs[KSpecCo4gIndex].iManufactureId,  manufId);
+    
+    
+    
+    //------------------------------------------------------------------
+    //Retrieve "DeviceId" (column request) values for all devices
+    //------------------------------------------------------------------
+    r = HcrSimTest.FindSettings(category, KMaxNumAccelerateDevices, mask, 
+            KCapsField_Device, ids, types, lengths);
+    //Assert against the error
+    test_Compare(r,>=,0);
+
+    //Check the number of elements
+    test_Equal(KMaxNumAccelerateDevices, r);
+
+    // Check the ids, lengths and types
+    test_Equal(repIds[KKiSemiIndex][KCapsField_Device - 1].iKey, ids[KKiSemiIndex]);
+    test_Equal(HCR::ETypeUInt16, types[KKiSemiIndex]);
+    test_Equal(0,lengths[KKiSemiIndex]);
+
+    // Check the ids, lengths and types
+    test_Equal(repIds[KSpecCo4gIndex][KCapsField_Device - 1].iKey, ids[KSpecCo4gIndex]);
+    test_Equal(HCR::ETypeUInt16, types[KSpecCo4gIndex]);
+    test_Equal(0,lengths[KSpecCo4gIndex]);
+
+    
+    //----------------------------
+    //Get all DeviceId values
+    //----------------------------
+    TUint16 devId;
+
+    //KiSemi
+    setId.iKey = ids[KKiSemiIndex];
+    r = HcrSimTest.GetUInt(setId,  devId);
+    test_KErrNone(r);
+    test_Equal(capsStructs[KKiSemiIndex].iDeviceId,  devId);
+  
+    //SpecCo 
+    setId.iKey = ids[KSpecCo4gIndex];
+    r = HcrSimTest.GetUInt(setId, devId);
+    test_KErrNone(r);
+    test_Equal(capsStructs[KSpecCo4gIndex].iDeviceId,  devId);
+
+
+    
+    //------------------------------------------------------------------
+    //Retrieve "DeviceName" (column request) values for all devices
+    //------------------------------------------------------------------
+    r = HcrSimTest.FindSettings(category, KMaxNumAccelerateDevices, mask, 
+            KCapsField_Name, ids, types, lengths);
+    
+    //Assert against the error
+    test_Compare(r,>=,0);
+
+    //Check the number of elements
+    test_Equal(KMaxNumAccelerateDevices, r);
+
+    // Check the ids, lengths and types
+    test_Equal(repIds[KKiSemiIndex][KCapsField_Name - 1].iKey, ids[KKiSemiIndex]);
+    test_Equal(HCR::ETypeText8, types[KKiSemiIndex]);
+    test_Equal(KKiSemiIncDevNameLength,lengths[KKiSemiIndex]);
+
+    // Check the ids, lengths and types
+    test_Equal(repIds[KSpecCo4gIndex][KCapsField_Name - 1].iKey, ids[KSpecCo4gIndex]);
+    test_Equal(HCR::ETypeText8, types[KSpecCo4gIndex]);
+    test_Equal(KSpecCo4gDevNameLength,lengths[KSpecCo4gIndex]);
+
+
+    //----------------------------
+    //Get all DeviceName values
+    //----------------------------
+    TUint16 len;
+    
+    //KiSemi
+    TText8* nameKiSemi = new TText8[KKiSemiIncDevNameLength];
+    test_NotNull(nameKiSemi);
+    
+    setId.iKey = ids[KKiSemiIndex];
+    r = HcrSimTest.GetString(setId, KKiSemiIncDevNameLength, 
+            nameKiSemi, len);
+    test_KErrNone(r);
+    r = memcompare((unsigned char*)capsStructs[KKiSemiIndex].iDevName, (int)KKiSemiIncDevNameLength,
+            nameKiSemi, (int)KKiSemiIncDevNameLength);
+    test_KErrNone(r);
+
+    //SpecCo 
+    TText8* nameSpecCo = new TText8[KSpecCo4gDevNameLength];
+    test_NotNull(nameSpecCo);
+    
+    setId.iKey = ids[KSpecCo4gIndex];
+    r = HcrSimTest.GetString(setId, KSpecCo4gDevNameLength, 
+            nameSpecCo, len);
+    test_KErrNone(r);
+    r = memcompare((unsigned char*)capsStructs[KSpecCo4gIndex].iDevName, 
+            (int)KSpecCo4gDevNameLength, nameSpecCo, (int)KSpecCo4gDevNameLength);
+    test_KErrNone(r);
+
+    
+    
+    //------------------------------------------------------------------
+    //Retrieve "DataRate" (column request) values for all devices
+    //------------------------------------------------------------------
+    r = HcrSimTest.FindSettings(category, KMaxNumAccelerateDevices, mask, 
+            KCapsField_DataRate, ids, types, lengths);
+    //Assert against the error
+    test_Compare(r,>=,0);
+
+    //Check the number of elements
+    test_Equal(KMaxNumAccelerateDevices, r);
+
+    // Check the ids, lengths and types
+    test_Equal(repIds[KKiSemiIndex][KCapsField_DataRate - 1].iKey, ids[KKiSemiIndex]);
+    test_Equal(HCR::ETypeUInt16, types[KKiSemiIndex]);
+    test_Equal(0,lengths[KKiSemiIndex]);
+
+    // Check the ids, lengths and types
+    test_Equal(repIds[KSpecCo4gIndex][KCapsField_DataRate - 1].iKey, ids[KSpecCo4gIndex]);
+    test_Equal(HCR::ETypeUInt16, types[KSpecCo4gIndex]);
+    test_Equal(0,lengths[KSpecCo4gIndex]);
+
+
+    //----------------------------
+    //Get all DataRate values
+    //----------------------------
+    TUint16 dataRate;
+
+    //KiSemi
+    setId.iKey = ids[KKiSemiIndex];
+    r = HcrSimTest.GetUInt(setId,  dataRate);
+    test_KErrNone(r);
+    test_Equal(capsStructs[KKiSemiIndex].iDataRate, dataRate);
+
+    //SpecCo 
+    setId.iKey = ids[KSpecCo4gIndex];
+    r = HcrSimTest.GetUInt(setId, dataRate);
+    test_KErrNone(r);
+    test_Equal(capsStructs[KSpecCo4gIndex].iDataRate,  dataRate);
+
+    
+    //------------------------------------------------------------------
+    //Retrieve "Resolution" (column request) values for all devices
+    //------------------------------------------------------------------
+    r = HcrSimTest.FindSettings(category, KMaxNumAccelerateDevices, mask, 
+            KCapsField_Resolution, ids, types, lengths);
+    //Assert against the error
+    test_Compare(r,>=,0);
+
+    //Check the number of elements
+    test_Equal(KMaxNumAccelerateDevices, r);
+
+    // Check the ids, lengths and types
+    test_Equal(repIds[KKiSemiIndex][KCapsField_Resolution - 1].iKey, ids[KKiSemiIndex]);
+    test_Equal(HCR::ETypeUInt16, types[KKiSemiIndex]);
+    test_Equal(0,lengths[KKiSemiIndex]);
+
+    // Check the ids, lengths and types
+    test_Equal(repIds[KSpecCo4gIndex][KCapsField_Resolution - 1].iKey, ids[KSpecCo4gIndex]);
+    test_Equal(HCR::ETypeUInt16, types[KSpecCo4gIndex]);
+    test_Equal(0,lengths[KSpecCo4gIndex]);
+
+
+    //----------------------------
+    //Get all "Resolution" values
+    //----------------------------
+    TUint16 resolution;
+
+    //KiSemi
+    setId.iKey = ids[KKiSemiIndex];
+    r = HcrSimTest.GetUInt(setId,  resolution);
+    test_KErrNone(r);
+    test_Equal(capsStructs[KKiSemiIndex].iResolution, resolution);
+
+    //SpecCo 
+    setId.iKey = ids[KSpecCo4gIndex];
+    r = HcrSimTest.GetUInt(setId, resolution);
+    test_KErrNone(r);
+    test_Equal(capsStructs[KSpecCo4gIndex].iResolution, resolution);
+
+
+    //------------------------------------------------------------------
+    //Retrieve "Scale" (column request) values for all devices
+    //------------------------------------------------------------------
+    r = HcrSimTest.FindSettings(category, KMaxNumAccelerateDevices, mask, 
+            KCapsField_Scale, ids, types, lengths);
+    //Assert against the error
+    test_Compare(r,>=,0);
+
+    //Check the number of elements
+    test_Equal(KMaxNumAccelerateDevices, r);
+
+    // Check the ids, lengths and types
+    test_Equal(repIds[KKiSemiIndex][KCapsField_Scale - 1].iKey, ids[KKiSemiIndex]);
+    test_Equal(HCR::ETypeUInt16, types[KKiSemiIndex]);
+    test_Equal(0,lengths[KKiSemiIndex]);
+
+    // Check the ids, lengths and types
+    test_Equal(repIds[KSpecCo4gIndex][KCapsField_Scale - 1].iKey, ids[KSpecCo4gIndex]);
+    test_Equal(HCR::ETypeUInt16, types[KSpecCo4gIndex]);
+    test_Equal(0,lengths[KSpecCo4gIndex]);
+
+
+    //----------------------------
+    //Get all "Scale" values
+    //----------------------------
+    TUint16 scale;
+
+    //KiSemi
+    setId.iKey = ids[KKiSemiIndex];
+    r = HcrSimTest.GetUInt(setId,  scale);
+    test_KErrNone(r);
+    test_Equal(capsStructs[KKiSemiIndex].iScale, scale);
+
+    //SpecCo 
+    setId.iKey = ids[KSpecCo4gIndex];
+    r = HcrSimTest.GetUInt(setId, scale);
+    test_KErrNone(r);
+    test_Equal(capsStructs[KSpecCo4gIndex].iScale, scale);
+    
+    
+    
+    //-----------------------------------------------------------------------
+    //Read a complete row data for the single device
+    //-----------------------------------------------------------------------
+    mask = 0xffff0000; //retrive a row
+    
+    //------------------------
+    //KiSemi
+    //------------------------
+    r = HcrSimTest.FindSettings(category, KNumElementsInRow, mask, 
+            KKiSemiPattern, ids, types, lengths);
+    //Assert against the error
+    test_Compare(r,>=,0);
+    
+    //Assert the number of found elements
+    test_Equal(KNumElementsInRow, r);
+    
+    //Check the ManufactureId
+    setId.iKey = ids[KCapsField_Manufacturer-1];
+    r = HcrSimTest.GetUInt(setId,  manufId);
+    test_KErrNone(r);
+    test_Equal(capsStructs[KKiSemiIndex].iManufactureId,  manufId);
+    
+    //Check the DeviceId
+    setId.iKey = ids[KCapsField_Device-1];
+    r = HcrSimTest.GetUInt(setId,  devId);
+    test_KErrNone(r);
+    test_Equal(capsStructs[KKiSemiIndex].iDeviceId,  devId);
+    
+    //Check the DeviceName
+    setId.iKey = ids[KCapsField_Name-1];
+    r = HcrSimTest.GetString(setId, KKiSemiIncDevNameLength, 
+            nameKiSemi, len);
+    test_KErrNone(r);
+    r = memcompare((unsigned char*)capsStructs[KKiSemiIndex].iDevName,
+        (int)KKiSemiIncDevNameLength, nameKiSemi, (int)KKiSemiIncDevNameLength);
+    test_KErrNone(r);
+    
+    //Check the DataRate
+    setId.iKey = ids[KCapsField_DataRate-1];
+    r = HcrSimTest.GetUInt(setId,  dataRate);
+    test_KErrNone(r);
+    test_Equal(capsStructs[KKiSemiIndex].iDataRate, dataRate);
+
+    
+    //Check the Resolution
+    setId.iKey = ids[KCapsField_Resolution-1];
+    r = HcrSimTest.GetUInt(setId,  resolution);
+    test_KErrNone(r);
+    test_Equal(capsStructs[KKiSemiIndex].iResolution, resolution);
+
+    //------------------------
+    //SpecCo
+    //------------------------
+    r = HcrSimTest.FindSettings(category, KNumElementsInRow, mask, 
+            KSpecCo4gPattern, ids, types, lengths);
+    //Assert against the error
+    test_Compare(r,>=,0);
+
+    //Assert the number of found elements
+    test_Equal(KNumElementsInRow, r);
+
+    //Check the ManufactureId
+    setId.iKey = ids[KCapsField_Manufacturer-1];
+    r = HcrSimTest.GetUInt(setId,  manufId);
+    test_KErrNone(r);
+    test_Equal(capsStructs[KSpecCo4gIndex].iManufactureId,  manufId);
+
+    //Check the DeviceId
+    setId.iKey = ids[KCapsField_Device-1];
+    r = HcrSimTest.GetUInt(setId,  devId);
+    test_KErrNone(r);
+    test_Equal(capsStructs[KSpecCo4gIndex].iDeviceId,  devId);
+
+    //Check the DeviceName
+    setId.iKey = ids[KCapsField_Name-1];
+    r = HcrSimTest.GetString(setId, KSpecCo4gDevNameLength, 
+            nameSpecCo, len);
+    test_KErrNone(r);
+    r = memcompare((unsigned char*)capsStructs[KSpecCo4gIndex].iDevName,
+          (int)KSpecCo4gDevNameLength, nameSpecCo, (int)KSpecCo4gDevNameLength);
+    test_KErrNone(r);
+
+    //Check the DataRate
+    setId.iKey = ids[KCapsField_DataRate-1];
+    r = HcrSimTest.GetUInt(setId,  dataRate);
+    test_KErrNone(r);
+    test_Equal(capsStructs[KSpecCo4gIndex].iDataRate, dataRate);
+
+    //Check the Resolution
+    setId.iKey = ids[KCapsField_Resolution-1];
+    r = HcrSimTest.GetUInt(setId,  resolution);
+    test_KErrNone(r);
+    test_Equal(capsStructs[KSpecCo4gIndex].iResolution, resolution);
+
+
+    //Deallocate allocated resources
+    delete[] ids;
+    delete[] types;
+    delete[] lengths;
+    
+    delete[] nameKiSemi;
+    delete[] nameSpecCo;
+    
+    delete[] capsStructs;
+    
+
+    HcrSimTest.Close();
+    r = User::FreeLogicalDevice(aDriver);
+    test_KErrNone(r);
+    test.End();
+    }
+    
+
 void HcrSimBenchmarkTests(const TDesC& aDriver)
 	{
 	test.Next(_L("Simulated HCR Benchmark"));
@@ -2639,7 +3336,9 @@ GLDEF_C TInt E32Main()
 	HcrPslTests(KTestHcrSimClient);
 	HcrSimTests(KTestHcrSimOwn);
 	HcrSimTests(KTestHcrSimClient);
-
+	
+	HcrCatRecodsExampleTest(KTestHcrSimOwn);
+	HcrCatRecodsExampleTest(KTestHcrSimClient);
 
 	//Benchmark tests
 	HcrSimBenchmarkTests(KTestHcrSimOwn);

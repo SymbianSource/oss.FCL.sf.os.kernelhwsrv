@@ -33,6 +33,13 @@ USERINCLUDE		../include/drivers
 sourcepath			../kernel
 source				smonitor.cpp
 
+#ifdef SMP
+sourcepath			../nkernsmp
+#else
+sourcepath			../nkern
+#endif
+source				nk_mon.cpp
+
 #if defined(MARM)
 #ifdef SMP
 sourcepath			../nkernsmp/arm

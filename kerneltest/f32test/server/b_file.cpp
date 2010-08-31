@@ -15,6 +15,7 @@
 // 
 //
 
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32math.h>
 #include <e32test.h>
@@ -72,7 +73,7 @@ LOCAL_C void bwrite(TInt aLength)
     TInt pos=0; // Relative position zero
     aret=TheFile.Seek(ESeekCurrent,pos);
     test.Printf(_L("bwrite2,pos=%u\n"),pos);
-    test(aret==KErrNone);
+    test_KErrNone(aret);
     TInt count=pos&0xff;
 	tbuf.SetLength(aLength);
 	TText8* p=(TText8*)tbuf.Ptr();
@@ -98,7 +99,7 @@ LOCAL_C void bread(TInt aLength)
 	CheckDisk();
     TInt pos=0; // Relative position zero
     aret=TheFile.Seek(ESeekCurrent,pos);
-    test(aret==KErrNone);
+    test_KErrNone(aret);
     TInt count=pos&0xff;
     aret=TheFile.Read(tbuf,aLength);
     if (bret<KErrNone)
@@ -127,7 +128,7 @@ LOCAL_C void bposa(TInt aPos)
 	CheckDisk();
     TInt newpos=aPos;
     aret=TheFile.Seek(ESeekStart,newpos);
-    test(aret==KErrNone);
+    test_KErrNone(aret);
     test(newpos==aPos);
 	CheckDisk();
     }
@@ -165,7 +166,7 @@ LOCAL_C void btest1(TUint aMode)
     bret=KErrAccessDenied; bwrite(1); bret=0;
     bclose();
 	aret=TheFile.Open(TheFs,tzzz,EFileRead);
-	test(aret==KErrNotFound);
+	test_Value(aret, aret == KErrNotFound);
 	test.End();
     }
 
@@ -199,15 +200,15 @@ LOCAL_C void btest2(TUint aMode)
     bposa(0);
     bret=1100; bread(1100); bret=0;
     aret=TheFile.Flush();
-    test(aret==KErrNone);
+    test_KErrNone(aret);
     aret=TheFile.SetSize(2000);
-    test(aret==KErrNone);
+    test_KErrNone(aret);
     TInt pos=0;
     aret=TheFile.Seek(ESeekCurrent,pos);
-    test(aret==KErrNone && pos==1100);
+    test_Value(aret, aret == KErrNone && pos==1100);
     pos=0;
     aret=TheFile.Seek(ESeekEnd,pos);
-    test(aret==KErrNone && pos==2000);
+    test_Value(aret, aret == KErrNone && pos==2000);
     bclose();
 	test.End();
     }
@@ -225,32 +226,32 @@ LOCAL_C void rndtest(TUint aMode)
     test.Start(_L("RNDTEST..."));
     TInt64 seed(0),zero(0);
 	aret=TheFile.Replace(TheFs,rndm,EFileWrite|aMode);
-	test(aret==KErrNone);
+	test_KErrNone(aret);
     for (cnt=0;cnt<KRandomNumbers;cnt++)
         {
 		TBuf8<0x10> b;
 		b.Format(TPtrC8((TUint8*)"%8x"),Math::Rand(seed));
 		aret=TheFile.Write(b);
-		test(aret==KErrNone);
+		test_KErrNone(aret);
         }
 	TheFile.Close();
 //
     test.Next(_L("Reading back"));
     seed=zero;
 	aret=TheFile.Open(TheFs,rndm,aMode);
-	test(aret==KErrNone);
+	test_KErrNone(aret);
     for (cnt=0;cnt<KRandomNumbers;cnt++)
         {
 		TBuf8<8> b;
 		b.Format(TPtrC8((TUint8*)"%8x"),Math::Rand(seed));
 		TBuf8<8> r;
 		aret=TheFile.Read(r);
-		test(aret==KErrNone);
+		test_KErrNone(aret);
 		test(b==r);
         }
 	TheFile.Close();
     aret=TheFs.Delete(rndm);
-	test(aret==KErrNone);
+	test_KErrNone(aret);
 //
 	test.End();
     }
@@ -264,14 +265,14 @@ LOCAL_C void testAutoClose()
     test.Start(_L("TAutoClose..."));
 	TAutoClose<RFile> f;
 	aret=f.iObj.Replace(TheFs,rndm,EFileWrite);
-	test(aret==KErrNone);
+	test_KErrNone(aret);
     TInt64 seed;
     for (TInt cnt=0;cnt<KRandomNumbers;cnt++)
         {
 		TBuf8<0x10> b;
 		b.Format(TPtrC8((TUint8*)"%8x"),Math::Rand(seed));
 		aret=f.iObj.Write(b);
-		test(aret==KErrNone);
+		test_KErrNone(aret);
         }
 	test.End();
     }
@@ -283,7 +284,7 @@ LOCAL_C void readWithNegativeLengthTest()
 	TRequestStatus status = KRequestPending;
 	TheFile.Open(TheFs,tbin,EFileRead);
  	ret = TheFile.Read(0,tbuf,-1);			// sync
- 	test ( ret == KErrArgument);
+ 	test_Value(ret, ret == KErrArgument);
  	TheFile.Read(0,tbuf,-1,status);		// async
  	User::WaitForRequest(status);
  	test(status.Int() == KErrArgument);
@@ -299,16 +300,16 @@ LOCAL_C void readWithNegativeLengthTestForEmptyFile()
 	RFile f;             
 	MakeFile(_L("C:\\F32-TST\\TFILE\\hello2.txt"));
 	TInt r=f.Open(TheFs,_L("C:\\F32-TST\\TFILE\\hello2.txt"),EFileRead); 
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TBuf8<0x100> a;
 	test.Next(_L("Check Negative length when file is empty"));
 	r=f.Read(a, -10);
-	test(r==KErrArgument);
+	test_Value(r, r == KErrArgument);
 	r=f.Read(0,a, -1);
-	test(r==KErrArgument);
+	test_Value(r, r == KErrArgument);
 	r=f.Read(0,a, -10);
-	test(r==KErrArgument);
+	test_Value(r, r == KErrArgument);
 	TRequestStatus	stat1;
 	f.Read(0,a,-5,stat1);
 	User::WaitForRequest(stat1);

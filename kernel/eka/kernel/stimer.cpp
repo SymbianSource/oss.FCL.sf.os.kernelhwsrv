@@ -1071,16 +1071,29 @@ void DTimer::MsComplete(TAny* aTimer)
 	DTimer* pT=FromPtr(aTimer);
 	NKern::LockSystem();
 	pT->iTimer.iState = (TUint8)TTimer::EIdle;
-	Kern::QueueRequestComplete(pT->Owner(), pT->iTimer.iRequest,KErrNone);
+	Kern::QueueRequestComplete(pT->Owner(), pT->iTimer.iRequest, KErrNone);
 	NKern::UnlockSystem();
 	}
 
-void DTimer::HighRes(TRequestStatus& aStatus, TInt anInterval)
+void DTimer::HighRes(TRequestStatus& aStatus, TInt aInterval)
 	{
 	// enter and return with system locked
-	TInt r=iTimer.AfterHighRes(anInterval,MsComplete,aStatus);
+	TInt r=iTimer.AfterHighRes(aInterval,MsComplete,aStatus);
 	if (r!=KErrNone)
 		K::PanicCurrentThread(ETimerAlreadyPending);
+	}
+
+void DTimer::AgainHighRes(TRequestStatus& aStatus, TInt aInterval)
+	{
+	// enter and return with system locked
+	TInt r=iTimer.AgainHighRes(aInterval,MsComplete,aStatus);
+	if (r==KErrInUse)
+		K::PanicCurrentThread(ETimerAlreadyPending);
+	else if (r!=KErrNone)
+		{
+		TRequestStatus* status = &aStatus;
+		Kern::RequestComplete(status, r);
+		}
 	}
 
 void DTimer::Cancel()
@@ -1191,7 +1204,7 @@ void TTimer::SetType(TTimerType aType)
 	iType=(TUint8)aType;
 	}
 
-TInt TTimer::AfterHighRes(TInt anInterval, NTimerFn aFunction, TRequestStatus& aStatus)
+TInt TTimer::AfterHighRes(TInt aInterval, NTimerFn aFunction, TRequestStatus& aStatus)
 	{
 	// enter and return with system locked
 	if (iState!=EIdle || iRequest->SetStatus(&aStatus) != KErrNone)
@@ -1199,10 +1212,35 @@ TInt TTimer::AfterHighRes(TInt anInterval, NTimerFn aFunction, TRequestStatus& a
 	iState = (TUint8)EWaitHighRes;
 	SetType(EHighRes);
 	TInt msp=NTickPeriod();
-	TInt t=(TInt)(((TUint)anInterval+msp-1)/msp);	// convert microseconds to milliseconds, rounding up
+	TInt t=(TInt)(((TUint)aInterval+msp-1)/msp);	// convert microseconds to milliseconds, rounding up
 	new (&Ms()) NTimer(aFunction,this);
 	Ms().OneShot(t,ETrue);			// start millisecond timer, complete in DFC
 	return KErrNone;
+	}
+
+TInt TTimer::AgainHighRes(TInt aInterval, NTimerFn aFunction, TRequestStatus& aStatus)
+	{
+	// enter and return with system locked
+	if (iState!=EIdle)
+		return KErrInUse;
+	if (iType!=EHighRes)
+		return AfterHighRes(aInterval, aFunction, aStatus);
+	if (iRequest->SetStatus(&aStatus) != KErrNone)
+		return KErrInUse;
+	iState = (TUint8)EWaitHighRes;
+	TInt msp=NTickPeriod();
+	TInt t;
+	if (aInterval>=0)
+		t = (TInt)(((TUint)aInterval+msp-1)/msp);	// convert microseconds to milliseconds, rounding up
+	else
+		t = aInterval/msp;		// convert microseconds to milliseconds, rounding up
+	TInt r = Ms().Again(t);		// start millisecond timer, complete in DFC
+	if (r != KErrNone)
+		{
+		iState=(TUint8)EIdle;
+		iRequest->Reset();
+		}
+	return r;
 	}
 
 void TTimer::Cancel(DThread* aThread)
@@ -1391,6 +1429,12 @@ void ExecHandler::TimerHighRes(DTimer* aTimer, TRequestStatus& aStatus, TInt aTi
 	{
 	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::TimerHighRes"));
 	aTimer->HighRes(aStatus,aTime);
+	}
+
+void ExecHandler::TimerAgainHighRes(DTimer* aTimer, TRequestStatus& aStatus, TInt aTime)
+	{
+	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::TimerAgainHighRes"));
+	aTimer->AgainHighRes(aStatus,aTime);
 	}
 
 void ExecHandler::TimerAt(DTimer* aTimer, TRequestStatus& aStatus, TUint32 aTimeLo, TUint32 aTimeHi)

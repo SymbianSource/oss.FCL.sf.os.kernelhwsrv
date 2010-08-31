@@ -86,7 +86,7 @@ source					byte_pair.cia
 sourcepath				../klib/arm
 source					 ckdes8.cia cumem.cia cbma.cia
 sourcepath				../common/arm
-source					carray.cia cdes8.cia cheap.cia cmem.cia
+source					carray.cia cdes8.cia cmem.cia
 #if defined(GCC32)
 source 					cgcchelp.cpp cgcchelp.cia
 #elif defined(ARMCC)
@@ -135,6 +135,10 @@ source					 cglobals.cpp cexec.cpp cinit.cpp
 source					 ckernel.cpp csched.cpp
 source					 cutils.cpp cache.cpp
 
+sourcepath				../common/win32
+userinclude				../common
+source					cmem.cpp
+
 library					emulator.lib
 #endif
 
@@ -158,13 +162,15 @@ source					 sbtrace.cpp
 source					 stest.cpp
 source					 sshbuf.cpp smap.cpp
 source					 srandombuff.cpp
+source					 kerncorestats.cpp
 
 sourcepath				../klib
 source					dbase.cpp kdes8.cpp
 source					kheap.cpp bma.cpp
 
 sourcepath				../common
-source					alloc.cpp array.cpp des8.cpp heap.cpp mem.cpp
+source					alloc.cpp array.cpp des8.cpp mem.cpp
+source					heap_hybrid.cpp debugfunction.cpp   
 source					secure.cpp
 macro					__EXPORT_MEMCPY__
 #ifdef MARM

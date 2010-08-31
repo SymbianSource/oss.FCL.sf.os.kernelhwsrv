@@ -24,6 +24,7 @@ OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 
 macro		BTRACE_RESOURCE_MANAGER
 macro		RESOURCE_MANAGER_SIMULATED_PSL
+macro		_DUMP_TRACKERS
 macro		PRM_INSTRUMENTATION_MACRO
 //macro		DEBUG_VERSION //Enable if wanted to check for Lock and critical section count checker
 

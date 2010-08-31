@@ -26,7 +26,7 @@ const TInt KHeapSize=0x2000;
 const TInt KAverageOverInSeconds=10;
 const TInt KNumberOfCalculationsPerLoop=10;
 
-volatile TUint count;
+volatile TUint Count;
 #ifdef T_R64BM_WITH_VFP
 RTest test(_L("T_VFPBM"));
 #else
@@ -58,9 +58,10 @@ TInt runTest(TThreadFunction aFunction,const TDesC& aTitle)
 		}
     thread.Resume();
     User::After(1000000);
-    count=0;
+    TUint initial = Count;
     User::After(KAverageOverInSeconds*1000000);
-    TUint64 result = count;
+	TUint final = Count;
+    TUint64 result = TUint64(final - initial);
 	result *= TUint64(KNumberOfCalculationsPerLoop);
 	result /= TUint64(KAverageOverInSeconds);
 	TUint r32 = (TUint)result;

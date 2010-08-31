@@ -191,7 +191,9 @@ TInt NKern::BootAP(volatile SAPBootInfo* aInfo)
 	__e32_io_completion_barrier();
 	a.iBPTimestamp = X86::Timestamp();
 	__e32_io_completion_barrier();
-	while (a.iBootFlag2==2)
+	a.iBootFlag2 = 3;
+	__e32_io_completion_barrier();
+	while (a.iBootFlag2==3)
 		{}
 	__e32_io_completion_barrier();
 	NKern::EnableAllInterrupts();
@@ -199,8 +201,16 @@ TInt NKern::BootAP(volatile SAPBootInfo* aInfo)
 	return KErrNone;
 	}
 
-void InitAPTimestamp(SNThreadCreateInfo&)
+void InitTimestamp(TSubScheduler* aSS, SNThreadCreateInfo& aInfo)
 	{
+	NThread* t = (NThread*)aSS->iCurrentThread;
+	t->iActiveState = 1;
+	if (aSS->iCpuNum == 0)
+		{
+		aSS->iLastTimestamp.i64 = 0;
+		t->iLastActivationTime.i64 = 0;
+		return;
+		}
 	volatile SApInitInfo& a = *(volatile SApInitInfo*)KApBootPage;
 	NKern::DisableAllInterrupts();
 	a.iBootFlag2 = 1;
@@ -210,16 +220,20 @@ void InitAPTimestamp(SNThreadCreateInfo&)
 	__e32_io_completion_barrier();
 	a.iAPTimestamp = X86::Timestamp();
 	__e32_io_completion_barrier();
+	while (a.iBootFlag2!=3)
+		{}
+	__e32_io_completion_barrier();
 	TUint64 bpt = a.iBPTimestamp;
 	TUint64 apt = a.iAPTimestamp;
 	TUint64 delta = bpt - apt;
-	TSubScheduler& ss = SubScheduler();
-	ss.iLastTimestamp64 += delta;
-	*(TUint64*)&ss.i_TimestampOffset = delta;
+	aSS->iSSX.iTimestampOffset.i64 = delta;
+	TUint64 now = NKern::Timestamp();
 	__KTRACE_OPT(KBOOT,DEBUGPRINT("APT=0x%lx BPT=0x%lx Delta=0x%lx", apt, bpt, delta));
 	__e32_io_completion_barrier();
-	a.iBootFlag2 = 3;
+	a.iBootFlag2 = 4;
 	NKern::EnableAllInterrupts();
+	t->iLastActivationTime.i64 = now;
+	aSS->iLastTimestamp.i64 = now;
 	}
 
 

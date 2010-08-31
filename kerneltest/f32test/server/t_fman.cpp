@@ -53,6 +53,7 @@ MFileManObserver::TControl CFileManObserver::NotifyFileManEnded()
 // Called back after each FMan tick
 //
 	{
+    (void) MFileManObserver::NotifyFileManEnded();
 	TInt lastError=iFileMan->GetLastError();
 	if (lastError!=KErrNone && lastError!=KErrBadName)
 		{
@@ -3108,7 +3109,6 @@ private:
 	CFileMan* iFileMan;
 	};
 
-
 CFileManObserverOverWrite::CFileManObserverOverWrite(CFileMan* aFileMan)
 //
 // Constructor
@@ -3136,6 +3136,59 @@ MFileManObserver::TControl CFileManObserverOverWrite::NotifyFileManEnded()
 		}
 	return(MFileManObserver::EContinue);
 	}
+
+class CFileManObserverBytesCopied : public CBase, public MFileManObserver
+    {
+public:
+    CFileManObserverBytesCopied(CFileMan* aFileMan);
+    TControl NotifyFileManEnded();
+    TControl NotifyFileManOperation();
+    TInt iBytesToBeCopied;
+private:
+    CFileMan* iFileMan;
+    TInt iBytesCopied;
+    };
+
+CFileManObserverBytesCopied::CFileManObserverBytesCopied(CFileMan* aFileMan)
+//
+// Constructor
+//
+    {
+    __DECLARE_NAME(_S("CFileManObserverBytesCopied"));
+    iFileMan=aFileMan;
+    iBytesCopied=0;
+    }
+
+MFileManObserver::TControl CFileManObserverBytesCopied::NotifyFileManOperation()
+//
+// Observer for testBytesCopied tests
+//
+    {
+    TFileName target;
+    iFileMan->GetCurrentTarget(target);
+    TInt match = target.MatchF(_L("?:\\bytesTransferred"));
+    if(match != 0)
+        {
+        RDebug::Print(_L("CFileManObserverBytesCopied::NotifyFileManOperation - target %s, match %d"),target.PtrZ(),match);
+        return MFileManObserver::EAbort;
+        }
+    
+    iBytesCopied += iFileMan->BytesTransferredByCopyStep();
+    return(MFileManObserver::EContinue);
+    }
+
+MFileManObserver::TControl CFileManObserverBytesCopied::NotifyFileManEnded()
+//
+// Observer for testBytesCopied  tests
+//
+    {
+    if(iBytesCopied!=iBytesToBeCopied)
+        return (MFileManObserver::EAbort);
+    
+    return(MFileManObserver::EContinue);
+    }
+
+
 
 LOCAL_C void TestOverWrite()
 //
@@ -3926,7 +3979,7 @@ LOCAL_C void TestMoveEmptyDirectory()
 	MakeDir(_L("C:\\F32-TST\\TFMAN\\DRIVEMOVE\\"));
 	TInt r=gFileMan->Move(_L("C:\\F32-TST\\TFMAN\\DRIVEMOVE\\*"),trgDrive,CFileMan::ERecurse);
 	test.Printf(_L("TestMoveEmptyDirectory(),gFileMan->Move(),r=%d\n"),r);
-	test (r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	}
 
 LOCAL_C void TestCopyAndRename()
@@ -4306,6 +4359,79 @@ void TestDEF130678()
 	RmDir(_L("C:\\TestDEF130678\\"));	
 	}
 
+void TestBytesTransferredByCopyStep()
+    {
+    //
+    // Test BytesCopied
+    //
+    test.Next(_L("TestBytesTransferredByCopyStep"));
+    (void)gFileMan->Delete(_L("\\bytesTransferred"));
+    
+    RFile tempFile;
+    TFileName tempname;
+    TInt r = tempFile.Temp(TheFs,_L("\\"),tempname,EFileWrite);
+    test_KErrNone(r);
+    r = tempFile.SetSize(50);
+    test_KErrNone(r);
+    tempFile.Flush();
+    tempFile.Close();
+
+    CFileManObserverBytesCopied* fManObserver=new(ELeave) CFileManObserverBytesCopied(gFileMan);
+    CleanupStack::PushL(fManObserver);
+    gFileMan->SetObserver(fManObserver);
+    fManObserver->iBytesToBeCopied=50;
+    
+    if (!gAsynch)
+        {
+        r=gFileMan->Copy(tempname,_L("\\bytesTransferred"),CFileMan::EOverWrite);
+        test_KErrNone(r);
+        }
+    else
+        {
+        TInt r=gFileMan->Copy(tempname,_L("\\bytesTransferred"),CFileMan::EOverWrite,gStat);
+        test_KErrNone(r);
+        WaitForSuccess();
+        }
+    
+    (void)gFileMan->Delete(_L("\\bytesTransferred"));
+    (void)TheFs.Delete(tempname);
+    CleanupStack::PopAndDestroy();
+    }
+
+void TestGetMoreErrorInfo()
+    {
+    //
+     // Test GetMoreErrorInfo
+     //
+     test.Next(_L("TestGetMoreErrorInfo"));
+
+     CFileManObserver* fManObserver=new(ELeave) CFileManObserver(gFileMan);
+     CleanupStack::PushL(fManObserver);
+     gFileMan->SetObserver(fManObserver);
+     
+     if (!gAsynch)
+         {
+         TInt r=gFileMan->Copy(_L("\\SRC"),_L("\\TRG"),0);
+         if(r!=KErrNone) //correct behaviour
+             {
+             TFileManError error = gFileMan->GetMoreInfoAboutError();
+             test_Equal((TFileManError)ENoFilesProcessed,error);
+             }
+         else { test_Equal(!KErrNone,r); }
+         }
+     else
+         {
+         TInt r=gFileMan->Copy(_L("\\SRC"),_L("\\TRG"),0,gStat);
+         if(r!=KErrNone) //correct behaviour
+             {
+             TFileManError error = gFileMan->GetMoreInfoAboutError();
+             test_Equal((TFileManError)ENoFilesProcessed,error);
+             }
+         else { test_Equal(!KErrNone,r); }
+         }
+    CleanupStack::PopAndDestroy();
+    }
+
 GLDEF_C void CallTestsL()
 //
 // Do tests
@@ -4401,6 +4527,8 @@ GLDEF_C void CallTestsL()
 	TestCopyAllCancel();
 	
 	TestDEF130678(); // Test CFileMan::Move does not leak any memory
+	TestBytesTransferredByCopyStep();
+	TestGetMoreErrorInfo();
 #ifndef __WINS__
 	RThread t;
 	TThreadStackInfo stack;
@@ -4408,6 +4536,7 @@ GLDEF_C void CallTestsL()
 	TestStackUsage(0, stack);
 #endif
 
+	
 	Cleanup();
 	DeleteTestDirectory();
 	test_KErrNone(TheFs.RmDir(_L("\\F32-TST\\")));

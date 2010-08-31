@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -355,37 +355,69 @@ class DmacSim
 public:
 	static void StartEmulation();
 	static void StopEmulation();
+	static TBool InISR();
+	static void Synchronize();
 private:
 	enum { KPeriod = 1 }; // in ms
+	enum { EDmaSimIdle=0u, EDmaSimStarted=1u, EDmaSimInISR=2u, EDmaSimStopping=0x80000000u };
 	static void TickCB(TAny* aThis);
 	static NTimer Timer;
+	static volatile TInt StartStop;
 	};
 
 NTimer DmacSim::Timer;
+volatile TInt DmacSim::StartStop;
 
 void DmacSim::StartEmulation()
 	{
+	__DMA_ASSERTA(StartStop==EDmaSimIdle);
 	new (&Timer) NTimer(&TickCB, 0);
+	__e32_atomic_store_ord32(&StartStop, EDmaSimStarted);
 	__DMA_ASSERTA(Timer.OneShot(KPeriod, EFalse) == KErrNone);
 	}
 
 void DmacSim::StopEmulation()
 	{
-	// Ensure that timer really is cancelled.
-	TBool cancelled = EFalse;
-	do
-		{
-		cancelled = Timer.Cancel();
-		}
-	while(!cancelled);
+	TInt orig = __e32_atomic_tas_ord32(&StartStop, (TInt)EDmaSimStarted, (TInt)EDmaSimStopping, 0);
+	if (orig == EDmaSimIdle)
+		return;		// wasn't running
+	// loop until we succeed in cancelling the timer or the timer callback
+	// notices that we are shutting down
+	while (!Timer.Cancel() && __e32_atomic_load_acq32(&StartStop)!=EDmaSimIdle)
+		{}
+	__e32_atomic_store_ord32(&StartStop, EDmaSimIdle);
 	}
 
 void DmacSim::TickCB(TAny*)
 	{
-	DmacSb::DoTransfer();
-	DmacDb::DoTransfer();
-	DmacSg::DoTransfer();
-	__DMA_ASSERTA(Timer.Again(KPeriod) == KErrNone);
+	TInt orig = (TInt)__e32_atomic_ior_acq32(&StartStop, EDmaSimInISR);
+	if (orig >= 0)
+		{
+		DmacSb::DoTransfer();
+		DmacDb::DoTransfer();
+		DmacSg::DoTransfer();
+		}
+	orig = (TInt)__e32_atomic_and_rel32(&StartStop, (TUint32)~EDmaSimInISR);
+	if (orig < 0)
+		{
+		__e32_atomic_store_rel32(&StartStop, EDmaSimIdle);
+		return;
+		}
+	TInt r = Timer.Again(KPeriod);
+	if (r == KErrArgument)
+		r = Timer.OneShot(KPeriod);
+	__DMA_ASSERTA(r == KErrNone);
+	}
+
+TBool DmacSim::InISR()
+	{
+	return __e32_atomic_load_acq32(&StartStop) & EDmaSimInISR;
+	}
+
+void DmacSim::Synchronize()
+	{
+	while (InISR())
+		{}
 	}
 
 //////////////////////////////////////////////////////////////////////////////
@@ -442,6 +474,7 @@ void DSimSbController::Transfer(const TDmaChannel& aChannel, const SDmaDesHdr& a
 void DSimSbController::StopTransfer(const TDmaChannel& aChannel)
 	{
 	__e32_atomic_and_ord32(&DmacSb::ControlStatus[aChannel.PslId()], (TUint32)~DmacSb::ECsRun);
+	DmacSim::Synchronize();
 	}
 
 
@@ -542,6 +575,7 @@ void DSimDbController::Transfer(const TDmaChannel& aChannel, const SDmaDesHdr& a
 void DSimDbController::StopTransfer(const TDmaChannel& aChannel)
 	{
 	__e32_atomic_and_ord32(&DmacDb::ControlStatus[aChannel.PslId()], (TUint32)~(DmacDb::ECsRun|DmacDb::ECsPrg));
+	DmacSim::Synchronize();
 	}
 
 
@@ -672,6 +706,7 @@ void DSimSgController::Transfer(const TDmaChannel& aChannel, const SDmaDesHdr& a
 void DSimSgController::StopTransfer(const TDmaChannel& aChannel)
 	{
 	__e32_atomic_and_ord32(&DmacSg::ChannelControl[aChannel.PslId()], (TUint32)~DmacSg::EChannelBitRun);
+	DmacSim::Synchronize();
 	}
 
 

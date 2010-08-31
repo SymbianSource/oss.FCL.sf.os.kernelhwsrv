@@ -1127,6 +1127,18 @@ inline TBool DMMCSession::RequestMoreData()
 	return(EFalse);
 	}
 
+inline void DMMCSession::SaveCard()
+	{
+	if (iCardP)
+		iSavedCardP = iCardP;
+	}
+
+inline void DMMCSession::RestoreCard()
+	{
+	if (iSavedCardP)
+		iCardP = iSavedCardP;
+	iSavedCardP = NULL;
+	}
 
 //	--------  class DMMCSocket  --------
 

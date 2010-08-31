@@ -974,7 +974,7 @@ void CFsMessageRequest::ProcessPostOperation()
 //
 	{
 	TInt err = KErrNone;
-	if(!iCurrentPlugin->IsPluginThread(*this))
+	if(!iCurrentPlugin->OriginatedFromPlugin(*this))
 		{
 		// The request hasn't come from this plugin so it's safe to dispatch		
 		TFsPluginRequest request(this);
@@ -997,14 +997,17 @@ void CFsMessageRequest::ProcessPostOperation()
 	
 	// Find the previous plugin in the chain and dispatch
 	//  - If no more plugins are interested in this message, then complete
-	FsPluginManager::PrevPlugin(iCurrentPlugin, this, ETrue);
+	FsPluginManager::ReadLockChain();
+	FsPluginManager::PrevPlugin(iCurrentPlugin, this);
 	if(iCurrentPlugin == NULL)
 		{
+	    FsPluginManager::UnlockChain();
 		Complete(GetError());
 		return;
 		}
 
 	Dispatch();
+	FsPluginManager::UnlockChain();
 	return;
 	}
 	
@@ -1015,7 +1018,7 @@ void CFsMessageRequest::ProcessPreOperation()
 //
 	{
 	TInt err = KErrNone;
-	if(!iCurrentPlugin->IsPluginThread(*this))
+	if(!iCurrentPlugin->OriginatedFromPlugin(*this))
 		{
 		// The request hasn't come from this plugin so it's safe to dispatch		
 		TFsPluginRequest request(this);		
@@ -1024,7 +1027,7 @@ void CFsMessageRequest::ProcessPreOperation()
 
 		if((iOperation->Function() == EFsDismountPlugin) && (err !=  KErrPermissionDenied))
 			{
-			TRAP(leaveValue, err = iOperation->DoRequestL(this));
+		    err = KErrNone;
 			}
 
 		if(leaveValue != KErrNone)
@@ -1042,10 +1045,12 @@ void CFsMessageRequest::ProcessPreOperation()
 		// Find the next plugin in the chain and dispatch
 		//  - If no more plugins are interested in this message, 
 		//	  then Dispatch() will process the request in drive/main thread context.
-		FsPluginManager::NextPlugin(iCurrentPlugin, this,(TBool)ETrue);
+	    FsPluginManager::ReadLockChain();
+		FsPluginManager::NextPlugin(iCurrentPlugin, this);
 		if(iCurrentPlugin && IsPostOperation())
 			SetPostOperation(EFalse);
 		Dispatch();
+		FsPluginManager::UnlockChain();
 		return;
 		}
 	// KErrCompletion may be returned by the plugin to 
@@ -1054,18 +1059,21 @@ void CFsMessageRequest::ProcessPreOperation()
 		{
 		// Find the previous plugin in the chain and dispatch
 		//  - If no more plugins are interested in this message, then complete
-		FsPluginManager::PrevPlugin(iCurrentPlugin, this,(TBool)ETrue);
+	    FsPluginManager::ReadLockChain();
+		FsPluginManager::PrevPlugin(iCurrentPlugin, this);
 		if(iCurrentPlugin != NULL)
 			{
 			SetPostOperation(ETrue);
 			err = KErrNone;
 			Dispatch();
+			FsPluginManager::UnlockChain();
 			return;
 			}
 		else
 			{
 			err = KErrNone;	
 			}
+		FsPluginManager::UnlockChain();
 		}
 		
 	Complete(err);
@@ -1124,13 +1132,18 @@ void CFsMessageRequest::ProcessDriveOperation()
 	iCurrentPlugin = NULL;
 	if (PostInterceptEnabled())
 		{
-		FsPluginManager::PrevPlugin(iCurrentPlugin, this,(TBool)ETrue);
-		if(iCurrentPlugin && !iCurrentPlugin->IsPluginThread(*this))
+	    FsPluginManager::ReadLockChain();
+		FsPluginManager::PrevPlugin(iCurrentPlugin, this);
+		if(iCurrentPlugin && !iCurrentPlugin->OriginatedFromPlugin(*this))
 			{
 			SetPostOperation(ETrue);
 			if (DispatchToPlugin())
+			    {
+		        FsPluginManager::UnlockChain();  
 				return;
+			    }
 			}
+		FsPluginManager::UnlockChain();		
 		}		
 
 	Complete(GetError());
@@ -1409,13 +1422,16 @@ TInt CFsMessageRequest::PostInitialise()
 		iCurrentPlugin = NULL;
 		if (PostInterceptEnabled())
 			{
-			FsPluginManager::PrevPlugin(iCurrentPlugin, this,(TBool)ETrue);
-			if(iCurrentPlugin && !iCurrentPlugin->IsPluginThread(*this))
+		    FsPluginManager::ReadLockChain();
+			FsPluginManager::PrevPlugin(iCurrentPlugin, this);
+			if(iCurrentPlugin && !iCurrentPlugin->OriginatedFromPlugin(*this))
 				{
 				SetPostOperation(ETrue);
 				Dispatch();
+				FsPluginManager::UnlockChain();
 				return r;	// EReqActionComplete
 				}
+			FsPluginManager::UnlockChain();
 			}		
 
 		Complete(KErrNone);
@@ -1443,6 +1459,7 @@ void CFsMessageRequest::Dispatch(TBool aInitialise, TBool aLowPriority, TBool aD
 	__THRD_PRINT1(_L("CFsMessageRequest::Dispatch() req %08x"), this);
 
 	TInt r = KErrNone;
+	TBool pluginChainLocked = EFalse;
 
 	if (iReqState == EReqStateInitialise && aInitialise)
 		{
@@ -1462,16 +1479,18 @@ void CFsMessageRequest::Dispatch(TBool aInitialise, TBool aLowPriority, TBool aD
 			}
 		if(!IsPluginSpecific() && (iOwnerPlugin == NULL))
 			{
+		    FsPluginManager::ReadLockChain(); // Unlocked in DispatchToPlugin
+		    pluginChainLocked = ETrue;
 			iCurrentPlugin = NULL;
 			iClientThreadId = 0;
-			FsPluginManager::NextPlugin(iCurrentPlugin, this, (TBool)ETrue);
+			FsPluginManager::NextPlugin(iCurrentPlugin, this);
 
 			// find out whether there is a plugin registered to post intercept this message
 			CFsPlugin* postInterceptPlugin = NULL;
 			if (iCurrentPlugin == NULL)
-				FsPluginManager::PrevPlugin(postInterceptPlugin, this, (TBool)ETrue);
+				FsPluginManager::PrevPlugin(postInterceptPlugin, this);
 
-			// Save the client's thread Id for subsequent testing by CFsPlugin::IsPluginThread() - doing so on the fly 
+			// Save the client's thread Id for subsequent testing by CFsPlugin::OriginatedFromPlugin() - doing so on the fly 
 			// is risky because some messages are completed early in which case Message().Client() will result in a panic
 			if ((iCurrentPlugin || postInterceptPlugin) && Message().Handle() != NULL && Message().Handle() != KLocalMessageHandle)
 				{
@@ -1490,16 +1509,23 @@ void CFsMessageRequest::Dispatch(TBool aInitialise, TBool aLowPriority, TBool aD
 		__PLUGIN_PRINT1(_L("PLUGIN: CFsMessageRequest %x dispatched to plugin (async)"), this);
 		// The request has been delivered to the plugin thread
 		//  - leave the main thread now and await asynchronous completion
+		if(pluginChainLocked)
+		    FsPluginManager::UnlockChain();
 		return;
 		}
 
+	//DispatchToPlugin didn't (deliver then unlock) so make sure we unlock here.
+    if(pluginChainLocked)
+        FsPluginManager::UnlockChain();
 
 	// Is there a PostInitialise function ?
 	if (iReqState ==  EReqStatePostInitialise && aInitialise && r == KErrNone)
 		{
 		TInt r = PostInitialise();
 		if (r == EReqActionComplete)
+		    {
 			return;
+		    }
 		else if (r == EReqActionBusy)				// request postponed ?
 			SetState(EReqStatePostInitialise);		// reinitialize when request is next processed
 		}
@@ -1559,6 +1585,7 @@ TBool CFsMessageRequest::DispatchToPlugin()
 //
 // Common route: Receive -> Process -> Dispatch -> DispatchToPlugin
 //
+// (Is called with FsPluginManager ReadLocked)
 	{
 	TInt drivenumber = DriveNumber();
 	if(iCurrentPlugin)
@@ -1572,16 +1599,16 @@ TBool CFsMessageRequest::DispatchToPlugin()
 				iCurrentPlugin = NULL;
 				}
 
-			while(iCurrentPlugin && iCurrentPlugin->IsPluginThread(*this))
+			while(iCurrentPlugin && iCurrentPlugin->OriginatedFromPlugin(*this))
 				{
 				// Skip the current plugin if the request originated from the plugin
 				if(IsPostOperation())
 					{
-					FsPluginManager::PrevPlugin(iCurrentPlugin, this,(TBool)ETrue);
+					FsPluginManager::PrevPlugin(iCurrentPlugin, this);
 					}
 				else
 					{
-					FsPluginManager::NextPlugin(iCurrentPlugin, this,(TBool)ETrue);
+					FsPluginManager::NextPlugin(iCurrentPlugin, this);
 					}
 				}
 				
@@ -1611,7 +1638,7 @@ TBool CFsMessageRequest::DispatchToPlugin()
 					//  - Pass the message on to the next plugin
 					if(FsFunction() != EFsPluginOpen)
 					    {
-	                    FsPluginManager::NextPlugin(iCurrentPlugin, this,(TBool)ETrue);
+	                    FsPluginManager::NextPlugin(iCurrentPlugin, this);
 	                    continue;
 					    }
 					else // FsFunction == EFsPluginOpen
@@ -1619,7 +1646,6 @@ TBool CFsMessageRequest::DispatchToPlugin()
 					    /* 
 					     * PluginOpen requests should not be passed down the plugin stack.
 					     * 
-
 					     */
 					    iCurrentPlugin = NULL;
 					    continue;
@@ -1630,7 +1656,7 @@ TBool CFsMessageRequest::DispatchToPlugin()
 					// The plugin has processed synchronously (case 2)
 					//  - Pass the message back up the stack
 					SetPostOperation(ETrue);
-					FsPluginManager::PrevPlugin(iCurrentPlugin, this,(TBool)ETrue);
+					FsPluginManager::PrevPlugin(iCurrentPlugin, this);
 					continue;
 					}
 				_LIT(KPanic,"Panic: F32-BAD-PLUGIN-ERROR");
@@ -1652,13 +1678,17 @@ TBool CFsMessageRequest::DispatchToPlugin()
 			}			
 		}
 
+	/*
+	 * Special case- DismountPlugin runs in the context of the plugin thread
+	 */
 	if(iOperation->Function() == EFsDismountPlugin)
 		{
 		// Don't pass plugin dismounts to the drive thread
+	    FsPluginManager::UnlockChain();
 		Process();
+		FsPluginManager::ReadLockChain(); //inverted unlock/lock to get around dismount plugin being a special case
 		return(ETrue);
 		}
-		
 	return EFalse;
 	}
 

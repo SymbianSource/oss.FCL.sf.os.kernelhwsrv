@@ -620,7 +620,7 @@ EXPORTS
 	FsRegisterThread__7UserSvr @ 619 NONAME R3UNUSED ; UserSvr::FsRegisterThread(void)
 	FullName__C11RHandleBase @ 620 NONAME R3UNUSED ; RHandleBase::FullName(void) const
 	FullName__C7CObject @ 621 NONAME R3UNUSED ; CObject::FullName(void) const
-	GetAddress__C5RHeapPCv @ 622 NONAME R3UNUSED ; RHeap::GetAddress(void const *) const
+	GetAddress__C5RHeapPCv @ 622 NONAME R3UNUSED ABSENT ; RHeap::GetAddress(void const *) const
 	GetBdCategory__C5TChar @ 623 NONAME R3UNUSED ; TChar::GetBdCategory(void) const
 	GetCaps__C7RDeviceR5TDes8 @ 624 NONAME R3UNUSED ; RDevice::GetCaps(TDes8 &) const
 	GetCategory__C5TChar @ 625 NONAME R3UNUSED ; TChar::GetCategory(void) const
@@ -1616,8 +1616,8 @@ EXPORTS
 	__5RBuf8 @ 1615 NONAME R3UNUSED ; RBuf8::RBuf8(void)
 	__5RBuf8P6HBufC8 @ 1616 NONAME R3UNUSED ; RBuf8::RBuf8(HBufC8 *)
 	__5RBuf8iii @ 1617 NONAME ; RBuf8::RBuf8(int, int, int)
-	__5RHeapiii @ 1618 NONAME ; RHeap::RHeap(int, int, int)
-	__5RHeapiiiiiii @ 1619 NONAME ; RHeap::RHeap(int, int, int, int, int, int, int)
+	__5RHeapiii @ 1618 NONAME ABSENT ; RHeap::RHeap(int, int, int)
+	__5RHeapiiiiiii @ 1619 NONAME ABSENT ; RHeap::RHeap(int, int, int, int, int, int, int)
 	__5RTestRC7TDesC16 @ 1620 NONAME R3UNUSED ; RTest::RTest(TDesC16 const &)
 	__5RTestRC7TDesC16i @ 1621 NONAME R3UNUSED ; RTest::RTest(TDesC16 const &, int)
 	__5RTestRC7TDesC16iPCUs @ 1622 NONAME ; RTest::RTest(TDesC16 const &, int, unsigned short const *)
@@ -1832,7 +1832,7 @@ EXPORTS
 	__negdi2 @ 1831 NONAME ; (null)
 	__negsf2 @ 1832 NONAME ; (null)
 	__nesf2 @ 1833 NONAME ; (null)
-	__nw__5RHeapUiPv @ 1834 NONAME R3UNUSED ; RHeap::operator new(unsigned int, void *)
+	__nw__5RHeapUiPv @ 1834 NONAME R3UNUSED ABSENT ; RHeap::operator new(unsigned int, void *)
 	__nw__FUiUi @ 1835 NONAME R3UNUSED ; operator new(unsigned int, unsigned int)
 	__opUi__C6TRealX @ 1836 NONAME R3UNUSED ; TRealX::operator unsigned int(void) const
 	__opd__C6TRealX @ 1837 NONAME R3UNUSED ; TRealX::operator double(void) const
@@ -2234,38 +2234,43 @@ EXPORTS
 	RandomL__4MathR5TDes8 @ 2233 NONAME R3UNUSED ; Math::RandomL(TDes8 &)
 	RandomL__4Math @ 2234 NONAME R3UNUSED ; Math::RandomL(void)
 	Random__4MathR5TDes8 @ 2235 NONAME R3UNUSED ; Math::Random(TDes8 &)
-	Append2__6TDes16G5TChar @ 2236  NONAME R3UNUSED ABSENT ; TDes16::Append2(TChar)
-	AppendFill2__6TDes16G5TChari @ 2237  NONAME R3UNUSED ABSENT ; TDes16::AppendFill2(TChar, int)
-	AppendJustify2__6TDes16PCUsi6TAlignG5TChar @ 2238  NONAME ABSENT ; TDes16::AppendJustify2(unsigned short const *, int, TAlign, TChar)
-	AppendJustify2__6TDes16PCUsii6TAlignG5TChar @ 2239  NONAME ABSENT ; TDes16::AppendJustify2(unsigned short const *, int, int, TAlign, TChar)
-	AppendJustify2__6TDes16RC7TDesC16i6TAlignG5TChar @ 2240  NONAME ABSENT ; TDes16::AppendJustify2(TDesC16 const &, int, TAlign, TChar)
-	AppendJustify2__6TDes16RC7TDesC16ii6TAlignG5TChar @ 2241  NONAME ABSENT ; TDes16::AppendJustify2(TDesC16 const &, int, int, TAlign, TChar)
-	Capitalize2__6TDes16 @ 2242  NONAME R3UNUSED ABSENT ; TDes16::Capitalize2(void)
-	Collate2__6TDes16 @ 2243  NONAME R3UNUSED ABSENT ; TDes16::Collate2(void)
-	CopyC2__6TDes16RC7TDesC16 @ 2244  NONAME R3UNUSED ABSENT ; TDes16::CopyC2(TDesC16 const &)
-	CopyCP2__6TDes16RC7TDesC16 @ 2245  NONAME R3UNUSED ABSENT ; TDes16::CopyCP2(TDesC16 const &)
-	CopyF2__6TDes16RC7TDesC16 @ 2246  NONAME R3UNUSED ABSENT ; TDes16::CopyF2(TDesC16 const &)
-	CopyLC2__6TDes16RC7TDesC16 @ 2247  NONAME R3UNUSED ABSENT ; TDes16::CopyLC2(TDesC16 const &)
-	CopyUC2__6TDes16RC7TDesC16 @ 2248  NONAME R3UNUSED ABSENT ; TDes16::CopyUC2(TDesC16 const &)
-	Fill2__6TDes16G5TChar @ 2249  NONAME R3UNUSED ABSENT ; TDes16::Fill2(TChar)
-	Fill2__6TDes16G5TChari @ 2250  NONAME R3UNUSED ABSENT ; TDes16::Fill2(TChar, int)
-	FindCorruptSurrogate__C7TDesC16 @ 2251  NONAME R3UNUSED ABSENT ; TDesC16::FindCorruptSurrogate(void) const
-	Fold2__6TDes16 @ 2252  NONAME R3UNUSED ABSENT ; TDes16::Fold2(void)
-	Justify2__6TDes16RC7TDesC16i6TAlignG5TChar @ 2253  NONAME ABSENT ; TDes16::Justify2(TDesC16 const &, int, TAlign, TChar)
-	Locate2__C7TDesC16G5TChar @ 2254  NONAME R3UNUSED ABSENT ; TDesC16::Locate2(TChar) const
-	LocateF2__C7TDesC16G5TChar @ 2255  NONAME R3UNUSED ABSENT ; TDesC16::LocateF2(TChar) const
-	LocateReverse2__C7TDesC16G5TChar @ 2256  NONAME R3UNUSED ABSENT ; TDesC16::LocateReverse2(TChar) const
-	LocateReverseF2__C7TDesC16G5TChar @ 2257  NONAME R3UNUSED ABSENT ; TDesC16::LocateReverseF2(TChar) const
-	LowerCase2__6TDes16 @ 2258  NONAME R3UNUSED ABSENT ; TDes16::LowerCase2(void)
-	Match2__C7TDesC16RC7TDesC16 @ 2259  NONAME R3UNUSED ABSENT ; TDesC16::Match2(TDesC16 const &) const
-	UpperCase2__6TDes16 @ 2260  NONAME R3UNUSED ABSENT ; TDes16::UpperCase2(void)
-	AgainHighRes__6RTimerR14TRequestStatusG27TTimeIntervalMicroSeconds32 @ 2261 NONAME R3UNUSED ABSENT ; RTimer::AgainHighRes(TRequestStatus &, TTimeIntervalMicroSeconds32)
-	Align__C10RAllocatorPv @ 2262 NONAME R3UNUSED ABSENT ; RAllocator::Align(void *) const
-	Align__C10RAllocatori @ 2263 NONAME R3UNUSED ABSENT ; RAllocator::Align(int) const
-	Base__C10RAllocator @ 2264 NONAME R3UNUSED ABSENT ; RAllocator::Base(void) const
-	MaxLength__C10RAllocator @ 2265 NONAME R3UNUSED ABSENT ; RAllocator::MaxLength(void) const
-	Size__C10RAllocator @ 2266 NONAME R3UNUSED ABSENT ; RAllocator::Size(void) const
-	__DbgGetAllocFail__10RAllocator @ 2267 NONAME R3UNUSED ABSENT ; RAllocator::__DbgGetAllocFail(void)
-	__DbgGetAllocFail__4Useri @ 2268 NONAME R3UNUSED ABSENT ; User::__DbgGetAllocFail(int)
+	Append2__6TDes16G5TChar @ 2236  NONAME R3UNUSED ; TDes16::Append2(TChar)
+	AppendFill2__6TDes16G5TChari @ 2237  NONAME R3UNUSED ; TDes16::AppendFill2(TChar, int)
+	AppendJustify2__6TDes16PCUsi6TAlignG5TChar @ 2238  NONAME ; TDes16::AppendJustify2(unsigned short const *, int, TAlign, TChar)
+	AppendJustify2__6TDes16PCUsii6TAlignG5TChar @ 2239  NONAME ; TDes16::AppendJustify2(unsigned short const *, int, int, TAlign, TChar)
+	AppendJustify2__6TDes16RC7TDesC16i6TAlignG5TChar @ 2240  NONAME ; TDes16::AppendJustify2(TDesC16 const &, int, TAlign, TChar)
+	AppendJustify2__6TDes16RC7TDesC16ii6TAlignG5TChar @ 2241  NONAME ; TDes16::AppendJustify2(TDesC16 const &, int, int, TAlign, TChar)
+	Capitalize2__6TDes16 @ 2242  NONAME R3UNUSED ; TDes16::Capitalize2(void)
+	Collate2__6TDes16 @ 2243  NONAME R3UNUSED ; TDes16::Collate2(void)
+	CopyC2__6TDes16RC7TDesC16 @ 2244  NONAME R3UNUSED ; TDes16::CopyC2(TDesC16 const &)
+	CopyCP2__6TDes16RC7TDesC16 @ 2245  NONAME R3UNUSED ; TDes16::CopyCP2(TDesC16 const &)
+	CopyF2__6TDes16RC7TDesC16 @ 2246  NONAME R3UNUSED ; TDes16::CopyF2(TDesC16 const &)
+	CopyLC2__6TDes16RC7TDesC16 @ 2247  NONAME R3UNUSED ; TDes16::CopyLC2(TDesC16 const &)
+	CopyUC2__6TDes16RC7TDesC16 @ 2248  NONAME R3UNUSED ; TDes16::CopyUC2(TDesC16 const &)
+	Fill2__6TDes16G5TChar @ 2249  NONAME R3UNUSED ; TDes16::Fill2(TChar)
+	Fill2__6TDes16G5TChari @ 2250  NONAME R3UNUSED ; TDes16::Fill2(TChar, int)
+	FindCorruptSurrogate__C7TDesC16 @ 2251  NONAME R3UNUSED ; TDesC16::FindCorruptSurrogate(void) const
+	Fold2__6TDes16 @ 2252  NONAME R3UNUSED ; TDes16::Fold2(void)
+	Justify2__6TDes16RC7TDesC16i6TAlignG5TChar @ 2253  NONAME ; TDes16::Justify2(TDesC16 const &, int, TAlign, TChar)
+	Locate2__C7TDesC16G5TChar @ 2254  NONAME R3UNUSED ; TDesC16::Locate2(TChar) const
+	LocateF2__C7TDesC16G5TChar @ 2255  NONAME R3UNUSED ; TDesC16::LocateF2(TChar) const
+	LocateReverse2__C7TDesC16G5TChar @ 2256  NONAME R3UNUSED ; TDesC16::LocateReverse2(TChar) const
+	LocateReverseF2__C7TDesC16G5TChar @ 2257  NONAME R3UNUSED ; TDesC16::LocateReverseF2(TChar) const
+	LowerCase2__6TDes16 @ 2258  NONAME R3UNUSED ; TDes16::LowerCase2(void)
+	Match2__C7TDesC16RC7TDesC16 @ 2259  NONAME R3UNUSED ; TDesC16::Match2(TDesC16 const &) const
+	UpperCase2__6TDes16 @ 2260  NONAME R3UNUSED ; TDes16::UpperCase2(void)
+	AgainHighRes__6RTimerR14TRequestStatusG27TTimeIntervalMicroSeconds32 @ 2261 NONAME R3UNUSED ; RTimer::AgainHighRes(TRequestStatus &, TTimeIntervalMicroSeconds32)
+	Align__C10RAllocatorPv @ 2262 NONAME R3UNUSED ; RAllocator::Align(void *) const
+	Align__C10RAllocatori @ 2263 NONAME R3UNUSED ; RAllocator::Align(int) const
+	Base__C10RAllocator @ 2264 NONAME R3UNUSED ; RAllocator::Base(void) const
+	MaxLength__C10RAllocator @ 2265 NONAME R3UNUSED ; RAllocator::MaxLength(void) const
+	Size__C10RAllocator @ 2266 NONAME R3UNUSED ; RAllocator::Size(void) const
+	__DbgGetAllocFail__10RAllocator @ 2267 NONAME R3UNUSED ; RAllocator::__DbgGetAllocFail(void)
+	__DbgGetAllocFail__4Useri @ 2268 NONAME R3UNUSED ; User::__DbgGetAllocFail(int)
 	SetKeyOffset__10RArrayBasei @ 2269  NONAME R3UNUSED ; RArrayBase::SetKeyOffset(int)
+	Poll__10RSemaphore @ 2270 NONAME R3UNUSED ; RSemaphore::Poll(void)
+	Wait__6RMutexi @ 2271 NONAME R3UNUSED ; RMutex::Wait(int)
+	Poll__6RMutex @ 2272 NONAME R3UNUSED ; RMutex::Poll(void)
+	Poll__9RFastLock @ 2273 NONAME R3UNUSED ; RFastLock::Poll(void)
+	Wait__9RFastLocki @ 2274 NONAME R3UNUSED ; RFastLock::Wait(int)
 	

@@ -20,9 +20,6 @@
 #include <arm_scu.h>
 #include <arm_tmr.h>
 
-extern "C" {
-extern SVariantInterfaceBlock* VIB;
-}
 
 struct SAPBootPage : public SFullArmRegSet
 	{
@@ -33,7 +30,14 @@ struct SAPBootPage : public SFullArmRegSet
 	volatile T_UintPtr	iBootFlags4;
 	volatile TUint64	iBPTimestamp;
 	volatile TUint64	iAPTimestamp;
+
+	TUint32				i_SAPBootPage_Spare[624];
+
+	UPerCpuUncached		iPerCpu[KMaxCpus];
 	};
+
+__ASSERT_COMPILE(sizeof(SAPBootPage)==4096);
+
 
 extern "C" void _ApEntry();
 extern "C" void KickCpu(volatile T_UintPtr* aPtr, T_UintPtr aRegsPhys);
@@ -87,7 +91,7 @@ TInt NKern::BootAP(volatile SAPBootInfo* aInfo)
 
 	KickCpu(&bootPage.iAPBootPtr[a.iCpu], bp_phys);
 
-	TUint32 n = TUint32(VIB->iMaxCpuClock >> 3);
+	TUint32 n = TUint32(TheScheduler.iVIB->iMaxCpuClock >> 3);
 	n = -n;
 	TUint32 b = 0;
 	do	{
@@ -100,41 +104,30 @@ TInt NKern::BootAP(volatile SAPBootInfo* aInfo)
 	__KTRACE_OPT(KBOOT,DEBUGPRINT("SCU: iCtrl=%08x iConfig=%08x iCpuStat=%08x", SCU.iCtrl, SCU.iConfig, SCU.iCpuStatus));
 	if (n==0)
 		return KErrTimedOut;
-	NKern::DisableAllInterrupts();
-	arm_dsb();
-	while (bootPage.iBootFlags2==0)
-		{}
-	arm_dsb();
-	bootPage.iBootFlags2 = 2;
-	arm_dsb();
-	bootPage.iBPTimestamp = NKern::Timestamp();
-	arm_dsb();
-	while (bootPage.iBootFlags2==2)
-		{}
-	arm_dsb();
-	NKern::EnableAllInterrupts();
+
+#if defined(__NKERN_TIMESTAMP_USE_LOCAL_TIMER__)
+#error Use of local timer for NKern::Timestamp() no longer supported
+#endif
+
 	return KErrNone;
 	}
 
-void InitAPTimestamp(SNThreadCreateInfo& aInfo)
+void InitTimestamp(TSubScheduler* aSS, SNThreadCreateInfo& aInfo)
 	{
-	volatile SArmAPBootInfo& a = *(volatile SArmAPBootInfo*)aInfo.iParameterBlock;
-	volatile SAPBootPage& bootPage = *(volatile SAPBootPage*)a.iAPBootLin;
-	NKern::DisableAllInterrupts();
-	bootPage.iBootFlags2 = 1;
-	arm_dsb();
-	while (bootPage.iBootFlags2==1)
-		{}
-	arm_dsb();
-	bootPage.iAPTimestamp = NKern::Timestamp();
-	arm_dsb();
-	TUint64 bpt = bootPage.iBPTimestamp;
-	TUint64 apt = bootPage.iAPTimestamp;
-	TUint64 delta = bpt - apt;
-	SubScheduler().iLastTimestamp64 += delta;
-	__KTRACE_OPT(KBOOT,DEBUGPRINT("APT=0x%lx BPT=0x%lx Delta=0x%lx", apt, bpt, delta));
-	arm_dsb();
-	bootPage.iBootFlags2 = 3;
-	NKern::EnableAllInterrupts();
+	NThread* t = (NThread*)aSS->iCurrentThread;
+	t->iActiveState = 1;
+	if (aSS->iCpuNum == 0)
+		{
+		aSS->iLastTimestamp.i64 = 0;
+		t->iLastActivationTime.i64 = 0;
+		return;
+		}
+	TUint64 ts = 0;
+#if defined(__NKERN_TIMESTAMP_USE_LOCAL_TIMER__)
+#error Use of local timer for NKern::Timestamp() no longer supported
+#endif
+	ts = NKern::Timestamp();
+	aSS->iLastTimestamp.i64 = ts;
+	t->iLastActivationTime.i64 = ts;
 	}
 

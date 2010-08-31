@@ -532,17 +532,6 @@ void CLineEdit::StoreBufferHistory()
 		}
 	}
 
-
-//-------------------------------------------------------------------------
-//-- generic shell commands that don't require sophisticated processing
-
-_LIT(KCmd_Help, "HELP");    ///< displays help
-_LIT(KCmd_Cls,  "CLS");     ///< clears the screen
-_LIT(KCmd_Rem,  "REM");     ///< *.bat processing - commented out line
-_LIT(KCmd_Break,"BREAK");   ///< stops *.bat file execution
-_LIT(KCmd_Exit, "EXIT");    ///< exit the shell
-
-//-------------------------------------------------------------------------
 //////////////////////////////////////
 //CShell
 //////////////////////////////////////
@@ -739,7 +728,7 @@ void CShell::RunL()
 				tabCount = 0;
 				
 #if !defined(_EPOC)
-				if(commandText.CompareF(KCmd_Exit) == 0)
+				if(commandText.CompareF(_L("EXIT")) == 0)
 					{
 					exit = ETrue;
 					break;
@@ -827,10 +816,6 @@ void CShell::RunL()
 	CleanupStack::PopAndDestroy(fileManObserver);
 	}
 
-
-
-//-------------------------------------------------------------------------
-
 void CShell::DoCommand(TDes& aCommand)
 //
 // Evaluate the commandline and run the command or file
@@ -899,13 +884,10 @@ void CShell::DoCommand(TDes& aCommand)
 		{
 		TInt r;
 		
-		if (aCommand.CompareF(KCmd_Help)==0)
+		if (aCommand.CompareF(_L("HELP"))==0)
 			PrintHelp();
-		else if (aCommand.CompareF(KCmd_Cls)==0)
+		else if (aCommand.CompareF(_L("CLS"))==0)
 			TheConsole->ClearScreen(); 
-		else if (aCommand.CompareF(KCmd_Break)==0)
-			{//-- "break" command, do nothing
-            }
 		else if (aCommand.Length()==2 && TChar(aCommand[0]).IsAlpha() && aCommand[1]==':')
 			ChangeDrive(aCommand[0]);
 		else if (aCommand.Length()!=0)
@@ -1081,17 +1063,10 @@ TInt CShell::RunBatch(TDes& aCommand)
 			else 
 			PrintError(KErrNotFound);
 			}
-		else if (readBuf.Length()<3 || readBuf.Left(3).CompareF(KCmd_Rem)!=0)
-            {
-			//-- check if it is a "break" command. stop execution in this case
-            if(readBuf.CompareF(KCmd_Break) ==0)
-                break; //-- terminate batch file execution        
-            else
+			
+		else if (readBuf.Length()<3 || readBuf.Left(3).CompareF(_L("REM"))!=0)
 			DoCommand(readBuf);
 		}
-		}
-	
-    
 	file.Close();
 	return KErrNone;
 	}
@@ -1243,7 +1218,7 @@ void CShell::SetDrivePath(const TDesC& aDrivePath)
 	drivePaths[drvNum]=aDrivePath;
 	}
 
-//----------------------------------------------------------------------
+
 TKeyCode CShell::OutputStringToConsole(TBool aPageSwitch,TRefByValue<const TDesC> aFmt,... )
 //function for output of a sring to console
 //aPageSwitch flag indicates that output should be page-by-page 
@@ -1264,7 +1239,6 @@ TKeyCode CShell::OutputStringToConsole(TBool aPageSwitch,TRefByValue<const TDesC
 	return OutputStringToConsole(KPrompt,aPageSwitch,_L("%S"),&aBuf);
 	}
 
-//----------------------------------------------------------------------
 TKeyCode CShell::OutputStringToConsole(const TDesC& aNotification,TBool aPageSwitch,TRefByValue<const TDesC> aFmt,...)
 	//function for output of a string to console aPageSwitch flag indicates that output should be page-by-page 
 	//if aPageSwitch==ETrue user will be prompted with the message passed as aNotification
@@ -1277,8 +1251,10 @@ TKeyCode CShell::OutputStringToConsole(const TDesC& aNotification,TBool aPageSwi
 	
 	VA_LIST list;
 	VA_START(list,aFmt);
+	
 	TBuf<0x200> aBuf;
 	//format output string using argumen list
+	
 	//coverity[uninit_use_in_call]
 	TRAP_IGNORE(aBuf.AppendFormatList(aFmt,list,&overflow)); // ignore leave in TTimeOverflowLeave::Overflow()
 	//if we are requested to wait for the user input at the end of each page, we check whether output of next piece of text will fit into the screen
@@ -1287,35 +1263,26 @@ TKeyCode CShell::OutputStringToConsole(const TDesC& aNotification,TBool aPageSwi
 		key=PageSwitchDisplay(aNotification);				
 		}
 	//output current string
-	
-	Print(aBuf);
-    
+	TheConsole->Write(aBuf);
 	return key;			
 	}
 
-//----------------------------------------------------------------------
-TKeyCode CShell::WriteBufToConsole(TBool aPageSwitch, const TDesC& aBuf)
+TKeyCode CShell::OutputStringToConsole(TBool aPageSwitch, const TDesC& aBuf)
 	{
 	_LIT(KPrompt , "Press any key to continue\n");
-    return WriteBufToConsole(aPageSwitch, aBuf, KPrompt);
-	}
 	
-//----------------------------------------------------------------------
-TKeyCode CShell::WriteBufToConsole(TBool aPageSwitch, const TDesC& aBuf, const TDesC& aNotification)
-    {
     TKeyCode key=EKeyNull;	
 
 	//if we are requested to wait for the user input at the end of each page, we check whether output of next piece of text will fit into the screen
 	if (aPageSwitch)
 		{
-		key = PageSwitchDisplay(aNotification);				
+		key = PageSwitchDisplay(KPrompt);				
 		}
-
-    Print(aBuf);
+	//output current string
+	TheConsole->Write(aBuf);
 	
     return key;
 	}
-
 
 TKeyCode CShell::PageSwitchDisplay(const TDesC& aNotification)
 	{
@@ -1346,9 +1313,3 @@ TKeyCode CShell::PageSwitchDisplay(const TDesC& aNotification)
 		}						
 	return key;			
 	}
-
-
-
-
-
-

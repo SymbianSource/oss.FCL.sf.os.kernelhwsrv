@@ -17,6 +17,10 @@
 
 #include "cl_std.h"
 
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "cl_fmtTraces.h"
+#endif
+
 
 
 
@@ -48,12 +52,14 @@ an error is returned.
 
 */
 	{
-	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFormat1Open, MODULEUID, aFs.Handle(), aName, aFormatMode);
+	OstTraceExt2(TRACE_BORDER, EFSRV_EFORMAT1OPEN, "sess %x aFormatMode %x", (TUint) aFs.Handle(), (TUint) aFormatMode);
+	OstTraceData(TRACE_BORDER, EFSRV_EFORMAT1OPEN_EDRIVENAME, "DriveName %S", aName.Ptr(), aName.Length()<<1);
 
 	TPtr8 c((TUint8*)&aCount,sizeof(TUint),sizeof(TUint));
 	TInt r = CreateSubSession(aFs,EFsFormatOpen,TIpcArgs(&aName,aFormatMode,&c));
 
-	TRACERET3(UTF::EBorder, UTraceModuleEfsrv::EFormatOpen1Return, MODULEUID, r, SubSessionHandle(), aCount);
+	OstTraceExt3(TRACE_BORDER, EFSRV_EFORMATOPEN1RETURN, "r %d subs %x aCount %d", (TUint) r, (TUint) SubSessionHandle(), (TUint) aCount);
+
 	return r;
 	}
 
@@ -86,7 +92,8 @@ an error is returned.
 @capability DiskAdmin
 */
 	{
-	TRACEMULT4(UTF::EBorder, UTraceModuleEfsrv::EFormat2Open, MODULEUID, aFs.Handle(), aName, aFormatMode, TUint(&aInfo));
+	OstTraceExt3(TRACE_BORDER, EFSRV_EFORMAT2OPEN, "sess %x aFormatMode %x aInfo %x", (TUint) aFs.Handle(), (TUint) aFormatMode, (TUint) TUint(&aInfo));
+	OstTraceData(TRACE_BORDER, EFSRV_EFORMAT2OPEN_EDRIVENAME, "DriveName %S", aName.Ptr(), aName.Length()<<1);
 
 	TInt size = sizeof(TUint)+aInfo.Length();
 	TUint8* buf = new TUint8[size];
@@ -106,7 +113,8 @@ an error is returned.
 		delete[] buf;
 		}
 
-	TRACERET3(UTF::EBorder, UTraceModuleEfsrv::EFormatOpen2Return, MODULEUID, r, SubSessionHandle(), aCount);
+	OstTraceExt3(TRACE_BORDER, EFSRV_EFORMATOPEN2RETURN, "r %d subs %x aCount %d", (TUint) r, (TUint) SubSessionHandle(), (TUint) aCount);
+
 	return r;
 	}
 
@@ -122,11 +130,11 @@ Close() is guaranteed to return, and provides no indication whether
 it completed successfully or not.
 */
 	{
-	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFormatClose, MODULEUID, Session().Handle(), SubSessionHandle());
+	OstTraceExt2(TRACE_BORDER, EFSRV_EFORMATCLOSE, "sess %x subs %x", (TUint) Session().Handle(), (TUint) SubSessionHandle());
 
 	CloseSubSession(EFsFormatSubClose);
 	
-	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFormatCloseReturn, MODULEUID);
+	OstTrace0(TRACE_BORDER, EFSRV_EFORMATCLOSERETURN, "");
 	}
 
 
@@ -152,12 +160,13 @@ is complete.
 
 */
 	{
-	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFormatNext1, MODULEUID, Session().Handle(), SubSessionHandle());
+	OstTraceExt2(TRACE_BORDER, EFSRV_EFORMATNEXT1, "sess %x subs %x", (TUint) Session().Handle(), (TUint) SubSessionHandle());
 
 	TPckg<TInt> e(aStep);
 	TInt r = SendReceive(EFsFormatNext,TIpcArgs(&e));
 
-	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EFormatNext1Return, MODULEUID, r, aStep);
+	OstTraceExt2(TRACE_BORDER, EFSRV_EFORMATNEXT1RETURN, "r %d aStep %d", (TUint) r, (TUint) aStep);
+
 	return r;
 	}
 
@@ -187,9 +196,9 @@ This is an asynchronous function.
 
 */
 	{
-	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFormatNext2, MODULEUID, Session().Handle(), SubSessionHandle(), &aStatus);
+	OstTraceExt3(TRACE_BORDER, EFSRV_EFORMATNEXT2, "sess %x subs %x status %x", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) &aStatus);
 
 	SendReceive(EFsFormatNext,TIpcArgs(&aStep),aStatus);
 
-	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFormatNext2Return, MODULEUID);
+	OstTrace0(TRACE_BORDER, EFSRV_EFORMATNEXT2RETURN, "");
 	}

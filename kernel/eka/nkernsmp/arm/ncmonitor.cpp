@@ -26,130 +26,37 @@ SFullArmRegSet& RegSet(TInt aCpu)
 	{
 	TScheduler* pS = TScheduler::Ptr();
 	TSubScheduler& ss = *pS->iSub[aCpu];
-	return *(SFullArmRegSet*)ss.i_AbtStackTop;
+	return *ss.iSSX.iRegs;
 	}
 
-void Monitor::DisplaySpinLock(const char* aTitle, TSpinLock* aLock)
+void DisplayNThreadStackedRegs(Monitor& m, SThreadReschedStack& reg)
 	{
-	volatile TUint32* p = (volatile TUint32*)aLock;
-	Printf("%s %08x %08x\r\n", aTitle, p[0], p[1]);
+	m.Printf("TEEHBR %08x UROTID %08x URWTID %08x  FPEXC %08x\r\n", reg.iTEEHBR, reg.iRWROTID, reg.iRWRWTID, reg.iFpExc);
+	m.Printf("   CAR %08x   DACR %08x\r\n", reg.iCar, reg.iDacr);
+	m.Printf(" SPARE %08x   SPSR %08x SPRSCH %08x    R15 %08x\r\n", reg.iSpare, reg.iSpsrSvc, reg.iSPRschdFlg, reg.iR15);
 	}
 
-EXPORT_C void Monitor::DisplayNThreadInfo(NThread* aT)
+void DisplaySubSchedulerExt(Monitor& m, TSubScheduler& ss)
 	{
-	DisplayNSchedulableInfo(aT);
+	TSubSchedulerX& x = ss.iSSX;
+	m.Printf("Extras[ 0] %08x Extras[ 1] %08x Extras[ 2] %08x i_GblTmrA  %08x\r\n", x.iSSXP[0], x.iSSXP[1], x.iSSXP[2], x.iGlobalTimerAddr);
+	m.Printf("i_ScuAddr  %08x i_GicDist  %08x i_GicCpuIf %08x i_LocTmrA  %08x\r\n", x.iScuAddr, x.iGicDistAddr, x.iGicCpuIfcAddr, x.iLocalTimerAddr);
+	m.Printf("i_IrqCount %08x i_IrqNest  %08x i_ExcInfo  %08x i_CrashSt  %08x\r\n", x.iIrqCount, x.iIrqNestCount, x.iExcInfo, x.iCrashState);
+	m.Printf("i_AbtStkTp %08x i_UndSktTp %08x i_FiqStkTp %08x i_IrqStkTp %08x\r\n", x.iAbtStackTop, x.iUndStackTop, x.iFiqStackTop, x.iIrqStackTop);
+	m.Printf("CpuFreqM   %08x CpuFreqS   %08x CpuPeriodM %08x CpuPeriodS %08x\r\n", x.iCpuFreqRI.iR.iM, x.iCpuFreqRI.iR.iX, x.iCpuFreqRI.iI.iM, x.iCpuFreqRI.iI.iX);
+	m.Printf("TmrFreqM   %08x TmrFreqS   %08x TmrPeriodM %08x TmrPeriodS %08x\r\n", x.iTimerFreqRI.iR.iM, x.iTimerFreqRI.iR.iX, x.iTimerFreqRI.iI.iM, x.iTimerFreqRI.iI.iX);
 	}
 
-void Monitor::DisplayNSchedulableInfo(NSchedulable* aS)
+void DisplaySchedulerExt(Monitor& m, TScheduler& s)
 	{
-	NThread* t = aS->iParent ? (NThread*)aS : 0;
-	NThreadGroup* g = aS->iParent ? 0 : (NThreadGroup*)aS;
-
-	if (t && aS->iParent==aS)
-		Printf("NThread @%08x Pri %d\r\n",aS,aS->iPriority);
-	else if (t)
-		Printf("NThread @%08x (G:%08x) Pri %d\r\n",aS,aS->iParent,aS->iPriority);
-	else
-		Printf("NThreadGroup @%08x Pri %d\r\n",aS,aS->iPriority);
-	Printf("Rdy=%02x Curr=%02x LastCpu=%d CpuChg=%02x FrzCpu=%d\r\n", aS->iReady, aS->iCurrent, aS->iLastCpu, aS->iCpuChange, aS->iFreezeCpu);
-	Printf("Next=%08x Prev=%08x Parent=%08x CPUaff=%08x\r\n", aS->iNext, aS->iPrev, aS->iParent, aS->iCpuAffinity);
-	Printf("PauseCount %02x Susp %1x\r\n", aS->iPauseCount, aS->iSuspended);
-	DisplaySpinLock("SpinLock", &aS->iSSpinLock);
-	Printf("Stopping %02x Events %08x %08x EventState %08x\r\n", aS->iStopping, aS->iEvents.iA.iNext, aS->iEvents.iA.iPrev, aS->iEventState);
-	Printf("TotalCpuTime %08x %08x RunCount %08x %08x\r\n", aS->iTotalCpuTime32[1], aS->iTotalCpuTime32[0], aS->iRunCount32[1], aS->iRunCount32[0]);
-
-	if (g)
-		{
-		// Thread group
-		return;
-		}
-
-	Printf("WaitState %02x %02x [%02x %02x] (%08x)\r\n", t->iWaitState.iWtC.iWtStFlags, t->iWaitState.iWtC.iWtObjType,
-											t->iWaitState.iWtC.iWtStSpare1, t->iWaitState.iWtC.iWtStSpare2, t->iWaitState.iWtC.iWtObj);
-	Printf("BasePri %d MutexPri %d Att=%02x\r\n", t->iBasePri, t->iMutexPri, t->i_ThrdAttr);
-	Printf("HeldFM=%08x FMDef=%02x AddrSp=%08x\r\n", t->iHeldFastMutex, t->iFastMutexDefer, t->iAddressSpace);
-	Printf("Time=%d Timeslice=%d ReqCount=%08x\r\n", t->iTime, t->iTimeslice, t->iRequestSemaphore.iCount);
-	Printf("SuspendCount=%d CsCount=%d CsFunction=%08x\r\n", t->iSuspendCount, t->iCsCount, t->iCsFunction);
-	Printf("LinkedObjType %02x LinkedObj %08x\r\n", t->iLinkedObjType, t->iLinkedObj);
-	Printf("SavedSP=%08x WaitLink:%08x %08x %d\r\n", t->iSavedSP, t->iWaitLink.iNext, t->iWaitLink.iPrev, t->iWaitLink.iPriority);
-	Printf("iNewParent=%08x iExtraContext=%08x, iExtraContextSize=%08x\r\n", t->iNewParent, t->iExtraContext, t->iExtraContextSize);
-	Printf("iUserModeCallbacks=%08x iNThreadBaseSpare6=%08x\r\n", t->iUserModeCallbacks, t->iNThreadBaseSpare6);
-	Printf("iNThreadBaseSpare7=%08x iNThreadBaseSpare8=%08x iNThreadBaseSpare9=%08x\r\n", t->iNThreadBaseSpare7, t->iNThreadBaseSpare8, t->iNThreadBaseSpare9);
-	if (!aS->iCurrent)
-		{
-		TUint32* pS=(TUint32*)t->iSavedSP;
-		SThreadReschedStack reg;
-		MTRAPD(r,wordmove(&reg,pS,sizeof(SThreadReschedStack)));
-		if (r==KErrNone)
-			{
-			Printf("TEEHBR %08x UROTID %08x URWTID %08x  FPEXC %08x\r\n", reg.iTEEHBR, reg.iRWROTID, reg.iRWRWTID, reg.iFpExc);
-			Printf("   CAR %08x   DACR %08x\r\n", reg.iCar, reg.iDacr);
-			Printf(" SPARE %08x   SPSR %08x SPRSCH %08x    R15 %08x\r\n", reg.iSpare, reg.iSpsrSvc, reg.iSPRschdFlg, reg.iR15);
-			}
-		}
-	NewLine();
-	}
-
-void Monitor::DisplayNFastSemInfo(NFastSemaphore* pS)
-	{
-	if (pS->iCount >= 0)
-		Printf("NFastSemaphore @ %08x Count %d OwningThread %08x\r\n",pS,pS->iCount,pS->iOwningThread);
-	else
-		Printf("NFastSemaphore @ %08x Count %08x (%08x) OwningThread %08x\r\n",pS,pS->iCount,pS->iCount<<2,pS->iOwningThread);
-	}
-
-void Monitor::DisplayNFastMutexInfo(NFastMutex* aM)
-	{
-	Printf("NFastMutex @ %08x HoldingThread %08x iWaitQ Pri Mask %08x %08x\r\n", aM, aM->iHoldingThread, aM->iWaitQ.iPresent[1], aM->iWaitQ.iPresent[0]);
-	DisplaySpinLock("SpinLock", &aM->iMutexLock);
-	}
-
-void DisplaySubSchedulerInfo(Monitor& m, TSubScheduler& ss)
-	{
-	m.Printf("\r\nSUBSCHEDULER %d @%08x:\r\n", ss.iCpuNum, &ss);
-	m.Printf("CurrentThread=%08x\r\n", ss.iCurrentThread);
-	m.Printf("IDFCs   %08x %08x    CPU# %08x CPUmask %08x\r\n", ss.iDfcs.iA.iNext, ss.iDfcs.iA.iPrev, ss.iCpuNum, ss.iCpuMask);
-	m.Printf("ExIDFCs %08x %08x CurIDFC %08x PendFlg %08x\r\n", ss.iExIDfcs.iA.iNext, ss.iExIDfcs.iA.iPrev, ss.iCurrentIDFC, *(TUint32*)&ss.iRescheduleNeededFlag);
-	m.DisplaySpinLock("ExIDfcLock", &ss.iExIDfcLock);
-	m.Printf("KLCount %d InIDFC %02x EvPend %02x\r\n", ss.iKernLockCount, ss.iInIDFC, ss.iEventHandlersPending);
-	m.Printf("AddrSp  %08x RschdIPIs %08x iNextIPI %08x\r\n", ss.iAddressSpace, ss.iReschedIPIs, ss.iNextIPI);
-	m.DisplaySpinLock("ReadyListLock", &ss.iReadyListLock);
-	m.Printf("EvtHand %08x %08x InitThrd %08x SLOC %08x %08x\r\n", ss.iEventHandlers.iA.iNext, ss.iEventHandlers.iA.iPrev,
-		ss.iInitialThread, I64HIGH(ss.iSpinLockOrderCheck), I64LOW(ss.iSpinLockOrderCheck));
-	m.DisplaySpinLock("EventHandlerLock", &ss.iEventHandlerLock);
-	m.Printf("Extras[ 0] %08x Extras[ 1] %08x Extras[ 2] %08x Extras[ 3] %08x\r\n", ss.iExtras[0], ss.iExtras[1], ss.iExtras[2], ss.iExtras[3]);
-	m.Printf("i_ScuAddr  %08x i_GicDist  %08x i_GicCpuIf %08x i_LocTmrA  %08x\r\n", ss.i_ScuAddr, ss.i_GicDistAddr, ss.i_GicCpuIfcAddr, ss.i_LocalTimerAddr);
-	m.Printf("i_IrqCount %08x i_IrqNest  %08x i_ExcInfo  %08x i_CrashSt  %08x\r\n", ss.i_IrqCount, ss.i_IrqNestCount, ss.i_ExcInfo, ss.i_CrashState);
-	m.Printf("i_AbtStkTp %08x i_UndSktTp %08x i_FiqStkTp %08x i_IrqStkTp %08x\r\n", ss.i_AbtStackTop, ss.i_UndStackTop, ss.i_FiqStackTop, ss.i_IrqStackTop);
-	m.Printf("i_TmrMultF %08x i_TmrMultI %08x i_CpuMult  %08x Extras[13] %08x\r\n", ss.i_TimerMultF, ss.i_TimerMultI, ss.i_CpuMult, ss.iExtras[19]);
-	m.Printf("i_LstTmrSt %08x i_TstmpErr %08x i_MaxCorr  %08x i_TimerGap %08x\r\n", ss.iExtras[20], ss.iExtras[21], ss.iExtras[22], ss.iExtras[23]);
-	m.Printf("iLastTimestamp %08x %08x   iReschedCount %08x %08x\r\n", ss.iLastTimestamp32[1], ss.iLastTimestamp32[0], ss.iReschedCount32[1], ss.iReschedCount32[0]);
-	}
-
-void Monitor::DisplaySchedulerInfo()
-	{
-	TScheduler* pS=TScheduler::Ptr();
-	Printf("SCHEDULER @%08x:\r\n",pS);
-	Printf("ProcessHandler=%08x MonitorExceptionHandler=%08x RescheduleHook=%08x\r\n",pS->iProcessHandler,pS->iMonitorExceptionHandler,pS->iRescheduleHook);
-	Printf("iActiveCpus1=%08x, iActiveCpus2=%08x, iNumCpus=%d\r\n",pS->iActiveCpus1,pS->iActiveCpus2,pS->iNumCpus);
-	Printf("SYSLOCK @ %08x\r\n",&pS->iLock);
-	DisplayNFastMutexInfo(&pS->iLock);
-	DisplaySpinLock("IdleSpinLock", &pS->iIdleSpinLock);
-	Printf("IdleDfcs %08x %08x CpusNotIdle %08x IdleGeneration %02x IdleSpillCpu %02x\r\n",
-		pS->iIdleDfcs.iA.iNext, pS->iIdleDfcs.iA.iPrev, pS->iCpusNotIdle, pS->iIdleGeneration, pS->iIdleSpillCpu);
-	Printf("Extras  0: %08x  1: %08x  2: %08x  3: %08x\r\n",pS->iExtras[0],pS->iExtras[1],pS->iExtras[2],pS->iExtras[3]);
-	Printf("Extras  4: %08x  5: %08x  6: %08x  7: %08x\r\n",pS->iExtras[4],pS->iExtras[5],pS->iExtras[6],pS->iExtras[7]);
-	Printf("Extras  8: %08x  9: %08x  A: %08x  B: %08x\r\n",pS->iExtras[8],pS->iExtras[9],pS->iExtras[10],pS->iExtras[11]);
-	Printf("Extras  C: %08x  D: %08x  E: %08x  F: %08x\r\n",pS->iExtras[12],pS->iExtras[13],pS->iExtras[14],pS->iExtras[15]);
-	Printf("Extras 10: %08x 11: %08x 12: %08x 13: %08x\r\n",pS->iExtras[16],pS->iExtras[17],pS->iExtras[18],pS->iExtras[19]);
-	Printf("Extras 14: %08x 15: %08x 16: %08x 17: %08x\r\n",pS->iExtras[20],pS->iExtras[21],pS->iExtras[22],pS->iExtras[23]);
-
-	TInt i;
-	for (i=0; i<KMaxCpus; ++i)
-		{
-		TSubScheduler& ss = *pS->iSub[i];
-		DisplaySubSchedulerInfo(*this,ss);
-		}
+	TSchedulerX& sx = s.iSX;
+	m.Printf("iTimerMax  %08x %08x\r\n", I64HIGH(sx.iTimerMax), I64LOW(sx.iTimerMax));
+	m.Printf("iGTmrA     %08x  iScuAddr %08x  iGicDistA %08x  iGicCpuIfcA %08x  iLocTmrA %08x\r\n",
+		sx.iGlobalTimerAddr, sx.iScuAddr, sx.iGicDistAddr, sx.iGicCpuIfcAddr, sx.iLocalTimerAddr);
+	m.Printf("iGTFreqM   %08x iGTFreqS   %08x iGTPeriodM %08x iGTPeriodS %08x\r\n",
+		sx.iGTimerFreqRI.iR.iM, sx.iGTimerFreqRI.iR.iX, sx.iGTimerFreqRI.iI.iM, sx.iGTimerFreqRI.iI.iX);
+	m.Printf("iCount0    %08x %08x   iTimestamp0 %08x %08x\r\n",
+		I64HIGH(sx.iCount0), I64LOW(sx.iCount0), I64HIGH(sx.iTimestamp0), I64LOW(sx.iTimestamp0));
 	}
 
 void DumpRegisters(Monitor& m, SFullArmRegSet& a)
@@ -217,9 +124,9 @@ EXPORT_C void Monitor::DisplayCpuFaultInfo()
 		{
 		Printf("CPU %d:\r\n", i);
 		TSubScheduler& ss = *pS->iSub[i];
-		if (!ss.i_Regs)
+		if (!ss.iSSX.iRegs)
 			continue;
-		SFullArmRegSet& r = *(SFullArmRegSet*)ss.i_Regs;
+		SFullArmRegSet& r = *ss.iSSX.iRegs;
 		
 		Printf("Exc %1d Cpsr=%08x FAR=%08x FSR=%08x\r\n",  r.iExcCode, r.iN.iFlags, r.iB[0].iDFAR, r.iB[0].iDFSR);
 		Printf(" R0=%08x  R1=%08x  R2=%08x  R3=%08x\r\n",  r.iN.iR0,  r.iN.iR1,  r.iN.iR2,  r.iN.iR3);
@@ -233,7 +140,6 @@ EXPORT_C void Monitor::DisplayCpuFaultInfo()
 
 EXPORT_C void Monitor::GetStackPointers(NThread* aThread, TUint& aSupSP, TUint& aUsrSP)
 	{
-//	TScheduler* pS = TScheduler::Ptr();
 	if (aThread->iCurrent)
 		{
 		TInt i = aThread->iLastCpu;

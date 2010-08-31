@@ -1,4 +1,4 @@
-// Copyright (c) 2000-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2000-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -14,12 +14,17 @@
 // e32test/usb/t_usb_device/src/apitests.cpp
 // USB Test Program T_USB_DEVICE, functional part.
 // Device-side part, to work against T_USB_HOST running on the host.
-// 
+//
 //
 
 #include "general.h"									// CActiveControl, CActiveRW
 #include "config.h"
 #include "usblib.h"										// Helpers
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "apitestsTraces.h"
+#endif
+
 
 extern RTest test;
 extern TBool gVerbose;
@@ -65,14 +70,14 @@ void SetupDescriptors(LDDConfigPtr aLddPtr,RDEVCLIENT* aPort, TUint16 aPid = 0)
 	deviceDescriptor[KUsbVendorIdOffset+1] = HiByte(aLddPtr->iVid);
 	// Change the device product ID (PID)
 	if (aPid != 0)
-		{	
+		{
 		deviceDescriptor[KUsbProductIdOffset]	= LoByte(aPid);		// little endian!
-		deviceDescriptor[KUsbProductIdOffset+1] = HiByte(aPid);		
+		deviceDescriptor[KUsbProductIdOffset+1] = HiByte(aPid);
 		}
 	else
 		{
 		deviceDescriptor[KUsbProductIdOffset]	= LoByte(aLddPtr->iPid);		// little endian!
-		deviceDescriptor[KUsbProductIdOffset+1] = HiByte(aLddPtr->iPid);		
+		deviceDescriptor[KUsbProductIdOffset+1] = HiByte(aLddPtr->iPid);
 		}
 	// Change the device release number
 	deviceDescriptor[KUsbDevReleaseOffset]	 = LoByte(aLddPtr->iRelease);	// little endian!
@@ -89,7 +94,7 @@ void SetupDescriptors(LDDConfigPtr aLddPtr,RDEVCLIENT* aPort, TUint16 aPid = 0)
 
 		test.Next(_L("Compare device descriptor with value set"));
 		r = descriptor2.Compare(deviceDescriptor);
-		test_KErrNone(r);	
+		test_KErrNone(r);
 		}
 
 	// === Configuration Descriptor
@@ -110,7 +115,7 @@ void SetupDescriptors(LDDConfigPtr aLddPtr,RDEVCLIENT* aPort, TUint16 aPid = 0)
 	const TUint8 KUsbAttributeDefault = 0x80;
 	const TUint8 KUsbAttributeSelfPower = 0x40;
 	const TUint8 KUsbAttributeRemoteWakeup = 0x20;
-	configDescriptor[KUsbAttributesOffset] = KUsbAttributeDefault | (aLddPtr->iSelfPower ? KUsbAttributeSelfPower : 0) 
+	configDescriptor[KUsbAttributesOffset] = KUsbAttributeDefault | (aLddPtr->iSelfPower ? KUsbAttributeSelfPower : 0)
 													| (aLddPtr->iRemoteWakeup ? KUsbAttributeRemoteWakeup : 0);
 	// Change the reported max power
 	// 100mA (= 2 * 0x32) is the highest value allowed for a bus-powered device.
@@ -130,7 +135,7 @@ void SetupDescriptors(LDDConfigPtr aLddPtr,RDEVCLIENT* aPort, TUint16 aPid = 0)
 		r = descriptor2.Compare(configDescriptor);
 		test_KErrNone(r);
 		}
-		
+
 	// === String Descriptors
 
 	test.Next(_L("SetStringDescriptor"));
@@ -141,7 +146,7 @@ void SetupDescriptors(LDDConfigPtr aLddPtr,RDEVCLIENT* aPort, TUint16 aPid = 0)
 		r = aPort->SetManufacturerStringDescriptor(* aLddPtr->iManufacturer);
 		test_KErrNone(r);
 		}
-		
+
 	if (aLddPtr->iProduct)
 		{
 		r = aPort->SetProductStringDescriptor(* aLddPtr->iProduct);
@@ -156,7 +161,7 @@ void SetupDescriptors(LDDConfigPtr aLddPtr,RDEVCLIENT* aPort, TUint16 aPid = 0)
 
 	// Set up two arbitrary string descriptors, which can be queried
 	// manually from the host side for testing purposes
-	
+
 	TBuf16<KUsbStringDescStringMaxSize / 2> wr_str(KString_one);
 	r = aPort->SetStringDescriptor(stridx1, wr_str);
 	test_KErrNone(r);
@@ -167,7 +172,7 @@ void SetupDescriptors(LDDConfigPtr aLddPtr,RDEVCLIENT* aPort, TUint16 aPid = 0)
 	test_KErrNone(r);
 
 	test.End();
-	
+
 	}
 
 static void TestDeviceQualifierDescriptor(RDEVCLIENT* aPort)
@@ -246,12 +251,12 @@ static void TestInterfaceDescriptor(RDEVCLIENT* aPort, TInt aNumSettings)
 	TBuf8<KUsbDescSize_Interface> descriptor2;
 	for (TInt i =0; i < aNumSettings; i++)
 		{
-		
+
 		test.Next(_L("GetInterfaceDescriptorSize()"));
 		r = aPort->GetInterfaceDescriptorSize(i, desc_size);
 		if (r != KErrNone)
 			{
-			RDebug::Printf ("Error %d in GetInterfaceDescriptorSize %d\n",r,i);
+			OstTraceExt2(TRACE_NORMAL, TESTINTERFACEDESCRIPTOR_TESTINTERFACEDESCRIPTOR, "Error %d in GetInterfaceDescriptorSize %d\n",r,i);
 			}
 		test_KErrNone(r);
 		test_Equal(KUsbDescSize_Interface,static_cast<TUint>(desc_size));
@@ -277,7 +282,7 @@ static void TestInterfaceDescriptor(RDEVCLIENT* aPort, TInt aNumSettings)
 		r = descriptor2.Compare(descriptor);
 		test_KErrNone(r);
 		}
-		
+
 	test.Next(_L("GetInterfaceDescriptor()"));
 	r = aPort->GetInterfaceDescriptor(aNumSettings, descriptor);
 	test_Equal(KErrNotFound,r);
@@ -285,7 +290,7 @@ static void TestInterfaceDescriptor(RDEVCLIENT* aPort, TInt aNumSettings)
 	test.Next(_L("SetInterfaceDescriptor()"));
 	r = aPort->SetInterfaceDescriptor(aNumSettings, descriptor);
 	test_Equal(KErrNotFound,r);
-		
+
 	test.End();
 	}
 
@@ -368,7 +373,7 @@ void TestEndpointDescriptor(RDEVCLIENT* aPort,TInt aIfSetting, TInt aEpNumber,TU
 		!(aEpInfo.iDir & KUsbEpDirIn) && !(epDescriptor[KEpDesc_AddressOffset] & 0x80)) &&
 			EpTypeMask2Value(aEpInfo.iType) == (TUint)(epDescriptor[KEpDesc_AttributesOffset] & 0x03) &&
 			aEpInfo.iInterval == epDescriptor[KEpDesc_IntervalOffset]);
-			
+
 	// Change the endpoint poll interval
 	TUint8 ival = 0x66;
 	if (epDescriptor[KEpDesc_IntervalOffset] == ival)
@@ -423,6 +428,7 @@ static void TestStandardStringDescriptors(RDEVCLIENT* aPort)
 	TInt r = aPort->GetStringDescriptorLangId(rd_langid_orig);
 	test_KErrNone(r);
 	test.Printf(_L("Original LANGID code: 0x%04X\n"), rd_langid_orig);
+	OstTrace1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS, "Original LANGID code: 0x%04X\n", rd_langid_orig);
 
 	test.Next(_L("SetStringDescriptorLangId()"));
 	TUint16 wr_langid = 0x0809;								// English (UK) Language ID
@@ -436,6 +442,7 @@ static void TestStandardStringDescriptors(RDEVCLIENT* aPort)
 	r = aPort->GetStringDescriptorLangId(rd_langid);
 	test_KErrNone(r);
 	test.Printf(_L("New LANGID code: 0x%04X\n"), rd_langid);
+	OstTrace1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP01, "New LANGID code: 0x%04X\n", rd_langid);
 
 	test.Next(_L("Compare LANGID codes"));
 	test_Equal(wr_langid,rd_langid);
@@ -459,11 +466,13 @@ static void TestStandardStringDescriptors(RDEVCLIENT* aPort)
 	if (r == KErrNone)
 		{
 		test.Printf(_L("Original Manufacturer string: \"%lS\"\n"), &rd_str_orig);
+		OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP02, "Original Manufacturer string: \"%lS\"\n", rd_str_orig);
 		restore_string = ETrue;
 		}
 	else
 		{
 		test.Printf(_L("No Manufacturer string set\n"));
+		OstTrace0(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP03, "No Manufacturer string set\n");
 		restore_string = EFalse;
 		}
 
@@ -478,6 +487,7 @@ static void TestStandardStringDescriptors(RDEVCLIENT* aPort)
 	r = aPort->GetManufacturerStringDescriptor(rd_str);
 	test_KErrNone(r);
 	test.Printf(_L("New Manufacturer string: \"%lS\"\n"), &rd_str);
+	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP04, "New Manufacturer string: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Manufacturer strings"));
 	r = rd_str.Compare(wr_str);
@@ -495,6 +505,7 @@ static void TestStandardStringDescriptors(RDEVCLIENT* aPort)
 	r = aPort->GetManufacturerStringDescriptor(rd_str);
 	test_KErrNone(r);
 	test.Printf(_L("New Manufacturer string: \"%lS\"\n"), &rd_str);
+	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP05, "New Manufacturer string: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Manufacturer strings"));
 	r = rd_str.Compare(wr_str);
@@ -528,6 +539,7 @@ static void TestStandardStringDescriptors(RDEVCLIENT* aPort)
 	if (r == KErrNone)
 		{
 		test.Printf(_L("Old Product string: \"%lS\"\n"), &rd_str_orig);
+		OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP06, "Old Product string: \"%lS\"\n", rd_str_orig);
 		restore_string = ETrue;
 		}
 	else
@@ -545,6 +557,7 @@ static void TestStandardStringDescriptors(RDEVCLIENT* aPort)
 	r = aPort->GetProductStringDescriptor(rd_str);
 	test_KErrNone(r);
 	test.Printf(_L("New Product string: \"%lS\"\n"), &rd_str);
+	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP07, "New Product string: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Product strings"));
 	r = rd_str.Compare(wr_str);
@@ -562,6 +575,7 @@ static void TestStandardStringDescriptors(RDEVCLIENT* aPort)
 	r = aPort->GetProductStringDescriptor(rd_str);
 	test_KErrNone(r);
 	test.Printf(_L("New Product string: \"%lS\"\n"), &rd_str);
+	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP08, "New Product string: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Product strings"));
 	r = rd_str.Compare(wr_str);
@@ -595,6 +609,7 @@ static void TestStandardStringDescriptors(RDEVCLIENT* aPort)
 	if (r == KErrNone)
 		{
 		test.Printf(_L("Old Serial Number: \"%lS\"\n"), &rd_str_orig);
+		OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP09, "Old Serial Number: \"%lS\"\n", rd_str_orig);
 		restore_string = ETrue;
 		}
 	else
@@ -612,6 +627,7 @@ static void TestStandardStringDescriptors(RDEVCLIENT* aPort)
 	r = aPort->GetSerialNumberStringDescriptor(rd_str);
 	test_KErrNone(r);
 	test.Printf(_L("New Serial Number: \"%lS\"\n"), &rd_str);
+	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP10, "New Serial Number: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Serial Number strings"));
 	r = rd_str.Compare(wr_str);
@@ -629,6 +645,7 @@ static void TestStandardStringDescriptors(RDEVCLIENT* aPort)
 	r = aPort->GetSerialNumberStringDescriptor(rd_str);
 	test_KErrNone(r);
 	test.Printf(_L("New Serial Number: \"%lS\"\n"), &rd_str);
+	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP11, "New Serial Number: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Serial Number strings"));
 	r = rd_str.Compare(wr_str);
@@ -662,6 +679,7 @@ static void TestStandardStringDescriptors(RDEVCLIENT* aPort)
 	if (r == KErrNone)
 		{
 		test.Printf(_L("Old Configuration string: \"%lS\"\n"), &rd_str_orig);
+		OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP12, "Old Configuration string: \"%lS\"\n", rd_str_orig);
 		restore_string = ETrue;
 		}
 	else
@@ -679,6 +697,7 @@ static void TestStandardStringDescriptors(RDEVCLIENT* aPort)
 	r = aPort->GetConfigurationStringDescriptor(rd_str);
 	test_KErrNone(r);
 	test.Printf(_L("New Configuration string: \"%lS\"\n"), &rd_str);
+	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP13, "New Configuration string: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Configuration strings"));
 	r = rd_str.Compare(wr_str);
@@ -696,6 +715,7 @@ static void TestStandardStringDescriptors(RDEVCLIENT* aPort)
 	r = aPort->GetConfigurationStringDescriptor(rd_str);
 	test_KErrNone(r);
 	test.Printf(_L("New Configuration string: \"%lS\"\n"), &rd_str);
+	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP14, "New Configuration string: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Configuration strings"));
 	r = rd_str.Compare(wr_str);
@@ -785,6 +805,7 @@ static void TestArbitraryStringDescriptors(RDEVCLIENT* aPort,TInt aNumSettings)
 	r = aPort->GetStringDescriptor(stridx3, rd_str);
 	test_KErrNone(r);
 	test.Printf(_L("New test string @ idx %d: \"%lS\"\n"), stridx3, &rd_str);
+	OstTraceExt2(TRACE_NORMAL, TESTARBITRARYSTRINGDESCRIPTORS_TESTARBITRARYSTRINGDESCRIPTORS, "New test string @ idx %d: \"%lS\"\n", stridx3, rd_str);
 
 	test.Next(_L("Compare test strings 3"));
 	r = rd_str.Compare(wr_str);
@@ -828,17 +849,17 @@ void TestInvalidSetInterface (RDEVCLIENT* aPort,TInt aNumSettings)
 	if (SupportsAlternateInterfaces())
 		{
 		TInt r = aPort->SetInterface(aNumSettings+1, ifc);
-		test_Compare(r,!=,KErrNone);		
+		test_Compare(r,!=,KErrNone);
 		}
-	
+
 	if (aNumSettings > 1)
 		{
 		TInt r = aPort->SetInterface(aNumSettings-1, ifc);
-		test_Compare(r,!=,KErrNone);		
+		test_Compare(r,!=,KErrNone);
 		}
 
 	TInt r = aPort->SetInterface(0, ifc);
-	test_Compare(r,!=,KErrNone);		
+	test_Compare(r,!=,KErrNone);
 
 	test.End();
 	}
@@ -850,13 +871,13 @@ void TestInvalidReleaseInterface (RDEVCLIENT* aPort,TInt aNumSettings)
 	if (aNumSettings > 2)
 		{
 		TInt r = aPort->ReleaseInterface(aNumSettings-3);
-		test_Compare(r,!=,KErrNone);		
+		test_Compare(r,!=,KErrNone);
 		}
 
 	if (aNumSettings > 1)
 		{
 		TInt r = aPort->ReleaseInterface(aNumSettings-2);
-		test_Compare(r,!=,KErrNone);		
+		test_Compare(r,!=,KErrNone);
 		}
 
 	test.End();
@@ -870,7 +891,7 @@ void TestDescriptorManipulation(TBool aHighSpeed, RDEVCLIENT* aPort, TInt aNumSe
 		{
 		TestDeviceQualifierDescriptor(aPort);
 
-		TestOtherSpeedConfigurationDescriptor(aPort);	
+		TestOtherSpeedConfigurationDescriptor(aPort);
 		}
 
 	TestInterfaceDescriptor(aPort,aNumSettings);
@@ -880,6 +901,7 @@ void TestDescriptorManipulation(TBool aHighSpeed, RDEVCLIENT* aPort, TInt aNumSe
 	TestStandardStringDescriptors(aPort);
 
 	TestArbitraryStringDescriptors(aPort,aNumSettings);
+	test.Next(_L("Test USB Descriptor Manipulation1"));
 
 	test.End();
 	}
@@ -933,11 +955,14 @@ void TestOtgExtensions(RDEVCLIENT* aPort)
 		TBool a_AltHnpSupport = (features & KUsbOtgAttr_A_AltHnpSupport) ? ETrue : EFalse;
 		test.Printf(_L("### OTG Features:\nB_HnpEnable(%d)\nA_HnpSupport(%d)\nA_Alt_HnpSupport(%d)\n"),
 					b_HnpEnable, a_HnpSupport, a_AltHnpSupport);
+		OstTraceExt3(TRACE_NORMAL, TESTOTGEXTENSIONS_TESTOTGEXTENSIONS, "### OTG Features:\nB_HnpEnable(%d)\nA_HnpSupport(%d)\nA_Alt_HnpSupport(%d)\n",
+					b_HnpEnable, a_HnpSupport, a_AltHnpSupport);
 		}
 	else
 		{
 		test_Equal(KErrNotSupported,r);
 		test.Printf(_L("GetOtgFeatures() not supported\n"));
+		OstTrace0(TRACE_NORMAL, TESTOTGEXTENSIONS_TESTOTGEXTENSIONS_DUP01, "GetOtgFeatures(not supported\n");
 		}
 
 	test.End();
@@ -989,10 +1014,12 @@ void TestEndpoint0MaxPacketSizes(RDEVCLIENT* aPort)
 			if (good)
 				{
 				test.Printf(_L("Ep0 supports %d bytes MaxPacketSize\n"), mpsize);
+				OstTrace1(TRACE_NORMAL, TESTENDPOINT0MAXPACKETSIZES_TESTENDPOINT0MAXPACKETSIZES, "Ep0 supports %d bytes MaxPacketSize\n", mpsize);
 				}
 			else
 				{
 				test.Printf(_L("Bad Ep0 size: 0x%08x, failure will occur\n"), bit);
+				OstTrace1(TRACE_NORMAL, TESTENDPOINT0MAXPACKETSIZES_TESTENDPOINT0MAXPACKETSIZES_DUP01, "Bad Ep0 size: 0x%08x, failure will occur\n", bit);
 				r = KErrGeneral;
 				}
 			}

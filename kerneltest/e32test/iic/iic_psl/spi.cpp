@@ -19,6 +19,7 @@
 #include <drivers/iic_trace.h>
 #endif
 
+#ifndef STANDALONE_CHANNEL
 #define NUM_CHANNELS 4 // Arbitrary
 
 // Macros to be updated(?) with interaction with Configuration Repository
@@ -26,6 +27,7 @@ const TInt KChannelTypeArray[NUM_CHANNELS] = {DIicBusChannel::EMaster, DIicBusCh
 #define CHANNEL_TYPE(n) (KChannelTypeArray[n])	
 const DIicBusChannel::TChannelDuplex KChannelDuplexArray[NUM_CHANNELS] = {DIicBusChannel::EHalfDuplex, DIicBusChannel::EHalfDuplex, DIicBusChannel::EHalfDuplex, DIicBusChannel::EFullDuplex};
 #define CHANNEL_DUPLEX(n) (KChannelDuplexArray[n]) 
+#endif/*STANDALONE_CHANNEL*/
 
 #ifdef LOG_SPI
 #define SPI_PRINT(str) Kern::Printf str
@@ -122,8 +124,10 @@ void DSimulatedSpiDevice::GetCaps(TDes8& aDes) const
 	aDes.Copy((TUint8*)&caps,size);
     }
 
+#ifndef STANDALONE_CHANNEL
 // supported channels for this implementation
 static DIicBusChannel* ChannelPtrArray[NUM_CHANNELS];
+#endif
 
 //DECLARE_EXTENSION_WITH_PRIORITY(BUS_IMPLMENTATION_PRIORITY)	
 DECLARE_STANDARD_PDD()		// SPI test driver to be explicitly loaded as an LDD, not kernel extension
@@ -487,10 +491,7 @@ void THwCallbackFunc(TAny* aPtr)
 TInt DSimulatedIicBusChannelMasterSpi::DoSimulatedTransaction()
 	{
 	TInt r = AsynchStateMachine(EHwTransferDone);
-	if(iTimeoutTimer.Cancel() == FALSE)
-		{
-		SPI_PRINT(("timer is not cancelled"));
-		}
+	CancelTimeOut();
 	return r;
 	}
 

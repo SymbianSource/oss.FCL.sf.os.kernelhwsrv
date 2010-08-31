@@ -38,6 +38,10 @@ Kernel side definitions for the HCR Platform Independent Layer.
 #include "hcr_hai.h"
 
 
+// -- INTERNAL/HELPER FUNCTIONS PROTOTYPE --------------------------------------
+TInt CompareSSettingIds(const HCR::TSettingId& a1, const HCR::SSettingId& a2);
+
+
 // -- CLASSES -----------------------------------------------------------------
 
 namespace HCR

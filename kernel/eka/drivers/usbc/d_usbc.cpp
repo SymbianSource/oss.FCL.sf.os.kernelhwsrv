@@ -1,4 +1,4 @@
-// Copyright (c) 2000-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2000-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -23,6 +23,11 @@
 */
 
 #include <drivers/usbc.h>
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "d_usbcTraces.h"
+#endif
+
 
 
 _LIT(KUsbLddName, "Usbc");
@@ -95,7 +100,9 @@ TInt DUsbcLogDevice::Install()
 	// Only proceed if we have the Controller underneath us
 	if (!DUsbClientController::UsbcControllerPointer())
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("LDD Install: USB Controller Not Present"));
+		OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLOGDEVICE_INSTALL,
+		        "LDD Install: USB Controller Not Present" );
+		
 		return KErrGeneral;
 		}
 	return SetName(&KUsbLddName);
@@ -134,7 +141,9 @@ DLddUsbcChannel::DLddUsbcChannel()
 	  iDeviceStatusNeeded(EFalse),
 	  iChannelClosing(EFalse)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("*** DLddUsbcChannel::DLddUsbcChannel CTOR"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DLDDUSBCCHANNEL_DLDDUSBCCHANNEL_CONS, 
+	        "*** DLddUsbcChannel::DLddUsbcChannel CTOR" );
+	
 	iClient = &Kern::CurrentThread();
 	iClient->Open();
 	for (TInt i = 1; i <= KMaxEndpointsPerClient; i++)
@@ -150,7 +159,9 @@ DLddUsbcChannel::DLddUsbcChannel()
 
 DLddUsbcChannel::~DLddUsbcChannel()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DLddUsbcChannel::~DLddUsbcChannel()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DLDDUSBCCHANNEL_DLDDUSBCCHANNEL_DES, 
+	        "DLddUsbcChannel::~DLddUsbcChannel()" );
+	
 	if (iController)
 		{
 		iController->DeRegisterClient(this);
@@ -196,8 +207,9 @@ inline TBool DLddUsbcChannel::ValidEndpoint(TInt aEndpoint)
 //
 TInt DLddUsbcChannel::DoCreate(TInt /*aUnit*/, const TDesC8* /*aInfo*/, const TVersion& aVer)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("LDD DoCreateL 1 Ver = %02d %02d %02d",
-									aVer.iMajor, aVer.iMinor, aVer.iBuild));
+	OstTraceDefExt3( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCREATE, 
+	        "LDD DoCreateL 1 Ver = %02d %02d %02d", aVer.iMajor, aVer.iMinor, aVer.iBuild );
+	
 	if (!Kern::CurrentThreadHasCapability(ECapabilityCommDD,
 										  __PLATSEC_DIAGNOSTIC_STRING("Checked by USBC.LDD (USB Driver)")))
 		{
@@ -427,7 +439,8 @@ void DLddUsbcChannel::HandleMsg(TMessageBase* aMsg)
 //
 TInt DLddUsbcChannel::RequestUserHandle(DThread* aThread, TOwnerType /*aType*/)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DLddUsbcChannel::RequestUserHandle"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_REQUESTUSERHANDLE,
+	        "DLddUsbcChannel::RequestUserHandle" );
 	// The USB client LDD is not designed for a channel to be shared between
 	// threads. It saves a pointer to the current thread when it is opened, and
 	// uses this to complete any asynchronous requests.
@@ -450,7 +463,8 @@ TInt DLddUsbcChannel::RequestUserHandle(DThread* aThread, TOwnerType /*aType*/)
 void DLddUsbcChannel::DoRequest(TInt aReqNo, TRequestStatus* aStatus, TAny* a1, TAny* a2)
 	{
 	// Check on request status
-	__KTRACE_OPT(KUSB, Kern::Printf("DoRequest 0x%08x", aReqNo));
+	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOREQUEST, 
+	        "DoRequest 0x%08x", aReqNo );
 		TInt r = KErrNone;
 		if (iRequestStatus[aReqNo] != NULL)
 			{
@@ -519,7 +533,8 @@ TInt DLddUsbcChannel::DoOtherAsyncReq(TInt aReqNo, TAny* a1, TAny* a2, TBool& aN
 		{
 	case RDevUsbcClient::ERequestAlternateDeviceStatusNotify:
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlReqDeviceStatusNotify"));
+		OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOOTHERASYNCREQ, 
+		        "EControlReqDeviceStatusNotify" );
 		if (a1 != NULL)
 			{
 			iDeviceStatusNeeded = ETrue;
@@ -532,14 +547,16 @@ TInt DLddUsbcChannel::DoOtherAsyncReq(TInt aReqNo, TAny* a1, TAny* a2, TBool& aN
 		}
 	case RDevUsbcClient::ERequestReEnumerate:
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("ERequestReEnumerate"));
+	    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOOTHERASYNCREQ_DUP1, 
+	            "ERequestReEnumerate" );
 		// If successful, this will complete via the status notification.
 		r = iController->ReEnumerate();
 		break;
 		}
 	case RDevUsbcClient::ERequestEndpointStatusNotify:
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("ERequestEndpointStatusNotify"));
+	    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOOTHERASYNCREQ_DUP2, 
+	            "ERequestEndpointStatusNotify" );
 		if (a1 != NULL)
 			{
 			iEndpointStatusChangePtr = a1;
@@ -550,7 +567,8 @@ TInt DLddUsbcChannel::DoOtherAsyncReq(TInt aReqNo, TAny* a1, TAny* a2, TBool& aN
 			}
 	case RDevUsbcClient::ERequestOtgFeaturesNotify:
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("ERequestOtgFeaturesNotify"));
+		OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOOTHERASYNCREQ_DUP3, 
+		        "ERequestOtgFeaturesNotify" );
 		if (a1 != NULL)
 			{
             iOtgFeatureChangePtr = a1;
@@ -589,7 +607,8 @@ TInt DLddUsbcChannel::DoTransferAsyncReq(TInt aEndpointNum, TAny* a1, TAny* a2, 
 		// ep0 requests
 		if (!(iValidInterface || iOwnsDeviceControl))
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("DoRequest rejected: not configured (Ep0)"));
+			OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOTRANSFERASYNCREQ,
+			        "DoRequest rejected: not configured (Ep0)" );
 			r = KErrUsbInterfaceNotReady;
 			goto exit;
 			}
@@ -601,7 +620,8 @@ TInt DLddUsbcChannel::DoTransferAsyncReq(TInt aEndpointNum, TAny* a1, TAny* a2, 
 		                          iDeviceState == EUsbcDeviceStateSuspended))
 		   )
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("DoRequest rejected not configured (Ep %d)", aEndpointNum));
+			OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOTRANSFERASYNCREQ_DUP1,
+			        "DoRequest rejected not configured (Ep %d)", aEndpointNum );
 			r = KErrUsbInterfaceNotReady;
 			goto exit;
 			}
@@ -609,7 +629,8 @@ TInt DLddUsbcChannel::DoTransferAsyncReq(TInt aEndpointNum, TAny* a1, TAny* a2, 
 
 	if (!ValidEndpoint(aEndpointNum))
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: DoRequest Read: in error complete"));
+		OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DLDDUSBCCHANNEL_DOTRANSFERASYNCREQ_DUP2,
+		        "  Error: DoRequest Read: in error complete" );
 		r = KErrUsbEpNotInInterface;
 		goto exit;
  		}
@@ -629,13 +650,15 @@ TInt DLddUsbcChannel::DoTransferAsyncReq(TInt aEndpointNum, TAny* a1, TAny* a2, 
 	pEndpoint = iEndpoint[aEndpointNum];
 	if (!pEndpoint)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: DoRequest Read: in error complete"));
+		OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DLDDUSBCCHANNEL_DOTRANSFERASYNCREQ_DUP3,
+		        "  Error: DoRequest Read: in error complete" );
 		r = KErrUsbEpNotInInterface;
 		goto exit;
 		}
 
 	pEndpointInfo = pEndpoint->EndpointInfo();
-	__KTRACE_OPT(KUSB, Kern::Printf("DoRequest %d", aEndpointNum));
+	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOTRANSFERASYNCREQ_DUP4,
+	        "DoRequest %d", aEndpointNum );
 
 	switch (pTfr->iTransferType)
 		{
@@ -645,21 +668,25 @@ TInt DLddUsbcChannel::DoTransferAsyncReq(TInt aEndpointNum, TAny* a1, TAny* a2, 
 	case ETransferTypeReadUntilShort:
 	case ETransferTypeReadOneOrMore:
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("DoRequest Read"));
+		OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOTRANSFERASYNCREQ_DUP5,
+		        "DoRequest Read" );
 		if (pEndpoint->iDmaBuffers->RxIsActive())
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("**** ReadReq ep%d RxActive", aEndpointNum));
+			OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOTRANSFERASYNCREQ_DUP6,
+			        "**** ReadReq ep%d RxActive", aEndpointNum );
 			}
 		else
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("**** ReadReq ep%d RxInActive", aEndpointNum));
+			OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOTRANSFERASYNCREQ_DUP7,
+			        "**** ReadReq ep%d RxInActive", aEndpointNum );
 			}
 
 		if (pEndpointInfo->iDir != KUsbEpDirOut &&
 			pEndpointInfo->iDir != KUsbEpDirBidirect)
 			{
 			// Trying to do the wrong thing
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: DoRequest Read: in error complete"));
+			OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DLDDUSBCCHANNEL_DOTRANSFERASYNCREQ_DUP8,
+			        "  Error: DoRequest Read: in error complete" );
 			r = KErrUsbEpBadDirection;
 			break;
 			}
@@ -677,7 +704,8 @@ TInt DLddUsbcChannel::DoTransferAsyncReq(TInt aEndpointNum, TAny* a1, TAny* a2, 
 			{
 			if (pTfr->iTransferType == ETransferTypeReadPacket)
 				{
-				__KTRACE_OPT(KUSB, Kern::Printf("DoRequest Read packet: data available complete"));
+				OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOTRANSFERASYNCREQ_DUP9,
+				        "DoRequest Read packet: data available complete" );
 				r = pEndpoint->CopyToClient(iClient,iClientAsynchNotify[aEndpointNum]->iClientBuffer);
 				aNeedsCompletion = ETrue;
 				break;
@@ -686,7 +714,8 @@ TInt DLddUsbcChannel::DoTransferAsyncReq(TInt aEndpointNum, TAny* a1, TAny* a2, 
 				{
 				if (pTfr->iTransferSize <= pEndpoint->RxBytesAvailable())
 					{
-					__KTRACE_OPT(KUSB, Kern::Printf("DoRequest Read data: data available complete"));
+					OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOTRANSFERASYNCREQ_DUP10,
+					        "DoRequest Read data: data available complete");
 					r = pEndpoint->CopyToClient(iClient,iClientAsynchNotify[aEndpointNum]->iClientBuffer);
 					aNeedsCompletion = ETrue;
 					break;
@@ -700,7 +729,8 @@ TInt DLddUsbcChannel::DoTransferAsyncReq(TInt aEndpointNum, TAny* a1, TAny* a2, 
 				{
 				if (pEndpoint->RxBytesAvailable() > 0)
 					{
-					__KTRACE_OPT(KUSB, Kern::Printf("DoRequest Read data: data available complete"));
+					OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOTRANSFERASYNCREQ_DUP11,
+					        "DoRequest Read data: data available complete" );
 					r = pEndpoint->CopyToClient(iClient,iClientAsynchNotify[aEndpointNum]->iClientBuffer);
 					aNeedsCompletion = ETrue;
 					break;
@@ -718,7 +748,9 @@ TInt DLddUsbcChannel::DoTransferAsyncReq(TInt aEndpointNum, TAny* a1, TAny* a2, 
 					(nRx < maxPacketSize) ||
 					pEndpoint->iDmaBuffers->ShortPacketExists())
 					{
-					__KTRACE_OPT(KUSB, Kern::Printf("DoRequest Read data: data available complete"));
+                    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOTRANSFERASYNCREQ_DUP12,
+                            "DoRequest Read data: data available complete" );
+
 					r = pEndpoint->CopyToClient(iClient,iClientAsynchNotify[aEndpointNum]->iClientBuffer);
 					aNeedsCompletion = ETrue;
 					}
@@ -731,7 +763,9 @@ TInt DLddUsbcChannel::DoTransferAsyncReq(TInt aEndpointNum, TAny* a1, TAny* a2, 
 		r = pEndpoint->TryToStartRead(EFalse);
 		if (r != KErrNone)
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("DoRequest Read: couldn't start read"));
+            OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOTRANSFERASYNCREQ_DUP13,
+                    "DoRequest Read: couldn't start read" );
+
 			r = KErrNone;									// Reader full isn't a userside error;
 			}
 		break;
@@ -739,42 +773,48 @@ TInt DLddUsbcChannel::DoTransferAsyncReq(TInt aEndpointNum, TAny* a1, TAny* a2, 
 
 	case ETransferTypeWrite:
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("DoRequest Write 1"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOTRANSFERASYNCREQ_DUP14,
+                "DoRequest Write 1" );
 		if (pEndpointInfo->iDir != KUsbEpDirIn &&
 			pEndpointInfo->iDir != KUsbEpDirBidirect)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: DoRequest Write: wrong direction complete"));
+			OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DLDDUSBCCHANNEL_DOTRANSFERASYNCREQ_DUP15,
+			        "  Error: DoRequest Write: wrong direction complete" );
 			r = KErrUsbEpBadDirection;
 			break;
 			}
-		__KTRACE_OPT(KUSB, Kern::Printf("DoRequest Write 2"));
+		OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOTRANSFERASYNCREQ_DUP16,
+		        "DoRequest Write 2" );
 
 
 		TInt desLength=iClientAsynchNotify[aEndpointNum]->iClientBuffer->Length();
 		
 		if (desLength < pTfr->iTransferSize)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: DoRequest Write: user buffer too short"));
+			OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DLDDUSBCCHANNEL_DOTRANSFERASYNCREQ_DUP17,
+			        "  Error: DoRequest Write: user buffer too short" );
 			r = KErrUsbTransferSize;
 			break;
 			}
 
-		__KTRACE_OPT(KUSB, Kern::Printf("DoRequest Write 3 length=%d maxlength=%d",
-										pTfr->iTransferSize, desLength));
+		OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOTRANSFERASYNCREQ_DUP18,
+		        "DoRequest Write 3 length=%d maxlength=%d", pTfr->iTransferSize, desLength);
 		// Zero length writes are acceptable
 		pEndpoint->SetClientWritePending(ETrue);
 		r = pEndpoint->TryToStartWrite(pTfr);
 		if (r != KErrNone)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: DoRequest Write: couldn't start write"));
+			OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DLDDUSBCCHANNEL_DOTRANSFERASYNCREQ_DUP19,
+			        "  Error: DoRequest Write: couldn't start write" );
 			pEndpoint->SetClientWritePending(EFalse);
 			}
 		break;
 		}
 
 	default:
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: DoTransferAsyncReq: pTfr->iTransferType = %d not supported",
-										  pTfr->iTransferType));
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DLDDUSBCCHANNEL_DOTRANSFERASYNCREQ_DUP20,
+                "  Error: DoTransferAsyncReq: pTfr->iTransferType = %d not supported", pTfr->iTransferType);
+
 		r = KErrNotSupported;
 		break;
 		}
@@ -790,15 +830,20 @@ TInt DLddUsbcChannel::DoTransferAsyncReq(TInt aEndpointNum, TAny* a1, TAny* a2, 
 TInt DLddUsbcChannel::DoCancel(TInt aReqNo)
 	{
 	TInt r = KErrNone;
-	__KTRACE_OPT(KUSB, Kern::Printf("DoCancel: 0x%x", aReqNo));
+	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCANCEL, 
+	        "DoCancel: 0x%x", aReqNo );
 	if (aReqNo <= iNumberOfEndpoints)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("DoCancel endpoint: 0x%x", aReqNo));
+		OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCANCEL_DUP1, 
+		        "DoCancel endpoint: 0x%x", aReqNo );
+
 		iEndpoint[aReqNo]->CancelTransfer(iClient,iClientAsynchNotify[aReqNo]->iClientBuffer);
 		}
 	else if (aReqNo == RDevUsbcClient::ERequestAlternateDeviceStatusNotify)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("DoCancel: ERequestAlternateDeviceStatusNotify 0x%x", aReqNo));
+		OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCANCEL_DUP2, 
+		        "DoCancel: ERequestAlternateDeviceStatusNotify 0x%x", aReqNo );
+
 		iDeviceStatusNeeded = EFalse;
 		iStatusFifo->FlushQueue();
 		if (iStatusChangePtr)
@@ -816,11 +861,15 @@ TInt DLddUsbcChannel::DoCancel(TInt aReqNo)
 		}
 	else if (aReqNo == RDevUsbcClient::ERequestReEnumerate)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("DoCancel ERequestReEnumerate: 0x%x", aReqNo));
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCANCEL_DUP3, 
+                "DoCancel ERequestReEnumerate: 0x%x", aReqNo );
+
 		}
 	else if (aReqNo == RDevUsbcClient::ERequestEndpointStatusNotify)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("DoCancel ERequestEndpointStatusNotify: 0x%x", aReqNo));
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCANCEL_DUP4,
+                "DoCancel ERequestEndpointStatusNotify: 0x%x", aReqNo );
+
 		CancelNotifyEndpointStatus();
 		if (iEndpointStatusChangeReq->IsReady())
 			{
@@ -831,7 +880,9 @@ TInt DLddUsbcChannel::DoCancel(TInt aReqNo)
 		}
 	else if (aReqNo == RDevUsbcClient::ERequestOtgFeaturesNotify)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("DoCancel ERequestOtgFeaturesNotify: 0x%x", aReqNo));
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCANCEL_DUP5,
+                "DoCancel ERequestOtgFeaturesNotify: 0x%x", aReqNo );
+
 		CancelNotifyOtgFeatures();
 		if (iOtgFeatureChangeReq->IsReady())
 			{
@@ -841,7 +892,9 @@ TInt DLddUsbcChannel::DoCancel(TInt aReqNo)
 		}
 	else
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("DoCancel Unknown! 0x%x", aReqNo));
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCANCEL_DUP6,
+                "DoCancel Unknown! 0x%x", aReqNo );
+
 		}
 
 		if (r == KErrNone)
@@ -1118,7 +1171,8 @@ TInt DLddUsbcChannel::SendControl(TMessageBase* aMsg)
 
 TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DoControl: %d", aFunction));
+    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL, 
+            "DoControl: %d", aFunction );
 
 	TInt r = KErrNone;
 	TInt ep;
@@ -1133,7 +1187,9 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 	switch (aFunction)
 		{
 	case RDevUsbcClient::EControlEndpointZeroRequestError:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlEndpointZeroRequestError"));
+	    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP1, 
+	            "EControlEndpointZeroRequestError" );
+
 		r = KErrNone;
 		if (iOwnsDeviceControl || (iValidInterface && iDeviceState == EUsbcDeviceStateConfigured))
 			{
@@ -1149,7 +1205,9 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlGetAlternateSetting:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlGetAlternateSetting"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP2,
+                "EControlGetAlternateSetting" );
+
 		if (iValidInterface && iDeviceState == EUsbcDeviceStateConfigured)
 			{
 			r = iController->GetInterfaceNumber(this, *(TInt*)a1);
@@ -1164,12 +1222,16 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlDeviceStatus:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlDeviceStatus"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP3,
+                "EControlDeviceStatus" );
+
 		*(TInt*)a1 = iController->GetDeviceStatus();
 		break;
 
 	case RDevUsbcClient::EControlEndpointStatus:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlEndpointStatus"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP4,
+                "EControlEndpointStatus" );
+
 		if (iValidInterface && ValidEndpoint((TInt) a1))
 			{
 			pEndpoint = iEndpoint[(TInt)a1];
@@ -1190,7 +1252,9 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlQueryReceiveBuffer:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlQueryReceiveBuffer"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP5,
+                "EControlQueryReceiveBuffer" );
+
 		if (iValidInterface && ValidEndpoint((TInt) a1))
 			{
 			pEndpoint=iEndpoint[(TInt) a1];
@@ -1198,7 +1262,8 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 				r = KErrNotSupported;
 			else if (pEndpoint->EndpointInfo()->iDir != KUsbEpDirIn)
 				{
-				__KTRACE_OPT(KUSB, Kern::Printf("  bytes = %d", pEndpoint->RxBytesAvailable()));
+		        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP6,
+		                "  bytes = %d", pEndpoint->RxBytesAvailable());
 				*(TInt*)a2 = pEndpoint->RxBytesAvailable();
 				}
 			}
@@ -1212,7 +1277,8 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlEndpointCaps:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlEndpointCaps"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP7,
+                "EControlEndpointCaps" );
 		r = Kern::ThreadDesWrite(iClient, a1, pZeroDesc, 0, 0, iClient);
 		if (r != KErrNone)
 			PanicClientThread(r);
@@ -1220,7 +1286,8 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlDeviceCaps:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlDeviceCaps"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP8,
+                "EControlDeviceCaps" );
 		r = Kern::ThreadDesWrite(iClient, a1, pZeroDesc, 0, 0, iClient);
 		if (r != KErrNone)
 			PanicClientThread(r);
@@ -1228,12 +1295,14 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlSendEp0StatusPacket:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlSendEp0StatusPacket"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP9,
+                "EControlSendEp0StatusPacket" );
 		iController->SendEp0StatusPacket(this);
 		break;
 
 	case RDevUsbcClient::EControlHaltEndpoint:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlHaltEndpoint"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP10,
+                "EControlHaltEndpoint" );
 		if (iValidInterface && ValidEndpoint((TInt) a1))
 			{
 			r = iController->HaltEndpoint(this, iEndpoint[(TInt)a1]->RealEpNumber());
@@ -1248,7 +1317,8 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlClearHaltEndpoint:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlClearHaltEndpoint"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP11,
+                "EControlClearHaltEndpoint" );
 		if (iValidInterface && ValidEndpoint((TInt) a1))
 			{
 			r = iController->ClearHaltEndpoint(this, iEndpoint[(TInt)a1]->RealEpNumber());
@@ -1263,33 +1333,39 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlDumpRegisters:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlDumpRegisters"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP12,
+                "EControlDumpRegisters" );
 		iController->DumpRegisters();
 		break;
 
 	case RDevUsbcClient::EControlReleaseDeviceControl:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlReleaseDeviceControl"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP13,
+                "EControlReleaseDeviceControl" );
 		iController->ReleaseDeviceControl(this);
 		iOwnsDeviceControl = EFalse;
 		break;
 
 	case RDevUsbcClient::EControlEndpointZeroMaxPacketSizes:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlEndpointZeroMaxPacketSizes"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP14,
+                "EControlEndpointZeroMaxPacketSizes" );
 		r = iController->EndpointZeroMaxPacketSizes();
 		break;
 
 	case RDevUsbcClient::EControlSetEndpointZeroMaxPacketSize:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlSetEndpointZeroMaxPacketSize"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP15,
+                "EControlSetEndpointZeroMaxPacketSize" );
 		r = iController->SetEndpointZeroMaxPacketSize(reinterpret_cast<TInt>(a1));
 		break;
 
 	case RDevUsbcClient::EControlGetEndpointZeroMaxPacketSize:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlGetEndpointZeroMaxPacketSize"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP16,
+                "EControlGetEndpointZeroMaxPacketSize" );
 		r = iController->Ep0PacketSize();
 		break;
 
 	case RDevUsbcClient::EControlGetDeviceDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlGetDeviceDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP17,
+                "EControlGetDeviceDescriptor" );
 		r = Kern::ThreadDesWrite(iClient, a1, pZeroDesc, 0, 0, iClient);
 		if (r != KErrNone)
 			PanicClientThread(r);
@@ -1297,7 +1373,8 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlSetDeviceDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlSetDeviceDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP18,
+                "EControlSetDeviceDescriptor" );
 		if (a1 != NULL)
 			r = iController->SetDeviceDescriptor(iClient, *((TDes8*) a1));
 		else
@@ -1305,7 +1382,8 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlGetDeviceDescriptorSize:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlGetDeviceDescriptorSize"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP19,
+                "EControlGetDeviceDescriptorSize" );
 		if (a1 != NULL)
 			r = iController->GetDeviceDescriptorSize(iClient, *((TDes8*) a1));
 		else
@@ -1313,7 +1391,8 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlGetConfigurationDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlGetConfigurationDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP20,
+                "EControlGetConfigurationDescriptor" );
 		r = Kern::ThreadDesWrite(iClient, a1, pZeroDesc, 0 , 0, iClient);
 		if (r != KErrNone)
 			PanicClientThread(r);
@@ -1321,7 +1400,8 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlGetConfigurationDescriptorSize:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlGetConfigurationDescriptorSize"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP21,
+                "EControlGetConfigurationDescriptorSize" );
 		if (a1 != NULL)
 			{
 			r = iController->GetConfigurationDescriptorSize(iClient, *((TDes8*) a1));
@@ -1331,27 +1411,32 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlSetConfigurationDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlSetConfigurationDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP22,
+                "EControlSetConfigurationDescriptor" );
 		r = iController->SetConfigurationDescriptor(iClient, *((TDes8*) a1));
 		break;
 
 	case RDevUsbcClient::EControlGetInterfaceDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlGetInterfaceDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP23,
+                "EControlGetInterfaceDescriptor" );
 		r = iController->GetInterfaceDescriptor(iClient, this, (TInt) a1, *((TDes8*) a2));
 		break;
 
 	case RDevUsbcClient::EControlGetInterfaceDescriptorSize:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlGetInterfaceDescriptorSize"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP24,
+                "EControlGetInterfaceDescriptorSize" );
 		r = iController->GetInterfaceDescriptorSize(iClient, this, (TInt) a1, *(TDes8*) a2);
 		break;
 
 	case RDevUsbcClient::EControlSetInterfaceDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlSetInterfaceDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP25,
+                "EControlSetInterfaceDescriptor" );
 		r = iController->SetInterfaceDescriptor(iClient, this, (TInt) a1, *((TDes8*) a2));
 		break;
 
 	case RDevUsbcClient::EControlGetEndpointDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlGetEndpointDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP26,
+                "EControlGetEndpointDescriptor" );
 		r = Kern::ThreadRawRead(iClient, a1, &epInfo, sizeof(epInfo));
 		if (r != KErrNone)
 			PanicClientThread(r);
@@ -1361,7 +1446,8 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlGetEndpointDescriptorSize:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlGetEndpointDescriptorSize"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP27,
+                "EControlGetEndpointDescriptorSize" );
 		r = Kern::ThreadRawRead(iClient, a1, &epInfo, sizeof(epInfo));
 		if (r != KErrNone)
 			PanicClientThread(r);
@@ -1371,7 +1457,8 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlSetEndpointDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlSetEndpointDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP28,
+                "EControlSetEndpointDescriptor" );
 		r = Kern::ThreadRawRead(iClient, a1, &epInfo, sizeof(epInfo));
 		if (r != KErrNone)
 			PanicClientThread(r);
@@ -1381,7 +1468,8 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlGetDeviceQualifierDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlGetDeviceQualifierDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP29,
+                "EControlGetDeviceQualifierDescriptor" );
 		r = Kern::ThreadDesWrite(iClient, a1, pZeroDesc, 0, 0, iClient);
 		if (r != KErrNone)
 			PanicClientThread(r);
@@ -1389,7 +1477,8 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlSetDeviceQualifierDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlSetDeviceQualifierDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP30,
+                "EControlSetDeviceQualifierDescriptor" );
 		if (a1 != NULL)
 			r = iController->SetDeviceQualifierDescriptor(iClient, *((TDes8*) a1));
 		else
@@ -1397,7 +1486,8 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlGetOtherSpeedConfigurationDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlGetOtherSpeedConfigurationDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP31,
+                "EControlGetOtherSpeedConfigurationDescriptor" );
 		r = Kern::ThreadDesWrite(iClient, a1, pZeroDesc, 0 , 0, iClient);
 		if (r != KErrNone)
 			PanicClientThread(r);
@@ -1405,23 +1495,27 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlSetOtherSpeedConfigurationDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlSetOtherSpeedConfigurationDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP32,
+                "EControlSetOtherSpeedConfigurationDescriptor" );
 		r = iController->SetOtherSpeedConfigurationDescriptor(iClient, *((TDes8*) a1));
 		break;
 
 
 	case RDevUsbcClient::EControlGetCSInterfaceDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlGetCSInterfaceDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP33,
+                "EControlGetCSInterfaceDescriptor" );
 		r = iController->GetCSInterfaceDescriptorBlock(iClient, this, (TInt) a1, *((TDes8*) a2));
 		break;
 
 	case RDevUsbcClient::EControlGetCSInterfaceDescriptorSize:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlGetCSInterfaceDescriptorSize"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP34,
+                "EControlGetCSInterfaceDescriptorSize" );
 		r = iController->GetCSInterfaceDescriptorBlockSize(iClient, this, (TInt) a1, *(TDes8*) a2);
 		break;
 
 	case RDevUsbcClient::EControlGetCSEndpointDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlGetCSEndpointDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP35,
+                "EControlGetCSEndpointDescriptor" );
 		r = Kern::ThreadRawRead(iClient, a1, &epInfo, sizeof(epInfo));
 		if (r != KErrNone)
 			PanicClientThread(r);
@@ -1431,7 +1525,8 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlGetCSEndpointDescriptorSize:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlGetCSEndpointDescriptorSize"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP36,
+                "EControlGetCSEndpointDescriptorSize" );
 		r = Kern::ThreadRawRead(iClient, a1, &epInfo, sizeof(epInfo));
 		if (r != KErrNone)
 			PanicClientThread(r);
@@ -1441,38 +1536,46 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlSignalRemoteWakeup:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlSignalRemoteWakeup"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP37,
+                "EControlSignalRemoteWakeup" );
 		r = iController->SignalRemoteWakeup();
 		break;
 
 	case RDevUsbcClient::EControlDeviceDisconnectFromHost:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlDeviceDisconnectFromHost"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP38,
+                "EControlDeviceDisconnectFromHost" );
 		r = iController->UsbDisconnect();
 		break;
 
 	case RDevUsbcClient::EControlDeviceConnectToHost:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlDeviceConnectToHost"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP39,
+                "EControlDeviceConnectToHost" );
 		r = iController->UsbConnect();
 		break;
 
 	case RDevUsbcClient::EControlDevicePowerUpUdc:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlDevicePowerUpUdc"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP40,
+                "EControlDevicePowerUpUdc" );
 		r = iController->PowerUpUdc();
 		break;
 
 	case RDevUsbcClient::EControlSetDeviceControl:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlSetDeviceControl"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP41,
+                "EControlSetDeviceControl" );
 		r = iController->SetDeviceControl(this);
 		if (r == KErrNone)
 			{
 			iOwnsDeviceControl = ETrue;
 			if (iEndpoint[0] == NULL)
 				{
-				__KTRACE_OPT(KUSB, Kern::Printf("EControlSetDeviceControl 11"));
+		        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP42,
+		                "EControlSetDeviceControl 11" );
 				r = SetupEp0();
 				if (r != KErrNone)
 					{
-					__KTRACE_OPT(KPANIC, Kern::Printf("  Error: SetupEp0() failed"));
+	               OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DLDDUSBCCHANNEL_DOCONTROL_DUP43,
+	                       "  Error: SetupEp0() failed" );
+
 					iController->ReleaseDeviceControl(this);
 					DestroyEp0();
 					iOwnsDeviceControl = EFalse;
@@ -1485,12 +1588,14 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlCurrentlyUsingHighSpeed:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlCurrentlyUsingHighSpeed"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP44,
+                "EControlCurrentlyUsingHighSpeed" );
 		r = iController->CurrentlyUsingHighSpeed();
 		break;
 
 	case RDevUsbcClient::EControlSetInterface:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlSetInterface"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP45,
+                "EControlSetInterface" );
 		r = Kern::ThreadRawRead(iClient, a2, &ifcInfo, sizeof(ifcInfo));
 		if (r != KErrNone)
 			PanicClientThread(r);
@@ -1516,7 +1621,8 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlReleaseInterface:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlReleaseInterface"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP46,
+                "EControlReleaseInterface" );
 		r = iController->ReleaseInterface(this, (TInt) a1);
 		if (r == KErrNone)
 			{
@@ -1524,12 +1630,14 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 			}
 		else
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error in PIL: LDD interface won't be released."));
+	        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DLDDUSBCCHANNEL_DOCONTROL_DUP47,
+	                "  Error in PIL: LDD interface won't be released." );
 			}
 		break;
 
 	case RDevUsbcClient::EControlSetCSInterfaceDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlSetCSInterfaceDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP48,
+                "EControlSetCSInterfaceDescriptor" );
 		r = Kern::ThreadRawRead(iClient, a1, &desInfo, sizeof(desInfo));
 		if (r != KErrNone)
 			PanicClientThread(r);
@@ -1539,7 +1647,8 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlSetCSEndpointDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlSetCSEndpointDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP49,
+                "EControlSetCSEndpointDescriptor" );
 		r = Kern::ThreadRawRead(iClient, a1, &desInfo, sizeof(desInfo));
 		if (r != KErrNone)
 			PanicClientThread(r);
@@ -1550,87 +1659,104 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
 	case RDevUsbcClient::EControlGetStringDescriptorLangId:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlGetStringDescriptorLangId"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP50,
+                "EControlGetStringDescriptorLangId" );
 		r = iController->GetStringDescriptorLangId(iClient, *((TDes8*) a1));
 		break;
 
 	case RDevUsbcClient::EControlSetStringDescriptorLangId:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlSetStringDescriptorLangId"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP51,
+                "EControlSetStringDescriptorLangId" );
 		r = iController->SetStringDescriptorLangId(reinterpret_cast<TUint>(a1));
 		break;
 
 	case RDevUsbcClient::EControlGetManufacturerStringDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlGetManufacturerStringDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP52,
+                "EControlGetManufacturerStringDescriptor" );
 		r = iController->GetManufacturerStringDescriptor(iClient, *((TPtr8*) a1));
 		break;
 
 	case RDevUsbcClient::EControlSetManufacturerStringDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlSetManufacturerStringDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP53,
+                "EControlSetManufacturerStringDescriptor" );
 		r = iController->SetManufacturerStringDescriptor(iClient, *((TPtr8*) a1));
 		break;
 
 	case RDevUsbcClient::EControlRemoveManufacturerStringDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlRemoveManufacturerStringDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP54,
+                "EControlRemoveManufacturerStringDescriptor" );
 		r = iController->RemoveManufacturerStringDescriptor();
 		break;
 
 	case RDevUsbcClient::EControlGetProductStringDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlGetProductStringDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP55,
+                "EControlGetProductStringDescriptor" );
 		r = iController->GetProductStringDescriptor(iClient, *((TPtr8*) a1));
 		break;
 
 	case RDevUsbcClient::EControlSetProductStringDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlSetProductStringDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP56,
+                "EControlSetProductStringDescriptor" );
 		r = iController->SetProductStringDescriptor(iClient, *((TPtr8*) a1));
 		break;
 
 	case RDevUsbcClient::EControlRemoveProductStringDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlRemoveProductStringDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP57,
+                "EControlRemoveProductStringDescriptor" );
 		r = iController->RemoveProductStringDescriptor();
 		break;
 
 	case RDevUsbcClient::EControlGetSerialNumberStringDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlGetSerialNumberStringDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP58,
+                "EControlGetSerialNumberStringDescriptor" );
 		r = iController->GetSerialNumberStringDescriptor(iClient, *((TPtr8*) a1));
 		break;
 
 	case RDevUsbcClient::EControlSetSerialNumberStringDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlSetSerialNumberStringDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP59,
+                "EControlSetSerialNumberStringDescriptor" );
 		r = iController->SetSerialNumberStringDescriptor(iClient, *((TPtr8*) a1));
 		break;
 
 	case RDevUsbcClient::EControlRemoveSerialNumberStringDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlRemoveSerialNumberStringDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP60,
+                "EControlRemoveSerialNumberStringDescriptor" );
 		r = iController->RemoveSerialNumberStringDescriptor();
 		break;
 
 	case RDevUsbcClient::EControlGetConfigurationStringDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlGetConfigurationStringDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP61,
+                "EControlGetConfigurationStringDescriptor" );
 		r = iController->GetConfigurationStringDescriptor(iClient, *((TPtr8*) a1));
 		break;
 
 	case RDevUsbcClient::EControlSetConfigurationStringDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlSetConfigurationStringDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP62,
+                "EControlSetConfigurationStringDescriptor" );
 		r = iController->SetConfigurationStringDescriptor(iClient, *((TPtr8*) a1));
 		break;
 
 	case RDevUsbcClient::EControlRemoveConfigurationStringDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlRemoveConfigurationStringDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP63,
+                "EControlRemoveConfigurationStringDescriptor" );
 		r = iController->RemoveConfigurationStringDescriptor();
 		break;
 
 	case RDevUsbcClient::EControlGetStringDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlGetStringDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP64,
+                "EControlGetStringDescriptor" );
 		r = iController->GetStringDescriptor(iClient, (TUint8) (TInt) a1, *((TPtr8*) a2));
 		break;
 
 	case RDevUsbcClient::EControlSetStringDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlSetStringDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP65,
+                "EControlSetStringDescriptor" );
 		r = iController->SetStringDescriptor(iClient, (TUint8) (TInt) a1, *((TPtr8*) a2));
 		break;
 
 	case RDevUsbcClient::EControlRemoveStringDescriptor:
-		__KTRACE_OPT(KUSB, Kern::Printf("EControlRemoveStringDescriptor"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP66,
+                "EControlRemoveStringDescriptor" );
 		r = iController->RemoveStringDescriptor((TUint8) (TInt) a1);
 		break;
 
@@ -1689,7 +1815,8 @@ TInt DLddUsbcChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		break;
 
     default:
-		__KTRACE_OPT(KUSB, Kern::Printf("Function code not supported"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOCONTROL_DUP67,
+                "Function code not supported" );
 		r = KErrNotSupported;
 		}
 
@@ -1704,14 +1831,16 @@ TInt DLddUsbcChannel::SetInterface(TInt aInterfaceNumber, TUsbcIfcInfo* aInfoBuf
 	const TInt srcLen = Kern::ThreadGetDesLength(iClient, ifc_info_buf_ptr);
 	if (srcLen < ifc_info_buf.Length())
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("SetInterface can't copy"));
+		OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETINTERFACE, 
+		        "SetInterface can't copy" );
 		PanicClientThread(EDesOverflow);
 		}
 
 	TInt r = Kern::ThreadDesRead(iClient, ifc_info_buf_ptr, ifc_info_buf, 0, KChunkShiftBy0);
 	if (r != KErrNone)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("SetInterface Copy failed reason=%d", r));
+	    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETINTERFACE_DUP1,
+	            "SetInterface Copy failed reason=%d", r );
 		PanicClientThread(r);
 		}
 
@@ -1720,7 +1849,8 @@ TInt DLddUsbcChannel::SetInterface(TInt aInterfaceNumber, TUsbcIfcInfo* aInfoBuf
 	// If an alternate interface is being asked for then do nothing,
 	// just pass it down to the Controller.
 	const TInt num_endpoints = ifc_info_buf().iTotalEndpointsUsed;
-	__KTRACE_OPT(KUSB, Kern::Printf("SetInterface num_endpoints=%d", num_endpoints));
+    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETINTERFACE_DUP2,
+            "SetInterface num_endpoints=%d", num_endpoints );
 
 	// [The next 4 variables have to be initialized here because of the goto's that follow.]
 	// Both IN and OUT buffers will be fully cached:
@@ -1731,7 +1861,8 @@ TInt DLddUsbcChannel::SetInterface(TInt aInterfaceNumber, TUsbcIfcInfo* aInfoBuf
 	TInt real_ep_numbers[6] = {-1, -1, -1, -1, -1, -1};
 
     // See if PIL will accept this interface
-	__KTRACE_OPT(KUSB, Kern::Printf("SetInterface Calling controller"));
+    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETINTERFACE_DUP3,
+            "SetInterface Calling controller" );
 	r = iController->SetInterface(this,
 								  iClient,
 								  aInterfaceNumber,
@@ -1742,10 +1873,12 @@ TInt DLddUsbcChannel::SetInterface(TInt aInterfaceNumber, TUsbcIfcInfo* aInfoBuf
 								  &real_ep_numbers,
 								  ifc_info_buf().iFeatureWord);
 
-	__KTRACE_OPT(KUSB, Kern::Printf("SetInterface controller returned %d", r));
+    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETINTERFACE_DUP4,
+            "SetInterface controller returned %d", r );
 	if (r != KErrNone)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("SetInterface failed reason=%d", r));
+	    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETINTERFACE_DUP5, 
+	            "SetInterface failed reason=%d", r );
 		return r;
 		}
 
@@ -1755,11 +1888,13 @@ TInt DLddUsbcChannel::SetInterface(TInt aInterfaceNumber, TUsbcIfcInfo* aInfoBuf
 	// ep0
 	if (iEndpoint[0] == NULL)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("SetInterface 11"));
+	    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETINTERFACE_DUP6,
+	            "SetInterface 11" );
 		r = SetupEp0();
 		if (r != KErrNone)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: SetupEp0() failed"));
+		    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DLDDUSBCCHANNEL_SETINTERFACE_DUP7,
+		            "  Error: SetupEp0() failed" );
 			DestroyEp0();
 			goto F1;
 			}
@@ -1772,13 +1907,15 @@ TInt DLddUsbcChannel::SetInterface(TInt aInterfaceNumber, TUsbcIfcInfo* aInfoBuf
 		goto F1;
 		}
 
-	__KTRACE_OPT(KUSB, Kern::Printf("DLddUsbcChannel::SetInterface num_endpoints=%d", num_endpoints));
+    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETINTERFACE_DUP8,
+            "DLddUsbcChannel::SetInterface num_endpoints=%d", num_endpoints );
 
 	// other endpoints
 	// calculate the total buffer size
 	for (TInt i = 1; i <= num_endpoints; i++, pEndpointData++)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("SetInterface for ep=%d", i));
+	    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETINTERFACE_DUP9,
+	            "SetInterface for ep=%d", i );
 		if (!ValidateEndpoint(pEndpointData))
 			{
 			r = KErrUsbBadEndpoint;
@@ -1798,8 +1935,9 @@ TInt DLddUsbcChannel::SetInterface(TInt aInterfaceNumber, TUsbcIfcInfo* aInfoBuf
 			goto F2;
 			}
 
-		__KTRACE_OPT(KUSB, Kern::Printf("SetInterface for ep=%d rec=0x%08x ep==0x%08x",
-										i, alternateSettingListRec, ep));
+	    OstTraceDefExt3( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETINTERFACE_DUP10,
+	            "SetInterface for ep=%d rec=0x%08x ep==0x%08x", i, 
+	            reinterpret_cast<TUint>(alternateSettingListRec), reinterpret_cast<TUint>(ep) );
 		}
 
 	// buf size of each endpoint
@@ -1819,7 +1957,8 @@ TInt DLddUsbcChannel::SetInterface(TInt aInterfaceNumber, TUsbcIfcInfo* aInfoBuf
 	    bufSizes[i] = alternateSettingListRec->iEndpoint[i]->BufferSize();
 	    }
 
-	__KTRACE_OPT(KUSB, Kern::Printf("Sort the endpoints:"));
+    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETINTERFACE_DUP11,
+            "Sort the endpoints:" );
 
     // sort the endpoint number by the bufsize decreasely
 	for( TInt i=1;i<num_endpoints;i++ )
@@ -1842,11 +1981,13 @@ TInt DLddUsbcChannel::SetInterface(TInt aInterfaceNumber, TUsbcIfcInfo* aInfoBuf
 
 	    alternateSettingListRec->iEpNumDeOrderedByBufSize[i] = epNum[i];
 
-	    __KTRACE_OPT(KUSB, Kern::Printf(" %d:%d", epNum[i], bufSizes[i]));
+	    OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETINTERFACE_DUP12,
+	            " %d:%d", epNum[i], bufSizes[i] );
 	    }
     alternateSettingListRec->iEpNumDeOrderedByBufSize[num_endpoints] = epNum[num_endpoints];
-    __KTRACE_OPT(KUSB, Kern::Printf(" %d:%d", epNum[num_endpoints], bufSizes[num_endpoints]));
-    __KTRACE_OPT(KUSB, Kern::Printf("\n"));
+    OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETINTERFACE_DUP13,
+            " %d:%d", epNum[num_endpoints], bufSizes[num_endpoints] );
+    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETINTERFACE_DUP14, "\n" );
 
 	// chain in this alternate setting
 	alternateSettingListRec->iNext = iAlternateSettingList;
@@ -1864,20 +2005,23 @@ TInt DLddUsbcChannel::SetInterface(TInt aInterfaceNumber, TUsbcIfcInfo* aInfoBuf
 	r = SetupInterfaceMemory(iHwChunks, cacheAttribs );
 	if( r==KErrNone )
 	    {
-        __KTRACE_OPT(KUSB, Kern::Printf("SetInterface ready to exit"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETINTERFACE_DUP15,
+                "SetInterface ready to exit" );
     
         if (aInterfaceNumber == 0)
             {
             // make sure we're ready to go with the main interface
             iValidInterface = ETrue;
-            __KTRACE_OPT(KUSB, Kern::Printf("SetInterface SelectAlternateSetting"));
+            OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETINTERFACE_DUP16,
+                    "SetInterface SelectAlternateSetting" );
             SelectAlternateSetting(0);
             }
         return KErrNone;
 	    }
 	else
 	    {
-        __KTRACE_OPT(KUSB, Kern::Printf("Destroying all interfaces"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETINTERFACE_DUP17,
+                "Destroying all interfaces" );
         DestroyAllInterfaces();
         DestroyEp0();
         return r;
@@ -1889,8 +2033,13 @@ TInt DLddUsbcChannel::SetInterface(TInt aInterfaceNumber, TUsbcIfcInfo* aInfoBuf
  
  F1:
 #if _DEBUG
+#ifdef OST_TRACE_COMPILER_IN_USE
 	TInt r1 = iController->ReleaseInterface(this, aInterfaceNumber);
-	__KTRACE_OPT(KUSB, Kern::Printf("Release Interface controller returned %d", r1));
+#else
+	(void)  iController->ReleaseInterface(this, aInterfaceNumber);
+#endif
+    OstTraceDef1( OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, DLDDUSBCCHANNEL_SETINTERFACE_DUP18,
+            "Release Interface controller returned %d", r1 );
 #else
 	(void)	iController->ReleaseInterface(this, aInterfaceNumber);
 #endif
@@ -1909,13 +2058,15 @@ TInt DLddUsbcChannel::SetupInterfaceMemory(RArray<DPlatChunkHw*> &aHwChunks,
  
     // 1, collect all bufs' sizes for the current interface
     //    to realloc all the chunks
-    __KTRACE_OPT(KUSB, Kern::Printf("Collect all buffer sizes:"));
+    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETUPINTERFACEMEMORY, 
+            "Collect all buffer sizes:" );
     RArray<TInt> bufSizes;
     for(TInt i=1;i<=numOfEp;i++)
         {
         TInt nextEp = asRec->iEpNumDeOrderedByBufSize[i];
         TInt epBufCount = asRec->iEndpoint[nextEp]->BufferNumber();
-        __KTRACE_OPT(KUSB, Kern::Printf(" ep %d, buf count %d", nextEp, epBufCount ));
+        OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETUPINTERFACEMEMORY_DUP1,
+                " ep %d, buf count %d", nextEp, epBufCount );
         for(TInt k=0;k<epBufCount;k++)
             {
             TInt epBufSize = asRec->iEndpoint[nextEp]->BufferSize();
@@ -1926,17 +2077,20 @@ TInt DLddUsbcChannel::SetupInterfaceMemory(RArray<DPlatChunkHw*> &aHwChunks,
                 bufSizes.Close();
                 return r;
                 }
-            __KTRACE_OPT(KUSB,Kern::Printf(" %d", epBufSize ));
+            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETUPINTERFACEMEMORY_DUP2,
+                    " %d", epBufSize );
             }
-        __KTRACE_OPT(KUSB, Kern::Printf("\n"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETUPINTERFACEMEMORY_DUP3, "\n" );
 
         }
    
     // 2, alloc the buffer decreasely, biggest-->smallest
     //   2.1 check the existing chunks
     TInt bufCount = bufSizes.Count();
-    __KTRACE_OPT(KUSB, Kern::Printf(" ep buf number needed %d", bufCount ));
-    __KTRACE_OPT(KUSB, Kern::Printf(" chunks available %d", aHwChunks.Count() ));
+    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETUPINTERFACEMEMORY_DUP4,
+            " ep buf number needed %d", bufCount );
+    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETUPINTERFACEMEMORY_DUP5,
+            " chunks available %d", aHwChunks.Count() );
 
     TInt chunkInd = 0;
     while( (chunkInd<aHwChunks.Count())&& (chunkInd<bufCount))
@@ -1947,7 +2101,8 @@ TInt DLddUsbcChannel::SetupInterfaceMemory(RArray<DPlatChunkHw*> &aHwChunks,
         DPlatChunkHw* chunk = ReAllocate(bufSizes[chunkInd], aHwChunks[chunkInd], aCacheAttribs);
         if (chunk == NULL)
             {
-            __KTRACE_OPT(KUSB, Kern::Printf("Failed to alloc chunks size %d!", bufSizes[chunkInd]));
+            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETUPINTERFACEMEMORY_DUP6,
+                    "Failed to alloc chunks size %d!", bufSizes[chunkInd] );
             // lost all interfaces:
             // Tell Controller to release Interface and h/w resources associated with this
             iController->DeRegisterClient(this);
@@ -1958,7 +2113,9 @@ TInt DLddUsbcChannel::SetupInterfaceMemory(RArray<DPlatChunkHw*> &aHwChunks,
             {
             // Parcel out the memory between endpoints
             TUint8* newAddr = reinterpret_cast<TUint8*>(chunk->LinearAddress());
-            __KTRACE_OPT(KUSB, Kern::Printf("SetupInterfaceMemory alloc new chunk=0x%x, size=%d", newAddr,bufSizes[chunkInd]));
+            OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETUPINTERFACEMEMORY_DUP7,
+                    "SetupInterfaceMemory alloc new chunk=0x%x, size=%d", 
+                    reinterpret_cast<TUint>(newAddr), bufSizes[chunkInd] );
             // The check is important to avoid chunkChanged to be corrupted.
             // This code change is to fix the problem that one chunk is used by multiple interfaces.
             if(!chunkChanged)
@@ -1977,7 +2134,8 @@ TInt DLddUsbcChannel::SetupInterfaceMemory(RArray<DPlatChunkHw*> &aHwChunks,
         chunk = Allocate( bufSizes[chunkInd], aCacheAttribs);
         if (chunk == NULL)
             {
-            __KTRACE_OPT(KUSB, Kern::Printf("Failed to alloc chunk, size %d!", bufSizes[chunkInd]));
+            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETUPINTERFACEMEMORY_DUP8,
+                    "Failed to alloc chunk, size %d!", bufSizes[chunkInd] );
             // lost all interfaces:
             // Tell Controller to release Interface and h/w resources associated with this
             iController->DeRegisterClient(this);
@@ -1987,8 +2145,10 @@ TInt DLddUsbcChannel::SetupInterfaceMemory(RArray<DPlatChunkHw*> &aHwChunks,
         else
             {
             // Parcel out the memory between endpoints
-            __KTRACE_OPT(KUSB, Kern::Printf("SetupInterfaceMemory alloc new chunk=0x%x, size=%d",
-            						reinterpret_cast<TUint8*>(chunk->LinearAddress()), bufSizes[chunkInd]));
+            OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETUPINTERFACEMEMORY_DUP9,
+                    "SetupInterfaceMemory alloc new chunk=0x%x, size=%d",
+                    static_cast<TUint>(chunk->LinearAddress()), bufSizes[chunkInd]);
+
             TInt r = aHwChunks.Append(chunk);
             if(r!=KErrNone)
                 {
@@ -2007,12 +2167,14 @@ TInt DLddUsbcChannel::SetupInterfaceMemory(RArray<DPlatChunkHw*> &aHwChunks,
 
     if(chunkChanged)
         {
-        __KTRACE_OPT(KUSB, Kern::Printf("SetupInterfaceMemory readdressing."));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETUPINTERFACEMEMORY_DUP10,
+                "SetupInterfaceMemory readdressing." );
         asRec = asRec->iNext;
         while (asRec)
             {
             // Interfaces are not concurrent so they can all start at the same logical address
-            __KTRACE_OPT(KUSB, Kern::Printf("SetupInterfaceMemory readdressing setting=%d", asRec->iSetting));
+            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETUPINTERFACEMEMORY_DUP11,
+                    "SetupInterfaceMemory readdressing setting=%d", asRec->iSetting );
             ReSetInterfaceMemory(asRec, aHwChunks);
             asRec = asRec->iNext;
             }
@@ -2022,7 +2184,8 @@ TInt DLddUsbcChannel::SetupInterfaceMemory(RArray<DPlatChunkHw*> &aHwChunks,
 
 TInt DLddUsbcChannel::SetupEp0()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("SetupEp0 entry %x", this));
+	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETUPEP0, 
+	        "SetupEp0 entry %x", this );
 	TInt ep0Size = iController->Ep0PacketSize();
 	TUsbcEndpointInfo ep0Info = TUsbcEndpointInfo(KUsbEpTypeControl, KUsbEpDirBidirect, ep0Size);
 	TUsbcEndpoint* ep0 = new TUsbcEndpoint(this, iController, &ep0Info, 0, 0);
@@ -2058,8 +2221,10 @@ TInt DLddUsbcChannel::SetupEp0()
         TUint8 * buf;
         buf = (TUint8*) chunk->LinearAddress();
         ep0->SetBufferAddr( i, buf);
-        __KTRACE_OPT(KUSB, Kern::Printf("SetupEp0 60 buffer number %d", i));
-        __KTRACE_OPT(KUSB, Kern::Printf("SetupEp0 60 buffer size %d", bufferSize));
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETUPEP0_DUP1,
+                "SetupEp0 60 buffer number %d", i );
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_SETUPEP0_DUP2,
+                "SetupEp0 60 buffer size %d", bufferSize );
         }
 
     ep0->SetRealEpNumber(0);
@@ -2089,11 +2254,17 @@ void DLddUsbcChannel::ReSetInterfaceMemory(TUsbcAlternateSettingList* aAlternate
                 TUint8* pBuf = NULL;
                 pBuf = reinterpret_cast<TUint8*>(aHwChunks[chunkInd]->LinearAddress());
                 ep->SetBufferAddr( k, pBuf);
-                __KTRACE_OPT(KUSB, Kern::Printf("  ep %d, buf %d, addr 0x%x", nextEp, k, pBuf ));
+                OstTraceDefExt3( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_RESETINTERFACEMEMORY,
+                        "  ep %d, buf %d, addr 0x%x", nextEp, k, reinterpret_cast<TUint>(pBuf) );
                 chunkInd++;
-                __ASSERT_DEBUG(chunkInd<=aHwChunks.Count(),
-                               Kern::Printf("  Error: available chunks %d, run out at epInd%d, bufInd%d",
-                                       aHwChunks.Count(), i, k));
+#ifdef _DEBUG
+                if (chunkInd > aHwChunks.Count())
+                    {
+                    OstTraceDefExt3(OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, DLDDUSBCCHANNEL_RESETINTERFACEMEMORY_DUP1,
+                            "  Error: available chunks %d, run out at epInd%d, bufInd%d",
+                            aHwChunks.Count(), i, k );
+                    }
+#endif
                 __ASSERT_DEBUG(chunkInd<=aHwChunks.Count(),
                                    Kern::Fault("usbc.ldd", __LINE__));
                 }
@@ -2189,7 +2360,8 @@ void DLddUsbcChannel::DestroyEp0()
 
 void DLddUsbcChannel::EndpointStatusChangeCallback(TAny* aDLddUsbcChannel)
     {
-	__KTRACE_OPT(KUSB, Kern::Printf("EndpointStatusChangeCallback"));
+    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_ENDPOINTSTATUSCHANGECALLBACK,
+            "EndpointStatusChangeCallback" );
     DLddUsbcChannel* dUsbc = (DLddUsbcChannel*) aDLddUsbcChannel;
 	if (dUsbc->iChannelClosing)
 		return;
@@ -2197,7 +2369,8 @@ void DLddUsbcChannel::EndpointStatusChangeCallback(TAny* aDLddUsbcChannel)
 	const TInt reqNo = (TInt) RDevUsbcClient::ERequestEndpointStatusNotify;
 	if (dUsbc->iRequestStatus[reqNo])
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("EndpointStatusChangeCallback Notify status"));
+	    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_ENDPOINTSTATUSCHANGECALLBACK_DUP1,
+	            "EndpointStatusChangeCallback Notify status" );
 		DThread* client = dUsbc->iClient;
 		
 		dUsbc->iEndpointStatusChangeReq->Data() = endpointState;
@@ -2220,7 +2393,8 @@ void DLddUsbcChannel::StatusChangeCallback(TAny* aDLddUsbcChannel)
  		 (i < KUsbcDeviceStateRequests) && ((deviceState = dUsbc->iStatusCallbackInfo.State(i)) != EUsbcNoState);
  		 ++i)
 		{
- 		__KTRACE_OPT(KUSB, Kern::Printf("StatusChangeCallBack status=%d", deviceState));
+		OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_STATUSCHANGECALLBACK, 
+		        "StatusChangeCallBack status=%d", static_cast<TInt>(deviceState) );
 		if (deviceState & KUsbAlternateSetting)
 			{
 			dUsbc->ProcessAlternateSetting(deviceState);
@@ -2250,7 +2424,8 @@ void DLddUsbcChannel::StatusChangeCallback(TAny* aDLddUsbcChannel)
 
 void DLddUsbcChannel::OtgFeatureChangeCallback(TAny* aDLddUsbcChannel)
     {
-	__KTRACE_OPT(KUSB, Kern::Printf("OtgFeatureChangeCallback"));
+    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_OTGFEATURECHANGECALLBACK,
+            "OtgFeatureChangeCallback" );
     DLddUsbcChannel* dUsbc = (DLddUsbcChannel*) aDLddUsbcChannel;
 	if (dUsbc->iChannelClosing)
 		return;
@@ -2262,7 +2437,8 @@ void DLddUsbcChannel::OtgFeatureChangeCallback(TAny* aDLddUsbcChannel)
     const TInt reqNo = (TInt) RDevUsbcClient::ERequestOtgFeaturesNotify;
 	if (dUsbc->iRequestStatus[reqNo])
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("OtgFeatureChangeCallback Notify status"));
+	    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_OTGFEATURECHANGECALLBACK_DUP1,
+	            "OtgFeatureChangeCallback Notify status" );
 		dUsbc->iOtgFeatureChangeReq->Data()=features;
 		dUsbc->iRequestStatus[reqNo] = NULL;
 		Kern::QueueRequestComplete(dUsbc->iClient,dUsbc->iOtgFeatureChangeReq,KErrNone);
@@ -2313,14 +2489,15 @@ TInt DLddUsbcChannel::EpFromAlternateSetting(TUint aAlternateSetting, TInt aEndp
 				}
 			else
 				{
-				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: aEndpoint %d wrong for aAlternateSetting %d",
-												  aEndpoint, aAlternateSetting));
+				OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DLDDUSBCCHANNEL_EPFROMALTERNATESETTING,
+				        "  Error: aEndpoint %d wrong for aAlternateSetting %d", aEndpoint, aAlternateSetting );
 				return -1;
 				}
 			}
 		alternateSettingListRec = alternateSettingListRec->iNext;
 		}
-	__KTRACE_OPT(KPANIC, Kern::Printf("  Error: no aAlternateSetting %d found", aAlternateSetting));
+    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DLDDUSBCCHANNEL_EPFROMALTERNATESETTING_DUP1,
+            "  Error: no aAlternateSetting %d found", aAlternateSetting );
 	return -1;
 	}
 
@@ -2328,9 +2505,12 @@ TInt DLddUsbcChannel::EpFromAlternateSetting(TUint aAlternateSetting, TInt aEndp
 TInt DLddUsbcChannel::ProcessAlternateSetting(TUint aAlternateSetting)
 	{
 	ResetInterface(KErrUsbInterfaceChange);					// kill any outstanding transfers
-	__KTRACE_OPT(KUSB, Kern::Printf("ProcessAlternateSetting 0x%08x", aAlternateSetting));
+	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_PROCESSALTERNATESETTING,
+	        "ProcessAlternateSetting 0x%08x", aAlternateSetting );
 	TUint newSetting = aAlternateSetting&(~KUsbAlternateSetting);
-	__KTRACE_OPT(KUSB, Kern::Printf("ProcessAlternateSetting selecting alternate setting 0x%08x", newSetting));
+    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_PROCESSALTERNATESETTING_DUP1,
+            "ProcessAlternateSetting selecting alternate setting 0x%08x", newSetting );
+
 	TInt r = SelectAlternateSetting(newSetting);
 	if (r != KErrNone)
 		return r;
@@ -2342,19 +2522,23 @@ TInt DLddUsbcChannel::ProcessAlternateSetting(TUint aAlternateSetting)
 
 TInt DLddUsbcChannel::ProcessDeviceState(TUsbcDeviceState aDeviceState)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("ProcessDeviceState(%d -> %d)", iDeviceState, aDeviceState));
+	OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_PROCESSDEVICESTATE,
+	        "ProcessDeviceState(%d -> %d)", iDeviceState, aDeviceState );
 	if (iDeviceState == aDeviceState)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  No state change => nothing to be done."));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_PROCESSDEVICESTATE_DUP1,
+                "  No state change => nothing to be done." );
 		return KErrNone;
 		}
 	if (iDeviceState == EUsbcDeviceStateSuspended)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  Coming out of Suspend: old state = %d", iOldDeviceState));
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_PROCESSDEVICESTATE_DUP2,
+                "  Coming out of Suspend: old state = %d", iOldDeviceState );
 		iDeviceState = iOldDeviceState;
 		if (iDeviceState == aDeviceState)
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  New state same as before Suspend => nothing to be done."));
+	        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_PROCESSDEVICESTATE_DUP3,
+	                "  New state same as before Suspend => nothing to be done." );
 			return KErrNone;
 			}
 		}
@@ -2363,7 +2547,8 @@ TInt DLddUsbcChannel::ProcessDeviceState(TUsbcDeviceState aDeviceState)
 	TInt cancellationCode = KErrNone;
 	if (aDeviceState == EUsbcDeviceStateSuspended)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  Suspending..."));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_PROCESSDEVICESTATE_DUP4,
+                "  Suspending..." );
 		iOldDeviceState = iDeviceState;
 		// Put PSL into low power mode here
 		}
@@ -2383,7 +2568,8 @@ TInt DLddUsbcChannel::ProcessDeviceState(TUsbcDeviceState aDeviceState)
 				cancellationCode = KErrUsbDeviceNotConfigured;
 			}
 		}
-	__KTRACE_OPT(KUSB, Kern::Printf("  %d --> %d", iDeviceState, aDeviceState));
+    OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_PROCESSDEVICESTATE_DUP5,
+            "  %d --> %d", iDeviceState, aDeviceState );
 	iDeviceState = aDeviceState;
 	if (iValidInterface || iOwnsDeviceControl)
 		{
@@ -2426,17 +2612,24 @@ void DLddUsbcChannel::UpdateEndpointSizes()
 		const TInt size = iController->EndpointPacketSize(this, iEndpoint[i]->RealEpNumber());
 		if (size < 0)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Packet size < 0 for ep %d", i));
+			OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DLDDUSBCCHANNEL_UPDATEENDPOINTSIZES,
+			        "  Error: Packet size < 0 for ep %d", i );
 			continue;
 			}
 		iEndpoint[i]->SetMaxPacketSize(size);
 		}
-	__ASSERT_DEBUG(i == iNumberOfEndpoints + 1,
-				   Kern::Printf("  Error: iNumberOfEndpoints wrong (%d)", iNumberOfEndpoints));
+#ifdef _DEBUG
+	if (i != iNumberOfEndpoints + 1)
+	    {
+        OstTraceDef1( OST_TRACE_CATEGORY_DEBUG, TRACE_FATAL, DLDDUSBCCHANNEL_UPDATEENDPOINTSIZES_DUP1,
+                "  Error: iNumberOfEndpoints wrong (%d)", iNumberOfEndpoints );
+
+	    }
+#endif
 	}
 
 
-DPlatChunkHw* DLddUsbcChannel::ReAllocate(TInt aBuffersize, DPlatChunkHw* aHwChunk, TUint32 aCacheAttribs)
+DPlatChunkHw* DLddUsbcChannel::ReAllocate(TInt aBuffersize, DPlatChunkHw* aHwChunk,TUint32 aCacheAttribs)
 	{
 	DPlatChunkHw* chunk = aHwChunk;
 	if ((!chunk) || (chunk->iSize < aBuffersize))
@@ -2445,7 +2638,8 @@ DPlatChunkHw* DLddUsbcChannel::ReAllocate(TInt aBuffersize, DPlatChunkHw* aHwChu
 			{
 			ClosePhysicalChunk(chunk);
 			}
-		__KTRACE_OPT(KUSB, Kern::Printf("ReAllocate need to get new chunk"));
+		OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_REALLOCATE, 
+		        "ReAllocate need to get new chunk" );
 		chunk = Allocate(aBuffersize, aCacheAttribs);
 		}
 	return chunk;
@@ -2511,7 +2705,8 @@ TBool DLddUsbcChannel::AlternateDeviceStateTestComplete()
 			{
 			// Device state waiting to be sent userside
 			completeNow = ETrue;
-			__KTRACE_OPT(KUSB, Kern::Printf("StatusChangeCallback Notify status"));
+			OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_ALTERNATEDEVICESTATETESTCOMPLETE,
+			        "StatusChangeCallback Notify status" );
 			iStatusChangeReq->Data()=deviceState;
 			iStatusChangePtr = NULL;
 			}
@@ -2528,7 +2723,8 @@ void DLddUsbcChannel::EmergencyCompleteDfc(TAny* aDLddUsbcChannel)
 
 void DLddUsbcChannel::DeConfigure(TInt aErrorCode)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DLddUsbcChannel::DeConfigure()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DECONFIGURE,
+	        "DLddUsbcChannel::DeConfigure()" );
 	// Called after deconfiguration. Cancels transfers on all endpoints.
 	ResetInterface(aErrorCode);
 	// Cancel the endpoint status notify request if it is outstanding.
@@ -2566,7 +2762,8 @@ void DLddUsbcChannel::ResetInterface(TInt aErrorCode)
 		// Reset each endpoint except ep0
 		for (TInt i = 1; i <= iNumberOfEndpoints; i++)
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("Cancelling transfer ep=%d", i));
+			OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_RESETINTERFACE,
+			        "Cancelling transfer ep=%d", i );
 			iEndpoint[i]->CancelTransfer(iClient,iClientAsynchNotify[i]->iClientBuffer);			// Copies data userside
 			iEndpoint[i]->AbortTransfer();					// kills any ldd->pil outstanding transfers
 			iEndpoint[i]->iDmaBuffers->Flush();
@@ -2611,14 +2808,16 @@ void DLddUsbcChannel::ClosePhysicalChunk(DPlatChunkHw*& aHwChunk)
 
 TInt DLddUsbcChannel::DoEmergencyComplete()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcEndpoint::DoEmergencyComplete"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOEMERGENCYCOMPLETE,
+	        "TUsbcEndpoint::DoEmergencyComplete" );
 	// cancel any pending DFCs
 	// complete all client requests
     for (TInt i = 0; i < KUsbcMaxRequests; i++)
         {
         if (iRequestStatus[i])
             {
-            __KTRACE_OPT(KUSB, Kern::Printf("Complete request 0x%x", iRequestStatus[i]));
+            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DLDDUSBCCHANNEL_DOEMERGENCYCOMPLETE_DUP1,
+                    "Complete request 0x%x", iRequestStatus[i] );
 
             if (i == RDevUsbcClient::ERequestAlternateDeviceStatusNotify)
                 {
@@ -2724,7 +2923,8 @@ TUsbcEndpoint::TUsbcEndpoint(DLddUsbcChannel* aLDD, DUsbClientController* aContr
 	  iBandwidthPriority(aBandwidthPriority)
 	{
  	ResetTransferInfo();
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcEndpoint::TUsbcEndpoint 2"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCENDPOINT_TUSBCENDPOINT_CONS, 
+	        "TUsbcEndpoint::TUsbcEndpoint 2" );
 	}
 
 
@@ -2756,7 +2956,8 @@ TInt TUsbcEndpoint::Construct()
 
 TUsbcEndpoint::~TUsbcEndpoint()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcEndpoint::~TUsbcEndpoint(%d)", iEndpointNumber));
+	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCENDPOINT_TUSBCENDPOINT_DES, 
+	        "TUsbcEndpoint::~TUsbcEndpoint(%d)", iEndpointNumber );
 	AbortTransfer();
 	delete iRequestCallbackInfo;
 	delete iDmaBuffers;
@@ -2765,7 +2966,8 @@ TUsbcEndpoint::~TUsbcEndpoint()
 
 void TUsbcEndpoint::RequestCallback(TAny* aTUsbcEndpoint)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcEndpoint::RequestCallback"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINT_REQUESTCALLBACK, 
+	        "TUsbcEndpoint::RequestCallback" );
 	((TUsbcEndpoint*) aTUsbcEndpoint)->EndpointComplete();
 	}
 
@@ -2779,12 +2981,13 @@ void TUsbcEndpoint::SetMaxPacketSize(TInt aSize)
 
 TInt TUsbcEndpoint::EndpointComplete()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcEndpoint::EndpointComplete ep=%d %d",
-									iEndpointNumber, iRequestCallbackInfo->iEndpointNum));
+    OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINT_ENDPOINTCOMPLETE, 
+            "TUsbcEndpoint::EndpointComplete ep=%d %d", iEndpointNumber, iRequestCallbackInfo->iEndpointNum );
 
 	if (iLdd->ChannelClosing())
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("We're going home -> completions no longer accepted"));
+	    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINT_ENDPOINTCOMPLETE_DUP1,
+	            "We're going home -> completions no longer accepted" );
 		return KErrNone;
 		}
 
@@ -2796,10 +2999,12 @@ TInt TUsbcEndpoint::EndpointComplete()
 
 	case EControllerWrite:
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("TUsbcEndpoint::EndpointComplete Write 2"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINT_ENDPOINTCOMPLETE_DUP2,
+                "TUsbcEndpoint::EndpointComplete Write 2" );
 		if (!iDmaBuffers->TxIsActive())
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  TX completion but !iDmaBuffers->TxIsActive()"));
+	        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINT_ENDPOINTCOMPLETE_DUP3,
+	                "  TX completion but !iDmaBuffers->TxIsActive()" );
 			break;
 			}
 
@@ -2855,8 +3060,10 @@ TInt TUsbcEndpoint::EndpointComplete()
 		if (iClientReadPending)
 			{
 			//Complete outstanding read
-			__KTRACE_OPT(KUSB, Kern::Printf("TUsbcEndpoint::EndpointComplete Read 3 (bytes "
-											"available=%d)", iDmaBuffers->RxBytesAvailable()));
+            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINT_ENDPOINTCOMPLETE_DUP4,
+                    "TUsbcEndpoint::EndpointComplete Read 3 (bytes available=%d)", 
+                    iDmaBuffers->RxBytesAvailable());
+
 			TInt bytesReqd = iTransferInfo.iTransferSize - iBytesTransferred;
 			TBool completeNow = EFalse;
 
@@ -2957,7 +3164,8 @@ TInt TUsbcEndpoint::CopyToClient(DThread* aClient, TBool& aCompleteNow, TClientB
 	const TBool KReadData = EFalse;
 	const TBool KReadUntilShort = ETrue;
 
-	__KTRACE_OPT(KUSB, Kern::Printf("CopyToClient: length = %d", length));
+    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINT_COPYTOCLIENT, 
+            "CopyToClient: length = %d", length );
 
 	if (iTransferInfo.iTransferType == ETransferTypeReadPacket)
 		{
@@ -2993,13 +3201,15 @@ TInt TUsbcEndpoint::CopyToClient(DThread* aClient, TBool& aCompleteNow, TClientB
 
 TInt TUsbcEndpoint::TryToStartRead(TBool aReEntrant)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TryToStartRead 1 ep=%d", iEndpointNumber));
+	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINT_TRYTOSTARTREAD,
+	        "TryToStartRead 1 ep=%d", iEndpointNumber );
 	TInt r = KErrNone;
 	if (iEndpointInfo.iDir != KUsbEpDirOut &&
 		iEndpointInfo.iDir != KUsbEpDirBidirect)
 		{
 		// Verify ep direction
-		__KTRACE_OPT(KUSB, Kern::Printf("TryToStartRead wrong direction ep=%d", iEndpointNumber));
+		  OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINT_TRYTOSTARTREAD_DUP1,
+		          "TryToStartRead wrong direction ep=%d", iEndpointNumber );
 		return KErrUsbEpBadDirection;
 		}
 
@@ -3008,12 +3218,15 @@ TInt TUsbcEndpoint::TryToStartRead(TBool aReEntrant)
 		// Can't issue an Ep0 read if reader or writer is active
 		if (iDmaBuffers->TxIsActive())
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("TryToStartRead ep0 Tx already active FATAL"));
+            OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINT_TRYTOSTARTREAD_DUP2,
+                    "TryToStartRead ep0 Tx already active FATAL" );
+
 			return KErrUsbEpNotReady;
 			}
 		if (iDmaBuffers->RxIsActive())
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("TryToStartRead ep0 Rx already active non-FATAL"));
+            OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINT_TRYTOSTARTREAD_DUP3,
+                    "TryToStartRead ep0 Rx already active non-FATAL" );
 			}
 		}
 
@@ -3029,14 +3242,15 @@ TInt TUsbcEndpoint::TryToStartRead(TBool aReEntrant)
 			{
 			iDmaBuffers->RxSetActive();
 			iRequestCallbackInfo->SetRxBufferInfo(bufferAddr, physAddr, indexArray, sizeArray, length);
-
-			__KTRACE_OPT(KUSB, Kern::Printf("TryToStartRead 2 bufferAddr=0x%08x", bufferAddr));
+            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINT_TRYTOSTARTREAD_DUP4,
+                    "TryToStartRead 2 bufferAddr=0x%08x", bufferAddr );
 
 			r = iController->SetupReadBuffer(*iRequestCallbackInfo);
 			if (r != KErrNone)
 				{
 				iDmaBuffers->RxSetInActive();
-				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: TryToStartRead controller rejects read"));
+	            OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINT_TRYTOSTARTREAD_DUP5,
+	                    "  Error: TryToStartRead controller rejects read" );
 				}
 			}
 		else
@@ -3062,7 +3276,8 @@ TInt TUsbcEndpoint::TryToStartRead(TBool aReEntrant)
 
 TInt TUsbcEndpoint::TryToStartWrite(TEndpointTransferInfo* pTfr)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TryToStartWrite 1 ep=%d", iEndpointNumber));
+	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINT_TRYTOSTARTWRITE,
+	        "TryToStartWrite 1 ep=%d", iEndpointNumber );
 	if (iEndpointInfo.iDir != KUsbEpDirIn &&
 		iEndpointInfo.iDir != KUsbEpDirBidirect)
 		{
@@ -3091,14 +3306,16 @@ TInt TUsbcEndpoint::TryToStartWrite(TEndpointTransferInfo* pTfr)
 
 TInt TUsbcEndpoint::ContinueWrite()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("ContinueWrite 2"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINT_CONTINUEWRITE, "ContinueWrite 2" );
 	TUint8* bufferAddr;
 	TPhysAddr physAddr;
 	TInt bufferLength;
 	TInt r = iDmaBuffers->TxGetNextXfer(bufferAddr, bufferLength, physAddr);
 	if (r != KErrNone)											// probably already active
 		return r;
-	__KTRACE_OPT(KUSB, Kern::Printf("ContinueWrite 3"));
+    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINT_CONTINUEWRITE_DUP1,
+            "ContinueWrite 3" );
+
 	iDmaBuffers->TxSetActive();
 	TBool zlpReqd = EFalse;
 	TUint32 transferSize = iTransferInfo.iTransferSize;
@@ -3117,7 +3334,9 @@ TInt TUsbcEndpoint::ContinueWrite()
 #if 0
 	for (TInt i = 0; i < iRequestCallbackInfo->iLength; i++)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("Buffer[%d] = 0x%02x", i, iRequestCallbackInfo->iBufferStart[i]));
+	    OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINT_CONTINUEWRITE_DUP2,
+	            "Buffer[%d] = 0x%02x", i, iRequestCallbackInfo->iBufferStart[i] );
+
 		}
 #endif
 	r = iController->SetupWriteBuffer(*iRequestCallbackInfo);
@@ -3127,19 +3346,21 @@ TInt TUsbcEndpoint::ContinueWrite()
 
 void TUsbcEndpoint::CancelTransfer(DThread* aThread, TClientBuffer *aTcb)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("CancelTransfer"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINT_CANCELTRANSFER, "CancelTransfer" );
 	if (iDmaBuffers != NULL)
 		{
 		if (iClientWritePending)
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  (iClientWritePending)"));
+            OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINT_CANCELTRANSFER_DUP1,
+                    "  (iClientWritePending)" );
 			iClientWritePending = EFalse;
 			iController->CancelWriteBuffer(iLdd, iRealEpNumber);
 			iDmaBuffers->TxSetInActive();
 			}
 		if (iClientReadPending)
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  (iClientReadPending)"));
+            OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINT_CANCELTRANSFER_DUP2,
+                    "  (iClientReadPending)" );
 			iClientReadPending = EFalse;
 			CopyToClient(aThread,aTcb);
 			}
@@ -3149,18 +3370,20 @@ void TUsbcEndpoint::CancelTransfer(DThread* aThread, TClientBuffer *aTcb)
 
 void TUsbcEndpoint::AbortTransfer()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("Abort Transfer"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINT_ABORTTRANSFER, "Abort Transfer" );
 	if (iDmaBuffers != NULL)
 		{
 		if (iDmaBuffers->TxIsActive())
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  (iClientWritePending)"));
+            OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINT_ABORTTRANSFER_DUP1,
+                    "  (iClientWritePending)" );
 			iController->CancelWriteBuffer(iLdd, iRealEpNumber);
 			iDmaBuffers->TxSetInActive();
 			}
 		if (iDmaBuffers->RxIsActive())
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  (iClientReadPending)"));
+            OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINT_ABORTTRANSFER_DUP2,
+                    "  (iClientReadPending)" );
 			iController->CancelReadBuffer(iLdd, iRealEpNumber);
 			iDmaBuffers->RxSetInActive();
 			}
@@ -3184,7 +3407,8 @@ TUsbcAlternateSettingList::TUsbcAlternateSettingList()
 
 TUsbcAlternateSettingList::~TUsbcAlternateSettingList()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcAlternateSettingList::~TUsbcAlternateSettingList()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCALTERNATESETTINGLIST_TUSBCALTERNATESETTINGLIST_DES,
+	        "TUsbcAlternateSettingList::~TUsbcAlternateSettingList()" );
 	for (TInt i = 0; i <= KMaxEndpointsPerClient; i++)
 		{
 		delete iEndpoint[i];

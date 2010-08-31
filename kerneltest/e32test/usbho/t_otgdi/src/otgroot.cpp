@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -28,6 +28,10 @@
 #include <d32usbc.h>		// USBCC header
 #include "otgroot.h"
 #include "testcaseroot.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "otgrootTraces.h"
+#endif
 
 RUsbOtgDriver  oUsbOtgDriver;
 RDevUsbcClient oUsbcClient;
@@ -50,8 +54,15 @@ RDevUsbcClient oUsbcClient;
 TInt COtgRoot::otgLoadLdd()
 	{
 	
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(COTGROOT_OTGLOADLDD);
+	    }
 	LOG_VERBOSE2(_L("Load driver: %S\n"), &KOTGDeviceInterfaceDriverName);
+	if(gVerboseOutput)
+	    {
+	    OstTraceExt1(TRACE_VERBOSE, COTGROOT_OTGLOADLDD_DUP01, "Load driver: %S\n", KOTGDeviceInterfaceDriverName);
+	    }
 
 	if (!LddLoaded())
 		{
@@ -61,12 +72,17 @@ TInt COtgRoot::otgLoadLdd()
 		if ( (err != KErrNone) && (err != KErrAlreadyExists) )
 			{
 			test.Printf(_L("<Error %d> Unable to load driver: %S\n"), err, &KOTGDeviceInterfaceDriverName);
+			OstTraceExt2(TRACE_NORMAL, COTGROOT_OTGLOADLDD_DUP02, "<Error %d> Unable to load driver: %S\n", err, KOTGDeviceInterfaceDriverName);
 			SetLoaded(EFalse);
 			return(err);
 			}
 		else
 			{
 			LOG_VERBOSE2(_L("Loaded driver: '%S' OK\n"), &KOTGDeviceInterfaceDriverName);
+			if(gVerboseOutput)
+			    {
+			    OstTraceExt1(TRACE_VERBOSE, COTGROOT_OTGLOADLDD_DUP03, "Loaded driver: '%S' OK\n", KOTGDeviceInterfaceDriverName);
+			    }
 			SetLoaded(ETrue);
 			}
 		
@@ -79,19 +95,31 @@ TInt COtgRoot::otgLoadLdd()
 */
 TInt COtgRoot::otgOpen()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(COTGROOT_OTGOPEN);
+	    }
 	
 	LOG_VERBOSE2(_L("Opening session... loaded = %d\n"), LddLoaded());
+	if(gVerboseOutput)
+	    {
+	    OstTrace1(TRACE_VERBOSE, COTGROOT_OTGOPEN_DUP01, "Opening session... loaded = %d\n", LddLoaded());
+	    }
 
 	TInt err(oUsbOtgDriver.Open());
 	if (err != KErrNone)
 		{
 		test.Printf(_L("<Error %d> Unable to open a channel to USB OTG driver\n"),err);
+		OstTrace1(TRACE_NORMAL, COTGROOT_OTGOPEN_DUP02, "<Error %d> Unable to open a channel to USB OTG driver\n",err);
 		return(err);
 		}
 	else
 		{
 		LOG_VERBOSE1(_L("Open channel OK\n"));
+		if(gVerboseOutput)
+		    {
+		    OstTrace0(TRACE_VERBOSE, COTGROOT_OTGOPEN_DUP03, "Open channel OK\n");
+		    }
 		}
 		
 	return(KErrNone);	
@@ -102,9 +130,13 @@ TInt COtgRoot::otgOpen()
 */
 void COtgRoot::otgClose()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(COTGROOT_OTGCLOSE);
+	    }
 	
 	test.Printf(_L("Closing session... loaded = %d\n"), LddLoaded());
+	OstTrace1(TRACE_NORMAL, COTGROOT_OTGCLOSE_DUP01, "Closing session... loaded = %d\n", LddLoaded());
 	oUsbOtgDriver.Close();
 	}
 
@@ -113,7 +145,10 @@ void COtgRoot::otgClose()
  */ 
 TInt COtgRoot::otgActivateOptTestMode()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(COTGROOT_OTGACTIVATEOPTTESTMODE);
+	    }
 
 	TInt err = oUsbOtgDriver.ActivateOptTestMode();
 
@@ -125,13 +160,16 @@ TInt COtgRoot::otgActivateOptTestMode()
 */
 TInt COtgRoot::otgStartStacks()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(COTGROOT_OTGSTARTSTACKS);
+	    }
 
 	TInt err(oUsbOtgDriver.StartStacks());
 	if (err != KErrNone)
 		{
 
-		LOG_FUNCERROR(err)
+		OstTrace1(TRACE_WARNING, COTGROOT_OTGSTARTSTACKS_DUP01, "[WARNING failed %d]", err);
 
 		}
 	return(err);
@@ -143,7 +181,10 @@ TInt COtgRoot::otgStartStacks()
 */ 
 void COtgRoot::otgStopStacks()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(COTGROOT_OTGSTOPSTACKS);
+	    }
 	
 	oUsbOtgDriver.StopStacks();
 	}
@@ -158,7 +199,7 @@ void COtgRoot::otgUnloadLdd()
 	TInt err (User::FreeLogicalDevice(KOTGDeviceInterfaceDriverName));
 	if (err != KErrNone)
 		{
-		LOG_FUNCERROR(err)
+		OstTrace1(TRACE_WARNING, COTGROOT_OTGUNLOADLDD, "[WARNING failed %d]", err);
 		}
 
 	SetLoaded(EFalse);
@@ -169,8 +210,11 @@ void COtgRoot::otgUnloadLdd()
 */
 void COtgRoot::otgQueueOtgEventRequest(RUsbOtgDriver::TOtgEvent& aEvent, TRequestStatus &aStatus)
 	{
-	//LOG_FUNC	
 	LOG_VERBOSE2(_L("Queue an Event Request %08X.\n"), (TInt)(&aStatus));
+	if(gVerboseOutput)
+	    {
+	    OstTrace1(TRACE_VERBOSE, COTGROOT_OTGQUEUEOTGEVENTREQUEST_DUP01, "Queue an Event Request %08X.\n", (TInt)(&aStatus));
+	    }
 
 	oUsbOtgDriver.QueueOtgEventRequest(aEvent, aStatus);
 	
@@ -182,6 +226,10 @@ void COtgRoot::otgQueueOtgEventRequest(RUsbOtgDriver::TOtgEvent& aEvent, TReques
 void COtgRoot::otgCancelOtgEventRequest()
 	{
 	LOG_VERBOSE1(_L("Cancel Event Request.\n"));
+	if(gVerboseOutput)
+	    {
+	    OstTrace0(TRACE_VERBOSE, COTGROOT_OTGCANCELOTGEVENTREQUEST, "Cancel Event Request.\n");
+	    }
 	oUsbOtgDriver.CancelOtgEventRequest();
 	}
     
@@ -190,10 +238,13 @@ void COtgRoot::otgCancelOtgEventRequest()
 */
 void COtgRoot::otgQueueOtgMessageRequest(RUsbOtgDriver::TOtgMessage& aMessage, TRequestStatus &aStatus)
 	{
-	//LOG_FUNC	
-	LOG_VERBOSE2(_L("Queue a Message Request %08X.\n"), (TInt)(&aStatus));
 
-	//LOG_VERBOSE1(_L("Queue a Message Request.\n"));
+	LOG_VERBOSE2(_L("Queue a Message Request %08X.\n"), (TInt)(&aStatus));
+	if(gVerboseOutput)
+	    {
+	    OstTrace1(TRACE_VERBOSE, COTGROOT_OTGQUEUEOTGMESSAGEREQUEST_DUP01, "Queue a Message Request %08X.\n", (TInt)(&aStatus));
+	    }
+
 	oUsbOtgDriver.QueueOtgMessageRequest(aMessage, aStatus);
 		
 	}
@@ -204,30 +255,50 @@ void COtgRoot::otgQueueOtgMessageRequest(RUsbOtgDriver::TOtgMessage& aMessage, T
 void COtgRoot::otgCancelOtgMessageRequest()
 	{
 	LOG_VERBOSE1(_L("Cancel Message Request.\n"));
+	if(gVerboseOutput)
+	    {
+	    OstTrace0(TRACE_VERBOSE, COTGROOT_OTGCANCELOTGMESSAGEREQUEST, "Cancel Message Request.\n");
+	    }
 	oUsbOtgDriver.CancelOtgMessageRequest();
 	}    
     
 void COtgRoot::otgQueuePeripheralStateRequest(TUint& aPeripheralState, TRequestStatus& aStatus)
 	{
 	LOG_VERBOSE1(_L("Queue Peripheral State Request.\n"));
+	if(gVerboseOutput)
+	    {
+	    OstTrace0(TRACE_VERBOSE, COTGROOT_OTGQUEUEPERIPHERALSTATEREQUEST, "Queue Peripheral State Request.\n");
+	    }
 	oUsbcClient.AlternateDeviceStatusNotify(aStatus, aPeripheralState);
 	}
 
 void COtgRoot::otgCancelPeripheralStateRequest()
 	{
 	LOG_VERBOSE1(_L("Cancel Peripheral State Request.\n"));
+	if(gVerboseOutput)
+	    {
+	    OstTrace0(TRACE_VERBOSE, COTGROOT_OTGCANCELPERIPHERALSTATEREQUEST, "Cancel Peripheral State Request.\n");
+	    }
 	oUsbcClient.AlternateDeviceStatusNotifyCancel();	
 	}
 
 void COtgRoot::otgQueueAConnectionIdleRequest(RUsbOtgDriver::TOtgConnection& aAConnectionIdle, TRequestStatus& aStatus)
 	{
 	LOG_VERBOSE1(_L("Queue A Connection Idle Request.\n"));
+	if(gVerboseOutput)
+	    {
+	    OstTrace0(TRACE_VERBOSE, COTGROOT_OTGQUEUEACONNECTIONIDLEREQUEST, "Queue A Connection Idle Request.\n");
+	    }
 	oUsbOtgDriver.QueueOtgConnectionNotification(aAConnectionIdle, aStatus);
 	}
 
 void COtgRoot::otgCancelAConnectionIdleRequest()
 	{
 	LOG_VERBOSE1(_L("Cancel A Connection Idle Request.\n"));
+	if(gVerboseOutput)
+	    {
+	    OstTrace0(TRACE_VERBOSE, COTGROOT_OTGCANCELACONNECTIONIDLEREQUEST, "Cancel A Connection Idle Request.\n");
+	    }
 	oUsbOtgDriver.CancelOtgConnectionNotification();
 	}
 
@@ -236,8 +307,11 @@ void COtgRoot::otgCancelAConnectionIdleRequest()
 */
 void COtgRoot::otgQueueOtgStateRequest(RUsbOtgDriver::TOtgState& aState, TRequestStatus &aStatus)
 	{
-	//LOG_FUNC	
 	LOG_VERBOSE2(_L("Queue a State Request %08X.\n"), (TInt)(&aStatus));
+	if(gVerboseOutput)
+	    {
+	    OstTrace1(TRACE_VERBOSE, COTGROOT_OTGQUEUEOTGSTATEREQUEST_DUP01, "Queue a State Request %08X.\n", (TInt)(&aStatus));
+	    }
 
 	oUsbOtgDriver.QueueOtgStateRequest(aState, aStatus);
 	
@@ -249,6 +323,10 @@ void COtgRoot::otgQueueOtgStateRequest(RUsbOtgDriver::TOtgState& aState, TReques
 void COtgRoot::otgCancelOtgStateRequest()
 	{
 	LOG_VERBOSE1(_L("Cancel State Request.\n"));
+	if(gVerboseOutput)
+	    {
+	    OstTrace0(TRACE_VERBOSE, COTGROOT_OTGCANCELOTGSTATEREQUEST, "Cancel State Request.\n");
+	    }
 	oUsbOtgDriver.CancelOtgStateRequest();
 	}
 
@@ -258,13 +336,16 @@ raise VBus (in reality this must only happen when a 'A' is present... and when n
 */
 TInt COtgRoot::otgBusRequest()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(COTGROOT_OTGBUSREQUEST);
+	    }
 	
 	TInt err(0);
 	err = oUsbOtgDriver.BusRequest();
 	if (err != KErrNone)
 		{
-		LOG_FUNCERROR(err)
+		OstTrace1(TRACE_WARNING, COTGROOT_OTGBUSREQUEST_DUP01, "[WARNING failed %d]", err);
 		}
 	return(err);
 	}
@@ -275,12 +356,15 @@ TInt COtgRoot::otgBusRequest()
  */
 TInt COtgRoot::otgBusRespondSRP()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(COTGROOT_OTGBUSRESPONDSRP);
+	    }
 	TInt err(0);
 		err = oUsbOtgDriver.BusRespondSrp();
 		if (err != KErrNone)
 			{
-			LOG_FUNCERROR(err)
+			OstTrace1(TRACE_WARNING, COTGROOT_OTGBUSRESPONDSRP_DUP01, "[WARNING failed %d]", err);
 			}
 		return(err);
 	}
@@ -290,12 +374,15 @@ TInt COtgRoot::otgBusRespondSRP()
 */	
 TInt COtgRoot::otgBusDrop()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(COTGROOT_OTGBUSDROP);
+	    }
 	TInt err(0);
 	err = oUsbOtgDriver.BusDrop();
 	if (err != KErrNone)
 		{
-		LOG_FUNCERROR(err)
+		OstTrace1(TRACE_WARNING, COTGROOT_OTGBUSDROP_DUP01, "[WARNING failed %d]", err);
 		}
 	return(err);
 	}
@@ -304,13 +391,16 @@ TInt COtgRoot::otgBusDrop()
 */
 TInt COtgRoot::otgBusClearError()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(COTGROOT_OTGBUSCLEARERROR);
+	    }
 	
 	TInt err(0);
 	err = oUsbOtgDriver.BusClearError();
 	if (err != KErrNone)
 		{
-		LOG_FUNCERROR(err)
+		OstTrace1(TRACE_WARNING, COTGROOT_OTGBUSCLEARERROR_DUP01, "[WARNING failed %d]", err);
 		}
 	return(err);
 	}
@@ -319,14 +409,20 @@ TInt COtgRoot::otgBusClearError()
 	
 void COtgRoot::otgQueueOtgIdPinNotification(RUsbOtgDriver::TOtgIdPin& aPin, TRequestStatus& aStatus)
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(COTGROOT_OTGQUEUEOTGIDPINNOTIFICATION);
+	    }
 	oUsbOtgDriver.QueueOtgIdPinNotification(aPin, aStatus);	// the kernel driver populates aPin...
 	}
 
 	
 void COtgRoot::otgCancelOtgIdPinNotification()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(COTGROOT_OTGCANCELOTGIDPINNOTIFICATION);
+	    }
 	oUsbOtgDriver.CancelOtgIdPinNotification();
 	}
 
@@ -335,25 +431,38 @@ void COtgRoot::otgQueueOtgVbusNotification(RUsbOtgDriver::TOtgVbus& aVbus,
                                                 TRequestStatus& aStatus
                                                )
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(COTGROOT_OTGQUEUEOTGVBUSNOTIFICATION);
+	    }
 	oUsbOtgDriver.QueueOtgVbusNotification(aVbus, aStatus);
 	}
 	
 	
 void COtgRoot::otgCancelOtgVbusNotification()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(COTGROOT_OTGCANCELOTGVBUSNOTIFICATION);
+	    }
 	oUsbOtgDriver.CancelOtgVbusNotification();
 	}
 
 
 TBool COtgRoot::otgIdPinPresent()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(COTGROOT_OTGIDPINPRESENT);
+	    }
 	TRequestStatus aStatus;
 	RUsbOtgDriver::TOtgIdPin aPin;
 	oUsbOtgDriver.QueueOtgIdPinNotification(aPin, aStatus);	// the kernel driver populates aPin...
 	LOG_VERBOSE2(_L("(sync) ID_PIN=%d\n"), iOTGIdPin);
+	if(gVerboseOutput)
+	    {
+	    OstTrace1(TRACE_VERBOSE, COTGROOT_OTGIDPINPRESENT_DUP01, "(sync) ID_PIN=%d\n", iOTGIdPin);
+	    }
 	
 	oUsbOtgDriver.CancelOtgIdPinNotification();
 	// swallow the event
@@ -369,7 +478,10 @@ TBool COtgRoot::otgIdPinPresent()
 	
 TBool COtgRoot::otgVbusPresent()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(COTGROOT_OTGVBUSPRESENT);
+	    }
 	TRequestStatus aStatus;
  	RUsbOtgDriver::TOtgVbus aVBus;
 	oUsbOtgDriver.QueueOtgVbusNotification(aVBus, aStatus);	// the kernel driver populates aPin in a kernel thread...
@@ -517,21 +629,21 @@ TInt COtgRoot::otgActivateFdfActor()
 	{
 	if(iFdfActorActive)
 		{
-		RDebug::Print(_L("FdfActor already exists!"));
+		OstTrace0(TRACE_NORMAL, COTGROOT_OTGACTIVATEFDFACTOR, "FdfActor already exists!");
 		return KErrAlreadyExists;
 		}
 		
 	const TUid KFdfSvrUid={0x10282B48};
 	const TUidType fdfActorUid(KNullUid, KNullUid, KFdfSvrUid);
 
-	RDebug::Print(_L("About to activate FDF Actor"));
+	OstTrace0(TRACE_NORMAL, COTGROOT_OTGACTIVATEFDFACTOR_DUP01, "About to activate FDF Actor");
 
 //	RProcess fdfActorProcess;
 	TInt err = iFdfActorProcess.Create(_L("t_otgdi_fdfactor.exe"), KNullDesC, fdfActorUid);
 	
 	if (err != KErrNone)
 		{
-		RDebug::Print(_L("Failed to create FDF Actor, err=%d"),err);
+		OstTrace1(TRACE_NORMAL, COTGROOT_OTGACTIVATEFDFACTOR_DUP02, "Failed to create FDF Actor, err=%d",err);
 		iFdfActorProcess.Close();
 		return err;
 		}
@@ -541,7 +653,7 @@ TInt COtgRoot::otgActivateFdfActor()
 	
 	if (stat!=KRequestPending)
 		{
-		RDebug::Print(_L("Failed to commence rendezvous, err=%d"),stat.Int());
+		OstTrace1(TRACE_NORMAL, COTGROOT_OTGACTIVATEFDFACTOR_DUP03, "Failed to commence rendezvous, err=%d",stat.Int());
 		iFdfActorProcess.Kill(0);		// abort startup
 		iFdfActorProcess.Close();
 		return stat.Int();
@@ -556,7 +668,7 @@ TInt COtgRoot::otgActivateFdfActor()
 		{
 		//	Wasn't KErrNone, which means that the FDFActor didn't successfully
 		//	start up. We shouldn't proceed with the test we're in.
-		RDebug::Print(_L("Failed to activate FDF Actor, err=%d"),stat.Int());
+		OstTrace1(TRACE_NORMAL, COTGROOT_OTGACTIVATEFDFACTOR_DUP04, "Failed to activate FDF Actor, err=%d",stat.Int());
 		iFdfActorProcess.Close();
 		return stat.Int();
 		}
@@ -564,7 +676,7 @@ TInt COtgRoot::otgActivateFdfActor()
 	//	We rendezvoused(?) with the FDFActor OK, so it is going to suspend
 	//	any devices it sees being attached, and will shut itself down
 	//	when this process signals its Rendezvous (at the end of the test)...
-	RDebug::Print(_L("Activated FDF Actor"));
+	OstTrace0(TRACE_NORMAL, COTGROOT_OTGACTIVATEFDFACTOR_DUP05, "Activated FDF Actor");
 	iFdfActorActive = ETrue;
 
 	return KErrNone;
@@ -574,7 +686,7 @@ void COtgRoot::otgDeactivateFdfActor()
 	{
 	if(!iFdfActorActive)
 		{
-		RDebug::Print(_L("FdfActor is not running!"));
+		OstTrace0(TRACE_NORMAL, COTGROOT_OTGDEACTIVATEFDFACTOR, "FdfActor is not running!");
 		return;
 		}
 
@@ -591,6 +703,7 @@ void COtgRoot::otgDeactivateFdfActor()
 	//	...and wait for it to go away.
 	User::WaitForRequest(waitForCloseStat);
 	test.Printf(_L("T_OTGDI confirms FDF Actor has gone away %d\n"), waitForCloseStat.Int());
+	OstTrace1(TRACE_NORMAL, COTGROOT_OTGDEACTIVATEFDFACTOR_DUP01, "T_OTGDI confirms FDF Actor has gone away %d\n", waitForCloseStat.Int());
 	
 	//	Now close our handle, and record that the process is no more...
 	iFdfActorProcess.Close();
@@ -603,17 +716,20 @@ void COtgRoot::otgDeactivateFdfActor()
 TBool COtgRoot::StepUnloadClient()
 	{
 	test.Printf(_L("Unload USBCC Client\n"));
+	OstTrace0(TRACE_NORMAL, COTGROOT_STEPUNLOADCLIENT, "Unload USBCC Client\n");
 
 	TInt err;
 
 	// Close the Client
 
 	test.Printf(_L("..Close\n"));
+	OstTrace0(TRACE_NORMAL, COTGROOT_STEPUNLOADCLIENT_DUP01, "..Close\n");
 	oUsbcClient.Close();
 
 	// Unload the LDD - note the name is *not* the same as for loading
 
 	test.Printf(_L("..Unload\n"));
+	OstTrace0(TRACE_NORMAL, COTGROOT_STEPUNLOADCLIENT_DUP02, "..Unload\n");
 	err = User::FreeLogicalDevice( KUsbDeviceName );
 	if (err != KErrNone)
 		{
@@ -635,6 +751,7 @@ TBool COtgRoot::StepLoadClient(TUint16 aPID,
 								TBool aEnableSRP/*=ETrue*/)
 	{
 	test.Printf(_L("Load USBCC Client 0x%04x\n"),aPID);
+	OstTrace1(TRACE_NORMAL, COTGROOT_STEPLOADCLIENT, "Load USBCC Client 0x%04x\n",aPID);
 
 	TInt err;
 
@@ -668,6 +785,7 @@ TBool COtgRoot::StepLoadClient(TUint16 aPID,
 	// Load the LDD - note the name is *not* the same as for unload
 
 	test.Printf(_L("..Load LDD\n"));
+	OstTrace0(TRACE_NORMAL, COTGROOT_STEPLOADCLIENT_DUP01, "..Load LDD\n");
 	err = User::LoadLogicalDevice( KUsbcLddFileName );
 	if ((err != KErrNone) && (err !=KErrAlreadyExists))
 		{
@@ -678,6 +796,7 @@ TBool COtgRoot::StepLoadClient(TUint16 aPID,
 	// Open the Client
 
 	test.Printf(_L("..Open LDD\n"));
+	OstTrace0(TRACE_NORMAL, COTGROOT_STEPLOADCLIENT_DUP02, "..Open LDD\n");
 	err = oUsbcClient.Open(0);
 	if (err != KErrNone)
 		{
@@ -688,6 +807,7 @@ TBool COtgRoot::StepLoadClient(TUint16 aPID,
 	// Set up descriptors
 	
 	test.Printf(_L("..Setup Descriptors\n"));
+	OstTrace0(TRACE_NORMAL, COTGROOT_STEPLOADCLIENT_DUP03, "..Setup Descriptors\n");
 
 	// the OTG descriptor
 	TBuf8<KUsbDescSize_Otg> theOtgDescriptor;
@@ -709,6 +829,7 @@ TBool COtgRoot::StepLoadClient(TUint16 aPID,
 		aByte |= (aEnableSRP? 1 : 0); 
 		aByte |= (aEnableHNP? 2 : 0); 
 	test.Printf(_L("..Change OTG 0x%02X->0x%02X\n"), theOtgDescriptor[2], aByte);
+	OstTraceExt2(TRACE_NORMAL, COTGROOT_STEPLOADCLIENT_DUP04, "..Change OTG 0x%02X->0x%02X\n", (TUint32)theOtgDescriptor[2], (TUint32)aByte);
 	theOtgDescriptor[2] = aByte;
 	
 	err = oUsbcClient.SetOtgDescriptor(theOtgDescriptor);
@@ -734,6 +855,7 @@ TBool COtgRoot::StepLoadClient(TUint16 aPID,
 
 	softwareConnect = d_caps().iConnect;
 	test.Printf(_L("..SoftwareConnect = %d\n"),softwareConnect);
+	OstTrace1(TRACE_NORMAL, COTGROOT_STEPLOADCLIENT_DUP05, "..SoftwareConnect = %d\n",softwareConnect);
 
 	if (n < 2)
 		{
@@ -829,6 +951,7 @@ TBool COtgRoot::StepLoadClient(TUint16 aPID,
 	theDeviceDescriptor[11] = ( aPID & 0xFF00 ) >> 8;
 
 	test.Printf(_L("..Change PID 0x%04X->0x%04X\n"), oldPID, aPID);
+	OstTraceExt2(TRACE_NORMAL, COTGROOT_STEPLOADCLIENT_DUP06, "..Change PID 0x%04X->0x%04X\n", (TUint32)oldPID, (TUint32)aPID);
 
 	err = oUsbcClient.SetDeviceDescriptor(theDeviceDescriptor);
 	if (err != KErrNone)
@@ -841,6 +964,7 @@ TBool COtgRoot::StepLoadClient(TUint16 aPID,
 	// Power Up UDC - KErrNotReady is expected
 
 	test.Printf(_L("..Power Up UDC\n"));
+	OstTrace0(TRACE_NORMAL, COTGROOT_STEPLOADCLIENT_DUP07, "..Power Up UDC\n");
 
 	err = oUsbcClient.PowerUpUdc();
 	if( err != KErrNotReady )
@@ -852,6 +976,7 @@ TBool COtgRoot::StepLoadClient(TUint16 aPID,
 	// Connect to Host
 
 	test.Printf(_L("..Connect to Host\n"));
+	OstTrace0(TRACE_NORMAL, COTGROOT_STEPLOADCLIENT_DUP08, "..Connect to Host\n");
 
 	err = oUsbcClient.DeviceConnectToHost();
 	if( err != KErrNone )
@@ -872,6 +997,7 @@ TBool COtgRoot::StepLoadClient(TUint16 aPID,
 TBool COtgRoot::StepDisconnect()
 	{
 	test.Printf(_L("Disconnect from Host\n"));
+	OstTrace0(TRACE_NORMAL, COTGROOT_STEPDISCONNECT, "Disconnect from Host\n");
 
 	TInt err;
 	
@@ -890,6 +1016,7 @@ TBool COtgRoot::StepDisconnect()
 TBool COtgRoot::StepConnect()
 	{
 	test.Printf(_L("Connect to Host\n"));
+	OstTrace0(TRACE_NORMAL, COTGROOT_STEPCONNECT, "Connect to Host\n");
 
 	TInt err;
 	
@@ -914,6 +1041,7 @@ TBool COtgRoot::StepChangeVidPid(TUint16 aVID, TUint16 aPID)
 
 	{
 	test.Printf(_L("Load USBCC HS Test Client 0x%04x/0x%04x\n"),aVID,aPID);
+	OstTraceExt2(TRACE_NORMAL, COTGROOT_STEPCHANGEVIDPID, "Load USBCC HS Test Client 0x%04x/0x%04x\n",(TUint32)aVID,(TUint32)aPID);
 
 	TInt err;
 
@@ -934,6 +1062,7 @@ TBool COtgRoot::StepChangeVidPid(TUint16 aVID, TUint16 aPID)
 	theDeviceDescriptor[9] = ( aVID & 0xFF00 ) >> 8;
 
 	test.Printf(_L("..Change VID 0x%04X->0x%04X\n"), oldVID, aVID);
+	OstTraceExt2(TRACE_NORMAL, COTGROOT_STEPCHANGEVIDPID_DUP01, "..Change VID 0x%04X->0x%04X\n", (TUint32)oldVID, (TUint32)aVID);
 
 	TUint16 oldPID = ( theDeviceDescriptor[10] )
 		           + ( theDeviceDescriptor[11] << 8 );
@@ -942,6 +1071,7 @@ TBool COtgRoot::StepChangeVidPid(TUint16 aVID, TUint16 aPID)
 	theDeviceDescriptor[11] = ( aPID & 0xFF00 ) >> 8;
 
 	test.Printf(_L("..Change PID 0x%04X->0x%04X\n"), oldPID, aPID);
+	OstTraceExt2(TRACE_NORMAL, COTGROOT_STEPCHANGEVIDPID_DUP02, "..Change PID 0x%04X->0x%04X\n", (TUint32)oldPID, (TUint32)aPID);
 
 	err = oUsbcClient.SetDeviceDescriptor(theDeviceDescriptor);
 	if (err != KErrNone)
@@ -972,12 +1102,21 @@ void COtgRoot::StepSetOptActive()
 TBool COtgRoot::StepUnloadLDD()
 	{ 
 	test.Printf(_L("Unload otg LDD (implicit Stop() + Close()) \n"));
+	OstTrace0(TRACE_NORMAL, COTGROOT_STEPUNLOADLDD, "Unload otg LDD (implicit Stop(+ Close()) \n");
 	
 	LOG_VERBOSE1(_L("  Stop OTG+Host Stack\n"));
+	if(gVerboseOutput)
+	    {
+	    OstTrace0(TRACE_VERBOSE, COTGROOT_STEPUNLOADLDD_DUP01, "  Stop OTG+Host Stack\n");
+	    }
 	otgStopStacks();
 	otgClose();
 	
 	LOG_VERBOSE1(_L("  Unload\n"));
+	if(gVerboseOutput)
+	    {
+	    OstTrace0(TRACE_VERBOSE, COTGROOT_STEPUNLOADLDD_DUP02, "  Unload\n");
+	    }
 	otgUnloadLdd();
 	
 	iOptActive = EFalse; // retain the OTGDI behavour to clears this flag when client shuts 
@@ -994,6 +1133,10 @@ TBool COtgRoot::StepLoadLDD()
 	TInt err;	
 
 	LOG_VERBOSE1(_L("Load otg LDD\n"));
+	if(gVerboseOutput)
+	    {
+	    OstTrace0(TRACE_VERBOSE, COTGROOT_STEPLOADLDD, "Load otg LDD\n");
+	    }
 	err = otgLoadLdd();
 	if (err != KErrNone)
 		{
@@ -1002,6 +1145,10 @@ TBool COtgRoot::StepLoadLDD()
 		}
 		
 	LOG_VERBOSE1(_L("Open the LDD session\n"));
+	if(gVerboseOutput)
+	    {
+	    OstTrace0(TRACE_VERBOSE, COTGROOT_STEPLOADLDD_DUP01, "Open the LDD session\n");
+	    }
 	err = otgOpen();
 	if (err != KErrNone)
 		{
@@ -1012,6 +1159,7 @@ TBool COtgRoot::StepLoadLDD()
 	if ( iOptActive )
 		{
 		test.Printf(_L("Activate OPT Test Mode\n"));
+		OstTrace0(TRACE_NORMAL, COTGROOT_STEPLOADLDD_DUP02, "Activate OPT Test Mode\n");
 		err = otgActivateOptTestMode();
 		if (err != KErrNone)
 			{
@@ -1021,6 +1169,7 @@ TBool COtgRoot::StepLoadLDD()
 		}
 
 	test.Printf(_L("Start OTG+Host Stack\n"));
+	OstTrace0(TRACE_NORMAL, COTGROOT_STEPLOADLDD_DUP03, "Start OTG+Host Stack\n");
 	err = otgStartStacks();
 	if (err != KErrNone)
 		{

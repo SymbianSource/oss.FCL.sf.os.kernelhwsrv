@@ -37,41 +37,72 @@
 #define __FAST_MUTEX_MACHINE_CODED__
 #define __NTHREAD_WAITSTATE_MACHINE_CODED__
 
-// TSubScheduler member data
-#define	i_ScuAddr			iExtras[4]		// Address of SCU (also in TScheduler)
-#define	i_GicDistAddr		iExtras[5]		// Address of GIC Distributor (also in TScheduler)
-#define	i_GicCpuIfcAddr		iExtras[6]		// Address of GIC CPU Interface (also in TScheduler)
-#define	i_LocalTimerAddr	iExtras[7]		// Address of local timer registers (also in TScheduler)
-#define	i_IrqCount			iExtras[8]		// count of interrupts handled
-#define	i_IrqNestCount		iExtras[9]		// IRQ nest count for this CPU (starts at -1)
-#define	i_ExcInfo			iExtras[10]		// pointer to exception info for crash debugger
-#define	i_CrashState		iExtras[11]		// 0=normal, 1=this CPU faulted, 2=this CPU has received an NMI and halted
-#define	i_AbtStackTop		iExtras[12]		// Top of ABT stack for this CPU, also used to point to SFullArmRegSet
-#define	i_UndStackTop		iExtras[13]		// Top of UND stack for this CPU
-#define	i_FiqStackTop		iExtras[14]		// Top of FIQ stack for this CPU
-#define	i_IrqStackTop		iExtras[15]		// Top of IRQ stack for this CPU
-#define	i_TimerMultF		iExtras[16]		// Timer frequency / Max Timer frequency * 2^32
-#define	i_TimerMultI		iExtras[17]		// Max Timer frequency / Timer frequency * 2^24
-#define	i_CpuMult			iExtras[18]		// CPU frequency / Max CPU frequency * 2^32
-#define	i_LastTimerSet		iExtras[20]		// Value last written to local timer counter
-#define	i_TimestampError	iExtras[21]		// Current error in the timestamp
-#define	i_MaxCorrection		iExtras[22]		// Maximum correction to timestamp in one go
-#define	i_TimerGap			iExtras[23]		// Timestamp ticks taken to read and write local timer counter
+class TSubScheduler;
+class TScheduler;
+struct SFullArmRegSet;
+struct ArmScu;
+struct GicDistributor;
+struct GicCpuIfc;
+struct ArmLocalTimer;
+struct ArmGlobalTimer;
 
-#define	i_Regs				iExtras[12]		// Alias for i_AbtStackTop
+// TSubScheduler member data
+struct TSubSchedulerX
+	{
+	TUint32				iSSXP[3];
+	ArmGlobalTimer*		iGlobalTimerAddr;		// Address of global timer registers (also in TScheduler)
+	ArmScu*				iScuAddr;				// Address of SCU (also in TScheduler)
+	GicDistributor*		iGicDistAddr;			// Address of GIC Distributor (also in TScheduler)
+	GicCpuIfc*			iGicCpuIfcAddr;			// Address of GIC CPU Interface (also in TScheduler)
+	ArmLocalTimer*		iLocalTimerAddr;		// Address of local timer registers (also in TScheduler)
+	volatile TUint32	iIrqCount;				// count of interrupts handled
+	volatile TInt		iIrqNestCount;			// IRQ nest count for this CPU (starts at -1)
+	TAny*				iExcInfo;				// pointer to exception info for crash debugger
+	volatile TInt		iCrashState;			// 0=normal, 1=this CPU faulted, 2=this CPU has received an NMI and halted
+	union {
+		TLinAddr		iAbtStackTop;			// Top of ABT stack for this CPU, also used to point to SFullArmRegSet
+		SFullArmRegSet* iRegs;
+		};
+	TLinAddr			iUndStackTop;			// Top of UND stack for this CPU
+	TLinAddr			iFiqStackTop;			// Top of FIQ stack for this CPU
+	TLinAddr			iIrqStackTop;			// Top of IRQ stack for this CPU
+	SRatioInv* volatile	iNewCpuFreqRI;			// set when CPU frequency has been changed
+	SRatioInv* volatile	iNewTimerFreqRI;		// set when CPU local timer frequency has been changed
+	SRatioInv			iCpuFreqRI;				// Ratio of CPU frequency to maximum possible CPU frequency
+	SRatioInv			iTimerFreqRI;			// Ratio of CPU local timer frequency to maximum possible
+
+	TUint32				iSSXP2[36];
+	TUint64				iSSXP3;					// one 64 bit value to guarantee alignment
+	};
 
 // TScheduler member data
-#define	i_TimerMax			iExtras[16]		// Maximum per-CPU timer frequency (after prescaling)
+struct TSchedulerX
+	{
+	TUint64				iTimerMax;				// Maximum per-CPU timer frequency (after prescaling)
+	TUint32				iSXP[1];
+	ArmGlobalTimer*		iGlobalTimerAddr;		// Address of global timer registers (also in TSubScheduler)
+	ArmScu*				iScuAddr;				// Address of SCU (also in TSubScheduler)
+	GicDistributor*		iGicDistAddr;			// Address of GIC Distributor (also in TSubScheduler)
+	GicCpuIfc*			iGicCpuIfcAddr;			// Address of GIC CPU Interface (also in TSubScheduler)
+	ArmLocalTimer*		iLocalTimerAddr;		// Address of local timer registers (also in TSubScheduler)
+
+	SRatioInv			iGTimerFreqRI;			// ratio of global timer frequency to maximum possible
+	TUint64				iCount0;				// global timer count at last frequency change
+	TUint64				iTimestamp0;			// timestamp at last frequency change
+
+	TUint32				iSXP2[16];
+	};
 
 
-#define	RESCHED_IPI_VECTOR			0x00
-#define	GENERIC_IPI_VECTOR			0x01
-#define	TRANSFERRED_IRQ_VECTOR		0x02
-#define	CRASH_IPI_VECTOR			0x03	// would really like this to be a FIQ
-#define	BOOT_IPI_VECTOR				0x04	// used during boot to handshake with APs
-#define RESERVED_IPI_VECTOR_1		0x05	// reserved for future kernel functionality
-#define RESERVED_IPI_VECTOR_2		0x06	// reserved for future kernel functionality
-#define RESERVED_IPI_VECTOR_3		0x07	// reserved for future kernel functionality
+#define	RESCHED_IPI_VECTOR				0x00
+#define	GENERIC_IPI_VECTOR				0x01
+#define	TRANSFERRED_IRQ_VECTOR			0x02
+#define	CRASH_IPI_VECTOR				0x03	// would really like this to be a FIQ
+#define	BOOT_IPI_VECTOR					0x04	// used during boot to handshake with APs
+#define	INDIRECT_POWERDOWN_IPI_VECTOR	0x04	// used to trigger core power down
+#define RESERVED_IPI_VECTOR_1			0x05	// reserved for future kernel functionality
+#define RESERVED_IPI_VECTOR_2			0x06	// reserved for future kernel functionality
+#define IDLE_WAKEUP_IPI_VECTOR			0x07	// for use of Idle handler/Wakeup handler
 
 #if defined(__CPU_ARM11MP__)
 #define	TIMESLICE_VECTOR			0x1D	// vector 29 is per-CPU timer interrupt
@@ -191,8 +222,7 @@ class NThread : public NThreadBase
 	{
 public:
 	TInt Create(SNThreadCreateInfo& aInfo, TBool aInitial);
-	inline void Stillborn()
-		{}
+	void Stillborn();
 
 	/** Value indicating what event caused thread to enter privileged mode.
 		@publishedPartner
@@ -299,14 +329,15 @@ inline void arm_isb()
 #define	smp_wmb()	mb()
 
 #ifdef	__IN_KERNEL__
-struct ArmScu;
-struct GicDistributor;
-struct GicCpuIfc;
-struct ArmLocalTimer;
-#define	SCU			(*(ArmScu*)TheScheduler.i_ScuAddr)
-#define	GIC_DIST	(*(GicDistributor*)TheScheduler.i_GicDistAddr)
-#define	GIC_CPU_IFC	(*(GicCpuIfc*)TheScheduler.i_GicCpuIfcAddr)
-#define	LOCAL_TIMER	(*(ArmLocalTimer*)TheScheduler.i_LocalTimerAddr)
+#define	SCU				(*TheScheduler.iSX.iScuAddr)
+#define	GIC_DIST		(*TheScheduler.iSX.iGicDistAddr)
+#define	GIC_CPU_IFC		(*TheScheduler.iSX.iGicCpuIfcAddr)
+#define	LOCAL_TIMER		(*TheScheduler.iSX.iLocalTimerAddr)
+
+#ifdef	__CPU_ARM_HAS_GLOBAL_TIMER_BLOCK
+#define	GLOBAL_TIMER	(*TheScheduler.iSX.iGlobalTimerAddr)
+#endif
+
 #endif
 
 

@@ -1353,6 +1353,76 @@ LOCAL_C void testLiteral()
 LOCAL_C void testSurrogateAwareInterfaces()
 	{
 	test.Next(_L("new TDesC interfaces"));
+	TInt count;
+	
+	// string 1: all BMP characters
+	_LIT(KBmpString1,			"abcdcf");
+	TBuf16<128> s01(KBmpString1);
+	test(s01.FindCorruptSurrogate() == KErrNotFound);
+	test(s01.Locate2('f') == 5);
+	test(s01.LocateReverse2('c') == 4);
+	test(s01.Match(_L("*cdc*")) == 2);
+	test(s01.Match2(_L("*bcdc*")) == 1);
+	test(s01.Match2(_L("*c?c*")) == 2);
+	
+	// string 2: all non-BMP characters
+	_LIT(KSurrogateString1,		"\xD840\xDDAA\xD840\xDDAB\xD840\xDDAC\xD840\xDDAD\xD840\xDDAE\xD840\xDDAF");
+	TBuf16<128> s02(KSurrogateString1);
+	for (count=0; count<=11; count++)
+	test(s02.FindCorruptSurrogate() == KErrNotFound);
+	test(s02.Locate2(0x201AE) == 8);
+	test(s02.LocateReverse2(0x201AC) == 4);
+	test(s02.Match2(_L("*\xD840\xDDAB\xD840\xDDAC*")) == 2);
+	test(s02.Match2(_L("*\xD840\xDDBB*")) == KErrNotFound);
+	test(s02.Match2(_L("*\xD840\xDDAD*")) == 6);
+
+	// string 3: mixed
+	_LIT(KMixedString1,			"ab\xD840\xDDAD e\xD801\xDC27");
+	TBuf16<128> s03(KMixedString1);
+	test(s03.FindCorruptSurrogate() == KErrNotFound);
+	test(s03.Locate2(0x10427) == 6);
+	test(s03.Locate2('e') == 5);
+	test(s03.LocateF2(0x1044F) == 6);	// lower case=U+1044F(D801, DC4F), upper case=U+10427(D801, DC27), title case=U+10427
+	TBuf16<128> s03a;
+	s03a.CopyLC2(s03);
+	s03a.Append2(0x21000);
+	TBuf16<128> s03b;
+	s03b.Copy(s03);
+	
+	s03b.AppendFill2(0x21000, 2);
+	test(s03a != s03b);
+	test(s03.Match2(_L("*b\xD840\xDDAD*")) == 1);
+	test(s03.Match2(_L("* e*")) == 4);
+	test(s03.Match2(_L("*\xD840\xDDAD?*")) == 2);
+	
+	// string 4: mixed, with corrupt surrogate
+	_LIT(KCorruptString1,		"ab\xD840\xDDAD e\xDDAD\xD840");
+	TBuf16<128> s04(KCorruptString1);
+	test(s04.FindCorruptSurrogate() == 6);
+	
+	// string 5: fill
+	_LIT(KOddString5,           "0123456");
+	TBuf16<128> s05(KOddString5);
+	s05.Fill2(0x21000);
+    test(s05 == _L("\xD844\xDC00\xD844\xDC00\xD844\xDC00\xD844"));
+    s05.Fill2(' ');
+    test(s05 == _L("       "));
+	s05.AppendFill2(0x22222, 2);
+	s05.AppendFill2(0x22222, 3);
+	test(s05 == _L("       \xD848\xDE22\xD848\xDE22\xD848"));
+	
+	// string 6: locate
+	// from Unicode 5.0, CaseFolding.txt
+	// 10400; C; 10428; # DESERET CAPITAL LETTER LONG I
+	// 0x10400's fold is 0x10428
+	TCharF f06(0x10400);
+	test(f06 == 0x10428);  // just to ensure the property is correct
+	// 0x10400: D801, DC00
+	// 0x10428: D801, DC28
+	_LIT(KMixedString6,         "ab\xD801\xDC00 e\xD801\xDC27");
+	TBuf16<128> s06(KMixedString6);
+	TInt pos6 = s06.LocateReverseF2(0x10428);
+	test(pos6 == 2);
 	}
 
 

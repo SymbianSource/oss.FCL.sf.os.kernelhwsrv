@@ -26,6 +26,12 @@
       <component id="f32test" name="File Server Tests" purpose="development">
         <unit bldFile="kerneltest/f32test/group" mrp="kerneltest/f32test/group/base_f32test.mrp"/>
       </component>
+      <component id="rofstests" name="Read Only File System Tests" purpose="development">
+        <unit bldFile="kerneltest/f32test/rofs" mrp="kerneltest/f32test/rofs/rofs_tests.mrp"/>
+      </component>
+      <component id="loadertest" name="Loader Tests" purpose="development">
+        <unit bldFile="kerneltest/f32test/loader" mrp="kerneltest/f32test/loader/base_loader.mrp"/>
+      </component>
     </collection>
     <collection id="ldds" name="Logical Device Drivers" level="adaptation">
       <component id="ethernetldd" name="Ethernet Drivers" purpose="optional">
@@ -44,14 +50,11 @@
         <!-- these are LDDs for storage media-->
         <unit bldFile="kernel/eka/drivers/locmedia" mrp="kernel/eka/drivers/locmedia/base_e32_drivers_locmedia.mrp"/>
       </component>
-      <component id="runmodedebugger" name="Run Mode Debugger" purpose="mandatory">
+      <component id="stopmodedebugdriver" name="Stop Mode Debug Driver" purpose="mandatory">
 		<unit bldFile="kernel/eka/drivers/debug/group" mrp="kernel/eka/drivers/debug/group/base_e32_drivers_debug.mrp"/>	    
       </component>
       <component id="btrace" name="Kernel Trace Tool" purpose="mandatory">
         <unit bldFile="kernel/eka/drivers/trace" mrp="kernel/eka/drivers/trace/base_e32_drivers_trace.mrp"/>
-      </component>
-      <component id="cameraldd" name="Camera Drivers" introduced="^3" purpose="optional">
-        <unit bldFile="kernel/eka/drivers/camerasc" mrp="kernel/eka/drivers/camerasc/base_drivers_camerasc.mrp"/>
       </component>
       <component id="displayldd" name="Display Drivers" introduced="^3" purpose="optional">
         <!-- owned and maintained by graphics package. To be moved there as soon as technical limitations are resolved -->

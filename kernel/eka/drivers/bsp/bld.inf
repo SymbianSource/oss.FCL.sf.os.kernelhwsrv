@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -28,6 +28,8 @@ BASEDEFAULT
 
 #include "../hcr/hcr.inf"
 
+PRJ_EXPORTS
+../../include/drivers/smppower/idlehelper.h      SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(smppower/idlehelper.h)
 
 PRJ_MMPFILES
 
@@ -37,6 +39,7 @@ PRJ_MMPFILES
 #if !defined(WINS) 
 #if !defined(X86)
 ../dma/dma_lib
+../dma/dma2_lib
 #endif
 #endif
 
@@ -47,11 +50,10 @@ PRJ_MMPFILES
 ../resourceman/resman_extended_lib
 ../resmanus/resmanus
 ../resmanus/resmanusextended
-../resmanus/resmanusextendedcore
-#endif
 
-#if !defined(X86)
 #if !defined(WINS)
+../power/smppower/idlehelper_lib.mmp
+../power/smppower/sample_idlehandler/smpidlehandler_lib.mmp
 ../iic/iic
 #endif
 #endif

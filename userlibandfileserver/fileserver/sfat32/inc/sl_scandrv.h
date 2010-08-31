@@ -134,6 +134,7 @@ private:
 	
 	void FixPartEntryL();
 	void FixMatchingEntryL();
+	void FixHangingClusterChainL(TUint32 aFatEocIndex);
 	void MovePastEntriesL(TEntryPos& aEntryPos,TFatDirEntry& aEntry,TInt aToMove,TInt& aDirEntries);
 	void AddToClusterListL(TInt aCluster);
 	inline TBool AlreadyExistsL(TInt aCluster)const;
@@ -150,37 +151,39 @@ private:
 protected:
 	
     /**
-    Internal ScanDrive mode specific errors. In Rugged FAT mode (current implementatio) any type of error of this kind can occur only once and it will be fixed.
-    Othersise the FS is considered to be corrupted
+    Internal ScanDrive mode specific errors.
+    In Rugged FAT mode (current implementation) any type of error of this kind can occur only once and it will be fixed.
+    Otherwise the FS is considered to be corrupted.
     */
     enum TDirError 
         {
-        ENoDirError= 0,         ///< no errors found
+        ENoDirError= 0,         ///< No errors found
         EScanMatchingEntry=1,   ///< Two entries pointing to the same cluster chain; Rugged FAT rename/replace artefact
         EScanPartEntry,         ///< Deleted DOS entry and orphaned VFAT ones from the same entryset; Rugged FAT 'file/dir delete' artefact
         };
 
 
 private:
-	CFatMountCB*            iMount;             ///< The owning Fat mount
+	CFatMountCB*            iMount;             ///< The owning FAT mount
 	
-    TPartVFatEntry          iPartEntry;         ///< Storage for a partial VFat entry set error, see EScanPartEntry
+    TPartVFatEntry          iPartEntry;         ///< Storage for a partial VFAT entry set error, see EScanPartEntry
 	TMatchingStartCluster   iMatching;          ///< Storage for Matching start cluster error, see EScanMatchingEntry
 	
-    TDirError               iDirError;          ///< Indicates the error tpye found also used to indicate if an error has occured
+    TDirError               iDirError;          ///< Indicates the error type found also used to indicate if an error has occured
+	TUint32                 iHangingClusters;	///< Number of hanging clusters found (and marked as EOF by ScanDrive), at which cluster chain
+												///< truncation should take place; Rugged FAT 'file shrinking/expanding' artefact
     TInt                    iDirsChecked;       ///< Count of the number of directories checked
 	TInt                    iRecursiveDepth;    ///< Depth of recursion the scan has reached
-	RArray<TInt>*           iClusterListArray[KMaxArrayDepth]; ///< Size in bytes of the bit packed Fat	Cluster list array used when maximum depth has been reached so that directory may be re-visited. Avoid stack overflow
-	
+	RArray<TInt>*           iClusterListArray[KMaxArrayDepth]; ///< Size in bytes of the bit packed FAT	cluster list array used when maximum depth
+															   ///< has been reached so that directory may be re-visited. Avoid stack overflow.
     TUint                   iListArrayIndex;    ///< Current position into cluster list array
-	TUint32                 iTruncationCluster; ///< Cluster at which cluster chain truncation should take place, used for truncation errors
 	TUint32                 iMaxClusters;       ///< Max. amount of clusters on the volume
 
-    RBitVector              iMediaFatBits;      ///< Storage for bit packed Fat read from media 
-    RBitVector              iScanFatBits;       ///< Storage for bit packed Fat built up by the scan
+    RBitVector              iMediaFatBits;      ///< Storage for bit packed FAT read from media 
+    RBitVector              iScanFatBits;       ///< Storage for bit packed FAT built up by the scan
 
     TGenericError           iGenericError;      ///< FS error that is discovered by scanning in any mode  
-    TScanDriveMode          iScanDriveMode;     ///< mode of operation
+    TScanDriveMode          iScanDriveMode;     ///< Mode of operation
 	};
 
 

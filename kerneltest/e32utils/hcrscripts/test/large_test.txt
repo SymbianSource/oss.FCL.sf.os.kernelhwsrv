@@ -1,0 +1,378 @@
+#------------------------------------------------------------------------------
+# Large Settings Test file for use with the 'hcrmd' tool.
+#
+
+#------------------------------------------------------------------------------
+# BinData tests
+#
+
+@
+cuid: 0x000000ff
+eid:  13
+type: BinData
+flags: 000000
+binval: 0E
+.
+@
+cuid: 0x000000ff
+eid:  23
+type: BinData
+flags: 000000
+binval: 0E 1F 
+.
+@
+cuid: 0x000000ff
+eid:  33
+type: BinData
+flags: 000000
+binval: 0E 1F BA
+.
+@
+cuid: 0x000000ff
+eid:  43
+type: BinData
+flags: 000000
+binval: 0E 1F BA 11
+.
+@
+cuid: 0x000000ff
+eid:  53
+type: BinData
+flags: 000000
+binval: 0E 1F BA 11 1F
+.
+@
+cuid: 0x000000ff
+eid:  63
+type: BinData
+flags: 000000
+binval: FF FF BA 0E 00 B4 
+.
+@
+cuid: 0x000000ff
+eid:  64
+type: BinData
+flags: 000000
+binval: FF FF BA 0E 00 B4 2E
+.
+@
+cuid: 0x000000ff
+eid:  73
+type: BinData
+flags: 000000
+binval: FF FF BA 0E 00 B4 2E AA
+.
+@
+cuid: 0x000000ff
+eid:  83
+type: BinData
+flags: 000000
+binval: FF FF BA 0E 00 B4 2E AA DD
+.
+@
+cuid: 0x000000ff
+eid:  93
+type: BinData
+flags: 000000
+binval: FF FF BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68
+binval: 69 73 20 70 72 6F 67 72 61 6D 20 63 61 6E 6E 6F 
+binval: 74 20 62 65 20 72 75 6E 20 69 6E 20 44 4F 53 20 
+binval: 6D 6F 64 65 2E 0D 0D 0A 24 00 00 00 00 00 00 0F
+binval: 0E 1F BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68 
+binval: 69 73 20 70 72 6F 67 72 61 6D 11 11 22 22 00 FF
+.
+
+@
+cuid: 0x000000ff
+eid:  103
+type: BinData
+flags: 000000
+binval: FF FF BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68
+binval: 69 73 20 70 72 6F 67 72 61 6D 20 63 61 6E 6E 6F 
+binval: 74 20 62 65 20 72 75 6E 20 69 6E 20 44 4F 53 20 
+binval: 6D 6F 64 65 2E 0D 0D 0A 24 00 00 00 00 00 00 0F
+binval: 0E 1F BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68 
+binval: 69 73 20 70 72 6F 67 72 61 6D 11 11 22 22 00 FF
+binval: FF FF BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68
+binval: 69 73 20 70 72 6F 67 72 61 6D 20 63 61 6E 6E 6F 
+binval: 74 20 62 65 20 72 75 6E 20 69 6E 20 44 4F 53 20 
+binval: 6D 6F 64 65 2E 0D 0D 0A 24 00 00 00 00 00 00 0F
+binval: 0E 1F BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68 
+binval: 69 73 20 70 72 6F 67 72 61 6D 11 11 22 22 00 FF
+binval: FF FF BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68
+binval: 69 73 20 70 72 6F 67 72 61 6D 20 63 61 6E 6E 6F 
+binval: 74 20 62 65 20 72 75 6E 20 69 6E 20 44 4F 53 20 
+binval: 6D 6F 64 65 2E 0D 0D 0A 24 00 00 00 00 00 00 0F
+binval: 0E 1F BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68 
+binval: 69 73 20 70 72 6F 67 72 61 6D 11 11 22 22 00 FF
+binval: FF FF BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68
+binval: 69 73 20 70 72 6F 67 72 61 6D 20 63 61 6E 6E 6F 
+binval: 74 20 62 65 20 72 75 6E 20 69 6E 20 44 4F 53 20 
+binval: 6D 6F 64 65 2E 0D 0D 0A 24 00 00 00 00 00 00 0F
+binval: 0E 1F BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68 
+binval: 69 73 20 70 72 6F 67 72 61 6D 11 11 22 22 00 FF
+binval: FF FF BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68
+binval: 69 73 20 70 72 6F 67 72 61 6D 20 63 61 6E 6E 6F 
+binval: 74 20 62 65 20 72 75 6E 20 69 6E 20 44 4F 53 20 
+binval: 6D 6F 64 65 2E 0D 0D 0A 24 00 00 00 00 00 00 0F
+binval: 0E 1F BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68 
+binval: 69 73 20 70 72 6F 67 72 61 6D 11 11 22 22 00 FF
+binval: FF FF BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68
+binval: 69 73 20 70 72 6F 67 72 61 6D 20 63 61 6E 6E 6F 
+.
+
+@
+cuid: 0x000000ff
+eid:  113
+type: BinData
+flags: 000000
+binval: FF FF BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68
+binval: 69 73 20 70 72 6F 67 72 61 6D 20 63 61 6E 6E 6F 
+binval: 74 20 62 65 20 72 75 6E 20 69 6E 20 44 4F 53 20 
+binval: 6D 6F 64 65 2E 0D 0D 0A 24 00 00 00 00 00 00 0F
+binval: 0E 1F BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68 
+binval: 69 73 20 70 72 6F 67 72 61 6D 11 11 22 22 00 FF
+binval: FF FF BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68
+binval: 69 73 20 70 72 6F 67 72 61 6D 20 63 61 6E 6E 6F 
+binval: 74 20 62 65 20 72 75 6E 20 69 6E 20 44 4F 53 20 
+binval: 6D 6F 64 65 2E 0D 0D 0A 24 00 00 00 00 00 00 0F
+binval: 0E 1F BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68 
+binval: 69 73 20 70 72 6F 67 72 61 6D 11 11 22 22 00 FF
+binval: FF FF BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68
+binval: 69 73 20 70 72 6F 67 72 61 6D 20 63 61 6E 6E 6F 
+binval: 74 20 62 65 20 72 75 6E 20 69 6E 20 44 4F 53 20 
+binval: 6D 6F 64 65 2E 0D 0D 0A 24 00 00 00 00 00 00 0F
+binval: 0E 1F BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68 
+binval: 69 73 20 70 72 6F 67 72 61 6D 11 11 22 22 00 FF
+binval: FF FF BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68
+binval: 69 73 20 70 72 6F 67 72 61 6D 20 63 61 6E 6E 6F 
+binval: 74 20 62 65 20 72 75 6E 20 69 6E 20 44 4F 53 20 
+binval: 6D 6F 64 65 2E 0D 0D 0A 24 00 00 00 00 00 00 0F
+binval: 0E 1F BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68 
+binval: 69 73 20 70 72 6F 67 72 61 6D 11 11 22 22 00 FF
+binval: FF FF BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68
+binval: 69 73 20 70 72 6F 67 72 61 6D 20 63 61 6E 6E 6F 
+binval: 74 20 62 65 20 72 75 6E 20 69 6E 20 44 4F 53 20 
+binval: 6D 6F 64 65 2E 0D 0D 0A 24 00 00 00 00 00 00 0F
+binval: 0E 1F BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68 
+binval: 69 73 20 70 72 6F 67 72 61 6D 11 11 22 22 00 FF
+binval: FF FF BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68
+binval: 69 73 20 70 72 6F 67 72 61 6D 20 63 61 6E 6E 6F  
+binval: 0E 1F BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68 
+binval: 69 73 20 70 72 6F 67 72 61 6D 11 11 22 22 00 FF
+binval: FF FF BA 0E 00 B4 09 CD 21 B8 01 4C CD 21 54 68
+binval: 69 73 20 70 72 6F 67 72 61 6D 20 63 61 6E 6E 6F  
+.
+
+#------------------------------------------------------------------------------
+# Text8 tests
+#
+
+# Length field tests
+#
+@
+cuid: 0x11223301
+eid:  1
+type: Text8
+flags: 0x0000
+strval: "Hello World!!"   
+.
+@
+cuid: 0x11223302
+eid:  2
+type: Text8
+flags: 0x0000
+strval: "Hell"   
+.
+@
+cuid: 0x11223303
+eid:  3
+type: Text8
+flags: 0x0000
+strval: "Hello World!!    "   
+.
+
+# strval field tests
+#
+@
+cuid: 0x11223304
+eid:  1
+type: Text8
+flags: 0x0000
+strval: ""   
+.
+@
+cuid: 0x11223305
+eid:  5
+type: Text8
+flags: 0x0000
+strval: "012345678901234567890123456789ab012345678901234567890123456789ab012345678901234567890123456789ab012345678901234567890123456789ab"
+.
+
+@
+cuid: 0x11223306
+eid:  6
+type: Text8
+flags: 0x0000
+strval: "012345678901234567890123456789ab012345678901234567890123456789ab012345678901234567890123456789ab012345678901234567890123456789ab"
+strval: "012345678901234567890123456789ab012345678901234567890123456789ab012345678901234567890123456789ab012345678901234567890123456789bc"
+strval: "012345678901234567890123456789ab012345678901234567890123456789ab012345678901234567890123456789ab012345678901234567890123456789cd"
+strval: "012345678901234567890123456789ab012345678901234567890123456789ab012345678901234567890123456789ab012345678901234567890123456789de" 
+.
+
+
+# strval field and padding tests
+#
+@
+cuid: 0x11223311
+eid:  128
+type: Text8
+flags: 0x0000
+strval: "A"   
+.
+@
+cuid: 0x11223312
+eid:  128
+type: Text8
+flags: 0x0000
+strval: "We"  
+. 
+@
+cuid: 0x11223313
+eid:  128
+type: Text8
+flags: 0x0000
+strval: "Car"   
+.
+@
+cuid: 0x11223314
+eid:  128
+type: Text8
+flags: 0x0000
+strval: "Cake"   
+.
+@
+cuid: 0x11223315
+eid:  128
+type: Text8
+flags: 0x0000
+strval: "1---A"
+.
+@
+cuid: 0x11223316
+eid:  128
+type: Text8
+flags: 0x0000
+strval: "1---We"  
+. 
+@
+cuid: 0x11223317
+eid:  128
+type: Text8
+flags: 0x0000
+strval: "1---Car"   
+.
+@
+cuid: 0x11223318
+eid:  128
+type: Text8
+flags: 0x0000
+strval: "1---Cake"   
+.
+@
+cuid: 0x11223319
+eid:  128
+type: Text8
+flags: 0x0000
+strval: "1---2---A"
+.
+@
+cuid: 0x1122331a 
+eid:  128
+type: Text8
+flags: 0x0000
+strval: "1---2---We"  
+. 
+@
+cuid: 0x1122331b
+eid:  128
+type: Text8
+flags: 0x0000
+strval: "1---2---Car"   
+.
+@
+cuid: 0x1122331c
+eid:  128
+type: Text8
+flags: 0x0000
+strval: "1---2---Cake"   
+.
+@
+cuid: 0x1122331d
+eid:  128
+type: Text8
+flags: 0x0000
+strval: "1---2---3---A"
+.
+@
+cuid: 0x1122331e
+eid:  128
+type: Text8
+flags: 0x0000
+strval: "1---2---3---We"  
+. 
+@
+cuid: 0x1122331f
+eid:  128
+type: Text8
+flags: 0x0000
+strval: "1---2---3---Car"   
+.
+@
+cuid: 0x11223320
+eid:  128
+type: Text8
+flags: 0x0000
+strval: "1---2---3---Cake"   
+.
+
+
+#------------------------------------------------------------------------------
+# UInt64 & Int64 tests
+#
+
+@
+cuid: 0x55667711
+eid:  91
+type: Int64
+flags: 0x0000
+binval: 00 00 00 00 00 00 00 80
+.
+@
+cuid: 0x55667711
+eid:  92
+type: Int64
+flags: 0x0000
+binval: 00 00 00 00 00 00 00 00
+.
+#@
+#cuid: 0x55667711
+#eid:  192
+#type: Int64
+#flags: 0x0000
+#binval: 00
+#.
+@
+cuid: 0x55667711
+eid:  93
+type: Int64
+flags: 0x0000
+binval: ff ff ff ff ff ff ff 7f 
+.
+@
+cuid: 0x55667711
+eid:  94
+type: UInt64
+flags: 0x0000
+binval: ff ff ff ff ff ff ff ff
+.

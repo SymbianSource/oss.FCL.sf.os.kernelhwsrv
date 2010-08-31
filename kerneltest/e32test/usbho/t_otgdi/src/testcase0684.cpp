@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -25,6 +25,10 @@
 //#include "testcasewd.h"
 #include "b2bwatchers.h"
 #include "testcase0684.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "testcase0684Traces.h"
+#endif
 
 #include <e32debug.h> 
 
@@ -40,7 +44,10 @@ const TTestCaseFactoryReceipt<CTestCase0684> CTestCase0684::iFactoryReceipt(KTes
 
 CTestCase0684* CTestCase0684::NewL(TBool aHost)
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0684_NEWL);
+	    }
 	CTestCase0684* self = new (ELeave) CTestCase0684(aHost);
 	CleanupStack::PushL(self);
 	self->ConstructL();
@@ -52,7 +59,10 @@ CTestCase0684* CTestCase0684::NewL(TBool aHost)
 CTestCase0684::CTestCase0684(TBool aHost)
 	: CTestCaseB2BRoot(KTestCaseId, aHost, iStatus) 
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0684_CTESTCASE0684);
+	    }
 		
 	} 
 
@@ -62,7 +72,10 @@ CTestCase0684::CTestCase0684(TBool aHost)
 */
 void CTestCase0684::ConstructL()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0684_CONSTRUCTL);
+	    }
 
 	iDualRoleCase = ETrue;
 	iBusRequestCounter = 2;
@@ -74,7 +87,10 @@ void CTestCase0684::ConstructL()
 
 CTestCase0684::~CTestCase0684()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0684_DCTESTCASE0684);
+	    }
 	iCollector.DestroyObservers();
 	Cancel();
 	}
@@ -82,7 +98,10 @@ CTestCase0684::~CTestCase0684()
 
 void CTestCase0684::ExecuteTestCaseL()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0684_EXECUTETESTCASEL);
+	    }
 	iCaseStep = EPreconditions;
 	CActiveScheduler::Add(this);
 	SelfComplete();
@@ -91,13 +110,19 @@ void CTestCase0684::ExecuteTestCaseL()
 	
 void CTestCase0684::DoCancel()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0684_DOCANCEL);
+	    }
 	// cancel our timer
 	iTimer.Cancel();
 	}
 void CTestCase0684::RunStepL()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0684_RUNSTEPL);
+	    }
 	
 	// Obtain the completion code for this CActive obj.
 	TInt completionCode(iStatus.Int()); 
@@ -161,6 +186,7 @@ void CTestCase0684::RunStepL()
 		case EReadyToRaiseVBus:
 			{
 			test.Printf(_L("Into EReadyToRaiseVBus step...\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0684_RUNSTEPL_DUP01, "Into EReadyToRaiseVBus step...\n");
 			
 			if (gTestRoleMaster)
 				{
@@ -199,6 +225,7 @@ void CTestCase0684::RunStepL()
 		case EDefaultRoles:
 			{
 			test.Printf(_L("Into EDefaultRoles step...\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0684_RUNSTEPL_DUP02, "Into EDefaultRoles step...\n");
 			if (KTestCaseWatchdogTO == iStatus.Int())
 				{
 				iCollector.DestroyObservers();
@@ -221,6 +248,7 @@ void CTestCase0684::RunStepL()
 		case EAIdleHostPriorToAPeripheral:	//	an "A-Device only" step
 			{
 			test.Printf(_L("Into EAIdleHostPriorToAPeripheral step...\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0684_RUNSTEPL_DUP03, "Into EAIdleHostPriorToAPeripheral step...\n");
 			if (KTestCaseWatchdogTO == iStatus.Int())
 				{
 				iCollector.DestroyObservers();
@@ -240,10 +268,11 @@ void CTestCase0684::RunStepL()
 		case EBConfigured:
 			{
 			test.Printf(_L("Into EBConfigured step...\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0684_RUNSTEPL_DUP04, "Into EBConfigured step...\n");
 			if (KTestCaseWatchdogTO == iStatus.Int())
 				{
 				iCollector.DestroyObservers();
-				RDebug::Print(_L("Timeout"));
+				OstTrace0(TRACE_NORMAL, CTESTCASE0684_RUNSTEPL_DUP05, "Timeout");
 				return TestFailed(KErrAbort, _L("Timeout"));
 				}
 			iCollector.AddRequiredNotification(EWatcherPeripheralState, EUsbcDeviceStateSuspended);
@@ -255,15 +284,17 @@ void CTestCase0684::RunStepL()
 		case EBSuspended:
 			{
 			test.Printf(_L("Into EBSuspended step...\n"));					
+			OstTrace0(TRACE_NORMAL, CTESTCASE0684_RUNSTEPL_DUP06, "Into EBSuspended step...\n");					
 			if (KTestCaseWatchdogTO == iStatus.Int())
 				{
 				iCollector.DestroyObservers();
-				RDebug::Print(_L("Timeout"));
+				OstTrace0(TRACE_NORMAL, CTESTCASE0684_RUNSTEPL_DUP07, "Timeout");
 				return TestFailed(KErrAbort, _L("Timeout"));
 				}
 			
 			if(iBusRequestCounter > 0){
 				test.Printf(_L("VBus present, attempting a swap.\n"));
+				OstTrace0(TRACE_NORMAL, CTESTCASE0684_RUNSTEPL_DUP08, "VBus present, attempting a swap.\n");
 				iCollector.AddRequiredNotification(EWatcherState, RUsbOtgDriver::EStateBHost);
 				
 				iBusRequestCounter --;
@@ -271,6 +302,7 @@ void CTestCase0684::RunStepL()
 				if (KErrNone != err)
 					{
 					test.Printf(_L("BusRequest returned %d\n"),err);
+					OstTrace1(TRACE_NORMAL, CTESTCASE0684_RUNSTEPL_DUP09, "BusRequest returned %d\n",err);
 					return TestFailed(KErrAbort, _L("BusRequest() failed!"));
 					}
 				iCaseStep = EBToHost;
@@ -286,6 +318,7 @@ void CTestCase0684::RunStepL()
 		case EAToHost:
 			{
 			test.Printf(_L("Into EAToHost step...\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0684_RUNSTEPL_DUP10, "Into EAToHost step...\n");
 			if (KTestCaseWatchdogTO == iStatus.Int())
 				{
 				iCollector.DestroyObservers();
@@ -298,6 +331,7 @@ void CTestCase0684::RunStepL()
 				TUint16 val = 0;
 				GetMaxPower(val);
 				test.Printf(_L("bMaxPower= %d\n"), val);
+				OstTrace1(TRACE_NORMAL, CTESTCASE0684_RUNSTEPL_DUP11, "bMaxPower= %d\n", val);
 				iCollector.AddRequiredNotification(EWatcherState, RUsbOtgDriver::EStateAPeripheral);
 				iCaseStep = EAToPeripheral;
 			}
@@ -313,6 +347,7 @@ void CTestCase0684::RunStepL()
 		case EAToPeripheral:
 			{
 			test.Printf(_L("Into EAToPeripheral step...\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0684_RUNSTEPL_DUP12, "Into EAToPeripheral step...\n");
 			if (KTestCaseWatchdogTO == iStatus.Int())
 				{
 				iCollector.DestroyObservers();
@@ -327,6 +362,7 @@ void CTestCase0684::RunStepL()
 		case EBToHost:
 			{
 			test.Printf(_L("Into EBToHost step...\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0684_RUNSTEPL_DUP13, "Into EBToHost step...\n");
 			if (KTestCaseWatchdogTO == iStatus.Int())
 				{
 				iCollector.DestroyObservers();
@@ -341,6 +377,7 @@ void CTestCase0684::RunStepL()
 		case EBToPeripheral:
 			{
 			test.Printf(_L("Into EBToPeripheral step...\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0684_RUNSTEPL_DUP14, "Into EBToPeripheral step...\n");
 			if (KTestCaseWatchdogTO == iStatus.Int())
 				{
 				iCollector.DestroyObservers();
@@ -363,6 +400,7 @@ void CTestCase0684::RunStepL()
 		case EIdleHostPriorToVBusDown:
 			{
 			test.Printf(_L("Into EAIdleHostPriorToVBusDown step...\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0684_RUNSTEPL_DUP15, "Into EAIdleHostPriorToVBusDown step...\n");
 			
 			if (KTestCaseWatchdogTO == iStatus.Int())
 				{
@@ -435,6 +473,7 @@ void CTestCase0684::RunStepL()
 			
 		default:
 			test.Printf(_L("<Error> unknown test step"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0684_RUNSTEPL_DUP16, "<Error> unknown test step");
 			Cancel();
 			RequestCharacter();	
 			return (TestFailed(KErrCorrupt, _L("<Error> unknown test step")));

@@ -505,10 +505,10 @@ For internal use only.
 */
 void TChunkCreateInfo::SetThreadHeap(TInt aInitialSize, TInt aMaxSize, const TDesC& aName)
 	{
-	iType = TChunkCreate::ENormal | TChunkCreate::EData;
+    iType = TChunkCreate::ENormal | TChunkCreate::EData;
+   	iMaxSize = aMaxSize;
 	iInitialBottom = 0;
 	iInitialTop = aInitialSize;
-	iMaxSize = aMaxSize;
 	iAttributes |= TChunkCreate::ELocalNamed;
 	iName = &aName;
 	iOwnerType = EOwnerThread;
@@ -4770,6 +4770,33 @@ Notes:
 		Exec::KernelHeapDebug(EDbgSetAllocFail,aType,(TAny*)aRate);
 	else
 		GetHeap()->__DbgSetAllocFail(aType,aRate);
+	}
+
+UEXPORT_C RAllocator::TAllocFail User::__DbgGetAllocFail(TBool aKernel)
+//
+// Obtains the current heap failure simulation type.
+//
+/**
+After calling __DbgSetAllocFail(), this function may be called to retrieve the
+value set.  This is useful primarily for test code that doesn't know if a heap
+has been set to fail and needs to check.
+
+@param aKernel   ETrue, if checking is being done for the kernel heap;
+                 EFalse, if checking is being done for the current thread's
+                 default heap.
+
+@return RAllocator::ENone if heap is not in failure simulation mode;
+		Otherwise one of the other RAllocator::TAllocFail enumerations
+*/
+	{
+	if (aKernel)
+		{
+		RAllocator::TAllocFail allocFail;
+		Exec::KernelHeapDebug(EDbgGetAllocFail, 0, &allocFail);
+		return(allocFail);
+		}
+	else
+		return(GetHeap()->__DbgGetAllocFail());
 	}
 
 /**

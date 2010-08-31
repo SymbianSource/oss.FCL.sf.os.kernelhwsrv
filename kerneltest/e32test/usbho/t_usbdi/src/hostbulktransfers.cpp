@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -17,6 +17,10 @@
 //
 
 #include "hosttransfers.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "hostbulktransfersTraces.h"
+#endif
 #include <e32debug.h>
 
 namespace NUnitTesting_USBDI
@@ -27,60 +31,65 @@ CBulkTransfer::CBulkTransfer(RUsbPipe& aPipe,RUsbInterface& aInterface,TInt aMax
 :	CBaseTransfer(aPipe,aInterface,aObserver,aTransferId),
 	iTransferDescriptor(aMaxTransferSize) // Allocate the buffer for bulk transfers
 	{
+    OstTraceFunctionEntryExt( CBULKTRANSFER_CBULKTRANSFER_ENTRY, this );
 
 	// Register the transfer descriptor with the interface
 	
 	TInt err(Interface().RegisterTransferDescriptor(iTransferDescriptor));
 	if(err != KErrNone)
 		{
-		RDebug::Printf("<Error %d> Unable to register transfer descriptor",err);
+		OstTrace1(TRACE_NORMAL, CBULKTRANSFER_CBULKTRANSFER, "<Error %d> Unable to register transfer descriptor",err);
 		}
+	OstTraceFunctionExit1( CBULKTRANSFER_CBULKTRANSFER_EXIT, this );
 	}
 	
 	
 CBulkTransfer::~CBulkTransfer()
 	{
-	LOG_FUNC
+	OstTraceFunctionEntry1( CBULKTRANSFER_CBULKTRANSFER_ENTRY_DUP01, this );
 	
 	// Cancel the transfer
 
 	Cancel();
+	OstTraceFunctionExit1( CBULKTRANSFER_CBULKTRANSFER_EXIT_DUP01, this );
 	}
 	
 	
 TPtrC8 CBulkTransfer::DataPolled()
 	{
+	OstTraceFunctionEntry1( CBULKTRANSFER_DATAPOLLED_ENTRY, this );
 	return iTransferDescriptor.Buffer();
 	}
 
 
 void CBulkTransfer::TransferIn(TInt aExpectedDataSize)
 	{
-	LOG_FUNC
+	OstTraceFunctionEntryExt( CBULKTRANSFER_TRANSFERIN_ENTRY, this );
 	
 	// Activate the asynchronous transfer 
 	
-	RDebug::Printf("Activating bulk in transfer");
+	OstTrace0(TRACE_NORMAL, CBULKTRANSFER_TRANSFERIN, "Activating bulk in transfer");
 	iTransferDescriptor.SaveData(aExpectedDataSize);
 	Pipe().Transfer(iTransferDescriptor,iStatus);
 	SetActive();
+	OstTraceFunctionExit1( CBULKTRANSFER_TRANSFERIN_EXIT, this );
 	}
 
 void CBulkTransfer::TransferOut(const TDesC8& aBulkData, TBool aUseZLPIfRequired)
 	{
-	LOG_FUNC
+    OstTraceFunctionEntryExt( CBULKTRANSFER_TRANSFEROUT_ENTRY, this );
 
 	// Copy the data across
 	if(aBulkData.Length() > iTransferDescriptor.iMaxSize)
 		{
-		RDebug::Printf("Too much data in bulk transfer. This test suite will now PANIC!");
-		RDebug::Printf("Bytes requested %d, Max allowed %d", aBulkData.Length(), iTransferDescriptor.iMaxSize);
+		OstTrace0(TRACE_NORMAL, CBULKTRANSFER_TRANSFEROUT, "Too much data in bulk transfer. This test suite will now PANIC!");
+		OstTraceExt2(TRACE_NORMAL, CBULKTRANSFER_TRANSFEROUT_DUP01, "Bytes requested %d, Max allowed %d", aBulkData.Length(), iTransferDescriptor.iMaxSize);
 		ASSERT(EFalse);
 		}
 		
 	TPtr8 buffer = iTransferDescriptor.WritableBuffer();
 	buffer.Copy(aBulkData);
-	RDebug::Printf("Transfer buffer now has %d bytes to write",buffer.Length());
+	OstTrace1(TRACE_NORMAL, CBULKTRANSFER_TRANSFEROUT_DUP02, "Transfer buffer now has %d bytes to write",buffer.Length());
 	iTransferDescriptor.SaveData(buffer.Length());
 	if(aUseZLPIfRequired)
 		{
@@ -93,33 +102,35 @@ void CBulkTransfer::TransferOut(const TDesC8& aBulkData, TBool aUseZLPIfRequired
 	
 	// Activate the asynchronous transfer 
 	
-	RDebug::Printf("Activating bulk out transfer");
+	OstTrace0(TRACE_NORMAL, CBULKTRANSFER_TRANSFEROUT_DUP03, "Activating bulk out transfer");
 	Pipe().Transfer(iTransferDescriptor,iStatus);
 	SetActive();
+	OstTraceFunctionExit1( CBULKTRANSFER_TRANSFEROUT_EXIT, this );
 	}
 
 void CBulkTransfer::TransferOut(const TDesC8& aBulkDataPattern, TUint aNumBytes, TBool aUseZLPIfRequired)
 	{
-	LOG_FUNC
+	OstTraceFunctionEntryExt( CBULKTRANSFER_TRANSFEROUT_ENTRY_DUP01, this );
 	
 	TransferOut(aBulkDataPattern, 0, aNumBytes, aUseZLPIfRequired);
+	OstTraceFunctionExit1( CBULKTRANSFER_TRANSFEROUT_EXIT_DUP01, this );
 	}
 
 
 void CBulkTransfer::TransferOut(const TDesC8& aBulkDataPattern, TUint aStartPoint, TUint aNumBytes, TBool aUseZLPIfRequired)
 	{
-	LOG_FUNC
+    OstTraceFunctionEntryExt( CBULKTRANSFER_TRANSFEROUT_ENTRY_DUP02, this );
 
 	// Copy the data across
 	if(aNumBytes > iTransferDescriptor.iMaxSize)
 		{
-		RDebug::Printf("Too much data in bulk transfer. This test suite will now PANIC!");
-		RDebug::Printf("Bytes requested %d, Max allowed %d", aNumBytes, iTransferDescriptor.iMaxSize);
+		OstTrace0(TRACE_NORMAL, CBULKTRANSFER_TRANSFEROUT_DUP10, "Too much data in bulk transfer. This test suite will now PANIC!");
+		OstTraceExt2(TRACE_NORMAL, CBULKTRANSFER_TRANSFEROUT_DUP11, "Bytes requested %d, Max allowed %d", aNumBytes, iTransferDescriptor.iMaxSize);
 		ASSERT(EFalse);
 		}
 	if(aBulkDataPattern.Length()<=0)
 		{
-		RDebug::Printf("ZERO LENGTH data pattern used in TransferOut. This test suite will now PANIC!");
+		OstTrace0(TRACE_NORMAL, CBULKTRANSFER_TRANSFEROUT_DUP12, "ZERO LENGTH data pattern used in TransferOut. This test suite will now PANIC!");
 		ASSERT(EFalse);
 		}
 	TUint startPoint = aStartPoint%aBulkDataPattern.Length();
@@ -140,7 +151,7 @@ void CBulkTransfer::TransferOut(const TDesC8& aBulkDataPattern, TUint aStartPoin
 		{
 		buffer.Append(aBulkDataPattern.Left(numEndBytes));
 		}
-	RDebug::Printf("Transfer buffer now has %d bytes to write",buffer.Length());
+	OstTrace1(TRACE_NORMAL, CBULKTRANSFER_TRANSFEROUT_DUP13, "Transfer buffer now has %d bytes to write",buffer.Length());
 	iTransferDescriptor.SaveData(buffer.Length());	
 	if(aUseZLPIfRequired)
 		{
@@ -153,9 +164,10 @@ void CBulkTransfer::TransferOut(const TDesC8& aBulkDataPattern, TUint aStartPoin
 	
 	// Activate the asynchronous transfer 
 	
-	RDebug::Printf("Activating bulk out transfer");
+	OstTrace0(TRACE_NORMAL, CBULKTRANSFER_TRANSFEROUT_DUP14, "Activating bulk out transfer");
 	Pipe().Transfer(iTransferDescriptor,iStatus);
 	SetActive();
+	OstTraceFunctionExit1( CBULKTRANSFER_TRANSFEROUT_EXIT_DUP02, this );
 	}
 
 	}

@@ -1116,33 +1116,11 @@ void TCacheBroadcast::DoIsrOp()
 void TCacheBroadcast::DoThreadOp()
 	{
 	CHECK_PRECONDITIONS(MASK_THREAD_STANDARD,"TCacheBroadcast::DoThreadOp");
-	NKern::ThreadEnterCS();
-	NThreadGroup* g = NKern::LeaveGroup();
-	TInt frz = NKern::FreezeCpu();
-	if (frz)
-		__crash();	// already frozen so won't be able to migrate :-(
-	TInt orig_cpu = NKern::CurrentCpu();
-	TInt ncpu = NKern::NumberOfCpus();
-	TInt cpu = orig_cpu;
-	TUint32 orig_affinity = 0;
-	do	{
-		TUint32 affinity = NKern::ThreadSetCpuAffinity(NKern::CurrentThread(), (TUint32)cpu);
-		if (cpu == orig_cpu)
-			{
-			orig_affinity = affinity;
-			NKern::EndFreezeCpu(frz);
-			}
-		TInt cpu_now = NKern::CurrentCpu();
-		if (cpu_now != cpu)
-			__crash();
+	TCoreCycler cycler;
+	while (cycler.Next()==KErrNone)
+		{
 		Isr(this);
-		if (++cpu == ncpu)
-			cpu = 0;
-		} while (cpu != orig_cpu);
-	NKern::ThreadSetCpuAffinity(NKern::CurrentThread(), orig_affinity);
-	if (g)
-		NKern::JoinGroup(g);
-	NKern::ThreadLeaveCS();
+		}
 	}
 
 void InternalCache::Invalidate(TUint aMask, TLinAddr aBase, TUint aSize)

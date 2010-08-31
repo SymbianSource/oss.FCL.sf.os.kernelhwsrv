@@ -23,6 +23,9 @@
 #include <f32dbg.h>
 #include "t_server.h"
 #include "t_chlffs.h"
+#include "f32_test_utils.h"
+
+using namespace F32_Test_Utils;
 
 #ifdef __WINS__
 #define WIN32_LEAN_AND_MEAN
@@ -344,15 +347,15 @@ GLDEF_C void CallTestsL()
 // Call tests that may leave
 //
 	{
-
-#ifdef __WINS__
-// These tests try to create a huge file to fill up the drive.
-// This fails on WINS with drives with > 1/2G free because
-// RFile::SetSize() (among other things) only takes a TInt.
-//
-	if (gSessionPath.Left(1).CompareF(_L("C")) == 0)
+    if (Is_SimulatedSystemDrive(TheFs, CurrentDrive()))
+        {
+		// These tests try to create a huge file to fill up the drive.
+		// This fails on WINS with drives with > 1/2G free because
+		// RFile::SetSize() (among other things) only takes a TInt.
+		test.Printf(_L("Skipping B_OPEN on PlatSim/Emulator drive %C:\n"), gSessionPath[0]);
 		return;
-#endif
+        }
+
 	CreateTestDirectory(_L("\\B_OPEN\\"));
 	InitTest();
 	testOpenFiles();

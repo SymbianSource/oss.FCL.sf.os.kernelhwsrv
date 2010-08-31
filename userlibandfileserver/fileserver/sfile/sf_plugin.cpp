@@ -247,9 +247,9 @@ TBool CFsPlugin::IsRegistered(TInt aMessage, TInterceptAtts aInterceptAtts)
 	}
 
 /**
-   Return ETrue if the calling thread is the plugin thread
+   Return ETrue if the request originated from this plugin
 */
-TBool CFsPlugin::IsPluginThread(CFsRequest& aRequest)
+TBool CFsPlugin::OriginatedFromPlugin(CFsRequest& aRequest)
 	{
 	if(aRequest.iOwnerPlugin == this)
 		return ETrue;
@@ -361,9 +361,11 @@ TInt CFsPlugin::DispatchOperation(TFsPluginRequest& aRequest, TDes8& aDes, TInt6
 
 
 	CFsPlugin* plugin = this;
-	FsPluginManager::NextPlugin(plugin, &msgRequest,(TBool)ETrue);
+	FsPluginManager::ReadLockChain();
+	FsPluginManager::NextPlugin(plugin, &msgRequest);
 	msgRequest.iCurrentPlugin = plugin;
 	msgRequest.Dispatch();
+	FsPluginManager::UnlockChain();
 	iThreadP->OperationLockWait();
 
 	aDes.SetLength(len);

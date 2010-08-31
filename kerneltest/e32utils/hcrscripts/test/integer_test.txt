@@ -1,0 +1,205 @@
+#------------------------------------------------------------------------------
+# Integer Setting Test file for use with the 'hcrmd' tool.
+#
+
+#------------------------------------------------------------------------------
+# Signed Integer 32-bit tests
+#
+@
+cuid: 0xff000001
+eid:  1
+type: Int32
+flags: 0x0000
+intval: 2147483647
+.
+@
+cuid: 0xff000001
+eid:  2
+type: Int32
+flags: 0x0000
+intval: 0
+.
+@
+cuid: 0xff000001
+eid:  3
+type: Int32
+flags: 0x0000
+intval: -2147483648
+.
+
+#------------------------------------------------------------------------------
+# Signed Integer 16-bit tests
+#
+@
+cuid: 0xff000002
+eid:  11
+type: Int16
+flags: 0x0000
+intval: 32767
+.
+@
+cuid: 0xff000002
+eid:  12
+type: Int16
+flags: 0x0000
+intval: 0
+.
+@
+cuid: 0xff000002
+eid:  13
+type: Int16
+flags: 0x0000
+intval: -32768
+.
+
+#------------------------------------------------------------------------------
+# Signed Integer 8-bit tests
+#
+@
+cuid: 0xff000003
+eid:  21
+type: Int8
+flags: 0x0000
+intval: 127
+.
+
+@
+cuid: 0xff000003
+eid:  22
+type: Int8
+flags: 0x0000
+intval: 0
+.
+@
+cuid: 0xff000003
+eid:  23
+type: Int8
+flags: 0x0000
+intval: -128
+.
+
+#------------------------------------------------------------------------------
+# Unsigned Integer tests
+#
+@
+cuid: 0xff000004
+eid:  31
+type: UInt32
+flags: 0x0000
+intval: 4294967295
+.
+@
+cuid: 0xff000004
+eid:  32
+type: UInt16
+flags: 0x0000
+intval: 65535
+.
+@
+cuid: 0xff000004
+eid:  33
+type: UInt8
+flags: 0x0000
+intval: 255
+.
+
+#------------------------------------------------------------------------------
+# Boolean tests
+#
+@
+cuid: 0xff000005
+eid:  41
+type: Bool
+flags: 0x0000
+intval: 1
+.
+@
+cuid: 0xff000005
+eid:  42
+type: Bool
+flags: 0x0000
+intval: 0
+.
+
+
+#------------------------------------------------------------------------------
+# Linear Addrress tests
+#
+@
+cuid: 0xff000006
+eid:  51
+type: LinAddr
+flags: 0x0000
+hexval: 0x80000000
+.
+@
+cuid: 0xff000006
+eid:  52
+type: LinAddr
+flags: 0x0000
+hexval: 0x01008004
+.
+@
+cuid: 0xff000006
+eid:  53
+type: LinAddr
+flags: 0x0000
+hexval: 0x00000000
+.
+
+
+#------------------------------------------------------------------------------
+# Synatx tests
+#
+
+# Tool should cope with these
+@
+cuid: 0xffff0001
+eid:  101
+type: Int32
+intval: 1889025
+.
+@
+cuid: 0xffff0002
+eid:  102
+type: Int32
+intval: 5889025
+.
+
+# Missing fields - Tool should abort for these records
+# 
+#@
+#cuid: 0xffff0003
+#eid:  103
+#type: Int32
+#.
+#@
+#cuid: 0xffff0004
+#eid:  104
+#.
+#@
+#cuid: 0xffff0005
+#.
+#@
+#.
+
+# Incorrect Types - Tool should abort for these records
+# 
+#@
+#cuid: 0xffff0006
+#eid:  106
+#type: int32
+#intval: 1889025
+#.
+#@
+#cuid: 0xffff0007
+#eid:  107
+#type: Int
+#intval: 1889025
+#.
+#@
+#cuid: 0xffff0008
+#eid:  108
+#type: Int32ab
+#intval: 1889025
+#.

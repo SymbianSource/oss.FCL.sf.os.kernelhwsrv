@@ -1,0 +1,52 @@
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/t_usb_transfersrv.mmp
+// 
+//
+
+TARGET        t_usb_transfersrv.dll
+TARGETTYPE    DLL
+
+UID         0x0 0x20031633
+VENDORID    0x70000001
+
+MACRO		USB_SC
+
+// Header file paths
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+USERINCLUDE	  ../usb/t_usb_device/include
+USERINCLUDE   ../traces_t_usb_transfersrvclient
+
+// Source file paths
+
+SOURCEPATH	  ../usb/t_usb_device/src
+
+
+SOURCE		transfersrv.cpp
+
+deffile			../~/t_usb_transfersrv.def 
+
+LIBRARY     EUSER.LIB HAL.LIB
+LIBRARY		usbcsc_bil.lib
+LIBRARY     EFSRV.LIB
+
+CAPABILITY    ALL
+
+
+// Larger user heap than default: maximum = 16MB
+EPOCHEAPSIZE  0x1000 0x01000000
+
+SMPSAFE

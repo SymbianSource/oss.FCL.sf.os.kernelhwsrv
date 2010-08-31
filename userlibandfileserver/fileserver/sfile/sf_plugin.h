@@ -60,19 +60,20 @@ public:
 	static TInt InstallPluginFactory(CFsPluginFactory* aFactory,RLibrary aLib);
 	static CFsPluginFactory* GetPluginFactory(const TDesC& aName);
 
-	static TInt NextPlugin(CFsPlugin*& aPlugin, CFsMessageRequest* aMsgRequest, TBool aLock, TBool aCheckCurrentOperation=ETrue);
-	static TInt PrevPlugin(CFsPlugin*& aPlugin, CFsMessageRequest* aMsgRequest, TBool aLock);
+	static TInt NextPlugin(CFsPlugin*& aPlugin, CFsMessageRequest* aMsgRequest, TBool aCheckCurrentOperation=ETrue);
+	static TInt PrevPlugin(CFsPlugin*& aPlugin, CFsMessageRequest* aMsgRequest);
 	static TInt InsertInPluginStack(CFsPlugin*& aPlugin,TInt aPos);
 	static TInt IsInChain(TInt aUPos, TInt aPos,TInt aDrive, CFsPluginFactory* aPluginFactory);
 	static CFsPlugin* FindByUniquePosition(TInt aPos);
 
-	static TInt InitPlugin(CFsPlugin& aPlugin);
+	static TInt InitPlugin(CFsPlugin& aPlugin, RLibrary aLibrary);
 	static void TransferRequests(CPluginThread* aPluginThread);
 	static void CancelPlugin(CFsPlugin* aPlugin,CSessionFs* aSession);
 	static TInt ChainCount();
 	static TInt Plugin(CFsPlugin*& aPlugin, TInt aPos);
 
-	static void LockChain();
+	static void ReadLockChain();
+	static void WriteLockChain();
 	static void UnlockChain();
 
 	static CFsPluginConn* CreatePluginConnL(TInt aUniquePosition, TUint aClientId);
@@ -91,7 +92,7 @@ private:
 	static CFsObjectCon* iPluginConns;
 
 	static RPointerArray<CFsPlugin> iPluginChain;
-	static RFastLock iChainLock;
+	static RReadWriteLock iChainLock;
 
 	static CFsSyncMessageScheduler* iScheduler;
 

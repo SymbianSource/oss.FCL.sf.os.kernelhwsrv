@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -18,6 +18,10 @@
 #include <e32property.h>
 #include <d32otgdi.h>
 #include "..\..\t_usbdi\inc\testdebug.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "t_usbhost_usbmanTraces.h"
+#endif
 
 _LIT(KOtgdiLddFileName, "otgdi");
 _LIT(KArgClient,        "client");
@@ -30,7 +34,7 @@ TBool RunHost(RUsbOtgDriver& aOtg, TInt event);
 
 TInt E32Main()
 	{
-	RDebug::Print(_L("---> Main OTG Sub-Process"));
+	OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN, "---> Main OTG Sub-Process");
 
 	CTrapCleanup* trapHandler = CTrapCleanup::New();
 
@@ -58,12 +62,12 @@ TInt E32Main()
 		if(firstToken.Compare(KArgClient) == 0)
 			{
 			clientFlag = ETrue;
-            RDebug::Print(_L("usbhost_usbman running as a Client"));
+            OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN_DUP01, "usbhost_usbman running as a Client");
 			}
 		else
 			{
 			clientFlag = EFalse;
-            RDebug::Print(_L("usbhost_usbman running as a Host"));
+            OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN_DUP02, "usbhost_usbman running as a Host");
 			}
 
 		delete cmdLine;
@@ -73,7 +77,7 @@ TInt E32Main()
 
 	if(r != KErrNone && r != KErrAlreadyExists) // persistent loading since process will be killed while it is in the loop below and doesnt unload it
 		{
-		RDebug::Print(_L("   LoadLogicalDevice(KOtgdiLddFileName) error = %d"), r);
+		OstTrace1(TRACE_NORMAL, E32MAIN_E32MAIN_DUP03, "   LoadLogicalDevice(KOtgdiLddFileName) error = %d", r);
 		delete trapHandler;
 		return r;		
 		}
@@ -86,28 +90,28 @@ TInt E32Main()
 	RUsbOtgDriver::TOtgEvent event;
 	TBool running = ETrue;
 	
-	RDebug::Print(_L("   opening otg driver"));
+	OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN_DUP04, "   opening otg driver");
 	
 	r = otg.Open();
 	if(r != KErrNone)
 		{
-		RDebug::Print(_L("   otg.Open fails %d"), r);
+		OstTrace1(TRACE_NORMAL, E32MAIN_E32MAIN_DUP05, "   otg.Open fails %d", r);
         goto Abort;
 		}
 
-	RDebug::Print(_L("   otg driver successfully opened"));
+	OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN_DUP06, "   otg driver successfully opened");
 
-	RDebug::Print(_L("   otg : starting stacks now"));
+	OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN_DUP07, "   otg : starting stacks now");
 	
 	r = otg.StartStacks();
 
 	if(r != KErrNone)
 		{
-		RDebug::Print(_L("   otg.StartStacks fails %d"), r);
+		OstTrace1(TRACE_NORMAL, E32MAIN_E32MAIN_DUP08, "   otg.StartStacks fails %d", r);
         goto Abort;
 		}	
 
-	RDebug::Print(_L("   otg stacks successfully started"));
+	OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN_DUP09, "   otg stacks successfully started");
 
 //	RProcess::Rendezvous(KErrNone);
 
@@ -115,7 +119,7 @@ TInt E32Main()
     r = wordofdeath.Attach(KWordOfDeathCat, KWordOfDeathKey, EOwnerThread);
     if(r != KErrNone)
         {
-        RDebug::Print(_L("Failed to connect to word of death"));
+        OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS, "Failed to connect to word of death");
         }
     
     // wait for the previously attached counterproperty to be updated
@@ -125,8 +129,8 @@ TInt E32Main()
 		otg.QueueOtgEventRequest(event, status);
 		User::WaitForRequest(status, waiting_for_death);
 
-        RDebug::Print(_L("waiting_for_death= %d"), waiting_for_death.Int());
-        RDebug::Print(_L("Otg Event        = %d"), status.Int());
+        OstTrace1(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP01, "waiting_for_death= %d", waiting_for_death.Int());
+        OstTrace1(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP02, "Otg Event        = %d", status.Int());
 
         r = waiting_for_death.Int();
         if(r != KRequestPending)
@@ -152,23 +156,23 @@ TInt E32Main()
 
 	// Shut down nicely
 
-    RDebug::Print(_L("StopStacks()"));
+    OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP03, "StopStacks()");
 
     otg.StopStacks(); //NB This drops the bus
 
-    RDebug::Print(_L("******** ShutdownStack Complete ********"));
+    OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP04, "******** ShutdownStack Complete ********");
 
-    RDebug::Print(_L("Close Otg stack()"));
+    OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP05, "Close Otg stack()");
 
     otg.Close();
 
 Abort:
-    RDebug::Print(_L("Free LDD"));
+    OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP06, "Free LDD");
     User::FreeLogicalDevice(RUsbOtgDriver::Name());
 
     delete trapHandler;
 
-    RDebug::Print(_L("usbhost_usbman Finished"));
+    OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP07, "usbhost_usbman Finished");
 
     return KErrNone;
     }
@@ -181,15 +185,15 @@ TBool RunClient(RUsbOtgDriver& aOtg, TInt event)
     switch(event)
         {
     case RUsbOtgDriver::EEventVbusRaised:
-        RDebug::Print(_L("Client Side : Vbus raise detected due to Event VbusRaised"));
+        OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP08, "Client Side : Vbus raise detected due to Event VbusRaised");
         break;
 
     case RUsbOtgDriver::EEventRoleChangedToDevice:
-        RDebug::Print(_L("Client Side : Vbus raise detected due to Event RoleChangedToDevice"));
+        OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP09, "Client Side : Vbus raise detected due to Event RoleChangedToDevice");
         break;
 
     default:
-        RDebug::Print(_L("Client Side : Event %d received"), event);
+        OstTrace1(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP10, "Client Side : Event %d received", event);
         break;
         }
 
@@ -205,71 +209,71 @@ TBool RunHost(RUsbOtgDriver& aOtg, TInt event)
     switch(event)
         {
     case RUsbOtgDriver::EEventAPlugInserted:
-        RDebug::Print(_L("Host side otg got APlugInserted Event"));
+        OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP11, "Host side otg got APlugInserted Event");
         r = aOtg.BusRequest();
-        RDebug::Print(_L("BusRequest() made - returned %d"), r);
+        OstTrace1(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP12, "BusRequest() made - returned %d", r);
         break;
 
     case RUsbOtgDriver::EEventAPlugRemoved:
-        RDebug::Print(_L("Host side otg got APlugRemoved Event - shutting down"));
+        OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP13, "Host side otg got APlugRemoved Event - shutting down");
         return EFalse;
 
     case RUsbOtgDriver::EEventVbusRaised:
-        RDebug::Print(_L("Host side otg got VbusRaised Event"));
+        OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP14, "Host side otg got VbusRaised Event");
         break;
 
     case RUsbOtgDriver::EEventVbusDropped:
-        RDebug::Print(_L("Host side otg got VbusDropped Event"));
+        OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP15, "Host side otg got VbusDropped Event");
         break;
 
     case RUsbOtgDriver::EEventSrpInitiated:
-        RDebug::Print(_L("Host side otg got SrpInitiated Event"));
+        OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP16, "Host side otg got SrpInitiated Event");
         break;
 
     case RUsbOtgDriver::EEventSrpReceived:
-        RDebug::Print(_L("Host side otg got SrpReceived Event"));
+        OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP17, "Host side otg got SrpReceived Event");
         break;
 
     case RUsbOtgDriver::EEventHnpEnabled:
-        RDebug::Print(_L("Host side otg got HnpEnabled Event"));
+        OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP18, "Host side otg got HnpEnabled Event");
         break;
 
     case RUsbOtgDriver::EEventHnpDisabled:
-        RDebug::Print(_L("Host side otg got HnpDisabled Event"));
+        OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP19, "Host side otg got HnpDisabled Event");
         break;
 
     case RUsbOtgDriver::EEventHnpSupported:
-        RDebug::Print(_L("Host side otg got HnpSupported Event"));
+        OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP20, "Host side otg got HnpSupported Event");
         break;
 
     case RUsbOtgDriver::EEventHnpAltSupported:
-        RDebug::Print(_L("Host side otg got HnpAltSupported Event"));
+        OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP21, "Host side otg got HnpAltSupported Event");
         break;
 
 
     case RUsbOtgDriver::EEventBusConnectionBusy:
-        RDebug::Print(_L("Host side otg got BusConnectionBusy Event"));
+        OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP22, "Host side otg got BusConnectionBusy Event");
         break;
 
     case RUsbOtgDriver::EEventBusConnectionIdle:
-        RDebug::Print(_L("Host side otg got BusConnectionIdle Event"));
+        OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP23, "Host side otg got BusConnectionIdle Event");
         break;
 
 
     case RUsbOtgDriver::EEventRoleChangedToHost:
-        RDebug::Print(_L("Host side otg got RoleChangedToHost Event"));
+        OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP24, "Host side otg got RoleChangedToHost Event");
         break;
 
     case RUsbOtgDriver::EEventRoleChangedToDevice:
-        RDebug::Print(_L("Host side otg got RoleChangedToDevice Event"));
+        OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP25, "Host side otg got RoleChangedToDevice Event");
         break;
 
     case RUsbOtgDriver::EEventRoleChangedToIdle:
-        RDebug::Print(_L("Host side otg got RoleChangedToIdle Event"));
+        OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP26, "Host side otg got RoleChangedToIdle Event");
         break;
 
     default:
-        RDebug::Print(_L("Host Side otg unknown event catcher tickled - event %d - shutting down"), event);
+        OstTrace1(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP27, "Host Side otg unknown event catcher tickled - event %d - shutting down", event);
         return EFalse;
      }
 

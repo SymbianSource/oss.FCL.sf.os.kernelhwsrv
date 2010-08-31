@@ -1,4 +1,4 @@
-// Copyright (c) 2000-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2000-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -23,6 +23,11 @@
 */
 
 #include <drivers/usbc.h>
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "ps_usbcTraces.h"
+#endif
+
 
 
 /**
@@ -118,7 +123,8 @@ static const TInt KUsbCableStatusDelay = 500;				// milliseconds
 */
 DUsbClientController::~DUsbClientController()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::~DUsbClientController()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_DUSBCLIENTCONTROLLER_DES, "DUsbClientController::~DUsbClientController()" );
+	
 	if (iPowerHandler)
 		{
 		iPowerHandler->Remove();
@@ -127,7 +133,7 @@ DUsbClientController::~DUsbClientController()
 	// ResetAndDestroy() will call for every array element the destructor of the pointed-to object,
 	// before deleting the element itself, and closing the array.
 	iConfigs.ResetAndDestroy();
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::~DUsbClientController(): Done."));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_DUSBCLIENTCONTROLLER_DES_DUP1, "DUsbClientController::~DUsbClientController(): Done." );
 	}
 
 
@@ -147,17 +153,17 @@ DUsbClientController::~DUsbClientController()
 */
 EXPORT_C void DUsbClientController::DisableClientStack()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DisableClientStack()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_DISABLECLIENTSTACK, "DUsbClientController::DisableClientStack()" );
 	if (!iStackIsActive)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  Already disabled - returning"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_DISABLECLIENTSTACK_DUP1, "  Already disabled - returning" );
 		return;
 		}
 	iOtgClientConnect = EFalse;
 	TInt r = EvaluateOtgConnectFlags();					 // will disconnect UDC
 	if (r != KErrNone)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: EvaluateOtgConnectFlags() failed: %d", r));
+	    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_DISABLECLIENTSTACK_DUP2, "  Error: EvaluateOtgConnectFlags() failed: %d", r );
 		}
 
 	// Reset OTG features, leave attributes as is (just as in USB Reset case)
@@ -205,10 +211,10 @@ EXPORT_C void DUsbClientController::DisableClientStack()
 */
 EXPORT_C void DUsbClientController::EnableClientStack()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::EnableClientStack()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_ENABLECLIENTSTACK, "DUsbClientController::EnableClientStack()" );
 	if (iStackIsActive)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  Already enabled - returning"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_ENABLECLIENTSTACK_DUP1, "  Already enabled - returning" );
 		return;
 		}
 	iStackIsActive = ETrue;
@@ -216,13 +222,13 @@ EXPORT_C void DUsbClientController::EnableClientStack()
 	TInt r = ActivateHardwareController();
 	if (r != KErrNone)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: ActivateHardwareController() failed: %d", r));
+	    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_ENABLECLIENTSTACK_DUP2, "  Error: ActivateHardwareController() failed: %d", r);
 		}
 	iOtgClientConnect = ETrue;
 	r = EvaluateOtgConnectFlags();							// may connect UDC
 	if (r != KErrNone)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: EvaluateOtgConnectFlags() failed: %d", r));
+	    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_ENABLECLIENTSTACK_DUP3, "  Error: EvaluateOtgConnectFlags() failed: %d", r);
 		}
 	}
 
@@ -233,7 +239,7 @@ EXPORT_C void DUsbClientController::EnableClientStack()
 */
 EXPORT_C TBool DUsbClientController::IsActive()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::IsActive()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_ISACTIVE, "DUsbClientController::IsActive()" );
 	return iStackIsActive;
 	}
 
@@ -244,11 +250,12 @@ EXPORT_C TBool DUsbClientController::IsActive()
 */
 EXPORT_C TInt DUsbClientController::RegisterClientCallback(TUsbcClientCallback& aCallback)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::RegisterClientCallback()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_REGISTERCLIENTCALLBACK, "DUsbClientController::RegisterClientCallback()" );
 	if (iClientCallbacks.Elements() == KUsbcMaxListLength)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Maximum list length reached: %d",
-										  KUsbcMaxListLength));
+		OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_REGISTERCLIENTCALLBACK_DUP1, "  Error: Maximum list length reached: %d",
+                                          KUsbcMaxListLength);
+
 		return KErrGeneral;
 		}
 	TSglQueIter<TUsbcClientCallback> iter(iClientCallbacks);
@@ -256,7 +263,7 @@ EXPORT_C TInt DUsbClientController::RegisterClientCallback(TUsbcClientCallback& 
 	while ((p = iter++) != NULL)
 		if (p == &aCallback)
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("	 Error: ClientCallback @ 0x%x already registered", &aCallback));
+			OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_REGISTERCLIENTCALLBACK_DUP2, "    Error: ClientCallback @ 0x%x already registered", &aCallback);
 			return KErrAlreadyExists;
 			}
 	iClientCallbacks.AddLast(aCallback);
@@ -274,10 +281,10 @@ EXPORT_C TInt DUsbClientController::RegisterClientCallback(TUsbcClientCallback& 
 */
 EXPORT_C DUsbClientController* DUsbClientController::UsbcControllerPointer(TInt aUdc)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::UsbcControllerPointer()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_USBCCONTROLLERPOINTER, "DUsbClientController::UsbcControllerPointer()" );
 	if (aUdc < 0 || aUdc > 1)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: aUdc out of range (%d)", aUdc));
+		OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_USBCCONTROLLERPOINTER_DUP1, "  Error: aUdc out of range (%d)", aUdc);
 		return NULL;
 		}
 	return UsbClientController[aUdc];
@@ -297,7 +304,7 @@ EXPORT_C DUsbClientController* DUsbClientController::UsbcControllerPointer(TInt 
 */
 EXPORT_C void DUsbClientController::EndpointCaps(const DBase* aClientId, TDes8& aCapsBuf) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::EndpointCaps()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_ENDPOINTCAPS, "DUsbClientController::EndpointCaps()" );
 	// Here we do not simply call DUsbClientController::DeviceEndpointCaps(),
 	// because that function fills an array which comprises of _all_ endpoints,
 	// whereas this function omits ep0 and all unusable endpoints.
@@ -306,10 +313,10 @@ EXPORT_C void DUsbClientController::EndpointCaps(const DBase* aClientId, TDes8& 
 	const TInt ifcset_num = ClientId2InterfaceNumber(aClientId);
 	for (TInt i = 2, j = 0; i < iDeviceTotalEndpoints; ++i)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::Caps: RealEndpoint #%d", i));
+		OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_ENDPOINTCAPS_DUP1, "DUsbClientController::Caps: RealEndpoint #%d", i);
 		if (iRealEndpoints[i].iCaps.iTypesAndDir != KUsbEpNotAvailable)
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::Caps: --> UsableEndpoint #%d", j));
+		    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_ENDPOINTCAPS_DUP2, "DUsbClientController::Caps: --> UsableEndpoint #%d", j);
 			data[j].iCaps = iRealEndpoints[i].iCaps;
 			if (ifcset_num < 0)
 				{
@@ -354,7 +361,7 @@ EXPORT_C void DUsbClientController::EndpointCaps(const DBase* aClientId, TDes8& 
 */
 EXPORT_C void DUsbClientController::DeviceCaps(const DBase* aClientId, TDes8& aCapsBuf) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DeviceCaps()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_DEVICECAPS, "DUsbClientController::DeviceCaps()" );
 	TUsbDeviceCaps caps;
 	caps().iTotalEndpoints = iDeviceUsableEndpoints;		// not DeviceTotalEndpoints()!
 	caps().iConnect = SoftConnectCaps();
@@ -435,17 +442,18 @@ EXPORT_C TInt DUsbClientController::SetInterface(const DBase* aClientId, DThread
 												 const TUsbcEndpointInfoArray aEndpointData,
 												 TInt aRealEpNumbers[], TUint32 aFeatureWord)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::SetInterface()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_SETINTERFACE, "DUsbClientController::SetInterface()" );
 	if (aInterfaceNum != 0)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  alternate interface setting request: #%d", aInterfaceNum));
+		OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETINTERFACE_DUP1, "  alternate interface setting request: #%d", aInterfaceNum);
+
 		}
 #ifndef USB_SUPPORTS_CONTROLENDPOINTS
 	for (TInt i = 0; i < aTotalEndpointsUsed; ++i)
 		{
 		if (aEndpointData[i].iType == KUsbEpTypeControl)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: control endpoints not supported"));
+		    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETINTERFACE_DUP2, "  Error: control endpoints not supported");
 			return KErrNotSupported;
 			}
 		}
@@ -455,21 +463,21 @@ EXPORT_C TInt DUsbClientController::SetInterface(const DBase* aClientId, DThread
 	// The passed-in ifcset_num may be -1 now, but that's intended.
 	if (!CheckEpAvailability(aTotalEndpointsUsed, aEndpointData, ifcset_num))
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: endpoints not (all) available"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETINTERFACE_DUP3, "  Error: endpoints not (all) available");
 		return KErrInUse;
 		}
 	// Create & setup new interface
 	TUsbcInterface* ifc = CreateInterface(aClientId, aInterfaceNum, aFeatureWord);
 	if (ifc == NULL)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: ifc == NULL"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETINTERFACE_DUP4, "  Error: ifc == NULL");
 		return KErrGeneral;
 		}
 	// Create logical endpoints
 	TInt r = CreateEndpoints(ifc, aTotalEndpointsUsed, aEndpointData, aRealEpNumbers);
 	if (r != KErrNone)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: CreateEndpoints() != KErrNone"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETINTERFACE_DUP5, "  Error: CreateEndpoints() != KErrNone");
 		DeleteInterface(ifc->iInterfaceSet->iInterfaceNumber, aInterfaceNum);
 		return r;
 		}
@@ -496,31 +504,31 @@ EXPORT_C TInt DUsbClientController::SetInterface(const DBase* aClientId, DThread
 */
 EXPORT_C TInt DUsbClientController::ReleaseInterface(const DBase* aClientId, TInt aInterfaceNum)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ReleaseInterface(..., %d)", aInterfaceNum));
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_RELEASEINTERFACE, "DUsbClientController::ReleaseInterface(..., %d)", aInterfaceNum);
+	
 	const TInt ifcset = ClientId2InterfaceNumber(aClientId);
 	if (ifcset < 0)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf(" interface not found")); // no error
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_RELEASEINTERFACE_DUP1, " interface not found");
 		return KErrNone;
 		}
 	TUsbcInterfaceSet* const ifcset_ptr = InterfaceNumber2InterfacePointer(ifcset);
 	if (!ifcset_ptr)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf(" Error: interface number %d doesn't exist", ifcset));
+	    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_RELEASEINTERFACE_DUP2, "Error: interface number %d doesn't exist", ifcset);
 		return KErrNotFound;
 		}
 	const TInt setting_count = ifcset_ptr->iInterfaces.Count();
 	if ((setting_count - 1) != aInterfaceNum)
 		{
-		__KTRACE_OPT(KUSB,
-					 Kern::Printf(" > Error: interface settings must be released in descending order:\n\r"
-								  "   %d setting(s) exist, #%d was requested to be released.\n\r"
-								  "   (#%d has to be released first)",
-								  setting_count, aInterfaceNum, setting_count - 1));
+	    OstTraceDefExt3(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_RELEASEINTERFACE_DUP3, "> Error: interface settings must be released in descending order:\n\r"
+                                  "   %d setting(s) exist, #%d was requested to be released.\n\r"
+                                  "   (#%d has to be released first)",
+                                  setting_count, aInterfaceNum, setting_count - 1);
 		return KErrArgument;
 		}
 	// Tear down current setting (invalidate configured state)
-	__KTRACE_OPT(KUSB, Kern::Printf(" > tearing down InterfaceSet %d", ifcset));
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_RELEASEINTERFACE_DUP4, " > tearing down InterfaceSet %d", ifcset);
 	// Cancel all transfers on the current setting of this interface and deconfigure all its endpoints.
 	InterfaceSetTeardown(ifcset_ptr);
 	// 'Setting 0' means: delete all existing settings.
@@ -571,7 +579,7 @@ EXPORT_C TInt DUsbClientController::ReleaseInterface(const DBase* aClientId, TIn
 	// If it was the last interface(set)...
 	if (iConfigs[0]->iInterfaceSets.Count() == 0)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  No ifc left -> turning off UDC"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_RELEASEINTERFACE_DUP5, "  No ifc left -> turning off UDC");
 		// First disconnect the device from the bus
 		UsbDisconnect();
 		DeActivateHardwareController();
@@ -588,13 +596,13 @@ EXPORT_C TInt DUsbClientController::ReleaseInterface(const DBase* aClientId, TIn
 */
 EXPORT_C TInt DUsbClientController::ReEnumerate()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ReEnumerate()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_REENUMERATE, "DUsbClientController::ReEnumerate()" );
 	// If, in an OTG setup, the client stack is disabled, there's no point in
 	// trying to reenumerate the device. In fact, we then don't even want to
 	// turn on the UDC via ActivateHardwareController().
 	if (!iStackIsActive)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  Client stack disabled -> returning here"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_REENUMERATE_DUP1, " Client stack disabled -> returning here" );
 		return KErrNotReady;
 		}
 	// We probably don't check here whether SoftConnectCaps() is ETrue, and
@@ -603,7 +611,7 @@ EXPORT_C TInt DUsbClientController::ReEnumerate()
 	// no-ops if not supported by the PSL.
 	if (iConfigs[0]->iInterfaceSets.Count() == 0)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  > No interface registered -> no need to re-enumerate"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_REENUMERATE_DUP2, "  > No interface registered -> no need to re-enumerate" );
 		return KErrNone;;
 		}
 	if (!iHardwareActivated)
@@ -612,7 +620,7 @@ EXPORT_C TInt DUsbClientController::ReEnumerate()
 		const TInt r = ActivateHardwareController();
 		if (r != KErrNone)
 				{
-				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: ActivateHardwareController() failed: %d", r));
+		        OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_REENUMERATE_DUP3, "  Error: ActivateHardwareController() failed: %d", r);
 				return r;
 				}
 		// Finally connect the device to the bus
@@ -638,25 +646,25 @@ EXPORT_C TInt DUsbClientController::ReEnumerate()
 */
 EXPORT_C TInt DUsbClientController::PowerUpUdc()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::PowerUpUdc()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_POWERUPUDC, "DUsbClientController::PowerUpUdc()" );
 	// If, in an OTG setup, the client stack is disabled, we mustn't turn on
 	// the UDC via ActivateHardwareController() as that would already configure
 	// Ep0.
 	if (!iStackIsActive)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  Client stack disabled -> returning here"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_POWERUPUDC_DUP1, "  Client stack disabled -> returning here" );
 		return KErrNotReady;
 		}
 	if (iConfigs[0]->iInterfaceSets.Count() == 0)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  > No interface registered -> won't power up UDC"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_POWERUPUDC_DUP2, "   > No interface registered -> won't power up UDC" );
 		return KErrNotReady;
 		}
 	// If the UDC is still off, we switch it on here.
 	const TInt r = ActivateHardwareController();
 	if (r != KErrNone)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: ActivateHardwareController() failed: %d", r));
+	    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_POWERUPUDC_DUP3, "  Error: ActivateHardwareController() failed: %d", r);
 		}
 	return r;
 	}
@@ -670,14 +678,14 @@ EXPORT_C TInt DUsbClientController::PowerUpUdc()
 */
 EXPORT_C TInt DUsbClientController::UsbConnect()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::UsbConnect()"));
+    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_USBCONNECT, "DUsbClientController::UsbConnect()" );
 #ifdef USB_OTG_CLIENT
 	iClientSupportReady = ETrue;
 	const TInt r = EvaluateOtgConnectFlags();
     const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
 	if (iUsbResetDeferred) // implies (iOtgHnpHandledByHw == ETrue)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  Resetting USB Reset 'defer' flag"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_USBCONNECT_DUP1, "  Resetting USB Reset 'defer' flag" );
 		iUsbResetDeferred = EFalse;
 		(void) ProcessResetEvent(EFalse);
 		}
@@ -697,7 +705,7 @@ EXPORT_C TInt DUsbClientController::UsbConnect()
 */
 EXPORT_C TInt DUsbClientController::UsbDisconnect()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::UsbDisconnect()"));
+    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_USBDISCONNECT, "DUsbClientController::UsbDisconnect()" );   
 #ifdef USB_OTG_CLIENT
 	iClientSupportReady = EFalse;
 	const TInt r = EvaluateOtgConnectFlags();
@@ -733,16 +741,16 @@ EXPORT_C TInt DUsbClientController::UsbDisconnect()
 */
 EXPORT_C TInt DUsbClientController::RegisterForStatusChange(TUsbcStatusCallback& aCallback)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::RegisterForStatusChange()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_REGISTERFORSTATUSCHANGE, "DUsbClientController::RegisterForStatusChange()" );
 	if (iStatusCallbacks.Elements() == KUsbcMaxListLength)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Maximum list length reached: %d",
-										  KUsbcMaxListLength));
+		OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_REGISTERFORSTATUSCHANGE_DUP1, "  Error: Maximum list length reached: %d",
+                                          KUsbcMaxListLength);
 		return KErrGeneral;
 		}
 	if (IsInTheStatusList(aCallback))
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  Error: StatusCallback @ 0x%x already registered", &aCallback));
+		OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_REGISTERFORSTATUSCHANGE_DUP2, "  Error: StatusCallback @ 0x%x already registered", &aCallback);
 		return KErrGeneral;
 		}
     const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
@@ -761,7 +769,7 @@ EXPORT_C TInt DUsbClientController::RegisterForStatusChange(TUsbcStatusCallback&
 */
 EXPORT_C TInt DUsbClientController::DeRegisterForStatusChange(const DBase* aClientId)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DeRegisterForStatusChange()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_DEREGISTERFORSTATUSCHANGE, "DUsbClientController::DeRegisterForStatusChange()" );
 	__ASSERT_DEBUG((aClientId != NULL), Kern::Fault(KUsbPILPanicCat, __LINE__));
     const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
 	TSglQueIter<TUsbcStatusCallback> iter(iStatusCallbacks);
@@ -770,13 +778,13 @@ EXPORT_C TInt DUsbClientController::DeRegisterForStatusChange(const DBase* aClie
 		{
 		if (p->Owner() == aClientId)
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  removing StatusCallback @ 0x%x", p));
+			OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_DEREGISTERFORSTATUSCHANGE_DUP1, "  removing StatusCallback @ 0x%x", p);
 			iStatusCallbacks.Remove(*p);
 		    __SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 			return KErrNone;
 			}
 		}
-	__KTRACE_OPT(KUSB, Kern::Printf("  client not found"));
+    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_DEREGISTERFORSTATUSCHANGE_DUP2, "  client not found");
     __SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 	return KErrNotFound;
 	}
@@ -799,16 +807,17 @@ EXPORT_C TInt DUsbClientController::DeRegisterForStatusChange(const DBase* aClie
 */
 EXPORT_C TInt DUsbClientController::RegisterForEndpointStatusChange(TUsbcEndpointStatusCallback& aCallback)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::RegisterForEndpointStatusChange()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_REGISTERFORENDPOINTSTATUSCHANGE, "DUsbClientController::RegisterForEndpointStatusChange()" );
 	if (iEpStatusCallbacks.Elements() == KUsbcMaxListLength)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Maximum list length reached: %d",
-										  KUsbcMaxListLength));
+	    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_REGISTERFORENDPOINTSTATUSCHANGE_DUP1, "  Error: Maximum list length reached: %d",
+                                          KUsbcMaxListLength);
+
 		return KErrGeneral;
 		}
 	if (IsInTheEpStatusList(aCallback))
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  Error: EpStatusCallback @ 0x%x already registered", &aCallback));
+		OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_REGISTERFORENDPOINTSTATUSCHANGE_DUP2, "  Error: EpStatusCallback @ 0x%x already registered", &aCallback);
 		return KErrGeneral;
 		}
     const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
@@ -827,7 +836,7 @@ EXPORT_C TInt DUsbClientController::RegisterForEndpointStatusChange(TUsbcEndpoin
 */
 EXPORT_C TInt DUsbClientController::DeRegisterForEndpointStatusChange(const DBase* aClientId)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DeRegisterForEndpointStatusChange()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_DEREGISTERFORENDPOINTSTATUSCHANGE, "DUsbClientController::DeRegisterForEndpointStatusChange()" );
 	__ASSERT_DEBUG((aClientId != NULL), Kern::Fault(KUsbPILPanicCat, __LINE__));
     const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
 	TSglQueIter<TUsbcEndpointStatusCallback> iter(iEpStatusCallbacks);
@@ -836,13 +845,13 @@ EXPORT_C TInt DUsbClientController::DeRegisterForEndpointStatusChange(const DBas
 		{
 		if (p->Owner() == aClientId)
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  removing EpStatusCallback @ 0x%x", p));
+			OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_DEREGISTERFORENDPOINTSTATUSCHANGE_DUP1, "  removing EpStatusCallback @ 0x%x", p);
 			iEpStatusCallbacks.Remove(*p);
 		    __SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 			return KErrNone;
 			}
 		}
-	__KTRACE_OPT(KUSB, Kern::Printf("  client not found"));
+    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_DEREGISTERFORENDPOINTSTATUSCHANGE_DUP2, "  client not found");
     __SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 	return KErrNotFound;
 	}
@@ -858,17 +867,18 @@ EXPORT_C TInt DUsbClientController::DeRegisterForEndpointStatusChange(const DBas
 */
 EXPORT_C TInt DUsbClientController::GetInterfaceNumber(const DBase* aClientId, TInt& aInterfaceNum) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetInterfaceNumber()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_GETINTERFACENUMBER, "DUsbClientController::GetInterfaceNumber()" );
+	
 	const TInt ifcset = ClientId2InterfaceNumber(aClientId);
 	if (ifcset < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error (ifc < 0)"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_GETINTERFACENUMBER_DUP1, "  Error (ifc < 0)");
 		return KErrNotFound;
 		}
 	const TUsbcInterfaceSet* const ifcset_ptr = InterfaceNumber2InterfacePointer(ifcset);
 	if (!ifcset_ptr)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: interface number %d doesn't exist", ifcset));
+	    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_GETINTERFACENUMBER_DUP2, "  Error: interface number %d doesn't exist", ifcset);
 		return KErrNotFound;
 		}
 	aInterfaceNum = ifcset_ptr->iCurrentInterface;
@@ -893,7 +903,8 @@ EXPORT_C TInt DUsbClientController::GetInterfaceNumber(const DBase* aClientId, T
 */
 EXPORT_C TInt DUsbClientController::DeRegisterClient(const DBase* aClientId)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DeRegisterClient(0x%x)", aClientId));
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_DEREGISTERCLIENT, "DUsbClientController::DeRegisterClient(0x%x)", aClientId);
+	
 	// Cancel all device state notification requests
 	DeRegisterForStatusChange(aClientId);
 	// Cancel all endpoint state notification requests
@@ -905,7 +916,7 @@ EXPORT_C TInt DUsbClientController::DeRegisterClient(const DBase* aClientId)
 	const TInt r = ReleaseInterface(aClientId, 0);
 	// Cancel all remaining (if any) read/write requests
 	DeleteRequestCallbacks(aClientId);
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DeRegisterClient: Done."));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_DEREGISTERCLIENT_DUP1, "DUsbClientController::DeRegisterClient: Done.");
 	return r;
 	}
 
@@ -919,12 +930,13 @@ EXPORT_C TInt DUsbClientController::Ep0PacketSize() const
 	const TUsbcLogicalEndpoint* const ep = iRealEndpoints[0].iLEndpoint;
 	if (iHighSpeed)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  Ep0 size = %d (HS)", ep->iEpSize_Hs));
+		OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_EP0PACKETSIZE, "  Ep0 size = %d (HS)", ep->iEpSize_Hs);
+		
 		return ep->iEpSize_Hs;
 		}
 	else
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  Ep0 size = %d (FS)", ep->iEpSize_Fs));
+	    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_EP0PACKETSIZE_DUP1, "  Ep0 size = %d (FS)", ep->iEpSize_Fs);
 		return ep->iEpSize_Fs;
 		}
 	}
@@ -938,7 +950,7 @@ EXPORT_C TInt DUsbClientController::Ep0PacketSize() const
 */
 EXPORT_C TInt DUsbClientController::Ep0Stall(const DBase* aClientId)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::Ep0Stall()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_EP0STALL, "DUsbClientController::Ep0Stall()" );
 	if (aClientId == iEp0ClientId)
 		{
 		ResetEp0DataOutVars();
@@ -959,7 +971,7 @@ EXPORT_C TInt DUsbClientController::Ep0Stall(const DBase* aClientId)
 */
 EXPORT_C void DUsbClientController::SendEp0StatusPacket(const DBase* /* aClientId */)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::SendEp0StatusPacket()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_SENDEP0STATUSPACKET, "DUsbClientController::SendEp0StatusPacket()" );
 	SendEp0ZeroByteStatusPacket();
 	}
 
@@ -974,7 +986,7 @@ EXPORT_C void DUsbClientController::SendEp0StatusPacket(const DBase* /* aClientI
 */
 EXPORT_C TUsbcDeviceState DUsbClientController::GetDeviceStatus() const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetDeviceStatus()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_GETDEVICESTATUS, "DUsbClientController::GetDeviceStatus()" );
 	return iDeviceState;
 	}
 
@@ -991,7 +1003,7 @@ EXPORT_C TUsbcDeviceState DUsbClientController::GetDeviceStatus() const
 */
 EXPORT_C TEndpointState DUsbClientController::GetEndpointStatus(const DBase* aClientId, TInt aEndpointNum) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetEndpointStatus()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_GETENDPOINTSTATUS, "DUsbClientController::GetEndpointStatus()" );
 	return EndpointStallStatus(aEndpointNum) ?
 		EEndpointStateStalled :
 		EEndpointStateNotStalled;
@@ -1008,23 +1020,23 @@ EXPORT_C TEndpointState DUsbClientController::GetEndpointStatus(const DBase* aCl
 */
 EXPORT_C TInt DUsbClientController::SetupReadBuffer(TUsbcRequestCallback& aCallback)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::SetupReadBuffer()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_SETUPREADBUFFER, "DUsbClientController::SetupReadBuffer()" );
 	const TInt ep = aCallback.iRealEpNum;
-	__KTRACE_OPT(KUSB, Kern::Printf("  logical ep: #%d", aCallback.iEndpointNum));
-	__KTRACE_OPT(KUSB, Kern::Printf("  real ep:    #%d", ep));
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETUPREADBUFFER_DUP1, "  logical ep: #%d", aCallback.iEndpointNum);
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETUPREADBUFFER_DUP2, "  real ep:    #%d", ep);
 	TInt err = KErrGeneral;
 	if (ep != 0)
 		{
 		if (iRequestCallbacks[ep])
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Warning: RequestCallback already registered for that ep"));
+			OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETUPREADBUFFER_DUP3, "  Warning: RequestCallback already registered for that ep");
 			if (iRequestCallbacks[ep] == &aCallback)
 				{
-				__KTRACE_OPT(KPANIC, Kern::Printf("  (this same RequestCallback @ 0x%x)", &aCallback));
+	            OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETUPREADBUFFER_DUP4, "  (this same RequestCallback @ 0x%x)", &aCallback);
 				}
 			else
 				{
-				__KTRACE_OPT(KPANIC, Kern::Printf("  (a different RequestCallback @ 0x%x)", &aCallback));
+                OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETUPREADBUFFER_DUP5, "  (a different RequestCallback @ 0x%x)", &aCallback);
 				}
 			return KErrNone;
 			}
@@ -1034,12 +1046,12 @@ EXPORT_C TInt DUsbClientController::SetupReadBuffer(TUsbcRequestCallback& aCallb
 		// an ISR) _before_ the SetupEndpointRead function returns. Since we don't know the
 		// outcome, we have to provide the callback before making the setup call.
 		//
-		__KTRACE_OPT(KUSB, Kern::Printf("  adding RequestCallback[%d] @ 0x%x", ep, &aCallback));
+        OstTraceDefExt2(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETUPREADBUFFER_DUP6, "  adding RequestCallback[%d] @ 0x%x", ep, (TUint)&aCallback);
 		iRequestCallbacks[ep] = &aCallback;
 		if ((err = SetupEndpointRead(ep, aCallback)) != KErrNone)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  removing RequestCallback @ 0x%x (due to error)",
-											  &aCallback));
+	        OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETUPREADBUFFER_DUP7, "  removing RequestCallback @ 0x%x (due to error)",
+                                              &aCallback);
 			iRequestCallbacks[ep] = NULL;
 			}
 		}
@@ -1047,24 +1059,24 @@ EXPORT_C TInt DUsbClientController::SetupReadBuffer(TUsbcRequestCallback& aCallb
 		{
 		if (iEp0ReadRequestCallbacks.Elements() == KUsbcMaxListLength)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Maximum list length reached: %d",
-											  KUsbcMaxListLength));
+			OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETUPREADBUFFER_DUP8, "  Error: Maximum list length reached: %d",
+                                              KUsbcMaxListLength);
 			return KErrGeneral;
 			}
 		if (IsInTheRequestList(aCallback))
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  RequestCallback @ 0x%x already registered", &aCallback));
+			OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETUPREADBUFFER_DUP9, "   RequestCallback @ 0x%x already registered", &aCallback);
 			return KErrNone;
 			}
 		// Ep0 reads don't need to be prepared - there's always one pending
-		__KTRACE_OPT(KUSB, Kern::Printf("  adding RequestCallback @ 0x%x (ep0)", &aCallback));
+        OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETUPREADBUFFER_DUP10, "  adding RequestCallback @ 0x%x (ep0)", &aCallback);
 	    const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
 		iEp0ReadRequestCallbacks.AddLast(aCallback);
         __SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 		err = KErrNone;
 		if (iEp0_RxExtraData)
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  iEp0_RxExtraData: trying again..."));
+	        OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETUPREADBUFFER_DUP11, "  iEp0_RxExtraData: trying again...");
 			const TBool rx_data = iEp0DataReceiving;
 		    const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
 			err = ProcessEp0ReceiveDone(iEp0_RxExtraCount);
@@ -1082,11 +1094,11 @@ EXPORT_C TInt DUsbClientController::SetupReadBuffer(TUsbcRequestCallback& aCallb
 					{
 					Ep0ReadSetupPktProceed();
 					}
-				__KTRACE_OPT(KUSB, Kern::Printf("  :-)"));
+	            OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETUPREADBUFFER_DUP12, "  :-)");
 				}
 			else
 				{
-				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: :-("));
+                OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETUPREADBUFFER_DUP13, "  Error: :-(");
 				err = KErrGeneral;
 				}
 			return err;
@@ -1106,22 +1118,23 @@ EXPORT_C TInt DUsbClientController::SetupReadBuffer(TUsbcRequestCallback& aCallb
 */
 EXPORT_C TInt DUsbClientController::SetupWriteBuffer(TUsbcRequestCallback& aCallback)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::SetupWriteBuffer()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_SETUPWRITEBUFFER, "DUsbClientController::SetupWriteBuffer()" );
 	TInt ep = aCallback.iRealEpNum;
-	__KTRACE_OPT(KUSB, Kern::Printf("  logical ep: #%d", aCallback.iEndpointNum));
-	__KTRACE_OPT(KUSB, Kern::Printf("  real ep:	   #%d", ep));
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETUPWRITEBUFFER_DUP1, "  logical ep: #%d", aCallback.iEndpointNum);
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETUPWRITEBUFFER_DUP2, "  real ep:    #%d", ep);
+
 	if (iRequestCallbacks[ep])
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Warning: RequestCallback already registered for that ep"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETUPWRITEBUFFER_DUP3, "  Warning: RequestCallback already registered for that ep");
 		if (iRequestCallbacks[ep] == &aCallback)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  (this same RequestCallback @ 0x%x)", &aCallback));
+		    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETUPWRITEBUFFER_DUP4, "  (this same RequestCallback @ 0x%x)", &aCallback);
 			return KErrNone;
 			}
 		else
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  (a different RequestCallback @ 0x%x - poss. error)",
-											  &aCallback));
+	        OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETUPWRITEBUFFER_DUP5, "  (a different RequestCallback @ 0x%x - poss. error)",
+                                              &aCallback);
 			return KErrGeneral;
 			}
 		}
@@ -1131,15 +1144,15 @@ EXPORT_C TInt DUsbClientController::SetupWriteBuffer(TUsbcRequestCallback& aCall
 			{
 			if (iEp0_TxNonStdCount > aCallback.iLength)
 				{
-				__KTRACE_OPT(KPANIC, Kern::Printf("  Warning: Ep0 is sending less data than requested"));
+				OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETUPWRITEBUFFER_DUP6, "  Warning: Ep0 is sending less data than requested");
 				if ((aCallback.iLength % iEp0MaxPacketSize == 0) && !aCallback.iZlpReqd)
 					{
-					__KTRACE_OPT(KPANIC, Kern::Printf("  Warning: Zlp should probably be requested"));
+		            OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETUPWRITEBUFFER_DUP7, "  Warning: Zlp should probably be requested");
 					}
 				}
 			else if (iEp0_TxNonStdCount < aCallback.iLength)
 				{
-				__KTRACE_OPT(KPANIC, Kern::Printf("  Warning: Ep0 is sending more data than requested"));
+                OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETUPWRITEBUFFER_DUP8, "  Warning: Ep0 is sending more data than requested");
 				}
 			iEp0_TxNonStdCount = 0;
 			}
@@ -1151,22 +1164,21 @@ EXPORT_C TInt DUsbClientController::SetupWriteBuffer(TUsbcRequestCallback& aCall
 	// However this is necessary because the transfer request might complete (through
 	// an ISR) _before_ the SetupEndpointWrite function returns. Since we don't know the
 	// outcome, we have to provide the callback before making the setup call.
-	//
-	__KTRACE_OPT(KUSB, Kern::Printf("  adding RequestCallback[%d] @ 0x%x", ep, &aCallback));
+    OstTraceDefExt2(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETUPWRITEBUFFER_DUP9, "  adding RequestCallback[%d] @ 0x%x", ep, (TUint)&aCallback);
 	iRequestCallbacks[ep] = &aCallback;
 	if (ep == KEp0_Tx)
 		{
 		iEp0ClientDataTransmitting = ETrue;			 // this must be set before calling SetupEndpointZeroWrite
 		if (SetupEndpointZeroWrite(aCallback.iBufferStart, aCallback.iLength, aCallback.iZlpReqd) != KErrNone)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  removing RequestCallback @ 0x%x (due to error)", &aCallback));
+		    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETUPWRITEBUFFER_DUP10, "  removing RequestCallback @ 0x%x (due to error)", &aCallback);
 			iRequestCallbacks[ep] = NULL;
 			iEp0ClientDataTransmitting = EFalse;
 			}
 		}
 	else if (SetupEndpointWrite(ep, aCallback) != KErrNone)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  removing RequestCallback @ 0x%x (due to error)", &aCallback));
+        OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETUPWRITEBUFFER_DUP11, "  removing RequestCallback @ 0x%x (due to error)", &aCallback);
 		iRequestCallbacks[ep] = NULL;
 		}
 	return KErrNone;
@@ -1183,10 +1195,11 @@ EXPORT_C TInt DUsbClientController::SetupWriteBuffer(TUsbcRequestCallback& aCall
 */
 EXPORT_C void DUsbClientController::CancelReadBuffer(const DBase* aClientId, TInt aRealEndpoint)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::CancelReadBuffer(%d)", aRealEndpoint));
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CANCELREADBUFFER, "DUsbClientController::CancelReadBuffer(%d)", aRealEndpoint);
+	
 	if (aRealEndpoint < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: ep # < 0: %d", aRealEndpoint));
+		OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_CANCELREADBUFFER_DUP1, "  Error: ep # < 0: %d", aRealEndpoint);
 		return;
 		}
 	// Note that we here don't cancel Ep0 read requests at the PSL level!
@@ -1209,10 +1222,11 @@ EXPORT_C void DUsbClientController::CancelReadBuffer(const DBase* aClientId, TIn
 */
 EXPORT_C void DUsbClientController::CancelWriteBuffer(const DBase* aClientId, TInt aRealEndpoint)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::CancelWriteBuffer(%d)", aRealEndpoint));
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CANCELWRITEBUFFER, "DUsbClientController::CancelWriteBuffer(%d)", aRealEndpoint);
+	
 	if (aRealEndpoint < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: ep # < 0: %d", aRealEndpoint));
+		OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_CANCELWRITEBUFFER_DUP1, "  Error: ep # < 0: %d", aRealEndpoint);
 		return;
 		}
 	if (aRealEndpoint == 0)
@@ -1240,7 +1254,8 @@ EXPORT_C void DUsbClientController::CancelWriteBuffer(const DBase* aClientId, TI
 */
 EXPORT_C TInt DUsbClientController::HaltEndpoint(const DBase* aClientId, TInt aEndpointNum)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::HaltEndpoint(%d)", aEndpointNum));
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_HALTENDPOINT, "DUsbClientController::HaltEndpoint(%d)", aEndpointNum);
+	
 	const TInt r = StallEndpoint(aEndpointNum);
 	if (r == KErrNone)
 		{
@@ -1264,7 +1279,7 @@ EXPORT_C TInt DUsbClientController::HaltEndpoint(const DBase* aClientId, TInt aE
 */
 EXPORT_C TInt DUsbClientController::ClearHaltEndpoint(const DBase* aClientId, TInt aEndpointNum)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ClearHaltEndpoint(%d)", aEndpointNum));
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CLEARHALTENDPOINT, "DUsbClientController::ClearHaltEndpoint(%d)", aEndpointNum);
 	const TInt r = ClearStallEndpoint(aEndpointNum);
 	if (r == KErrNone)
 		{
@@ -1291,15 +1306,15 @@ EXPORT_C TInt DUsbClientController::ClearHaltEndpoint(const DBase* aClientId, TI
 */
 EXPORT_C TInt DUsbClientController::SetDeviceControl(const DBase* aClientId)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::SetDeviceControl()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_SETDEVICECONTROL, "DUsbClientController::SetDeviceControl()" );
 	if (iEp0DeviceControl)
 		{
 		if (iEp0DeviceControl == aClientId)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Warning: Device Control already owned by this client"));
+			OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETDEVICECONTROL_DUP1, "  Warning: Device Control already owned by this client" );
 			return KErrNone;
 			}
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Device Control already claimed by a different client"));
+        OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETDEVICECONTROL_DUP2, "  Error: Device Control already claimed by a different client");
 		return KErrGeneral;
 		}
 	iEp0DeviceControl = aClientId;
@@ -1318,20 +1333,20 @@ EXPORT_C TInt DUsbClientController::SetDeviceControl(const DBase* aClientId)
 */
 EXPORT_C TInt DUsbClientController::ReleaseDeviceControl(const DBase* aClientId)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ReleaseDeviceControl()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_RELEASEDEVICECONTROL, "DUsbClientController::ReleaseDeviceControl()" );
 	if (iEp0DeviceControl)
 		{
 		if (iEp0DeviceControl == aClientId)
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  Releasing Device Control"));
+			OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_RELEASEDEVICECONTROL_DUP1, "  Releasing Device Control" );
 			iEp0DeviceControl = NULL;
 			return KErrNone;
 			}
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Device Control owned by a different client"));
+        OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_RELEASEDEVICECONTROL_DUP2, "  Error: Device Control owned by a different client" );
 		}
 	else
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Device Control not owned by any client"));
+        OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_RELEASEDEVICECONTROL_DUP3, "  Error: Device Control not owned by any client" );
 		}
 	return KErrGeneral;
 	}
@@ -1346,7 +1361,7 @@ EXPORT_C TInt DUsbClientController::ReleaseDeviceControl(const DBase* aClientId)
 */
 EXPORT_C TUint DUsbClientController::EndpointZeroMaxPacketSizes() const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::EndpointZeroMaxPacketSizes()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_ENDPOINTZEROMAXPACKETSIZES, "DUsbClientController::EndpointZeroMaxPacketSizes()" );
 	return iRealEndpoints[0].iCaps.iSizes;
 	}
 
@@ -1362,8 +1377,9 @@ EXPORT_C TUint DUsbClientController::EndpointZeroMaxPacketSizes() const
 */
 EXPORT_C TInt DUsbClientController::SetEndpointZeroMaxPacketSize(TInt aMaxPacketSize)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::SetEndpointZeroMaxPacketSize(%d)",
-									aMaxPacketSize));
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETENDPOINTZEROMAXPACKETSIZE, "DUsbClientController::SetEndpointZeroMaxPacketSize(%d)",
+                                    aMaxPacketSize);
+	
 
 	if (DeviceHighSpeedCaps())
 		{
@@ -1373,12 +1389,12 @@ EXPORT_C TInt DUsbClientController::SetEndpointZeroMaxPacketSize(TInt aMaxPacket
 
 	if (!(iRealEndpoints[0].iCaps.iSizes & PacketSize2Mask(aMaxPacketSize)))
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: invalid size"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETENDPOINTZEROMAXPACKETSIZE_DUP1, "  Error: invalid size");
 		return KErrNotSupported;
 		}
 	if (iRealEndpoints[0].iLEndpoint->iEpSize_Fs == aMaxPacketSize)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  this packet size already set -> returning"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETENDPOINTZEROMAXPACKETSIZE_DUP2, "  this packet size already set -> returning");
 		return KErrNone;
 		}
 	const TUsbcLogicalEndpoint* const ep0_0 = iRealEndpoints[0].iLEndpoint;
@@ -1415,7 +1431,7 @@ EXPORT_C TInt DUsbClientController::SetEndpointZeroMaxPacketSize(TInt aMaxPacket
 */
 EXPORT_C TInt DUsbClientController::GetDeviceDescriptor(DThread* aThread, TDes8& aDeviceDescriptor)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetDeviceDescriptor()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_GETDEVICEDESCRIPTOR, "DUsbClientController::GetDeviceDescriptor()" );
 	return iDescriptors.GetDeviceDescriptorTC(aThread, aDeviceDescriptor);
 	}
 
@@ -1431,7 +1447,7 @@ EXPORT_C TInt DUsbClientController::GetDeviceDescriptor(DThread* aThread, TDes8&
 */
 EXPORT_C TInt DUsbClientController::SetDeviceDescriptor(DThread* aThread, const TDes8& aDeviceDescriptor)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::SetDeviceDescriptor()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_SETDEVICEDESCRIPTOR, "DUsbClientController::SetDeviceDescriptor()" );
 	return iDescriptors.SetDeviceDescriptorTC(aThread, aDeviceDescriptor);
 	}
 
@@ -1447,7 +1463,7 @@ EXPORT_C TInt DUsbClientController::SetDeviceDescriptor(DThread* aThread, const 
 */
 EXPORT_C TInt DUsbClientController::GetDeviceDescriptorSize(DThread* aThread, TDes8& aSize)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetDeviceDescriptorSize()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_GETDEVICEDESCRIPTORSIZE, "DUsbClientController::GetDeviceDescriptorSize()" );
 	// We do not really enquire here....
 	const TPtrC8 size(reinterpret_cast<const TUint8*>(&KUsbDescSize_Device), sizeof(KUsbDescSize_Device));
 	return Kern::ThreadDesWrite(aThread, &aSize, size, 0);
@@ -1465,7 +1481,7 @@ EXPORT_C TInt DUsbClientController::GetDeviceDescriptorSize(DThread* aThread, TD
 */
 EXPORT_C TInt DUsbClientController::GetConfigurationDescriptor(DThread* aThread, TDes8& aConfigurationDescriptor)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetConfigurationDescriptor()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_GETCONFIGURATIONDESCRIPTOR, "DUsbClientController::GetConfigurationDescriptor()" );
 	return iDescriptors.GetConfigurationDescriptorTC(aThread, aConfigurationDescriptor);
 	}
 
@@ -1482,7 +1498,7 @@ EXPORT_C TInt DUsbClientController::GetConfigurationDescriptor(DThread* aThread,
 EXPORT_C TInt DUsbClientController::SetConfigurationDescriptor(DThread* aThread,
 															   const TDes8& aConfigurationDescriptor)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::SetConfigurationDescriptor()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_SETCONFIGURATIONDESCRIPTOR, "DUsbClientController::SetConfigurationDescriptor()" );
 	return iDescriptors.SetConfigurationDescriptorTC(aThread, aConfigurationDescriptor);
 	}
 
@@ -1498,7 +1514,7 @@ EXPORT_C TInt DUsbClientController::SetConfigurationDescriptor(DThread* aThread,
 */
 EXPORT_C TInt DUsbClientController::GetConfigurationDescriptorSize(DThread* aThread, TDes8& aSize)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetConfigurationDescriptorSize()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_GETCONFIGURATIONDESCRIPTORSIZE, "DUsbClientController::GetConfigurationDescriptorSize()" );
 	// We do not really enquire here....
 	const TPtrC8 size(reinterpret_cast<const TUint8*>(&KUsbDescSize_Config), sizeof(KUsbDescSize_Config));
 	return Kern::ThreadDesWrite(aThread, &aSize, size, 0);
@@ -1516,7 +1532,7 @@ EXPORT_C TInt DUsbClientController::GetConfigurationDescriptorSize(DThread* aThr
 */
 EXPORT_C TInt DUsbClientController::GetOtgDescriptor(DThread* aThread, TDes8& aOtgDesc) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetOtgDescriptor()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_GETOTGDESCRIPTOR, "DUsbClientController::GetOtgDescriptor()" );
 	if (!iOtgSupport)
 		{
 		return KErrNotSupported;
@@ -1534,7 +1550,7 @@ EXPORT_C TInt DUsbClientController::GetOtgDescriptor(DThread* aThread, TDes8& aO
 */
 EXPORT_C TInt DUsbClientController::SetOtgDescriptor(DThread* aThread, const TDesC8& aOtgDesc)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::SetOtgDescriptor()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_SETOTGDESCRIPTOR, "DUsbClientController::SetOtgDescriptor()" );
 	if (!iOtgSupport)
 		{
 		return KErrNotSupported;
@@ -1548,38 +1564,38 @@ EXPORT_C TInt DUsbClientController::SetOtgDescriptor(DThread* aThread, const TDe
 	// Check descriptor validity
 	if (otg[0] != KUsbDescSize_Otg || otg[1] != KUsbDescType_Otg || otg[2] > 3)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Invalid OTG descriptor"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETOTGDESCRIPTOR_DUP1, "  Error: Invalid OTG descriptor" );
 		return KErrGeneral;
 		}
-	__KTRACE_OPT(KUSB, Kern::Printf("  iOtgFuncMap before: 0x%x", iOtgFuncMap));
+    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETOTGDESCRIPTOR_DUP2, "  iOtgFuncMap before: 0x%x", iOtgFuncMap);
 	// Update value in controller as well
 	const TUint8 hnp = otg[2] & KUsbOtgAttr_HnpSupp;
 	const TUint8 srp = otg[2] & KUsbOtgAttr_SrpSupp;
 	if (hnp && !srp)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Warning: Invalid OTG attribute combination (HNP && !SRP"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETOTGDESCRIPTOR_DUP3, " Warning: Invalid OTG attribute combination (HNP && !SRP");
 		}
 	if (hnp && !(iOtgFuncMap & KUsbOtgAttr_HnpSupp))
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  Setting attribute KUsbOtgAttr_HnpSupp"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETOTGDESCRIPTOR_DUP4, "   Setting attribute KUsbOtgAttr_HnpSupp");
 		iOtgFuncMap |= KUsbOtgAttr_HnpSupp;
 		}
 	else if (!hnp && (iOtgFuncMap & KUsbOtgAttr_HnpSupp))
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  Removing attribute KUsbOtgAttr_HnpSupp"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETOTGDESCRIPTOR_DUP5, "  Removing attribute KUsbOtgAttr_HnpSupp");
 		iOtgFuncMap &= ~KUsbOtgAttr_HnpSupp;
 		}
 	if (srp && !(iOtgFuncMap & KUsbOtgAttr_SrpSupp))
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  Setting attribute KUsbOtgAttr_SrpSupp"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETOTGDESCRIPTOR_DUP6, "  Setting attribute KUsbOtgAttr_SrpSupp");
 		iOtgFuncMap |= KUsbOtgAttr_SrpSupp;
 		}
 	else if (!srp && (iOtgFuncMap & KUsbOtgAttr_SrpSupp))
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  Removing attribute KUsbOtgAttr_SrpSupp"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETOTGDESCRIPTOR_DUP7, "  Removing attribute KUsbOtgAttr_SrpSupp");
 		iOtgFuncMap &= ~KUsbOtgAttr_SrpSupp;
 		}
-	__KTRACE_OPT(KUSB, Kern::Printf("  iOtgFuncMap after:  0x%x", iOtgFuncMap));
+    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETOTGDESCRIPTOR_DUP8, "  iOtgFuncMap after:  0x%x", iOtgFuncMap);
 	return iDescriptors.SetOtgDescriptor(otg);
 	}
 
@@ -1593,7 +1609,7 @@ EXPORT_C TInt DUsbClientController::SetOtgDescriptor(DThread* aThread, const TDe
 */
 EXPORT_C TInt DUsbClientController::GetOtgFeatures(DThread* aThread, TDes8& aFeatures) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetOtgFeatures()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_GETOTGFEATURES, "DUsbClientController::GetOtgFeatures()" );
 	if (!iOtgSupport)
 		{
 		return KErrNotSupported;
@@ -1612,7 +1628,7 @@ EXPORT_C TInt DUsbClientController::GetOtgFeatures(DThread* aThread, TDes8& aFea
 */
 EXPORT_C TInt DUsbClientController::GetCurrentOtgFeatures(TUint8& aFeatures) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetCurrentOtgFeatures()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_GETCURRENTOTGFEATURES, "DUsbClientController::GetCurrentOtgFeatures()" );
 	if (!iOtgSupport)
 		{
 		return KErrNotSupported;
@@ -1633,16 +1649,16 @@ EXPORT_C TInt DUsbClientController::GetCurrentOtgFeatures(TUint8& aFeatures) con
 */
 EXPORT_C TInt DUsbClientController::RegisterForOtgFeatureChange(TUsbcOtgFeatureCallback& aCallback)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::RegisterForOtgFeatureChange()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_REGISTERFOROTGFEATURECHANGE, "DUsbClientController::RegisterForOtgFeatureChange()" );
 	if (iOtgCallbacks.Elements() == KUsbcMaxListLength)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Maximum list length reached: %d",
-										  KUsbcMaxListLength));
+		OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_REGISTERFOROTGFEATURECHANGE_DUP1, "  Error: Maximum list length reached: %d",
+                                          KUsbcMaxListLength);
 		return KErrGeneral;
 		}
 	if (IsInTheOtgFeatureList(aCallback))
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  Error: OtgFeatureCallback @ 0x%x already registered", &aCallback));
+		OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_REGISTERFOROTGFEATURECHANGE_DUP2, "  Error: OtgFeatureCallback @ 0x%x already registered", &aCallback);
 		return KErrAlreadyExists;
 		}
     const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
@@ -1661,7 +1677,7 @@ EXPORT_C TInt DUsbClientController::RegisterForOtgFeatureChange(TUsbcOtgFeatureC
 */
 EXPORT_C TInt DUsbClientController::DeRegisterForOtgFeatureChange(const DBase* aClientId)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DeRegisterForOtgFeatureChange()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_DEREGISTERFOROTGFEATURECHANGE, "DUsbClientController::DeRegisterForOtgFeatureChange()" );
 	__ASSERT_DEBUG((aClientId != NULL), Kern::Fault(KUsbPILPanicCat, __LINE__));
     const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
 	TSglQueIter<TUsbcOtgFeatureCallback> iter(iOtgCallbacks);
@@ -1670,13 +1686,13 @@ EXPORT_C TInt DUsbClientController::DeRegisterForOtgFeatureChange(const DBase* a
 		{
 		if (!aClientId || p->Owner() == aClientId)
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  removing OtgFeatureCallback @ 0x%x", p));
+			OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_DEREGISTERFOROTGFEATURECHANGE_DUP1, "  removing OtgFeatureCallback @ 0x%x", p);
 			iOtgCallbacks.Remove(*p);
             __SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 			return KErrNone;
 			}
 		}
-	__KTRACE_OPT(KUSB, Kern::Printf("  client not found"));
+    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_DEREGISTERFOROTGFEATURECHANGE_DUP2, "  client not found");
     __SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 	return KErrNotFound;
 	}
@@ -1696,12 +1712,13 @@ EXPORT_C TInt DUsbClientController::DeRegisterForOtgFeatureChange(const DBase* a
 EXPORT_C TInt DUsbClientController::GetInterfaceDescriptor(DThread* aThread, const DBase* aClientId,
 														   TInt aSettingNum, TDes8& aInterfaceDescriptor)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetInterfaceDescriptor(x, 0x%08x, %d, y)",
-									aClientId, aSettingNum));
+	OstTraceDefExt2(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_GETINTERFACEDESCRIPTOR, "DUsbClientController::GetInterfaceDescriptor(x, 0x%08x, %d, y)",
+                                    (TUint)aClientId, aSettingNum);
+	
 	const TInt ifcset = ClientId2InterfaceNumber(aClientId);
 	if (ifcset < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Interface not found from client ID"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_GETINTERFACEDESCRIPTOR_DUP1, "  Error: Interface not found from client ID");
 		return KErrNotFound;
 		}
 	return iDescriptors.GetInterfaceDescriptorTC(aThread, aInterfaceDescriptor, ifcset, aSettingNum);
@@ -1731,19 +1748,19 @@ EXPORT_C TInt DUsbClientController::GetInterfaceDescriptor(DThread* aThread, con
 EXPORT_C TInt DUsbClientController::SetInterfaceDescriptor(DThread* aThread, const DBase* aClientId,
 														   TInt aSettingNum, const TDes8& aInterfaceDescriptor)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::SetInterfaceDescriptor(x, 0x%08x, %d, y)",
-									aClientId, aSettingNum));
+	OstTraceDefExt2(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETINTERFACEDESCRIPTOR, "DUsbClientController::SetInterfaceDescriptor(x, 0x%08x, %d, y)",
+                                    (TUint)aClientId, aSettingNum);
 	const TInt ifcset = ClientId2InterfaceNumber(aClientId);
 	if (ifcset < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Interface not found from client ID"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETINTERFACEDESCRIPTOR_DUP1, "  Error: Interface not found from client ID");
 		return KErrNotFound;
 		}
 	TBuf8<KUsbDescSize_Interface> new_ifc;
 	TInt r = Kern::ThreadDesRead(aThread, &aInterfaceDescriptor, new_ifc, 0);
 	if (r != KErrNone)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Copying interface descriptor buffer failed (%d)", r));
+	    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETINTERFACEDESCRIPTOR_DUP2, "  Error: Copying interface descriptor buffer failed (%d)", r);
 		return r;
 		}
 	const TInt ifcset_new = new_ifc[2];
@@ -1751,7 +1768,7 @@ EXPORT_C TInt DUsbClientController::SetInterfaceDescriptor(DThread* aThread, con
 	TUsbcInterfaceSet* const ifcset_ptr = InterfaceNumber2InterfacePointer(ifcset);
 	if (!ifcset_ptr)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: interface number %d doesn't exist", ifcset));
+	    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETINTERFACEDESCRIPTOR_DUP3, "  Error: interface number %d doesn't exist", ifcset);
 		return KErrNotFound;
 		}
 	if (ifc_num_changes)
@@ -1760,32 +1777,32 @@ EXPORT_C TInt DUsbClientController::SetInterfaceDescriptor(DThread* aThread, con
 		if (InterfaceExists(ifcset_new))
 			{
 			// Obviously we cannot accept a number that is already used by another interface.
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: interface number %d already in use", ifcset_new));
+		    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETINTERFACEDESCRIPTOR_DUP4, "  Error: interface number %d already in use", ifcset_new);
 			return KErrArgument;
 			}
 		if (ifcset_ptr->iInterfaces.Count() > 1)
 			{
 			// We allow the interface number to be changed only when it's the only setting.
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: interface has more than one alternate setting"));
+	        OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETINTERFACEDESCRIPTOR_DUP5, "  Error: interface has more than one alternate setting");
 			return KErrArgument;
 			}
 		if (aSettingNum != 0)
 			{
 			// We allow the interface number to be changed only when it's the default setting.
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: interface number can only be changed for setting 0"));
+	        OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETINTERFACEDESCRIPTOR_DUP6, " Error: interface number can only be changed for setting 0");
 			return KErrArgument;
 			}
 		}
 	if ((r = iDescriptors.SetInterfaceDescriptor(new_ifc, ifcset, aSettingNum)) != KErrNone)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: iDescriptors.SetInterfaceDescriptorfailed"));
+        OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETINTERFACEDESCRIPTOR_DUP7, "  Error: iDescriptors.SetInterfaceDescriptorfailed");
 		return r;
 		}
 	if (ifc_num_changes)
 		{
 		// Alright then, let's do it...
-		__KTRACE_OPT(KUSB, Kern::Printf("  about to change interface number from %d to %d",
-										ifcset, ifcset_new));
+		OstTraceDefExt2(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETINTERFACEDESCRIPTOR_DUP8, "  about to change interface number from %d to %d",
+                                        ifcset, ifcset_new);
 		ifcset_ptr->iInterfaceNumber = ifcset_new;
 		}
 	return KErrNone;
@@ -1806,11 +1823,11 @@ EXPORT_C TInt DUsbClientController::SetInterfaceDescriptor(DThread* aThread, con
 EXPORT_C TInt DUsbClientController::GetInterfaceDescriptorSize(DThread* aThread, const DBase* aClientId,
 															   TInt /*aSettingNum*/, TDes8& aSize)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetInterfaceDescriptorSize()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_GETINTERFACEDESCRIPTORSIZE, "DUsbClientController::GetInterfaceDescriptorSize()" );
 	const TInt ifcset = ClientId2InterfaceNumber(aClientId);
 	if (ifcset < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Interface not found from client ID"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_GETINTERFACEDESCRIPTORSIZE_DUP1, "  Error: Interface not found from client ID" );
 		return KErrNotFound;
 		}
 	// Actually, we do not really enquire here....
@@ -1837,12 +1854,12 @@ EXPORT_C TInt DUsbClientController::GetEndpointDescriptor(DThread* aThread, cons
 														  TInt aSettingNum, TInt aEndpointNum,
 														  TDes8& aEndpointDescriptor)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetEndpointDescriptor(x, 0x%08x, %d, %d, y)",
-									aClientId, aSettingNum, aEndpointNum));
+	OstTraceDefExt3(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_GETENDPOINTDESCRIPTOR, "DUsbClientController::GetEndpointDescriptor(x, 0x%08x, %d, %d, y)",
+                                    (TUint)aClientId, aSettingNum, aEndpointNum);
 	const TInt ifcset = ClientId2InterfaceNumber(aClientId);
 	if (ifcset < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Interface not found from client ID"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_GETENDPOINTDESCRIPTOR_DUP1, "  Error: Interface not found from client ID");
 		return KErrNotFound;
 		}
 	return iDescriptors.GetEndpointDescriptorTC(aThread, aEndpointDescriptor, ifcset,
@@ -1868,12 +1885,12 @@ EXPORT_C TInt DUsbClientController::SetEndpointDescriptor(DThread* aThread, cons
 														  TInt aSettingNum, TInt aEndpointNum,
 														  const TDes8& aEndpointDescriptor)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::SetEndpointDescriptor(x, 0x%08x, %d, %d, y)",
-									aClientId, aSettingNum, aEndpointNum));
+	OstTraceDefExt3(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETENDPOINTDESCRIPTOR, "DUsbClientController::SetEndpointDescriptor(x, 0x%08x, %d, %d, y)",
+                                    (TUint)aClientId, aSettingNum, aEndpointNum);
 	const TInt ifcset = ClientId2InterfaceNumber(aClientId);
 	if (ifcset < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Interface not found from client ID"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETENDPOINTDESCRIPTOR_DUP1, "  Error: Interface not found from client ID");
 		return KErrNotFound;
 		}
 	return iDescriptors.SetEndpointDescriptorTC(aThread, aEndpointDescriptor, ifcset,
@@ -1898,12 +1915,12 @@ EXPORT_C TInt DUsbClientController::GetEndpointDescriptorSize(DThread* aThread, 
 															  TInt aSettingNum, TInt aEndpointNum,
 															  TDes8& aSize)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetEndpointDescriptorSize(x, 0x%08x, %d, %d, y)",
-									aClientId, aSettingNum, aEndpointNum));
+	OstTraceDefExt3(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_GETENDPOINTDESCRIPTORSIZE, "DUsbClientController::GetEndpointDescriptorSize(x, 0x%08x, %d, %d, y)",
+                                    (TUint)aClientId, aSettingNum, aEndpointNum);
 	const TInt ifcset = ClientId2InterfaceNumber(aClientId);
 	if (ifcset < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Interface not found from client ID"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_GETENDPOINTDESCRIPTORSIZE_DUP1, "D  Error: Interface not found from client ID");
 		return KErrNotFound;
 		}
 	TInt s;
@@ -1916,7 +1933,7 @@ EXPORT_C TInt DUsbClientController::GetEndpointDescriptorSize(DThread* aThread, 
 		}
 	else
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: endpoint descriptor not found"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_GETENDPOINTDESCRIPTORSIZE_DUP2, "  Error: endpoint descriptor not found");
 		}
 	return r;
 	}
@@ -1936,7 +1953,7 @@ EXPORT_C TInt DUsbClientController::GetEndpointDescriptorSize(DThread* aThread, 
 EXPORT_C TInt DUsbClientController::GetDeviceQualifierDescriptor(DThread* aThread,
 																 TDes8& aDeviceQualifierDescriptor)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetDeviceQualifierDescriptor()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_GETDEVICEQUALIFIERDESCRIPTOR, "DUsbClientController::GetDeviceQualifierDescriptor()" );
 	return iDescriptors.GetDeviceQualifierDescriptorTC(aThread, aDeviceQualifierDescriptor);
 	}
 
@@ -1956,7 +1973,7 @@ EXPORT_C TInt DUsbClientController::GetDeviceQualifierDescriptor(DThread* aThrea
 EXPORT_C TInt DUsbClientController::SetDeviceQualifierDescriptor(DThread* aThread,
 																 const TDes8& aDeviceQualifierDescriptor)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::SetDeviceQualifierDescriptor()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_SETDEVICEQUALIFIERDESCRIPTOR, "DUsbClientController::SetDeviceQualifierDescriptor()" );
 	return iDescriptors.SetDeviceQualifierDescriptorTC(aThread, aDeviceQualifierDescriptor);
 	}
 
@@ -1975,7 +1992,7 @@ EXPORT_C TInt DUsbClientController::SetDeviceQualifierDescriptor(DThread* aThrea
 EXPORT_C TInt DUsbClientController::GetOtherSpeedConfigurationDescriptor(DThread* aThread,
 																		 TDes8& aConfigurationDescriptor)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetOtherSpeedConfigurationDescriptor()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_GETOTHERSPEEDCONFIGURATIONDESCRIPTOR, "DUsbClientController::GetOtherSpeedConfigurationDescriptor()" );
 	return iDescriptors.GetOtherSpeedConfigurationDescriptorTC(aThread, aConfigurationDescriptor);
 	}
 
@@ -1995,7 +2012,7 @@ EXPORT_C TInt DUsbClientController::GetOtherSpeedConfigurationDescriptor(DThread
 EXPORT_C TInt DUsbClientController::SetOtherSpeedConfigurationDescriptor(DThread* aThread,
 																		 const TDes8& aConfigurationDescriptor)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::SetOtherSpeedConfigurationDescriptor()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_SETOTHERSPEEDCONFIGURATIONDESCRIPTOR, "DUsbClientController::SetOtherSpeedConfigurationDescriptor()" );
 	return iDescriptors.SetOtherSpeedConfigurationDescriptorTC(aThread, aConfigurationDescriptor);
 	}
 
@@ -2016,12 +2033,12 @@ EXPORT_C TInt DUsbClientController::GetCSInterfaceDescriptorBlock(DThread* aThre
 																  TInt aSettingNum,
 																  TDes8& aInterfaceDescriptor)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetCSInterfaceDescriptorBlock(x, 0x%08x, %d, y)",
-									aClientId, aSettingNum));
+	OstTraceDefExt2(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_GETCSINTERFACEDESCRIPTORBLOCK, "DUsbClientController::GetCSInterfaceDescriptorBlock(x, 0x%08x, %d, y)",
+                                    (TUint)aClientId, aSettingNum);
 	const TInt ifcset = ClientId2InterfaceNumber(aClientId);
 	if (ifcset < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Interface not found from client ID"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_GETCSINTERFACEDESCRIPTORBLOCK_DUP1, "D  Error: Interface not found from client ID");
 		return KErrNotFound;
 		}
 	return iDescriptors.GetCSInterfaceDescriptorTC(aThread, aInterfaceDescriptor, ifcset, aSettingNum);
@@ -2048,18 +2065,17 @@ EXPORT_C TInt DUsbClientController::SetCSInterfaceDescriptorBlock(DThread* aThre
 																  TInt aSettingNum,
 																  const TDes8& aInterfaceDescriptor, TInt aSize)
 	{
-	__KTRACE_OPT(KUSB,
-				 Kern::Printf("DUsbClientController::SetCSInterfaceDescriptorBlock(x, 0x%08x, %d, y, %d)",
-							  aClientId, aSettingNum, aSize));
+	OstTraceDefExt3(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETCSINTERFACEDESCRIPTORBLOCK, "DUsbClientController::SetCSInterfaceDescriptorBlock(x, 0x%08x, %d, y, %d)",
+                              (TUint)aClientId, aSettingNum, aSize);
 	const TInt ifcset = ClientId2InterfaceNumber(aClientId);
 	if (ifcset < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Interface not found from client ID"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETCSINTERFACEDESCRIPTORBLOCK_DUP1, "  Error: Interface not found from client ID");
 		return KErrNotFound;
 		}
 	if (aSize < 2)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: aSize < 2 (%d)", aSize));
+	    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETCSINTERFACEDESCRIPTORBLOCK_DUP2, "  Error: aSize < 2 (%d)", aSize);
 		return KErrArgument;
 		}
 	return iDescriptors.SetCSInterfaceDescriptorTC(aThread, aInterfaceDescriptor, ifcset, aSettingNum, aSize);
@@ -2081,13 +2097,12 @@ EXPORT_C TInt DUsbClientController::SetCSInterfaceDescriptorBlock(DThread* aThre
 EXPORT_C TInt DUsbClientController::GetCSInterfaceDescriptorBlockSize(DThread* aThread, const DBase* aClientId,
 																	  TInt aSettingNum, TDes8& aSize)
 	{
-	__KTRACE_OPT(KUSB,
-				 Kern::Printf("DUsbClientController::GetCSInterfaceDescriptorBlockSize(x, 0x%08x, %d, y)",
-							  aClientId, aSettingNum));
+	OstTraceDefExt2(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_GETCSINTERFACEDESCRIPTORBLOCKSIZE, "DUsbClientController::GetCSInterfaceDescriptorBlockSize(x, 0x%08x, %d, y)",
+                              (TUint)aClientId, aSettingNum);
 	const TInt ifcset = ClientId2InterfaceNumber(aClientId);
 	if (ifcset < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Interface not found from client ID"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_GETCSINTERFACEDESCRIPTORBLOCKSIZE_DUP1, "  Error: Interface not found from client ID");
 		return KErrNotFound;
 		}
 	TInt s;
@@ -2099,7 +2114,7 @@ EXPORT_C TInt DUsbClientController::GetCSInterfaceDescriptorBlockSize(DThread* a
 		}
 	else
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: cs interface descriptor not found"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_GETCSINTERFACEDESCRIPTORBLOCKSIZE_DUP2, "  Error: cs interface descriptor not found");
 		}
 	return r;
 	}
@@ -2122,13 +2137,12 @@ EXPORT_C TInt DUsbClientController::GetCSEndpointDescriptorBlock(DThread* aThrea
 																 TInt aSettingNum, TInt aEndpointNum,
 																 TDes8& aEndpointDescriptor)
 	{
-	__KTRACE_OPT(KUSB,
-				 Kern::Printf("DUsbClientController::GetCSEndpointDescriptorBlock(x, 0x%08x, %d, %d, y)",
-							  aClientId, aSettingNum, aEndpointNum));
+	OstTraceDefExt3(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_GETCSENDPOINTDESCRIPTORBLOCK, "DUsbClientController::GetCSEndpointDescriptorBlock(x, 0x%08x, %d, %d, y)",
+                              (TUint)aClientId, aSettingNum, aEndpointNum);
 	const TInt ifcset = ClientId2InterfaceNumber(aClientId);
 	if (ifcset < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Interface not found from client ID"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_GETCSENDPOINTDESCRIPTORBLOCK_DUP1, "  Error: Interface not found from client ID");
 		return KErrNotFound;
 		}
 	return iDescriptors.GetCSEndpointDescriptorTC(aThread, aEndpointDescriptor, ifcset,
@@ -2157,18 +2171,17 @@ EXPORT_C TInt DUsbClientController::SetCSEndpointDescriptorBlock(DThread* aThrea
 																 TInt aSettingNum, TInt aEndpointNum,
 																 const TDes8& aEndpointDescriptor, TInt aSize)
 	{
-	__KTRACE_OPT(KUSB,
-				 Kern::Printf("DUsbClientController::SetCSEndpointDescriptorBlock(x, 0x%08x, %d, %d, y)",
-							  aClientId, aSettingNum, aEndpointNum));
+	OstTraceDefExt3(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETCSENDPOINTDESCRIPTORBLOCK, "DUsbClientController::SetCSEndpointDescriptorBlock(x, 0x%08x, %d, %d, y)",
+                              (TUint)aClientId, aSettingNum, aEndpointNum);
 	const TInt ifcset = ClientId2InterfaceNumber(aClientId);
 	if (ifcset < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Interface not found from client ID"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETCSENDPOINTDESCRIPTORBLOCK_DUP1, "  Error: Interface not found from client ID");
 		return KErrNotFound;
 		}
 	if (aSize < 2)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: aSize < 2 (%d)", aSize));
+	    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETCSENDPOINTDESCRIPTORBLOCK_DUP2, "  Error: aSize < 2 (%d)", aSize);
 		return KErrArgument;
 		}
 	return iDescriptors.SetCSEndpointDescriptorTC(aThread, aEndpointDescriptor, ifcset,
@@ -2193,13 +2206,12 @@ EXPORT_C TInt DUsbClientController::GetCSEndpointDescriptorBlockSize(DThread* aT
 																	 TInt aSettingNum, TInt aEndpointNum,
 																	 TDes8& aSize)
 	{
-	__KTRACE_OPT(KUSB,
-				 Kern::Printf("DUsbClientController::GetCSEndpointDescriptorBlockSize(x, 0x%08x, %d, %d, y)",
-							  aClientId, aSettingNum, aEndpointNum));
+	OstTraceDefExt3(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_GETCSENDPOINTDESCRIPTORBLOCKSIZE, "DUsbClientController::GetCSEndpointDescriptorBlockSize(x, 0x%08x, %d, %d, y)",
+                              (TUint)aClientId, aSettingNum, aEndpointNum);
 	const TInt ifcset = ClientId2InterfaceNumber(aClientId);
 	if (ifcset < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Interface not found from client ID"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_GETCSENDPOINTDESCRIPTORBLOCKSIZE_DUP1, "  Error: Interface not found from client ID");
 		return KErrNotFound;
 		}
 	TInt s;
@@ -2212,7 +2224,7 @@ EXPORT_C TInt DUsbClientController::GetCSEndpointDescriptorBlockSize(DThread* aT
 		}
 	else
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: cs endpoint descriptor not found"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_GETCSENDPOINTDESCRIPTORBLOCKSIZE_DUP2, "  Error: cs endpoint descriptor not found");
 		}
 	return r;
 	}
@@ -2229,7 +2241,7 @@ EXPORT_C TInt DUsbClientController::GetCSEndpointDescriptorBlockSize(DThread* aT
 */
 EXPORT_C TInt DUsbClientController::GetStringDescriptorLangId(DThread* aThread, TDes8& aLangId)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetStringDescriptorLangId()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_GETSTRINGDESCRIPTORLANGID, "DUsbClientController::GetStringDescriptorLangId()" );
 	return iDescriptors.GetStringDescriptorLangIdTC(aThread, aLangId);
 	}
 
@@ -2242,7 +2254,7 @@ EXPORT_C TInt DUsbClientController::GetStringDescriptorLangId(DThread* aThread, 
 */
 EXPORT_C TInt DUsbClientController::SetStringDescriptorLangId(TUint16 aLangId)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetStringDescriptorLangId()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_SETSTRINGDESCRIPTORLANGID, "DUsbClientController::SetStringDescriptorLangId()" );
 	return iDescriptors.SetStringDescriptorLangId(aLangId);
 	}
 
@@ -2262,7 +2274,7 @@ EXPORT_C TInt DUsbClientController::SetStringDescriptorLangId(TUint16 aLangId)
 */
 EXPORT_C TInt DUsbClientController::GetManufacturerStringDescriptor(DThread* aThread, TDes8& aString)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetManufacturerStringDescriptor()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_GETMANUFACTURERSTRINGDESCRIPTOR, "DUsbClientController::GetManufacturerStringDescriptor()" );
 	return iDescriptors.GetManufacturerStringDescriptorTC(aThread, aString);
 	}
 
@@ -2283,7 +2295,7 @@ EXPORT_C TInt DUsbClientController::GetManufacturerStringDescriptor(DThread* aTh
 */
 EXPORT_C TInt DUsbClientController::SetManufacturerStringDescriptor(DThread* aThread, const TDes8& aString)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::SetManufacturerStringDescriptor()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_SETMANUFACTURERSTRINGDESCRIPTOR, "DUsbClientController::SetManufacturerStringDescriptor()" );
 	return iDescriptors.SetManufacturerStringDescriptorTC(aThread, aString);
 	}
 
@@ -2295,7 +2307,7 @@ EXPORT_C TInt DUsbClientController::SetManufacturerStringDescriptor(DThread* aTh
 */
 EXPORT_C TInt DUsbClientController::RemoveManufacturerStringDescriptor()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::RemoveManufacturerStringDescriptor()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_REMOVEMANUFACTURERSTRINGDESCRIPTOR, "DUsbClientController::RemoveManufacturerStringDescriptor()" );
 	return iDescriptors.RemoveManufacturerStringDescriptor();
 	}
 
@@ -2315,7 +2327,7 @@ EXPORT_C TInt DUsbClientController::RemoveManufacturerStringDescriptor()
 */
 EXPORT_C TInt DUsbClientController::GetProductStringDescriptor(DThread* aThread, TDes8& aString)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetProductStringDescriptor()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_GETPRODUCTSTRINGDESCRIPTOR, "DUsbClientController::GetProductStringDescriptor()" );
 	return iDescriptors.GetProductStringDescriptorTC(aThread, aString);
 	}
 
@@ -2336,7 +2348,7 @@ EXPORT_C TInt DUsbClientController::GetProductStringDescriptor(DThread* aThread,
 */
 EXPORT_C TInt DUsbClientController::SetProductStringDescriptor(DThread* aThread, const TDes8& aString)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::SetProductStringDescriptor()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_SETPRODUCTSTRINGDESCRIPTOR, "DUsbClientController::SetProductStringDescriptor()" );
 	return iDescriptors.SetProductStringDescriptorTC(aThread, aString);
 	}
 
@@ -2348,7 +2360,7 @@ EXPORT_C TInt DUsbClientController::SetProductStringDescriptor(DThread* aThread,
 */
 EXPORT_C TInt DUsbClientController::RemoveProductStringDescriptor()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::RemoveProductStringDescriptor()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_REMOVEPRODUCTSTRINGDESCRIPTOR, "DUsbClientController::RemoveProductStringDescriptor()" );
 	return iDescriptors.RemoveProductStringDescriptor();
 	}
 
@@ -2368,7 +2380,7 @@ EXPORT_C TInt DUsbClientController::RemoveProductStringDescriptor()
 */
 EXPORT_C TInt DUsbClientController::GetSerialNumberStringDescriptor(DThread* aThread, TDes8& aString)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetSerialNumberStringDescriptor()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_GETSERIALNUMBERSTRINGDESCRIPTOR, "DUsbClientController::GetSerialNumberStringDescriptor()" );
 	return iDescriptors.GetSerialNumberStringDescriptorTC(aThread, aString);
 	}
 
@@ -2389,7 +2401,7 @@ EXPORT_C TInt DUsbClientController::GetSerialNumberStringDescriptor(DThread* aTh
 */
 EXPORT_C TInt DUsbClientController::SetSerialNumberStringDescriptor(DThread* aThread, const TDes8& aString)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::SetSerialNumberStringDescriptor()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_SETSERIALNUMBERSTRINGDESCRIPTOR, "DUsbClientController::SetSerialNumberStringDescriptor()" );
 	return iDescriptors.SetSerialNumberStringDescriptorTC(aThread, aString);
 	}
 
@@ -2401,7 +2413,7 @@ EXPORT_C TInt DUsbClientController::SetSerialNumberStringDescriptor(DThread* aTh
 */
 EXPORT_C TInt DUsbClientController::RemoveSerialNumberStringDescriptor()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::RemoveSerialNumberStringDescriptor()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_REMOVESERIALNUMBERSTRINGDESCRIPTOR, "DUsbClientController::RemoveSerialNumberStringDescriptor()" );
 	return iDescriptors.RemoveSerialNumberStringDescriptor();
 	}
 
@@ -2421,7 +2433,7 @@ EXPORT_C TInt DUsbClientController::RemoveSerialNumberStringDescriptor()
 */
 EXPORT_C TInt DUsbClientController::GetConfigurationStringDescriptor(DThread* aThread, TDes8& aString)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetConfigurationStringDescriptor()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_GETCONFIGURATIONSTRINGDESCRIPTOR, "DUsbClientController::GetConfigurationStringDescriptor()" );
 	return iDescriptors.GetConfigurationStringDescriptorTC(aThread, aString);
 	}
 
@@ -2442,7 +2454,7 @@ EXPORT_C TInt DUsbClientController::GetConfigurationStringDescriptor(DThread* aT
 */
 EXPORT_C TInt DUsbClientController::SetConfigurationStringDescriptor(DThread* aThread, const TDes8& aString)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::SetConfigurationStringDescriptor()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_SETCONFIGURATIONSTRINGDESCRIPTOR, "DUsbClientController::SetConfigurationStringDescriptor()" );
 	return iDescriptors.SetConfigurationStringDescriptorTC(aThread, aString);
 	}
 
@@ -2454,7 +2466,7 @@ EXPORT_C TInt DUsbClientController::SetConfigurationStringDescriptor(DThread* aT
 */
 EXPORT_C TInt DUsbClientController::RemoveConfigurationStringDescriptor()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::RemoveConfigurationStringDescriptor()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_REMOVECONFIGURATIONSTRINGDESCRIPTOR, "DUsbClientController::RemoveConfigurationStringDescriptor()" );
 	return iDescriptors.RemoveConfigurationStringDescriptor();
 	}
 
@@ -2472,7 +2484,8 @@ EXPORT_C TInt DUsbClientController::RemoveConfigurationStringDescriptor()
 */
 EXPORT_C TInt DUsbClientController::GetStringDescriptor(DThread* aThread, TUint8 aIndex, TDes8& aString)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::GetStringDescriptor(%d)", aIndex));
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_GETSTRINGDESCRIPTOR, "DUsbClientController::GetStringDescriptor(%d)", aIndex);
+	
 	return iDescriptors.GetStringDescriptorTC(aThread, aIndex, aString);
 	}
 
@@ -2491,7 +2504,8 @@ EXPORT_C TInt DUsbClientController::GetStringDescriptor(DThread* aThread, TUint8
 */
 EXPORT_C TInt DUsbClientController::SetStringDescriptor(DThread* aThread, TUint8 aIndex, const TDes8& aString)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::SetStringDescriptor(%d)", aIndex));
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETSTRINGDESCRIPTOR, "DUsbClientController::SetStringDescriptor(%d)", aIndex);
+	
 	return iDescriptors.SetStringDescriptorTC(aThread, aIndex, aString);
 	}
 
@@ -2504,7 +2518,8 @@ EXPORT_C TInt DUsbClientController::SetStringDescriptor(DThread* aThread, TUint8
 */
 EXPORT_C TInt DUsbClientController::RemoveStringDescriptor(TUint8 aIndex)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::RemoveStringDescriptor(%d)", aIndex));
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_REMOVESTRINGDESCRIPTOR, "DUsbClientController::RemoveStringDescriptor(%d)", aIndex);
+	
 	return iDescriptors.RemoveStringDescriptor(aIndex);
 	}
 
@@ -2525,7 +2540,7 @@ EXPORT_C TInt DUsbClientController::RemoveStringDescriptor(TUint8 aIndex)
 EXPORT_C TInt DUsbClientController::AllocateEndpointResource(const DBase* /*aClientId*/, TInt aEndpointNum,
 															 TUsbcEndpointResource aResource)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::AllocateEndpointResource()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_ALLOCATEENDPOINTRESOURCE, "DUsbClientController::AllocateEndpointResource()" );
 	return AllocateEndpointResource(aEndpointNum, aResource);
 	}
 
@@ -2544,7 +2559,7 @@ EXPORT_C TInt DUsbClientController::AllocateEndpointResource(const DBase* /*aCli
 EXPORT_C TInt DUsbClientController::DeAllocateEndpointResource(const DBase* /*aClientId*/, TInt aEndpointNum,
 															   TUsbcEndpointResource aResource)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DeAllocateEndpointResource()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_DEALLOCATEENDPOINTRESOURCE, "DUsbClientController::DeAllocateEndpointResource()" );
 	return DeAllocateEndpointResource(aEndpointNum, aResource);
 	}
 
@@ -2564,20 +2579,19 @@ EXPORT_C TInt DUsbClientController::DeAllocateEndpointResource(const DBase* /*aC
 EXPORT_C TBool DUsbClientController::QueryEndpointResource(const DBase* /*aClientId*/, TInt aEndpointNum,
 														   TUsbcEndpointResource aResource)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::QueryEndpointResource()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_QUERYENDPOINTRESOURCE, "DUsbClientController::QueryEndpointResource()" );
 	return QueryEndpointResource(aEndpointNum, aResource);
 	}
 
 
 EXPORT_C TInt DUsbClientController::EndpointPacketSize(const DBase* aClientId, TInt aEndpointNum)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::EndpointPacketSize(0x%08x, %d)",
-									aClientId, aEndpointNum));
-
+	OstTraceDefExt2(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_ENDPOINTPACKETSIZE, "DUsbClientController::EndpointPacketSize(0x%08x, %d)",
+                                    (TUint)aClientId, aEndpointNum);
 	const TUsbcInterfaceSet* const ifcset_ptr = ClientId2InterfacePointer(aClientId);
 	if (!ifcset_ptr)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: interface or clientid not found"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_ENDPOINTPACKETSIZE_DUP1, "  Error: interface or clientid not found");
 		return -1;
 		}
 	const TUsbcInterface* const ifc_ptr = ifcset_ptr->iInterfaces[ifcset_ptr->iCurrentInterface];
@@ -2588,14 +2602,14 @@ EXPORT_C TInt DUsbClientController::EndpointPacketSize(const DBase* aClientId, T
 		const TUsbcLogicalEndpoint* const ep = ep_array[i];
 		if (EpAddr2Idx(ep->iPEndpoint->iEndpointAddr) == static_cast<TUint>(aEndpointNum))
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  Endpoint packet sizes: FS = %d  HS = %d",
-											ep->iEpSize_Fs, ep->iEpSize_Hs));
+		    OstTraceDefExt2(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_ENDPOINTPACKETSIZE_DUP2, "  Endpoint packet sizes: FS = %d  HS = %d",
+                                            ep->iEpSize_Fs, ep->iEpSize_Hs);
 			const TInt size = iHighSpeed ? ep->iEpSize_Hs : ep->iEpSize_Fs;
-			__KTRACE_OPT(KUSB, Kern::Printf("  Returning %d", size));
+			OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_ENDPOINTPACKETSIZE_DUP3, "  Returning %d", size);
 			return size;
 			}
 		}
-	__KTRACE_OPT(KPANIC, Kern::Printf("  Error: endpoint not found"));
+    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_ENDPOINTPACKETSIZE_DUP4, "  Error: endpoint not found");
 	return -1;
 	}
 
@@ -2606,7 +2620,7 @@ EXPORT_C TInt DUsbClientController::EndpointPacketSize(const DBase* aClientId, T
 
 EXPORT_C TBool DUsbClientController::CurrentlyUsingHighSpeed()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::CurrentlyUsingHighSpeed()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_CURRENTLYUSINGHIGHSPEED, "DUsbClientController::CurrentlyUsingHighSpeed()" );
 	return EFalse;
 	}
 
@@ -2626,10 +2640,10 @@ EXPORT_C TBool DUsbClientController::CurrentlyUsingHighSpeed()
 */
 DUsbClientController* DUsbClientController::RegisterUdc(TInt aUdc)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::RegisterUdc()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_REGISTERUDC, "DUsbClientController::RegisterUdc()" );
 	if (aUdc < 0 || aUdc > (KUsbcMaxUdcs - 1))
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: aUdc out of range (%d)", aUdc));
+		OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_REGISTERUDC_DUP1, "  Error: aUdc out of range (%d)", aUdc);
 		return NULL;
 		}
 	return UsbClientController[aUdc] = this;
@@ -2712,7 +2726,7 @@ TBool DUsbClientController::InitialiseBaseClass(TUsbcDeviceDescriptor* aDeviceDe
 												TUsbcStringDescriptor* aConfig,
                                                 TUsbcOtgDescriptor* aOtgDesc)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::InitialiseBaseClass()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_INITIALISEBASECLASS, "DUsbClientController::InitialiseBaseClass()" );
 	// We don't want the host to see us (at least not yet):
 	UsbDisconnect();
 
@@ -2720,7 +2734,7 @@ TBool DUsbClientController::InitialiseBaseClass(TUsbcDeviceDescriptor* aDeviceDe
 	if (iDescriptors.Init(aDeviceDesc, aConfigDesc, aLangId, aManufacturer, aProduct,
 						  aSerialNum, aConfig, aOtgDesc) !=	KErrNone)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  Error: Descriptor initialization failed"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_INITIALISEBASECLASS_DUP1, "  Error: Descriptor initialization failed");
 		return EFalse;
 		}
 
@@ -2761,27 +2775,27 @@ TBool DUsbClientController::InitialiseBaseClass(TUsbcDeviceDescriptor* aDeviceDe
 
 	// Initialise the array of physical endpoints
 	iDeviceTotalEndpoints = DeviceTotalEndpoints();
-	__KTRACE_OPT(KUSB, Kern::Printf("  DeviceTotalEndpoints: %d", iDeviceTotalEndpoints));
+    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_INITIALISEBASECLASS_DUP2, "  DeviceTotalEndpoints: %d", iDeviceTotalEndpoints);
 	// KUsbcMaxEndpoints doesn't include ep 0
 	if ((iDeviceTotalEndpoints > (KUsbcMaxEndpoints + 2)) ||
 		((iDeviceTotalEndpoints * sizeof(TUsbcPhysicalEndpoint)) > sizeof(iRealEndpoints)))
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: too many endpoints! (change KUsbcMaxEndpoints: %d)",
-										  KUsbcMaxEndpoints));
+		OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_INITIALISEBASECLASS_DUP3, "  Error: too many endpoints! (change KUsbcMaxEndpoints: %d)",
+                                          KUsbcMaxEndpoints);
 		goto exit_1;
 		}
 	caps = DeviceEndpointCaps();
 	for (TInt i = 0; i < iDeviceTotalEndpoints; ++i)
 		{
 		iRealEndpoints[i].iEndpointAddr = EpIdx2Addr(i);
-		__KTRACE_OPT(KUSB, Kern::Printf("  Caps[%02d] - iTypes: 0x%08x iSizes: 0x%08x",
-										i, caps[i].iTypesAndDir, caps[i].iSizes));
+		OstTraceDefExt3(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_INITIALISEBASECLASS_DUP4, "  Caps[%02d] - iTypes: 0x%08x iSizes: 0x%08x",
+                                        i, caps[i].iTypesAndDir, caps[i].iSizes);
 		iRealEndpoints[i].iCaps = caps[i];
 		iRealEndpoints[i].iCaps.iReserved[0] = 0;
 		iRealEndpoints[i].iCaps.iReserved[1] = 0;
 		if ((i > 1) && (caps[i].iTypesAndDir != KUsbEpNotAvailable))
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  --> UsableEndpoint: #%d", i));
+			OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_INITIALISEBASECLASS_DUP5, "  --> UsableEndpoint: #%d", i);
 			iDeviceUsableEndpoints++;
 			}
 		}
@@ -2790,14 +2804,14 @@ TBool DUsbClientController::InitialiseBaseClass(TUsbcDeviceDescriptor* aDeviceDe
 	// and virtual 0 is real 0):
 	// -- Ep0 OUT
 	iEp0MaxPacketSize = caps[0].MaxPacketSize();
-	__KTRACE_OPT(KUSB, Kern::Printf("  using Ep0 maxpacketsize of %d bytes", iEp0MaxPacketSize));
+    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_INITIALISEBASECLASS_DUP6, "  using Ep0 maxpacketsize of %d bytes", iEp0MaxPacketSize);
 	info.iSize = iEp0MaxPacketSize;
 	ep = new TUsbcLogicalEndpoint(this, 0, info, NULL, &iRealEndpoints[KEp0_Out]);
 	if (!ep)
 		{
 		goto exit_1;
 		}
-	__KTRACE_OPT(KUSB, Kern::Printf("  creating ep: mapping real ep %d --> logical ep 0", KEp0_Out));
+    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_INITIALISEBASECLASS_DUP7, "  creating ep: mapping real ep %d --> logical ep 0", KEp0_Out);
 	iRealEndpoints[KEp0_Out].iLEndpoint = ep;
 	// -- Ep0 IN
 	info.iDir = KUsbEpDirIn;
@@ -2806,7 +2820,7 @@ TBool DUsbClientController::InitialiseBaseClass(TUsbcDeviceDescriptor* aDeviceDe
 		{
 		goto exit_2;
 		}
-	__KTRACE_OPT(KUSB, Kern::Printf("  creating ep: mapping real ep %d --> logical ep 0", KEp0_In));
+    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_INITIALISEBASECLASS_DUP8, "  creating ep: mapping real ep %d --> logical ep 0", KEp0_In);
 	iRealEndpoints[KEp0_In].iLEndpoint = ep;
 
 	// Create the power handler
@@ -2824,7 +2838,7 @@ TBool DUsbClientController::InitialiseBaseClass(TUsbcDeviceDescriptor* aDeviceDe
 		// There shouldn't really be any PSL that doesn't support Device State
 		// tracking, but we cannot simply enforce it as we have to preserve
 		// backwards compatibility.
-		__KTRACE_OPT(KUSB, Kern::Printf("  Warning: USB Device State tracking not supported by PSL"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_INITIALISEBASECLASS_DUP9, "  Warning: USB Device State tracking not supported by PSL");
 		}
 
 	return ETrue;
@@ -2901,7 +2915,7 @@ DUsbClientController::DUsbClientController()
 	  iDisablePullUpOnDPlus(NULL),
 	  iOtgContext(NULL)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DUsbClientController()"));
+    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_DUSBCLIENTCONTROLLER_CONS, "DUsbClientController::DUsbClientController()" );
 
 #ifndef SEPARATE_USB_DFC_QUEUE
 	iPowerUpDfc.SetDfcQ(Kern::DfcQue0());
@@ -2927,7 +2941,7 @@ DUsbClientController::DUsbClientController()
 */
 TInt DUsbClientController::DeviceEventNotification(TUsbcDeviceEvent anEvent)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DeviceEventNotification()"));
+    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_DEVICEEVENTNOTIFICATION, "DUsbClientController::DeviceEventNotification()" );
 
 	// This function may be called by the PSL from within an ISR -- so we have
 	// to take care what we do here (and also in all functions that get called
@@ -2961,8 +2975,8 @@ TInt DUsbClientController::DeviceEventNotification(TUsbcDeviceEvent anEvent)
 */
 void DUsbClientController::EndpointRequestComplete(TUsbcRequestCallback* aCallback)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::EndpointRequestComplete(%p)", aCallback));
-
+	OstTraceDefExt1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_ENDPOINTREQUESTCOMPLETE, "DUsbClientController::EndpointRequestComplete(%p)", aCallback);
+	
 	// This function may be called by the PSL from within an ISR -- so we have
 	// to take care what we do here (and also in all functions that get called
 	// from here).
@@ -2995,16 +3009,17 @@ void DUsbClientController::HandleHnpRequest(TInt aHnpState)
 // This function is called by the PSL from within an ISR -- so we have to take care what we do here
 // (and also in all functions that get called from here).
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::HandleHnpRequest(%d)", aHnpState));
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_HANDLEHNPREQUEST, "DUsbClientController::HandleHnpRequest(%d)", aHnpState);
+	
 
 	if (!iOtgSupport)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Request only supported on a OTG device"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_HANDLEHNPREQUEST_DUP1, "  Error: Request only supported on a OTG device");
 		return;
 		}
 	if (!(iOtgFuncMap & KUsbOtgAttr_HnpSupp))
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Request only valid if OTG device supports HNP"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_HANDLEHNPREQUEST_DUP2, "  Error: Request only valid if OTG device supports HNP");
 		return;
 		}
 	//	(case KUsbFeature_B_HnpEnable:)
@@ -3044,8 +3059,8 @@ void DUsbClientController::HandleHnpRequest(TInt aHnpState)
 */
 TInt DUsbClientController::Ep0RequestComplete(TInt aRealEndpoint, TInt aCount, TInt aError)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::Ep0RequestComplete(%d)", aRealEndpoint));
-
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_EP0REQUESTCOMPLETE, "DUsbClientController::Ep0RequestComplete(%d)", aRealEndpoint);
+	
 	// This function may be called by the PSL from within an ISR -- so we have
 	// to take care what we do here (and also in all functions that get called
 	// from here).
@@ -3053,16 +3068,17 @@ TInt DUsbClientController::Ep0RequestComplete(TInt aRealEndpoint, TInt aCount, T
 	__ASSERT_DEBUG((aRealEndpoint < 2), Kern::Fault(KUsbPILPanicCat, __LINE__));
 	if (aError != KErrNone && aError != KErrPrematureEnd)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf(" Error: Ep0 request failed (code %d). "
-										"Setting up new Read request.", aError));
+		OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_EP0REQUESTCOMPLETE_DUP1, " Error: Ep0 request failed (code %d). "
+                                        "Setting up new Read request.", aError);
+
 		if (aRealEndpoint == KEp0_Rx)
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf(" (RX request failed)"));
+			OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_EP0REQUESTCOMPLETE_DUP2, " (RX request failed)");
 			StallEndpoint(KEp0_Out);
 			}
 		else
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf(" (TX request failed)"));
+	        OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_EP0REQUESTCOMPLETE_DUP3, " (TX request failed)");
 			iEp0WritePending = EFalse;
 			StallEndpoint(KEp0_In);
 			}
@@ -3090,7 +3106,7 @@ TInt DUsbClientController::Ep0RequestComplete(TInt aRealEndpoint, TInt aCount, T
 		{
 		// we're done & no write request has been set up.
 		// so: setup an Ep0 read again
-		__KTRACE_OPT(KUSB, Kern::Printf(" Setting up new Ep0 read request."));
+        OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_EP0REQUESTCOMPLETE_DUP4, " Setting up new Ep0 read request.");
 		SetupEndpointZeroRead();
 		}
 	return r;
@@ -3103,7 +3119,7 @@ TInt DUsbClientController::Ep0RequestComplete(TInt aRealEndpoint, TInt aCount, T
 */
 void DUsbClientController::MoveToAddressState()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::MoveToAddressState()"));
+    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_MOVETOADDRESSSTATE, "DUsbClientController::MoveToAddressState()" );
 
 	// This function may be called by the PSL from within an ISR -- so we have
 	// to take care what we do here (and also in all functions that get called
@@ -3124,8 +3140,8 @@ void DUsbClientController::MoveToAddressState()
 */
 void DUsbClientController::SetCurrent(TInt aCurrent)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::SetCurrent(%d)", aCurrent));
-
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETCURRENT, "DUsbClientController::SetCurrent(%d)", aCurrent);
+	
 	// Not much for the moment... (What should we do here?)
 	return;
 	}
@@ -3137,20 +3153,21 @@ void DUsbClientController::SetCurrent(TInt aCurrent)
 
 TInt DUsbClientController::OpenDmaChannel(TInt aRealEndpoint)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::OpenDmaChannel(%d)", aRealEndpoint));
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_OPENDMACHANNEL, "DUsbClientController::OpenDmaChannel(%d)", aRealEndpoint);
+	
 	return KErrNone;
 	}
 
 
 void DUsbClientController::CloseDmaChannel(TInt aRealEndpoint)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::CloseDmaChannel(%d)", aRealEndpoint));
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CLOSEDMACHANNEL, "DUsbClientController::CloseDmaChannel(%d)", aRealEndpoint);
 	}
 
 
 TBool DUsbClientController::CableDetectWithoutPowerCaps() const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::CableDetectWithoutPowerCaps()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_CABLEDETECTWITHOUTPOWERCAPS, "DUsbClientController::CableDetectWithoutPowerCaps()" );
 	// Should be overridden in PSL if applicable.
 	return EFalse;
 	}
@@ -3158,7 +3175,7 @@ TBool DUsbClientController::CableDetectWithoutPowerCaps() const
 
 TBool DUsbClientController::DeviceHighSpeedCaps() const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DeviceHighSpeedCaps()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_DEVICEHIGHSPEEDCAPS, "DUsbClientController::DeviceHighSpeedCaps()" );
 	// Should be overridden in PSL if applicable.
 	return EFalse;
 	}
@@ -3166,7 +3183,7 @@ TBool DUsbClientController::DeviceHighSpeedCaps() const
 
 TBool DUsbClientController::DeviceResourceAllocV2Caps() const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DeviceResourceAllocV2Caps()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_DEVICERESOURCEALLOCV2CAPS, "DUsbClientController::DeviceResourceAllocV2Caps()" );
 	// Should be overridden in PSL if applicable.
 	return EFalse;
 	}
@@ -3174,7 +3191,7 @@ TBool DUsbClientController::DeviceResourceAllocV2Caps() const
 
 TBool DUsbClientController::DeviceHnpHandledByHardwareCaps() const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DeviceHnpHandledByHardwareCaps()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_DEVICEHNPHANDLEDBYHARDWARECAPS, "DUsbClientController::DeviceHnpHandledByHardwareCaps()" );
 	// Should be overridden in PSL if applicable.
 	return EFalse;
 	}
@@ -3182,7 +3199,8 @@ TBool DUsbClientController::DeviceHnpHandledByHardwareCaps() const
 
 TInt DUsbClientController::EnterTestMode(TInt aTestSelector)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::EnterTestMode(%d)", aTestSelector));
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_ENTERTESTMODE, "DUsbClientController::EnterTestMode(%d)", aTestSelector);
+	
 	// Should be overridden in PSL if applicable.
 	return KErrNotSupported;
 	}
@@ -3190,35 +3208,35 @@ TInt DUsbClientController::EnterTestMode(TInt aTestSelector)
 
 TBool DUsbClientController::PowerDownWhenActive() const
 	{
- 	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::PowerDownWhenActive()"));
+ 	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_POWERDOWNWHENACTIVE, "DUsbClientController::PowerDownWhenActive()" );
  	return EFalse;
 	}
 
 
 TInt DUsbClientController::PowerDown()
 	{
- 	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::PowerDown()"));
+ 	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_POWERDOWN, "DUsbClientController::PowerDown()" );
  	return KErrNone;
 	}
 
 
 TInt DUsbClientController::PowerUp()
 	{
- 	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::PowerUp()"));
+ 	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_POWERUP, "DUsbClientController::PowerUp()" );
  	return KErrNone;
 	}
 
 
 TInt DUsbClientController::OtgEnableUdc()
 	{
- 	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::OtgEnableUdc()"));
+ 	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_OTGENABLEUDC, "DUsbClientController::OtgEnableUdc()" );
  	return KErrNone;
 	}
 
 
 TInt DUsbClientController::OtgDisableUdc()
    	{
- 	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::OtgDisableUdc()"));
+ 	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_OTGDISABLEUDC, "DUsbClientController::OtgDisableUdc()" );
  	return KErrNone;
 	}
 
@@ -3229,18 +3247,18 @@ TInt DUsbClientController::OtgDisableUdc()
 
 TInt DUsbClientController::DeRegisterClientCallback(const DBase* aClientId)
     {
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DeRegisterClientCallback()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_DEREGISTERCLIENTCALLBACK, "DUsbClientController::DeRegisterClientCallback()" );
 	__ASSERT_DEBUG((aClientId != NULL), Kern::Fault(KUsbPILPanicCat, __LINE__));
 	TSglQueIter<TUsbcClientCallback> iter(iClientCallbacks);
 	TUsbcClientCallback* p;
 	while ((p = iter++) != NULL)
 		if (p->Owner() == aClientId)
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  removing ClientCallback @ 0x%x", p));
+			 OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_DEREGISTERCLIENTCALLBACK_DUP1, "  removing ClientCallback @ 0x%x", p);
 			iClientCallbacks.Remove(*p);
 			return KErrNone;
 			}
-	__KTRACE_OPT(KUSB, Kern::Printf("  Client not found"));
+    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_DEREGISTERCLIENTCALLBACK_DUP2, "  Client not found");
 	return KErrNotFound;
     }
 
@@ -3249,28 +3267,28 @@ TBool DUsbClientController::CheckEpAvailability(TInt aEndpointsUsed,
 												const TUsbcEndpointInfoArray& aEndpointData,
 												TInt aIfcNumber) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::CheckEpAvailability()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_CHECKEPAVAILABILITY, "DUsbClientController::CheckEpAvailability()" );
 	if (aEndpointsUsed > KMaxEndpointsPerClient)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: too many endpoints claimed (%d)", aEndpointsUsed));
+		OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_CHECKEPAVAILABILITY_DUP1, "  Error: too many endpoints claimed (%d)", aEndpointsUsed);
 		return EFalse;
 		}
 	TBool reserve[KUsbcEpArraySize]; // iDeviceTotalEndpoints can be equal to 32
 	memset(reserve, EFalse, sizeof(reserve));				// reset the array
 	for (TInt i = 0; i < aEndpointsUsed; ++i)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  checking for (user) endpoint #%d availability...", i + 1));
+	    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CHECKEPAVAILABILITY_DUP2, "  checking for (user) endpoint #%d availability...", i + 1);
 		TInt j = 2;
 		while (j < iDeviceTotalEndpoints)
 			{
 			if ((iRealEndpoints[j].EndpointSuitable(&aEndpointData[i], aIfcNumber)) &&
 				(reserve[j] == EFalse))
 				{
-				__KTRACE_OPT(KUSB, Kern::Printf("  ---> found suitable endpoint: RealEndpoint #%d", j));
+		        OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CHECKEPAVAILABILITY_DUP3, "  ---> found suitable endpoint: RealEndpoint #%d", j);
 				reserve[j] = ETrue;							// found one: mark this ep as reserved
 				break;
 				}
-			__KTRACE_OPT(KUSB, Kern::Printf("  -> endpoint not suitable: RealEndpoint #%d", j));
+            OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CHECKEPAVAILABILITY_DUP4, "  -> endpoint not suitable: RealEndpoint #%d", j);
 			j++;
 			}
 		if (j == iDeviceTotalEndpoints)
@@ -3287,7 +3305,8 @@ TUsbcInterface* DUsbClientController::CreateInterface(const DBase* aClientId, TI
 // concurrent interfaces supported by the configuration."  But since we permit the user to
 // change interface numbers, we can neither assume nor enforce anything about them here.
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::CreateInterface(x, aIfc=%d)", aIfc));
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CREATEINTERFACE, "DUsbClientController::CreateInterface(x, aIfc=%d)", aIfc);
+	
 	TUsbcInterfaceSet* ifcset_ptr = NULL;
 	TInt ifcset = ClientId2InterfaceNumber(aClientId);
 	TBool new_ifc;
@@ -3298,7 +3317,7 @@ TUsbcInterface* DUsbClientController::CreateInterface(const DBase* aClientId, TI
 		const TInt num_ifcsets = iConfigs[0]->iInterfaceSets.Count();
 		if (num_ifcsets == 255)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Too many interfaces already exist: 255"));
+			OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_CREATEINTERFACE_DUP1, "  Error: Too many interfaces already exist: 255");
 			return NULL;
 			}
 		// Find the smallest interface number that has not yet been used.
@@ -3309,7 +3328,7 @@ TUsbcInterface* DUsbClientController::CreateInterface(const DBase* aClientId, TI
 				{
 				if ((iConfigs[0]->iInterfaceSets[i]->iInterfaceNumber) == ifcset)
 					{
-					__KTRACE_OPT(KUSB, Kern::Printf("  interface number %d already used", ifcset));
+			        OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CREATEINTERFACE_DUP2, "  interface number %d already used", ifcset);
 					n_used = ETrue;
 					break;
 					}
@@ -3321,20 +3340,19 @@ TUsbcInterface* DUsbClientController::CreateInterface(const DBase* aClientId, TI
 			}
 		if (ifcset == 256)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: no available interface number found"));
+            OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_CREATEINTERFACE_DUP3, "  Error: no available interface number found");
 			return NULL;
 			}
 		// append the ifcset
-		__KTRACE_OPT(KUSB, Kern::Printf("  creating new InterfaceSet %d first", ifcset));
+        OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CREATEINTERFACE_DUP4, "  creating new InterfaceSet %d first", ifcset);
 		if (aIfc != 0)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: invalid interface setting number (1): %d", aIfc));
+	        OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_CREATEINTERFACE_DUP5, "  Error: invalid interface setting number (1): %d", aIfc);
 			return NULL;
 			}
 		if ((ifcset_ptr = new TUsbcInterfaceSet(aClientId, ifcset)) == NULL)
 			{
-			__KTRACE_OPT(KPANIC,
-						 Kern::Printf("  Error: new TUsbcInterfaceSet(aClientId, ifcset_num) failed"));
+			OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_CREATEINTERFACE_DUP6, "  Error: new TUsbcInterfaceSet(aClientId, ifcset_num) failed");
 			return NULL;
 			}
 		iConfigs[0]->iInterfaceSets.Append(ifcset_ptr);
@@ -3343,20 +3361,20 @@ TUsbcInterface* DUsbClientController::CreateInterface(const DBase* aClientId, TI
 		{
 		// use an existent ifcset
 		new_ifc = EFalse;
-		__KTRACE_OPT(KUSB, Kern::Printf("  using existing InterfaceSet %d", ifcset));
+        OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CREATEINTERFACE_DUP7, "  using existing InterfaceSet %d", ifcset);
 		ifcset_ptr = InterfaceNumber2InterfacePointer(ifcset);
 		if (aIfc != ifcset_ptr->iInterfaces.Count())
 			{
 			// 9.2.3: "Alternate settings range from zero to one less than the number of alternate
 			// settings for a specific interface." (Thus we can here only append a setting.)
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: invalid interface setting number (2): %d", aIfc));
+	        OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_CREATEINTERFACE_DUP8, "  Error: invalid interface setting number (2): %d", aIfc);
 			return NULL;
 			}
 		// Check whether the existing interface belongs indeed to this client
 		if (ifcset_ptr->iClientId != aClientId)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: iClientId (%p) != aClientId (%p)",
-											  ifcset_ptr->iClientId, aClientId));
+	        OstTraceDefExt2(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_CREATEINTERFACE_DUP9, "  Error: iClientId (%p) != aClientId (%p)",
+                                              ifcset_ptr->iClientId, aClientId);
 			return NULL;
 			}
 		}
@@ -3364,7 +3382,7 @@ TUsbcInterface* DUsbClientController::CreateInterface(const DBase* aClientId, TI
 	TUsbcInterface* const ifc_ptr = new TUsbcInterface(ifcset_ptr, aIfc, no_ep0_requests);
 	if (!ifc_ptr)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: new TUsbcInterface(ifcset, aIfc) failed"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_CREATEINTERFACE_DUP10, "  Error: new TUsbcInterface(ifcset, aIfc) failed");
 		if (new_ifc)
 			{
 			DeleteInterfaceSet(ifcset);
@@ -3387,7 +3405,7 @@ TInt DUsbClientController::CreateEndpoints(TUsbcInterface* aIfc, TInt aEndpoints
 										   const TUsbcEndpointInfoArray& aEndpointData,
 										   TInt aRealEpNumbers[])
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::CreateEndpoints()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_CREATEENDPOINTS, "DUsbClientController::CreateEndpoints()" );
 	const TInt ifc_num = aIfc->iInterfaceSet->iInterfaceNumber;
 	const TInt start_ep = 2;
 	for (TInt i = 0; i < aEndpointsUsed; ++i)
@@ -3401,7 +3419,7 @@ TInt DUsbClientController::CreateEndpoints(TUsbcInterface* aIfc, TInt aEndpoints
 																		  aIfc, &iRealEndpoints[j]);
 				if (!ep)
 					{
-					__KTRACE_OPT(KPANIC, Kern::Printf("  Error: new TUsbcLogicalEndpoint() failed"));
+					OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_CREATEENDPOINTS_DUP1, "  Error: new TUsbcLogicalEndpoint() failed");
 					aIfc->iEndpoints.ResetAndDestroy();
 					RESET_SETTINGRESERVE;
 					return KErrNoMemory;
@@ -3413,16 +3431,16 @@ TInt DUsbClientController::CreateEndpoints(TUsbcInterface* aIfc, TInt aEndpoints
 					// For details see last paragraph of 5.7.3 "Interrupt Transfer Packet Size Constraints".
 					if ((ep->iInfo.iType == KUsbEpTypeInterrupt) && (ep->iEpSize_Hs > 64))
 						{
-						__KTRACE_OPT(KPANIC, Kern::Printf("  Warning: INT ep HS size = %d on default ifc setting",
-														  ep->iEpSize_Hs));
-						__KTRACE_OPT(KPANIC, Kern::Printf("           (should be <= 64)"));
+		                OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_CREATEENDPOINTS_DUP2, "  Warning: INT ep HS size = %d on default ifc setting",
+                                                          ep->iEpSize_Hs);
+		                OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_CREATEENDPOINTS_DUP3, "           (should be <= 64)");
 						}
 					// For details see last paragraph of 5.6.3 "Isochronous Transfer Packet Size Constraints".
 					else if ((ep->iInfo.iType == KUsbEpTypeIsochronous) && (ep->iInfo.iSize > 0))
 						{
-						__KTRACE_OPT(KPANIC, Kern::Printf("  Warning: ISO ep size = %d on default ifc setting",
-														  ep->iInfo.iSize));
-						__KTRACE_OPT(KPANIC, Kern::Printf("           (should be zero or ep non-existent)"));
+						OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_CREATEENDPOINTS_DUP4, " Warning: ISO ep size = %d on default ifc setting",
+                                                          ep->iInfo.iSize);
+						OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_CREATEENDPOINTS_DUP5, "           (should be zero or ep non-existent)");
 						}
 					}
 				// If the endpoint doesn't support DMA (now or never) the next operation
@@ -3430,23 +3448,21 @@ TInt DUsbClientController::CreateEndpoints(TUsbcInterface* aIfc, TInt aEndpoints
 				const TInt r = OpenDmaChannel(j);
 				if (r != KErrNone)
 					{
-					__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Opening of DMA channel failed"));
+                    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_CREATEENDPOINTS_DUP6, "  Error: Opening of DMA channel failed");
 					aIfc->iEndpoints.ResetAndDestroy();
 					RESET_SETTINGRESERVE;
 					return r;
 					}
-				__KTRACE_OPT(KUSB, Kern::Printf("  creating ep: mapping real ep %d -> logical ep %d",
-												j, i + 1));
+				OstTraceDefExt2(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CREATEENDPOINTS_DUP7, "  creating ep: mapping real ep %d -> logical ep %d",
+                                                j, i + 1);
 				iRealEndpoints[j].iIfcNumber = &aIfc->iInterfaceSet->iInterfaceNumber;
 				iRealEndpoints[j].iSettingReserve = ETrue;
-				__KTRACE_OPT(KUSB,
-							 Kern::Printf("  ep->iInfo: iType=0x%x iDir=0x%x iSize=%d iInterval=%d",
-										  ep->iInfo.iType, ep->iInfo.iDir, ep->iInfo.iSize,
-										  ep->iInfo.iInterval));
-				__KTRACE_OPT(KUSB,
-							 Kern::Printf("  ep->iInfo: iInterval_Hs=%d iTransactions=%d iExtra=%d",
-										  ep->iInfo.iInterval_Hs, ep->iInfo.iTransactions,
-										  ep->iInfo.iExtra));
+				OstTraceDefExt4(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CREATEENDPOINTS_DUP8, "  ep->iInfo: iType=0x%x iDir=0x%x iSize=%d iInterval=%d",
+                                          ep->iInfo.iType, ep->iInfo.iDir, ep->iInfo.iSize,
+                                          ep->iInfo.iInterval);
+				OstTraceDefExt3(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CREATEENDPOINTS_DUP9, "  ep->iInfo: iInterval_Hs=%d iTransactions=%d iExtra=%d",
+                                          ep->iInfo.iInterval_Hs, ep->iInfo.iTransactions,
+                                          ep->iInfo.iExtra);
 				// Store real endpoint numbers:
 				// array[x] holds the number for logical ep x.
 				aRealEpNumbers[i + 1] = j;
@@ -3455,12 +3471,12 @@ TInt DUsbClientController::CreateEndpoints(TUsbcInterface* aIfc, TInt aEndpoints
 			}
 		}
 	aRealEpNumbers[0] = 0;								// ep0: 0.
-	__KTRACE_OPT(KUSB,{
-		Kern::Printf("  Endpoint Mapping for Interface %d / Setting %d:", ifc_num, aIfc->iSettingCode);
-		Kern::Printf("Logical  | Real");
-		Kern::Printf("Endpoint | Endpoint");
-		for (TInt ep = 0; ep <= aEndpointsUsed; ++ep) Kern::Printf("   %2d       %3d",ep, aRealEpNumbers[ep]);
-		});
+	OstTraceDefExt2(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CREATEENDPOINTS_DUP10, "  Endpoint Mapping for Interface %d / Setting %d:", ifc_num, aIfc->iSettingCode); 
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CREATEENDPOINTS_DUP11, "Logical  | Real");
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CREATEENDPOINTS_DUP12, "Endpoint | Endpoint");
+    for (TInt ep = 0; ep <= aEndpointsUsed; ++ep)
+        OstTraceDefExt2(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CREATEENDPOINTS_DUP13, "   %2d       %3d",ep, aRealEpNumbers[ep]);
+
 	RESET_SETTINGRESERVE;
 	return KErrNone;
 	}
@@ -3469,7 +3485,7 @@ TInt DUsbClientController::CreateEndpoints(TUsbcInterface* aIfc, TInt aEndpoints
 TInt DUsbClientController::SetupIfcDescriptor(TUsbcInterface* aIfc, TUsbcClassInfo& aClass, DThread* aThread,
 											  TDesC8* aString, const TUsbcEndpointInfoArray& aEndpointData)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::SetupIfcDescriptor()"));
+    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_SETUPIFCDESCRIPTOR, "DUsbClientController::SetupIfcDescriptor()" );
 
 	// Interface descriptor
 	TUsbcDescriptorBase* d = TUsbcInterfaceDescriptor::New(aIfc->iInterfaceSet->iInterfaceNumber,
@@ -3478,7 +3494,7 @@ TInt DUsbClientController::SetupIfcDescriptor(TUsbcInterface* aIfc, TUsbcClassIn
 														   aClass);
 	if (!d)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Memory allocation for ifc desc failed."));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETUPIFCDESCRIPTOR_DUP1, "  Error: Memory allocation for ifc desc failed." );
 		return KErrNoMemory;
 		}
 	iDescriptors.InsertDescriptor(d);
@@ -3490,13 +3506,13 @@ TInt DUsbClientController::SetupIfcDescriptor(TUsbcInterface* aIfc, TUsbcClassIn
 		TUint strlen = Kern::ThreadGetDesLength(aThread, aString);
 		if (strlen > KUsbStringDescStringMaxSize)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Warning: $ descriptor too long - string will be truncated"));
+		    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETUPIFCDESCRIPTOR_DUP2, "  Warning: $ descriptor too long - string will be truncated" );
 			strlen = KUsbStringDescStringMaxSize;
 			}
 		HBuf8* const stringbuf = HBuf8::New(strlen);
 		if (!stringbuf)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Memory allocation for ifc $ desc string failed."));
+	        OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETUPIFCDESCRIPTOR_DUP3, "  Error: Memory allocation for ifc $ desc string failed." );
 			iDescriptors.DeleteIfcDescriptor(aIfc->iInterfaceSet->iInterfaceNumber,
 											 aIfc->iSettingCode);
 			return KErrNoMemory;
@@ -3506,7 +3522,7 @@ TInt DUsbClientController::SetupIfcDescriptor(TUsbcInterface* aIfc, TUsbcClassIn
 		TInt r = Kern::ThreadDesRead(aThread, aString, *stringbuf, 0);
 		if (r != KErrNone)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Thread read error"));
+	         OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETUPIFCDESCRIPTOR_DUP4, "  Error: Thread read error" );
 			iDescriptors.DeleteIfcDescriptor(aIfc->iInterfaceSet->iInterfaceNumber,
 											 aIfc->iSettingCode);
 			delete stringbuf;
@@ -3515,7 +3531,7 @@ TInt DUsbClientController::SetupIfcDescriptor(TUsbcInterface* aIfc, TUsbcClassIn
 		TUsbcStringDescriptor* const sd = TUsbcStringDescriptor::New(*stringbuf);
 		if (!sd)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Memory allocation for ifc $ desc failed."));
+	        OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETUPIFCDESCRIPTOR_DUP5, "  Error: Memory allocation for ifc $ desc failed." );
 			iDescriptors.DeleteIfcDescriptor(aIfc->iInterfaceSet->iInterfaceNumber,
 											 aIfc->iSettingCode);
 			delete stringbuf;
@@ -3539,8 +3555,8 @@ TInt DUsbClientController::SetupIfcDescriptor(TUsbcInterface* aIfc, TUsbcClassIn
 			if (aEndpointData[i].iExtra != 2)
 				{
 				// ...then it must be a Audio Class endpoint descriptor. Else...
-				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: EP desc extension > 2 bytes (%d)",
-												  aEndpointData[i].iExtra));
+				OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETUPIFCDESCRIPTOR_DUP6, "  Error: EP desc extension > 2 bytes (%d)",
+                                                  aEndpointData[i].iExtra);
 				iDescriptors.DeleteIfcDescriptor(aIfc->iInterfaceSet->iInterfaceNumber,
 												 aIfc->iSettingCode);
 				return KErrArgument;
@@ -3555,7 +3571,7 @@ TInt DUsbClientController::SetupIfcDescriptor(TUsbcInterface* aIfc, TUsbcClassIn
 			}
 		if (!d)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Memory allocation for ep desc #%d failed.", i));
+			OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_SETUPIFCDESCRIPTOR_DUP7, "  Error: Memory allocation for ep desc #%d failed.", i);
 			iDescriptors.DeleteIfcDescriptor(aIfc->iInterfaceSet->iInterfaceNumber,
 											 aIfc->iSettingCode);
 			return KErrNoMemory;
@@ -3621,23 +3637,23 @@ TUsbcInterfaceSet* DUsbClientController::InterfaceNumber2InterfacePointer(TInt a
 
 TInt DUsbClientController::ActivateHardwareController()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ActivateHardwareController()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_ACTIVATEHARDWARECONTROLLER, "DUsbClientController::ActivateHardwareController()" );
 	if (iHardwareActivated)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  already active -> returning"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_ACTIVATEHARDWARECONTROLLER_DUP1, "  already active -> returning" );
 		return KErrNone;
 		}
 	// Initialise HW
 	TInt r = StartUdc();
 	if (r != KErrNone)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: StartUdc() failed"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_ACTIVATEHARDWARECONTROLLER_DUP2, "  Error: StartUdc() failed" );
 		return KErrHardwareNotAvailable;
 		}
 	r = OtgEnableUdc();							   // turn on UDC (OTG flavour)
 	if (r != KErrNone)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: OtgEnableUdc() failed: %d", r));
+	    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_ACTIVATEHARDWARECONTROLLER_DUP3, "  Error: OtgEnableUdc() failed: %d", r);
 		}
 	iHardwareActivated = ETrue;
 
@@ -3658,7 +3674,7 @@ TInt DUsbClientController::ActivateHardwareController()
 	ConfigureEndpoint(1, ep0_1->iInfo);
 	iEp0MaxPacketSize = ep0_0->iInfo.iSize;
 
-	__KTRACE_OPT(KUSB, Kern::Printf("  Controller activated."));
+    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_ACTIVATEHARDWARECONTROLLER_DUP4, "  Controller activated.");
 	if (UsbConnectionStatus())
 		{
 		if (iDeviceState == EUsbcDeviceStateUndefined)
@@ -3673,10 +3689,10 @@ TInt DUsbClientController::ActivateHardwareController()
 
 void DUsbClientController::DeActivateHardwareController()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DeActivateHardwareController()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_DEACTIVATEHARDWARECONTROLLER, "DUsbClientController::DeActivateHardwareController()" );
 	if (!iHardwareActivated)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  not active -> returning"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_DEACTIVATEHARDWARECONTROLLER_DUP1, "  not active -> returning" );
 		return;
 		}
 	// Deconfigure & disable endpoint zero
@@ -3686,11 +3702,11 @@ void DUsbClientController::DeActivateHardwareController()
 	TInt r = OtgDisableUdc();					  // turn off UDC (OTG flavour)
 	if (r != KErrNone)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: OtgDisableUdc() failed: %d", r));
+	    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_DEACTIVATEHARDWARECONTROLLER_DUP2, "  Error: OtgDisableUdc() failed: %d", r);
 		}
 	StopUdc();
 	iHardwareActivated = EFalse;
-	__KTRACE_OPT(KUSB, Kern::Printf("  Controller deactivated."));
+    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_DEACTIVATEHARDWARECONTROLLER_DUP3, "  Controller deactivated.");
 	if (UsbConnectionStatus())
 		{
 		NextDeviceState(EUsbcDeviceStateAttached);
@@ -3701,17 +3717,18 @@ void DUsbClientController::DeActivateHardwareController()
 
 void DUsbClientController::DeleteInterfaceSet(TInt aIfcSet)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DeleteInterfaceSet(%d)", aIfcSet));
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_DELETEINTERFACESET, "DUsbClientController::DeleteInterfaceSet(%d)", aIfcSet);
+	
 	TUsbcInterfaceSet* const ifcset_ptr = InterfaceNumber2InterfacePointer(aIfcSet);
 	if (!ifcset_ptr)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: invalid interface number: %d", aIfcSet));
+		OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_DELETEINTERFACESET_DUP1, "  Error: invalid interface number: %d", aIfcSet);
 		return;
 		}
 	const TInt idx = iConfigs[0]->iInterfaceSets.Find(ifcset_ptr);
 	if (idx == KErrNotFound)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: interface not found in array"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_DELETEINTERFACESET_DUP2, "  Error: interface not found in array");
 		return;
 		}
 	//Add this mutex to protect the interface set data structure
@@ -3731,16 +3748,17 @@ void DUsbClientController::DeleteInterfaceSet(TInt aIfcSet)
 
 void DUsbClientController::DeleteInterface(TInt aIfcSet, TInt aIfc)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DeleteInterface(%d, %d)", aIfcSet, aIfc));
+	OstTraceDefExt2(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_DELETEINTERFACE, "DUsbClientController::DeleteInterface(%d, %d)", aIfcSet, aIfc);
+	
 	TUsbcInterfaceSet* const ifcset_ptr = InterfaceNumber2InterfacePointer(aIfcSet);
 	if (!ifcset_ptr)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: invalid interface number: %d", aIfcSet));
+		OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_DELETEINTERFACE_DUP1, " Error: invalid interface number: %d", aIfcSet);
 		return;
 		}
 	if (ifcset_ptr->iInterfaces.Count() <= aIfc)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: invalid interface setting: %d", aIfc));
+	    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_DELETEINTERFACE_DUP2, "  Error: invalid interface setting: %d", aIfc);
 		return;
 		}
 	//Add this mutex to protect the interface set data structure
@@ -3754,7 +3772,7 @@ void DUsbClientController::DeleteInterface(TInt aIfcSet, TInt aIfc)
 
 	if (aIfc == ifcset_ptr->iCurrentInterface)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf(" > Warning: deleting current interface setting"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_DELETEINTERFACE_DUP3, " > Warning: deleting current interface setting");
 		ifcset_ptr->iCurrentInterface = 0;
 		}
 	if (NKern::CurrentContext() == EThread)
@@ -3767,8 +3785,9 @@ void DUsbClientController::DeleteInterface(TInt aIfcSet, TInt aIfc)
 
 void DUsbClientController::CancelTransferRequests(TInt aRealEndpoint)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::CancelTransferRequests(aRealEndpoint=%d)",
-									aRealEndpoint));
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CANCELTRANSFERREQUESTS, "DUsbClientController::CancelTransferRequests(aRealEndpoint=%d)",
+                                    aRealEndpoint);
+	
 	const DBase* const clientId = PEndpoint2ClientId(aRealEndpoint);
 	if (EpIdx2Addr(aRealEndpoint) & KUsbEpAddress_In)
 		{
@@ -3784,7 +3803,7 @@ void DUsbClientController::CancelTransferRequests(TInt aRealEndpoint)
 void DUsbClientController::DeleteRequestCallback(const DBase* aClientId, TInt aEndpointNum,
 												 TTransferDirection aTransferDir)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DeleteRequestCallback()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_DELETEREQUESTCALLBACK, "DUsbClientController::DeleteRequestCallback()" );
 	// Ep0 OUT
 	if (aEndpointNum == 0)
 		{
@@ -3797,7 +3816,7 @@ void DUsbClientController::DeleteRequestCallback(const DBase* aClientId, TInt aE
 				{
 				__ASSERT_DEBUG((p->iRealEpNum == 0), Kern::Fault(KUsbPILPanicCat, __LINE__));
 				__ASSERT_DEBUG((p->iTransferDir == EControllerRead), Kern::Fault(KUsbPILPanicCat, __LINE__));
-				__KTRACE_OPT(KUSB, Kern::Printf("  removing RequestCallback @ 0x%x (ep0)", p));
+			    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_DELETEREQUESTCALLBACK_DUP1, "  removing RequestCallback @ 0x%x (ep0)", p);
 				iEp0ReadRequestCallbacks.Remove(*p);
 				}
 			}
@@ -3810,7 +3829,7 @@ void DUsbClientController::DeleteRequestCallback(const DBase* aClientId, TInt aE
 		{
  		__ASSERT_DEBUG((p->Owner() == aClientId), Kern::Fault(KUsbPILPanicCat, __LINE__));
 		__ASSERT_DEBUG((p->iTransferDir == aTransferDir), Kern::Fault(KUsbPILPanicCat, __LINE__));
-		__KTRACE_OPT(KUSB, Kern::Printf("  removing RequestCallback @ 0x%x", p));
+        OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_DELETEREQUESTCALLBACK_DUP2, "  removing RequestCallback @ 0x%x", p);
 		iRequestCallbacks[aEndpointNum] = NULL;
 		}
 	}
@@ -3819,7 +3838,7 @@ void DUsbClientController::DeleteRequestCallback(const DBase* aClientId, TInt aE
 void DUsbClientController::DeleteRequestCallbacks(const DBase* aClientId)
 	{
 	// aClientId being NULL means: delete all requests for *all* clients.
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DeleteRequestCallbacks()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_DELETEREQUESTCALLBACKS, "DUsbClientController::DeleteRequestCallbacks()" );
 	// Ep0 OUT
     const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
 	TSglQueIter<TUsbcRequestCallback> iter(iEp0ReadRequestCallbacks);
@@ -3828,7 +3847,7 @@ void DUsbClientController::DeleteRequestCallbacks(const DBase* aClientId)
 		{
 		if (!aClientId || p->Owner() == aClientId)
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  removing RequestCallback @ 0x%x (ep0)", p));
+			 OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_DELETEREQUESTCALLBACKS_DUP1, "  removing RequestCallback @ 0x%x (ep0)", p);
 			iEp0ReadRequestCallbacks.Remove(*p);
 			}
 		}
@@ -3839,7 +3858,7 @@ void DUsbClientController::DeleteRequestCallbacks(const DBase* aClientId)
 		TUsbcRequestCallback* const p = iRequestCallbacks[i];
 		if (p && (!aClientId || p->Owner() == aClientId))
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  removing RequestCallback @ 0x%x", p));
+	        OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_DELETEREQUESTCALLBACKS_DUP2, "  removing RequestCallback @ 0x%x", p);
 			iRequestCallbacks[i] = NULL;
 			}
 		}
@@ -3848,7 +3867,7 @@ void DUsbClientController::DeleteRequestCallbacks(const DBase* aClientId)
 
 void DUsbClientController::StatusNotify(TUsbcDeviceState aState, const DBase* aClientId)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::StatusNotify()"));
+    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_STATUSNOTIFY, "DUsbClientController::StatusNotify()" );
 
 	// This function may be called by the PSL (via chapter9.cpp) from within an
 	// ISR -- so we have to take care what we do here (and also in all
@@ -3860,7 +3879,7 @@ void DUsbClientController::StatusNotify(TUsbcDeviceState aState, const DBase* aC
 		{
 		if (!aClientId || aClientId == p->Owner())
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  notifying LDD @ 0x%x about %d", p->Owner(), aState));
+		    OstTraceDefExt2(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_STATUSNOTIFY_DUP1, "  notifying LDD @ 0x%x about %d", (TUint)p->Owner(), (TUint)aState);
 			p->SetState(aState);
 			p->DoCallback();
 			}
@@ -3870,7 +3889,7 @@ void DUsbClientController::StatusNotify(TUsbcDeviceState aState, const DBase* aC
 
 void DUsbClientController::EpStatusNotify(TInt aRealEndpoint)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::EpStatusNotify()"));
+    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_EPSTATUSNOTIFY, "DUsbClientController::EpStatusNotify()" );
 
 	// This function may be called by the PSL (via chapter9.cpp) from within an
 	// ISR -- so we have to take care what we do here (and also in all
@@ -3879,7 +3898,7 @@ void DUsbClientController::EpStatusNotify(TInt aRealEndpoint)
 	const DBase* const client_id = PEndpoint2ClientId(aRealEndpoint);
 	if (!client_id)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Client not found for real ep %d", aRealEndpoint));
+	    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_EPSTATUSNOTIFY_DUP1, "  Error: Client not found for real ep %d", aRealEndpoint);
 		return;
 		}
 	// Check if there is a notification request queued for that client (if not, we can return here).
@@ -3894,25 +3913,25 @@ void DUsbClientController::EpStatusNotify(TInt aRealEndpoint)
 		}
 	if (!p)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  No notification request for that client, returning"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_EPSTATUSNOTIFY_DUP2, "  No notification request for that client, returning");
 		return;
 		}
 	const TInt ifcset = ClientId2InterfaceNumber(client_id);
 	if (ifcset < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Ifcset not found for clientid %d", client_id));
+	    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_EPSTATUSNOTIFY_DUP3, "  Error: Ifcset not found for clientid %d", client_id);
 		return;
 		}
 	const TUsbcInterfaceSet* const ifcset_ptr = InterfaceNumber2InterfacePointer(ifcset);
 	if (!ifcset_ptr)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Ifcset pointer not found for ifcset %d", ifcset));
+	    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_EPSTATUSNOTIFY_DUP4, "  Error: Ifcset pointer not found for ifcset %d", ifcset);
 		return;
 		}
 	const TUsbcInterface* const ifc_ptr = ifcset_ptr->CurrentInterface();
 	if (!ifc_ptr)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Current ifc pointer not found for ifcset %d", ifcset));
+	    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_EPSTATUSNOTIFY_DUP5, "  Error: Current ifc pointer not found for ifcset %d", ifcset);
 		return;
 		}
 	TUint state = 0;
@@ -3920,20 +3939,20 @@ void DUsbClientController::EpStatusNotify(TInt aRealEndpoint)
 	for (TInt i = 0; i < eps; i++)
 		{
 		const TUsbcLogicalEndpoint* const ep_ptr = ifc_ptr->iEndpoints[i];
-		__KTRACE_OPT(KUSB, Kern::Printf("  checking logical ep #%d for stall state...",
-										ep_ptr->iLEndpointNum));
+	    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_EPSTATUSNOTIFY_DUP6, "  checking logical ep #%d for stall state...",
+                                        ep_ptr->iLEndpointNum);
 		if (ep_ptr->iPEndpoint->iHalt)
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  -- stalled"));
+			OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_EPSTATUSNOTIFY_DUP7, "  -- stalled");
 			// set the bit n to 1, where n is the logical endpoint number minus one
 			state |= (1 << (ep_ptr->iLEndpointNum - 1));
 			}
 		else
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  -- not stalled"));
+	        OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_EPSTATUSNOTIFY_DUP8, "  -- not stalled");
 			}
 		}
-	__KTRACE_OPT(KUSB, Kern::Printf(" passing ep state 0x%x on to LDD @ 0x%x", state, client_id));
+    OstTraceDefExt2(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_EPSTATUSNOTIFY_DUP9, " passing ep state 0x%x on to LDD @ 0x%x", (TUint)state, (TUint)client_id);
 	p->SetState(state);
 	p->DoCallback();
 	}
@@ -3941,7 +3960,7 @@ void DUsbClientController::EpStatusNotify(TInt aRealEndpoint)
 
 void DUsbClientController::OtgFeaturesNotify()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::OtgFeaturesNotify()"));
+    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_OTGFEATURESNOTIFY, "DUsbClientController::OtgFeaturesNotify()" );
 
 	// This function may be called from the PSL (via PIL's chapter9.cpp) from
 	// within an ISR -- so we have to take care what we do here (and also in
@@ -3959,12 +3978,12 @@ void DUsbClientController::OtgFeaturesNotify()
 
 void DUsbClientController::RunClientCallbacks()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::RunClientCallbacks()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_RUNCLIENTCALLBACKS, "DUsbClientController::RunClientCallbacks()" );
 	TSglQueIter<TUsbcClientCallback> iter(iClientCallbacks);
 	TUsbcClientCallback* p;
 	while ((p = iter++) != NULL)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("Callback 0x%x", p));
+		OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_RUNCLIENTCALLBACKS_DUP1, "Callback 0x%x", p);
 		p->DoCallback();
 		}
 	}
@@ -3972,7 +3991,7 @@ void DUsbClientController::RunClientCallbacks()
 
 void DUsbClientController::ProcessDataTransferDone(TUsbcRequestCallback& aRcb)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessDataTransferDone()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCESSDATATRANSFERDONE, "DUsbClientController::ProcessDataTransferDone()" );
 	// This piece can only be called in thread context from ProcessEp0DataReceived() /
 	// ProcessEp0SetupReceived() via the call to ProcessEp0ReceiveDone() in
 	// SetupReadBuffer(), which is guarded by an interrupt lock.
@@ -3993,7 +4012,7 @@ void DUsbClientController::ProcessDataTransferDone(TUsbcRequestCallback& aRcb)
 	if (ep > 0)												// not 'else'!
 		{
 		__ASSERT_DEBUG((iRequestCallbacks[ep] == &aRcb), Kern::Fault(KUsbPILPanicCat, __LINE__));
-		__KTRACE_OPT(KUSB, Kern::Printf(" > removing RequestCallback[%d] @ 0x%x", ep, &aRcb));
+		OstTraceDefExt2(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSDATATRANSFERDONE_DUP1, " > removing RequestCallback[%d] @ 0x%x", ep, (TUint)&aRcb);
 		iRequestCallbacks[ep] = NULL;
 		}
 	aRcb.DoCallback();
@@ -4002,18 +4021,21 @@ void DUsbClientController::ProcessDataTransferDone(TUsbcRequestCallback& aRcb)
 
 void DUsbClientController::NextDeviceState(TUsbcDeviceState aNextState)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::NextDeviceState()"));
+    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_NEXTDEVICESTATE, "DUsbClientController::NextDeviceState()" );
+    
 #ifdef _DEBUG
+#ifdef OST_TRACE_COMPILER_IN_USE
 	const char* const states[] = {"Undefined", "Attached", "Powered", "Default",
 								  "Address", "Configured", "Suspended"};
+#endif
 	if ((aNextState >= EUsbcDeviceStateUndefined) &&
 		(aNextState <= EUsbcDeviceStateSuspended))
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  next device state: %s", states[aNextState]));
+	    OstTraceDefExt1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_NEXTDEVICESTATE_DUP1, "  next device state: %s", states[aNextState]);
 		}
 	else
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Unknown next device state: %d", aNextState));
+	    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_NEXTDEVICESTATE_DUP2, "  Error: Unknown next device state: %d", aNextState);
 		}
 	// Print a warning when an invalid state transition is detected
 	// 'Undefined' is not a state that is mentioned in the USB spec, but
@@ -4076,12 +4098,12 @@ void DUsbClientController::NextDeviceState(TUsbcDeviceState aNextState)
 			break;
 		goto OK;
 	default:
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Unknown current device state: %d", iDeviceState));
+	    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_NEXTDEVICESTATE_DUP3, "  Error: Unknown current device state: %d", iDeviceState);
 		goto OK;
 		}
 	// KUSB only (instead of KPANIC) so as not to worry people too much where
 	// a particular h/w regularly enforces invalid (but harmless) transitions
-	__KTRACE_OPT(KUSB, Kern::Printf("  Warning: Invalid next state from %s", states[iDeviceState]));
+    OstTraceDefExt1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_NEXTDEVICESTATE_DUP4, "  Warning: Invalid next state from %s", states[iDeviceState]);
 OK:
 #endif // _DEBUG
 
@@ -4092,7 +4114,7 @@ OK:
 
 TInt DUsbClientController::ProcessSuspendEvent()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessSuspendEvent()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCESSSUSPENDEVENT, "DUsbClientController::ProcessSuspendEvent()" );
 	// A suspend interrupt has been received and needs attention.
 	iDeviceStateB4Suspend = iDeviceState;
 	// We have to move to the Suspend state immediately (in case it's a genuine Suspend)
@@ -4116,11 +4138,11 @@ TInt DUsbClientController::ProcessSuspendEvent()
 //
 TInt DUsbClientController::ProcessSuspendEventProceed()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessSuspendEventProceed()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCESSSUSPENDEVENTPROCEED, "DUsbClientController::ProcessSuspendEventProceed()" );
 	if (!UsbConnectionStatus())
 		{
 		// If we are no longer connected to the bus, we go into Undefined state (from Suspend).
-		__KTRACE_OPT(KUSB, Kern::Printf(" > USB cable detached"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSSUSPENDEVENTPROCEED_DUP1, " > USB cable detached" );
 		NextDeviceState(EUsbcDeviceStateUndefined);
 		}
 	return KErrNone;
@@ -4129,7 +4151,7 @@ TInt DUsbClientController::ProcessSuspendEventProceed()
 
 TInt DUsbClientController::ProcessResumeEvent()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessResumeEvent()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCESSRESUMEEVENT, "DUsbClientController::ProcessResumeEvent()" );
 	iCableStatusTimer.Cancel();
 	if (iDeviceState == EUsbcDeviceStateSuspended)
 		{
@@ -4142,7 +4164,7 @@ TInt DUsbClientController::ProcessResumeEvent()
 
 TInt DUsbClientController::ProcessResetEvent(TBool aPslUpcall)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessResetEvent()"));
+    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCESSRESETEVENT, "DUsbClientController::ProcessResetEvent()" );
 
 	if (aPslUpcall)
 		{
@@ -4150,17 +4172,16 @@ TInt DUsbClientController::ProcessResetEvent(TBool aPslUpcall)
 		// Also, do it always, even when PIL processing will be deferred.
 		Reset();
 		}
-
 #ifdef USB_OTG_CLIENT
 	if (iUsbResetDeferred) // implies (iOtgHnpHandledByHw == ETrue)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  User-side (still) not ready -> returning"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSRESETEVENT_DUP1, "  User-side (still) not ready -> returning" );
 		return KErrNone;
 		}
 	else if (iOtgHnpHandledByHw && !iClientSupportReady)
 		{
 		// Wait with the PIL Reset processing until user-side is ready
-		__KTRACE_OPT(KUSB, Kern::Printf("  User-side not ready -> deferring"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSRESETEVENT_DUP2, "  User-side not ready -> deferring" );
 		iUsbResetDeferred = ETrue;
 		return KErrNone;
 		}
@@ -4195,19 +4216,19 @@ TInt DUsbClientController::ProcessResetEvent(TBool aPslUpcall)
 	iHighSpeed = CurrentlyUsingHighSpeed();
 	if (!was_hs && iHighSpeed)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  Moving to High-speed"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSRESETEVENT_DUP3, "  Moving to High-speed" );
 		EnterHighSpeed();
 		}
 	else if (was_hs && !iHighSpeed)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  Moving to Full-speed"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSRESETEVENT_DUP4, "  Moving to Full-speed" );
 		EnterFullSpeed();
 		}
 
 	// Setup initial Ep0 read (SetupEndpointZeroRead never called from thread)
 	if (SetupEndpointZeroRead() != KErrNone)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: while setting up Ep0 read"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSRESETEVENT_DUP5, "  Error: while setting up Ep0 read" );
 		return KErrGeneral;
 		}
 
@@ -4217,9 +4238,10 @@ TInt DUsbClientController::ProcessResetEvent(TBool aPslUpcall)
 
 TInt DUsbClientController::ProcessCableInsertEvent()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessCableInsertEvent()"));
+    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCESSCABLEINSERTEVENT, "DUsbClientController::ProcessCableInsertEvent()" );
+    
 #ifdef USB_OTG_CLIENT
-	__KTRACE_OPT(KPANIC, Kern::Printf("  Error: EUsbEventCableInsert shouldn't be sent by an OTG Client PSL"));
+    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSCABLEINSERTEVENT_DUP1, "  Error: EUsbEventCableInsert shouldn't be sent by an OTG Client PSL" );
 	return KErrArgument;
 #else
 	NextDeviceState(EUsbcDeviceStateAttached);
@@ -4234,9 +4256,9 @@ TInt DUsbClientController::ProcessCableInsertEvent()
 
 TInt DUsbClientController::ProcessCableRemoveEvent()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessCableRemoveEvent()"));
+    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCESSCABLEREMOVEEVENT, "DUsbClientController::ProcessCableRemoveEvent()" );
 #ifdef USB_OTG_CLIENT
-	__KTRACE_OPT(KPANIC, Kern::Printf("  Error: EUsbEventCableRemoved shouldn't be sent by an OTG Client PSL"));
+    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSCABLEREMOVEEVENT_DUP1, "  Error: EUsbEventCableRemoved shouldn't be sent by an OTG Client PSL" );
 	return KErrArgument;
 #else
 	// Tear down the current configuration (if any)
@@ -4249,14 +4271,14 @@ TInt DUsbClientController::ProcessCableRemoveEvent()
 
 void DUsbClientController::EnterFullSpeed()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::EnterFullSpeed()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_ENTERFULLSPEED, "DUsbClientController::EnterFullSpeed()" );
 	iDescriptors.UpdateDescriptorsFs();
 	}
 
 
 void DUsbClientController::EnterHighSpeed()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::EnterHighSpeed()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_ENTERHIGHSPEED, "DUsbClientController::EnterHighSpeed()" );
 	iDescriptors.UpdateDescriptorsHs();
 	}
 
@@ -4266,7 +4288,7 @@ void DUsbClientController::EnterHighSpeed()
 //
 TInt DUsbClientController::EvaluateOtgConnectFlags()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::EvaluateOtgConnectFlags()"));
+    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_EVALUATEOTGCONNECTFLAGS, "DUsbClientController::EvaluateOtgConnectFlags()" );
 
 	TInt r = KErrNone;
 
@@ -4281,7 +4303,7 @@ TInt DUsbClientController::EvaluateOtgConnectFlags()
 	else
 		{
 		// certain h/w: handles HNP connect/disconnect automatically
-		__KTRACE_OPT(KUSB, Kern::Printf("  HNP-handling h/w: only considering user-side readiness"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_EVALUATEOTGCONNECTFLAGS_DUP1, "  HNP-handling h/w: only considering user-side readiness" );
 		enableDPlus = iClientSupportReady;
 		}
 
@@ -4293,7 +4315,7 @@ TInt DUsbClientController::EvaluateOtgConnectFlags()
 	// There has been a changed requirement that must be serviced...
 	if (enableDPlus)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  calling (*iEnablePullUpOnDPlus)()"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_EVALUATEOTGCONNECTFLAGS_DUP2, "  calling (*iEnablePullUpOnDPlus)()" );
 		if (iEnablePullUpOnDPlus != NULL)
 			{
 			iDPlusEnabled = enableDPlus;
@@ -4321,12 +4343,12 @@ TInt DUsbClientController::EvaluateOtgConnectFlags()
 			r = (*iEnablePullUpOnDPlus)(iOtgContext);
 			if (r != KErrNone)
 				{
-				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: iEnablePullUpOnDPlus() = %d", r));
+		        OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_EVALUATEOTGCONNECTFLAGS_DUP3, "  Error: iEnablePullUpOnDPlus() = %d", r);
 				}
 			}
 		else
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  Warning: iEnablePullUpOnDPlus pointer not ready"));
+            OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_EVALUATEOTGCONNECTFLAGS_DUP4, "  Warning: iEnablePullUpOnDPlus pointer not ready");
 			// We cannot enforce the presence of the pointer (via an ASSERT)
 			// since it might only be available at a later point.
 			// We shouldn't return an error at this point either, since the
@@ -4335,19 +4357,19 @@ TInt DUsbClientController::EvaluateOtgConnectFlags()
 		}
 	else
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  calling (*iDisablePullUpOnDPlus)()"));
+        OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_EVALUATEOTGCONNECTFLAGS_DUP5, "  calling (*iDisablePullUpOnDPlus)()");
 		if (iDisablePullUpOnDPlus != NULL)
 			{
 			iDPlusEnabled = enableDPlus;
 			r = (*iDisablePullUpOnDPlus)(iOtgContext);
 			if (r != KErrNone)
 				{
-				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: iDisablePullUpOnDPlus() = %d", r));
+		        OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_EVALUATEOTGCONNECTFLAGS_DUP6, "  Error: iDisablePullUpOnDPlus() = %d", r);
 				}
 			}
 		else
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  Warning: iDisablePullUpOnDPlus pointer not ready"));
+            OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_EVALUATEOTGCONNECTFLAGS_DUP7, "  Warning: iDisablePullUpOnDPlus pointer not ready");
 			// We cannot enforce the presence of the pointer (via an ASSERT)
 			// since it might only be available at a later point.
 			// We shouldn't return an error at this point either, since the
@@ -4363,10 +4385,10 @@ TInt DUsbClientController::EvaluateOtgConnectFlags()
 //
 void DUsbClientController::ReconnectTimerCallback(TAny *aPtr)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ReconnectTimerCallback()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_RECONNECTTIMERCALLBACK, "DUsbClientController::ReconnectTimerCallback()" );
 	if (!aPtr)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: !aPtr"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_RECONNECTTIMERCALLBACK_DUP1, "  Error: !aPtr");
 		return;
 		}
 	DUsbClientController* const ptr = static_cast<DUsbClientController*>(aPtr);
@@ -4379,10 +4401,10 @@ void DUsbClientController::ReconnectTimerCallback(TAny *aPtr)
 //
 void DUsbClientController::CableStatusTimerCallback(TAny *aPtr)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::CableStatusTimerCallback()"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_CABLESTATUSTIMERCALLBACK, "DUsbClientController::CableStatusTimerCallback()" );
 	if (!aPtr)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: !aPtr"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_CABLESTATUSTIMERCALLBACK_DUP1, "  Error: !aPtr" );
 		return;
 		}
 	DUsbClientController* const ptr = static_cast<DUsbClientController*>(aPtr);
@@ -4395,10 +4417,10 @@ void DUsbClientController::CableStatusTimerCallback(TAny *aPtr)
 //
 void DUsbClientController::PowerUpDfc(TAny* aPtr)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::PowerUpDfc"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_POWERUPDFC, "DUsbClientController::PowerUpDfc" );
 	if (!aPtr)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("	 Error: !aPtr"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_POWERUPDFC_DUP1, "   Error: !aPtr" );
 		return;
 		}
 	DUsbClientController* const ptr = static_cast<DUsbClientController*>(aPtr);
@@ -4414,10 +4436,10 @@ void DUsbClientController::PowerUpDfc(TAny* aPtr)
 //
 void DUsbClientController::PowerDownDfc(TAny* aPtr)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::PowerDownDfc"));
+	OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_POWERDOWNDFC, "DUsbClientController::PowerDownDfc" );
 	if (!aPtr)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("	 Error: !aPtr"));
+		OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_POWERDOWNDFC_DUP1, "    Error: !aPtr" );
 		return;
 		}
 	DUsbClientController* const ptr = static_cast<DUsbClientController*>(aPtr);
@@ -4427,13 +4449,13 @@ void DUsbClientController::PowerDownDfc(TAny* aPtr)
 	if (!ptr->iHardwareActivated || ptr->PowerDownWhenActive())
 		{
 		(void) ptr->PowerDown();
-		__KTRACE_OPT(KUSB, Kern::Printf("Calling PowerHandler->PowerDownDone()"));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_POWERDOWNDFC_DUP2, "Calling PowerHandler->PowerDownDone()" );
 		ptr->iPowerHandler->PowerDownDone();
 		}
 	else
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("Not calling PowerHandler->PowerDownDone()"));
-		__KTRACE_OPT(KUSB, Kern::Printf("  because UDC is active."));
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_POWERDOWNDFC_DUP3, "Not calling PowerHandler->PowerDownDone()" );
+	    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_POWERDOWNDFC_DUP4, "  because UDC is active." );
 		}
 	}
 

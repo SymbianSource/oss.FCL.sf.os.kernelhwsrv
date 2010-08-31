@@ -28,6 +28,8 @@
 #include <f32dbg.h>
 #include "t_server.h"
 #include <e32twin.h>
+#include <hal.h>
+#include "tf32testtimer.h"
 
 const TInt KTotalCacheSize = 32 * 1024 * 1024;
 const TInt KDefaultCacheSize = (128 + 12) * 1024; 	// This size is the default configuration size
@@ -89,7 +91,6 @@ const TInt KOneK = 1024;
 const TInt KOneMeg = KOneK * 1024;
 const TInt KBlockSize = KOneK;
 const TInt KWaitRequestsTableSize = 256;
-const TInt KMs = 1000; 
 
 TInt gSecondFileSize = 0; 
 TInt gFirstFileSize = 0;
@@ -102,9 +103,6 @@ TBuf16<25> gSecondFile;
 TBuf16<25> gCurrentFile;
 
 TInt gNextFile = 0;
-TTime gTime1;
-TTime gTime2;
-
 
 // Concurrent Threads
 RThread gThread1;
@@ -513,25 +511,22 @@ TInt ReadFileAsync(RFs& aFs,RFile& aFileRead, TDes16& aFile, TInt aFileSize, TIn
 	
 	@return time taken to perform the operation in uS
 */
-TInt WriteTestFile(RFile& aFile, TDes16& aFileName, TInt aSize, TInt aBlockSize, TInt aMode) 
+TTimeIntervalMicroSeconds WriteTestFile(RFile& aFile, TDes16& aFileName, TInt aSize, TInt aBlockSize, TInt aMode) 
 	{
 	RTest test(_L("T_WCACHE"));
 
-	TTime startTime;
-	TTime endTime;
 	TInt r = 0;
-	
-	startTime.HomeTime();
+
+    TF32TestTimer timer;
+	timer.Start();
 	
 	r = WriteFile(gTheFs,aFile, aFileName , aSize * KOneK, aBlockSize, gBufWritePtr, aMode);
 	test_KErrNone(r);
-	
-	endTime.HomeTime();
-	
-	gTimeTakenBigFile = I64LOW(endTime.MicroSecondsFrom(startTime).Int64());
-	
+
+	timer.Stop();	
+	gTimeTakenBigFile = timer.Time();
 	test.Close();
-	return I64LOW(gTimeTakenBigFile.Int64());
+	return timer.Time();        
 	}
 
 /** Measure the time taken for this file to be read synchronously
@@ -545,18 +540,16 @@ TInt WriteTestFile(RFile& aFile, TDes16& aFileName, TInt aSize, TInt aBlockSize,
 	@return time taken to perform the operation in uS
 
 */
-TInt ReadTestFile(RFile& aFile, TDes16& aFileName, TInt aSize, TInt aBlockSize, TInt aMode) 
+TTimeIntervalMicroSeconds ReadTestFile(RFile& aFile, TDes16& aFileName, TInt aSize, TInt aBlockSize, TInt aMode) 
 	{
-	TTime startTime;
-	TTime endTime;
-	
-	startTime.HomeTime();
+    TF32TestTimer timer;
+	timer.Start();
 	ReadFile(gTheFs,aFile, aFileName, aSize * KOneK, aBlockSize, aMode);
-	endTime.HomeTime();
+	timer.Stop();
 	
-	gTimeTakenBigFile = I64LOW(endTime.MicroSecondsFrom(startTime).Int64());
-	
-	return I64LOW(gTimeTakenBigFile.Int64()) ;
+	gTimeTakenBigFile = timer.Time();
+        	
+	return timer.Time();
 	}
 
 /** Read asynchronously the test file from the disc
@@ -569,22 +562,19 @@ TInt ReadTestFile(RFile& aFile, TDes16& aFileName, TInt aSize, TInt aBlockSize, 
 
 	@return time taken to perform the operation in uS
 */
-TInt ReadAsyncTestFile(RFile& file, TDes16& aFile, TInt aSize, TInt aBlockSize, TInt aMode) 
+TTimeIntervalMicroSeconds ReadAsyncTestFile(RFile& file, TDes16& aFile, TInt aSize, TInt aBlockSize, TInt aMode) 
 	{
-	TTime startTime;
-	TTime endTime;
 	TRequestStatus status[KWaitRequestsTableSize];
-	
-	startTime.HomeTime();
+    TF32TestTimer timer;
+	timer.Start();
 	
 	ReadFileAsync(gTheFs, file, aFile, aSize * KOneK, aBlockSize, status, aMode);
 	WaitForAll(status,  (aSize * KOneK)/KBlockSize);
+	timer.Stop();	
+		
+	gTimeTakenBigFile = timer.Time();
 	
-	endTime.HomeTime();
-	
-	gTimeTakenBigFile = I64LOW(endTime.MicroSecondsFrom(startTime).Int64());
-	
-	return I64LOW(gTimeTakenBigFile.Int64());
+	return timer.Time();
 	}
 
 /** Read asynchronously the test file from the disc
@@ -596,22 +586,19 @@ TInt ReadAsyncTestFile(RFile& file, TDes16& aFile, TInt aSize, TInt aBlockSize, 
 
 	@return time taken to perform the operation in uS
 */
-TInt WriteAsyncTestFile(RFile& aFile, TDes16& aFileName, TInt aSize, TInt aMode) 
+TTimeIntervalMicroSeconds WriteAsyncTestFile(RFile& aFile, TDes16& aFileName, TInt aSize, TInt aMode) 
 	{
-	TTime startTime;
-	TTime endTime;
 	TRequestStatus status[KWaitRequestsTableSize];
-	
-	startTime.HomeTime();
+    TF32TestTimer timer;
+    timer.Start();
 	
 	WriteFileAsync(gTheFs, aFile, aFileName, aSize * KOneK, aMode, status );
 	WaitForAll(status, (aSize * KOneK)/KBlockSize);
+	timer.Stop();	
 	
-	endTime.HomeTime();
+	gTimeTakenBigFile = timer.Time();
 	
-	gTimeTakenBigFile = I64LOW(endTime.MicroSecondsFrom(startTime).Int64());
-	
-	return I64LOW(gTimeTakenBigFile.Int64());
+	return timer.Time();
 	}
 
 /**  Test Boundaries
@@ -621,9 +608,9 @@ TInt WriteAsyncTestFile(RFile& aFile, TDes16& aFileName, TInt aSize, TInt aMode)
 void TestBoundaries()
 	{
 	TInt r = 0;
-	TInt time = 0;
-	TInt rtime = 0;
-	TInt tcreate = 0;
+	TTimeIntervalMicroSeconds time = 0;
+	TTimeIntervalMicroSeconds rtime = 0;
+	TTimeIntervalMicroSeconds tcreate = 0;
 	RFile fileWriter;
 	RFile fileWriter2;
 	RFile fileReader;
@@ -641,21 +628,22 @@ void TestBoundaries()
 		test.Printf(_L("\nSync: Write from 1 K to %d K \n"), i); 
 
 		tcreate = WriteTestFile(fileWriter, gSecondFile, i, KBlockSize, EFileShareAny|EFileWrite|EFileWriteDirectIO);
-		test.Printf(_L("Time to write %d K without caching: %d mS\n"), i, tcreate/KMs);	
+		test.Printf(_L("Time to write %d K without caching: %d mS\n"), i, TF32TestTimer::TimeInMilliSeconds(tcreate));	
 		fileWriter.Close();
 
 		time =  WriteTestFile(fileWriter2, gFirstFile, i, KBlockSize, EFileShareAny|EFileWrite|EFileWriteBuffered);
-		test.Printf(_L("Time to write %d K WITH caching: %d mS\n"), i, time/KMs);
+		test.Printf(_L("Time to write %d K WITH caching: %d mS\n"), i, TF32TestTimer::TimeInMilliSeconds(time));
 
 		rtime = ReadTestFile(fileReader, gFirstFile, i, KBlockSize, EFileShareAny|EFileRead|EFileReadBuffered);
-		test.Printf(_L("Time to read %d K from the cache: %d mS\n"), i, rtime/KMs);
-
+		test.Printf(_L("Time to read %d K from the cache: %d mS\n"), i, TF32TestTimer::TimeInMilliSeconds(rtime));
 
 		fileReader.Close();	
 		fileWriter2.Close();
 		
 		#if !defined(__WINS__)
-			test((tcreate > time) || (tcreate > rtime)); 
+            test(tcreate > TTimeIntervalMicroSeconds(0));  // test measured time is correct
+			test(tcreate > time);
+            test(tcreate > rtime); 
 		#endif
 
 		r = gTheFs.Delete(gFirstFile);
@@ -676,21 +664,23 @@ void TestBoundaries()
 		test.Printf(_L("\nAsync: Write from 1 K to %d K \n"), i); 
 
 		tcreate = WriteAsyncTestFile(fileWriter, gSecondFile, i, EFileShareAny|EFileWrite|EFileWriteDirectIO);
-		test.Printf(_L("Time to write %d K without caching: %d mS\n"), i, tcreate/KMs);	
+		test.Printf(_L("Time to write %d K without caching: %d mS\n"), i, TF32TestTimer::TimeInMilliSeconds(tcreate));
 		fileWriter.Close();
 
 		time =  WriteAsyncTestFile(fileWriter2, gFirstFile, i,EFileShareAny|EFileWrite|EFileWriteBuffered);
-		test.Printf(_L("Time to write %d K WITH caching: %d mS\n"), i, time/KMs);
+		test.Printf(_L("Time to write %d K WITH caching: %d mS\n"), i, TF32TestTimer::TimeInMilliSeconds(time));
 
 
 		rtime = ReadAsyncTestFile(fileReader, gFirstFile, i, KBlockSize, EFileShareAny|EFileRead|EFileReadBuffered);
-		test.Printf(_L("Time to read %d K from the cache: %d mS\n"), i, rtime/KMs);
+		test.Printf(_L("Time to read %d K from the cache: %d mS\n"), i, TF32TestTimer::TimeInMilliSeconds(rtime));
 
 		fileReader.Close();	
 		fileWriter2.Close();
 		
 		#if !defined(__WINS__)
-			test((tcreate > time) || (tcreate > rtime));  
+            test(tcreate > TTimeIntervalMicroSeconds(0));  // test measured time is correct
+			test(tcreate > time);
+            test(tcreate > rtime);
 		#endif
 
 		r = gTheFs.Delete(gFirstFile);
@@ -749,17 +739,16 @@ void TestNegative()
 	
 	@return returns the time that took to do the verification in mS, fails if the file is not corrupted/modified
 */
-TInt ReadTestFileVerif(TDes16& aFile)
+TTimeIntervalMicroSeconds ReadTestFileVerif(TDes16& aFile)
 	{
-	TTime startTime;
-	TTime endTime;
 	TInt r = 0;
 	TInt size = 0;
 	RFile fileRead;
 	TInt corrupt = 0;
 	TBool isFat=IsFSFAT(gTheFs,gDrive);
-	
-	startTime.HomeTime();
+
+    TF32TestTimer timer;
+	timer.Start();
 	
 	r = fileRead.Open(gTheFs,aFile,EFileShareAny|EFileRead|EFileReadBuffered|EFileReadAheadOff);
 	test_KErrNone(r);
@@ -791,12 +780,11 @@ TInt ReadTestFileVerif(TDes16& aFile)
 	fileRead.Close();
 	
 	test(corrupt>0); // Ensure the cache returns the changed content 
+	timer.Stop();	
 	
-	endTime.HomeTime();
+	gTimeTakenBigFile = timer.Time();
 	
-	gTimeTakenBigFile = I64LOW(endTime.MicroSecondsFrom(startTime).Int64());
-	
-	return I64LOW(gTimeTakenBigFile.Int64()) / KMs;
+	return timer.Time();
 	}
 
 /**  Modifies the second file
@@ -810,7 +798,7 @@ LOCAL_C TInt CorruptSecondFile()
 	TPtr8 dummyPtr(NULL, 0);	
 
 	TRAPD(res,dummy = HBufC8::NewL(4));
-	test(res == KErrNone && dummy != NULL);
+	test_Value(res, res == KErrNone && dummy != NULL);
 		
 	dummyPtr.Set(dummy->Des());
 	FillBuffer(dummyPtr, 4, '1');
@@ -840,8 +828,8 @@ LOCAL_C TInt CorruptSecondFile()
 LOCAL_C void TestIntegrity()
 	{
 	TInt r = 0;
-	TInt time;
-	TInt tcreate = 0;
+	TTimeIntervalMicroSeconds time;
+	TTimeIntervalMicroSeconds tcreate = 0;
 	RFile file;
 	
 	// Modify file in some position 
@@ -850,14 +838,14 @@ LOCAL_C void TestIntegrity()
 	test.Printf(_L("\nSync: Write from 1 K to %d K \n"), 255); 
 
 	tcreate = WriteTestFile(file, gSecondFile, 255, KBlockSize, EFileShareAny|EFileWrite|EFileWriteBuffered);
-	test.Printf(_L("Time to write %d K with caching: %d mS\n"), 255, tcreate/KMs);	
+	test.Printf(_L("Time to write %d K with caching: %d mS\n"), 255, TF32TestTimer::TimeInMilliSeconds(tcreate));	
 	file.Close();
 
 	test.Printf(_L("Mess the content that is still in the cache\n"));
 	CorruptSecondFile(); 
 	
 	time = ReadTestFileVerif(gSecondFile);	
-	test.Printf(_L("Time taken to verify: %d\n"),time);
+	test.Printf(_L("Time taken to verify: %ld\n"),time.Int64());
 	
 	test.Printf(_L("Integrity verified\n"));
 
@@ -893,7 +881,7 @@ TInt CreateFilesThread(TAny *)
 	TInt KBigBifferSize = 32 * KOneK;
 	
 	TRAPD(res,bigBuf = HBufC8::NewL(KBigBifferSize));
-	test(res == KErrNone && bigBuf != NULL);
+	test_Value(res, res == KErrNone && bigBuf != NULL);
 		
 	TPtr8 bigBufWritePtr(NULL, 0);	
 	bigBufWritePtr.Set(bigBuf->Des());
@@ -959,7 +947,7 @@ void CreateFiles(TInt aFiles, TInt aFileSize)
 	HBufC8* bigBuf = NULL;
 	const TInt KBigBifferSize = 32 * 1024;
 	TRAPD(res,bigBuf = HBufC8::NewL(KBigBifferSize));
-	test(res == KErrNone && bigBuf != NULL);
+	test_Value(res, res == KErrNone && bigBuf != NULL);
 		
 	TPtr8 bigBufWritePtr(NULL, 0);	
 	bigBufWritePtr.Set(bigBuf->Des());
@@ -1016,7 +1004,7 @@ void FillCache(RFile aFile[KFilesNeededToFillCache], TInt aFiles, TInt aFileSize
 	TPtr8 bufPtr(NULL, 0);	
 	
 	TRAPD(res,buf = HBufC8::NewL(2));
-	test(res == KErrNone && buf != NULL);
+	test_Value(res, res == KErrNone && buf != NULL);
 	bufPtr.Set(buf->Des());
 	
 	directory = gSessionPath;
@@ -1178,7 +1166,7 @@ void TestFillCacheNegative()
 */
 void TestRemoval()
 	{	
-	TInt time = 0, rtime = 0;
+	TTimeIntervalMicroSeconds time = 0, rtime = 0;
 	RFile file1, file2;
 	
 		 	
@@ -1214,7 +1202,7 @@ void TestRemoval()
 
 
 	TRAPD(res,gBuf = HBufC8::NewL(KBlockSize+1));
-	test(res == KErrNone && gBuf != NULL);
+	test_Value(res, res == KErrNone && gBuf != NULL);
 		
 	gBufWritePtr.Set(gBuf->Des());
 	FillBuffer(gBufWritePtr, KBlockSize, 'A');
@@ -1227,7 +1215,7 @@ void TestRemoval()
 	test.Printf(_L("\nSync: Write from 1 K to 254 K \n")); 
 
 	time =  WriteTestFile(file1, gSecondFile, KMinSize, KBlockSize, EFileShareAny|EFileWrite|EFileWriteBuffered);
-	test.Printf(_L("Time to write %d K WITH caching: %d mS\n"), KMinSize, time/KMs);
+	test.Printf(_L("Time to write %d K WITH caching: %d mS\n"), KMinSize, TF32TestTimer::TimeInMilliSeconds(time));
 	test.Printf(_L("Remove MMC card,! and then press a key\n"));
 	test.Getch();
 
@@ -1235,7 +1223,7 @@ void TestRemoval()
 	test.Getch();
 
 	rtime = ReadTestFile(file2, gSecondFile, KMinSize, KBlockSize, EFileShareAny|EFileRead|EFileReadBuffered);
-	test.Printf(_L("Time to read %d K from the cache: %d mS\n"), KMinSize, rtime/KMs);
+	test.Printf(_L("Time to read %d K from the cache: %d mS\n"), KMinSize, TF32TestTimer::TimeInMilliSeconds(rtime));
 
 	test.Printf(_L("Remove MMC card! and then press a key\n"));
 	test.Getch();
@@ -1247,7 +1235,7 @@ void TestRemoval()
 	test.Printf(_L("\nSync: Write from 1 K to 255 K \n")); 
 
 	time =  WriteTestFile(file1, gFirstFile, KMinSize + 1 , KBlockSize, EFileShareAny|EFileWrite|EFileWriteBuffered);
-	test.Printf(_L("Time to write %d K WITH caching: %d mS\n"), KMinSize + 1, time/KMs);
+	test.Printf(_L("Time to write %d K WITH caching: %d mS\n"), KMinSize + 1, TF32TestTimer::TimeInMilliSeconds(time));
 	test.Printf(_L("Remove MMC card and delete the file //F32-TST//FFFFFFF0.TXT and then press a key\n"));
 	test.Getch();
 
@@ -1255,7 +1243,7 @@ void TestRemoval()
 	test.Getch();
 
 	rtime = ReadTestFile(file2, gFirstFile, KMinSize + 1, KBlockSize, EFileShareAny|EFileRead|EFileReadBuffered);
-	test.Printf(_L("Time to read %d K from the cache: %d mS\n"), KMinSize + 1, rtime/KMs);
+	test.Printf(_L("Time to read %d K from the cache: %d mS\n"), KMinSize + 1, TF32TestTimer::TimeInMilliSeconds(rtime));
 
 	test.Printf(_L("Remove MMC card! and then press a key\n"));
 	test.Getch();
@@ -1299,7 +1287,7 @@ void CallTestsL()
 
 
 	TRAPD(res,gBuf = HBufC8::NewL(KBlockSize+1));
-	test(res == KErrNone && gBuf != NULL);
+	test_Value(res, res == KErrNone && gBuf != NULL);
 		
 	gBufWritePtr.Set(gBuf->Des());
 	FillBuffer(gBufWritePtr, KBlockSize, 'A');
@@ -1367,10 +1355,8 @@ TBool CheckForDiskSize()
 	TVolumeInfo volInfo;
 	TInt r = gTheFs.Volume(volInfo, gDrive);
 	test_KErrNone(r);
-	gMediaSize = volInfo.iSize;
-	
-	test.Printf(_L("\nMedia size: %d MB\n"), gMediaSize/KOneMeg  );
-	
+	gMediaSize = volInfo.iFree;	
+	test.Printf(_L("\nMedia free space: %d MB\n"), gMediaSize/KOneMeg);
 	return ETrue;
 	}
 

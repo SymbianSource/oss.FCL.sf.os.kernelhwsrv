@@ -126,14 +126,14 @@ public:
 
 // CTestServer functions
 
-CTestServer::CTestServer(TInt aPriority) 
+EXPORT_C CTestServer::CTestServer(TInt aPriority) 
 //
 // Constructor - sets name
 //
 	: CServer2(aPriority)
 	{}
 
-CSession2* CTestServer::NewSessionL(const TVersion& aVersion,const RMessage2& /*aMessage*/) const
+EXPORT_C CSession2* CTestServer::NewSessionL(const TVersion& aVersion,const RMessage2& /*aMessage*/) const
 //
 // Virtual fn - checks version supported and creates a CTestSession
 //
@@ -284,7 +284,7 @@ TInt CTestSession::TestRMessagePtr2LeavingInterface(const RMessage2& aMessage)
 	return KErrNone;
 	}
 
-void CTestSession::ServiceL(const RMessage2& aMessage)
+EXPORT_C void CTestSession::ServiceL(const RMessage2& aMessage)
 //
 // Virtual message-handler
 //

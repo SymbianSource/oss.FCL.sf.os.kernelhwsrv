@@ -1,0 +1,304 @@
+// Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL " http://www.eclipse.org/legal/epl-v10.html ".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// os\kernelhwsrv\kernel\eka\drivers\power\smpidlehelper.cpp
+// Impelentation of helper classes required to implement CPU idle
+// functionality in a SMP BSP.
+
+/**
+ @file
+ @prototype
+*/
+
+
+
+#ifdef __SMP__
+
+
+#include <smppower/idlehelper.h>
+
+
+#ifndef DISABLE_TRACE
+
+extern "C" void btrace_printfn(const TAny *aPtr,const TInt regNum)
+    {
+    PMBTRACE4(KPrintReg,regNum,aPtr);
+    }
+
+extern "C" void btrace_printfnId(const TAny *aPtr,const TInt regNum, TUint aId)
+    {
+    PMBTRACE8(KPrintReg,0xffu,regNum,aPtr);
+    }
+
+#define PRINTREG(Rn)                 \
+        asm("stmfd sp!,{r0-r12,lr}"); \
+        asm("mov r0,r"#Rn); \
+        asm("mov r1,#"#Rn); \
+        asm("bl btrace_printfn"); \
+        asm("ldmfd sp!,{r0-r12,lr}"); 
+
+#define PRINTREGID(Rn,n)               \
+        asm("stmfd sp!,{r0-r12,lr}"); \
+        asm("mov r0,r"#Rn); \
+        asm("mov r1,#"#Rn); \
+        asm("mov r2,#"#n); \
+        asm("bl btrace_printfnId"); \
+        asm("ldmfd sp!,{r0-r12,lr}"); 
+
+
+#else
+#define PRINTREG(Rn)
+#define PRINTREGID(Rn,n)
+#endif
+
+
+/**
+   Atomically does the following:
+     sets the current cpu idle mask bit to indicate current core wants to idle
+     if all enaged cores have set their bit the flag KGlobalIdleFlag is also 
+     orred into the idle mask to indicate all cores are going down. In this case
+     the function returned true. False otherwise
+
+   aCMask- Bit mask with only current CPU bit set
+   Normal Usage:use in idle handler before waiting for all cores down IPI
+   
+   @pre 
+ */		
+	
+__NAKED__ TBool TIdleSupport::SetLocalAndCheckSetGlobalIdle(TUint32 /*aCpuMask*/)
+    {
+	asm("ldr    r1,__iAllEngagedCpusMask");                           //r1 = address of iAllEngagedCpusMask
+	asm("ldr	r2, [r1]");                                           //r2 = iAllEngagedCpusMask
+    asm("add    r1,r1,#4");                                           //r1 = address of iIdlingCpus 
+    __DATA_MEMORY_BARRIER_Z__(r12);   
+    asm("1: ");
+	LDREX(3,1);                                                       // r3 = iIdlingCpus
+    asm("orr    r3,r0,r3");                                           // orr in mask for this CPU
+    asm("cmp    r3,r2");                                              // compare to iAllEngagedCpusMask
+    asm("orreq  r3,r3,#%a0" : : "i" ((TInt)TIdleSupport::KGlobalIdleFlag)); // if equal orr in KGlobalIdleFlag
+    STREX(12,3,1);
+    asm("cmp    r12, #0 ");                                              // 
+	asm("bne    1b ");                                                   // write didn't succeed try again
+    __DATA_MEMORY_BARRIER__(r12);
+    asm("and    r0,r3,#%a0" : : "i" ((TInt)TIdleSupport::KGlobalIdleFlag));
+	__JUMP(,lr);
+    asm("__iAllEngagedCpusMask:");
+    asm(".word %a0" : : "i" ((TInt)&TIdleSupport::iAllEngagedCpusMask));//
+    }
+
+/** 
+
+Wait for all CPUs to reach the sync point. A CPU will only exit this function when all other CPUs
+have reached it. 
+
+Works like this:
+
+cpuMask = 1 << NKern::CurrentCpu()
+BEGIN_ATOMIC
+    stage = iStageAndCPUWaitingMask >> 16
+    waitingCpus = iStageAndCPUWaitingMask&iAllCpusMask
+    oldstage = stage;
+    if (waitingCpus == iAllCpusMask) // we synched already and this is new 
+             waitingCpus = 0;
+     waitingCpus |= cpuMask
+     if (waitingCpus == iAllCpusMask) stage++
+     iStageAndCPUWaitingMask = (stage << 16) | waitingCpus
+END_ATOMIC
+FOREVER 
+   if (oldstage!=stage) return
+   stage = iStageAndCPUWaitingMask >> 16 // reread stage
+END_FOREVER   
+
+*/
+__NAKED__ void TSyncPoint::DoSW(TUint32 /*aCpuMask*/)
+    {
+    asm("stmfd sp!, {r4-r5,lr} ");	
+    asm("add r0,r0,#%a0" : : "i"  _FOFF(TSyncPointBase, iStageAndCPUWaitingMask)); // skip vt
+    asm("ldr r4,[r0,#4]"); 
+    asm("ldr r4,[r4]");
+   __DATA_MEMORY_BARRIER_Z__(r12);          // 
+    asm("1: ");
+	LDREX(2,0);                             // r2 =  iStageAndCPUWaitingMask, r4 = iAllEnagedCpusMask
+    asm("mov r5,r2,lsr #16");               // r5 has old staging value
+    asm("and r2,r2,r4");                    // r2 has currently waiting cpus
+    asm("cmp r2,r4");                       // if r2 == r4 then we previously have had all cpus synched 
+    asm("moveq r2,#0");                     // reset 
+    asm("orr r2, r2, r1");                  // orr mask for this CPU 
+    asm("mov r3,r5");                       // r3 will have new stage
+    asm("cmp r2,r4");                       // if r2 == r4 then all cpus have set
+    asm("addeq r3,r3,#1");                  // increment new stage count
+    asm("orr r2,r2,r3, lsl #16");          
+	STREX(12,2,0);                           // try to atomically iStageAndCPUWaitingMask
+	asm("cmp r12, #0 ");
+	asm("bne 1b ");                         // write didn't succeed try again
+    __DATA_MEMORY_BARRIER__(r12);          // ensure that's written
+#ifdef SYNCPOINT_WFE	
+	asm("ands r2,r2,r4");
+    asm("cmp r2,r4");                       // if r2 == r4 then all cpus have set      			
+	ARM_SEVcc(CC_EQ);
+#endif		
+    asm("2: ");
+    asm("cmp r3,r5");                       // all (old stage does not equal new stage)
+    asm("ldmnefd sp!, {r4-r5,pc}");         // yup return
+#ifdef SYNCPOINT_WFE		
+	__DATA_MEMORY_BARRIER__(r12);        
+	ARM_WFE;
+#endif	
+    asm("ldr r2,[r0]");                     // otherwise re read iWaitingCpusMask into r5
+    __DATA_MEMORY_BARRIER__(r12);           // ensure read is observed
+    asm("mov r3,r2,lsr #16");               // re-read new stage
+    asm("b 2b");                            // loop back
+    }
+
+/** 
+
+Wait for all CPUs to reach the sync point. A CPU will only exit this function when all other CPUs
+have reached it or if another CPU has called the Break function. An attempt to wait on a broken
+syncpoint will return immediately.
+
+Works like this:
+
+cpuMask = 1 << NKern::CurrentCpu()
+BEGIN_ATOMIC
+     waitingCpus = iStageAndCPUWaitingMask&iAllEnagedCpusMask
+     if (iStageAndCPUWaitingMask & 0x80000000) // sync point is broken
+        END_ATOMIC and return
+
+     waitingCpus |= cpuMask
+     if (waitingCpus == iAllEnagedCpusMask) waitingCpus |= 0x80000000
+     iStageAndCPUWaitingMask = waitingCpus
+END_ATOMIC
+FOREVER 
+     if (iStageAndCPUWaitingMask&0x80000000) break
+END_FOREVER   
+
+*/
+__NAKED__ void TBreakableSyncPoint::DoSW(TUint32 /*aCpuMask*/)
+    {
+    asm("stmfd sp!, {r4,lr} ");	
+    asm("add r0,r0,#%a0" : : "i"  _FOFF(TSyncPointBase, iStageAndCPUWaitingMask)); // skip vt
+    asm("ldr r4,[r0,#4]");
+    asm("ldr r4,[r4]");
+    __DATA_MEMORY_BARRIER_Z__(r12);          // 
+    asm("1: ");
+	LDREX(2,0);                             // r2 =  iStageAndCPUWaitingMask, r4 = iAllEnagedCpusMask
+    asm("ands r3,r2,#0x80000000");          // 
+    asm("bne 3f");                          // sync point broken so return
+    asm("and r2,r2,r4");                    // r2 has currently waiting cpus
+    asm("orr r2, r2, r1");                  // orr mask for this CPU 
+    asm("cmp r2,r4");                       // if r2 == r4 then all cpus have set
+    asm("orreq r2,r2,#0x80000000");         // set MSB
+	STREX(12,2,0);                          // try to atomically iStageAndCPUWaitingMask
+	asm("cmp r12, #0 ");
+	asm("bne 1b ");                         // write didn't succeed try again		
+    __DATA_MEMORY_BARRIER__(r12);           // ensure that's written
+#ifdef SYNCPOINT_WFE	
+	asm("ands r3,r2,#0x80000000");          // MSB set?
+	ARM_SEVcc(CC_NE);
+#endif		
+    asm("2: ");
+    asm("ands r3,r2,#0x80000000");          // MSB set?	
+    asm("ldmnefd sp!, {r4,pc}");            // yup return
+#ifdef SYNCPOINT_WFE		
+	__DATA_MEMORY_BARRIER__(r12);
+	ARM_WFE;
+#endif	
+    asm("ldr r2,[r0]");                     // otherwise re read iWaitingCpusMask into r5
+    //__DATA_MEMORY_BARRIER_Z__(r12);        // ensure read is observed
+    asm("b 2b");                            // loop back
+    asm("3:");
+    CLREX;
+#ifdef SYNCPOINT_WFE	 
+    __DATA_MEMORY_BARRIER__(r12);           // ensure that's written
+	ARM_SEV;
+#endif	
+    asm("ldmfd sp!, {r4,pc}");            // yup return
+    }
+	
+	
+#ifdef PROPER_WFI
+__NAKED__ void TIdleSupport::DoWFI()
+    {
+    __DATA_SYNC_BARRIER_Z__(r12);  // generally good idea to a barrier before WFI            
+    ARM_WFI;
+	__JUMP(,lr);
+    }
+#else
+void TIdleSupport::DoWFI()
+    {
+    TInt c=NKern::CurrentCpu();
+    FOREVER
+        {
+        TInt isr = Pending();
+        if (isr!=1023) 
+            {
+            BTRACE0(KIsrPendingCat,isr&0xff);
+            break;
+            }
+        }
+    }
+#endif
+
+__NAKED__ void TIdleSupport::DoIdleIPI(TUint32 /*aMask*/) 
+    {
+	//r0 = cpu mask
+    asm("ldr    r2,__EnagedCpusMask");  // only IPI enaged cores r2 has enaged core mask addr
+    asm("ldr    r2,[r2]");   
+    asm("and    r0,r0,r2");            // and out retired cores
+    asm("ldr	r1,__KGICAddr");//r1 = address off iGlobalIntDistAddress
+    asm("ldr	r1, [r1]");//r1 = address of Hw GIC interrupt dispatcher base			
+    __DATA_SYNC_BARRIER_Z__(r12);			// need DSB before sending any IPI
+    asm("movs	r0, r0, lsl #16 ");		// CPU mask into bits 16-23 - any bits set in aMask?
+    asm("orrne	r0, r0, #%a0" : : "i" ((TInt) IDLE_WAKEUP_IPI_VECTOR));
+    asm("strne	r0, [r1, #%a0]" : : "i" _FOFF(GicDistributor, iSoftIrq));	// trigger IPIs if any
+    __JUMP(,lr);
+    asm("__KGICAddr:");
+    asm(".word %a0" : : "i" ((TInt)&TIdleSupport::iGlobalIntDistAddress));
+    asm("__EnagedCpusMask:");
+    asm(".word %a0" : : "i" ((TInt)&TIdleSupport::iAllEngagedCpusMask));
+    }
+
+#ifdef _DEBUG
+__NAKED__  TInt TIdleSupport::DoClearIdleIPI()
+#else
+__NAKED__  void TIdleSupport::ClearIdleIPI()
+#endif
+    {
+    __DATA_SYNC_BARRIER_Z__(r12);			// DSB    
+    asm("ldr    r1,__KCPUIFAddr");//r1 = address of iBaseIntIfAddress
+    asm("ldr	r1, [r1]");//r1 = address of Hw GIC CPU interrupt interface base address
+    asm("ldr    r0,[r1, #%a0]" : : "i" _FOFF(GicCpuIfc, iAck));
+    // asm("mov    r0,#%a0" : : "i" ((TInt) IDLE_WAKEUP_IPI_VECTOR)); // has to be!
+    asm("str    r0, [r1, #%a0]" : : "i" _FOFF(GicCpuIfc, iEoi));
+	__JUMP(,lr);
+    asm("__KCPUIFAddr:");
+    asm(".word %a0" : : "i" ((TInt)&TIdleSupport::iBaseIntIfAddress));// CPU interrupt interface base address
+    }
+
+#ifndef _DEBUG
+TInt TIdleSupport::DoClearIdleIPI()
+    {
+    return 0;
+    }
+#endif
+
+__NAKED__  TInt TIdleSupport::IntPending()  
+    {
+	asm("ldr    r1,__KCPUIFAddr");//r1 = address of iBaseIntIfAddress
+	asm("ldr	r1, [r1]");//r1 = address of Hw GIC CPU interrupt interface base address
+	asm("ldr    r0, [r1, #%a0]" : : "i" _FOFF(GicCpuIfc, iHighestPending));    
+	__JUMP(,lr);
+    }	
+
+
+#endif // ifdef __SMP__

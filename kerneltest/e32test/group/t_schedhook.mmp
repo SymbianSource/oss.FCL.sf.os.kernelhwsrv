@@ -18,9 +18,7 @@
 target			t_schedhook.exe
 targettype		exe
 
-#if defined(GCC32)
 ALWAYS_BUILD_AS_ARM
-#endif
 
 sourcepath		../debug
 source			t_schedhook.cpp context.cia

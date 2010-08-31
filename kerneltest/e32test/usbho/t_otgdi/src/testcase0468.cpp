@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -24,6 +24,10 @@
 #include "testcaseroot.h"
 #include "testcasewd.h"
 #include "testcase0468.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "testcase0468Traces.h"
+#endif
 
 #define _REPEATS (oOpenIterations*3)
 
@@ -36,7 +40,10 @@ const TTestCaseFactoryReceipt<CTestCase0468> CTestCase0468::iFactoryReceipt(KTes
 
 CTestCase0468* CTestCase0468::NewL(TBool aHost)
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0468_NEWL);
+	    }
 	CTestCase0468* self = new (ELeave) CTestCase0468(aHost);
 	CleanupStack::PushL(self);
 	self->ConstructL();
@@ -48,7 +55,10 @@ CTestCase0468* CTestCase0468::NewL(TBool aHost)
 CTestCase0468::CTestCase0468(TBool aHost)
 :	CTestCaseRoot(KTestCaseId, aHost)
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0468_CTESTCASE0468);
+	    }
 		
 	} 
 
@@ -58,7 +68,10 @@ CTestCase0468::CTestCase0468(TBool aHost)
 */
 void CTestCase0468::ConstructL()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0468_CONSTRUCTL);
+	    }
 	iWDTimer = CTestCaseWatchdog::NewL();
 	iRepeats = OPEN_REPEATS;
 		
@@ -68,7 +81,10 @@ void CTestCase0468::ConstructL()
 
 CTestCase0468::~CTestCase0468()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0468_DCTESTCASE0468);
+	    }
 
 	Cancel();
 	delete iWDTimer;
@@ -78,7 +94,10 @@ CTestCase0468::~CTestCase0468()
 
 void CTestCase0468::ExecuteTestCaseL()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0468_EXECUTETESTCASEL);
+	    }
 	iCaseStep = EPreconditions;
 	
 	iRepeats = KOperationRetriesMax;	// VBus event rise retries
@@ -91,7 +110,10 @@ void CTestCase0468::ExecuteTestCaseL()
 	
 void CTestCase0468::DoCancel()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0468_DOCANCEL);
+	    }
 
 	// cancel our timer
 	iTimer.Cancel();
@@ -100,7 +122,10 @@ void CTestCase0468::DoCancel()
 
 void CTestCase0468::CancelKB(CTestCaseRoot *pThis)
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0468_CANCELKB);
+	    }
 	CTestCase0468 * p = REINTERPRET_CAST(CTestCase0468 *,pThis);
 	// cancel any pending call, and then complete our active obj with a cancel value
 	p->iConsole->ReadCancel();
@@ -110,7 +135,10 @@ void CTestCase0468::CancelKB(CTestCaseRoot *pThis)
 
 void CTestCase0468::CancelNotify(CTestCaseRoot *pThis)
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0468_CANCELNOTIFY);
+	    }
 	CTestCase0468 * p = REINTERPRET_CAST(CTestCase0468 *,pThis);
 	// cancel any pending call, and then complete our active obj with a timeout value
 	p->otgCancelOtgVbusNotification();
@@ -122,12 +150,18 @@ void CTestCase0468::CancelNotify(CTestCaseRoot *pThis)
 void CTestCase0468::DescribePreconditions()
 	{
 	test.Printf(_L("Insert 'A' connector beforehand.\n"));
+	OstTrace0(TRACE_NORMAL, CTESTCASE0468_DESCRIBEPRECONDITIONS, "Insert 'A' connector beforehand.\n");
 	test.Printf(_L("ID_PIN detection and VBus driving tests must already pass.\n"));
+	OstTrace0(TRACE_NORMAL, CTESTCASE0468_DESCRIBEPRECONDITIONS_DUP01, "ID_PIN detection and VBus driving tests must already pass.\n");
 	}
 
 void CTestCase0468::ContinueAfter(TTimeIntervalMicroSeconds32 aMicroSecs, TCaseSteps aStep)
 	{
 	LOG_VERBOSE2(_L("Wait %dms before drop VBus"), (TInt)(aMicroSecs.Int()/1000));
+	if(gVerboseOutput)
+	    {
+	    OstTrace1(TRACE_VERBOSE, CTESTCASE0468_CONTINUEAFTER, "Wait %dms before drop VBus", (TInt)(aMicroSecs.Int()/1000));;
+	    }
 	iTimer.After(iStatus, aMicroSecs);
 	iCaseStep = aStep;
 	SetActive();
@@ -136,7 +170,10 @@ void CTestCase0468::ContinueAfter(TTimeIntervalMicroSeconds32 aMicroSecs, TCaseS
 // handle event completion	
 void CTestCase0468::RunStepL()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0468_RUNSTEPL);
+	    }
 	// Obtain the completion code for this CActive obj.
 	TInt completionCode(iStatus.Int()); 
 	TBuf<MAX_DSTRLEN> aDescription;
@@ -155,7 +192,9 @@ void CTestCase0468::RunStepL()
 				}
 			// prompt to insert connector
 			test.Printf(KInsertAConnectorPrompt);
+			OstTrace0(TRACE_NORMAL, CTESTCASE0468_RUNSTEPL_DUP01, KInsertAConnectorPrompt);
 			test.Printf(KPressAnyKeyToContinue);
+			OstTrace0(TRACE_NORMAL, CTESTCASE0468_RUNSTEPL_DUP02, KPressAnyKeyToContinue);
 			RequestCharacter();			
 			break;
 			
@@ -181,7 +220,9 @@ void CTestCase0468::RunStepL()
 			if (!otgIdPinPresent())
 				{
 				test.Printf(KInsertAConnectorPrompt);
+				OstTrace0(TRACE_NORMAL, CTESTCASE0468_RUNSTEPL_DUP03, KInsertAConnectorPrompt);
 				test.Printf(KPressAnyKeyToContinue);
+				OstTrace0(TRACE_NORMAL, CTESTCASE0468_RUNSTEPL_DUP04, KPressAnyKeyToContinue);
 				RequestCharacter();
 
 				iCaseStep = EDetectAPlug;
@@ -210,8 +251,10 @@ void CTestCase0468::RunStepL()
 			// 4. DRIVE VBUS
 			iWDTimer->Cancel();
 			test.Printf(_L("Drive VBus, iteration %d/%d\n"), OPEN_REPEATS-iRepeats+1, OPEN_REPEATS);
+			OstTraceExt2(TRACE_NORMAL, CTESTCASE0468_RUNSTEPL_DUP05, "Drive VBus, iteration %d/%d\n", OPEN_REPEATS-iRepeats+1, OPEN_REPEATS);
 			// test for VBus rise next
 			test.Printf(_L("Waiting for VBus Event\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0468_RUNSTEPL_DUP06, "Waiting for VBus Event\n");
 			iStatus = KRequestPending;
 			otgQueueOtgVbusNotification( iOTGVBus, iStatus );
 
@@ -229,6 +272,10 @@ void CTestCase0468::RunStepL()
 		case ELoopVerifyVBus:
 			// 5. get VBus rise event
 			LOG_VERBOSE2(_L("Post notification val=%d\n\n"), iOTGVBus);
+			if(gVerboseOutput)
+			    {
+			    OstTrace1(TRACE_VERBOSE, CTESTCASE0468_RUNSTEPL_DUP07, "Post notification val=%d\n\n", iOTGVBus);;
+			    }
 			if (KTestCaseWatchdogTO == iStatus.Int())
 				{
 				return TestFailed(KErrAbort, _L("Vbus rise not signalled in time - FAILED!"));
@@ -313,6 +360,7 @@ void CTestCase0468::RunStepL()
 			
 		default:
 			test.Printf(_L("<Error> unknown test step"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0468_RUNSTEPL_DUP08, "<Error> unknown test step");
 			Cancel();
 			return (TestFailed(KErrCorrupt, _L("<Error> unknown test step")));
 		}

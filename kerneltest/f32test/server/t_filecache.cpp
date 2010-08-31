@@ -22,6 +22,7 @@
 #include "t_server.h"
 #include <e32twin.h>
 #include <e32rom.h>
+#include <u32hal.h>
 
 
 //----------------------------------------------------------------------------------------------
@@ -114,7 +115,7 @@ void PrintFileCacheStats(TFileCacheStats& fileCacheStats, TBool aDisplay = ETrue
 void PrintFileCacheConfig(TFileCacheConfig& aFileCacheConfig, TBool aDisplay = ETrue)
 	{
 	TInt r = controlIo(TheFs,gDrive, KControlIoFileCacheConfig, aFileCacheConfig);
-	test (r == KErrNone);
+	test_KErrNone(r);
 	if (!aDisplay)
 		return;
 	
@@ -250,6 +251,108 @@ void TestBuffer(TDes8& aBuffer, TInt aPos, TInt aLength)
 		}
 	}
 
+TInt FreeRam()
+	{
+	// wait for any async cleanup in the supervisor to finish first...
+	UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, 0, 0);
+
+	TMemoryInfoV1Buf meminfo;
+	UserHal::MemoryInfo(meminfo);
+	return meminfo().iFreeRamInBytes;
+	}
+
+void LowMemoryTest()
+	{
+	TInt fileSize = 0;
+	
+	const TInt KWriteLen = 128*1024;
+	test.Next(_L("Test appending to a file with low memory"));
+	gBufPtr.SetLength(KBufSize);
+
+	RFile f;
+	TFileName testFile   = _L("TEST.BIN");
+
+	TInt r = f.Replace(TheFs, testFile, EFileWrite | EFileWriteBuffered);
+	test_KErrNone(r);
+
+	TInt pos = 0;
+
+	TPtrC8 writePtr;
+	writePtr.Set(gBufPtr.MidTPtr(pos, KWriteLen));
+
+	r = f.Write(pos, writePtr);
+	test_KErrNone(r);
+	pos+= writePtr.Length();
+
+	r = f.Size(fileSize);
+	test_KErrNone(r);
+	test_Equal(fileSize,pos);
+
+
+
+	TUint freeRam = FreeRam();
+	const TInt KPageSize=4096;
+	freeRam = (freeRam + KPageSize -1) & ~(KPageSize-1);
+	test.Printf(_L("FreeRam = %d"), freeRam);
+
+	RChunk chunk;
+	TChunkCreateInfo chunkInfo;
+	chunkInfo.SetDisconnected(0, 0, freeRam);
+	chunkInfo.SetPaging(TChunkCreateInfo::EUnpaged);
+	test_KErrNone(chunk.Create(chunkInfo));
+
+	test.Printf(_L("Gobbling all of memory..."));
+	
+	TUint commitEnd;
+	for (commitEnd = 0; commitEnd < freeRam; commitEnd += KPageSize) 
+		{
+		r = chunk.Commit(commitEnd,KPageSize);
+		if (r != KErrNone)
+			break;
+		
+		}
+	test.Printf(_L("commitEnd %d, r %d"), commitEnd, r);
+	test_Value(r, r == KErrNoMemory || r == KErrNone);
+
+	test.Printf(_L("FreeRam = %d"), FreeRam());
+
+	pos-= KSegmentSize;
+	writePtr.Set(gBufPtr.MidTPtr(pos, KWriteLen));
+
+	test.Printf(_L("Writing to file..."));
+
+	// now we have gobbled all or most of memory, the next write can fail
+	// if it does keep decommitting memory until it succeeds and then test that the file size is correct
+	commitEnd = 0;
+	do {
+
+		r = f.Write(pos, writePtr);
+		test_Value(r, r == KErrNoMemory || r == KErrNone);
+		if (r == KErrNoMemory)
+			{
+			chunk.Decommit(commitEnd,KPageSize);
+			commitEnd += KPageSize;
+			}
+		}
+	while (r == KErrNoMemory);
+
+	pos+= writePtr.Length();
+
+	test.Printf(_L("Gsetting size of file ..."));
+	r = f.Size(fileSize);
+	test_KErrNone(r);
+	test_Equal(fileSize,pos);
+
+	test.Printf(_L("Closing file ..."));
+	f.Close();
+
+	test.Printf(_L("Closing chunk ..."));
+	chunk.Close();
+
+	test.Printf(_L("FreeRam = %d"), FreeRam());
+	}
+
+
 
 LOCAL_C void UnitTests()
 //
@@ -271,7 +374,7 @@ LOCAL_C void UnitTests()
 	TBool simulatelockFailureMode;
 	TFileCacheStats fileCacheStats;
 	r = controlIo(TheFs, gDrive, KControlIoFileCacheStats, fileCacheStats);
-	test (r == KErrNone);
+	test_KErrNone(r);
 	test.Printf(_L("Number of files on closed queue=%d\n"),fileCacheStats.iFilesOnClosedQueue);
 	test(fileCacheStats.iFilesOnClosedQueue == 0);
 #endif
@@ -280,7 +383,7 @@ LOCAL_C void UnitTests()
 	// turn OFF lock failure mode 
 	simulatelockFailureMode = EFalse;
 	r = controlIo(TheFs, gDrive, KControlIoSimulateLockFailureMode, simulatelockFailureMode);
-	test (r == KErrNone);
+	test_KErrNone(r);
 #endif
 
 	TFileName testFile   = _L("TEST.BIN");
@@ -298,6 +401,8 @@ LOCAL_C void UnitTests()
 	TInt uncachedBytesRead;
 	TInt uncachedPacketsRead;
 #endif
+
+	LowMemoryTest();
 
 	// create an empty file, so that any writes overlapping segemt boundaries
 	// need a read first
@@ -455,6 +560,9 @@ LOCAL_C void UnitTests()
 	test_KErrNone(r);
 
 	r = f.Replace(TheFs, testFile, EFileReadBuffered | EFileWrite | EFileWriteBuffered);
+	test_KErrNone(r);
+
+	r = f.SetSize(gFileCacheConfig.iCacheSize);
 	test_KErrNone(r);
 
 	RTimer timer;
@@ -618,7 +726,7 @@ LOCAL_C void UnitTests()
 
 	TInt size;
 	r = f.Size(size);
-	test (r == KErrNone);
+	test_KErrNone(r);
 	test (size = KBufSize);
 
 	readPtr.Set(gBuf->Des());
@@ -627,7 +735,7 @@ LOCAL_C void UnitTests()
 	// Allocate full cachelines - so we can enable hole testing
 	TBool allocateAllSegmentsInCacheLine = ETrue;
 	r = controlIo(TheFs, gDrive, KControlIoAllocateMaxSegments, allocateAllSegmentsInCacheLine);
-	test (r == KErrNone);
+	test_KErrNone(r);
 	PrintFileCacheStats(fileCacheStats, EFalse);
 	TInt holesDetected = fileCacheStats.iHoleCount;
 	TInt lockFailures = fileCacheStats.iCommitFailureCount + fileCacheStats.iLockFailureCount;
@@ -712,7 +820,7 @@ LOCAL_C void UnitTests()
 	// Don't allocate full cachelines any more
 	allocateAllSegmentsInCacheLine = EFalse;
 	r = controlIo(TheFs, gDrive, KControlIoAllocateMaxSegments, allocateAllSegmentsInCacheLine);
-	test (r == KErrNone);
+	test_KErrNone(r);
 #endif
 
 
@@ -812,7 +920,7 @@ LOCAL_C void UnitTests()
 
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)
 	r = controlIo(TheFs, gDrive, KControlIoFileCacheStats, fileCacheStats);
-	test (r == KErrNone);
+	test_KErrNone(r);
 	test.Printf(_L("Number of files on closed queue=%d\n"),fileCacheStats.iFilesOnClosedQueue);
 	test(fileCacheStats.iFilesOnClosedQueue == 1);
 #endif
@@ -846,7 +954,7 @@ LOCAL_C void UnitTests()
 
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)
 		r = controlIo(TheFs, gDrive, KControlIoFileCacheStats, fileCacheStats);
-		test (r == KErrNone);
+		test_KErrNone(r);
 		test.Printf(_L("Number of files on closed queue=%d\n"),fileCacheStats.iFilesOnClosedQueue);
 		test(fileCacheStats.iFilesOnClosedQueue == 0);
 #endif
@@ -857,7 +965,7 @@ LOCAL_C void UnitTests()
 
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)
 		r = controlIo(TheFs, gDrive, KControlIoFileCacheStats, fileCacheStats);
-		test (r == KErrNone);
+		test_KErrNone(r);
 		test.Printf(_L("Number of files on closed queue=%d\n"),fileCacheStats.iFilesOnClosedQueue);
 		test(fileCacheStats.iFilesOnClosedQueue == 1);
 #endif
@@ -886,7 +994,7 @@ LOCAL_C void UnitTests()
 
 	#if defined(_DEBUG) || defined(_DEBUG_RELEASE)
 		r = controlIo(TheFs, gDrive, KControlIoFileCacheStats, fileCacheStats);
-		test (r == KErrNone);
+		test_KErrNone(r);
 		test.Printf(_L("Number of files on closed queue=%d\n"),fileCacheStats.iFilesOnClosedQueue);
 		test(fileCacheStats.iFilesOnClosedQueue == 0);
 	#endif
@@ -896,7 +1004,7 @@ LOCAL_C void UnitTests()
 	// turn lock failure mode back ON (if enabled)
 	simulatelockFailureMode = ETrue;
 	r = controlIo(TheFs, gDrive, KControlIoSimulateLockFailureMode, simulatelockFailureMode);
-	test (r == KErrNone);
+	test_KErrNone(r);
 #endif
 
 	//**************************************************************
@@ -922,7 +1030,7 @@ LOCAL_C void UnitTests()
 
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)
 	r = controlIo(TheFs, gDrive, KControlIoFileCacheStats, fileCacheStats);
-	test (r == KErrNone);
+	test_KErrNone(r);
 	test.Printf(_L("Number of Write-throughs with dirty data=%d\n"),fileCacheStats.iWriteThroughWithDirtyDataCount);
 	TInt writeThroughWithDirtyDataCountOld = fileCacheStats.iWriteThroughWithDirtyDataCount;
 	TInt writeThroughWithDirtyDataCountNew = writeThroughWithDirtyDataCountOld;
@@ -933,7 +1041,7 @@ LOCAL_C void UnitTests()
 		{
 		fileSize = 0;
 		r = f.SetSize(fileSize);
-		test (r == KErrNone);
+		test_KErrNone(r);
 		for (pos = 0; pos < KMaxFileSize; )
 			{
 			r = f.Write(pos, writePtr);
@@ -944,11 +1052,11 @@ LOCAL_C void UnitTests()
 				test.Printf(_L("Flush returned %d"), r);
 				test(0);
 				}
-			test(r == KErrNone);
+			test_KErrNone(r);
 			pos+= writePtr.Length();
 
 			r = f.Size(fileSize);
-			test (r == KErrNone);
+			test_KErrNone(r);
 			if (fileSize != pos)
 				{
 				test.Printf(_L("Iter #%d, write pos %d != size %d"), i, pos, fileSize);
@@ -960,7 +1068,7 @@ LOCAL_C void UnitTests()
 
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)
 			r = controlIo(TheFs, gDrive, KControlIoFileCacheStats, fileCacheStats);
-			test (r == KErrNone);
+			test_KErrNone(r);
 			writeThroughWithDirtyDataCountNew = fileCacheStats.iWriteThroughWithDirtyDataCount;
 			if (writeThroughWithDirtyDataCountNew > writeThroughWithDirtyDataCountOld)
 				{
@@ -998,9 +1106,9 @@ TInt ReaderThread(TAny* aFileName)
 
 	RFs fs;
 	TInt r = fs.Connect();
-	test (r==KErrNone);
+	test_KErrNone(r);
 	r = fs.SetSessionPath(gSessionPath);
-	test (r==KErrNone);
+	test_KErrNone(r);
 
 
 	RFile file;
@@ -1236,7 +1344,7 @@ LOCAL_C void DoTestFileWrite(TUint aFileMode, TInt aWriteBlockSize)
 
 	RFile file;
 	TInt r = file.Replace(TheFs,_L("WRITETST"),EFileStream | aFileMode);
-	test (r == KErrNone);
+	test_KErrNone(r);
 
 	TTime startTime;
 	TTime endTime;
@@ -1600,7 +1708,7 @@ GLDEF_C void CallTestsL()
 
 	TVolumeInfo volInfo;
 	TInt r = TheFs.Volume(volInfo, gDrive);
-	test (r == KErrNone);
+	test_KErrNone(r);
 
 	TFullName extName;
 	r = TheFs.ExtensionName(extName,gDrive, 0);
@@ -1635,7 +1743,7 @@ GLDEF_C void CallTestsL()
 		// turn OFF lock failure mode
 		TBool simulatelockFailureMode = EFalse;
 		r = controlIo(TheFs, gDrive, KControlIoSimulateLockFailureMode, simulatelockFailureMode);
-		test (r == KErrNone);
+		test_KErrNone(r);
 #endif
 
 		TestFileRead(EFileReadDirectIO);
@@ -1655,7 +1763,7 @@ GLDEF_C void CallTestsL()
 		// turn lock failure mode back ON (if enabled)
 		simulatelockFailureMode = ETrue;
 		r = controlIo(TheFs, gDrive, KControlIoSimulateLockFailureMode, simulatelockFailureMode);
-		test (r == KErrNone);
+		test_KErrNone(r);
 #endif
 		}	// if (gRunPerformanceTests)
 
@@ -1779,7 +1887,7 @@ GLDEF_C TInt E32Main()
 		{
 		test.Printf(_L("Writing DriveCacheFlags for drive %C = %08X\n"), (TInt) gDriveToTest, gDriveCacheFlags);
 		r = controlIo(TheFs,gDrive, KControlIoFileCacheFlagsWrite, gDriveCacheFlags);
-		test (r == KErrNone);
+		test_KErrNone(r);
 		}
 #endif
 

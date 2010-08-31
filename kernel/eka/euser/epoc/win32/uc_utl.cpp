@@ -114,6 +114,21 @@ EXPORT_C void RFastLock::Wait()
 		RSemaphore::Wait();
 	}
 
+EXPORT_C __NAKED__ TInt RFastLock::Poll()
+	{
+	_asm xor eax, eax
+	_asm xor edx, edx
+	_asm dec edx
+
+	/* if ([ecx+4]==0) { [ecx+4]=-1; ZF=1;} else {eax=[ecx+4]; ZF=0;} */
+	_asm lock cmpxchg [ecx+4], edx
+	_asm jz short fastlock_poll_done
+	_asm mov eax, -33
+
+	fastlock_poll_done:
+	_asm ret
+	}
+
 EXPORT_C void RFastLock::Signal()
 	{
 	if (InterlockedIncrement((LPLONG)&iCount) < 0)

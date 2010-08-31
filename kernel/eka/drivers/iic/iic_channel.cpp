@@ -129,6 +129,9 @@ void DIicBusChannelMaster::SetDfcQ(TDfcQue* aDfcQue)
 
 void DIicBusChannelMaster::CompleteRequest(TInt aResult)
 	{
+	// Ensure the timeout timer has been cancelled
+	CancelTimeOut();
+
 	TIicBusTransaction* nextTrans=NextTrans(iCurrentTransaction);
 
 	if((aResult != KErrNone)||(nextTrans == NULL))
@@ -356,7 +359,13 @@ void DIicBusChannelMaster::EndTransaction(TIicBusTransaction* aTrans, TInt aResu
 
 void DIicBusChannelMaster::CancelTimeOut()
 	{
+	// Silently cancel the timer and associated DFC
+	//
+	// NTimer::Cancel returns ETrue if cancelled, EFalse otherwise - which may mean it wasn't active
+	// TDfc::Cancel returns ETrue if actually de-queued, EFalse otherwise - which may mean it wasn't queued
+	//
 	iTimeoutTimer.Cancel();
+	iSlaveTimeoutDfc->Cancel();
 	}
 
 void DIicBusChannelMaster::Complete(TInt aResult, TIicBusTransaction* aTransaction) //Completes a kernel message and receive the next one
@@ -481,7 +490,7 @@ TInt DIicBusChannelSlave::ReleaseChannel()
 	r=SetNotificationTrigger(0);			// Attempt to clear notification requests
 	if((r!=KErrNone)&&(r!=KErrTimedOut))	// KErrTimedOut refers to an earlier transaction, and is for information only
 		return r;
-	iTimeoutTimer.Cancel();
+	StopTimer();
 	r=DoRequest(EPowerDown);
 	if(r == KErrNone)
 		{
@@ -888,7 +897,13 @@ void DIicBusChannelSlave::StartTimerByState()
 
 void DIicBusChannelSlave::StopTimer()
 	{
+	// Silently cancel the timer and associated DFC
+	//
+	// NTimer::Cancel returns ETrue if cancelled, EFalse otherwise - which may mean it wasn't active
+	// TDfc::Cancel returns ETrue if actually de-queued, EFalse otherwise - which may mean it wasn't queued
+	//
 	iTimeoutTimer.Cancel();
+	iClientTimeoutDfc->Cancel();
 	}
 
 TInt DIicBusChannelSlave::UpdateReqTrig(TInt8& aCbTrigVal, TInt& aCallbackRet)
@@ -901,14 +916,15 @@ TInt DIicBusChannelSlave::UpdateReqTrig(TInt8& aCbTrigVal, TInt& aCallbackRet)
 	if(iNotif->iTrigger & EGeneralBusError)
 		{
 		// In the event of a bus error, always cancel the timer and call the Client callback
-		nextSteps |= (EStopTimer | EInvokeCb);
+		StopTimer();
 		iTimerState = EInactive;
+		nextSteps = EInvokeCb;
 		aCallbackRet = KErrGeneral;
 		}
 	else if(iNotif->iTrigger == EAsyncCaptChan)
 		{
 		// For asynchronous channel capture, no timers are involved - just call the Client callback
-		nextSteps |= EInvokeCb;
+		nextSteps = EInvokeCb;
 		aCallbackRet = KErrCompletion;
 		}
 	else if((iNotif->iTrigger & iReqTrig) != 0)
@@ -947,7 +963,8 @@ TInt DIicBusChannelSlave::UpdateReqTrig(TInt8& aCbTrigVal, TInt& aCallbackRet)
 				{
 				// All triggers required have occurred, so transition to state EWaitForClient
 				iTimerState = EWaitForClient;
-				nextSteps |= (EStopTimer | EInvokeCb | EStartTimer);
+				StopTimer();
+				nextSteps = (EInvokeCb | EStartTimer);
 				}
 			else
 				{
@@ -986,7 +1003,7 @@ void DIicBusChannelSlave::NotifyClient(TInt aTrigger)
 		TInt nextSteps = UpdateReqTrig(callbackTrig, callbackRet);
 		if(nextSteps & EStopTimer)
 			{
-			iTimeoutTimer.Cancel();
+			__ASSERT_DEBUG(NULL, Kern::Fault(KIicChannelPanic,__LINE__));
 			}
 		if(nextSteps & EInvokeCb)
 			{

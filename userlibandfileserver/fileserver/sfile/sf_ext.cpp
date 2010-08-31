@@ -15,9 +15,10 @@
 // 
 //
 
-
 #include "sf_std.h"
-
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "sf_extTraces.h"
+#endif
 typedef CProxyDriveFactory*(*TExtensionNew)();
 typedef CExtProxyDriveFactory*(*TProxyDriveNew)();
 
@@ -326,12 +327,10 @@ Instatiates a CLocalProxyDrive objects with the given arguments.
 */
 CLocalProxyDrive* CLocalProxyDrive::New(CMountCB* aMount,TBusLocalDrive& aLocDrv)
 	{
-	TRACE2(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveNew, EF32TraceUidProxyDrive, 
-		aMount, aMount->DriveNumber());
-
+	OstTraceExt2(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVENEW, "aMount %x drive %d", (TUint) aMount, (TUint) aMount->DriveNumber());
 	CLocalProxyDrive* proxyDrive = new CLocalProxyDrive(aMount,aLocDrv);
 	
-	TRACE1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveNewRet, EF32TraceUidProxyDrive, proxyDrive);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVENEWRET, "proxyDrive %x", proxyDrive);
 	return proxyDrive;
 	}
 
@@ -357,9 +356,8 @@ This implementation performs no operations.
 */
 TInt CLocalProxyDrive::Initialise()
 	{
-	TRACE1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveInitialise, EF32TraceUidProxyDrive, this);
-	TRACE1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveInitialiseRet, EF32TraceUidProxyDrive, KErrNone);
-
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEINITIALISE, "this %x", this);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEINITIALISERET, "r %d", KErrNone);
 	return(KErrNone);
 	}
 
@@ -373,9 +371,8 @@ This implementation performs no operations.
 */
 TInt CLocalProxyDrive::Dismounted()
 	{
-	TRACE1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveDismounted, EF32TraceUidProxyDrive, this);
-	TRACE1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveDismountedRet, EF32TraceUidProxyDrive, KErrNone);
-
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEDISMOUNTED, "this %x", this);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEDISMOUNTEDRET, "r %d", KErrNone);
 	return(KErrNone);
 	}
 
@@ -389,11 +386,9 @@ Increase the size of the connected drive by the specified length (in bytes).
 */
 TInt CLocalProxyDrive::Enlarge(TInt aLength)
 	{
-	TRACE2(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveEnlarge, EF32TraceUidProxyDrive, this, aLength);
-
+	OstTraceExt2(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEENLARGE, "this %x aLength %d", (TUint) this, (TUint) aLength);
 	TInt r = iLocDrv.Enlarge(aLength);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveEnlargeRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEENLARGERET, "r %d", r);
 	return r;
 	}
 
@@ -411,11 +406,9 @@ notes.
 */
 TInt CLocalProxyDrive::ReduceSize(TInt aPos, TInt aLength)
 	{
-	TRACE3(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveReduceSize, EF32TraceUidProxyDrive, this, aPos, aLength);
-
+	OstTraceExt3(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEREDUCESIZE, "this %x aPos %x aLength %d", (TUint) this, (TUint) aPos, (TUint) aLength);
 	TInt r = iLocDrv.ReduceSize(aPos,aLength);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveReduceSizeRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEREDUCESIZERET, "r %d", r);
 	return r;
 	}
 
@@ -435,12 +428,9 @@ Read from the connected drive, and pass flags to driver.
 TInt CLocalProxyDrive::Read(TInt64 aPos,TInt aLength,const TAny* aTrg,TInt aThreadHandle,TInt aOffset, TInt aFlags)
 	{
 	TRACETHREADIDH(aThreadHandle);
-	TRACE8(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveRead1, EF32TraceUidProxyDrive, 
-		this, I64LOW(aPos), I64HIGH(aPos), aLength, aTrg, threadId, aOffset, aFlags);
-
+	OstTraceExt5(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEREAD1, "this %x clientThreadId %x aPos %x:%x aLength %d", (TUint) this, (TUint) threadId, (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), aLength);
 	TInt r = iLocDrv.Read(aPos,aLength,aTrg,aThreadHandle,aOffset,aFlags);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveRead1Ret, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEREAD1RET, "r %d", r);
 	return r;
 	}
 
@@ -458,12 +448,9 @@ Read from the connected drive.
 TInt CLocalProxyDrive::Read(TInt64 aPos,TInt aLength,const TAny* aTrg,TInt aThreadHandle,TInt anOffset)
 	{
 	TRACETHREADIDH(aThreadHandle);
-	TRACE7(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveRead2, EF32TraceUidProxyDrive, 
-		this, I64LOW(aPos), I64HIGH(aPos), aLength, aTrg, threadId, anOffset);
-
+	OstTraceExt5(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEREAD2, "this %x clientThreadId %x aPos %x:%x aLength %d", (TUint) this, (TUint) threadId, (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), aLength);
 	TInt r = iLocDrv.Read(aPos,aLength,aTrg,aThreadHandle,anOffset);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveRead2Ret, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEREAD2RET, "r %d", r);
 	return r;
 	}
 
@@ -478,12 +465,9 @@ Read from the connected drive.
 */
 TInt CLocalProxyDrive::Read(TInt64 aPos,TInt aLength,TDes8& aTrg)
 	{
-	TRACE5(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveRead3, EF32TraceUidProxyDrive, 
-		this, I64LOW(aPos), I64HIGH(aPos), aLength, &aTrg);
-
+	OstTraceExt5(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEREAD3, "this %x aPos %x:%x aLength %d aTrg %x", (TUint) this, (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), aLength, (TUint) &aTrg);
 	TInt r = iLocDrv.Read(aPos,aLength,aTrg);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveRead3Ret, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEREAD3RET, "r %d", r);
 	return r;
 	}
 
@@ -503,13 +487,9 @@ Write to the connected drive and pass flags to driver.
 TInt CLocalProxyDrive::Write(TInt64 aPos,TInt aLength,const TAny* aSrc,TInt aThreadHandle,TInt aOffset,TInt aFlags)
 	{
 	TRACETHREADIDH(aThreadHandle);
-	TRACE8(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveWrite1, EF32TraceUidProxyDrive, 
-		this, I64LOW(aPos), I64HIGH(aPos), aLength, aSrc, threadId, aOffset, aFlags);
-
+	OstTraceExt5(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEWRITE1, "this %x clientThreadId %x aPos %x:%x aLength %d", (TUint) this, (TUint) threadId, (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), aLength);
 	TInt r = iLocDrv.Write(aPos,aLength,aSrc,aThreadHandle,aOffset,aFlags);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveWrite1Ret, EF32TraceUidProxyDrive, r);
-
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEWRITE1RET, "r %d", r);
 	return r;
 	}
 
@@ -528,12 +508,9 @@ Write to the connected drive.
 TInt CLocalProxyDrive::Write(TInt64 aPos,TInt aLength,const TAny* aSrc,TInt aThreadHandle,TInt anOffset)
 	{
 	TRACETHREADIDH(aThreadHandle);
-	TRACE7(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveWrite2, EF32TraceUidProxyDrive, 
-		this, I64LOW(aPos), I64HIGH(aPos), aLength, aSrc, threadId, anOffset);
-
+	OstTraceExt5(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEWRITE2, "this %x clientThreadId %x aPos %x:%x aLength %d", (TUint) this, (TUint) threadId, (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), aLength);
 	TInt r = iLocDrv.Write(aPos,aLength,aSrc,aThreadHandle,anOffset);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveWrite2Ret, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEWRITE2RET, "r %d", r);
 	return r;
 	}
 
@@ -548,12 +525,9 @@ Write to the connected drive.
 */
 TInt CLocalProxyDrive::Write(TInt64 aPos,const TDesC8& aSrc)
 	{
-	TRACE5(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveWrite3, EF32TraceUidProxyDrive, 
-		this, I64LOW(aPos), I64HIGH(aPos), aSrc.Length(), &aSrc);
-
+	OstTraceExt5(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEWRITE3, "this %x aPos %x:%x aLength %d aSrc %x", (TUint) this, (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), aSrc.Length(), (TUint) &aSrc);
 	TInt r = iLocDrv.Write(aPos,aSrc);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveWrite3Ret, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEWRITE3RET, "r %d", r);
 	return r;
 	}
 	
@@ -567,11 +541,9 @@ Get the connected drive's capabilities information.
 */
 TInt CLocalProxyDrive::Caps(TDes8& anInfo)
 	{
-	TRACE1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveCaps, EF32TraceUidProxyDrive, this);
-
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVECAPS, "this %x", this);
 	TInt r = iLocDrv.Caps(anInfo);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveCapsRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVECAPSRET, "r %d", r);
 	return r;
 	}
 
@@ -585,12 +557,9 @@ Format the connected drive.
 */
 TInt CLocalProxyDrive::Format(TFormatInfo& anInfo)
 	{
-	TRACE1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveFormat1, EF32TraceUidProxyDrive, this);
-
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEFORMAT1, "this %x", this);
 	TInt r = iLocDrv.Format(anInfo);
-
-	TRACE4(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveFormat1Ret, EF32TraceUidProxyDrive, 
-		r, anInfo.iFormatIsCurrent, anInfo.i512ByteSectorsFormatted, anInfo.iMaxBytesPerFormat);
+	OstTraceExt4(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEFORMAT1RET, "r %d iFormatIsCurrent %d i512ByteSectorsFormatted %d iMaxBytesPerFormat %d", (TUint) r, (TUint) anInfo.iFormatIsCurrent, (TUint) anInfo.i512ByteSectorsFormatted, (TUint) anInfo.iMaxBytesPerFormat);
 	return r;
 	}
 
@@ -605,12 +574,9 @@ Format the connected drive.
 */
 TInt CLocalProxyDrive::Format(TInt64 aPos,TInt aLength)
 	{
-	TRACE4(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveFormat2, EF32TraceUidProxyDrive, 
-		this, I64LOW(aPos), I64HIGH(aPos), aLength);
-
+	OstTraceExt4(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEFORMAT2, "this %x aPos %x:%x aLength %d", (TUint) this, (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), (TUint) aLength);
 	TInt r = iLocDrv.Format(aPos,aLength);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveFormat2Ret, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEFORMAT2RET, "r %d", r);
 	return r;
 	}
 
@@ -625,11 +591,9 @@ Set the mount information on the local drive.
 */
 TInt CLocalProxyDrive::SetMountInfo(const TDesC8* aMountInfo,TInt aMountInfoThreadHandle)
 	{
-	TRACE3(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveSetMountInfo, EF32TraceUidProxyDrive, this, aMountInfo, aMountInfoThreadHandle);
-
+	OstTraceExt3(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVESETMOUNTINFO, "this %x aMountInfo %x aMountInfoThreadHandle %d", (TUint) this, (TUint) aMountInfo, (TUint) aMountInfoThreadHandle);
 	TInt r = iLocDrv.SetMountInfo(aMountInfo,aMountInfoThreadHandle);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveSetMountInfoRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVESETMOUNTINFORET, "r %d", r);
 	return r;
 	}
 
@@ -643,11 +607,9 @@ Forces a remount on the local drive
 */
 TInt CLocalProxyDrive::ForceRemount(TUint aFlags)
 	{
-	TRACE2(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveForceRemount, EF32TraceUidProxyDrive, this, aFlags);
-
+	OstTraceExt2(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEFORCEREMOUNT, "this %x aFlags %x", (TUint) this, (TUint) aFlags);
 	TInt r = iLocDrv.ForceRemount(aFlags);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveForceRemountRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEFORCEREMOUNTRET, "r %d", r);
 	return r;
 	}
 
@@ -664,11 +626,9 @@ the appropriate driver layer.
 */
 TInt CLocalProxyDrive::ControlIO(const RMessagePtr2& /*aMessage*/,TInt aCommand,TAny* aParam1,TAny* aParam2)
 	{
-	TRACE1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveControlIO, EF32TraceUidProxyDrive, this);
-
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVECONTROLIO, "this %x", this);
 	TInt r = iLocDrv.ControlIO(aCommand,aParam1,aParam2);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveControlIORet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVECONTROLIORET, "r %d", r);
 	return r;
 	}
 	
@@ -683,11 +643,9 @@ Unlocks a password-enabled device.
 */
 TInt CLocalProxyDrive::Unlock(TMediaPassword &aPassword, TBool aStorePassword)
 	{
-	TRACE2(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveUnlock, EF32TraceUidProxyDrive, this, aStorePassword);
-
+	OstTraceExt2(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEUNLOCK, "this %x aPassword %d", (TUint) this, (TUint) aStorePassword);
 	TInt r = iLocDrv.Unlock(aPassword,aStorePassword);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveUnlockRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEUNLOCKRET, "r %d", r);
 	return r;
 	}
 
@@ -703,11 +661,9 @@ Locks a password-enabled device with the new password.
 */
 TInt CLocalProxyDrive::Lock(TMediaPassword &aOldPassword, TMediaPassword &aNewPassword, TBool aStorePassword)
 	{
-	TRACE2(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveLock, EF32TraceUidProxyDrive, this, aStorePassword);
-
+	OstTraceExt2(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVELOCK, "this %x aPassword %d", (TUint) this, (TUint) aStorePassword);
 	TInt r = iLocDrv.SetPassword(aOldPassword,aNewPassword,aStorePassword);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveLockRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVELOCKRET, "r %d", r);
 	return r;
 	}
 
@@ -721,11 +677,9 @@ Clears a password from a device - controller sets password to null.
 */
 TInt CLocalProxyDrive::Clear(TMediaPassword &aPassword)
 	{
-	TRACE1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveClear, EF32TraceUidProxyDrive, this);
-
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVECLEAR, "this %x", this);
 	TInt r = iLocDrv.Clear(aPassword);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveClearRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVECLEARRET, "r %d", r);
 	return r;
 	}
 
@@ -736,11 +690,9 @@ Forcibly unlock a password-enabled drive.
 */
 TInt CLocalProxyDrive::ErasePassword()
 	{
-	TRACE1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveErasePassword, EF32TraceUidProxyDrive, this);
-
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEERASEPASSWORD, "this %x", this);
 	TInt r = iLocDrv.ErasePassword();
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveErasePasswordRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEERASEPASSWORDRET, "r %d", r);
 	return r;
 	}
 
@@ -750,17 +702,13 @@ Used by some media drivers (e.g. NAND flash) for garbage collection.
 
 @param aPos    The position of the data which is being deleted.
 @param aLength The length of the data which is being deleted.
-
 @return System wide error code.
 */
 TInt CLocalProxyDrive::DeleteNotify(TInt64 aPos, TInt aLength)
 	{
-	TRACE4(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveDeleteNotify, EF32TraceUidProxyDrive, 
-		this, I64LOW(aPos), I64HIGH(aPos), aLength);
-
+	OstTraceExt4(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEDELETENOTIFY, "this %x aPos %x:%x aLength %d", (TUint) this, (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), (TUint) aLength);
 	TInt r = iLocDrv.DeleteNotify(aPos, aLength);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveDeleteNotifyRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEDELETENOTIFYRET, "r %d", r);
 	return r;
 	}
 
@@ -774,20 +722,16 @@ Retrieve disk error information.
 */	
 TInt CLocalProxyDrive::GetLastErrorInfo(TDes8 &aErrorInfo)
 	{
-	TRACE1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveGetLastErrorInfo, EF32TraceUidProxyDrive, this);
-
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEGETLASTERRORINFO, "this %x", this);
 	TInt r = iLocDrv.GetLastErrorInfo(aErrorInfo);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveGetLastErrorInfoRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEGETLASTERRORINFORET, "r %d", r);
 	return r;
 	}
 
 
 TInt CLocalProxyDrive::GetInterface(TInt aInterfaceId,TAny*& aInterface,TAny* aInput)
 	{
-	TRACE3(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveGetInterface, EF32TraceUidProxyDrive, 
-		this, aInterfaceId, aInput);
-
+	OstTraceExt3(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEGETINTERFACE, "this %x aInterfaceId %d aInput %x", (TUint) this, (TUint) aInterfaceId, (TUint) aInput);
 	TInt r;
 	switch(aInterfaceId)
 		{
@@ -805,8 +749,7 @@ TInt CLocalProxyDrive::GetInterface(TInt aInterfaceId,TAny*& aInterface,TAny* aI
 		default:
 			r= CProxyDrive::GetInterface(aInterfaceId,aInterface,aInput);
 		}
-
-	TRACERET2(UTF::EBorder, UTraceModuleProxyDrive::ECLocalProxyDriveGetInterfaceRet, EF32TraceUidProxyDrive, r, aInterface);
+	OstTraceExt2(TRACE_DRIVE, PROXYDRIVE_ECLOCALPROXYDRIVEGETINTERFACERET, "r %d aInterface %x", (TUint) r, (TUint) aInterface);
 	return r;
 	}
 
@@ -843,11 +786,9 @@ This implementation performs no operations.
 */
 EXPORT_C TInt CBaseExtProxyDrive::Initialise()
 	{
-	TRACE1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveInitialise, EF32TraceUidProxyDrive, this);
-
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEINITIALISE, "this %x", this);
 	TInt r = iProxy->Initialise();
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveInitialiseRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEINITIALISERET, "r %d", r);
 	return r;
 	}
 
@@ -859,11 +800,9 @@ Calls Dismounted() on the proxy drive.
 */
 EXPORT_C TInt CBaseExtProxyDrive::Dismounted()
 	{
-	TRACE1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveDismounted, EF32TraceUidProxyDrive, this);
-
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEDISMOUNTED, "this %x", this);
 	TInt r = iProxy->Dismounted();
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveDismountedRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEDISMOUNTEDRET, "r %d", r);
 	return r;
 	}
 
@@ -876,11 +815,9 @@ Increase the size of the proxy drive by the specified length (in bytes).
 */
 EXPORT_C TInt CBaseExtProxyDrive::Enlarge(TInt aLength)
 	{
-	TRACE2(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveEnlarge, EF32TraceUidProxyDrive, this, aLength);
-
+	OstTraceExt2(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEENLARGE, "this %x aLength %d", (TUint) this, (TUint) aLength);
 	TInt r = iProxy->Enlarge(aLength);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveEnlargeRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEENLARGERET, "r %d", r);
 	return r;
 	}
 
@@ -898,11 +835,9 @@ notes.
 */
 EXPORT_C TInt CBaseExtProxyDrive::ReduceSize(TInt aPos, TInt aLength)
 	{
-	TRACE3(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveReduceSize, EF32TraceUidProxyDrive, this, aPos, aLength);
-
+	OstTraceExt3(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEREDUCESIZE, "this %x aPos %x aLength %d", (TUint) this, (TUint) aPos, (TUint) aLength);
 	TInt r = iProxy->ReduceSize(aPos,aLength);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveReduceSizeRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEREDUCESIZERET, "r %d", r);
 	return r;
 	}
 
@@ -922,13 +857,9 @@ Read from the proxy drive, and pass flags to driver.
 EXPORT_C TInt CBaseExtProxyDrive::Read(TInt64 aPos,TInt aLength,const TAny* aTrg,TInt aThreadHandle,TInt aOffset,TInt aFlags)
 	{
 	TRACETHREADIDH(aThreadHandle);
-	TRACE8(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveRead1, EF32TraceUidProxyDrive, 
-		this, I64LOW(aPos), I64HIGH(aPos), aLength, aTrg, threadId, aOffset, aFlags);
-
+	OstTraceExt5(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEREAD1, "this %x clientThreadId %x aPos %x:%x aLength %d", (TUint) this, (TUint) threadId, (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), aLength);
 	TInt r = iProxy->Read(aPos,aLength,aTrg,aThreadHandle,aOffset,aFlags);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveRead1Ret, EF32TraceUidProxyDrive, r);
-
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEREAD1RET, "r %d", r);
 	return r;
 	}
 
@@ -947,12 +878,9 @@ Read from the proxy drive.
 EXPORT_C TInt CBaseExtProxyDrive::Read(TInt64 aPos,TInt aLength,const TAny* aTrg,TInt aThreadHandle,TInt anOffset)
 	{
 	TRACETHREADIDH(aThreadHandle);
-	TRACE7(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveRead2, EF32TraceUidProxyDrive, 
-		this, I64LOW(aPos), I64HIGH(aPos), aLength, aTrg, threadId, anOffset);
-
+	OstTraceExt5(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEREAD2, "this %x clientThreadId %x aPos %x:%x aLength %d", (TUint) this, (TUint) threadId, (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), aLength);
 	TInt r = iProxy->Read(aPos,aLength,aTrg,aThreadHandle,anOffset);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveRead2Ret, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEREAD2RET, "r %d", r);
 	return r;
 	}
 
@@ -968,12 +896,10 @@ Read from the proxy drive.
 */
 EXPORT_C TInt CBaseExtProxyDrive::Read(TInt64 aPos,TInt aLength,TDes8& aTrg)
 	{
-	TRACE5(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveRead3, EF32TraceUidProxyDrive, 
-		this, I64LOW(aPos), I64HIGH(aPos), aLength, &aTrg);
-
+	OstTraceExt5(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEREAD3, "this %x aPos %x:%x aLength %d aTrg %x", (TUint) this, (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), aLength, (TUint) &aTrg);
+		
 	TInt r = iProxy->Read(aPos,aLength,aTrg);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveRead3Ret, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEREAD3RET, "r %d", r);
 	return r;
 	}
 
@@ -993,12 +919,9 @@ Write to the proxy drive and pass flags to driver.
 EXPORT_C TInt CBaseExtProxyDrive::Write(TInt64 aPos,TInt aLength,const TAny* aSrc,TInt aThreadHandle,TInt aOffset,TInt aFlags)
 	{
 	TRACETHREADIDH(aThreadHandle);
-	TRACE8(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveWrite1, EF32TraceUidProxyDrive, 
-		this, I64LOW(aPos), I64HIGH(aPos), aLength, aSrc, threadId, aOffset, aFlags);
-
+	OstTraceExt5(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEWRITE1, "this %x clientThreadId %x aPos %x:%x aLength %d", (TUint) this, (TUint) threadId, (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), aLength);
 	TInt r = iProxy->Write(aPos,aLength,aSrc,aThreadHandle,aOffset,aFlags);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveWrite1Ret, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEWRITE1RET, "r %d", r);
 	return r;
 	}
 
@@ -1017,12 +940,9 @@ Write to the proxy drive.
 EXPORT_C TInt CBaseExtProxyDrive::Write(TInt64 aPos,TInt aLength,const TAny* aSrc,TInt aThreadHandle,TInt anOffset)
 	{
 	TRACETHREADIDH(aThreadHandle);
-	TRACE7(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveWrite2, EF32TraceUidProxyDrive, 
-		this, I64LOW(aPos), I64HIGH(aPos), aLength, aSrc, threadId, anOffset);
-
+	OstTraceExt5(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEWRITE2, "this %x clientThreadId %x aPos %x:%x aLength %d", (TUint) this, (TUint) threadId, (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), aLength);
 	TInt r = iProxy->Write(aPos,aLength,aSrc,aThreadHandle,anOffset);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveWrite2Ret, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEWRITE2RET, "r %d", r);
 	return r;
 	}
 
@@ -1037,12 +957,9 @@ Write to the proxy drive.
 */
 EXPORT_C TInt CBaseExtProxyDrive::Write(TInt64 aPos,const TDesC8& aSrc)
 	{
-	TRACE5(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveWrite3, EF32TraceUidProxyDrive, 
-		this, I64LOW(aPos), I64HIGH(aPos), aSrc.Length(), &aSrc);
-
+	OstTraceExt5(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEWRITE3, "this %x aPos %x:%x aLength %d aSrc %x", (TUint) this, (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), aSrc.Length(), (TUint) &aSrc);
 	TInt r = iProxy->Write(aPos,aSrc);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveWrite3Ret, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEWRITE3RET, "r %d", r);
 	return r;
 	}
 
@@ -1056,11 +973,9 @@ Get the proxy drive's capabilities information.
 */
 EXPORT_C TInt CBaseExtProxyDrive::Caps(TDes8& anInfo)
 	{
-	TRACE1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveCaps, EF32TraceUidProxyDrive, this);
-
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVECAPS, "this %x", this);
 	TInt r = iProxy->Caps(anInfo);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveCapsRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVECAPSRET, "r %d", r);
 	return r;
 	}
 
@@ -1074,12 +989,9 @@ Format the connected drive.
 */
 EXPORT_C TInt CBaseExtProxyDrive::Format(TFormatInfo& anInfo)
 	{
-	TRACE1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveFormat1, EF32TraceUidProxyDrive, this);
-
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEFORMAT1, "this %x", this);
 	TInt r = iProxy->Format(anInfo);
-
-	TRACE4(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveFormat1Ret, EF32TraceUidProxyDrive, 
-		r, anInfo.iFormatIsCurrent, anInfo.i512ByteSectorsFormatted, anInfo.iMaxBytesPerFormat);
+	OstTraceExt4(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEFORMAT1RET, "r %d iFormatIsCurrent %d i512ByteSectorsFormatted %d iMaxBytesPerFormat %d", (TUint) r, (TUint) anInfo.iFormatIsCurrent, (TUint) anInfo.i512ByteSectorsFormatted, (TUint) anInfo.iMaxBytesPerFormat);
 	return r;
 	}
 
@@ -1094,12 +1006,9 @@ Format the proxy drive.
 */
 EXPORT_C TInt CBaseExtProxyDrive::Format(TInt64 aPos,TInt aLength)
 	{
-	TRACE4(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveFormat2, EF32TraceUidProxyDrive, 
-		this, I64LOW(aPos), I64HIGH(aPos), aLength);
-
+	OstTraceExt4(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEFORMAT2, "this %x aPos %x:%x aLength %d", (TUint) this, (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), (TUint) aLength);
 	TInt r = iProxy->Format(aPos,aLength);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveFormat2Ret, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEFORMAT2RET, "r %d", r);
 	return r;
 	}
 
@@ -1114,11 +1023,9 @@ Set the mount information on the proxy drive.
 */
 EXPORT_C TInt CBaseExtProxyDrive::SetMountInfo(const TDesC8* aMountInfo,TInt aMountInfoThreadHandle)
 	{
-	TRACE3(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveSetMountInfo, EF32TraceUidProxyDrive, this, aMountInfo, aMountInfoThreadHandle);
-
+	OstTraceExt3(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVESETMOUNTINFO, "this %x aMountInfo %x aMountInfoThreadHandle %x", (TUint) this, (TUint) aMountInfo, (TUint) aMountInfoThreadHandle);
 	TInt r = iProxy->SetMountInfo(aMountInfo,aMountInfoThreadHandle);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveSetMountInfoRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVESETMOUNTINFORET, "r %d", r);
 	return r;
 	}
 
@@ -1132,11 +1039,9 @@ Forces a remount on the proxy drive
 */
 EXPORT_C TInt CBaseExtProxyDrive::ForceRemount(TUint aFlags)
 	{
-	TRACE2(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveForceRemount, EF32TraceUidProxyDrive, this, aFlags);
-
+	OstTraceExt2(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEFORCEREMOUNT, "this %x aFlags%x", (TUint) this, (TUint) aFlags);
 	TInt r = iProxy->ForceRemount(aFlags);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveForceRemountRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEFORCEREMOUNTRET, "r %d", r);
 	return r;
 	}
 
@@ -1151,11 +1056,9 @@ Unlocks a password-enabled proxy drive.
 */
 EXPORT_C TInt CBaseExtProxyDrive::Unlock(TMediaPassword &aPassword, TBool aStorePassword)
 	{
-	TRACE2(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveUnlock, EF32TraceUidProxyDrive, this, aStorePassword);
-
+	OstTraceExt2(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEUNLOCK, "this %x aPassword %d", (TUint) this, (TUint) aStorePassword);
 	TInt r = iProxy->Unlock(aPassword,aStorePassword);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveUnlockRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEUNLOCKRET, "r %d", r);
 	return r;
 	}
 
@@ -1171,11 +1074,9 @@ Locks a password-enabled proxy drive with the new password.
 */
 EXPORT_C TInt CBaseExtProxyDrive::Lock(TMediaPassword &aOldPassword, TMediaPassword &aNewPassword, TBool aStorePassword)
 	{
-	TRACE2(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveLock, EF32TraceUidProxyDrive, this, aStorePassword);
-
+	OstTraceExt2(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVELOCK, "this %x aPassword %d", (TUint) this, (TUint) aStorePassword);
 	TInt r = iProxy->Lock(aOldPassword,aNewPassword,aStorePassword);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveLockRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVELOCKRET, "r %d", r);
 	return r;
 	}
 
@@ -1189,11 +1090,9 @@ Clears a password from a proxy drive - controller sets password to null.
 */
 EXPORT_C TInt CBaseExtProxyDrive::Clear(TMediaPassword &aPassword)
 	{
-	TRACE1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveClear, EF32TraceUidProxyDrive, this);
-
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVECLEAR, "this %x", this);
 	TInt r = iProxy->Clear(aPassword);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveClearRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVECLEARRET, "r %d", r);
 	return r;
 	}
 
@@ -1204,11 +1103,9 @@ Forcibly unlock a password-enabled proxy drive.
 */
 EXPORT_C TInt CBaseExtProxyDrive::ErasePassword()
 	{
-	TRACE1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveErasePassword, EF32TraceUidProxyDrive, this);
-
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEERASEPASSWORD, "this %x", this);
 	TInt r = iProxy->ErasePassword();
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveErasePasswordRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEERASEPASSWORDRET, "r %d", r);
 	return r;
 	}
 
@@ -1225,11 +1122,9 @@ the appropriate driver layer.
 */
 EXPORT_C TInt CBaseExtProxyDrive::ControlIO(const RMessagePtr2& aMessage,TInt aCommand,TAny* aParam1,TAny* aParam2)
 	{
-	TRACE1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveControlIO, EF32TraceUidProxyDrive, this);
-
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVECONTROLIO, "this %x", this);
 	TInt r = iProxy->ControlIO(aMessage,aCommand,aParam1,aParam2);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveControlIORet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVECONTROLIORET, "r %d", r);
 	return r;
 	}
 
@@ -1245,9 +1140,8 @@ Initialise the provided interface extension.
 */	
 EXPORT_C TInt CBaseExtProxyDrive::GetInterface(TInt aInterfaceId,TAny*& aInterface,TAny* aInput)
 	{
-	TRACE3(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveGetInterface, EF32TraceUidProxyDrive, 
-		this, aInterfaceId, aInput);
-
+	OstTraceExt3(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEGETINTERFACE, "this %x aInterfaceId %d aInput %x", (TUint) this, (TUint) aInterfaceId, (TUint) aInput);
+		
 	TInt r;
 	if (aInterfaceId==EGetLocalDrive)
 		{
@@ -1255,8 +1149,7 @@ EXPORT_C TInt CBaseExtProxyDrive::GetInterface(TInt aInterfaceId,TAny*& aInterfa
 		}
 	else	
 		r = CProxyDrive::GetInterface(aInterfaceId,aInterface,aInput);
-
-	TRACERET2(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveGetInterfaceRet, EF32TraceUidProxyDrive, r, aInterface);
+	OstTraceExt2(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEGETINTERFACERET, "r %d aInterface %x", (TUint) r, (TUint) aInterface);
 	return r;
 	}	
 
@@ -1270,11 +1163,9 @@ Retrieve proxy drive disk error information.
 */
 EXPORT_C TInt CBaseExtProxyDrive::GetLastErrorInfo(TDes8 &aErrorInfo)
 	{
-	TRACE1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveGetLastErrorInfo, EF32TraceUidProxyDrive, this);
-
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEGETLASTERRORINFO, "this %x", this);
 	TInt r = iProxy->GetLastErrorInfo(aErrorInfo);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveGetLastErrorInfoRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEGETLASTERRORINFORET, "r %d", r);
 	return r;
 	}
 
@@ -1290,12 +1181,9 @@ For example a cluster or partition has been freed.
 */
 EXPORT_C TInt CBaseExtProxyDrive::DeleteNotify(TInt64 aPos, TInt aLength)
     {
-	TRACE4(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveDeleteNotify, EF32TraceUidProxyDrive, 
-		this, I64LOW(aPos), I64HIGH(aPos), aLength);
-
+	OstTraceExt4(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEDELETENOTIFY, "this %x aPos %x:%x aLength %d", (TUint) this, (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), (TUint) aLength);
     TInt r = iProxy->DeleteNotify(aPos, aLength);
-
-	TRACERET1(UTF::EBorder, UTraceModuleProxyDrive::ECBaseExtProxyDriveDeleteNotifyRet, EF32TraceUidProxyDrive, r);
+	OstTrace1(TRACE_DRIVE, PROXYDRIVE_ECBASEEXTPROXYDRIVEDELETENOTIFYRET, "r %d", r);
 	return r;
     }
 
@@ -1368,7 +1256,7 @@ EXPORT_C CProxyDrive* CreateProxyDriveL(CProxyDrive* aConcreteDrive,CMountCB* aM
 		return(aConcreteDrive);
 
 	TBool extSupported = drive.FSys().IsExtensionSupported();
-	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECFileSystemIsExtensionSupported, EF32TraceUidProxyDrive, extSupported);
+	OstTraceExt2(TRACE_DRIVE, FSYS_ECFILESYSTEMISEXTENSIONSUPPORTED2, "%x r %d", (TUint) &drive.FSys(), (TUint) extSupported);
 	if(!extSupported)
 		{
 		delete(aConcreteDrive);

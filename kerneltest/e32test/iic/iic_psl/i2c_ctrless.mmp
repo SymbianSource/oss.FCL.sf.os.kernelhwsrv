@@ -39,7 +39,7 @@ macro MASTER_MODE
 macro SLAVE_MODE
 
 // un-comment the following if debug printing is required
-macro LOG_I2C
+//macro LOG_I2C
 
 // un-comment the following if BTRACE output is required
 macro IIC_INSTRUMENTATION_MACRO

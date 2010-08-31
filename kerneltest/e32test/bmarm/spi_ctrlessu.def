@@ -1,0 +1,7 @@
+EXPORTS
+	CreatePhysicalDevice__Fv @ 1 NONAME R3UNUSED ; CreatePhysicalDevice(void)
+	DfcFunc__20TIicBusSlaveCallbackPv @ 2 NONAME R3UNUSED ; TIicBusSlaveCallback::DfcFunc(void *)
+	__25DIicBusChannelMasterSlaveQ214DIicBusChannel8TBusTypeQ214DIicBusChannel14TChannelDuplexP20DIicBusChannelMasterP19DIicBusChannelSlave @ 3 NONAME ; DIicBusChannelMasterSlave::DIicBusChannelMasterSlave(DIicBusChannel::TBusType, DIicBusChannel::TChannelDuplex, DIicBusChannelMaster *, DIicBusChannelSlave *)
+	__31DSimulatedIicBusChannelSlaveSpiQ214DIicBusChannel8TBusTypeQ214DIicBusChannel14TChannelDuplex @ 4 NONAME R3UNUSED ; DSimulatedIicBusChannelSlaveSpi::DSimulatedIicBusChannelSlaveSpi(DIicBusChannel::TBusType, DIicBusChannel::TChannelDuplex)
+	__32DSimulatedIicBusChannelMasterSpiQ214DIicBusChannel8TBusTypeQ214DIicBusChannel14TChannelDuplex @ 5 NONAME R3UNUSED ; DSimulatedIicBusChannelMasterSpi::DSimulatedIicBusChannelMasterSpi(DIicBusChannel::TBusType, DIicBusChannel::TChannelDuplex)
+

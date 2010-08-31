@@ -1,4 +1,4 @@
-// Copyright (c) 1998-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -41,7 +41,6 @@ BASEDEFAULT
 #include "drivers/media/bld.inf"
 #include "drivers/trace/bld.inf"
 #include "drivers/usbc/bld.inf"
-#include "drivers/camerasc/bld.inf"
 #include "drivers/display/bld.inf"
 #include "euser/bld.inf"
 #include "ewsrv/bld.inf"
@@ -115,6 +114,7 @@ include/kernel/kpower.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
 include/kernel/sproperty.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
 include/kernel/kernboot.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
 include/kernel/kbma.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
+include/kernel/kerncorestats.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
 
 // Export a stub localisation header under the old name. This just inclides "localise.h" ...
 include/kernel/ls_std.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
@@ -201,14 +201,21 @@ include/drivers/pccd_vcc.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/ethernet.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/ethernet.inl					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/dma.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
-include/drivers/dma.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/dma_v1.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/dma_v1.inl						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/dma_v2.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/dma_v2.inl						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/dmadefs.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/dma_compat.inl					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/dma_hai.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/dma_hai.inl						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/iic.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/iic.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/iic_channel.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/iic_channel.inl					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/iic_trace.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
-include/drivers/iic_transaction.h				drivers/						//
-include/drivers/iic_transaction.inl				drivers/
+include/drivers/iic_transaction.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/iic_transaction.inl				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 
 include/drivers/gpio.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/mmccd_ifc.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
@@ -234,16 +241,12 @@ include/drivers/usbcdesc.h						drivers/						//
 include/drivers/usbdi_hub.h                     drivers/						//
 include/drivers/usbdi_channel.h                 drivers/						//
 
-include/drivers/camerasc.h						drivers/						//
-include/drivers/camerasc.inl					drivers/						//
-
 include/drivers/otgdi.h                         drivers/
 
 include/drivers/crashflash.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/crashflashnor.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/crashflashnand.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 
-include/rm_debug_api.h SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(rm_debug_api.h)
 include/sm_debug_api.h SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(sm_debug_api.h)
 
 include/drivers/resourceman.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
@@ -254,6 +257,8 @@ include/drivers/resource.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/resourcecontrol_trace.h			SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/resource_category.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/resource_extend.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/resourcecontrol_settings.h		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/resourcecontrol_clientsettings.h	SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 
 // Power Resource Manager User-Side API
 include/drivers/resmanus_trace.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
@@ -355,8 +360,6 @@ include/d32usbdi_hubdriver.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32usbdi_
 include/d32usbdi_hubdriver.inl					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32usbdi_hubdriver.inl)
 include/d32usbtransfers.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32usbtransfers.h)
 include/d32usbdescriptors.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32usbdescriptors.h)
-include/d32camerasc.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32camerasc.h)
-include/d32camerasc.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32camerasc.inl)
 include/d32otgdi.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32otgdi.h)
 include/d32otgdi.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32otgdi.inl)
 include/d32otgdi_errors.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32otgdi_errors.h)
@@ -371,6 +374,8 @@ include/dispchannel.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(dispchannel.
 include/d32resmanus.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32resmanus.h)
 include/d32resmanus.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32resmanus.inl)
 
+include/heap_hybrid.h							SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(kernel/)
+
 //Unified Trace Framework API
 include/e32utf.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32utf.h)
 include/e32utrace.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32utrace.inl)
@@ -378,20 +383,20 @@ include/e32utrace_basic_types.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32utr
 include/e32utrace.mmh							SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32utrace.mmh)
 
 //Open System Trace API
-include/opensystemtrace.h					/epoc32/include/platform/
-include/opensystemtrace.inl					/epoc32/include/platform/
-include/opensystemtrace_types.h					/epoc32/include/platform/
-include/opensystemtrace.mmh					/epoc32/include/platform/
+include/opensystemtrace.h                       SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(opensystemtrace.h)
+include/opensystemtrace.inl                     SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(opensystemtrace.inl)
+include/opensystemtrace_types.h                 SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(opensystemtrace_types.h)
+include/opensystemtrace.mmh                     SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(opensystemtrace.mmh)
 
 // ROM building scripts
-rombuild/base.iby								/epoc32/rom/include/			//
-rombuild/PlatSecEnforcement.oby					/epoc32/rom/include/			//
-rombuild/PlatSecDiagnostics.oby					/epoc32/rom/include/			//
-rombuild/btrace.iby								/epoc32/rom/include/			//
+rombuild/base.iby								/epoc32/rom/include/
+rombuild/PlatSecEnforcement.oby					/epoc32/rom/include/
+rombuild/PlatSecDiagnostics.oby					/epoc32/rom/include/
+rombuild/btrace.iby								/epoc32/rom/include/
 rombuild/kernel.hby								/epoc32/rom/include/
-rombuild/rm_debug_svr.iby						/epoc32/rom/include/			// Run mode debug driver
-rombuild/utrace.iby								/epoc32/rom/include/			//utrace
-rombuild/ost.iby								/epoc32/rom/include/			//ost
+rombuild/sm_debug.iby						    /epoc32/rom/include/			
+rombuild/utrace.iby								/epoc32/rom/include/
+rombuild/ost.iby								/epoc32/rom/include/
 
 // Byte pair compressor
 include/byte_pair_compress.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(byte_pair_compress.h)

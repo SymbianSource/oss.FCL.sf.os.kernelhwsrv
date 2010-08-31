@@ -147,6 +147,17 @@ private:
 
 const TInt KSDMaxMBWRetries = 1;
 const TUint32 KSDACMD22BlockLen = 4;
+
+NONSHARABLE_CLASS(DAddressCard) : public DMMCStack::MAddressCard
+	{
+public:
+	DAddressCard(DSDStack& aStack);
+	virtual void AddressCard(TInt aCardNumber);
+private:
+	DSDStack& iStack;
+	};
+
+
 class DSDStack : public DMMCStack
 	{
 public:
@@ -191,15 +202,19 @@ private:
     // Dummy functions to maintain binary compatibility
     IMPORT_C virtual void Dummy1();
     IMPORT_C virtual void Dummy2();
-    IMPORT_C virtual void Dummy3();
+
+protected:
+	IMPORT_C virtual void GetInterface(TInterfaceId aInterfaceId, MInterface*& aInterfacePtr);
 
 public: 
     IMPORT_C virtual DSDStack::TSDCardType CardType(TInt aSocket, TInt aCardNumber);
 
 private:    
+	DAddressCard* iAddressCard;
     //
     // Reserved members to maintain binary compatibility
-    TInt iReserved[68];
+
+    TInt iReserved[67];
 	};
 
 #include <drivers/sdcard.inl>

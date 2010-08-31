@@ -974,7 +974,10 @@ void CLeafDirTree::DumpTreeContentL() const
 	{
 	RPointerArray<CLeafDirTreeNode>* nodeStack = new(ELeave) RPointerArray<CLeafDirTreeNode>(4);
 	RFs fs;
-	fs.Connect();
+	
+    TInt nRes = fs.Connect();
+    User::LeaveIfError(nRes);
+
 	const TUint32 debugRegister = DebugRegister();
 	fs.SetDebugRegister(debugRegister|KFSYS);
 	if (iRoot != NULL)

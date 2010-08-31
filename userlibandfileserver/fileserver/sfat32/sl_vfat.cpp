@@ -29,7 +29,7 @@ const TUint8 KLeadingE5Replacement = 0x05;
 // use second half of ISO Latin 1 character set for extended chars
 const TUint KExtendedCharStart=0x80;
 const TUint KExtendedCharEnd=0xff;
-const TUint KMaxVFatEntries = 21; ///< Max possible number of entries in the VFAT entryset
+#define KMaxVFatEntries 21 ///< Max possible number of entries in the VFAT entryset
 
 
 //-----------------------------------------------------------------------------

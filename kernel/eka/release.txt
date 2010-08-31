@@ -1,787 +1,1322 @@
-Version 2.00.2655
+Version 2.00.3115
+=================
+(Made by fadhliM 16/08/2010)
+
+1.	daniezho
+	1.	RP527391
+		REQ		417-56902 Instrumentation of USB
+		SUB/SCO	417-72923 Instrumentation of USB - USB package
+
+
+Version 2.00.3114
+=================
+(Made by fadhliM 06/08/2010)
+
+1.	vfebvre
+	1.	ou1cimx1#502965 ENV : E32Test T_HEAPDL Fails TestRHeap::Test3()
+
+2.	jimhofe
+	1.	MINOR_CHANGE Adding f32test\rofs and f32test\loader to package_definition.xml
+	2.	MINOR_CHANGE Adding rofs_tests.mrp
+	3.	MINOR_CHANGE Removing author names from documentation
+
+3.	lanerobe
+	1.	ou1cimx1#506647 T_SMPSOAK debug output is not standard
+
+4.	cnotton
+	1.	ou1cimx1#500725 Coverity defects - Resource Manager and ResManUS
+
+5.	jukwak
+	1.	ou1cimx1#413512 DEV - GPIO SHAI is missing the inclusion of static extension function handlers
+	2.	ou1cimx1#468979 t_pci has dependency on naviengine
+
+
+Version 2.00.3113
+=================
+(Made by fadhliM 02/08/2010)
+
+
+1.	sakhghos
+	1.	ou1cimx1#504256 MCL removal of Run-Mode Debug Driver components from KHS package
+
+2.	h14jiang
+	1.	ou1cimx1#504400 [MCL] Disk full notification pops up
+
+3.	lanerobe
+	1.	ou1cimx1#499080 TExtended::LoadLocale() failed, but may affect the OS locale setting.
+	2.	ou1cimx1#499031 TExtendedLocale::Locale(const TDesC& aLocaleDllName) fail.
+
+4.	martai
+	1.	ou1cimx1#508646 ENV : E32TEST T_SHADOW Fails during testMultipleReadFile()
+
+
+Version 2.00.3112
 =================
 (Made by fadhliM 27/07/2010)
 
 1.	vfebvre
-	1.	ou1cimx1#488886 System-critical thread being reported in MC when another permanent thread in same process fault
+	1.	ou1cimx1#492020 System-critical thread being reported in MC when another permanent thread in same process faults
 
-2.	dogunjum
-	1.	ou1cimx1#479596 92: Domain Manager - Correct the usage of RArray::Append()
+2.	josezhou
+	1.	ou1cimx1#482087 If the usb device doesn't support HNP, the call to usbd_set_otg_support returns USBD_STALLED 
+
+3.	gcochran
+	1.	ou1cimx1#498830 [mcl] ENV t_svrpinning, _P,_UP test fails with unexpected thread exit type on Vasco/TB9.2  
+
+4.	stmansfi
+	1.	ou1cimx1#496968 Fix domain manager test structure
+
+5.	jcoppear
+	1.	ou1cimx1#500393 Demand paging loses error information when a fatal error occurs
+
+6.	x120li
+	1.	ou1cimx1#493275 TdesC16::LocateReverseF2() function can't stop running.
+
+7.	erifung
+	1.	ou1cimx1#460764 Improve code coverage for kernel power component
+
+8.	davegord
+	1.	ou1cimx1#497240 [mcl] Problem with ExecHandler::FsRegisterThread()
 
 
-Version 2.00.2654
+Version 2.00.3111
+=================
+(Made by fadhliM 26/07/2010)
+
+1.	lforynsk
+	1.	ou1cimx1#500491 Resource Manager PIL reallocates an array that it doesn't create or delete (kernelhwsrv)
+	2.	ou1cimx1#500836 Resource manager does not response to an asynchronous request if the resource level owner send a request with the same level
+
+2.	gayarama
+	1.	ou1cimx1#473162 DEV Registration of resources for idle is not complete
+	2.	ou1cimx1#493520 DEV Allow simulated resource controller to register with power controller
+
+3.	cnotton
+	1.	ou1cimx1#493455 Test bld.inf files are exporting headers without proper macro
+	2.	MINOR_CHANGE Moved T_TIMESTAMP up above T_LAT2.
+
+4.	erifung
+	1.	ou1cimx1#493519 t_rescontrolcli.exe crash
+
+5.	vfebvre
+	1.	ou1cimx1#483102 H6 baseport bld.inf changes
+
+6.	jcoppear
+	1.	ou1cimx1#428875 MCL NaviEngine baseport bld.inf changes
+
+
+Version 2.00.3110
+=================
+(Made by fadhliM 22/07/2010)
+
+1.	davegord
+	1.	ou1cimx1#488456 (MCL) Kernel signals MTP server unexpectedly and cause it panic
+
+2.	dogunjom
+	1.	ou1cimx1#413278 MCL:Domain Manager - Correct the usage of RArray::Append()
+
+3.	jcoppear
+	1.	ou1cimx1#479322 ENV E32TEST T_RAMDEFRAG test failure investigation (t_ramdefrag.cpp:549)
+
+4.	vfebvre
+	1.	ou1cimx1#460995 ENV E32TEST T_PAGETABLE_LIMIT test failure investigation (t_pagetable_limit.cpp:276)
+
+5.	seolney
+	1.	ou1cimx1#486893 DEV DMA functions missing test code (pt. 2)
+
+6.	mipetzol
+	1.	ou1cimx1#479623 DMA V2 framework PIL enhancement required for management of AsymmmetricSgChannel class descriptors
+
+
+Version 2.00.3109
 =================
 (Made by fadhliM 19/07/2010)
 
-1.	gcochran
-	1.	DEF144551 t_svrpinning, _P,_UP test fails with unexpected thread exit type on Vasco/TB9.2
+1.	mipetzol
+	1.	ou1cimx1#467351 DMA PIL doesn't check client thread priorities
+	2.	ou1cimx1#467653 DMA PIL: Unnecessary calls to empty virtual function
 
-2.	martai
-	1.	ou1cimx1#494023 E32TEST T_SHADOW Fails during testMultipleReadFile()
+2.	mmoate
+	1.	ou1cimx1#422063 MCL Test Code Coverage Improvement Phase 1
+
+3.	garciato
+	1.	MINOR_CHANGE Corrections to document and diagram and corrected file name
+
+4.	jcoppear
+	1.	ou1cimx1#460995 ENV E32TEST T_PAGETABLE_LIMIT test failure investigation (t_pagetable_limit.cpp:276)
+
+5.	fagortz
+	1.	ou1cimx1#479558 t_medch does not find suitable drive for test if pagingMediaCheck is false
+
+6.	ferporta
+	1.	ou1cimx1#480991 10.1 Component build failures with f32file.h platform header removal changes
 
 
-Version 2.00.2653
-=================
-(Made by famustaf 14/07/2010)
-
-1.	davegord
-	1.	ou1cimx1#485331 Kernel signals MTP server unexpectedly and cause it panic
-
-
-Version 2.00.2652
-=================
-(Made by famustaf 12/07/2010)
-
-1.	jcoppear
-	1.	ou1cimx1#479552 ENV E32TEST T_ALIAS_REMOVE timeout
-	
-
-Version 2.00.2651
+Version 2.00.3108
 =================
 (Made by famustaf 12/07/2010)
 
-1.	paconway
-	1.	MINOR_CHANGE Correct EPL header for sdapctest.mmp
+1.	coliward
+	1.	ou1cimx1#457854 Kernel's memmove() routine needs optimising for Win32 UDEB builds
+
+2.	stmansfi
+	1.	ou1cimx1#468733 ENV Remove unnecessary test exports
+
+3.	jimhofe
+	1.	MINOR_CHANGE Adding pkgdefs file for mounting the filesystem from the synergy package
+
+4.	niccox
+	1.	ou1cimx1#474990 h4usbtest.iby is missing t_usb_transfersrv.dll
 
 
-Version 2.00.2650
+Version 2.00.3107
 =================
 (Made by famustaf 07/07/2010)
 
-1.	paconway
-	1.	REQ 417-56766 MBBMS over CMMB for TD-SCDMA Gen. 2 MobileTv
+1.	necliffo
+	1.	REQ 428-72 Partition support for eMMC-only platforms
 
 
-Version 2.00.2144
+Version 2.00.3106
+=================
+(Made by famustaf 01/07/2010)
+
+1.	jessiezh
+	1.	ou1cimx1#470771 Improve code coverage for IIC
+
+2.	niccox
+	1.	ou1cimx1#469034 ENV New usbcsc export not frozen
+
+3.	garciato
+	1.	MINOR_CHANGE Add more SMP documentation
+
+
+Version 2.00.3105
+=================
+(Made by vfebvre 28/06/2010)
+
+1.	seolney
+	1.	ou1cimx1#462430 DMA functions missing test code
+
+
+Version 2.00.3104
+=================
+(Made by vfebvre 25/06/2010)
+
+1.	snagappa
+	1.	ou1cimx1#460964 t_dma2 test failure investigation
+
+2.	indrasin
+	1.	MINOR_CHANGE Excluded H2, Emulator test code, H4 flexible memory build
+
+3.	cnotton
+	1.	ou1cimx1#440685 Multimedia headers in kernelhwsrv are including platform headers
+
+4.	erifung
+	1.	ou1cimx1#435148 Unsafe setting of DPowerResourceNotification data
+
+
+Version 2.00.3103
+=================
+(Made by vfebvre 24/06/2010)
+
+1.	snagappa
+	1.	ou1cimx1#432741 Ektran functions missing test cases
+
+2.	erifung
+	1.	ou1cimx1#436980 EResourceManager and TResourceManagerUs e32btrace.h formats cannot be correctly parsed by SymSEE TraceViewer
+
+
+Version 2.00.3102
+=================
+(Made by vfebvre 24/06/2010)
+
+1.	daniezho
+	1.	ou1cimx1#452612 [kernelhwsrvmcl] Not support NCM function in USB shared chunk LDD
+
+2.	cnotton
+	1.	ou1cimx1#435933 E32TEST T_TIMESTAMP test failure investigation (SMP, t_timestamp.cpp:194)
+
+
+Version 2.00.3101
+=================
+(Made by vfebvre 22/06/2010)
+
+1.	erifung
+	1.	ou1cimx1#436941 Category 20 (TResourceManagerUs) cannot be enabled in btrace
+
+2.	indrasin
+	1.	MINOR_CHANGE Included H2/H4/H6, emulator builds, excluded TraceCore from rapu for sirocco building
+	2.	MINOR_CHANGE Excluded TraceCore from rapu baseport for sirocco building
+
+
+Version 2.00.3100
 =================
 (Made by vfebvre 21/06/2010)
 
 1.	stmansfi
-	1.	ou1cimx1#451247 DEV 9.2 Warnings in DRM_DebugEventHandler header for coverage builds
+	1.	ou1cimx1#451185 DEV MCL Warnings in DRM_DebugEventHandler header for coverage builds
+
+2.	mipetzol
+	1.	ou1cimx1#457256 Changes done in DMA PIL DMA V2 framework to adapt to ST PSL
+
+3.	lanerobe
+	1.	ou1cimx1#447463 VFP Mode inheritance fix
+
+4.	kmetherm
+	1.	ou1cimx1#442009 DEV RVCT4.0 Compilation issues in  when building bsp
 
 
-Version 2.00.2143
+Version 2.00.3099
 =================
 (Made by vfebvre 18/06/2010)
 
 1.	jimhofe
-	1.	ou1cimx1#443255 Automouter is not referenced by the package_definition.xml file
+	1.	ou1cimx1#443337 Automouter is not referenced by the package_definition.xml file
 
-
-Version 2.00.2142
-=================
-(Made by vfebvre 17/06/2010)
-
-1.	mipetzol
+2.	mipetzol
 	1.	MINOR_CHANGE DMA header file in-source documentation update
 
+3.	tocosgro
+	1.	ou1cimx1#403437 RVCT 4.0: Definition of BTraceFiltered8 engenders undefined behaviour
+		RVCT4 with -O3 and -Otime creates incorrect object code when we cast a function
+		call in order to call a function that should have more parameters with fewer than it
+		needs.
 
-Version 2.00.2141
+		This is done by various of the BTrace macros in e32btrace.h (Btrace0(), BTrace4(), etc, etc),
+		using internal typedefs TBTrace1, TBTrace2 and TBTrace 3.
+
+		The change is to remove the casts (and the typedefs to avoid this being done again
+		immediately) and add explicit 0 arguments to the calls in the macros.
+
+		The impact of this on the generated code is precisely to add the extra register load immediate
+		instructions (e.g. mov r3, #0).
+
+4.	shubmurt
+	1.	ou1cimx1#428765 Case and Slash fix for Linux Build
+
+5.	kmetherm
+	1.	ou1cimx1#419204 DEV-T_CrashMonitor_Lib test fails when built with RVCT4.0 compiler
+	2.	ou1cimx1#390590 DEV-T_KHEAP test fails when built with RVCT4.0 compiler
+	3.	ou1cimx1#423744 DEV-T_XXVer2 test fails/times out when built with RVCT4.0 compiler
+
+
+Version 2.00.3098
+=================
+(Made by vfebvre 18/06/2010)
+
+1.	garciato
+	1.	RP520151
+		REQ:417-52765 - SMP: Product Quality SMP Kernel for Bridge
+
+
+Version 2.00.3097
 =================
 (Made by vfebvre 16/06/2010)
 
 1.	jcoppear
-	1.	ou1cimx1#443819 ENV E32TEST T_THRASH test timeout on 92
+	1.	ou1cimx1#444092 MCL ENV E32TEST T_THRASH test timeout on 92
+
+2.	shubmurt
+	1.	ou1cimx1#423695 MCL:Mobile Crash #25334: CodeAbort exception in CompleteQue method, kernel/sproperty.cpp
 
 
-Version 2.00.2140
-=================
-(Made by vfebvre 15/06/2010)
-
-1.	martai
-	1.	ou1cimx1#437377 E32TEST T_CHUNK test failure investigation (t_chunk.cpp:885)
-
-
-Version 2.00.2139
+Version 2.00.3095
 =================
 (Made by vfebvre 14/06/2010)
 
-1.	martai
-	1.	ou1cimx1#435560 WDP: Paged data can be corrupted randomly
+1.	kingzhan
+	1.	ou1cimx1#425296 MCL Mutex ordering violation in USB driver
+
+2.	jcoppear
+	1.	ou1cimx1#432392 System reset during execution of T_SHBUF_CLIENT
+	2.	ou1cimx1#380623 WDP: Non aligned swap writes increase media wear
+
+3.	martai
+	1.	ou1cimx1#435628 Copy of WDP: Paged data can be corrupted randomly
+	2.	ou1cimx1#424896 E32TEST T_RAMALL occasionally times out
+	3.	ou1cimx1#412959 ENV X86GCC compilation warnings t_ramall.cpp
+	4.	ou1cimx1#384467 Contiguous memory allocations do not use multi-page write support
+
+4.	coliward
+	1.	ou1cimx1#428886 SDK specific: Unable to Install Midlet in the Emulator.
 
 
-Version 2.00.2138
+Version 2.00.3094
 =================
 (Made by vfebvre 10/06/2010)
 
 1.	jimhofe
-	1.	ou1cimx1#419218 Missing exported kernelhwsrv documentation causes build breaks
+	1.	ou1cimx1#419221 Missing exported kernelhwsrv documentation causes build breaks
+
+2.	lanerobe
+	1.	ou1cimx1#427741 Reset timestamp before running test
 
 
-Version 2.00.2137
+Version 2.00.3093
 =================
 (Made by vfebvre 09/06/2010)
 
-1.	shubmurt
-	1.	ou1cimx1#387232 CodeAbort exception in CompleteQue method, kernel/sproperty.cpp
-		Changes in Publish & Subscribe
+1.	gcochran
+	1.	ou1cimx1#400079 MCL: E32TEST RMessagePtr2::Kill is not exercised by t_message
 
-2.	coliward
-	1.	ou1cimx1#424882 SDK specific: Unable to Install Midlet in the Emulator.
-
-
-Version 2.00.2136
-=================
-(Made by vfebvre 07/06/2010)
-
-1.	lanerobe
-	1.	ou1cimx1#393868 Use built-in uint32 sort function
-
-2.	martai
-	1.	ou1cimx1#414410 E32TEST T_RAMALL occasionally times out
+2.	jimhofe
+	1.	ou1cimx1#411346 MCL wk22 build break in kernelhwsrv
 
 
-Version 2.00.2135
+Version 2.00.3092
 =================
 (Made by vfebvre 04/06/2010)
 
-1.	kingzhan
-	1.	ou1cimx1#415058 92 Mutex ordering violation in USB driver
-
-2.	cnotton
-	1.	ou1cimx1#414553 Attempt to export missing file bootstrap_smrif.h
+1.	cnotton
+	1.	ou1cimx1#413372 Attempt to export missing file bootstrap_smrif.h
 
 
-Version 2.00.2134
+Version 2.00.3091
 =================
-(Made by vfebvre 03/06/2010)
+(Made by vfebvre 04/06/2010)
 
-1.	martai
-	1.	ou1cimx1#414435 WDP: The paging cache can increase beyond its maximum size temporarily
+1.	mmoate
+	1.	MINOR_CHANGE Correct insource docs for aSingleThread parameter in UserHeap methods
 
 
-Version 2.00.2133
+Version 2.00.3090
 =================
 (Made by vfebvre 03/06/2010)
 
 1.	jimhofe
 	1.	MINOR_CHANGE Documentation formatting tweaks
 
-2.	gcochran
-	1.	ou1cimx1#400068 E32TEST RMessagePtr2::Kill is not exercised by t_message
 
-
-Version 2.00.2132
+Version 2.00.3089
 =================
-(Made by vfebvre 02/06/2010)
+(Made by vfebvre 01/06/2010)
 
-1.	davegord
-	1.	ou1cimx1#410777 Kernel Message Pool corrupted by delayed DeadClientCleanup
+1.	lanerobe
+	1.	ou1cimx1#397118 Use build-in uint32 sort function
 
 
-Version 2.00.2130
+Version 2.00.3088
 =================
 (Made by vfebvre 28/05/2010)
 
-1.	lanerobe
-	1.	ou1cimx1#399811 BM_SUITE does not run on NaviEngine
+1.	necliffo
+	1.	ou1cimx1#407499 modify medmmc to ensure format
+
+2.	lanerobe
+	1.	ou1cimx1#402843 Fix smppower .mmp files
 
 
-Version 2.00.2129
+Version 2.00.3086
 =================
 (Made by vfebvre 27/05/2010)
 
-1.	vfebvre
-	1.	ou1cimx1#400807 Warnings reported by the Symbian Foundation license checker
+1.	atvamos
+	1.	ou1cimx1#376123 h2.arm4.udeb.f32test.page ROFSBUILD failed on dev-cedar build
 
-2.	lanerobe
-	1.	ou1cimx1#399627 Build HCR test roms in its own folder
+2.	vfebvre
+	1.	ou1cimx1#400806 Warnings reported by the Symbian Foundation license checker
+
+3.	garciato
+	1.	ou1cimx1#379971 Incorrect Copyright Headers in e32test\timestamp
+
+4.	djkovace
+	1.	ou1cimx1#367370 Bridge platform neither reboots nor runs crash debugger when crashed
+
+5.	martai
+	1.	ou1cimx1#399892 E32TEST T_CHUNK test failure investigation (t_chunk.cpp:885)
+
+6.	elzou
+	1.	ou1cimx1#393943 Phone reset if connect/disconnect USB mouse few times fast
+
+7.	lanerobe
+	1.	ou1cimx1#399642 Build HCR test roms in its own folder
+	2.	ou1cimx1#353110 BM_SUITE does not run on NaviEngine
+
+8.	hengrant
+	1.	ou1cimx1#377057 Trace outputs truncated data for length and position
 
 
-Version 2.00.2128
+Version 2.00.3085
 =================
-(Made by vfebvre 26/05/2010)
+(Made by vfebvre 18/05/2010)
 
-1.	elzou
-	1.	ou1cimx1#393925 Phone reset if connect/disconnect USB mouse few times fast
+1.	gayarama
+	1.	ou1cimx1#382130 DEV HCR settings to be used by PRM and its clients
+
+2.	mipetzol
+	1.	MINOR_CHANGE Updated comments in dma_v2.h
 
 
-Version 2.00.2127
+Version 2.00.3084
 =================
-(Made by vfebvre 24/05/2010)
+(Made by vfebvre 17/05/2010)
 
-1.	jcoppear
-	1.	ou1cimx1#389410 ENV E32TEST T_IPCCPY hangs on H4HRP.ARMV5.UREL.FMM.ONENANDPAGE
+1.	indrasin
+	1.	MINOR_CHANGE: TITANIUM (SIROCCO MIGRATION): submitting build.config.xml for sirocco migration to identify components to be build
+
+2.	shubmurt
+	1.	DEF144569 t_datapaging passes when data paging is not enabled
+		t_datapaging should fail if data paging is not reported in a ROM that is meant to be be data paged
+	2.	ou1cimx1#361046 T_WSD* test set fails to compile / run when built with RVCT4.0 compiler
 
 
-Version 2.00.2126
+Version 2.00.3083
 =================
-(Made by vfebvre 20/05/2010)
-
-1.	necliffo
-	1.	ou1cimx1#389444 NAND paging are in bootloop
-
-
-Version 2.00.2125
-=================
-(Made by vfebvre 19/05/2010)
-
-1.	hengrant
-	1.	ou1cimx1#377066 Trace outputs truncated data for length and position
-
-
-Version 2.00.2124
-=================
-(Made by vfebvre 14/05/2010)
+(Made by vfebvre 13/05/2010)
 
 1.	famustaf
-	1.	ou1cimx1#380187 Build on Linux - Incorrect slash in #include in sf_sys.cpp
-		Changed backslash to forward slash.
+	1.	ou1cimx1#380321 Build on Linux - Incorrect slash in #include in sf_sys.cpp
+
+2.	cnotton
+	1.	ou1cimx1#380725 Public headers in bt are including platform headers
 
 
-Version 2.00.2123
+Version 2.00.3082
 =================
 (Made by vfebvre 12/05/2010)
 
-1.	stmansfi
-	1.	RM 417-69728 KHS Digitiser HAL Changes 92
-		PackageReleaseID=488421
+1.	mipetzol
+	1.	MINOR_CHANGE Update to DMAv2 Porting Guide
+
+2.	lanerobe
+	1.	ou1cimx1#378811 Change kernel use of %lS to %S
+	2.	ou1cimx1#378808 MCL Stop ExecHandler accessing user descriptors directly
+
+3.	migubarr
+	1.	ou1cimx1#377322 New T_FILECACHE test failures (t_filecache.cpp:356)
+
+4.	hengrant
+	1.	ou1cimx1#370931 Memory card gets locked by itself MCL
 
 
-Version 2.00.2122
+Version 2.00.3081
 =================
 (Made by vfebvre 11/05/2010)
 
-1.	martai
-	1.	ou1cimx1#378868 Contiguous memory allocations do not use multi-page write support
+1.	jimhofe
+	1.	ou1cimx1#367892 Changing MedSD3c PolicyId from 2 to 1461
 
-2.	jimhofe
-	1.	ou1cimx1#367891: Changing MedSD3c PolicyId from 2 to 1461
+2.	martai
+	1.	PDEF145025 Support rapu variant specific e32tests 
+
+3.	kmetherm
+	1.	PR457093 RVCT 4 compatible software codebase (SSS)
 
 
-Version 2.00.2121
+Version 2.00.3080
 =================
 (Made by vfebvre 10/05/2010)
 
 1.	necliffo
-	1.	ou1cimx1#375835: eMMC reliable Write can increase wear of eMMC devices
+	1.	ou1cimx1#378256 eMMC reliable Write can increase wear of eMMC devices
+
+2.	jessiezh
+	1.	MINOR_CHANGE Re-enable T_SOUND2 test
+	2.	ou1cimx1#367177 E32TEST T_DOMAIN test failure investigation
+
+3.	gcochran
+	1.	ou1cimx1#367939 MCL: Undefined Symbol error with the header "e32math.h"
 
 
-Version 2.00.2120
+Version 2.00.3079
 =================
 (Made by vfebvre 07/05/2010)
 
 1.	mipetzol
-	1.	ou1cimx1#374045 DMA V2 should be removed from TB9.2
-
-2.	jcoppear
-	1.	ou1cimx1#37212: WDP: Non aligned swap writes increase media wear
+	1.	MINOR_CHANGE: Updated comment in dma_v1.h
+	2.	MINOR_CHANGE: Updated comment in dma_v2.h
 
 
-Version 2.00.2119
+Version 2.00.3078
 =================
 (Made by vfebvre 05/05/2010)
 
-1.	jimmzhou
-	1.	ou1cimx1#366904 [kernel92][[Internal]t_usbapi test is not ready to run on production phone environment Vasco/hw79
+1.	cnotton
+	1.	ou1cimx1#345137 idlehelper_lib & Power DLL don't build for ARM4SMP (kernelhwsrv)
 
-2.	gcochran
-	1.	ou1cimx1#367933 TB9.2 - Undefined Symbol error with the header "e32math.h"
+2.	jimmzhou
+	1.	ou1cimx1#366912 [kernelmcl][[Internal]t_usbapi test is not ready to run on production phone environment Vasco/hw79
 
 3.	ricoles
-	1.	DEF139990 SMP known test failures 
+	1.	PDEF144020 SMP known test failures
+
+4.	y153liu
+	1.	ou1cimx1#355904 MCL_Music playback is not correct after resuming the playback from the USB headset AD-83 after long pause
 
 
-Version 2.00.2118
+Version 2.00.3077
+=================
+(Made by vfebvre 04/05/2010)
+
+1.	martai
+	1.	ou1cimx1#337920 WDP:Potential system impact of flushing the entire page cache is unacceptable
+
+2.	shubmurt
+	1.	PDEF145383 E32TEST T_DATAPAGING occasionally reports KERN-EXEC 17 on SMPDATAPAGE configs
+
+
+Version 2.00.3076
 =================
 (Made by vfebvre 30/04/2010)
 
 1.	stmansfi
-	1.	ou1cimx1#361784 HAL GetAll() returns handle based attributes leading to unnecessary resource allocation
+	1.	ou1cimx1#352017 (MCL) Advisory notes related to cat x in TB92SF_1116 and MSF00398
+	2.	ou1cimx1#361803 (MCL) Adjust HAL::GetAll() to ignore DisplayMemoryHandle attribute
 
-2.	jimhofe
-	1.	ou1cimx1#366068 Change unistore II policyId from 2 to 1455
+2.	vfebvre
+	1.	ou1cimx1#357360 Some test binaries are targeted by several bld.inf files
+	2.	ou1cimx1#363918 Non-test binaries targeted by several bld.inf files
 
 
-Version 2.00.2117
+Version 2.00.3075
+=================
+(Made by vfebvre 29/04/2010)
+
+1.	seolney
+	1.	REQ417-52838 Upgrade DMA API to support advanced addressing modes
+		PackageReleaseID=485812 FeaturePlanID=428985
+
+
+Version 2.00.3074
 =================
 (Made by vfebvre 28/04/2010)
 
 1.	necliffo
-	1.	ou1cimx1#358999 eMMC with DDR-mode support is not used in 4-bit mode
-
-2.	martai
-	1.	ou1cimx1#354860 WDP:Potential system impact of flushing the entire page cache is unacceptable
-
-3.	y153liu
-	1.	ou1cimx1#355901 Music playback is not correct after resuming the playback from the USB headset AD-83 after long pause
+	1.	ou1cimx1#357516 eMMC with DDR-mode support is not used in 4-bit mode
 
 
-Version 2.00.2116
-=================
-(Made by vfebvre 28/04/2010)
-
-1.	stmansfi
-	1.	ou1cimx1#361073 [System Build]: Advisory notes related to cat x in TB92SF_1116 and MSF00398
-
-2	shubmurt
-	1.	DEF144601 E32TEST T_DATAPAGING occasionally reports KERN-EXEC 17 on SMPDATAPAGE configs
-
-
-Version 2.00.2115
+Version 2.00.3073
 =================
 (Made by vfebvre 26/04/2010)
 
 1.	jimmzhou
-	1.	ou1cimx1#351997 [kernel92]Can't recieve USB data after Host call SetConfiguraion
+	1.	ou1cimx1#352019 [kernelmcl]Can't recieve USB data after Host call SetConfiguraion
 
 
-Version 2.00.2114
+Version 2.00.3072
+=================
+(Made by vfebvre 22/04/2010)
+
+1.	migubarr
+	1.	ou1cimx1#356834 Execution of the kernelhwsrv test suites on H4HRP.ARMV5.U*.FMM.MMCPAGE does not complete
+
+
+Version 2.00.3071
 =================
 (Made by vfebvre 21/04/2010)
 
 1.	davegord
-	1.	ou1cimx1#353731 DownloadServerMgr.exe causes phone crash
+	1.	ou1cimx1#353902 MCL DownloadServerMgr.exe causes phone crash
 
 
-Version 2.00.2113
+Version 2.00.3070
+=================
+(Made by vfebvre 20/04/2010)
+
+1.	seolney
+	1.	PDEF145220 Fault possible if client deletes DMA request in callback
+
+2.	lanerobe
+	1.	ou1cimx1#352938 E32TEST T_TIMER test failure investigation
+
+
+Version 2.00.3069
+=================
+(Made by vfebvre 20/04/2010)
+
+1.	vfebvre
+	1.	REQ417-62711 Sirocco: Build and Test Systems Migration
+		PackageReleaseID=487623 FeaturePlanID=457782
+
+
+Version 2.00.3068
 =================
 (Made by vfebvre 16/04/2010)
 
 1.	jimmzhou
-	1.	ou1cimx1#342085 [kernel92]Logitech USB desktop microphone is not recogonized.
+	1.	ou1cimx1#342082 Logitech USB desktop microphone is not recogonized
 
 
-Version 2.00.2112
+Version 2.00.3067
+=================
+(Made by vfebvre 16/04/2010)
+
+1.	vfebvre
+	1.	No change
+
+
+Version 2.00.3066
+=================
+(Made by vfebvre 15/04/2010)
+
+1.	migubarr
+	1.	REQ 415-7212 NFE drive encryption on Demand Paging-enabled device
+		PackageReleaseID=453228 FeatureReleaseID=447937
+
+
+Version 2.00.3065
+=================
+(Made by vfebvre 15/04/2010)
+
+1.	ahiron
+	1.	DEF145202: E32TEST T_IIC test failure investigation (KERN-EXEC 17) 
+
+2.	vfebvre
+	1.	MINOR_CHANGE Temporarily disable crash-prone test T_SOUND2 until it is fixed (DEF144934)
+
+
+Version 2.00.3064
+=================
+(Made by vfebvre 14/04/2010)
+
+1.	jcoppear
+	1.	PDEF144022: T_SHADOW failing test that ROM is section mapped (t_shadow.cpp:360)
+
+
+Version 2.00.3063
+=================
+(Made by vfebvre 13/04/2010)
+
+1.	vfebvre
+	1.	MINOR_CHANGE Re-add changes reverted by DEF145318
+	2.	MINOR_CHANGE Reinstate temporarily commented out code in t_rescontrolcli.cpp to avoid warnings
+
+
+Version 2.00.3062
 =================
 (Made by vfebvre 12/04/2010)
 
-1.	jcoppear
-	1.	PDEF145321: WDP: WDP only writes one page to swap at a time
-	2.	DEF143737: T_SHADOW failing test that ROM is section mapped (t_shadow.cpp:360)
+1.	kmetherm
+	1.	REQ 417-57581 RVCT 4 compatible software codebase (SSS)
+		PackageReleaseID=476546 FeaturePlanID=444184
+
+2.	jcoppear
+	1.	DEF145150: WDP: No support for testing whether device drivers are WDP safe
 
 
-Version 2.00.2111
+Version 2.00.3061
+=================
+(Made by vfebvre 12/04/2010)
+
+1.	jimhofe
+	1.	ou1cimx1#343350 Changed unistore policyId from 2 to 1455
+
+
+Version 2.00.3060
+=================
+(Made by vfebvre 12/04/2010)
+
+1.	vfebvre
+	1.	DEF145318 [System Build]:CBR stage errors in MSF00392 vtb101sf and vfuture builds
+
+
+Version 2.00.3059
 =================
 (Made by vfebvre 09/04/2010)
 
-1.	vfebvre
-	1.	PDEF145226 Change distribution policy ID of hcr/documents to 1
+1.	seolney
+	1.	ou1cimx1#339838 t_dma times out on SMP datapaged system
+		Reduce number of test iterations and different fragment sizes tested
+
+2.	cnotton
+	1.	ou1cimx1#341002 Wrong copyright header under sf\os\kernelhwsrv\kernel\eka\drivers\power\smppower
 
 
-Version 2.00.2110
+Version 2.00.3058
+=================
+(Made by vfebvre 09/04/2010)
+
+1.	stmansfi
+	1.	DEF145294 Update HCR API comments and documentation
+
+2.	vfebvre
+	1.	DEF145224 Change distribution policy ID of hcr/documents to 1
+
+3.	marisood
+	1.	PDEF145242 E32TEST T_PRMACCTSTSIM fails on NE1_TB.ARMV5.UDEB.DATAPAGE
+
+
+Version 2.00.3057
 =================
 (Made by vfebvre 08/04/2010)
 
-1.	shenzhou
-	1.	ou1cimx1#335076 change_otg_descriptor_returned_location
+1.	lforynsk
+	1.	DEF144907: T_CPUTIME fails on several platforms 
 
-2.	marisood
-	1.	DEF144852 E32TEST T_PRMACCTSTSIM fails on NE1_TB.ARMV5.UDEB.DATAPAGE
+2.	stmansfi
+	1.	DEF145153 GPIO template implementation should use VARIANT.MMH to specify its .LIB file to
 
-3.	martai
-	1.	DEF145234 SALM-83WJYV: WDP: Potential system impact of flushing the entire page cache is
+3.	shenzhou
+	1.	ou1cimx1#335116:change_otg_descriptor_returned_location
+
+4.	jcoppear
+	1.	PDEF144022: T_SHADOW failing test that ROM is section mapped (t_shadow.cpp:360)
+
+5.	shubmurt
+	1.	DEF145149 WDP: paging benchmarks minimum value incorrectly reported
 
 
-Version 2.00.2109
+Version 2.00.3056
+=================
+(Made by vfebvre 08/04/2010)
+
+1.	mmoate
+	1.	REQ 417-52840 Upgrade memory allocator to a higher performance allocator
+		PackageReleaseID=413335 FeaturePlanID=413327
+		CR503 RHeap hybrid heap reimplementation
+
+
+Version 2.00.3055
+=================
+(Made by vfebvre 08/04/2010)
+
+1.	garciato
+	1.	MINOR CHANGE Moving headers to EPL for kern core stats test code
+
+
+Version 2.00.3054
 =================
 (Made by vfebvre 29/03/2010)
 
-1.	mmoate
-	1.	DEF145151 \e32utils\nistsecurerng\* has incorrect distribution.policy.s60 ID 
+1.	vfebvre
+	1.	DEF145148 E32TEST T_SHBUF_OWN test failure investigation (t_shbuf.cpp:2083)
+
+2.	garciato
+	1.	DEF144785 t_timerduration sporadically fails on builds with load balancer and idle code
+
+3.	dogunjum
+	1.	DEF145185 TEventModifier in e32keys.h does not support QT Key Event Handling
+		New key event modifiers added to TEventModifier in e32keys.h. EModifierLongKey = 0x20000000
+		for Long key press and EModiferExternalKey = 0x40000000 for Accessory key event. EAllModifiers
+		a member of TEventModifier  changed to support the addition of the new key event modifiers.
+		i.e. EAllModifiers=0x1fffffff changed to EAllModifiers=0xffffffff.
+
+4.	gcochran
+	1.	PDEF145132 TRLM-83EGSL Paging HAL stats not visible
+
+5.	mmoate
+	1.	PDEF145152 \e32utils\nistsecurerng\* has incorrect distribution.policy.s60 ID
 
 
-Version 2.00.2108
+Version 2.00.3053
 =================
 (Made by vfebvre 26/03/2010)
 
-1.	seolney
-	1.	DEF144784 Fault possible if client deletes DMA request in callback 
-
-2.	jimmzhou
-	1.	ou1cimx1#320637[kernel92]Phone Crash when USB MobileTV device CU-14A is connected
-
-3.	gcochran
-	1.	DEF145128 TRLM-83EGSL Paging HAL stats not visible in TB92
+1.	jimmzhou
+	1.	ou1cimx1#320634 [kernelmcl]Phone Crash when USB MobileTV device CU-14A is connected
 
 
-Version 2.00.2107
+Version 2.00.3052
 =================
-(Made by vfebvre 24/03/2010)
+(Made by vfebvre 25/03/2010)
+
+1.	gavguo
+	1.	REQ:417-57581:RVCT 4 compatible software codebase
+		PackageReleaseID=462344 FeaturePlanID=444184
+
+
+Version 2.00.3051
+=================
+(Made by vfebvre 25/03/2010)
 
 1.	lanerobe
-	1.	DEF144929 KHS Documentation is not contributed to the Symbian Foundation
+	1.	PDEF145143 KHS Documentation is not contributed to the Symbian Foundation
 
 
-Version 2.00.2106
+Version 2.00.3050
 =================
 (Made by vfebvre 23/03/2010)
 
-1.	lanerobe
-	1.	DEF144874 Intermittent E32TEST T_MSTIM test failures on the H4 (line 371)
+1.	josezhou
+	1.	ou1cimx1#312908 : RUsbHubDriver interface can only be called by FDF, but multiple clients might have conflict requests to the interfaces 
+
+2.	lanerobe
+	1.	DEF145040 E32TEST T_THREAD test failure investigation
 
 
-Version 2.00.2105
+Version 2.00.3049
 =================
 (Made by vfebvre 22/03/2010)
 
-1.	josezhou
-	1.	ou1cimx1#312934 : RUsbHubDriver interface can only be called by FDF, but multiple clients might have conflict requests to the interfaces 
-
-2.	ferporta
-	1.	PDEF145131 System Crash Monitor contains memory model dependent #defines
-	2.	DEF144875 E32TEST T_RMDEBUG2_OEM failing on UREL SMP configurations
+1.	lanerobe
+	1.	DEF145041 E32TEST T_TIMER test failure investigation
 
 
-Version 2.00.2104
+Version 2.00.3048
+=================
+(Made by vfebvre 22/03/2010)
+
+1.	lanerobe
+	1.	DEF145039 E32TEST T_SDRIVERS test failure investigation
+	2.	PDEF144928 Symbian Foundation build error due to missing usb components
+
+
+Version 2.00.3047
 =================
 (Made by vfebvre 19/03/2010)
 
-1.	lanerobe
-	1.	DEF144712 Symbian Foundation build error due to missing usb components
+1.	jimmzhou
+	1.	ou1cimx1#310882: BELS-7YXDRY RDevUsbcClient::ReadUntilShort complete unexpected
+
+2.	lanerobe
+	1.	DEF144874 Intermittent E32TEST T_MSTIM test failures on the H4 (line 371)
+
+3.	fagortz
+	1.	DEF144667 WDP: t_medch crashes the system if a page out happens
 
 
-Version 2.00.2103
+Version 2.00.3046
 =================
 (Made by vfebvre 18/03/2010)
 
-1.	genwei
-	1.	ou1cimx1#301151: The device under test exits the high-speed host electrical test mode without operator action
+1.	lanerobe
+	1.	DEF145036 T_CONTEXT test failure investigation 
+
+2.	ferporta
+	1.	DEF145026 Remove SCM memory model dependency
+	2.	DEF144875 E32TEST T_RMDEBUG2_OEM failing on UREL SMP configurations
+
+3.	genwei
+	1.	ou1cimx1#301181: The device under test exits the high-speed host electrical test mode without operator action
 
 
-Version 2.00.2102
+Version 2.00.3045
 =================
 (Made by vfebvre 17/03/2010)
 
-1.	sattiyap
-	1.	DEF144982 Support rapu variant specific e32tests
+1.	lanerobe
+	1.	MINOR_CHANGE Fix copyright notices on power management code
+
+2.	martai
+	1.	PDEF145027 FMM - BTrace messages EKernelMemory are missing from the flexible memory model
 
 
-Version 2.00.2101
+Version 2.00.3044
+=================
+(Made by vfebvre 15/03/2010)
+
+1.	jimmzhou
+	1.	CR ou1cimx1#300759: kernel_mcl: A malfunctioning peripheral still cannot be reported to the UI, breaking the "no silent failures" policy of USB OTG
+		TKEA-836MEU
+
+2.	martai
+	1.	PDEF144923 FMM - The virtual address space manager allocates incorrect size heap cells
+	2.	DEF144936 It is not possible to free a RAM zone via its ID
+
+
+Version 2.00.3043
 =================
 (Made by vfebvre 12/03/2010)
 
-1.	jimmzhou
-	1.	ou1cimx1#293062 A malfunctioning peripheral still cannot be reported to the UI, breaking the "no silent failures" policy of USB OTG
-		TSW: TKEA-836MEU
+1.	seolney
+	1.	DEF144850 E32TEST T_DMASIM fails on x86pc (level 012) 
 
 2.	necliffo
-	1.	DEF144967 EMOL-83CGYT: SPB 10.1: Device freeze when corrupted memory card is used.
+	1.	PDEF144977 EMOL-83CGYT: SPB 10.1: Device freeze when corrupted memory card is used.
+
+3.	mmaksymi
+	1.	DEF144804 OST Kernel Code Doesn't Comply with Header Relocation Rules
 
 
-Version 2.00.2100
+Version 2.00.3042
 =================
 (Made by vfebvre 11/03/2010)
 
 1.	jimmzhou
-	1.	DEF144628: for submission: TSW defect TSW YXIO-82ZBPL
+	1.	DEF144836: for submission to MCL: TSW defect TSW YXIO-82ZBP
+
+2.	gcochran
+	1.	PDEF144935 MMEG-83F9A8 - Misleading error message in ExecHandler::ThreadRequestSignal
+
+3.	tommarti
+	1.	DEF144920 Wrong license in some FMM source files
+
+
+Version 2.00.3041
+=================
+(Made by vfebvre 10/03/2010)
+
+1.	gayarama
+	1.	PDEF144756 t_tbus_datapaging test fails on Vasco/TB9.2 due to fileserver api issue
 
 2.	martai
-	1.	DEF144914: FMM - BTrace messages EKernelMemory are missing from the flexible memory model
+	1.	DEF144781: MMEG-8369AQ RThread::Create documentation doesn't mention the minimum stack size 
 
-3.	gcochran
-	1.	DEF144931 MMEG-83F9A8 - Misleading error message in ExecHandler::ThreadRequestSignal
-
-
-Version 2.00.2099
-=================
-(Made by vfebvre 11/03/2010)
-
-1.	vfebvre
-	1.	DEF144925 base_ubootldr component CBR stage failed in TB92SF_1073
+3.	davegord
+	1.	DEF144743 Kernel Message Pool corrupted by delayed DeadClientCleanup 
 
 
-Version 2.00.2098
+Version 2.00.3040
 =================
 (Made by vfebvre 09/03/2010)
 
-1.	lanerobe
+1.	lforynsk
+	1.	DEF144742: T_Cputime failing on winscw and HREF
+
+2.	lanerobe
 	1.	DEF144710 bootloader component not built in KHS package
 
-2.	martai
-	1.	DEF144800: FMM - The virtual address space manager allocates incorrect size heap cells
 
-
-Version 2.00.2097
+Version 2.00.3039
 =================
 (Made by vfebvre 08/03/2010)
 
-1.	seolney
-	1.	DEF140598 Assertion failure in DMA PIL 
-		Improved t_dma. Missed interrupt cleanup is cofigurable (with macro
-		DISABLE_MISSED_IRQ_RECOVERY) in DMA PIL v1 and is removed from PIL v2
+1.	jimmzhou
+	1.	PDEF144619: ARAN-82PGM3: Connecting empty cable causes error, after connecting/disconnecting
 
-2.	jimmzhou
-	1.	DEF144618: ARAN-82PGM3: Connecting empty cable causes error, after connecting/disconnecting
+2.	y153liu
+	1.	PDEF144726: Extra KErrUsbOtgPeriphNotSupported Event for Peripheral Requires More power
+
+3.	davegord
+	1.	DEF144818 Moving Model version of ReadAndParseDesHeader() can reference uninitialised data 
 
 
-Version 2.00.2096
+Version 2.00.3038
 =================
 (Made by vfebvre 04/03/2010)
 
-1.	martai
-	1.	DEF144781: MMEG-8369AQ RThread::Create documentation doesn't mention the minimum stack size 
+1.	ahiron
+	1.	DEF144450 DIicBusChannel timeouts are handled incorrectly
+		Relates to Break Request in Polonium:
+		#455 - IIC: access to iTimeoutTimer and macros GET_TRANS_SPEED, SET_TRANS_SPEED
+	2.	DEF144748 iic_transaction.h, .inl should be exported with the appropriate macros
+	3.	DEF144488 IIC interface for setting up transaction speed is confusing
+		Relates to Break Request in Polonium:
+		#455 - IIC: access to iTimeoutTimer and macros GET_TRANS_SPEED, SET_TRANS_SPEED
 
-2.	s40li
-	1.	DEF144533 USB PIL Crash after MTP server panic
+2.	martai
+	1.	PDEF144757 ArmMmu::ReleasePagesFromDMA() may hold system lock for unbounded time periods
+	2.	PDEF144572: DBase Reference counting contains incorrect debug assertions 
+
+3.	jessiezh
+	1.	DEF144709:T_IIC should not be limited to execution on the Emulator
+		iic build warnings and errors fix
+
+4.	genwei
+	1.	PDEF144770 USB PIL Crash after MTP server panic
 
 
-Version 2.00.2095
+Version 2.00.3037
 =================
 (Made by vfebvre 03/03/2010)
 
-1	paconway
-	1.	PDEF144746 Coverity defect in onbl2.cpp (UNINIT) 
-
-2.	y153liu
-	1.	DEF144620: Extra KErrUsbOtgPeriphNotSupported Event for Peripheral Requires More power
+1.	cnotton
+	1.	REQ 417-52765 SMP: Product Quality SMP Kernel for Bridge
+		PackageReleaseID=451110 FeatureReleaseID=440027
 
 
-Version 2.00.2094
+Version 2.00.3036
+=================
+(Made by vfebvre 03/03/2010)
+
+1.	mipetzol
+	1.	DEF144291 DMA: Apply fix for DEF143310 (PRM) also to DMAv2
+
+2.	marisood
+	1.	DEF144635 Coverity defect in eka/ewsrv/ky_tran.cpp (UNINIT)
+
+3.	ferporta
+	1.	DEF143491 Breakpoints in looping code can be missed when inserting/deleting and stepping
+	2.	DEF142018 Debug Sec Srv crashes if asked for an incompat srv version
+	3.	DEF143991 E32TEST T_RMDEBUG2_OEM fails on Navi-Engine with WDP enabled
+
+4.	paconway
+	1.	DEF144633 Coverity defect in onbl2.cpp (UNINIT) 
+
+
+Version 2.00.3035
 =================
 (Made by vfebvre 02/03/2010)
 
-1.	jimhofe
-	1.	MINOR_CHANGE: Changing kernelhwsrv/kernel/eka/drivers/pbus/mmc/sdcard/eabi/sdcard3c policyid to 7
-	2.	MINOR_CHANGE: Changing policyId from 1 to 7 for kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\XXXX\sdcard3c
+1.	seolney
+	1.	PDEF144695 Assertion failure in DMA PIL
+		Improved t_dma. Missed interrupt cleanup is cofigurable (with macro
+		DISABLE_MISSED_IRQ_RECOVERY) in DMA PIL v1 and is removed from PIL v2
 
-2.	gayarama
-	1.	DEF144267 t_tbus_datapaging test fails on Vasco/TB9.2 due to fileserver api issue
-
-3.	martai
-	1.	DEF144639: ArmMmu::ReleasePagesFromDMA() may hold system lock for unbounded time periods 
+2.	jimhofe
+	1.	MINOR_CHANGE: Changing policy Id to 7 for os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\XXXX\sdcard3c
 
 
-Version 2.00.2093
+Version 2.00.3034
 =================
 (Made by vfebvre 01/03/2010)
 
 1.	vfebvre
-	1.	PDEF144682 E32TEST T_PIN test failures on x86gcc.fmm (t_pin.cpp:688)
+	1.	DEF144564 E32TEST T_PIN test failures on x86gcc.fmm (t_pin.cpp:688)
+	2.	DEF144687 OSTv2 doesn't provide a standarised way for instrumentors to add UDEB only trace
 
-2.	ferporta
-	1.	DEF142018 Debug Sec Srv crashes if asked for an incompat srv version
-	2.	DEF143491 Breakpoints in looping code can be missed when inserting/deleting and stepping
+2.	jimmzhou
+	1.	PDEF144575 for submission: TSW defect TSW TRLM-82BCNG: t_usb_device test fails
+	2.	PDEF144581 - for base submission: fix defect YXIO-824BQL RUsb::DeviceStateNotification doesn'
 
 
-Version 2.00.2092
+Version 2.00.3033
 =================
 (Made by vfebvre 26/02/2010)
 
-1.	lforynsk
-	1.	PDEF144647:Occasional T_CHNOT failures on SMP configurations 
+1.	frhofman
+	1.	DEF142944: T_IDRV - fails with test drive count is more than the supportedsrives on gekko77
+
+2.	marisood
+	1.	DEF144627:Coverity defects in btrace_analyse.cpp 
 
 
-Version 2.00.2091
+Version 2.00.3032
 =================
 (Made by vfebvre 25/02/2010)
 
-1.	gcochran
-	1.	DEF144355  t_context locks up on Vasco/HW79
-
-2.	davegord
-	1.	DEF144641 Data import/export across DLL boundaries doesn't work in all cases
-		Implements REQ417-62614 "Data exports across DLL boundaries"
+1.	davegord
+	1.	REQ417-62614 Data exports across DLL boundaries
+		PackageReleaseID=450554 FeatureReleaseID=450540
+		PNUN-7T4E35 efile/loader: Writable DLL data across DLL boundary does not work
 
 
-Version 2.00.2090
+Version 2.00.3031
 =================
-(Made by vfebvre 24/02/2010)
+(Made by vfebvre 25/02/2010)
 
-1.	jcoppear
-	1.	PDEF144517: Emulator crashes when run under Carbide debugger on Windows 7
+1.	mipetzol
+	1.	PDEF144567: Rapu Base Port DMA tests failing
 
-2.	hengrant
-	1.	DEF144604 Incorrect trace metadata included in medsd.mmp
+2.	jcoppear
+	1.	DEF144597 WDP: WDP only writes one page to swap at a time
+
+3.	gcochran
+	1.	DEF144355 - t_context locks up on Vasco/HW79 
+
+4.	hengrant
+	1.	PDEF144605 Incorrect trace metadata included in medsd.mmp
 
 
-Version 2.00.2089
+Version 2.00.3030
+=================
+(Made by vfebvre 25/02/2010)
+
+1.	martai
+	1.	REQ 417-68452 Provide a WDP configuration for Atlantis
+		PackageReleaseID=463461 FeatureReleaseID=463452
+
+
+Version 2.00.3029
 =================
 (Made by vfebvre 23/02/2010)
 
-1.	vfebvre
-	1.	DEF142659 T_SHBUF failures on X86GCC/FMM (t_shbuf:2835)
+1.	lforynsk
+	1.	DEF144416: Occasional T_CHNOT failures on SMP configurations
+		There is a potential race condition, if the calling thread runs on a different
+		CPU than the Supervisor thread, which can result this thread being signalled
+		before the RHandleBase is fully closed.
+
+		Used EKernelHalSupervisorBarrier to wait until the Supervisor thread gets to
+		idle which is the indication that the DChangeNotifier::Complete() function has
+		returned and the Kernel memory was released (DThread object was closed)
+
+2.	vfebvre
+	1.	PDEF144553 T_SHBUF failures on X86GCC/FMM (t_shbuf:2835)
+
+3.	jcoppear
+	1.	PDEF144518 Emulator crashes when run under Carbide debugger on Windows 7
 
 
-Version 2.00.2088
+Version 2.00.3028
 =================
-(Made by vfebvre 22/02/2010)
+(Made by vfebvre 19/02/2010)
 
-1.	kingzhan
-	1.	DEF144531 for submission: TSW defect TSW TRLM-82BCNG
-		TSW TRLM-82BCNG: t_usb_device test fails
+1.	jimhofe
+	1.	MINOR_CHANGE: Removing obsolete files
 
-
-2.	mipetzol
-	1.	DEF144549: Rapu Base Port DMA tests failing
-		The DMA channel DFC now takes into account that the channel might get
-		closed by the client in the transfer completion callback.
-
-3.	martai
-	1.	DEF144546: DBase Reference counting contains incorrect debug assertions
+2.	cnotton
+	1.	DEF144396 h2.arm4.udeb.f32test.page ROMs are not built on devcedar builds
 
 
-Version 2.00.2087
-=================
-(Made by vfebvre 22/02/2010)
-
-1.	vfebvre
-	1.	DEF144532 [System Build]: Build failed for TB92SF_1052 due to missing .mrp change  
-
-
-Version 2.00.2086
+Version 2.00.3027
 =================
 (Made by vfebvre 18/02/2010)
 
-1.	jimhofe
-	1.	MINOR_CHANGE: Removing obsolete txt file
+1.	shamaden
+	1.	MINOR_CHANGE: SFL to EPL copyrights
+
+2.	vfebvre
+	1.	DEF144065 boostrap.flm is broken
+
+3.	amironen
+	1.	MINOR_CHANGE Adding GPIO Extenders support has been added
+		This project target is introducing support for GPIO Extender by introducing
+		new 32-bit pin id which consists of two parts highest 16-bit defines the GPIO
+		device(SOC or 0-15 GPIO extenders) and the lowest 16-bit defines the 65K of
+		SOC or GPIO extender pins. 
+
+4.	paconway
+	1.	PDEF144501 SD mounting issue due to postponed door-open media change
 
 
-Version 2.00.2085
+Version 2.00.3026
+=================
+(Made by vfebvre 17/02/2010)
+
+1.	sakhghos
+	1.	PDEF144158 IMPORT_C missing from declaration of StopModeDebug::ExitPoint() RVCT4.0
+
+
+Version 2.00.3025
 =================
 (Made by vfebvre 15/02/2010)
 
-1.	ferporta
-	1.	DEF142026 Core Dump Server not getting events after attaching to more than one executable
-	2.	PDEF143992 E32TEST T_RMDEBUG2_OEM fails on Navi-Engine with WDP enabled 
-	3.	DEF143480 t_rmdebug2_oem, t_rmdebug2 test fails on production hw79/vasco with debug server
-
-2.	paconway
-	1.	DEF144234 SD mounting issue due to postponed door-open media change
+1.	tommarti
+	1.	MINOR_CHANGE Remove outdated comments from mpager.cpp
 
 
-Version 2.00.2084
+Version 2.00.3024
 =================
 (Made by vfebvre 11/02/2010)
 
-1.	kingzhan
-	1.	DEF144402 - for base submission: fix defect YXIO-824BQL RUsb::DeviceStateNotification doesn'
-		TSW YXIO-824BQL:RUsb::DeviceStateNotification doesn't notify any device status
-		change after failing to TryStart USB stack
-
-2.	coliward
-	1.	DEF144164: WSD data is allocated incorrectly on the kernel heap
-		WSD was being allocated on the kernel heap, which was causing large Qt
-		programs to fail to start up, given that the kernel heap is limited to 16 MB.
+1.	tommarti
+	1.	DEF144393 SMP: Minimum page cache size not set correctly on SMP systems
 
 
-Version 2.00.2083
+Version 2.00.3023
 =================
 (Made by vfebvre 10/02/2010)
 
-1.	martai
-	1.	PackageReleaseID=457064 FeatureReleaseID=457058
-		REQ 417-65372 Enabling and validation of WDP in TB9.2
+1.	mmoate
+	1.	PackageReleaseID=446093 FeatureReleaseID=445992
+		Cryptographically-Strong Random Number Generator
 
 
-Version 2.00.2082
+Version 2.00.3022
+=================
+(Made by vfebvre 09/02/2010)
+
+1.	cnotton
+	1.	PDEF144259: HAL header files can now been returned to platform...
+	2.	MINOR_CHANGE Fixed T_RMDEBUG_MULTI_AGENT compile issue with SYMBIAN_ENABLE_PUBLIC_PLATFORM_HEADER_SPLIT.
+
+
+Version 2.00.3021
 =================
 (Made by vfebvre 08/02/2010)
 
-1.	jimmzhou
-	1.	DEF144308 XLII-7ZNH37: Phone crashes when running usbmsapp test with usbcsc.ldd
+1.	cnotton
+	1.	MINOR_CHANGE Fixed RM_DEBUG test code issue for SYMBIAN_ENABLE_PUBLIC_PLATFORM_HEADER_SPLIT.
+	2.	PDEF144300 eslm-82cags locmedia_ost.h is missing in wk05 NCP79 build
 
 2.	martai
-	1.	DEF144290: FMM handles IPC aliasing inefficiently 
+	1.	PDEF144330: FMM handles IPC aliasing inefficiently
 
 
-Version 2.00.2081
+Version 2.00.3020
 =================
 (Made by vfebvre 05/02/2010)
 
 1.	cnotton
-	1.	DEF144265: eslm-82cags locmedia_ost.h is missing in wk05 NCP79 build
+	1.	MINOR_CHANGE Fixed RM_DEBUG test code issue for SYMBIAN_ENABLE_PUBLIC_PLATFORM_HEADER_SPLIT.
+
+2.	tocosgro
+	1.	DEFECT FIX: DEF144243 JHWG-822NAG FOUR_TUINT8 macro in e32cmn.h caused compiling warning in RVCT4
+		Cast to TUint32 before shift to avoid RVCT4 compiler warning.
+
+3.	coliward
+	1.	PDEF144269 WSD data is allocated incorrectly on the kernel heap
+		WSD was being allocated on the kernel heap, which was causing large Qt programs
+		to fail to start up, given that the kernel heap is limited to 16 MB.
 
 
-Version 2.00.2080
+Version 2.00.3019
 =================
-(Made by vfebvre 04/02/2010)
+(Made by vfebvre 05/02/2010)
 
-1.	djkovace
-	1.	DEF144258: [SymTB9.2]  PL310 maintenance by IndexWay misses some ways
+1.	lforynsk
+	1.	DEF144007 New Platform Independent Coverity Defect
+
+2.	djkovace
+	1.	PDEF144260:  [SymTB10.1] PL310 maintenance by IndexWay misses some ways
+
+3.	mipetzol
+	1.	PDEF144193 DMA: PIL detection of missed interrupts can fail
+		The method whereby the DMA PIL tried to detect missed PSL DMA interrupts could
+		yield false positives resulting in spurious missed interrupts which ultimately
+		led to the DMA driver crashing. The detection condition has been reworked to
+		rule out those false positives.
+
+4.	tocosgro
+	1.	MINOR_CHANGE: Use blhi rather than bhi to a panic, for call stack
+		Change bhi to blhi and blo to bllo so that LR is set for stack trace
+
+5.	gcochran
+	1.	DEF144239: t_perflogger tests fails at kern perf logger tests on production hw79/vasco
 
 
-Version 2.00.2079
+Version 2.00.3018
 =================
 (Made by vfebvre 03/02/2010)
 
 1.	migubarr
-	1.	DEF143959: MMC stack initialisation enables DMA when ESupportsDoubleBuffering specified 
-
-2.	gcochran
-	1.	DEF143479: t_perflogger tests fails at kern perf logger tests on production hw79/vasco
+	1.	PDEF143960: MMC stack initialisation enables DMA when ESupportsDoubleBuffering specified 
 
 
-Version 2.00.2078
+Version 2.00.3017
 =================
 (Made by vfebvre 02/02/2010)
 
-1.	virodion
-	1.	DEF144163 E32 T_VIDEOMEMORY test failed at line 124
-		Defect fix for TSW: EYGL-7SPCS3
-
-2.	cnotton
-	1.	DEF144062 HAL header files can now been returned to platform...
-
-3.	martai
-	1.	PDEF144201 FMM: The RAM zone callback function ERamZoneOp_Init isn't invoked in the FMM
+1.	martai
+	1.	DEF144198 FMM: The RAM zone callback function ERamZoneOp_Init isn't invoked in the FMM 
 
 
-Version 2.00.2077
-=================
-(Made by vfebvre 01/02/2010)
-
-1.	mipetzol
-	1.	DEF144066 DMA: PIL detection of missed interrupts can fail
-		The method whereby the DMA PIL tried to detect missed PSL DMA interrupts
-		could yield false positives resulting in spurious missed interrupts which
-		ultimately led to the DMA driver crashing. The detection condition has been
-		corrected to rule out the false positives.
-
-
-Version 2.00.2076
+Version 2.00.3016
 =================
 (Made by vfebvre 29/01/2010)
 
-1.	necliffo
-	1.	PDEF144095: BGAHSMMCPTN does not check for partition table version
-
-2.	mmoate
-	1.	DEF144102 Missing distribution.policy.s60 file in TB92SF_1021
+1.	vfebvre
+	1.	PDEF144097 BTracex_ldd causing missing file warning in CTS77 image creation - TSW Defect
 
 
-Version 2.00.2075
+Version 2.00.3015
 =================
-(Made by vfebvre 26/01/2010)
+(Made by vfebvre 28/01/2010)
 
-1.	josezhou
-	1.	DEF143803 COPY of DEF143562:No error note about connected USB HUB shown
-	2.	DEF143802 copied open for submission:EDHO-7Y3AAD, USB connection: 
-	3.	DEF143804 COPY of DEF143568:USB using an obsoleted API to allocate endpoint resource
-	4.	DEF143799 COPY of DEF142812: SMP-Panic in the TDfcQue::ThreadFunction when USB channel is
-	5.	DEF143800 COPY of DEF142888: SMP-t_usbdi test case 1231 failed
+1.	necliffo
+	1.	DEF144094: BGAHSMMCPTN does not check for partition table version
+		Modified BGAHSMMCPTN to check version of table is supported.
 
-2.	ange
-	1.	PDEF143797 Precondition is not met when USB OTG driver use Kernel API 
 
-3.	vfebvre
+Version 2.00.3014
+=================
+(Made by vfebvre 27/01/2010)
+
+1.	famustaf
+	1.	MINOR_CHANGE Add documentation to 'Copy' in Text Shell
+		Added documentation to state that ShellFunction::Copy will overwrite existing file(s)
+
+2.	stmansfi
+	1.	MINOR_CHANGE Improved HCR HAI in-source documentation
+
+3.	amironen
+	1.	DEF144028 HCR Get large settings API does not check for invalid arguments
+	2.	MINOR_CHANGE HCR: Add test scenarios from User Guide and improve robustness
+
+
+Version 2.00.3013
+=================
+(Made by vfebvre 27/01/2010)
+
+1.	cnotton
 	1.	MINOR_CHANGE Fixed test code for File Header Relocation
 
 
-Version 2.00.2074
+Version 2.00.3012
 =================
 (Made by vfebvre 25/01/2010)
 
 1.	djkovace
-	1.	DEF143683 Fix PL310 erratum 727915
+	1.	PDEF144004 Fix PL310 erratum 727915
 
-2.	dogunjum
-	1.	DEF137221 NE1 PCI driver not confirmed SMPSAFE automatic test case missing
-
-3.	vfebvre
-	1.	DEF143067 BTracex_ldd causing missing file warning in CTS77 image creation - TSW Defect
+2.	x120li
+	1.	DEF143955 Submit UTF-16 descriptor APIs to TB101
+		Submit remaining part of PREQ2471
 
 
-Version 2.00.2073
-=================
-(Made by vfebvre 25/01/2010)
-
-1.	mmoate
-	1.	MILESTONE: SymTB9.2, GT0660, MS3.8, DS.1456
-		REQ427:125 Cryptographically-Strong Random Number Generator [PREQ211]
-
-
-Version 2.00.2072
+Version 2.00.3011
 =================
 (Made by vfebvre 25/01/2010)
 
@@ -789,81 +1324,155 @@ Version 2.00.2072
 	1.	MINOR_CHANGE Update required to base_e32.mrp for Header Relocation
 
 
-Version 2.00.2071
+Version 2.00.3010
 =================
-(Made by vfebvre 21/01/2010)
+(Made by vfebvre 19/01/2010)
 
-1.	ryharkin
-	1.	PDEF143852 - TConsoleKey missing iPointerNumber
-		The text window server class TConsoleKey is missing the iPointerNumber member value
+1.	gcochran
+	1.	DEF143458 E32 T_CODEPAGING test is not support large page cache TSW: EYGL-7T38TL
+
+2.	vfebvre
+	1.	MINOR_CHANGE Fix copyright notices in newly submitted files
 
 
-Version 2.00.2070
+Version 2.00.3009
 =================
 (Made by vfebvre 18/01/2010)
 
 1.	shamaden
-	1.	DEF143440  t_heap fails when KHeapMinCellSize = 16
+	1.	DEF143830:  Memory model information missing from overnight test logs
 
 2.	necliffo
-	1.	DEF143882: SALM-7ZQN53 WDP: EMMC drive not mountable as Mass Storage
-
-3.	gcochran
-	1.	DEF143458: E32 T_CODEPAGING test is not support large page cache (TB9.2) TSW: EYGL-7T38TL
-
-4.	vfebvre
-	1.	DEF142990 Change to Make Files - Causing OS Base Build Failure
+	1.	PDEF143883: SALM-7ZQN53 WDP: EMMC drive not mountable as Mass Storage 
 
 
-Version 2.00.2069
+Version 2.00.3008
 =================
 (Made by vfebvre 15/01/2010)
 
 1.	martai
-	1.	DEF143580: t_fuzzldr crashes/hangs on FMM and Datapaged ROMs
-	2.	DEF143441: FMM: Minimise size of live list when demand paging disabled 
+	1.	PDEF143818:  t_fuzzldr crashes/hangs on FMM and Datapaged ROMs
 
 2.	tommarti
-	1.	Fix for DEF140936: T_WDPSTRESS fails on NaviEngine SMPPAGE/SMPKERNEL
+	1.	DEF140936: T_WDPSTRESS fails on NaviEngine SMPPAGE/SMPKERNEL
 
 
-Version 2.00.2068
+Version 2.00.3007
 =================
 (Made by vfebvre 15/01/2010)
 
-1.	djkovace
-	1.	PDEF143736 OOM defect in DVirtualPinMapping::New
-	2.	PDEF143812 Support platform specific mappings on 1136
+1.	shamaden
+	1.	PDEF143831 t_heap fails when KHeapMinCellSize = 16 for IVAL (WDP)
 
-2.	necliffo
-	1.	DEF143340 JPLS-7XXEAC: eMMC initialisation fails with Samsung 32GB
-	2.	DEF143593 WDP: Phone does not boot if SWAP drive is corrupted
-
-3.	martai
-	1.	DEF142714: Frequent T_RAMDEFRAG failures observed on the H4 
-
-4.	vfebvre
-	1.	PDEF143659 Bootstrap.flm and related bld.inf changes not submitted to the MCL
-
-5.	marisood
-	1.	DEF143212: Missing M&FS files from Symbian Foundation due to IP classifications 
+2.	djkovace
+	1.	DEF143786 Support platform specific mappings on 1136
 
 
-Version 2.00.2067
+Version 2.00.3006
+=================
+(Made by vfebvre 13/01/2010)
+
+1.	vfebvre
+	1.	DEF142854 Bootstrap.flm and related bld.inf changes not submitted to the MCL
+		Update the Base Port Template so the bootstrap is built using the new
+		bootstrap FLM with Raptor.
+
+
+Version 2.00.3005
 =================
 (Made by vfebvre 12/01/2010)
 
-1.	cnotton
-	1.	MINOR_CHANGE Fixed some smaller compile issues with split and relocation header changes.
+1.	ryharkin
+	1.	DEF143738 TConsoleKey missing iPointerNumber
+		Integrating changes from Kernel Extentions team to add iPointerNumber to TConsoleKey
+
+2.	ange
+	1.	DEF143703 Precondition is not met when USB OTG driver use Kernel API
 
 
-Version 2.00.2066
+Version 2.00.3004
 =================
 (Made by vfebvre 11/01/2010)
+
+1.	prbetage
+	1.	DEF142990 Change to Make Files - Causing OS Base Build Failure
+
+2.	djkovace
+	1.	DEF143620 OOM defect in DVirtualPinMapping::New
+
+3.	jimmzhou
+	1.	DEF142812 SMP-Panic in the TDfcQue::ThreadFunction when USB channel is closing
+	2.	DEF142888 SMP-t_usbdi test case 1231 failed
+
+4.	cnotton
+	1.	MINOR_CHANGE Fixed test export locations for Header Relocation
+
+
+Version 2.00.3003
+=================
+(Made by vfebvre 07/01/2010)
+
+1.	necliffo
+	1.	DEF143593 WDP: Phone does not boot if SWAP drive is corrupted
+
+
+Version 2.00.3002
+=================
+(Made by vfebvre 06/01/2010)
+
+1.	kingzhan
+	1.	DEF143562 ForBaseSubmission(TSW JHAA-7YAEKV): No error note about connected USB HUB shown
+		TSW defect: JHAA-7YAEKV No error note about connected USB HUB shown.
+
+2.	wuda
+	1.	DEF143561 open for submission:EDHO-7Y3AAD, USB connection:
+		TSW Defect EDHO-7Y3AAD: USB connection: USB connection state changes after connecting the USB charger.
+
+3.	dogunjum
+	1.	DEF137221 NE1 PCI driver not confirmed SMPSAFE automatic test case missing
+
+4.	marisood
+	1.	DEF143212 Missing M&FS files from Symbian Foundation due to IP classifications
+
+5.	martai
+	1.	DEF143441 FMM: Minimise size of live list when demand paging disabled
+
+6.	shenzhou
+	1.	DEF143568 open for submission - USB using an obsoleted API to allocate endpoint resource
+
+
+Version 2.00.3001
+=================
+(Made by vfebvre 05/01/2010)
 
 1.	necliffo
 	1.	PackageReleaseID=439017 FeatureReleaseID=439013
 		eMMC Partition Plugin compatibility with Nokia flashing tools
+
+
+Version 2.00.3000
+=================
+(Made by vfebvre 29/12/2009)
+
+1.	vfebvre
+	1.	DEF142026 Core Dump Server not getting events after attaching to more than one executable
+	2.	MINOR_CHANGE Copyright header correction
+
+2.	djkovace
+	1.	MINOR_CHANGE Fix Kernel builds with  __FLUSH_PT_INTO_RAM__
+		Kerrnel doesn't build if __FLUSH_PT_INTO_RAM__ is defined in variant.mmh. The fix is quite trivial.
+
+3.	cnotton
+	1.	MINOR_CHANGE Fixed some smaller compile issues with split and relocation header changes.		
+
+4.	necliffo
+	1.	DEF143340 JPLS-7XXEAC: eMMC initialisation fails with Samsung 32GB
+
+5.	marisood
+	1.	DEF142934 Bridge: t_rescontrolcli and t_extendedrescontrolcli fail on 8500 board.
+
+6.	martai
+	1.	DEF142714 Frequent T_RAMDEFRAG failures observed on the H4
 
 
 Version 2.00.2065

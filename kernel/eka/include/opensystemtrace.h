@@ -19,6 +19,11 @@
 
 #include <opensystemtrace_types.h>
 
+/**
+This macro defines the version of the Open System Trace instrumentation API.
+*/
+#define OST_INSTRUMENTATION_API_VERSION 2.1.0
+
 
 /**
 Methods for tracing from user side.
@@ -117,7 +122,9 @@ This should not be used from traces
 #define OST_TRACE_CATEGORY_NONE 0x00000000
 
 /**
-Preprocessor category for production traces
+Preprocessor category for traces that should be compiled
+into all builds including UREL. As a result these traces
+will end up in production images used by consumers.
 */
 #define OST_TRACE_CATEGORY_PRODUCTION 0x00000001
 
@@ -130,6 +137,12 @@ Preprocessor category for RnD traces
 Preprocessor category for performance measurement traces
 */
 #define OST_TRACE_CATEGORY_PERFORMANCE_MEASUREMENT 0x00000004
+
+/**
+Preprocessor category for traces that by default should only 
+be compiled into UDEB builds.
+*/
+#define OST_TRACE_CATEGORY_DEBUG 0x00000008
 
 /**
 Preprocessor level for all traces on.
@@ -145,13 +158,24 @@ A flag, which specifies if the compiler has been run for the component
 
 
 /**
-The default preprocessor category is RND
-Component may override this by defining
+The default preprocessor categories are defined here.
+A component may override this by defining
 OST_TRACE_CATEGORY before including this file
+
+The RND category is defined for UREL and UDEB to 
+preserve source compatibility.
 */
-#if !defined( OST_TRACE_CATEGORY )
-#define OST_TRACE_CATEGORY OST_TRACE_CATEGORY_RND
-#endif
+#ifndef OST_TRACE_CATEGORY
+#ifdef _DEBUG
+#define OST_TRACE_CATEGORY (OST_TRACE_CATEGORY_RND | \
+                            OST_TRACE_CATEGORY_PRODUCTION | \
+                            OST_TRACE_CATEGORY_DEBUG)
+#else // _DEBUG
+#define OST_TRACE_CATEGORY (OST_TRACE_CATEGORY_RND | \
+                            OST_TRACE_CATEGORY_PRODUCTION)
+#endif // _DEBUG
+#endif // OST_TRACE_CATEGORY
+
 
 /**
 Trace with no parameters

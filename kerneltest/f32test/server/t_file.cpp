@@ -50,10 +50,10 @@ static void testShare()
 
 	RFile f1;
 	TInt r=f1.Open(TheFs,_L("TESTER"),EFileRead|EFileShareAny);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	RFile f2;
 	r=f2.Open(TheFs,_L("TESTER"),EFileWrite|EFileShareAny);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=f2.Write(_L("0"));
 	test.Printf(_L("returned %d"),r);
@@ -62,49 +62,49 @@ static void testShare()
 	f2.Close();
 
 	r=TheFs.Delete(_L("TESTER"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 */
 
 	RFile f1;
 	TInt r=f1.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareExclusive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	RFile f2;
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareExclusive);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOnly);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareAny);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	f1.Close();
 	r=f1.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileWrite|EFileShareExclusive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f1.Close();
 
 	test.Next(_L("Test readers only sharing"));
 	r=f1.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileWrite|EFileShareReadersOnly);
-	test(r==KErrArgument);
+	test_Value(r, r == KErrArgument);
 	r=f1.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareExclusive);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareAny);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileWrite|EFileShareReadersOnly);
-	test(r==KErrArgument);
+	test_Value(r, r == KErrArgument);
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f1.Close();
 	f2.Close();
 
 	test.Next(_L("Test any sharing"));
 	r=f1.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileWrite|EFileShareAny);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareExclusive);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOnly);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareAny);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f1.Close();
 	f2.Close();
 
@@ -121,63 +121,63 @@ static void testChangeMode()
 	RFile f1;
 	RFile f2;
 	TInt r=f1.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareExclusive);
-	test(r==KErrNone); // Opened exclusive
+	test_KErrNone(r); // Opened exclusive
 	r=f1.ChangeMode(EFileShareReadersOnly);
-	test(r==KErrNone); // Change to readers only
+	test_KErrNone(r); // Change to readers only
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOnly);
-	test(r==KErrNone); // Open as reader
+	test_KErrNone(r); // Open as reader
 	r=f1.ChangeMode(EFileShareExclusive);
-	test(r==KErrAccessDenied); // Change back to exclusive fails
+	test_Value(r, r == KErrAccessDenied); // Change back to exclusive fails
 	r=f2.ChangeMode(EFileShareExclusive);
-	test(r==KErrAccessDenied); // Change to exclusive fails
+	test_Value(r, r == KErrAccessDenied); // Change to exclusive fails
 	f1.Close(); // Close other reader
 	r=f2.ChangeMode(EFileShareExclusive);
-	test(r==KErrNone); // Change to exclusive succeeds.
+	test_KErrNone(r); // Change to exclusive succeeds.
 	f2.Close();
 
 	r=f1.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOnly);
-	test(r==KErrNone); // Opened readers only
+	test_KErrNone(r); // Opened readers only
 	r=f1.ChangeMode(EFileShareExclusive);
-	test(r==KErrNone); // Change to exclusive
+	test_KErrNone(r); // Change to exclusive
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOnly);
-	test(r==KErrInUse); // Open as reader fails
+	test_Value(r, r == KErrInUse); // Open as reader fails
 	r=f1.ChangeMode(EFileShareReadersOnly);
-	test(r==KErrNone); // Change to readers only
+	test_KErrNone(r); // Change to readers only
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOnly);
-	test(r==KErrNone); // Open as reader
+	test_KErrNone(r); // Open as reader
 	r=f1.ChangeMode(EFileShareExclusive);
-	test(r==KErrAccessDenied); // Change back to exclusive fails
+	test_Value(r, r == KErrAccessDenied); // Change back to exclusive fails
 	r=f2.ChangeMode(EFileShareExclusive);
-	test(r==KErrAccessDenied); // Change to exclusive fails
+	test_Value(r, r == KErrAccessDenied); // Change to exclusive fails
 	f1.Close(); // Close other reader
 	r=f2.ChangeMode(EFileShareExclusive);
-	test(r==KErrNone); // Change to exclusive succeeds.
+	test_KErrNone(r); // Change to exclusive succeeds.
 	f2.Close();
 
 	r=f1.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileWrite|EFileShareExclusive);
-	test(r==KErrNone); // Opened exclusive for writing
+	test_KErrNone(r); // Opened exclusive for writing
 	r=f1.ChangeMode(EFileShareReadersOnly);
-	test(r==KErrAccessDenied); // Change to readers fails
+	test_Value(r, r == KErrAccessDenied); // Change to readers fails
 	r=f1.ChangeMode(EFileShareExclusive);
-	test(r==KErrNone); // No change ok
+	test_KErrNone(r); // No change ok
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOnly);
-	test(r==KErrInUse); // Open as reader fails
+	test_Value(r, r == KErrInUse); // Open as reader fails
 	f1.Close();
 
 	r=f1.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareAny);
-	test(r==KErrNone); // Opened share any
+	test_KErrNone(r); // Opened share any
 	r=f1.ChangeMode(EFileShareExclusive);
-	test(r==KErrAccessDenied); // Change to exclusive fails
+	test_Value(r, r == KErrAccessDenied); // Change to exclusive fails
 	r=f1.ChangeMode(EFileShareReadersOnly);
-	test(r==KErrAccessDenied); // Change to readers only fails
+	test_Value(r, r == KErrAccessDenied); // Change to readers only fails
 	f1.Close();
 
 	r=f1.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareExclusive);
-	test(r==KErrNone); // Opened exclusive
+	test_KErrNone(r); // Opened exclusive
 	r=f1.ChangeMode(EFileShareAny);
-	test(r==KErrArgument); // Change to share any fails KErrArgument
+	test_Value(r, r == KErrArgument); // Change to share any fails KErrArgument
 	r=f1.ChangeMode((TFileMode)42);
-	test(r==KErrArgument); // Change to random value fails
+	test_Value(r, r == KErrArgument); // Change to random value fails
 	f1.Close();
 	test.End();
 	}
@@ -190,12 +190,15 @@ static void testReadFile()
 
 	test.Start(_L("Test read file"));
 	RFile f,ZFile;
-	TInt r=f.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText);
-	test(r==KErrNone);
-	TFileName fn = _L("Z:\\TEST\\T_FILE.CPP");
+	
+    TInt r=f.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText);
+	test_KErrNone(r);
+	
+    TFileName fn = _L("Z:\\TEST\\T_FILE.CPP");
 	fn[0] = gExeFileName[0];
-	r=ZFile.Open(TheFs,fn,EFileStreamText);
-	test(r==KErrNone);
+	
+    r=ZFile.Open(TheFs,fn,EFileStreamText);
+	test_KErrNone(r);
 
 	// check the file on the Z: drive his read-only
 	TEntry fileAtt;
@@ -206,36 +209,41 @@ static void testReadFile()
 
 	test.Next(_L("Read file"));
 	TBuf8<0x100> a,b;
-	FOREVER
+	
+    for(;;)
 		{
 		r=f.Read(b);
-		test(r==KErrNone);
-		r=ZFile.Read(a);
-		test(r==KErrNone);
-		test(a==b);
-		if (b.Length()<b.MaxLength())
+		test_KErrNone(r);
+		
+        r=ZFile.Read(a);
+		test_KErrNone(r);
+		
+        test(CompareBuffers(a, b));
+		
+        if (b.Length()<b.MaxLength())
 			break;
 		}
+
 	b.SetLength(10);
 	r=f.Read(b);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(b.Length()==0);
 	f.Close();
 	ZFile.Close();
 
 	test.Next(_L("Read way beyond the end of the file"));
 	r=f.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Read(3000000,gBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f.Close();
 
 	test.Next(_L("Write way beyond the end of the file"));
 	r=f.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	gBuf.SetLength(10);
 	r=f.Write(3000000,gBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f.Close();
 	test.End();
 	}
@@ -247,23 +255,30 @@ static void testMultipleReadFile()
 	{
 
 	test.Start(_L("Test multiple read file"));
-	RFile f1;
+	
+    RFile f1;
 	TInt r=f1.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOnly);
-	test(r==KErrNone);
-	RFile f2;
+	test_KErrNone(r);
+	
+    RFile f2;
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("Read file"));
-	FOREVER
+	
+    TBuf8<0x100> b1;
+    TBuf8<0x100> b2;
+    
+    for(;;)
 		{
-		TBuf8<0x100> b1;
-		r=f1.Read(b1);
-		test(r==KErrNone);
-		TBuf8<0x100> b2;
+        r=f1.Read(b1);
+		test_KErrNone(r);
+        
 		r=f2.Read(b2);
-		test(r==KErrNone);
-		test(b1==b2);
+		test_KErrNone(r);
+		
+        test(CompareBuffers(b1, b2));
+
 		if (b1.Length()<b1.MaxLength())
 			break;
 		}
@@ -287,68 +302,68 @@ static void testWriteFile()
 
 	// write test 1
 	TInt r=file.Replace(TheFs,fn,EFileStreamText);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("Write file"));
 
 	r=file.Write(testData);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	file.Close();
 
 	// test write modes
 	// test writing with EFileRead
 	r=file.Open(TheFs,fn,EFileStreamText|EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("Write file"));
 	r=file.Write(testData);
-	test(r==KErrAccessDenied);
+	test_Value(r, r == KErrAccessDenied);
 	file.Close();
 
 	// test writing with EFileWrite
 	r=file.Open(TheFs,fn,EFileStreamText|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("Write file"));
 	r=file.Write(testData);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 	// test writing with share mode EFileShareExclusive
 	r=file.Open(TheFs,fn,EFileStreamText|EFileWrite|EFileShareExclusive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("Write file"));
 	r=file.Write(testData);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 	// test writing with share mode EFileShareReadersOnly (fails with KErrArgument)
 	r=file.Open(TheFs,fn,EFileStreamText|EFileWrite|EFileShareReadersOnly);
-	test(r==KErrArgument);
+	test_Value(r, r == KErrArgument);
 
 	// test writing with share mode EFileShareReadersOrWriters
 	r=file.Open(TheFs,fn,EFileStreamText|EFileWrite|EFileShareReadersOrWriters);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("Write file"));
 	r=file.Write(testData);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 	// test writing with share mode EFileShareAny
 	r=file.Open(TheFs,fn,EFileStreamText|EFileWrite|EFileShareAny);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("Write file"));
 	r=file.Write(testData);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 	// tidy up
 	r=TheFs.Delete(fn);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.End();
 	}
@@ -364,30 +379,30 @@ static void CopyFileToTestDirectory()
 	TParse f;
 	TInt r;
 	r=TheFs.Parse(fn,f);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TParse fCopy;
 	r=TheFs.Parse(f.NameAndExt(),fCopy);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	RFile f1;
 	r=f1.Open(TheFs,f.FullName(),EFileStreamText|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	RFile f2;
 	r=f2.Replace(TheFs,fCopy.FullName(),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TBuf8<512> copyBuf;
 	TInt rem;
 	r=f1.Size(rem);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt pos=0;
 	while (rem)
 		{
 		TInt s=Min(rem,copyBuf.MaxSize());
 		r=f1.Read(pos,copyBuf,s);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		test(copyBuf.Length()==s);
 		r=f2.Write(pos,copyBuf,s);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		pos+=s;
 		rem-=s;
 		}
@@ -411,26 +426,26 @@ static void testFileText()
 
 	RFile f;
 	TInt r=f.Replace(TheFs,_L("TEXTFILE.TXT"),0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TFileText textFile;
 	textFile.Set(f);
 	TInt i=0;
 	for (i=0;i<5;i++)
 		{
 		r=textFile.Write(record[i]);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 	r=textFile.Seek(ESeekStart);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TBuf<16> recBuf;
 	for(i=0;i<5;i++)
 		{
 		r=textFile.Read(recBuf);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		test(recBuf==record[i]);
 		}
 	r=textFile.Read(recBuf);
-	test(r==KErrEof);
+	test_Value(r, r == KErrEof);
 	test(recBuf.Length()==0);
 	f.Close();
 
@@ -452,36 +467,36 @@ static void testFileText()
 	trecord[5].Set((TUint8*)tTextrecord[5].Ptr(),tTextrecord[5].Length()*sizeof(TText));
 	trecord[6].Set((TUint8*)tTextrecord[6].Ptr(),tTextrecord[6].Length()*sizeof(TText));
 	r=f.Replace(TheFs,_L("TEXTFILE.TXT"),0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	for(i=0;i<7;i++)
 		{
 		TBuf8<256> buf;
 		buf.Copy(trecord[i]);
 		r=f.Write(buf);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 	textFile.Set(f);
 	textFile.Seek(ESeekStart);
 	for(i=0;i<5;i++)
 		{
 		r=textFile.Read(recBuf);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		test(recBuf==record[i]);
 		}
 	r=textFile.Read(recBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(recBuf==_L("Sixth record"));
 	r=textFile.Read(recBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(recBuf==_L("\rSeventh record"));
 	r=textFile.Read(recBuf);
-	test(r==KErrEof);
+	test_Value(r, r == KErrEof);
 	test(recBuf.Length()==0);
 	f.Close();
 
 	test.Next(_L("Test read with bufferSize == dataSize"));
 	r=f.Replace(TheFs,_L("TEXTFILE.TXT"),0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	record[0].Set(_L("1234567890123456"));
 //	trecord[0].Set(_L8("1234567890123456\r\n"));
 //	trecord[1].Set(_L8("1234567890123456\n"));
@@ -496,37 +511,37 @@ static void testFileText()
 	for (i=0;i<2;i++)
 		{
 		r=f.Write(trecord[i]);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 	textFile.Set(f);
 	textFile.Seek(ESeekStart);
 	for(i=0;i<2;i++)
 		{
 		r=textFile.Read(recBuf);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		test(recBuf==record[0]);
 		}
 	r=textFile.Read(recBuf);
-	test(r==KErrEof);
+	test_Value(r, r == KErrEof);
 	test(recBuf.Length()==0);
 	f.Close();
 
 	test.Next(_L("Read into a buffer < recordSize"));
 	TBuf<8> smallBuf;
 	r=f.Open(TheFs,_L("TEXTFILE.txt"),0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	textFile.Set(f);
 	for(i=0;i<2;i++)
 		{
 		r=textFile.Read(smallBuf);
-		test(r==KErrTooBig);
+		test_Value(r, r == KErrTooBig);
 		test(smallBuf==_L("12345678"));
 		}
 	f.Close();
 
 	test.Next(_L("Nasty cases: 1) \\r \\n split over buffer boundary"));
 	r=f.Replace(TheFs,_L("TEXTFILE.txt"),0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	HBufC* largeRecord=HBufC::NewL(600);
 	largeRecord->Des().SetLength(250);
 	largeRecord->Des().Fill('A');
@@ -534,96 +549,96 @@ static void testFileText()
 	TPtrC8 bufPtr;
 	bufPtr.Set((TUint8*)largeRecord->Ptr(),largeRecord->Size()); // Size() returns length in bytes
 	r=f.Write(bufPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TBuf<16> boundaryBuf=_L("12345\r\n");
 	bufPtr.Set((TUint8*)boundaryBuf.Ptr(),boundaryBuf.Size());
 	r=f.Write(bufPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Write(trecord[0]);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	textFile.Set(f);
 	textFile.Seek(ESeekStart);
 	r=textFile.Read(recBuf);
-	test(r==KErrTooBig);
+	test_Value(r, r == KErrTooBig);
 	test(recBuf==_L("AAAAAAAAAAAAAAAA"));
 	r=textFile.Read(recBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(recBuf==_L("12345"));
 	r=textFile.Read(recBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(recBuf==record[0]);
 	f.Close();
 
 	test.Next(_L("Nasty cases: 2) \\r on buffer boundary"));
 	r=f.Replace(TheFs,_L("TEXTFILE.txt"),0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	largeRecord->Des().SetLength(250);
 	largeRecord->Des().Fill('A');
 	largeRecord->Des()[249]='\n';
 	bufPtr.Set((TUint8*)largeRecord->Ptr(),largeRecord->Size());
 	r=f.Write(bufPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	boundaryBuf=_L("12345\rxyz\n");
 	bufPtr.Set((TUint8*)boundaryBuf.Ptr(),boundaryBuf.Size());
 	r=f.Write(bufPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Write(trecord[0]);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	textFile.Set(f);
 	textFile.Seek(ESeekStart);
 	r=textFile.Read(recBuf);
-	test(r==KErrTooBig);
+	test_Value(r, r == KErrTooBig);
 	test(recBuf==_L("AAAAAAAAAAAAAAAA"));
 	r=textFile.Read(recBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(recBuf==_L("12345\rxyz"));
 	r=textFile.Read(recBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(recBuf==record[0]);
 	f.Close();
 
 	test.Next(_L("Nasty cases: 3) record size > buffer size"));
 	r=f.Replace(TheFs,_L("TEXTFILE.txt"),0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	largeRecord->Des().SetLength(600);
 	largeRecord->Des().Fill('Z');
 	largeRecord->Des()[511]='\r';
 	largeRecord->Des()[599]='\n';
 	bufPtr.Set((TUint8*)largeRecord->Ptr(),largeRecord->Size());
 	r=f.Write(bufPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	boundaryBuf=_L("12345\rxyz\n");
 	bufPtr.Set((TUint8*)boundaryBuf.Ptr(),boundaryBuf.Size());
 	r=f.Write(bufPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Write(trecord[0]);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	textFile.Set(f);
 	textFile.Seek(ESeekStart);
 	r=textFile.Read(recBuf);
-	test(r==KErrTooBig);
+	test_Value(r, r == KErrTooBig);
 	test(recBuf==_L("ZZZZZZZZZZZZZZZZ"));
 	r=textFile.Read(recBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(recBuf==_L("12345\rxyz"));
 	r=textFile.Read(recBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(recBuf==record[0]);
 
 	TBuf<601> bigBuf;
 	TPtrC largePtr((TText*)largeRecord->Ptr(),(largeRecord->Length()-1));
 	textFile.Seek(ESeekStart);
 	r=textFile.Read(bigBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(bigBuf==largePtr);
 	r=textFile.Read(recBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(recBuf==_L("12345\rxyz"));
 	r=textFile.Read(recBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(recBuf==record[0]);
 	f.Close();
 
@@ -639,60 +654,60 @@ static void testFileTextEndRecord()
 	test.Next(_L("Test FileText last record has no terminator"));
 	RFile f;
 	TInt r=f.Replace(TheFs,_L("TextFile"),0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TPtrC8 bufPtr;
 	TBuf<16>boundaryBuf=_L("Record1\n");
 	bufPtr.Set((TUint8*)boundaryBuf.Ptr(),boundaryBuf.Size());
 	r=f.Write(bufPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	boundaryBuf=_L("Record2\n");
 	bufPtr.Set((TUint8*)boundaryBuf.Ptr(),boundaryBuf.Size());
 	r=f.Write(bufPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	boundaryBuf=_L("Record3\n");
 	bufPtr.Set((TUint8*)boundaryBuf.Ptr(),boundaryBuf.Size());
 	r=f.Write(bufPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TFileText fText;
 	fText.Set(f);
 	r=fText.Seek(ESeekStart);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TBuf<32> recBuf;
 	r=fText.Read(recBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(recBuf.MatchF(_L("record1"))!=KErrNotFound);
 	r=fText.Read(recBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(recBuf.MatchF(_L("record2"))!=KErrNotFound);
 	r=fText.Read(recBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(recBuf.MatchF(_L("record3"))!=KErrNotFound);
 	r=fText.Read(recBuf);
-	test(r==KErrEof);
+	test_Value(r, r == KErrEof);
 	test(recBuf.Length()==0);
 	f.Close();
 
 	TBuf<0x100> bigBuf(0x100);
 	bigBuf.Fill('A');
 	r=f.Replace(TheFs,_L("TextFile"),0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
     bufPtr.Set((TUint8*)bigBuf.Ptr(),bigBuf.Size());
 	r=f.Write(bufPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	fText.Set(f);
 	r=fText.Seek(ESeekStart);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	bigBuf.SetLength(0);
 	r=fText.Read(bigBuf);
 	test.Printf(_L("fText.Read returns %d\n"),r);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test.Printf(_L("BigBuf.Length()==%d\n"),bigBuf.Length());
 	test(bigBuf.Length()==0x100);
 	r=fText.Read(bigBuf);
-	test(r==KErrEof);
+	test_Value(r, r == KErrEof);
 	test(bigBuf.Length()==0);
 	f.Close();
 	}
@@ -707,7 +722,7 @@ static void testFileNames()
 	TFileName tempFileName;
 	RFile f;
 	TInt r=f.Temp(TheFs,_L(""),tempFileName,EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TParse p;
 	p.Set(tempFileName,NULL,NULL);
 	test(p.DrivePresent());
@@ -717,10 +732,10 @@ static void testFileNames()
 	f.Close();
 
 	r=f.Replace(TheFs,_L("WELCOMETO"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f.Close();
 	r=f.Replace(TheFs,_L("WELCOMETO.WRD"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f.Close();
 	}
 
@@ -739,189 +754,189 @@ static void testFileAttributes()
 	test.Next(_L("Archive att is set after creation"));
 	RFile f;
 	TInt r=TheFs.Delete(_L("FILEATT.ARC"));
-	test(r==KErrNone || r==KErrNotFound);
+	test_Value(r, r == KErrNone || r==KErrNotFound);
 	r=f.Create(TheFs,_L("FILEATT.ARC"),EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TUint atts;
 	r=f.Att(atts);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test((atts&ATT_MASK)==KEntryAttArchive);
 	TEntry fileAtt;
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==KEntryAttArchive);
 	f.Close();
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==KEntryAttArchive);
 
 	test.Next(_L("Archive att is set after a write"));
 	TheFs.SetAtt(_L("FILEATT.ARC"),0,KEntryAttArchive);
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==0);
 	r=f.Open(TheFs,_L("FILEATT.ARC"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Write(_L8("Hello World"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Att(atts);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test((atts&ATT_MASK)==KEntryAttArchive);
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==KEntryAttArchive);
 	f.Close();
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==KEntryAttArchive);
 
 	test.Next(_L("Archive att is set after setsize"));
 	TheFs.SetAtt(_L("FILEATT.ARC"),0,KEntryAttArchive);
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==0);
 	r=f.Open(TheFs,_L("FILEATT.ARC"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.SetSize(447);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt size;
 	r=f.Size(size);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(size==447);
 	r=f.Att(atts);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test((atts&ATT_MASK)==KEntryAttArchive);
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==KEntryAttArchive);
 	f.Close();
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==KEntryAttArchive);
 
 	test.Next(_L("Archive att is not set after open"));
 	r=TheFs.SetAtt(_L("FILEATT.ARC"),0,KEntryAttArchive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Open(TheFs,_L("FILEATT.ARC"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Att(atts);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test((atts&ATT_MASK)==0);
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==0);
 	f.Close();
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==0);
 
 	test.Next(_L("Archive att is not set after a read"));
 	TheFs.SetAtt(_L("FILEATT.ARC"),0,KEntryAttArchive);
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==0);
 	r=f.Open(TheFs,_L("FILEATT.ARC"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TBuf8<16> readBuf;
 	r=f.Read(readBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Att(atts);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test((atts&ATT_MASK)==0);
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==0);
 	f.Close();
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==0);
 
 	test.Next(_L("Archive att is set after replace"));
 	r=f.Replace(TheFs,_L("FILEATT.ARC"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Att(atts);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test((atts&ATT_MASK)==KEntryAttArchive);
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==KEntryAttArchive);
 	f.Close();
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==KEntryAttArchive);
 
 	test.Next(_L("Read only bit can be unset"));
 	r=TheFs.SetAtt(_L("FILEATT.ARC"),KEntryAttReadOnly|KEntryAttHidden,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==(KEntryAttReadOnly|KEntryAttHidden|KEntryAttArchive));
 
 	r=TheFs.SetAtt(_L("FILEATT.ARC"),0,KEntryAttHidden);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==(KEntryAttReadOnly|KEntryAttArchive));
 
 	r=TheFs.SetAtt(_L("FILEATT.ARC"),0,KEntryAttReadOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==(KEntryAttArchive));
 
 	r=TheFs.SetAtt(_L("FILEATT.ARC"),KEntryAttReadOnly|KEntryAttHidden,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==(KEntryAttReadOnly|KEntryAttHidden|KEntryAttArchive));
 
 	r=TheFs.SetAtt(_L("FILEATT.ARC"),0,KEntryAttReadOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==(KEntryAttHidden|KEntryAttArchive));
 
 	r=TheFs.SetAtt(_L("FILEATT.ARC"),0,KEntryAttHidden);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==(KEntryAttArchive));
 
 	TTime time(0);
 	r=TheFs.SetEntry(_L("FILEATT.ARC"),time,KEntryAttReadOnly|KEntryAttHidden,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==(KEntryAttReadOnly|KEntryAttHidden|KEntryAttArchive));
 
 	r=TheFs.SetEntry(_L("FILEATT.ARC"),time,0,KEntryAttHidden);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==(KEntryAttReadOnly|KEntryAttArchive));
 
 	r=TheFs.SetEntry(_L("FILEATT.ARC"),time,0,KEntryAttReadOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==(KEntryAttArchive));
 
 	r=TheFs.SetEntry(_L("FILEATT.ARC"),time,KEntryAttReadOnly|KEntryAttHidden,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==(KEntryAttReadOnly|KEntryAttHidden|KEntryAttArchive));
 
 	r=TheFs.SetEntry(_L("FILEATT.ARC"),time,0,KEntryAttReadOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==(KEntryAttHidden|KEntryAttArchive));
 
 	r=TheFs.SetEntry(_L("FILEATT.ARC"),time,0,KEntryAttHidden);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("FILEATT.ARC"),fileAtt);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(fileAtt.iAtt==(KEntryAttArchive));
 
 	test.Next(_L("Cashing the 'read-only' attribute"));
@@ -929,35 +944,35 @@ static void testFileAttributes()
 
 	// Test RO attribute after creating a file
 	r=f.Create(TheFs,fname,EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.SetAtt(KEntryAttReadOnly,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Write(_L8("Hello World"));
-	test(r==KErrNone);					// <-- here!
+	test_KErrNone(r);					// <-- here!
 	f.Close();
 
 	// Test we can't open for write or delete a RO file
 	r=f.Open(TheFs,fname,EFileWrite);
-	test(r==KErrAccessDenied);
+	test_Value(r, r == KErrAccessDenied);
 	r=TheFs.Delete(fname);
-	test(r==KErrAccessDenied);
+	test_Value(r, r == KErrAccessDenied);
 
 	// Tidy up and re-create test file
 	r=TheFs.SetAtt(fname,0,KEntryAttReadOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(fname);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Create(TheFs,fname,EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f.Close();
 
 	// Test RO attribute after opening a file
 	r=f.Open(TheFs,fname,EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.SetAtt(KEntryAttReadOnly,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Write(_L8("Hello World"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f.Close();
 
 
@@ -1000,9 +1015,9 @@ static void testFileAttributes()
 
 	// Tidy up
 	r=TheFs.SetAtt(fname,0,KEntryAttReadOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(fname);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 static void testShortNameAccessorFunctions()
@@ -1021,21 +1036,21 @@ static void testShortNameAccessorFunctions()
 
 	TBuf<64> sessionPath;
 	TInt r=TheFs.SessionPath(sessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	RFile f;
 	r=TheFs.MkDirAll(_L("\\F32-TST\\TFILE\\TOPLEVEL\\MIDDLE-DIRECTORY\\LASTDIR\\RANDOM.ENDBIT"));
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 	r=f.Replace(TheFs,_L("LONGFILENAME.LONGEXT"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f.Close();
 	r=f.Replace(TheFs,_L("\\F32-TST\\TFILE\\TOPLEVEL\\MIDDLE-DIRECTORY\\LASTDIR\\LONGFILENAME.LONGEXT"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f.Close();
 	r=f.Replace(TheFs,_L("\\F32-TST\\TFILE\\TOPLEVEL\\MIDDLE-DIRECTORY\\LASTDIR\\BAD CHAR"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f.Close();
 	r=f.Replace(TheFs,_L("\\F32-TST\\TFILE\\TOPLEVEL\\MIDDLE-DIRECTORY\\LASTDIR\\GoodCHAR.TXT"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f.Close();
 	TBuf<12> shortName1;
 	TBuf<12> shortName2;
@@ -1043,15 +1058,15 @@ static void testShortNameAccessorFunctions()
 	TBuf<12> shortName4;
 	TBuf<12> shortName5;
 	r=TheFs.GetShortName(_L("LONGFILENAME.LONGEXT"),shortName1);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.GetShortName(_L("\\F32-TST\\TFILE\\TOPLEVEL\\MIDDLE-DIRECTORY\\LASTDIR\\LONGFILENAME.LONGEXT"),shortName2);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.GetShortName(_L("\\F32-TST\\TFILE\\TOPLEVEL\\MIDDLE-DIRECTORY\\LASTDIR\\BAD CHAR"),shortName3);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.GetShortName(_L("\\F32-TST\\TFILE\\TOPLEVEL\\MIDDLE-DIRECTORY\\LASTDIR\\GOODCHAR.TXT"),shortName4);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.GetShortName(_L("\\F32-TST\\TFILE\\TOPLEVEL\\MIDDLE-DIRECTORY"),shortName5);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	if(Is_Win32(TheFs, gDriveNum))
 		{
@@ -1080,48 +1095,48 @@ static void testShortNameAccessorFunctions()
 	if (Is_Win32(TheFs, gDriveNum))
 		{
 		r=TheFs.GetLongName(_L("LONGFI~1.LON"),longName1);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.GetLongName(_L("\\F32-TST\\TFILE\\TOPLEVEL\\MIDDLE-DIRECTORY\\LASTDIR\\LONGFI~1.LON"),longName2);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.GetLongName(_L("\\F32-TST\\TFILE\\TOPLEVEL\\MIDDLE-DIRECTORY\\LASTDIR\\BADCHA~1"),longName3);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.GetLongName(_L("\\F32-TST\\TFILE\\TOPLEVEL\\MIDDLE-DIRECTORY\\LASTDIR\\GOODCHAR.TXT"),longName4);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.GetLongName(_L("\\F32-TST\\TFILE\\TOPLEVEL\\MIDDLE~1"),longName5);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 	else if (!IsTestingLFFS())
 		{
 		r=TheFs.GetLongName(_L("LONGFI~1.LON"),longName1);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.GetLongName(_L("\\F32-TST\\TFILE\\TOPLEVEL\\MIDDLE-DIRECTORY\\LASTDIR\\LONGFI~1.LON"),longName2);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.GetLongName(_L("\\F32-TST\\TFILE\\TOPLEVEL\\MIDDLE-DIRECTORY\\LASTDIR\\BAD_CHAR"),longName3);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.GetLongName(_L("\\F32-TST\\TFILE\\TOPLEVEL\\MIDDLE-DIRECTORY\\LASTDIR\\GOODCHAR.TXT"),longName4);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.GetLongName(_L("\\F32-TST\\TFILE\\TOPLEVEL\\MIDDLE~1"),longName5);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
     else
     	{
 		// LFFS longname tests
         r=TheFs.GetLongName(shortName1,longName1);
-        test(r==KErrNone);
+        test_KErrNone(r);
         r=TheFs.SetSessionPath(_L("\\F32-TST\\TFILE\\TOPLEVEL\\MIDDLE-DIRECTORY\\LASTDIR\\"));
-        test(r==KErrNone);
+        test_KErrNone(r);
         r=TheFs.GetLongName(shortName2,longName2);
-        test(r==KErrNone);
+        test_KErrNone(r);
         r=TheFs.GetLongName(shortName3,longName3);
-        test(r==KErrNone);
+        test_KErrNone(r);
         r=TheFs.GetLongName(shortName4,longName4);
-        test(r==KErrNone);
+        test_KErrNone(r);
         r=TheFs.SetSessionPath(_L("\\F32-TST\\TFILE\\TOPLEVEL\\"));
-        test(r==KErrNone);
+        test_KErrNone(r);
         r=TheFs.GetLongName(shortName5,longName5);
-        test(r==KErrNone);
+        test_KErrNone(r);
         r=TheFs.SetSessionPath(sessionPath);
-        test(r==KErrNone);
+        test_KErrNone(r);
     	}
 
 	test(longName1==_L("LONGFILENAME.LONGEXT"));
@@ -1131,16 +1146,16 @@ static void testShortNameAccessorFunctions()
 	test(longName5==_L("MIDDLE-DIRECTORY"));
 
 	r=TheFs.GetShortName(_L("XXX.YYY"),shortName1);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	r=TheFs.GetShortName(_L("\\F32-TST\\TFILE\\TOPLEVEL\\MIDDLE-YROTCERID\\LASTDIR\\BAD-CHAR"),shortName1);
-	test(r==KErrPathNotFound);
+	test_Value(r, r == KErrPathNotFound);
 	r=TheFs.GetLongName(_L("XXX.YYY"),longName1);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	r=TheFs.GetLongName(_L("\\F32-TST\\TFILE\\TOPLEVEL\\MIDDLE-YROTCERID\\LASTDIR\\BAD-CHAR"),longName1);
-	test(r==KErrPathNotFound);
+	test_Value(r, r == KErrPathNotFound);
 
 	r=TheFs.Delete(_L("LONGFILENAME.LONGEXT"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TEntry romEntry;
 	r=TheFs.Entry(_L("Z:\\System"),romEntry);
@@ -1150,13 +1165,13 @@ static void testShortNameAccessorFunctions()
 		//test.Getch();
 		//return;
 		}
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TBuf<64> romFileName=_L("Z:\\");
 	romFileName.Append(romEntry.iName);
 	r=TheFs.GetShortName(romFileName,shortName1);
-	test(r==KErrNotSupported);
+	test_Value(r, r == KErrNotSupported);
 	r=TheFs.GetLongName(_L("Z:\\system"),longName1);
-	test(r==KErrNotSupported);
+	test_Value(r, r == KErrNotSupported);
 	}
 
 static void RmDir(const TDesC& aDirName)
@@ -1167,7 +1182,7 @@ static void RmDir(const TDesC& aDirName)
 	CFileMan* fMan=CFileMan::NewL(TheFs);
 	test(fMan!=NULL);
 	TInt r=TheFs.SessionPath(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.CheckDisk(gSessionPath);
 	if (r!=KErrNone && r!=KErrNotSupported)
 		ReportCheckDiskFailure(r);
@@ -1177,7 +1192,7 @@ static void RmDir(const TDesC& aDirName)
 
 	fMan->Attribs(removeDirName, 0, KEntryAttReadOnly, 0, CFileMan::ERecurse);
 	r=fMan->RmDir(removeDirName);
-	test(r==KErrNone || r==KErrNotFound || r==KErrPathNotFound);
+	test_Value(r, r == KErrNone || r==KErrNotFound || r==KErrPathNotFound);
 
 	delete fMan;
 	}
@@ -1218,14 +1233,10 @@ static void TestINC112803()
 	// Check the generated shortname of the original file
 	TBuf<12> shortName;
 	err = TheFs.GetShortName(KOrigFileName, shortName);
-	test(err==KErrNone);
+	test_KErrNone(err);
 
-	// Validate the generated shorname against the original filename.
-	if (Is_Win32(TheFs, gDriveNum))
-		{
-		test(shortName==_L("2222~1.JAR"));
-		}
-	else if(!IsTestingLFFS())
+	// Validate the generated shortname against the original filename.
+	if(!IsTestingLFFS())
 		{
 		// LFFS short names not the same as VFAT ones
 		test(shortName==_L("2222~1.JAR"));
@@ -1236,7 +1247,7 @@ static void TestINC112803()
 	CheckFileExists(KOrigFileShortName, KErrNone, EFalse);
 
 	err = TheFs.Rename(KOrigFileName,KDestinationFileName);
-	test(err==KErrNone);
+	test_KErrNone(err);
 
 	// Clean up before leaving
 	RmDir(_L("INC112803\\"));
@@ -1251,43 +1262,43 @@ static void testIsFileOpen()
 	test.Next(_L("Test IsFileOpen"));
 	TBool answer;
 	TInt r=TheFs.IsFileOpen(_L("OPEN.FILE"),answer);
-	test(r==KErrNotFound || (r==KErrNone && answer==EFalse));
+	test_Value(r, r == KErrNotFound || (r==KErrNone && answer==EFalse));
 	RFile f;
 	r=f.Replace(TheFs,_L("OPEN.FILE"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.IsFileOpen(_L("OPEN.FILE"),answer);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(answer!=EFalse);
 	f.Close();
 	r=TheFs.IsFileOpen(_L("OPEN.FILE"),answer);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(answer==EFalse);
 	r=TheFs.Delete(_L("OPEN.FILE"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	RFile f2;
 	r=f2.Replace(TheFs,_L("AnotherOpen.File"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.IsFileOpen(_L("AnotherOpen.File"),answer);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(answer!=EFalse);
 	r=f.Replace(TheFs,_L("OPEN.FILE"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.IsFileOpen(_L("OPEN.FILE"),answer);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(answer!=EFalse);
 	f2.Close();
 	r=TheFs.IsFileOpen(_L("OPEN.FILE"),answer);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(answer!=EFalse);
 	f.Close();
 	r=TheFs.IsFileOpen(_L("OPEN.FILE"),answer);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(answer==EFalse);
 	r=TheFs.Delete(_L("AnotherOpen.File"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(_L("OPEN.FILE"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 static void testDeleteOpenFiles()
@@ -1300,99 +1311,99 @@ static void testDeleteOpenFiles()
 	RFile f;
 	f.Close();
 	TInt r=f.Replace(TheFs,_L("Open.File"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(_L("OPEN.FILE"));
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	f.Close();
 	f.Close();
 	f.Close();
 	r=TheFs.Delete(_L("Open.FILe"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TFileName fileName;
 	r=f.Temp(TheFs,_L(""),fileName,EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(fileName);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	f.Close();
 	r=TheFs.Delete(fileName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	MakeFile(_L("\\Documents\\TEstfile.txt"));
 	r=f.Open(TheFs,_L("\\Documents\\TEstfile.txt"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(_L("\\Documents\\TEstfile.txt"));
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=TheFs.Delete(_L("\\documents\\TEstfile.txt"));
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=TheFs.Delete(_L("\\Documents.\\TEstfile.txt"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.Delete(_L("\\documents.\\TEstfile.txt"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.Delete(_L("\\Documents\\Testfile.txt"));
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=TheFs.Delete(_L("\\documents\\testfile.txt"));
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=TheFs.Delete(_L("\\Documents.\\TEstfile.TXT"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.Delete(_L("\\docUMENTS.\\TESTFILE.TXT"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	f.Close();
 	r=TheFs.Delete(_L("\\Documents\\TEstfile.TXT"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	MakeFile(_L("\\Documents\\Documents\\TEstfile.txt"));
 	r=f.Open(TheFs,_L("\\Documents\\Documents\\TEstfile.txt"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(_L("\\Documents\\documents.\\TEstfile.txt"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.Delete(_L("\\documents\\Documents.\\TEstfile.txt"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.Delete(_L("\\Documents.\\documents\\TEstfile.txt"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.Delete(_L("\\documents.\\Documents\\TEstfile.txt"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.Delete(_L("\\Documents\\Documents\\Testfile.txt"));
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=TheFs.Delete(_L("\\documents\\documents\\testfile.txt"));
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=TheFs.Delete(_L("\\Documents.\\Documents.\\TEstfile.TXT"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.Delete(_L("\\docUMENTS.\\docUMENTS.\\TESTFILE.TXT"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 
 
 	r=TheFs.RmDir(_L("\\Documents\\"));
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=TheFs.RmDir(_L("\\documents\\"));
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=TheFs.RmDir(_L("\\Documents.\\"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.RmDir(_L("\\documents.\\"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.RmDir(_L("\\Documents\\documents\\"));
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=TheFs.RmDir(_L("\\documents\\documents.\\"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.RmDir(_L("\\Documents.\\Documents\\"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.RmDir(_L("\\documents.\\Documents.\\"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.RmDir(_L("\\Documents\\TestFile.TXT"));
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=TheFs.RmDir(_L("\\documents\\TestFile"));
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=TheFs.RmDir(_L("\\Documents.\\Testfile."));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.RmDir(_L("\\documents.\\t"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	f.Close();
 	r=TheFs.Delete(_L("\\Documents\\documents\\TEstfile.TXT"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(_L("\\Documents\\documents.\\"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.RmDir(_L("\\Documents.\\"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	}
 
 static void testFileSeek()
@@ -1403,7 +1414,7 @@ static void testFileSeek()
 	test.Next(_L("Test file seek"));
 	RFile f;
 	TInt r=f.Open(TheFs,_L("T_File.cpp"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TBuf8<20> text1;TInt pos1=0;
 	TBuf8<20> text2;TInt pos2=510;
@@ -1412,67 +1423,67 @@ static void testFileSeek()
 	TBuf8<20> text5;TInt pos5=4999;
 
 	r=f.Read(pos1,text1);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Read(pos2,text2);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Read(pos3,text3);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Read(pos4,text4);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Read(pos5,text5);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TBuf8<20> testBuf;
 
 	r=f.Read(pos3,testBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(testBuf==text3);
 
 	r=f.Read(pos1,testBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(testBuf==text1);
 
 	r=f.Read(pos4,testBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(testBuf==text4);
 
 	r=f.Read(pos2,testBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(testBuf==text2);
 
 	r=f.Read(pos5,testBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(testBuf==text5);
 
 	r=f.Read(pos2,testBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(testBuf==text2);
 	r=f.SetSize(1023);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Read(pos2,testBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(testBuf==text2);
 	r=f.SetSize(1024);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Read(pos1,testBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(testBuf==text1);
 	r=f.Read(pos2,testBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(testBuf==text2);
 
 	r=f.Read(pos1,testBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(testBuf==text1);
 	r=f.SetSize(511);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Read(pos1,testBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(testBuf==text1);
 	r=f.SetSize(512);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Read(pos1,testBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(testBuf==text1);
 	f.Close();
 	}
@@ -1485,60 +1496,60 @@ static void testMoreFileSeek()
 //	Create a zero length file
 	RFile file;
 	TInt r=file.Replace(TheFs,_L("\\F32-TST\\TFILE\\seektest"),EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.SetSize(20);
-	test(r==KErrNone);
+	test_KErrNone(r);
 //	Seek beyond the length of the file
 	TInt seekPos;
 	seekPos = 80;								//	Pick a likely offset
     TInt err = file.Seek(ESeekEnd, seekPos);	//	and go there
-    test(err==KErrNone);
+    test_KErrNone(err);
 	test(seekPos==20);							//	Somewhat non-intuitive?
 
 	r=file.Write(_L8("A Devil's Haircut"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt newFileSize;
 	r=file.Size(newFileSize);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	seekPos = 0;
     err = file.Seek(ESeekCurrent, seekPos);		//	Find out where we ended up?
-	test(err==KErrNone);
+	test_KErrNone(err);
 	test(seekPos==37);
 
 	file.SetSize(512);
 	seekPos=513;
 	err=file.Seek(ESeekStart, seekPos);
-	test(err==KErrNone);
+	test_KErrNone(err);
 	test(seekPos==513);
 
 	err=file.Seek(ESeekEnd, seekPos);
-	test(err==KErrNone);
+	test_KErrNone(err);
 	test(seekPos==512);
 
 	seekPos=-530;
 	err=file.Seek(ESeekEnd, seekPos);
-	test(err==KErrNone);
+	test_KErrNone(err);
 	test(seekPos==0);
 
 	seekPos=-10;
 	err=file.Seek(ESeekEnd, seekPos);
-	test(err==KErrNone);
+	test_KErrNone(err);
 	test(seekPos==502);
 
 	seekPos=-10;
 	err=file.Seek(ESeekStart,seekPos);
-	test(err==KErrArgument);
+	test_Value(err, err == KErrArgument);
 	test(seekPos==-10);
 
 	seekPos=0;
 	err=file.Seek(ESeekEnd,seekPos);
-	test(err==KErrNone);
+	test_KErrNone(err);
 	test(seekPos==512);
 
 	file.Close();
 	r=TheFs.Delete(_L("\\F32-TST\\TFILE\\seektest"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 static void testSetSize()
@@ -1551,18 +1562,18 @@ static void testSetSize()
 	RFile f1;
 	TInt i=0;
 	TInt r=f1.Replace(TheFs,_L("File.File"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	gBuf.SetLength(32);
 	for(i=0;i<32;i++)
 		gBuf[i]=(TUint8)i;
 	r=f1.Write(gBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	gBuf.SetLength(1334);
 	for(i=64;i<1334+64;i++)
 		gBuf[i-64]=(TUint8)i;
 	r=f1.Write(30,gBuf);
 	r=f1.Read(30,gBuf,1000);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(gBuf[0]==64);
 	test(gBuf[1]==65);
 	test(gBuf[2]==66);
@@ -1570,23 +1581,23 @@ static void testSetSize()
 
 	test.Next(_L("Open a large file"));
 	r=f1.Replace(TheFs,_L("File.File"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckDisk();
 	r=f1.SetSize(131072); // 128K
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TBuf8<16> testData=_L8("testData");
 	r=f1.Write(131060,testData);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f1.Close();
 	r=f1.Open(TheFs,_L("File.File"),EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt size;
 	r=f1.Size(size);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(size==131072);
 	TBuf8<16> testData2;
 	r=f1.Read(131060,testData2,8);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(testData==testData2);
 	f1.Close();
 	TheFs.Delete(_L("File.file"));
@@ -1597,10 +1608,10 @@ static void testIsRomAddress()
 	{
 	RFile f;
 	TInt r=f.Open(TheFs, PlatSec::ConfigSetting(PlatSec::EPlatSecEnforceSysBin)?_L("Z:\\Sys\\Bin\\eshell.exe"):_L("Z:\\System\\Bin\\eshell.exe"), EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt anAddress=0;
 	r=f.Seek(ESeekAddress, anAddress);
-	test(r==KErrNone);
+	test_KErrNone(r);
 #if !defined(__WINS__)
 	test(RFs::IsRomAddress((TAny *)anAddress)); // Always returns EFalse if WINS
 #endif
@@ -1621,25 +1632,25 @@ static void testMiscellaneousReportedBugs()
 	RFile f1;
 	TInt temp;
 	TInt r=f1.Replace(TheFs,_L("File.File"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f1.Size(temp);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(temp==0);
 	TUint data=0;
 	TPtrC8 buf((TText8*)&data,1);
 	r=f1.Write(buf);
 //	r=f1.Write(_L("\0"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f1.Size(temp);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(temp==1);
 	temp=0;
 	r=f1.Seek(ESeekStart,temp);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(temp==0);
 	TBuf8<32> testBuf;
 	r=f1.Read(testBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(testBuf==buf);
 	f1.Close();
 
@@ -1652,15 +1663,15 @@ static void testMiscellaneousReportedBugs()
 
 	RHackFile f2;
 	f2.Open(TheFs, _L("File.File"), EFileRead);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = f2.SendReceive(/*47*/ EFsFileChangeMode, TIpcArgs(EFileRead | EFileWrite));	// <- must fail!
-	test(r == KErrArgument);
+	test_Value(r, r == KErrArgument);
 	r = f2.Write(_L8("Hacked!"));	// <- must fail!
-	test(r == KErrAccessDenied);
+	test_Value(r, r == KErrAccessDenied);
 	f2.Close();
 
 	r=TheFs.Delete(_L("File.FIle"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 static void testFileRename()
@@ -1680,46 +1691,46 @@ static void testFileRename()
 
     //-- test renaming a file to a non-existing directory
     r = TheFs.MkDir(_L("\\temp\\"));
-    test(r==KErrNone || r==KErrAlreadyExists);
+    test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 
     r = f1.Replace(TheFs, _L("\\temp\\file1"), 0);
-    test(r==KErrNone);
+    test_KErrNone(r);
 
     r = f1.Rename(_L("\\temp\\temp\\file1"));
-    test(r == KErrPathNotFound);
+    test_Value(r, r == KErrPathNotFound);
 
     f1.Close();
 
 
 	r=f1.Replace(TheFs,name2,EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f1.Write(_L8("1234"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt len=CheckFileExists(name2,KErrNone);
 	test(len==4);
 	r=f1.Rename(name1);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=f1.Read(0,contents);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(contents==_L8("1234"));
 	r=f1.Write(4,_L8("5678"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	len=CheckFileExists(name1,KErrNone);
 	test(len==8);
 	CheckFileExists(name2,KErrNotFound);
 	r=f1.Write(8,_L8("90"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f1.Close();
 	len=CheckFileExists(name1,KErrNone);
 	test(len==10);
 
 	test.Next(_L("Test can change case using rename"));
 	r=f1.Open(TheFs,name1,EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f1.Rename(name3);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckFileExists(name1,KErrNone,EFalse);
 	len=CheckFileExists(name3,KErrNone);
 	test(len==10);
@@ -1730,9 +1741,9 @@ static void testFileRename()
 
 	test.Next(_L("Test can rename to an identical filename"));
 	r=f1.Open(TheFs,name3,EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f1.Rename(name3);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	len=CheckFileExists(name3,KErrNone);
 	test(len==10);
 	f1.Close();
@@ -1741,20 +1752,20 @@ static void testFileRename()
 
 	test.Next(_L("Test rename to a name containing a wildcard is rejected"));
 	r=f1.Open(TheFs,name3,EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f1.Rename(_L("asdf*ASDF"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=f1.Rename(_L("asdf?AF"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	f1.Close();
 
 	r=f1.Open(TheFs,name3,EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f1.Read(contents);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(contents==_L8("1234567890"));
 	r=f1.Read(contents);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(contents.Length()==0);
 	f1.Close();
 
@@ -1762,26 +1773,26 @@ static void testFileRename()
 	TDateTime dateTime(1995,(TMonth)10,19,23,0,0,0);
 	TTime oldTime(dateTime);
 	r=TheFs.SetEntry(name3,oldTime,0,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f1.Open(TheFs,name3,EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TTime check;
 	r=f1.Modified(check);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(check==oldTime);
 
 	r=f1.Rename(_L("OldFile.Old"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=f1.Modified(check);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(check==oldTime);
 	r=TheFs.Modified(_L("oldfile.old"),check);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(check==oldTime);
 	f1.Close();
 	r=TheFs.Modified(_L("oldfile.old"),check);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(check==oldTime);
 	}
 
@@ -1799,20 +1810,20 @@ static void TestFileUids()
 
 	TEntry e;
 	TInt r=TheFs.Entry(_L("Tmp04005.$$$"),e);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(uidData==e.iType);
 	r=TheFs.Entry(_L("Sketch(01)"),e);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(uidData1==e.iType);
 
 	test.Next(_L("Test replace preserves UIDs"));
 	r=TheFs.Replace(_L("Tmp04005.$$$"),_L("Sketch(01)"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=TheFs.Entry(_L("Tmp04005.$$$"),e);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	r=TheFs.Entry(_L("Sketch(01)"),e);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(uidData==e.iType);
 	}
 
@@ -1822,11 +1833,11 @@ static void TestMaxLengthFilenames()
 // Test max length filenames can be created/deleted
 //
 	{
-
-#if defined(__WINS__)
-	if (gSessionPath[0]=='C')
+	if(Is_SimulatedSystemDrive(TheFs, gDriveNum))
+		{
+		test.Printf(_L("Skipping TestMaxLengthFilenames() on PlatSim/Emulator drive %C:\n"), gSessionPath[0]);
 		return;
-#endif
+		}
 
 	test.Next(_L("Test max length filenames"));
 	TFileName bigName;
@@ -1834,10 +1845,10 @@ static void TestMaxLengthFilenames()
 	bigName[0]='\\';
 	RFile f;
 	TInt r=f.Create(TheFs,bigName,EFileRead);
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	bigName.SetLength(254);
 	r=f.Create(TheFs,bigName,EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f.Close();
 
 	TInt count;
@@ -1850,35 +1861,35 @@ static void TestMaxLengthFilenames()
 		if (r==KErrDirFull)
 			{
 			r=TheFs.Delete(countedBigName);
-			test(r==KErrNotFound);
+			test_Value(r, r == KErrNotFound);
 			break;
 			}
 		if (r!=KErrNone)
 			test.Printf(_L("File create failed:%d"),r);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		f.Close();
 		}
 	while(count--)
 		{
 		countedBigName[2]=(TText)('A'+count);
 		r=TheFs.Delete(countedBigName);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 
 	r=TheFs.Delete(bigName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TFileName subDirFileName=_L("\\F32-TST\\TFILE");
 	bigName.SetLength(241);
 	subDirFileName.Append(bigName);
 	r=f.Create(TheFs,subDirFileName,EFileRead);
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	subDirFileName.SetLength(254);
 	r=f.Create(TheFs,subDirFileName,EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f.Close();
 	r=TheFs.Delete(subDirFileName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 
@@ -1896,30 +1907,30 @@ static void testReadersWriters()
 	// Open a file in EFileShareReadersOnly mode
 	RFile f1;
 	TInt r=f1.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// Opening a share in EFileShareReadersOnly mode should succeed
 	RFile f2;
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f2.Close();
 
 	// Opening a share in EFileShareReadersOrWriters mode with EFileRead access should succeed
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOrWriters|EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f2.Close();
 
 	// Opening a share in EFileShareReadersOrWriters mode with EFileWrite access should succeed
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOrWriters|EFileWrite);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 
 	// Opening a share in EFileShareReadersOrWriters mode with EFileRead|EFileWrite access should succeed
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOrWriters|EFileRead|EFileWrite);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 
 	// Opening a share in EShareAny mode should fail
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareAny);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 
 	f1.Close();
 
@@ -1927,36 +1938,36 @@ static void testReadersWriters()
 
 	// Open a file in EFileShareReadersOrWriters mode for reading
 	r=f1.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOrWriters|EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// Opening a share in EFileShareExclusive mode should fail
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareExclusive);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 
 	// Opening a share in EFileShareReadersOnly mode should succeed
 	// (the share doesn't care if the file is opened for reading or writing)
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f2.Close();
 
 	// Opening a share in EFileShareReadersOnly mode with EFileRead accesss should succeed
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOrWriters|EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f2.Close();
 
 	// Opening a share in EFileShareReadersOnly mode with EFileWrite accesss should succeed
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOrWriters|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f2.Close();
 
 	// Opening a share in EFileShareReadersOnly mode with EFileRead|EFileWrite accesss should succeed
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOrWriters|EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f2.Close();
 
 	// Opening a share in EFileShareAny mode should succeed
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareAny);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f2.Close();
 
 	f1.Close();
@@ -1965,34 +1976,34 @@ static void testReadersWriters()
 
 	// Open a file in EFileShareReadersOrWriters mode for writing
 	r=f1.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOrWriters|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// Opening a share in EFileShareExclusive mode should fail
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareExclusive);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 
 	// Opening a share in EFileShareReadersOnly mode should fail
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOnly);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 
 	// Opening a share in EFileShareReadersOrWriters mode with EFileRead access should succeed
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOrWriters|EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f2.Close();
 
 	// Opening a share in EFileShareReadersOrWriters mode with EFileWrite access should succeed
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOrWriters|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f2.Close();
 
 	// Opening a share in EFileShareReadersOrWriters mode with EFileRead|EFileWrite access should succeed
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOrWriters|EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f2.Close();
 
 	// Opening a share in EFileShareAny mode should succeed
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareAny);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f2.Close();
 
 	f1.Close();
@@ -2001,34 +2012,34 @@ static void testReadersWriters()
 
 	// Open a file in EFileShareAny mode
 	r=f1.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareAny);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// Opening a share in EFileShareExclusive mode should fail
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareExclusive);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 
 	// Opening a share in EFileShareReadersOnly mode should fail
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOnly);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 
 	// Opening a share in EFileShareReadersOrWriters mode with EFileRead access should succeed
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOrWriters|EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f2.Close();
 
 	// Opening a share in EFileShareReadersOrWriters mode with EFileWrite access should succeed
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOrWriters|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f2.Close();
 
 	// Opening a share in EFileShareReadersOrWriters mode with EFileRead|EFileWrite access should succeed
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOrWriters|EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f2.Close();
 
 	// Opening a share in EFileShareAny mode with should succeed
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareAny);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f2.Close();
 
 	f1.Close();
@@ -2037,12 +2048,12 @@ static void testReadersWriters()
 
 	// Open a file in EFileShareReadersOrWriters mode for reading
 	r=f1.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOrWriters|EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// Opening a share in EFileShareReadersOnly mode should succeed
 	//  - The share should now be promoted to EFileShareReadersOnly mode
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TInt pass = 2;
 	while(pass--)
@@ -2050,7 +2061,7 @@ static void testReadersWriters()
 		RFile f3;
 		// Opening a share in EFileShareReadersOnly mode with EFileRead accesss should succeed
 		r=f3.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOrWriters|EFileRead);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		f3.Close();
 
 		// Opening a share in EFileShareReadersOnly mode with EFileWrite accesss should fail
@@ -2058,12 +2069,12 @@ static void testReadersWriters()
 		if(pass == 1)
 			{
 			// The share is promoted - should obey EFileShareReadersOnly rules
-			test(r==KErrInUse);
+			test_Value(r, r == KErrInUse);
 			}
 		else
 			{
 			// The share is demoted - should obey EFileShareReadersOrWriters rules
-			test(r==KErrNone);
+			test_KErrNone(r);
 			f3.Close();
 			}
 
@@ -2072,12 +2083,12 @@ static void testReadersWriters()
 		if(pass == 1)
 			{
 			// The share is promoted - should obey EFileShareReadersOnly rules
-			test(r==KErrInUse);
+			test_Value(r, r == KErrInUse);
 			}
 		else
 			{
 			// The share is demoted - should obey EFileShareReadersOrWriters rules
-			test(r==KErrNone);
+			test_KErrNone(r);
 			f3.Close();
 			}
 
@@ -2086,13 +2097,13 @@ static void testReadersWriters()
 		if(pass == 1)
 			{
 			// The share is promoted - should obey EFileShareReadersOnly rules
-			test(r==KErrInUse);
+			test_Value(r, r == KErrInUse);
 			f2.Close();
 			}
 		else
 			{
 			// The share is demoted - should obey EFileShareReadersOrWriters rules
-			test(r==KErrNone);
+			test_KErrNone(r);
 			f3.Close();
 			}
 		}
@@ -2195,7 +2206,7 @@ test.Start(_L("Test RFile::Write variants with Negative Length parameter"));
 	createTestFile(TheFile);
 
 	r=TheFile.Write(gBuf, -1);
-	test(r==KErrArgument);
+	test_Value(r, r == KErrArgument);
 
 	removeTestFile(TheFile);
 
@@ -2212,7 +2223,7 @@ test.Start(_L("Test RFile::Write variants with Negative Length parameter"));
 // EXPORT_C TInt RFile::Write(TInt aPos,const TDesC8& aDes,TInt aLength)
 	createTestFile(TheFile);
 	r = TheFile.Write(0,gBuf,-1);
-	test(r==KErrArgument);
+	test_Value(r, r == KErrArgument);
 	removeTestFile(TheFile);
 
 
@@ -2330,7 +2341,7 @@ static void testZeroLengthDescriptors()
 
 	test.Next(_L("Execute sync call RFile::Write(const TDesC8& aDes) with zero length aDes"));
 	TInt r=TheFile.Write(gLongBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Printf(_L("Test case passed\n"));
 
@@ -2397,7 +2408,7 @@ static void testZeroLengthDescriptors()
 #else
 
 	r=TheFile.Write(gLongBuf, 0x80000);
-	test(r==KErrNone);
+	test_KErrNone(r);
 #endif
 
 	test.Printf(_L("Test case passed\n"));
@@ -2449,7 +2460,7 @@ static void testZeroLengthDescriptors()
 
 	test.Next(_L("Execute sync call RFile::Write(TInt aPos, const TDesC8& aDes) with zero length aDes"));
 	r=TheFile.Write(0, gLongBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Printf(_L("Test case passed\n"));
 
@@ -2500,7 +2511,7 @@ static void testZeroLengthDescriptors()
 
 	test.Next(_L("Execute sync call RFile::Write(TInt aPos, const TDesC8& aDes, TInt aLength) with zero length aDes"));
 	r=TheFile.Write(0, gLongBuf, 0x80000);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Printf(_L("Test case passed\n"));
 
@@ -2564,7 +2575,7 @@ static void testReadBufferOverflow()
 
 // EXPORT_C TInt RFile::Read(TDes8& aDes,TInt aLength) const
 	err = file.Read(buf8,5);
-	test(err==KErrOverflow);
+	test_Value(err, err == KErrOverflow);
 	err = KErrNone;
 
 // EXPORT_C void RFile::Read(TDes8& aDes,TInt aLength,TRequestStatus& aStatus) const
@@ -2574,7 +2585,7 @@ static void testReadBufferOverflow()
 
 // EXPORT_C TInt RFile::Read(TInt aPos,TDes8& aDes,TInt aLength) const
 	err = file.Read(0,buf8,5);
-	test(err==KErrOverflow);
+	test_Value(err, err == KErrOverflow);
 
 // EXPORT_C void RFile::Read(TInt aPos,TDes8& aDes,TInt aLength,TRequestStatus& aStatus) const
 	file.Read(0,buf8,5,status);
@@ -2600,13 +2611,13 @@ static TInt DeleteOnCloseClientThread(TAny* aMode)
 	RFile file;
 
 	TInt r=fs.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs.SetSessionPath(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	if (testMode & EDoCDeleteOnClose)
 		fileMode|=EDeleteOnClose;
 	r=file.Temp(fs,_L(""),gLastTempFileName,fileMode);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	// Signal controlling thread and pause for panic where requested
 	// by caller.
 	if (testMode & EDoCPanic)
@@ -2652,11 +2663,11 @@ static	void TestDeleteOnClose()
 //! 	1.	The temporary file is successfully created and deleted.
 //---------------------------------------------------------------------------------------------------------------------
 	r=clientThread.Create(_L("DeleteOnCloseClientThread 1"),DeleteOnCloseClientThread,KDefaultStackSize,0x2000,0x2000,(TAny*)0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	clientThread.Resume();
 	gSleepThread.Wait();
 	r=TheFs.Delete(gLastTempFileName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	clientThread.Close();
 
 //
@@ -2679,11 +2690,11 @@ static	void TestDeleteOnClose()
 //---------------------------------------------------------------------------------------------------------------------
 	test.Next(_L("RFile::Temp EDeleteOnClose behaviour"));
 	r=clientThread.Create(_L("DeleteOnCloseClientThread 2"),DeleteOnCloseClientThread,KDefaultStackSize,0x2000,0x2000,(TAny*)EDoCDeleteOnClose);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	clientThread.Resume();
 	gSleepThread.Wait();
 	r=TheFs.Delete(gLastTempFileName);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	clientThread.Close();
 
 //
@@ -2704,7 +2715,7 @@ static	void TestDeleteOnClose()
 //---------------------------------------------------------------------------------------------------------------------
 	test.Next(_L("RFile::Temp default panic behaviour"));
 	r=clientThread.Create(_L("DeleteOnCloseClientThread 3"),DeleteOnCloseClientThread,KDefaultStackSize,0x2000,0x2000,(TAny*)EDoCPanic);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	clientThread.Resume();
 	gSleepThread.Wait();
 	User::SetJustInTime(EFalse);
@@ -2713,7 +2724,7 @@ static	void TestDeleteOnClose()
 	CLOSE_AND_WAIT(clientThread);
 	FsBarrier();
 	r=TheFs.Delete(gLastTempFileName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 //
 //---------------------------------------------------------------------------------------------------------------------
@@ -2735,7 +2746,7 @@ static	void TestDeleteOnClose()
 //---------------------------------------------------------------------------------------------------------------------
 	test.Next(_L("RFile::Temp EDeleteOnClose panic behaviour"));
 	r=clientThread.Create(_L("DeleteOnCloseClientThread 4"),DeleteOnCloseClientThread,KDefaultStackSize,0x2000,0x2000,(TAny*)(EDoCPanic|EDoCDeleteOnClose));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	clientThread.Resume();
 	gSleepThread.Wait();
 	User::SetJustInTime(EFalse);
@@ -2744,7 +2755,7 @@ static	void TestDeleteOnClose()
 	CLOSE_AND_WAIT(clientThread);
 	FsBarrier();
 	r=TheFs.Delete(gLastTempFileName);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 
 //
 //---------------------------------------------------------------------------------------------------------------------
@@ -2764,10 +2775,10 @@ static	void TestDeleteOnClose()
 //---------------------------------------------------------------------------------------------------------------------
 	test.Next(_L("RFile::Create EDeleteOnClose behaviour"));
  	r=file.Create(TheFs,_L("DoC5"),EFileRead|EFileWrite|EDeleteOnClose);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 	r=TheFs.Delete(filename);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 
 //
 //---------------------------------------------------------------------------------------------------------------------
@@ -2791,16 +2802,16 @@ static	void TestDeleteOnClose()
 //---------------------------------------------------------------------------------------------------------------------
 	test.Next(_L("DoC 6 - Multiple subsessions"));
  	r=file.Create(TheFs,filename,EFileShareAny|EFileRead|EFileWrite|EDeleteOnClose);
-	test(r==KErrNone);
+	test_KErrNone(r);
  	r=file2.Open(TheFs,filename,EFileShareAny|EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(filename);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	file2.Close();
 	r=TheFs.Delete(filename);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 
 //
 //---------------------------------------------------------------------------------------------------------------------
@@ -2818,10 +2829,10 @@ static	void TestDeleteOnClose()
 //---------------------------------------------------------------------------------------------------------------------
 	test.Next(_L("RFile::Create existing file behaviour"));
  	r=file.Create(TheFs,filename,EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
  	r=file.Create(TheFs,filename,EFileRead|EFileWrite|EDeleteOnClose);
-	test(r==KErrAlreadyExists);
+	test_Value(r, r == KErrAlreadyExists);
 
 //
 //---------------------------------------------------------------------------------------------------------------------
@@ -2838,9 +2849,9 @@ static	void TestDeleteOnClose()
 //---------------------------------------------------------------------------------------------------------------------
 	test.Next(_L("RFile::Open EDeleteOnClose flag validation"));
 	r=file.Open(TheFs,filename,EFileRead|EFileWrite|EDeleteOnClose);
-	test(r==KErrArgument);
+	test_Value(r, r == KErrArgument);
 	r=TheFs.Delete(filename);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	gSleepThread.Close();
 	test.End();
@@ -2869,21 +2880,21 @@ void TestFileAttributesAndCacheFlushing()
 
     //-- 1. create test file
     nRes = CreateEmptyFile(TheFs, KFile, 33);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     //-- 2. open it for write
     RFile file;
     nRes = file.Open(TheFs, KFile, EFileWrite);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     //-- 3. write a couple of bytes there. This must cause 'Archive' attribute set
     nRes = file.Write(0, _L8("a"));
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
     nRes = file.Write(10, _L8("b"));
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     nRes = TheFs.Entry(KFile, entry);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     test(entry.IsArchive());  //-- 'A' attribute must be set.
 
@@ -2891,23 +2902,23 @@ void TestFileAttributesAndCacheFlushing()
     //-- 4. set new file attributes (w/o 'A') and creation time
     const TUint newAtt = KEntryAttSystem ;
     nRes = file.SetAtt(newAtt, ~newAtt & KEntryAttMaskSupported);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     TTime newTime;
     nRes = newTime.Set(_L("19970310:101809.000000"));
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
     nRes = file.SetModified(newTime);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     //-- 5. wait 5 seconds. file server shall flush dirty data during this period.
     User::After(5*K1Sec);
 
     //-- 6. check that attributes haven't chanded because of flush
     nRes = file.Flush(); //-- this will flush attributes to the media
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     nRes = TheFs.Entry(KFile, entry);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     test(entry.iAtt == newAtt);
     test(entry.iModified.DateTime().Year() == 1997);
@@ -2916,12 +2927,12 @@ void TestFileAttributesAndCacheFlushing()
 
     //-- 7. write some data and ensure that 'A' attribute is set now and 'modified' time updated
     nRes = file.Write(12, _L8("c"));
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     file.Close(); //-- this will flush attributes to the media
 
     nRes = TheFs.Entry(KFile, entry);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
     test(entry.iAtt == (newAtt | KEntryAttArchive));
     test(entry.iModified.DateTime().Year() != 1997);
 
@@ -2937,8 +2948,6 @@ void TestMaxFileSize()
 {
     test.Next(_L("test maximal file size on FAT32\n"));
 
-#ifdef SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
-
     if(!Is_Fat32(TheFs, gDriveNum))
     {
         test.Printf(_L("This test requires FAT32! skipping.\n"));
@@ -2950,7 +2959,7 @@ void TestMaxFileSize()
     //-- check disk space, it shall be > 4G
     TVolumeInfo volInfo;
     nRes = TheFs.Volume(volInfo, gDriveNum);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     const TUint32 KMaxFAT32FileSize = 0xFFFFFFFF; // 4GB-1
 
@@ -2968,17 +2977,17 @@ void TestMaxFileSize()
     //-- this file has enabled write caching by default
     test.Printf(_L("creating maximal length file, size = 0x%x\n"),KMaxFAT32FileSize);
     nRes = file64.Replace(TheFs, KFileName, EFileWrite);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     const TInt64 fileSize = KMaxFAT32FileSize;
 
     nRes = file64.SetSize(fileSize);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     test.Printf(_L("seeking to the file end...\n"));
     TInt64 filePos = 0;
     nRes = file64.Seek(ESeekEnd, filePos);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
 
     test.Printf(_L("test writing to the last bytes of the file (rel pos addressing) \n"));
@@ -2986,31 +2995,31 @@ void TestMaxFileSize()
     //-- 1. writing using relative position
     filePos = -1;
     nRes = file64.Seek(ESeekEnd, filePos);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
     test(filePos == fileSize-1);
 
     nRes = file64.Write(_L8("z")); //-- write 1 byte a pos 0xFFFFFFFE, this is the last allowed position of the FAT32 file
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     nRes = file64.Write(_L8("x")); //-- write 1 byte a pos 0xFFFFFFFF, beyond the max. allowed file size, this shall fail
-    test(nRes == KErrNotSupported);
+    test_Value(nRes, nRes == KErrNotSupported);
 
     nRes = file64.Flush();
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     //-- 1.1 check the result by reading data using rel. pos
     filePos = -1;
     nRes = file64.Seek(ESeekEnd, filePos);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
     test(filePos == fileSize-1);
 
     test.Printf(_L("reading 1 byte at pos: 0x%x\n"), filePos);
     nRes = file64.Read(buf, 1); //-- read 1 byte a pos 0xFFFFFFFE, this is the last allowed position of the FAT32 file
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
     test(buf.Length() == 1 && buf[0]=='z');
 
     nRes = file64.Read(buf, 1); //-- read 1 byte a pos 0xFFFFFFFF, beyond the max. allowed file size, this shall fail
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
     test(buf.Length() == 0);
 
     file64.Close();
@@ -3018,51 +3027,48 @@ void TestMaxFileSize()
     test.Printf(_L("test writing to the last bytes of the file (absolute pos addressing) \n"));
     //-- 2. writing using absolute position
     nRes = file64.Open(TheFs, KFileName, EFileWrite);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     filePos = fileSize-1;
 
     nRes = file64.Write(filePos-2, _L8("0"), 1); //-- write 1 byte a pos 0xFFFFFFFC
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     nRes = file64.Write(filePos, _L8("a"), 1);   //-- write 1 byte a pos 0xFFFFFFFE, this is the last allowed position of the FAT32 file
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     nRes = file64.Write(filePos+1, _L8("b"), 1); //-- write 1 byte a pos 0xFFFFFFFF, beyond the max. allowed file size, this shall fail
-    test(nRes == KErrNotSupported);
+    test_Value(nRes, nRes == KErrNotSupported);
 
     nRes = file64.Flush();
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     //-- 1.1 check the result by reading data absolute rel. position
 
     nRes = file64.Read(filePos-2, buf, 1); //-- read 1 byte a pos 0xFFFFFFFD
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
     test(buf.Length() == 1 && buf[0]=='0');
 
     nRes = file64.Read(filePos, buf, 1);   //-- read 1 byte a pos 0xFFFFFFFE, this is the last allowed position of the FAT32 file
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
     test(buf.Length() == 1 && buf[0]=='a');
 
     nRes = file64.Read(filePos+1, buf, 1);  //-- read 1 byte a pos 0xFFFFFFFF, beyond the max. allowed file size
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
     test(buf.Length() == 0);
 
     nRes = file64.Read(filePos+2, buf, 1); //buf.Len must be 0
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
     test(buf.Length() == 0);
 
     file64.Close();
 
     test.Printf(_L("deleting the huge file.\n"));
     nRes = TheFs.Delete(KFileName);
-    test(nRes == KErrNone);
-
-#else
+    test_KErrNone(nRes);
 
     test.Printf(_L("RFile64 is not supported! Skipping.\n"));
 
-#endif //SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
 
 }
 
@@ -3076,7 +3082,7 @@ void CallTestsL()
     F32_Test_Utils::SetConsole(test.Console());
 
     TInt nRes=TheFs.CharToDrive(gDriveToTest, gDriveNum);
-    test(nRes==KErrNone);
+    test_KErrNone(nRes);
     
     PrintDrvInfo(TheFs, gDriveNum);
 
@@ -3085,26 +3091,26 @@ void CallTestsL()
         gShortFileNamesSupported = ETrue;
     
     if(Is_Win32(TheFs, gDriveNum)) 
-    {//-- find out if this is NTFS and if it supports short names (this feature can be switched OFF)
+    	{//-- find out if this is NTFS and if it supports short names (this feature can be switched OFF)
         
         _LIT(KLongFN, "\\this is a long file name");
         nRes = CreateEmptyFile(TheFs, KLongFN, 10);   
-        test(nRes==KErrNone);
+        test_KErrNone(nRes);
 
 	    TBuf<12> shortName;
 	    nRes = TheFs.GetShortName(KLongFN, shortName);
 	    gShortFileNamesSupported = (nRes == KErrNone);
         
         nRes = TheFs.Delete(KLongFN);
-        test(nRes==KErrNone);
+        test_KErrNone(nRes);
 
         DeleteTestDirectory();
-    }
+    	}
     else
-    {
+    	{
         nRes = FormatDrive(TheFs, gDriveNum, ETrue);
-        test(nRes==KErrNone);
-    }
+        test_KErrNone(nRes);
+    	}
 
 	CreateTestDirectory(_L("\\F32-TST\\TFILE\\"));
 

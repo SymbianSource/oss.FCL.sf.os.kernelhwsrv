@@ -106,7 +106,7 @@ EXPORTS
 	DeclareCardAsGone__12TSDCardArrayUi @ 105 NONAME R3UNUSED ; TSDCardArray::DeclareCardAsGone(unsigned int)
 	Dummy1__8DSDStack @ 106 NONAME R3UNUSED ; DSDStack::Dummy1(void)
 	Dummy2__8DSDStack @ 107 NONAME R3UNUSED ; DSDStack::Dummy2(void)
-	Dummy3__8DSDStack @ 108 NONAME R3UNUSED ; DSDStack::Dummy3(void)
+	GetInterface__8DSDStackQ29DMMCStack12TInterfaceIdRPQ29DMMCStack10MInterface @ 108  NONAME R3UNUSED ; DSDStack::GetInterface(DMMCStack::TInterfaceId, DMMCStack::MInterface *&)
 	CardType__8DSDStackii @ 109 NONAME R3UNUSED ; DSDStack::CardType(int, int)
 	InitStackAfterUnlockSM__8DSDStack @ 110 NONAME R3UNUSED ; DSDStack::InitStackAfterUnlockSM(void)
 	Init__8DSDStack @ 111 NONAME R3UNUSED ; DSDStack::Init(void)

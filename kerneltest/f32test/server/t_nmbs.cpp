@@ -13,10 +13,14 @@
 // Description:
 //
 
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include "t_server.h"
 #include "t_chlffs.h"
+#include "f32_test_utils.h"
+
+using namespace F32_Test_Utils;
 
 GLDEF_D RTest test(_L("T_NMBS"));
 
@@ -29,69 +33,69 @@ LOCAL_C void testMkDirRmDir()
 	test.Next(_L("Test MkDir"));
 
 	TInt r=TheFs.RmDir(_L("\\F32-TST\\TNMBS\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.MkDir(_L("\\F32-TST\\TNMBS\\TEST\\"));
-	test(r==KErrPathNotFound);
+	test_Value(r, r == KErrPathNotFound);
 	r=TheFs.MkDir(_L("\\F32-TST\\TNMBS\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.MkDir(_L("\\F32-TST\\TNMBS\\TEST\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("Test RmDir 1.0"));
 	r=TheFs.RmDir(_L("\\F32-TST\\TNMBS\\TEST\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(_L("\\F32-TST\\TNMBS\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("Test MkDirAll 1.0"));
 	r=TheFs.MkDirAll(_L("\\F32-TST\\TNMBS\\TEST\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("Test RmDir 2.0"));
 	r=TheFs.RmDir(_L("\\F32-TST\\TNMBS\\TEST\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(_L("\\F32-TST\\TNMBS\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("Test MkDirAll 2.0"));
 	r=TheFs.MkDirAll(_L("\\F32-TST\\TNMBS\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.MkDirAll(_L("\\F32-TST\\TNMBS\\TEST\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("Test RmDir 3.0"));
 	r=TheFs.RmDir(_L("\\F32-TST\\TNMBS\\TEST\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(_L("\\F32-TST\\TNMBS\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("Test mkdir and rmdir on root"));
 	r=TheFs.RmDir(_L("\\File.TXT"));
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=TheFs.MkDir(_L("\\asdf.ere"));
-	test(r==KErrAlreadyExists);
+	test_Value(r, r == KErrAlreadyExists);
 	r=TheFs.MkDirAll(_L("\\asdf.ere"));
-	test(r==KErrAlreadyExists);
+	test_Value(r, r == KErrAlreadyExists);
 
 	test.Next(_L("Test error code return values"));
 	r=TheFs.MkDir(_L("\\F32-TST\\\\ABCDEF\\"));
 
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 
 	test.Next(_L("Test MkDir with trailing spaces"));
 	r=TheFs.MkDir(_L("\\F32-TST\\TESTMKDIR    \\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(_L("\\F32-TST\\TESTMKDIR\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.MkDirAll(_L("\\F32-TST\\TESTMKDIR    \\NOTCREATED\\NORTHIS   \\"));
-	test(r==KErrPathNotFound);
+	test_Value(r, r == KErrPathNotFound);
 	r=TheFs.RmDir(_L("\\F32-TST\\TESTMKDIR\\NOTCREATED\\"));
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	r=TheFs.RmDir(_L("\\F32-TST\\TESTMKDIR\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=TheFs.MkDirAll(_L("\\F32-TST\\TNMBS\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 LOCAL_C void testRename()
@@ -102,13 +106,13 @@ LOCAL_C void testRename()
 
 	test.Next(_L("Test rename directories"));
 	TInt r=TheFs.MkDirAll(_L("\\F32-TST\\ABCDEF\\GPQ\\"));
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 	r=TheFs.Rename(_L("\\F32-TST\\ABCDEF\\"),_L("\\F32-TST\\ABCDEF\\LMED"));
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=TheFs.Rename(_L("\\F32-TST\\ABCDEF\\GPQ"),_L("\\F32-TST\\LMED"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(_L("\\F32-TST\\LMED\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	MakeDir(_L("\\F32-TST\\ABC\\"));
 	MakeFile(_L("\\F32-TST\\ABCDEF\\GPQ\\asdf.txt"));
@@ -117,120 +121,124 @@ LOCAL_C void testRename()
 	test.Next(_L("Test rename directory while subfile is open"));
 	RFile f;
 	r=f.Open(TheFs,_L("\\F32-TST\\ABCDEF\\GPQ\\asdf.txt"),EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Rename(_L("\\F32-TST\\ABCDEF"),_L("\\F32-TST\\xxxyyy"));
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=TheFs.Rename(_L("\\F32-TST\\ABCDEF"),_L("\\F32-TST\\xxxyyy"));
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=TheFs.Rename(_L("\\F32-TST\\ABC"),_L("\\F32-TST\\XXX"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f.Close();
 	r=TheFs.Rename(_L("\\F32-TST\\ABCDEF"),_L("\\F32-TST\\xxxyyy"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Rename(_L("\\F32-TST\\XXX"),_L("\\F32-TST\\ABC"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Rename(_L("\\"),_L("\\BLARG"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 
 	r=f.Open(TheFs,_L("\\F32-TST\\asdf.txt"),EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Rename(_L("\\F32-TST\\xxxyyy"),_L("\\F32-TST\\ABCDEF"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Rename(_L("\\F32-TST\\"),_L("\\ABCDEF"));
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	f.Close();
 
 	r=TheFs.Delete(_L("\\F32-TST\\ABCDEF\\GPQ\\asdf.txt"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(_L("\\F32-TST\\asdf.txt"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(_L("\\F32-TST\\ABCDEF\\GPQ\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(_L("\\F32-TST\\ABC\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=TheFs.Rename(_L("\\TST-E32\\123456"),_L("\\F32-TST\\ABCDEF"));
-	test(r==KErrPathNotFound);
+	test_Value(r, r == KErrPathNotFound);
 	r=TheFs.Rename(_L("\\F32-TST\\123456"),_L("\\F32-TST\\ABCDEF"));
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	r=TheFs.Rename(_L("\\TST-E32\\123456"),_L("\\F32-TST\\FEDCBA"));
-	test(r==KErrPathNotFound);
+	test_Value(r, r == KErrPathNotFound);
 	r=TheFs.Rename(_L("\\F32-TST\\FEDCBA"),_L("\\TST-E32\\123456"));
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	r=TheFs.Rename(_L("\\F32-TST\\ABCDEF"),_L("\\F32-TST\\123456"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Rename(_L("\\F32-TST\\123456"),_L("\\F32-TST\\XYZABC"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("Test rename files"));
 	r=f.Create(TheFs,_L("\\F32-TST\\XYZABC\\OLDNAME.TXT"),EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f.Close();
 	r=TheFs.Rename(_L("\\F32-TST\\XYZABC\\OLDNAME.TXT"),_L("\\F32-TST\\XYZABC\\NEWNAME.TXT"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(_L("\\F32-TST\\XYZABC\\NEWNAME.TXT"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("Test rename checks for duplicate entries"));
 	r=TheFs.MkDirAll(_L("\\F32-TST\\ABCDEF\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Rename(_L("\\F32-TST\\ABCDEF"),_L("\\F32-TST\\XYZABC"));
-	test(r==KErrAlreadyExists);
+	test_Value(r, r == KErrAlreadyExists);
 	r=f.Create(TheFs,_L("\\F32-TST\\XYZABC\\OLDNAME.TXT"),EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f.Close();
 	r=f.Create(TheFs,_L("\\F32-TST\\XYZABC\\NEWNAME.TXT"),EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f.Close();
 	r=TheFs.Rename(_L("\\F32-TST\\XYZABC\\OLDNAME.TXT"),_L("\\F32-TST\\XYZABC\\NEWNAME.TXT"));
-	test(r==KErrAlreadyExists);
+	test_Value(r, r == KErrAlreadyExists);
 
 	test.Next(_L("Test rename across directories"));
 	r=TheFs.Rename(_L("\\F32-TST\\XYZABC\\NEWNAME.TXT"),_L("\\F32-TST\\ABCDEF\\OLDNAME.TXT"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Rename(_L("\\F32-TST\\XYZABC\\NEWNAME.TXT"),_L("\\F32-TST\\ABCDEF\\OLDNAME.TXT"));
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	r=TheFs.Rename(_L("\\F32-TST\\XYZABC\\NEWNAME.TXT"),_L("\\F32-TST\\ABCDEF\\DIFNAME.TXT"));
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	r=TheFs.Rename(_L("\\F32-TST\\XYZABC"),_L("\\F32-TST\\ABCDEF\\XYZABC"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Rename(_L("\\F32-TST\\ABCDEF\\XYZABC\\OLDNAME.TXT"),_L("\\F32-TST\\ABCDEF\\NEWNAME.TXT"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Rename(_L("\\F32-TST\\ABCDEF\\NewNAME.TXT"),_L("\\F32-TST\\ABCDEF\\XYZABC\\OLDNAME.TXT"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test.Next(_L("Test rename across drive error code"));
 	r=TheFs.Rename(_L("Z:\\BLEG"),_L("C:\\FRUM"));
-	test(r==KErrArgument);	
+	test_Value(r, r == KErrArgument);	
 	test.Next(_L("Test rename to identical names"));
 	r=TheFs.Rename(_L("\\F32-TST\\ABCDEF\\XYZABC\\OLDNAME.TXT"),_L("\\F32-TST\\ABCDEF\\XYZABC\\OLDNAME.TXT"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckFileExists(_L("\\F32-TST\\ABCDEF\\XYZABC\\OLDNAME.TXT"),KErrNone);
 	r=TheFs.Rename(_L("\\F32-TST\\ABCDEF\\XYZABC\\OLDNAME.TXT"),_L("\\F32-TST\\ABCDEF\\XYZABC\\OLdnAME.TXT"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckFileExists(_L("\\F32-TST\\ABCDEF\\XYZABC\\OLDNAME.TXT"),KErrNone,EFalse);
 	CheckFileExists(_L("\\F32-TST\\ABCDEF\\XYZABC\\OLdnAME.TXT"),KErrNone,ETrue);
 
 	r=TheFs.Rename(_L("\\F32-TST\\ABCDEF\\XYZABC\\OLDNAME.TXT"),_L("\\F32-TST\\ABCDEF\\NEWNAME.TXT"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test.Next(_L("Test RmDir"));
 	r=TheFs.Delete(_L("\\F32-TST\\ABCDEF\\NEWNAME.TXT"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(_L("\\F32-TST\\ABCDEF\\OLDNAME.TXT"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(_L("\\F32-TST\\ABCDEF\\XYZABC\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(_L("\\F32-TST\\ABCDEF\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 LOCAL_C void TestLongFileName()
 	{
-	#ifndef __EPOC32__ //emulator
-	if (gDriveToTest.GetLowerCase()=='c')
-		return;//don't perform this test for c: in emulator as emulator uses windows system calls
-		//windows doesn't create a directory with length more than 244 characters
-	#endif 
+	if (Is_SimulatedSystemDrive(TheFs, CurrentDrive()))
+		{
+		// Do not perform this test for the system drive of the emulator or PlatSim
+		// as they use Windows system calls.
+		// Windows does not create a directory with length more than 244 characters
+		// (247 including <drive>:\)
+		test.Printf(_L("TestLongFileName() skipped on simulated system drive.\n"));
+		return;
+		}
 	
-	 test.Next(_L("Test renaming 257 characters directories"));
+	test.Next(_L("Test renaming 257 characters directories"));
 	_LIT(KLongFileName256, "256dir_IncludingBackslash_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 	_LIT(KLongFileName257, "257dir_IncludingBackslash_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 	TBuf<260> Path;
@@ -244,11 +252,11 @@ LOCAL_C void TestLongFileName()
 	TInt 	result = KErrNone;
 	//-- 1. create directory in Root which total path length is 256 symbols.	result = TheFs.MkDirAll(Path);
 	result=TheFs.MkDirAll(Path);
-	test((result==KErrNone)||(result==KErrAlreadyExists));
+	test_Value(result, (result == KErrNone)||(result==KErrAlreadyExists));
 	
 	test.Next(_L("Renaming a 265 char directory to a 257 char directory"));
 	result=TheFs.SetSessionPath(baseDir);
-	test(result==KErrNone);	
+	test_KErrNone(result);	
 	TheFs.SessionPath(baseDir);
 	test.Printf(_L("Session path was set to: %S"), &baseDir);
 
@@ -257,12 +265,12 @@ LOCAL_C void TestLongFileName()
 	result = KErrNone;
 	Path.Copy(KLongFileName257);
 	result = TheFs.Rename(KLongFileName256, Path);
-	test(result==KErrBadName);
+	test_Value(result, result == KErrBadName);
 	//-- 3. try to rename this directory to one with 258 character total path length
 
 	Path.Append(_L("z"));
 	result = TheFs.Rename(KLongFileName256, Path);
-	test(result==KErrBadName);
+	test_Value(result, result == KErrBadName);
 
 	}
 LOCAL_C void testRenameCase()
@@ -274,7 +282,7 @@ LOCAL_C void testRenameCase()
 	test.Next(_L("Test rename case"));
 	MakeDir(_L("\\F32-TST\\RENAMECASE\\"));
 	TInt r=TheFs.SetSessionPath(_L("\\F32-TST\\RENAMECASE\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	MakeFile(_L("file1.txt"));
 	MakeFile(_L("FILE2.TXT"));
@@ -283,89 +291,89 @@ LOCAL_C void testRenameCase()
 
 	TEntry entry;
 	r=TheFs.Rename(_L("FILE1.TXT"),_L("FILE1.TXT"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("File1.txt"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("FILE1.TXT"));
 
 	r=TheFs.Rename(_L("file2.txt"),_L("file2.txt"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("File2.txt"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("file2.txt"));
 
 	r=TheFs.Rename(_L("agenda."),_L("agenda.two"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("Agenda.two"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("agenda.two"));
 
 	r=TheFs.Rename(_L("AGENDA.ONE"),_L("AGENDA.ONE"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("Agenda.one"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("AGENDA.ONE"));
 
 	r=TheFs.Rename(_L("FILE1.TXT"),_L("file1.txt"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("File1.txt"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("file1.txt"));
 
 	r=TheFs.Rename(_L("file2.txt"),_L("FILE2.TXT"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("File2.txt"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("FILE2.TXT"));
 
 	r=TheFs.Rename(_L("agenda.two"),_L("AGENDA"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("Agenda"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("AGENDA"));
 
 	r=TheFs.Rename(_L("AGENDA.ONE"),_L("agenda.one"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("Agenda.one"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("agenda.one"));
 
 	r=TheFs.Rename(_L("FILE1.TXT"),_L("FILe1.txt"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("File1.txt"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("FILe1.txt"));
 
 	r=TheFs.Rename(_L("file2.txt"),_L("FILE3.TXT"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("File3.txt"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("FILE3.TXT"));
 
 	r=TheFs.Rename(_L("agenda."),_L("AGENDA1"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("Agenda1"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("AGENDA1"));
 
 	r=TheFs.Rename(_L("AGENDA.ONE"),_L("Agenda.One"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("Agenda.one"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("Agenda.One"));
 
 	r=TheFs.Delete(_L("file1.txt"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(_L("file3.txt"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(_L("Agenda1"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(_L("AGENDA.ONE"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(_L("\\F32-TST\\RENAMECASE\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.SetSessionPath(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 LOCAL_C void testReplace()
@@ -376,33 +384,33 @@ LOCAL_C void testReplace()
 
 	test.Next(_L("Test Replace"));
 	TInt r=TheFs.MkDirAll(_L("\\F32-TST\\ABCDEF\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Replace(_L("\\TST-E32\\123456"),_L("\\F32-TST\\ABCDEF"));
-	test(r==KErrAccessDenied); // Do not replace directories
+	test_Value(r, r == KErrAccessDenied); // Do not replace directories
 	r=TheFs.Replace(_L("\\F32-TST\\123456"),_L("\\F32-TST\\ABCDEF"));
-	test(r==KErrAccessDenied);
+	test_Value(r, r == KErrAccessDenied);
 	r=TheFs.Replace(_L("\\TST-E32\\123456"),_L("\\F32-TST\\FEDCBA"));
-	test(r==KErrPathNotFound);
+	test_Value(r, r == KErrPathNotFound);
 	r=TheFs.Replace(_L("\\F32-TST\\ABCDEF"),_L("\\F32-TST\\123456"));
-	test(r==KErrAccessDenied);
+	test_Value(r, r == KErrAccessDenied);
 
 	test.Next(_L("Replace a file with itself (8.3 filename)"));
 	MakeFile(_L("\\F32-TST\\ABCDEF\\TEST1.SPR"));
 	r=TheFs.Replace(_L("\\F32-TST\\ABCDEF\\TEST1.SPR"),_L("\\F32-TST\\ABCDEF\\TEST1.SPR"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckFileExists(_L("\\F32-TST\\ABCDEF\\TEST1.SPR"),KErrNone);
 	r=TheFs.Replace(_L("\\F32-TST\\ABCDEF\\TEST1.SPR"),_L("\\F32-TST\\ABCDEF\\test1.spr"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckFileExists(_L("\\F32-TST\\ABCDEF\\TEST1.SPR"),KErrNone,ETrue); // Replace does not rename existing file
 	CheckFileExists(_L("\\F32-TST\\ABCDEF\\test1.spr"),KErrNone,EFalse);
 
 	test.Next(_L("Replace a file with itself (vfat filename)"));
 	MakeFile(_L("\\F32-TST\\ABCDEF\\TEST_SHEET(01).SPR"));
 	r=TheFs.Replace(_L("\\F32-TST\\ABCDEF\\TEST_SHEET(01).SPR"),_L("\\F32-TST\\ABCDEF\\TEST_SHEET(01).SPR"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckFileExists(_L("\\F32-TST\\ABCDEF\\TEST_SHEET(01).SPR"),KErrNone);
 	r=TheFs.Replace(_L("\\F32-TST\\ABCDEF\\TEST_SHEET(01).SPR"),_L("\\F32-TST\\ABCDEF\\test_sheet(01).spr"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckFileExists(_L("\\F32-TST\\ABCDEF\\TEST_SHEET(01).SPR"),KErrNone,ETrue); // Replace does not rename existing file
 	CheckFileExists(_L("\\F32-TST\\ABCDEF\\test_sheet(01).spr"),KErrNone,EFalse);
 
@@ -410,14 +418,14 @@ LOCAL_C void testReplace()
 	MakeFile(_L("\\F32-TST\\ABCDEF\\SHEET1.SPR"),_L8("Original Data"));
 	MakeFile(_L("\\F32-TST\\ABCDEF\\TEMP0001.SPR"),_L8("NewData"));
 	r=TheFs.Replace(_L("\\F32-TST\\ABCDEF\\TEMP0001.SPR"),_L("\\F32-TST\\ABCDEF\\SHEET1.SPR"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckFileContents(_L("\\F32-TST\\ABCDEF\\SHEET1.SPR"),_L8("NewData"));
 	CheckFileExists(_L("\\F32-TST\\ABCDEF\\TEMP0001.SPR"),KErrNotFound);
 
 	r=TheFs.Rename(_L("\\F32-TST\\ABCDEF\\SHEET1.SPR"),_L("\\F32-TST\\ABCDEF\\TEMP0001.SPR"));
-	test(r==KErrNone);
+	test_KErrNone(r);
     r=TheFs.Replace(_L("\\F32-TST\\ABCDEF\\TEMP0001.SPR"),_L("\\F32-TST\\ABCDEF\\SHEET1.SPR"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckFileContents(_L("\\F32-TST\\ABCDEF\\SHEET1.SPR"),_L8("NewData"));
 	CheckFileExists(_L("\\F32-TST\\ABCDEF\\TEMP0001.SPR"),KErrNotFound);
 
@@ -425,31 +433,31 @@ LOCAL_C void testReplace()
 	MakeFile(_L("\\F32-TST\\ABCDEF\\SHEET_TEST1.SPR"),_L8("Original Data"));
 	MakeFile(_L("\\F32-TST\\ABCDEF\\NEW_TEMP0001.SPR"),_L8("NewData"));
 	r=TheFs.Replace(_L("\\F32-TST\\ABCDEF\\NEW_TEMP0001.SPR"),_L("\\F32-TST\\ABCDEF\\SHEET_TEST1.SPR"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckFileContents(_L("\\F32-TST\\ABCDEF\\SHEET_TEST1.SPR"),_L8("NewData"));
 	CheckFileExists(_L("\\F32-TST\\ABCDEF\\NEW_TEMP0001.SPR"),KErrNotFound);
 
 	r=TheFs.Rename(_L("\\F32-TST\\ABCDEF\\SHEET_TEST1.SPR"),_L("\\F32-TST\\ABCDEF\\NEW_TEMP0001.SPR"));
-	test(r==KErrNone);
+	test_KErrNone(r);
     r=TheFs.Replace(_L("\\F32-TST\\ABCDEF\\NEW_TEMP0001.SPR"),_L("\\F32-TST\\ABCDEF\\SHEET_TEST1.SPR"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckFileContents(_L("\\F32-TST\\ABCDEF\\SHEET_TEST1.SPR"),_L8("NewData"));
 	CheckFileExists(_L("\\F32-TST\\ABCDEF\\NEW_TEMP0001.SPR"),KErrNotFound);
 
 	r=TheFs.RmDir(_L("\\F32-TST\\ABCDEF\\"));
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=TheFs.RmDir(_L("\\F32-TST\\ABCDEF\\SHEET1.SPR\\"));
-	test(r==KErrPathNotFound);
+	test_Value(r, r == KErrPathNotFound);
 	r=TheFs.Delete(_L("\\F32-TST\\ABCDEF\\SHEET1.SPR"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(_L("\\F32-TST\\ABCDEF\\SHEET_TEST1.SPR"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(_L("\\F32-TST\\ABCDEF\\TEST1.SPR"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(_L("\\F32-TST\\ABCDEF\\TEST_SHEET(01).SPR"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(_L("\\F32-TST\\ABCDEF\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("Check file date is retained"));
 	MakeFile(_L("OldFile.Old"));
@@ -459,11 +467,11 @@ LOCAL_C void testReplace()
 	TTime newTime(newDate);
 	
 	r=TheFs.SetEntry(_L("NewFile.new"),newTime,0,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	TEntry entry;
 	r=TheFs.Entry(_L("NewFile.new"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	TTime checkReturnedTime=entry.iModified;
 	TDateTime dateTime=checkReturnedTime.DateTime();
@@ -473,13 +481,13 @@ LOCAL_C void testReplace()
 	TDateTime oldDate(1996,(TMonth)2,3,23,0,0,0);
 	TTime oldTime(oldDate);
 	r=TheFs.SetEntry(_L("OldFile.old"),oldTime,0,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TheFs.Replace(_L("NewFile.new"),_L("OldFile.old"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TTime check;
 	r=TheFs.Modified(_L("OldFile.old"),check);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TDateTime checkDateTime=check.DateTime();
 	
 	test(checkDateTime.Year()==dateTime.Year());
@@ -492,28 +500,28 @@ LOCAL_C void testReplace()
 	test.Next(_L("Replace 'Agenda' with 'Agenda.'"));
 	MakeFile(_L("Agenda"));
 	r=TheFs.Replace(_L("Agenda"),_L("Agenda."));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckFileExists(_L("Agenda"),KErrNone,ETrue);
 	CheckFileExists(_L("Agenda."),KErrNone,ETrue);
 	CheckFileExists(_L("AGENDA"),KErrNone,EFalse);
 	CheckFileExists(_L("AGENDA."),KErrNone,EFalse);
 
 	r=TheFs.Replace(_L("Agenda"),_L("Agenda."));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckFileExists(_L("Agenda"),KErrNone,ETrue);
 	CheckFileExists(_L("Agenda."),KErrNone,ETrue);
 	CheckFileExists(_L("AGENDA"),KErrNone,EFalse);
 	CheckFileExists(_L("AGENDA."),KErrNone,EFalse);
 
 	r=TheFs.Replace(_L("Agenda."),_L("AGENDA"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckFileExists(_L("Agenda"),KErrNone,ETrue);  // Replace does not rename existing file
 	CheckFileExists(_L("Agenda."),KErrNone,ETrue);
 	CheckFileExists(_L("AGENDA"),KErrNone,EFalse);
 	CheckFileExists(_L("AGENDA."),KErrNone,EFalse);
 
 	r=TheFs.Replace(_L("AGENDA."),_L("AGENDA.")); // Unchanged, ie still 'Agenda'
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckFileExists(_L("Agenda"),KErrNone,ETrue);
 	CheckFileExists(_L("Agenda."),KErrNone,ETrue);
 	CheckFileExists(_L("AGENDA"),KErrNone,EFalse);
@@ -529,16 +537,16 @@ LOCAL_C void testEntry()
 	test.Next(_L("Get directory entry"));
 	TEntry entry;
 	TInt r=TheFs.Entry(_L("\\BLEERRG\\"),entry);
-	test(r==KErrNotFound); // BLEERRG does not exist
+	test_Value(r, r == KErrNotFound); // BLEERRG does not exist
 	r=TheFs.Entry(_L("\\F32-TST"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("F32-TST")||entry.iName==_L("F32-TST."));
 	if (IsTestingLFFS())
 		{
 		r=TheFs.Rename(_L("\\F32-TST.\\"),_L("\\F32-TST\\"));
-		test(r==KErrBadName);
+		test_Value(r, r == KErrBadName);
 		r=TheFs.Entry(_L("\\F32-TST"),entry);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 	test(entry.iName==_L("F32-TST"));
 	test(entry.IsDir());
@@ -546,18 +554,18 @@ LOCAL_C void testEntry()
 	test.Next(_L("Get file entry"));
 	RFile f;
 	r=f.Replace(TheFs,_L("ENTRY.TXT"),EFileStream);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Write(_L8("Entry data"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f.Close();
 	r=TheFs.Entry(_L("\\F32-TST\\TNMBS\\ENTRY.TXT"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("ENTRY.TXT"));
 	test(!entry.IsDir());
 
 	test.Next(_L("Get the root directory"));
 	r=TheFs.Entry(_L("\\"),entry);
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	}
 
 LOCAL_C void testRenameRegression()
@@ -569,14 +577,14 @@ LOCAL_C void testRenameRegression()
 	test.Next(_L("More rename tests"));
 	MakeFile(_L("\\F32-TST\\asdf"));
 	TInt r=TheFs.Rename(_L("\\F32-TST\\asdf"),_L("*"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.Rename(_L("\\F32-TST\\"),_L("*"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.Rename(_L("\\F32-TST\\"),_L("\\F32-TST.\\"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	CheckFileExists(_L("\\F32-TST\\asdf"),KErrNone);
 	r=TheFs.Rename(_L("\\F32-TST\\asdf"),_L("\\F32-TST\\Asdf."));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckFileExists(_L("\\F32-TST\\asdf"),KErrNone,EFalse);
 	CheckFileExists(_L("\\F32-TST\\Asdf"),KErrNone,ETrue);
 
@@ -584,11 +592,11 @@ LOCAL_C void testRenameRegression()
 	shortName.SetLength(1);
 	shortName[0]=0xff;
 	r=TheFs.Rename(_L("\\F32-TST\\asdf"),shortName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(_L("\\F32-TST\\Asdf"));
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	r=TheFs.Delete(shortName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 LOCAL_C void testMaxNameLength()
@@ -607,7 +615,7 @@ LOCAL_C void testMaxNameLength()
 	longName.Append(_L("\\"));
 
 	TInt r=TheFs.MkDirAll(longName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TInt i=0;
 	FOREVER
@@ -622,16 +630,16 @@ LOCAL_C void testMaxNameLength()
 	
 	longName.SetLength(longName.Length()-2);
 	r=TheFs.RmDir(longName);
-	test(r==KErrNone); // Make room for file
+	test_KErrNone(r); // Make room for file
 	longName.SetLength(longName.Length()-2);
 
 	TFullName oldSessionPath;
 	r=TheFs.SessionPath(oldSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.SetSessionPath(longName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.SessionPath(longName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Printf(_L("MaxPathLength achieved = %d chars\n"),longName.Length());
 	TBuf<32> fileName=_L("012345678901234567890");
@@ -647,18 +655,18 @@ LOCAL_C void testMaxNameLength()
 	f.Close();
 	test.Printf(_L("Added filename %S\n"),&fileName);
 	r=f.Open(TheFs,fileName,EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f.Close();
 
 	CFileMan* fMan=CFileMan::NewL(TheFs);
 	r=fMan->RmDir(_L("\\F32-TST\\MAXNAMELEN\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	delete fMan;
 
 	r=f.Open(TheFs,fileName,EFileRead);
-	test(r==KErrPathNotFound);
+	test_Value(r, r == KErrPathNotFound);
 	r=TheFs.SetSessionPath(oldSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 LOCAL_C void testErrorReturnValues()
@@ -673,43 +681,43 @@ LOCAL_C void testErrorReturnValues()
     if (!IsTestingLFFS())
         { //FIXME: Bad error codes from LFFS
 	    r=TheFs.MkDir(_L("\\BLUE\\"));
-        test(r==KErrAccessDenied);
+        test_Value(r, r == KErrAccessDenied);
         MakeFile(_L("\\RED\\BLUE"));
         r=TheFs.MkDir(_L("\\RED\\BLUE\\"));
-        test(r==KErrAccessDenied);
+        test_Value(r, r == KErrAccessDenied);
         r=TheFs.MkDirAll(_L("\\BLUE\\GREEN\\ORANGE\\"));
-        test(r==KErrAccessDenied);
+        test_Value(r, r == KErrAccessDenied);
         }
 
 	test.Next(_L("Create folder with the name of an existing folder"));
 	MakeDir(_L("\\VOLVO\\"));
 	r=TheFs.MkDir(_L("\\VOLVO\\"));
-	test(r==KErrAlreadyExists);
+	test_Value(r, r == KErrAlreadyExists);
 	MakeDir(_L("\\FORD\\VOLKSWAGEN\\"));
 	r=TheFs.MkDirAll(_L("\\ford\\volkswagen\\"));
-	test(r==KErrAlreadyExists);
+	test_Value(r, r == KErrAlreadyExists);
 
 	RFile f;
     if (!IsTestingLFFS())
         { //FIXME Bad error codes from LFFS
 	    test.Next(_L("Create a file with the name of an existing folder"));
 	    r=f.Create(TheFs,_L("\\VOLVO"),EFileRead|EFileWrite);
-	    test(r==KErrAccessDenied);
+	    test_Value(r, r == KErrAccessDenied);
 	    r=f.Replace(TheFs,_L("\\VOLVO"),EFileRead|EFileWrite);
-	    test(r==KErrAccessDenied);
+	    test_Value(r, r == KErrAccessDenied);
 	    r=f.Open(TheFs,_L("\\VOLVO"),EFileRead|EFileWrite);
-	    test(r==KErrAccessDenied);
+	    test_Value(r, r == KErrAccessDenied);
 	    r=f.Create(TheFs,_L("\\FORD\\VOLKSWAGEN"),EFileRead|EFileWrite);
-	    test(r==KErrAccessDenied);
+	    test_Value(r, r == KErrAccessDenied);
 	    r=f.Replace(TheFs,_L("\\FORD\\VOLKSWAGEN"),EFileRead|EFileWrite);
-	    test(r==KErrAccessDenied);
+	    test_Value(r, r == KErrAccessDenied);
 	    r=f.Open(TheFs,_L("\\FORD\\VOLKSWAGEN"),EFileRead|EFileWrite);
-	    test(r==KErrAccessDenied);
+	    test_Value(r, r == KErrAccessDenied);
         }
 
 	test.Next(_L("Create a file with the name of an existing file"));
 	r=f.Create(TheFs,_L("\\BLUE"),EFileRead|EFileWrite);
-	test(r==KErrAlreadyExists);
+	test_Value(r, r == KErrAlreadyExists);
 	}
 
 LOCAL_C void testSetEntry()
@@ -726,124 +734,124 @@ LOCAL_C void testSetEntry()
 	
 	RFile f;
 	TInt r=f.Open(TheFs,_L("dumentry"),EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.SetEntry(_L("dumentry."),time,KEntryAttReadOnly,KEntryAttArchive);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	f.Close();
 	
 	r=TheFs.SetEntry(_L("dumentry."),time,KEntryAttReadOnly,KEntryAttArchive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),KEntryAttReadOnly,TTime(dateTime));
 	r=TheFs.SetEntry(_L("dumentry."),time,0,KEntryAttReadOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),0,TTime(dateTime));
 	r=TheFs.SetEntry(_L("dumentry."),time,KEntryAttDir,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),0,TTime(dateTime));
 	r=TheFs.SetEntry(_L("dumentry."),time,KEntryAttVolume,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),0,TTime(dateTime));
 	r=TheFs.SetEntry(_L("dumentry."),time,KEntryAttRemote,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),0,TTime(dateTime));
 	r=TheFs.SetEntry(_L("dumentry."),time,KEntryAttDir|KEntryAttVolume,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),0,TTime(dateTime));
 	r=TheFs.SetEntry(_L("dumentry."),time,KEntryAttDir|KEntryAttRemote,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),0,TTime(dateTime));
 	r=TheFs.SetEntry(_L("dumentry."),time,KEntryAttVolume|KEntryAttRemote,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),0,TTime(dateTime));
 	r=TheFs.SetEntry(_L("dumentry."),time,KEntryAttDir|KEntryAttVolume|KEntryAttRemote,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),0,TTime(dateTime));
 	r=TheFs.SetEntry(_L("dumentry."),time,0,KEntryAttDir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),0,TTime(dateTime));
 	r=TheFs.SetEntry(_L("dumentry."),time,0,KEntryAttVolume);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),0,TTime(dateTime));
 	r=TheFs.SetEntry(_L("dumentry."),time,0,KEntryAttRemote);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),0,TTime(dateTime));
 	r=TheFs.SetEntry(_L("dumentry."),time,0,KEntryAttDir|KEntryAttVolume);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),0,TTime(dateTime));
 	r=TheFs.SetEntry(_L("dumentry."),time,0,KEntryAttDir|KEntryAttRemote);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),0,TTime(dateTime));
 	r=TheFs.SetEntry(_L("dumentry."),time,0,KEntryAttVolume|KEntryAttRemote);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),0,TTime(dateTime));
 	r=TheFs.SetEntry(_L("dumentry."),time,0,KEntryAttDir|KEntryAttVolume|KEntryAttRemote);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),0,TTime(dateTime));
 	r=TheFs.SetEntry(_L("dumentry."),time,KEntryAttDir,KEntryAttVolume);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),0,TTime(dateTime));
 	r=TheFs.SetEntry(_L("dumentry."),time,KEntryAttDir,KEntryAttRemote);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),0,TTime(dateTime));	
 	r=TheFs.SetEntry(_L("dumentry."),time,KEntryAttVolume,KEntryAttDir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),0,TTime(dateTime));
 	r=TheFs.SetEntry(_L("dumentry."),time,KEntryAttVolume,KEntryAttRemote);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),0,TTime(dateTime));
 	r=TheFs.SetEntry(_L("dumentry."),time,KEntryAttRemote,KEntryAttDir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),0,TTime(dateTime));
 	r=TheFs.SetEntry(_L("dumentry."),time,KEntryAttRemote,KEntryAttVolume);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),0,TTime(dateTime));
 
 	r=f.Open(TheFs,_L("dumentry"),EFileWrite);
-	test(r==KErrNone);	
+	test_KErrNone(r);	
 
 	r=f.SetAtt(KEntryAttDir,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),0,TTime(dateTime));
 	r=f.SetAtt(KEntryAttVolume,KEntryAttDir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("DUMEntry"),0,TTime(dateTime));
 	f.Close();
 	r=TheFs.Delete(_L("dumEntry."));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	MakeDir(_L("\\DumEntry\\"));
 	r=TheFs.SetEntry(_L("\\dumentry\\"),time,KEntryAttReadOnly,KEntryAttArchive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("\\DUMEntry"),KEntryAttReadOnly|KEntryAttDir,TTime(dateTime));
 	r=TheFs.SetEntry(_L("\\dumentry."),time,0,KEntryAttReadOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("\\DUMEntry"),KEntryAttDir,TTime(dateTime));
 	r=TheFs.SetEntry(_L("\\dumentry"),time,KEntryAttDir,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("\\DUMEntry"),KEntryAttDir,TTime(dateTime));
 	r=TheFs.SetEntry(_L("\\dumentry"),time,KEntryAttVolume,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("\\DUMEntry"),KEntryAttDir,TTime(dateTime));
 	r=TheFs.SetEntry(_L("\\dumentry"),time,KEntryAttVolume|KEntryAttDir,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("\\DUMEntry"),KEntryAttDir,TTime(dateTime));
 	r=TheFs.SetEntry(_L("\\dumentry"),time,0,KEntryAttVolume|KEntryAttDir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("\\DUMEntry"),KEntryAttDir,TTime(dateTime));
 	r=TheFs.SetEntry(_L("\\dumentry"),time,0,KEntryAttVolume);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("\\DUMEntry"),KEntryAttDir,TTime(dateTime));
 	r=TheFs.SetEntry(_L("\\dumentry"),time,0,KEntryAttDir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("\\DUMEntry"),KEntryAttDir,TTime(dateTime));
 	r=TheFs.SetEntry(_L("\\dumentry"),time,KEntryAttVolume,KEntryAttDir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("\\DUMEntry"),KEntryAttDir,TTime(dateTime));
 	r=TheFs.SetEntry(_L("\\dumentry"),time,KEntryAttDir,KEntryAttVolume);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckEntry(_L("\\DUMEntry"),KEntryAttDir,TTime(dateTime));
 	r=TheFs.RmDir(_L("\\dumEntry\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 	
@@ -859,83 +867,83 @@ LOCAL_C void testSetFileAttributes()
 //	Create a file "TEMPFILE.TMP" and set attributes to hidden	
 	RFile file;
 	TInt r=file.Replace(TheFs,_L("TEMPFILE.TMP"),0);
-	test(r==KErrNone || r==KErrPathNotFound);	
+	test_Value(r, r == KErrNone || r==KErrPathNotFound);	
 	r=file.SetAtt(KEntryAttHidden,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 //	Check attributes are as set
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
 	TUint atts;
 	r=file.Att(atts);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 	test(atts&KEntryAttHidden);
 
 //	Change attributes from hidden to system	
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
 	r=file.SetAtt(KEntryAttSystem,KEntryAttHidden);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 //	Check attributes have been changed
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
 	r=file.Att(atts);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
-	test(atts&KEntryAttSystem);
+	test_Value((TInt)atts, atts&KEntryAttSystem);
 
 //	Change attributes to normal
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
 	r=file.SetAtt(KEntryAttNormal,KEntryAttSystem|KEntryAttArchive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 //	Check attributes have been changed
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
 	r=file.Att(atts);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
-	test(atts==KEntryAttNormal);
+	test_Value((TInt)atts, atts==KEntryAttNormal);
 
 //	Attempt to change attributes from normal file to directory	
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
 	r=file.SetAtt(KEntryAttDir,KEntryAttNormal);
-	test(r==KErrNone);	//	Returns KErrNone but DOESN'T change the file to a directory
+	test_KErrNone(r);	//	Returns KErrNone but DOESN'T change the file to a directory
 	file.Close();
 
 //	Check the file has not been changed to a directory
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
 	r=file.Att(atts);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
-	test((TInt)(atts&KEntryAttDir)==KErrNone);
+	test_Value((TInt)atts, (TInt)(atts&KEntryAttDir)==KErrNone);
 
 //	Change the attributes from normal file to hidden file
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
 	r=file.SetAtt(KEntryAttHidden,KEntryAttNormal);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 //	Check the attributes have been changed
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
 	r=file.Att(atts);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
-	test(atts&KEntryAttHidden);
+	test_Value((TInt)atts, atts&KEntryAttHidden);
 
 //	Try to change the attributes from hidden file to volume	
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
 	r=file.SetAtt(KEntryAttVolume,KEntryAttHidden);
-	test(r==KErrNone);	//	Returns KErrNone but DOESN'T change the file to a volume
+	test_KErrNone(r);	//	Returns KErrNone but DOESN'T change the file to a volume
 	file.Close();
 
 //	Check that the hidden file has not been changed to a volume
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
 	r=file.Att(atts);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
-	test((TInt)(atts&KEntryAttVolume)==KErrNone);
+	test_Value((TInt)atts, (TInt)(atts&KEntryAttVolume)==KErrNone);
 
 //	Test RFile::Set() function	
 	
@@ -944,9 +952,9 @@ LOCAL_C void testSetFileAttributes()
 //	Check attributes 
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
 	r=file.Att(atts);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
-	test(atts==KEntryAttNormal);
+	test_Value((TInt)atts, atts==KEntryAttNormal);
 
 //	Change attributes from hidden to system	- and change modification time
 	TDateTime dateTime(1998,EMay,25,18,23,0,0);
@@ -954,17 +962,17 @@ LOCAL_C void testSetFileAttributes()
 	TTime retTime;
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
 	r=file.Set(modTime1,KEntryAttSystem,KEntryAttNormal);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 //	Check attributes have been changed
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
 	r=file.Att(atts);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Modified(retTime);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
-	test(atts&KEntryAttSystem);
+	test_Value((TInt)atts, atts&KEntryAttSystem);
 	test(retTime==modTime1);
 
 //	Change attributes to normal - and change modification time
@@ -972,64 +980,64 @@ LOCAL_C void testSetFileAttributes()
 	TTime modTime2(dateTime);
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
 	r=file.Set(modTime2,KEntryAttNormal,KEntryAttSystem|KEntryAttArchive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 //	Check attributes have been changed
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
 	r=file.Att(atts);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Modified(retTime);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
-	test(atts==KEntryAttNormal);
+	test_Value((TInt)atts, atts==KEntryAttNormal);
 	test(retTime==modTime2);
 
 //	Attempt to change attributes from normal file to directory	
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
 	r=file.Set(modTime1,KEntryAttDir,KEntryAttNormal);
-	test(r==KErrNone);	//	Returns KErrNone but DOESN'T change the file to a directory
+	test_KErrNone(r);	//	Returns KErrNone but DOESN'T change the file to a directory
 	file.Close();
 
 //	Check the file has not been changed to a directory
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
 	r=file.Att(atts);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Modified(retTime);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
-	test((TInt)(atts&KEntryAttDir)==KErrNone);
+	test_Value((TInt)atts, (TInt)(atts&KEntryAttDir)==KErrNone);
 	test(retTime==modTime1);//	Modification time should have been set successfully
 
 //	Change the attributes from normal file to hidden file - and change modification time
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
 	r=file.Set(modTime1,KEntryAttHidden,KEntryAttNormal);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 //	Check the attributes have been changed
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
 	r=file.Att(atts);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Modified(retTime);
 	file.Close();
-	test(atts&KEntryAttHidden);
+	test_Value((TInt)atts, atts&KEntryAttHidden);
 	test(retTime==modTime1);
 
 //	Try to change the attributes from hidden file to volume	
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
 	r=file.Set(modTime2,KEntryAttVolume,KEntryAttHidden);
-	test(r==KErrNone);	//	Returns KErrNone but DOESN'T change the file to a volume
+	test_KErrNone(r);	//	Returns KErrNone but DOESN'T change the file to a volume
 	file.Close();
 
 //	Check that the hidden file has not been changed to a volume
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
 	r=file.Att(atts);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Modified(retTime);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
-	test((TInt)(atts&KEntryAttVolume)==KErrNone);
+	test_Value((TInt)atts, (TInt)(atts&KEntryAttVolume)==KErrNone);
 	test(retTime==modTime2);	//	Modification time should have been set successfully
 	
 	r=TheFs.Delete(_L("TEMPFILE.TMP"));

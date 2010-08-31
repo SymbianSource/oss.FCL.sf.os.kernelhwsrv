@@ -48,8 +48,8 @@ EXPORTS
 	??0RBuf8@@QAE@PAVHBufC8@@@Z @ 47 NONAME ; public: __thiscall RBuf8::RBuf8(class HBufC8 *)
 	??0RBuf8@@QAE@XZ @ 48 NONAME ; public: __thiscall RBuf8::RBuf8(void)
 	??0RCriticalSection@@QAE@XZ @ 49 NONAME ; public: __thiscall RCriticalSection::RCriticalSection(void)
-	??0RHeap@@QAE@HHH@Z @ 50 NONAME ; public: __thiscall RHeap::RHeap(int,int,int)
-	??0RHeap@@QAE@HHHHHHH@Z @ 51 NONAME ; public: __thiscall RHeap::RHeap(int,int,int,int,int,int,int)
+	??0RHeap@@QAE@HHH@Z @ 50 NONAME ABSENT ; public: __thiscall RHeap::RHeap(int,int,int)
+	??0RHeap@@QAE@HHHHHHH@Z @ 51 NONAME ABSENT ; public: __thiscall RHeap::RHeap(int,int,int,int,int,int,int)
 	??0RMessage2@@QAE@ABVRMessagePtr2@@@Z @ 52 NONAME ; public: __thiscall RMessage2::RMessage2(class RMessagePtr2 const &)
 	??0RNotifier@@QAE@XZ @ 53 NONAME ; public: __thiscall RNotifier::RNotifier(void)
 	??0RPointerArrayBase@@IAE@H@Z @ 54 NONAME ; protected: __thiscall RPointerArrayBase::RPointerArrayBase(int)
@@ -216,7 +216,7 @@ EXPORTS
 	??1CSession2@@UAE@XZ @ 215 NONAME ; public: virtual __thiscall CSession2::~CSession2(void)
 	??1CTimer@@UAE@XZ @ 216 NONAME ; public: virtual __thiscall CTimer::~CTimer(void)
 	??1CTrapCleanup@@UAE@XZ @ 217 NONAME ; public: virtual __thiscall CTrapCleanup::~CTrapCleanup(void)
-	??2RHeap@@SAPAXIPAX@Z @ 218 NONAME ; public: static void * __cdecl RHeap::operator new(unsigned int,void *)
+	??2RHeap@@SAPAXIPAX@Z @ 218 NONAME ABSENT ; public: static void * __cdecl RHeap::operator new(unsigned int,void *)
 	??4HBufC16@@QAEAAV0@ABVTDesC16@@@Z @ 219 NONAME ; public: class HBufC16 & __thiscall HBufC16::operator=(class TDesC16 const &)
 	??4HBufC16@@QAEAAV0@PBG@Z @ 220 NONAME ; public: class HBufC16 & __thiscall HBufC16::operator=(unsigned short const *)
 	??4HBufC8@@QAEAAV0@ABVTDesC8@@@Z @ 221 NONAME ; public: class HBufC8 & __thiscall HBufC8::operator=(class TDesC8 const &)
@@ -943,7 +943,7 @@ EXPORTS
 	?Get@RProperty@@SAHVTUid@@IAAVTDes8@@@Z @ 942 NONAME ; public: static int __cdecl RProperty::Get(class TUid,unsigned int,class TDes8 &)
 	?Get@TLex16@@QAE?AVTChar@@XZ @ 943 NONAME ; public: class TChar  __thiscall TLex16::Get(void)
 	?Get@TLex8@@QAE?AVTChar@@XZ @ 944 NONAME ; public: class TChar  __thiscall TLex8::Get(void)
-	?GetAddress@RHeap@@IBEPAUSCell@1@PBX@Z @ 945 NONAME ; protected: struct RHeap::SCell * __thiscall RHeap::GetAddress(void const *)const 
+	?GetAddress@RHeap@@IBEPAUSCell@1@PBX@Z @ 945 NONAME ABSENT ; protected: struct RHeap::SCell * __thiscall RHeap::GetAddress(void const *)const 
 	?GetBdCategory@TChar@@QBE?AW4TBdCategory@1@XZ @ 946 NONAME ; public: enum TChar::TBdCategory  __thiscall TChar::GetBdCategory(void)const 
 	?GetCaps@RDevice@@QBEXAAVTDes8@@@Z @ 947 NONAME ; public: void __thiscall RDevice::GetCaps(class TDes8 &)const 
 	?GetCategory@TChar@@QBE?AW4TCategory@1@XZ @ 948 NONAME ; public: enum TChar::TCategory  __thiscall TChar::GetCategory(void)const 
@@ -2182,38 +2182,42 @@ EXPORTS
 	?RandomL@Math@@SAXAAVTDes8@@@Z @ 2181 NONAME ; void Math::RandomL(class TDes8 &)
 	?Random@Math@@SAXAAVTDes8@@@Z @ 2182 NONAME ; void Math::Random(class TDes8 &)
 	?RandomL@Math@@SAKXZ @ 2183 NONAME ; unsigned long Math::RandomL(void)
-	?Append2@TDes16@@QAEXVTChar@@@Z @ 2184 NONAME ABSENT ; void TDes16::Append2(class TChar)
-	?CopyC2@TDes16@@QAEXABVTDesC16@@@Z @ 2185 NONAME ABSENT ; void TDes16::CopyC2(class TDesC16 const &)
-	?Collate2@TDes16@@QAEXXZ @ 2186 NONAME ABSENT ; void TDes16::Collate2(void)
-	?CopyF2@TDes16@@QAEXABVTDesC16@@@Z @ 2187 NONAME ABSENT ; void TDes16::CopyF2(class TDesC16 const &)
-	?Fill2@TDes16@@QAEXVTChar@@@Z @ 2188 NONAME ABSENT ; void TDes16::Fill2(class TChar)
-	?Locate2@TDesC16@@QBEHVTChar@@@Z @ 2189 NONAME ABSENT ; int TDesC16::Locate2(class TChar) const
-	?AppendFill2@TDes16@@QAEXVTChar@@H@Z @ 2190 NONAME ABSENT ; void TDes16::AppendFill2(class TChar, int)
-	?AppendJustify2@TDes16@@QAEXABVTDesC16@@HHW4TAlign@@VTChar@@@Z @ 2191 NONAME ABSENT ; void TDes16::AppendJustify2(class TDesC16 const &, int, int, enum TAlign, class TChar)
-	?AppendJustify2@TDes16@@QAEXPBGHW4TAlign@@VTChar@@@Z @ 2192 NONAME ABSENT ; void TDes16::AppendJustify2(unsigned short const *, int, enum TAlign, class TChar)
-	?Fold2@TDes16@@QAEXXZ @ 2193 NONAME ABSENT ; void TDes16::Fold2(void)
-	?AppendJustify2@TDes16@@QAEXABVTDesC16@@HW4TAlign@@VTChar@@@Z @ 2194 NONAME ABSENT ; void TDes16::AppendJustify2(class TDesC16 const &, int, enum TAlign, class TChar)
-	?LowerCase2@TDes16@@QAEXXZ @ 2195 NONAME ABSENT ; void TDes16::LowerCase2(void)
-	?CopyUC2@TDes16@@QAEXABVTDesC16@@@Z @ 2196 NONAME ABSENT ; void TDes16::CopyUC2(class TDesC16 const &)
-	?FindCorruptSurrogate@TDesC16@@QBEHXZ @ 2197 NONAME ABSENT ; int TDesC16::FindCorruptSurrogate(void) const
-	?Justify2@TDes16@@QAEXABVTDesC16@@HW4TAlign@@VTChar@@@Z @ 2198 NONAME ABSENT ; void TDes16::Justify2(class TDesC16 const &, int, enum TAlign, class TChar)
-	?UpperCase2@TDes16@@QAEXXZ @ 2199 NONAME ABSENT ; void TDes16::UpperCase2(void)
-	?Capitalize2@TDes16@@QAEXXZ @ 2200 NONAME ABSENT ; void TDes16::Capitalize2(void)
-	?AppendJustify2@TDes16@@QAEXPBGHHW4TAlign@@VTChar@@@Z @ 2201 NONAME ABSENT ; void TDes16::AppendJustify2(unsigned short const *, int, int, enum TAlign, class TChar)
-	?CopyLC2@TDes16@@QAEXABVTDesC16@@@Z @ 2202 NONAME ABSENT ; void TDes16::CopyLC2(class TDesC16 const &)
-	?Fill2@TDes16@@QAEXVTChar@@H@Z @ 2203 NONAME ABSENT ; void TDes16::Fill2(class TChar, int)
-	?LocateF2@TDesC16@@QBEHVTChar@@@Z @ 2204 NONAME ABSENT ; int TDesC16::LocateF2(class TChar) const
-	?Match2@TDesC16@@QBEHABV1@@Z @ 2205 NONAME ABSENT ; int TDesC16::Match2(class TDesC16 const &) const
-	?LocateReverse2@TDesC16@@QBEHVTChar@@@Z @ 2206 NONAME ABSENT ; int TDesC16::LocateReverse2(class TChar) const
-	?LocateReverseF2@TDesC16@@QBEHVTChar@@@Z @ 2207 NONAME ABSENT ; int TDesC16::LocateReverseF2(class TChar) const
-	?CopyCP2@TDes16@@QAEXABVTDesC16@@@Z @ 2208 NONAME ABSENT ; void TDes16::CopyCP2(class TDesC16 const &)
-	?AgainHighRes@RTimer@@QAEXAAVTRequestStatus@@VTTimeIntervalMicroSeconds32@@@Z @ 2209 NONAME ABSENT ; public: void __thiscall RTimer::AgainHighRes(class TRequestStatus &,class TTimeIntervalMicroSeconds32)
-	?Align@RAllocator@@QBEPAXPAX@Z @ 2210 NONAME ABSENT ; void * RAllocator::Align(void *) const
-	?Align@RAllocator@@QBEHH@Z @ 2211 NONAME ABSENT ; int RAllocator::Align(int) const
-	?Size@RAllocator@@QBEHXZ @ 2212 NONAME ABSENT ; int RAllocator::Size(void) const
-	?Base@RAllocator@@QBEPAEXZ @ 2213 NONAME ABSENT ; void * RAllocator::Base(void) const
-	?MaxLength@RAllocator@@QBEHXZ @ 2214 NONAME ABSENT ; int RAllocator::MaxLength(void) const
-	?__DbgGetAllocFail@RAllocator@@QAE?AW4TAllocFail@1@XZ @ 2215 NONAME ABSENT ; enum RAllocator::TAllocFail RAllocator::__DbgGetAllocFail(void)
-	?__DbgGetAllocFail@User@@SA?AW4TAllocFail@RAllocator@@H@Z @ 2216 NONAME ABSENT ; enum RAllocator::TAllocFail User::__DbgGetAllocFail(int)
+	?Append2@TDes16@@QAEXVTChar@@@Z @ 2184 NONAME ; void TDes16::Append2(class TChar)
+	?CopyC2@TDes16@@QAEXABVTDesC16@@@Z @ 2185 NONAME ; void TDes16::CopyC2(class TDesC16 const &)
+	?Collate2@TDes16@@QAEXXZ @ 2186 NONAME ; void TDes16::Collate2(void)
+	?CopyF2@TDes16@@QAEXABVTDesC16@@@Z @ 2187 NONAME ; void TDes16::CopyF2(class TDesC16 const &)
+	?Fill2@TDes16@@QAEXVTChar@@@Z @ 2188 NONAME ; void TDes16::Fill2(class TChar)
+	?Locate2@TDesC16@@QBEHVTChar@@@Z @ 2189 NONAME ; int TDesC16::Locate2(class TChar) const
+	?AppendFill2@TDes16@@QAEXVTChar@@H@Z @ 2190 NONAME ; void TDes16::AppendFill2(class TChar, int)
+	?AppendJustify2@TDes16@@QAEXABVTDesC16@@HHW4TAlign@@VTChar@@@Z @ 2191 NONAME ; void TDes16::AppendJustify2(class TDesC16 const &, int, int, enum TAlign, class TChar)
+	?AppendJustify2@TDes16@@QAEXPBGHW4TAlign@@VTChar@@@Z @ 2192 NONAME ; void TDes16::AppendJustify2(unsigned short const *, int, enum TAlign, class TChar)
+	?Fold2@TDes16@@QAEXXZ @ 2193 NONAME ; void TDes16::Fold2(void)
+	?AppendJustify2@TDes16@@QAEXABVTDesC16@@HW4TAlign@@VTChar@@@Z @ 2194 NONAME ; void TDes16::AppendJustify2(class TDesC16 const &, int, enum TAlign, class TChar)
+	?LowerCase2@TDes16@@QAEXXZ @ 2195 NONAME ; void TDes16::LowerCase2(void)
+	?CopyUC2@TDes16@@QAEXABVTDesC16@@@Z @ 2196 NONAME ; void TDes16::CopyUC2(class TDesC16 const &)
+	?FindCorruptSurrogate@TDesC16@@QBEHXZ @ 2197 NONAME ; int TDesC16::FindCorruptSurrogate(void) const
+	?Justify2@TDes16@@QAEXABVTDesC16@@HW4TAlign@@VTChar@@@Z @ 2198 NONAME ; void TDes16::Justify2(class TDesC16 const &, int, enum TAlign, class TChar)
+	?UpperCase2@TDes16@@QAEXXZ @ 2199 NONAME ; void TDes16::UpperCase2(void)
+	?Capitalize2@TDes16@@QAEXXZ @ 2200 NONAME ; void TDes16::Capitalize2(void)
+	?AppendJustify2@TDes16@@QAEXPBGHHW4TAlign@@VTChar@@@Z @ 2201 NONAME ; void TDes16::AppendJustify2(unsigned short const *, int, int, enum TAlign, class TChar)
+	?CopyLC2@TDes16@@QAEXABVTDesC16@@@Z @ 2202 NONAME ; void TDes16::CopyLC2(class TDesC16 const &)
+	?Fill2@TDes16@@QAEXVTChar@@H@Z @ 2203 NONAME ; void TDes16::Fill2(class TChar, int)
+	?LocateF2@TDesC16@@QBEHVTChar@@@Z @ 2204 NONAME ; int TDesC16::LocateF2(class TChar) const
+	?Match2@TDesC16@@QBEHABV1@@Z @ 2205 NONAME ; int TDesC16::Match2(class TDesC16 const &) const
+	?LocateReverse2@TDesC16@@QBEHVTChar@@@Z @ 2206 NONAME ; int TDesC16::LocateReverse2(class TChar) const
+	?LocateReverseF2@TDesC16@@QBEHVTChar@@@Z @ 2207 NONAME ; int TDesC16::LocateReverseF2(class TChar) const
+	?CopyCP2@TDes16@@QAEXABVTDesC16@@@Z @ 2208 NONAME ; void TDes16::CopyCP2(class TDesC16 const &)
+	?AgainHighRes@RTimer@@QAEXAAVTRequestStatus@@VTTimeIntervalMicroSeconds32@@@Z @ 2209 NONAME ; public: void __thiscall RTimer::AgainHighRes(class TRequestStatus &,class TTimeIntervalMicroSeconds32)
+	?Align@RAllocator@@QBEPAXPAX@Z @ 2210 NONAME ; void * RAllocator::Align(void *) const
+	?Align@RAllocator@@QBEHH@Z @ 2211 NONAME ; int RAllocator::Align(int) const
+	?Size@RAllocator@@QBEHXZ @ 2212 NONAME ; int RAllocator::Size(void) const
+	?Base@RAllocator@@QBEPAEXZ @ 2213 NONAME ; void * RAllocator::Base(void) const
+	?MaxLength@RAllocator@@QBEHXZ @ 2214 NONAME ; int RAllocator::MaxLength(void) const
+	?__DbgGetAllocFail@RAllocator@@QAE?AW4TAllocFail@1@XZ @ 2215 NONAME ; enum RAllocator::TAllocFail RAllocator::__DbgGetAllocFail(void)
+	?__DbgGetAllocFail@User@@SA?AW4TAllocFail@RAllocator@@H@Z @ 2216 NONAME ; enum RAllocator::TAllocFail User::__DbgGetAllocFail(int)
 	?SetKeyOffset@RArrayBase@@IAEXH@Z @ 2217  NONAME ; void RArrayBase::SetKeyOffset(int)
-
+	?Poll@RFastLock@@QAEHXZ @ 2218 NONAME ; public: int __thiscall RFastLock::Poll(void)
+	?Poll@RMutex@@QAEHXZ @ 2219 NONAME ; public: int __thiscall RMutex::Poll(void)
+	?Poll@RSemaphore@@QAEHXZ @ 2220 NONAME ; public: int __thiscall RSemaphore::Poll(void)
+	?Wait@RMutex@@QAEHH@Z @ 2221 NONAME ; public: int __thiscall RMutex::Wait(int)
+	?Wait@RFastLock@@QAEHH@Z @ 2222 NONAME ; public: int __thiscall RFastLock::Wait(int)

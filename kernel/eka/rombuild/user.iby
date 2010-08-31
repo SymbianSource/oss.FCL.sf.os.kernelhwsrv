@@ -67,12 +67,12 @@ file=\Epoc32\Release\##MAIN##\##BUILD##\eka1_entry_stub.dll				\sys\bin\eka1_ent
 #endif
 
 
-#ifndef USE_CUSTOM_MMC_PARTITION
+#if !(defined(INST_X86) || defined(INST_X86GCC)) && !defined(USE_CUSTOM_MMC_PARTITION)
 extension[VARID]=\Epoc32\Release\##KMAIN##\##BUILD##\EMMCPTN.DLL                   \Sys\Bin\EMMCPTN.DLL
 #endif
 
-// Run-mode debug subsystem
-#include "rm_debug_svr.iby"
+// Stop-mode debug subsystem
+#include "sm_debug.iby"
 
 // Load Platform Security settings
 #ifndef __DONT_LOAD_PLATSEC_SETTINGS__
@@ -173,6 +173,10 @@ datapagingpolicy defaultpaged
 datapagingpolicy nopaging
 #endif
 #endif // PAGED_DATA
+
+#if !defined(PAGED_DATA)
+data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\not_data_paged.txt  Test\not_data_paged.txt unpaged paging_unmovable
+#endif //#if !defined(PAGED_DATA)
 
 // Test constant patching works by setting KHeapMinCellSize to zero, which is the default anyway
 patchdata ekern.exe @ KHeapMinCellSize 0

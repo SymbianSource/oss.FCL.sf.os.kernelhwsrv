@@ -32,15 +32,20 @@
 #define MAX_RESOURCE_COUNT 30
 #define MAX_DEPENDENT_RESOURCE_COUNT 10
 
-#define MAX_BLOCK_TIME 200 //Maximum block time
-#define MIN_BLOCK_TIME 50 //Guaranteed minimum block
+#define MAX_BLOCK_TIME 400 //Maximum block time
+#define MIN_BLOCK_TIME 200 //Guaranteed minimum block
 
-#define CLEAN_AND_RETURN(resCount, resArray, error)				\
-	{															\
-	for(TUint count = 0; count < resCount; count++)				\
-		delete resArray[count];									\
-	delete resArray;											\
-	return error;												\
+template <class T>
+inline TBool SafeAppend(RPointerArray <T> & aStaticResourceArray, T* pR)
+	{
+	if(pR)
+		{
+		if(aStaticResourceArray.Append(pR) == KErrNone)
+			return ETrue;
+		else
+			delete pR;
+		}
+	return EFalse;
 	}
 
 const TUint KBinary = 0x0;
@@ -55,10 +60,10 @@ public:
 	~DSimulatedPowerResourceController();
     TInt DoInitController();
     TInt DoInitResources();
-    TInt DoRegisterStaticResources(DStaticPowerResource**& aStaticResourceArray, TUint16& aStaticResourceCount);
+    TInt DoRegisterStaticResources(RPointerArray <DStaticPowerResource> & aStaticResourceArray);
 	// Function to process instantaneous resources
     TInt ProcessInstantaneousResources(TPowerRequest& req, TInt& aClientLevel, TInt aMaxLevel, TInt aMinLevel, TInt aDefaultLevel);
-	// Function to procces polled resources
+	// Function to process polled resources
     TInt ProcessPolledResources(TPowerRequest& req, TInt& aClientLevel, TInt aMaxLevel, TInt aMinLevel, TInt aDefaultLevel, TInt aBlockTime = 0);
 	// Function to change the state of the resource
     TInt ChangeResource(TPowerRequest& req, TInt& aClientLevel, TInt aMaxLevel, TInt aMinLevel);
@@ -67,19 +72,15 @@ public:
     IMPORT_C static TInt CaptureIdleResourcesInfo(TUint aControllerId, TUint aNumResources, TPtr* aPtr);
 	IMPORT_C static TInt CompleteResourceControllerInitialisation();
 #ifdef PRM_ENABLE_EXTENDED_VERSION
-	TInt DoRegisterStaticResourcesDependency(DStaticPowerResourceD**& aStaticResourceDArray, TUint16& aStaticResourceDCount);
-	TInt CreateResourceDependency(DStaticPowerResourceD** pResArray);
+	TInt DoRegisterStaticResourcesDependency(RPointerArray <DStaticPowerResourceD> & aStaticResourceDArray);
+	TInt CreateResourceDependency(RPointerArray <DStaticPowerResourceD> & pResArray);
 #endif
 private:
-    static void TimerIsrFunc(TAny* ptr); //ISR Function called when specfied timer expires. This is for even driven resources
-    static void EventDfcFunc(TAny* ptr); //Function to wakeup the fast semphore. This is called from timer ISR.
-    DStaticPowerResource** iResources;
-    TUint16 iStaticResourceCount;
-    NFastSemaphore iEventFastSem; //Semphore to block the PIL of resource controller for event driven resource operations.
+    static void TimerIsrFunc(TAny* ptr); //ISR Function called when specified timer expires. This is for even driven resources
+    static void EventDfcFunc(TAny* ptr); //Function to wake up the fast semaphore. This is called from timer ISR.
+    NFastSemaphore iEventFastSem; //Semaphore to block the PIL of resource controller for event driven resource operations.
     TDfc iEventDfc; //Dfc to run to signal the event semaphore when the timer expires. Queued from timer ISR
 #ifdef PRM_ENABLE_EXTENDED_VERSION
-	DStaticPowerResourceD** iDependencyResources;
-	TUint16 iStaticResDependencyCount;
 	SNode* iNodeArray;
 	TUint16 iNodeCount;
 #endif

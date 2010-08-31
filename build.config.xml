@@ -1,0 +1,287 @@
+<?xml version="1.0"?>
+<!DOCTYPE SystemDefinition [
+ <!ELEMENT SystemDefinition (systemModel?, build?)>
+ <!ATTLIST SystemDefinition
+  name CDATA #REQUIRED
+  schema CDATA #REQUIRED>
+ <!ELEMENT systemModel (layer+)>
+ <!ELEMENT layer (logicalset* | module*)*>
+ <!ATTLIST layer
+  name CDATA #REQUIRED
+  levels CDATA #IMPLIED
+  span CDATA #IMPLIED>
+ <!ELEMENT logicalset (logicalsubset* | module* | unit* | package* | prebuilt*)*>
+ <!ATTLIST logicalset 
+  name CDATA #REQUIRED
+  levels CDATA #IMPLIED  
+  span CDATA #IMPLIED
+  level CDATA #IMPLIED>
+ <!ELEMENT logicalsubset (module* | unit* | package* | prebuilt*)*>
+ <!ATTLIST logicalsubset name CDATA #REQUIRED>
+ <!ELEMENT module (component* | unit* | package* | prebuilt*)*>
+ <!ATTLIST module
+  name CDATA #REQUIRED
+  level CDATA #IMPLIED>
+ <!ELEMENT component (unit* | package* | prebuilt*)*>
+ <!ATTLIST component name CDATA #REQUIRED>
+ <!ELEMENT unit EMPTY>
+ <!ATTLIST unit
+  unitID ID #REQUIRED
+  name CDATA #REQUIRED
+  mrp CDATA #REQUIRED
+  filter CDATA #IMPLIED
+  bldFile CDATA #REQUIRED
+  priority CDATA #IMPLIED
+  contract CDATA #IMPLIED>
+ <!ELEMENT package EMPTY>
+ <!ATTLIST package
+  name CDATA #REQUIRED
+  mrp CDATA #REQUIRED
+  filter CDATA #IMPLIED
+  contract CDATA #IMPLIED>
+ <!ELEMENT prebuilt EMPTY>
+ <!ATTLIST prebuilt
+  name CDATA #REQUIRED
+  version CDATA #REQUIRED
+  late (Y|N) #IMPLIED
+  filter CDATA #IMPLIED
+  contract CDATA #IMPLIED>
+ <!ELEMENT build (option* | target+ | targetList+ | unitList+ | configuration+)*>
+ <!ELEMENT unitList (unitRef+)>
+ <!ATTLIST unitList
+  name ID #REQUIRED
+  description CDATA #REQUIRED>
+ <!ELEMENT unitRef EMPTY>
+ <!ATTLIST unitRef unit IDREF #REQUIRED>
+ <!ELEMENT targetList EMPTY>
+ <!ATTLIST targetList
+  name ID #REQUIRED
+  description CDATA #REQUIRED
+  target IDREFS #REQUIRED>
+ <!ELEMENT target EMPTY>
+ <!ATTLIST target
+  name ID #REQUIRED
+  abldTarget CDATA #REQUIRED
+  description CDATA #REQUIRED>
+ <!ELEMENT option EMPTY>
+ <!ATTLIST option
+  name ID #REQUIRED
+  abldOption CDATA #REQUIRED
+  description CDATA #REQUIRED
+  enable (Y | N | y | n) #REQUIRED>
+ <!ELEMENT configuration (unitListRef+ | layerRef+ | task+)*>
+ <!ATTLIST configuration
+  name ID #REQUIRED
+  description CDATA #REQUIRED
+  filter CDATA #REQUIRED>
+ <!ELEMENT task ( unitListRef* , (buildLayer | specialInstructions))>
+ <!ELEMENT unitListRef EMPTY>
+ <!ATTLIST unitListRef unitList IDREF #REQUIRED>
+ <!ELEMENT layerRef EMPTY>
+ <!ATTLIST layerRef layerName CDATA #REQUIRED>
+ <!ELEMENT buildLayer EMPTY>
+ <!ATTLIST buildLayer
+  command CDATA #REQUIRED
+  targetList IDREFS #IMPLIED
+  unitParallel (Y | N | y | n) #REQUIRED
+  targetParallel (Y | N | y | n) #IMPLIED>
+ <!ELEMENT specialInstructions EMPTY>
+ <!ATTLIST specialInstructions
+  name CDATA #REQUIRED
+  cwd CDATA #REQUIRED
+  command CDATA #REQUIRED>
+ <!ENTITY layer_real_source_path "/sf/os/kernelhwsrv" >
+]>
+<SystemDefinition name="KHS" schema="1.4.0">
+  <systemModel>
+	<layer name="os_layer">
+
+		<module name="KHS_HalServices"> 
+			<unit name="khs_hal" unitID="sos.khs_hal" bldFile="\sf\os\kernelhwsrv\halservices\hal" mrp="\sf\os\kernelhwsrv\halservices\hal\base_hal.mrp"/> 
+		</module> 
+		<module name="KHS_Kernel"> 
+			<unit name="eka" unitID="sos.eka" bldFile="\sf\os\kernelhwsrv\kernel\eka" mrp="\sf\os\kernelhwsrv\kernel\eka\base_e32.mrp"/>
+			<unit name="eka_compsupp" unitID="sos.eka_compsupp" bldFile="\sf\os\kernelhwsrv\kernel\eka\compsupp" mrp="\sf\os\kernelhwsrv\kernel\eka\compsupp\base_e32_compsupp.mrp"/>
+			<unit name="eka_drivers_bsp" unitID="sos.eka_drivers_bsp" bldFile="\sf\os\kernelhwsrv\kernel\eka\drivers\bsp\" mrp="\sf\os\kernelhwsrv\kernel\eka\drivers\bsp\base_e32_drivers_bsp.mrp.mrp"/>
+			<unit name="eka_drivers_cf_unistore2" unitID="sos.eka_drivers_cf_unistore2" bldFile="\sf\os\kernelhwsrv\kernel\eka\drivers\crashflash\unistore2" mrp="\sf\os\kernelhwsrv\kernel\eka\drivers\crashflash\unistore2\base_crashflash_unistore2.mrp"/>
+			<unit name="eka_drivers_debug" unitID="sos.eka_drivers_debug" bldFile="\sf\os\kernelhwsrv\kernel\eka\drivers\debug\group" mrp="\sf\os\kernelhwsrv\kernel\eka\drivers\debug\group\base_e32_drivers_debug.mrp"/>
+			<unit name="eka_drivers_display" unitID="sos.eka_drivers_display" bldFile="\sf\os\kernelhwsrv\kernel\eka\drivers\display" mrp="\sf\os\kernelhwsrv\kernel\eka\drivers\display\base_e32_drivers_display.mrp"/>
+			<unit name="eka_drivers_ecomm" unitID="sos.eka_drivers_ecomm" bldFile="\sf\os\kernelhwsrv\kernel\eka\drivers\ecomm" mrp="\sf\os\kernelhwsrv\kernel\eka\drivers\ecomm\base_e32_drivers_ecomm.mrp"/>
+			<unit name="eka_drivers_ethernet" unitID="sos.eka_drivers_ethernet" bldFile="\sf\os\kernelhwsrv\kernel\eka\drivers\ethernet" mrp="\sf\os\kernelhwsrv\kernel\eka\drivers\ethernet\base_e32_drivers_ethernet.mrp"/>
+			<unit name="eka_drivers_locmedia" unitID="sos.eka_drivers_locmedia" bldFile="\sf\os\kernelhwsrv\kernel\eka\drivers\locmedia" mrp="\sf\os\kernelhwsrv\kernel\eka\drivers\locmedia\base_e32_drivers_locmedia.mrp"/>
+			<unit name="eka_drivers_media" unitID="sos.eka_drivers_media" bldFile="\sf\os\kernelhwsrv\kernel\eka\drivers\media" mrp="\sf\os\kernelhwsrv\kernel\eka\drivers\media\base_e32_drivers_media.mrp"/>
+			<unit name="eka_drivers_medsd3c" unitID="sos.eka_drivers_medsd3c" bldFile="\sf\os\kernelhwsrv\kernel\eka\drivers\medsd3c" mrp="\sf\os\kernelhwsrv\kernel\eka\drivers\medsd3c\base_e32_sd3c.mrp"/>
+			<unit name="eka_drivers_sdcard4c" unitID="sos.eka_drivers_sdcard4c" bldFile="\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\sdcard4c" mrp="\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\sdcard4c\base_e32_sd4c.mrp"/>
+			<unit name="eka_drivers_soundsc" unitID="sos.eka_drivers_soundsc" bldFile="\sf\os\kernelhwsrv\kernel\eka\drivers\soundsc" mrp="\sf\os\kernelhwsrv\kernel\eka\drivers\soundsc\base_e32_drivers_sound.mrp"/>
+			<unit name="eka_drivers_trace" unitID="sos.eka_drivers_trace" bldFile="\sf\os\kernelhwsrv\kernel\eka\drivers\trace" mrp="\sf\os\kernelhwsrv\kernel\eka\drivers\trace\base_e32_drivers_trace.mrp"/>
+			<unit name="eka_drivers_unistore2" unitID="sos.eka_drivers_unistore2" bldFile="\sf\os\kernelhwsrv\kernel\eka\drivers\unistore2" mrp="\sf\os\kernelhwsrv\kernel\eka\drivers\unistore2\base_drivers_unistore2.mrp"/>
+			<unit name="eka_drivers_usbdescriptors" unitID="sos.eka_drivers_usbdescriptors" bldFile="\sf\os\kernelhwsrv\kernel\eka\drivers\usbho\usbdescriptors" mrp="\sf\os\kernelhwsrv\kernel\eka\drivers\usbho\usbdescriptors\base_drivers_usbdescriptors.mrp"/>
+			<unit name="eka_drivers_usbdi_utils" unitID="sos.eka_drivers_usbdi_utils" bldFile="\sf\os\kernelhwsrv\kernel\eka\drivers\usbho\usbdi_utils" mrp="\sf\os\kernelhwsrv\kernel\eka\drivers\usbho\usbdi_utils\base_drivers_usbdi_utils.mrp"/>
+			<unit name="eka_drivers_usbc" unitID="sos.eka_drivers_usbc" bldFile="\sf\os\kernelhwsrv\kernel\eka\drivers\usbc" mrp="\sf\os\kernelhwsrv\kernel\eka\drivers\usbc\base_e32_drivers_usbcli.mrp"/>
+			<unit name="eka_drivers_usbho" unitID="sos.eka_drivers_usbho" bldFile="\sf\os\kernelhwsrv\kernel\eka\drivers\usbho" mrp="\sf\os\kernelhwsrv\kernel\eka\drivers\usbho\base_drivers_usbhostotg.mrp"/>
+			<unit name="eka_euser" unitID="sos.eka_euser" bldFile="\sf\os\kernelhwsrv\kernel\eka\euser" mrp="\sf\os\kernelhwsrv\kernel\eka\euser\base_e32_euser.mrp"/>
+			<unit name="eka_ewsrv" unitID="sos.eka_ewsrv" bldFile="\sf\os\kernelhwsrv\kernel\eka\ewsrv\" mrp="\sf\os\kernelhwsrv\kernel\eka\ewsrv\base_e32_ewsrv.mrp"/>
+		</module> 
+
+		<module name="KHS_UserLibraryAndFileServer"> 
+			<unit name="usrlibflsrv_domainmgr" unitID="sos.usrlibflsrv_domainmgr" bldFile="\sf\os\kernelhwsrv\userlibandfileserver\domainmgr\group" mrp="\sf\os\kernelhwsrv\userlibandfileserver\domainmgr\group\base_domain.mrp"/>
+			<unit name="usrlibflsrv_flsrv_automounter" unitID="sos.usrlibflsrv_flsrv_automounter" bldFile="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\automounter" mrp="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\automounter\base_domain.mrp"/>
+			<unit name="usrlibflsrv_flsrv_estart" unitID="sos.usrlibflsrv_flsrv_estart" bldFile="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\estart" mrp="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\estart\base_f32_estart.mrp"/>
+			<unit name="usrlibflsrv_flsrv_etshell" unitID="sos.usrlibflsrv_flsrv_etshell" bldFile="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\etshell" mrp="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\etshell\base_f32_eshell.mrp"/>
+			<unit name="usrlibflsrv_flsrv" unitID="sos.usrlibflsrv_flsrv" bldFile="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\group" mrp="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\group\base_f32.mrp"/>
+			<unit name="usrlibflsrv_flsrv_iso9660" unitID="sos.usrlibflsrv_flsrv_iso9660" bldFile="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\iso9660" mrp="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\base_f32_siso9660.mrp"/>
+			<unit name="usrlibflsrv_flsrv_ntfs" unitID="sos.usrlibflsrv_flsrv_ntfs" bldFile="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\ntfs" mrp="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\ntfs\base_f32_sntfs.mrp"/>
+			<unit name="usrlibflsrv_flsrv_scomp" unitID="sos.usrlibflsrv_flsrv_scomp" bldFile="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\scomp" mrp="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\scomp\base_f32_scomp.mrp"/>
+			<unit name="usrlibflsrv_flsrv_sfat" unitID="sos.usrlibflsrv_flsrv_sfat" bldFile="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\sfat" mrp="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\sfat\base_f32_sfat.mrp"/>
+			<unit name="usrlibflsrv_flsrv_sfat32" unitID="sos.usrlibflsrv_flsrv_sfat32" bldFile="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\sfat32" mrp="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\sfat32\base_f32_sfat32.mrp"/>
+			<unit name="usrlibflsrv_flsrv_shostmassstorage" unitID="sos.usrlibflsrv_flsrv_shostmassstorage" bldFile="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\shostmassstorage" mrp="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\shostmassstorage\base_f32_shostmassstorage.mrp"/>
+			<unit name="usrlibflsrv_flsrv_smassstorage" unitID="sos.usrlibflsrv_flsrv_smassstorage" bldFile="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\smassstorage" mrp="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\smassstorage\base_f32_smassstorage.mrp"/>
+			<unit name="usrlibflsrv_flsrv_srofs" unitID="sos.usrlibflsrv_flsrv_srofs" bldFile="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\srofs" mrp="\sf\os\kernelhwsrv\userlibandfileserver\fileserver\srofs\base_f32_srofs.mrp"/>
+		</module> 
+
+		<module name="KHS_Unistore2"> 
+			<unit name="unistore2_uiibootsupport" unitID="sos.unistore2_uiibootsupport" bldFile="\sf\os\kernelhwsrv\unistore2\uiibootsupport" mrp="\sf\os\kernelhwsrv\unistore2\uiibootsupport\base_nandboot_unistore2.mrp"/>
+		</module>
+
+		<module name="KHS_E32utils"> 
+			<unit name="e32utils" unitID="sos.e32utils" bldFile="\sf\os\kernelhwsrv\kerneltest\e32utils\group" mrp="\sf\os\kernelhwsrv\kerneltest\e32utils\group\base_e32utils.mrp"/>
+			<unit name="e32utils_restricted" unitID="sos.e32utils_restricted" bldFile="\sf\os\kernelhwsrv\kerneltest\e32utils\group\restricted" mrp="\sf\os\kernelhwsrv\kerneltest\e32utils\group\restricted\base_e32utils_restricted.mrp"/>
+		</module>
+
+		<module name="BSP_Emulator"> 
+			<unit name="emulatorbsp" unitID="sos.emulatorbsp" bldFile="\sf\os\boardsupport\emulator\emulatorbsp" mrp="\sf\os\boardsupport\emulator\emulatorbsp\base_wins.mrp"/>
+			<unit name="unistore2emulatorsupport" unitID="sos.unistore2emulatorsupport" bldFile="\sf\os\boardsupport\emulator\unistore2emulatorsupport" mrp="\sf\os\boardsupport\emulator\unistore2emulatorsupport\base_wins_unistore2.mrp"/>
+		</module>
+		<!--
+		<module name="BSP_NaviEngine"> 
+			<unit name="navienginebootldr" unitID="sos.navienginebootldr" bldFile="\sf\os\boardsupport\naviengine\navienginebootldr" mrp="\sf\os\boardsupport\naviengine\navienginebootldr\base_wins.mrp"/>
+			<unit name="navienginebsp_ne1_tb" unitID="sos.navienginebsp_ne1_tb" bldFile="\sf\os\boardsupport\naviengine\navienginebsp\ne1_tb" mrp=""/>
+			<unit name="navienginebsp_ne1_tb_single" unitID="sos.navienginebsp_ne1_tb_single" bldFile="\sf\os\boardsupport\naviengine\navienginebsp\ne1_tb\single" mrp=""/>
+			<unit name="navienginebspflexible" unitID="sos.navienginebspflexible" bldFile="\sf\os\boardsupport\naviengine\navienginebspflexible" mrp="\sf\os\boardsupport\naviengine\navienginebspflexible\base_naviengine_flexible.mrp"/>
+			<unit name="naviengineunistore2" unitID="sos.naviengineunistore2" bldFile="\sf\os\boardsupport\naviengine\naviengineunistore2" mrp="\sf\os\boardsupport\naviengine\naviengineunistore2\base_nec_naviengine_unistore2.mrp"/>
+			<unit name="naviengineunistore2flex" unitID="sos.naviengineunistore2flex" bldFile="\sf\os\boardsupport\naviengine\naviengineunistore2flex" mrp="\sf\os\boardsupport\naviengine\naviengineunistore2flex\base_nec_naviengine_unistore2_flexible.mrp"/>
+			<unit name="naviengineusbhcd" unitID="sos.naviengineusbhcd" bldFile="\sf\os\boardsupport\naviengine\naviengineusbhcd" mrp="\sf\os\boardsupport\naviengine\naviengineusbhcd\base_naviengine_usbhost.mrp"/>
+			<unit name="naviengineusbhcd_flexible" unitID="sos.naviengineusbhcd_flexible" bldFile="\sf\os\boardsupport\naviengine\naviengineusbhcd\flexible" mrp=""/>
+		</module>
+		-->
+		<module name="BSP_OMAP3Variants"> 
+			<unit name="34xx_sdp" unitID="sos.34xx_sdp" bldFile="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\34xx_sdp" mrp=""/>
+			<unit name="34xx_sdp_bootloader" unitID="sos.34xx_sdp_bootloader" bldFile="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\34xx_sdp\34xx_sdp_bootloader" mrp=""/>
+			<unit name="34xx_sdp_bootstrap" unitID="sos.34xx_sdp_bootstrap" bldFile="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\34xx_sdp\bootstrap" mrp=""/>
+			<unit name="34xx_sdp_flexible" unitID="sos.34xx_sdp_flexible" bldFile="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\34xx_sdp\flexible" mrp="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\34xx_sdp\flexible\base_tiomap3_flexible.mrp"/>
+			<unit name="34xx_sdp_restricted_sdio" unitID="sos.34xx_sdp_restricted_sdio" bldFile="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\34xx_sdp_restricted\sdio" mrp="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\34xx_sdp_restricted\sdio\base_tiomap3_sdio.mrp"/>
+			<unit name="34xx_sdp_restricted_unistore2" unitID="sos.34xx_sdp_restricted_unistore2" bldFile="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\34xx_sdp_restricted\unistore2" mrp=""/>
+			<unit name="34xx_sdp_restricted_unistore2_flexible" unitID="sos.34xx_sdp_restricted_unistore2_flexible" bldFile="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\34xx_sdp_restricted\unistore2\flexible" mrp="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\34xx_sdp_restricted\unistore2\flexible\base_tiomap3_unistore2_flexible.mrp"/>
+			<unit name="lab" unitID="sos.lab" bldFile="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\lab" mrp="\base_tiomap3_lab.mrp"/>
+			<unit name="lab_bootloader" unitID="sos.lab_bootloader" bldFile="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\lab\lab_bootloader" mrp=""/>
+			<unit name="lab_restricted_sdio" unitID="sos.lab_restricted_sdio" bldFile="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\lab_restricted\sdio" mrp="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\lab_restricted\sdio\base_tiomap3_lab_sdio.mrp"/>
+			<unit name="lab_restricted_unistore2" unitID="sos.lab_restricted_unistore2" bldFile="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\lab_restricted\unistore2" mrp="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\lab_restricted\unistore2\base_tiomap3_lab_unistore2.mrp"/>
+		</module>
+		<module name="BSP_OMAPH2"> 
+			<unit name="omaph2bsp_h2" unitID="sos.omaph2bsp_h2" bldFile="\sf\os\boardsupport\omaph2\omaph2bsp\h2" mrp="\sf\os\boardsupport\omaph2\omaph2bsp\h2\base_omaph2.mrp"/>
+			<unit name="omaph2bsp_h2_single" unitID="sos.omaph2bsp_h2_single" bldFile="\sf\os\boardsupport\omaph2\omaph2bsp\h2\single" mrp=""/>
+			<unit name="omaph2sdio" unitID="sos.omaph2sdio" bldFile="\sf\os\boardsupport\omaph2\omaph2sdio" mrp="\sf\os\boardsupport\omaph2\omaph2sdio\base_h2_sdio.mrp"/>
+			<unit name="omaph2unistore2" unitID="sos.omaph2unistore2" bldFile="\sf\os\boardsupport\omaph2\omaph2unistore2" mrp="\sf\os\boardsupport\omaph2\omaph2unistore2\base_h2_unistore2.mrp"/>
+		</module>
+		<module name="BSP_OMAPH4"> 
+			<unit name="h4bootloader" unitID="sos.h4bootloader" bldFile="\sf\os\boardsupport\omaph4\h4bootloader" mrp="\sf\os\boardsupport\omaph4\h4bootloader\base_omaph4hrp_bootldr.mrp"/>
+			<unit name="omaph4bsp_h4" unitID="sos.omaph4bsp_h4" bldFile="\sf\os\boardsupport\omaph4\omaph4bsp\h4" mrp="\sf\os\boardsupport\omaph4\omaph4bsp\h4\base_omaph4hrp.mrp"/>
+			<!--<unit name="omaph4bsp_h4_flexible" unitID="sos.omaph4bsp_h4_flexible" bldFile="\sf\os\boardsupport\omaph4\omaph4bsp\h4\flexible" mrp="\sf\os\boardsupport\omaph4\omaph4bsp\h4\flexible\base_omaph4hrp_flexible.mrp"/>-->
+			<unit name="omaph4minienvbootloader" unitID="sos.omaph4minienvbootloader" bldFile="\sf\os\boardsupport\omaph4\omaph4minienvbootloader" mrp="\sf\os\boardsupport\omaph4\omaph4minienvbootloader\base_omaph4hrp_mebootldr.mrp"/>
+			<unit name="omaph4sdio" unitID="sos.omaph4sdio" bldFile="\sf\os\boardsupport\omaph4\omaph4sdio" mrp="\sf\os\boardsupport\omaph4\omaph4sdio\base_omaph4hrp_sdio.mrp"/>
+			<unit name="omaph4unistore2" unitID="sos.omaph4unistore2" bldFile="\sf\os\boardsupport\omaph4\omaph4unistore2" mrp="\sf\os\boardsupport\omaph4\omaph4unistore2\base_omaph4hrp_unistore2.mrp"/>
+			<!-- <unit name="omapusbhotgdrivers" unitID="sos.omapusbhotgdrivers" bldFile="\sf\os\boardsupport\omaph4\omapusbhotgdrivers" mrp="\sf\os\boardsupport\omaph4\omapusbhotgdrivers\base_omaph4hrp_usbhostotg_usbware.mrp"/> -->
+		</module>
+		<!-- 
+		<module name="BSP_STVariants"> 
+			<unit name="montblanc_test" unitID="sos.montblanc_test" bldFile="\sf\os\boardsupport\stvariants\montblanc\test" mrp=""/>
+			<unit name="nokia_smpower" unitID="sos.nokia_smpower" bldFile="\sf\os\boardsupport\emulator\unistore2emulatorsupport" mrp=""/>
+		</module>
+		-->
+		<module name="NCP_Rapu"> 
+			<!-- <unit name="PRM" unitID="sos.PRM" bldFile="\ncp_sw\core7.0\base_rapu\rapu\PowerResourceManager" mrp=""/> -->
+			<unit name="power" unitID="sos.power" bldFile="\ncp_sw\core7.0\base_rapu\rapu\power" mrp=""/>
+			<unit name="ip_devices_keymap" unitID="sos.ip_devices_keymap" bldFile="\ncp_sw\corecom\bbc_components\input_devices\keymap\group" mrp=""/>
+			<unit name="security_components" unitID="sos.security_components" bldFile="\ncp_sw\corecom\security_components\group" mrp=""/>
+			<unit name="power_common" unitID="sos.power_common" bldFile="\ncp_sw\corecom\base_components\power_common\group" mrp=""/>
+
+			<unit name="I2C" unitID="sos.I2C" bldFile="\ncp_sw\corecom\base_components\I2C\group" mrp=""/>
+			<unit name="hal" unitID="sos.hal" bldFile="\overlay\10.1_overlay\79.01_vasco_overlay\variation\group" mrp=""/>
+			<unit name="ip_devices_mednand_common" unitID="sos.ip_devices_mednand_common" bldFile="\ncp_sw\corecom\bbc_components\memory\mednand_common" mrp=""/>
+			<unit name="ip_devices_medusii17" unitID="sos.ip_devices_medusii17" bldFile="\ncp_sw\corecom\bbc_components\memory\medusii17\group" mrp=""/>
+			<unit name="ip_devices_memcard_sd_devlon" unitID="sos.ip_devices_memcard_sd_devlon" bldFile="\ncp_sw\corecom\bbc_components\memory\memcard\rapu\devlon70" mrp=""/>
+			<unit name="display_chipset" unitID="sos.display_chipset" bldFile="\ncp_sw\core7.0\IVE3_Engine\IVE3_rapu_drivers\display\display_chipset_drv_ive_bc" mrp=""/>
+
+			<unit name="vcdriver" unitID="sos.vcdriver" bldFile="\ncp_sw\core7.0\IVE3_Engine\IVE3_rapu_drivers\interface\vcdriver\group" mrp=""/>
+			<unit name="vchi" unitID="sos.vchi" bldFile="\ncp_sw\core7.0\IVE3_Engine\IVE3_rapu_drivers\interface\vchi" mrp=""/>
+			<unit name="rmi" unitID="sos.rmi" bldFile="\ncp_sw\core7.0\IVE3_Engine\IVE3_rapu_drivers\interface\rmi" mrp=""/>
+			<unit name="test_logger" unitID="sos.test_logger" bldFile="\ncp_sw\core7.0\IVE3_Engine\IVE3_rapu_drivers\test\logger" mrp=""/>
+			<unit name="dispcommanddrv" unitID="sos.dispcommanddrv" bldFile="\ncp_sw\core7.0\IVE3_Engine\IVE3_rapu_drivers\display\dispcommanddrv" mrp=""/>
+			<unit name="tv_out" unitID="sos.tv_out" bldFile="\ncp_sw\core7.0\IVE3_Engine\IVE3_rapu_drivers\display\tv_out" mrp=""/>
+			<unit name="vc_dispman" unitID="sos.vc_dispman" bldFile="\ncp_sw\core7.0\IVE3_Engine\IVE3_rapu_drivers\display\vc_dispman\group" mrp=""/>
+			<unit name="dgsw_s60display_group_common" unitID="sos.dgsw_s60display_group_common" bldFile="\ncp_sw\corecom\dgsw_s60display\group_common" mrp=""/>
+			<unit name="dgsw_s60display_group_variation" unitID="sos.dgsw_s60display_group_variation" bldFile="\ncp_sw\corecom\dgsw_s60display\group_variation" mrp=""/>
+			<unit name="cts79" unitID="sos.cts79" bldFile="\ncp_sw\corecom\dgsw_s60display\group_variation\cts79" mrp=""/>
+			<unit name="isaaccessdriver" unitID="sos.isaaccessdriver" bldFile="\ncp_sw\corecom\modemadaptation_ext\connectivitylayer_ext\isaaccessdriver\group" mrp=""/>
+			<unit name="ist" unitID="sos.ist" bldFile="\ncp_sw\corecom\modemadaptation_ext\connectivitylayer_ext\ist\group" mrp=""/>
+			<unit name="isimessage" unitID="sos.isimessage" bldFile="\ncp_sw\corecom\modemadaptation_ext\connectivitylayer_ext\isimessage\group" mrp=""/>
+			<!-- <unit name="TraceCore" unitID="sos.TraceCore" bldFile="\ncp_sw\corecom\SWATI_Symbian_Tools\Trace\TraceCore\group" mrp=""/> -->
+			<unit name="rapu" unitID="sos.rapu" bldFile="\ncp_sw\core7.0\base_rapu\rapu" mrp=""/>
+            <!-- RJC added -->
+			<unit name="rapu_flexible" unitID="sos.rapu.flexible" bldFile="\ncp_sw\core7.0\base_rapu\rapu\flexible" mrp=""/>
+			<unit name="gape" unitID="sos.gape" bldFile="\ncp_sw\corecom\base_components\gape\group" mrp=""/>
+			<unit name="srawfs" unitID="sos.srawfs" bldFile="\ncp_sw\corecom\bbc_components\memory\srawfs\group" mrp=""/>
+			<unit name="rebootdrv" unitID="sos.rebootdrv" bldFile="\ncp_sw\corecom\modemadaptation_ext\adaptationlayer_ext\rebootdriver\group" mrp=""/>
+			<unit name="vcbufmanx" unitID="sos.vcbufmanx" bldFile="\ncp_sw\core7.0\IVE3_Engine\IVE3_rapu_drivers\interface\bufmanx" mrp=""/>
+            
+		</module>
+	</layer>
+	
+	<layer name="api_test_layer">
+		<module name="KHS_Test_E32test"> 
+			<unit name="e32test_dll" unitID="sos.e32test_dll" bldFile="\sf\os\kernelhwsrv\kerneltest\e32test\dll\oe\group" mrp=""/>
+			<unit name="e32test" unitID="sos.e32test" bldFile="\sf\os\kernelhwsrv\kerneltest\e32test\group" mrp="\sf\os\kernelhwsrv\kerneltest\e32test\groupbase_e32test.mrp"/>
+			<unit name="e32test_resourceman_acctst" unitID="sos.e32test_resourceman_acctst" bldFile="\sf\os\kernelhwsrv\kerneltest\e32test\resourceman\acctst" mrp=""/>
+			<unit name="e32test_otgdi" unitID="sos.e32test_otgdi" bldFile="\sf\os\kernelhwsrv\kerneltest\e32test\usbho\t_otgdi" mrp=""/>
+			<unit name="e32test_usbdi" unitID="sos.e32test_usbdi" bldFile="\sf\os\kernelhwsrv\kerneltest\e32test\usbho\t_usbdi" mrp=""/>
+		</module> 
+
+		<module name="KHS_Test_F32test"> 
+			<unit name="f32test" unitID="sos.f32test" bldFile="\sf\os\kernelhwsrv\kerneltest\f32test\group" mrp="\sf\os\kernelhwsrv\kerneltest\f32test\group\base_f32test.mrp"/>
+			<unit name="f32test_loader" unitID="sos.f32test_loader" bldFile="\sf\os\kernelhwsrv\kerneltest\f32test\loader" mrp="\sf\os\kernelhwsrv\kerneltest\f32test\loader\base_loader.mrp"/>
+			<unit name="f32test_rofs" unitID="sos.f32test_rofs" bldFile="\sf\os\kernelhwsrv\kerneltest\f32test\rofs" mrp=""/>
+			<unit name="f32test_shostmassstorage" unitID="sos.f32test_shostmassstorage" bldFile="\sf\os\kernelhwsrv\kerneltest\f32test\shostmassstorage" mrp=""/>
+			<unit name="f32test_tools" unitID="sos.f32test_tools" bldFile="\sf\os\kernelhwsrv\kerneltest\f32test\tools" mrp=""/>
+		</module>
+
+        <!--
+		<module name="KHS_Test_SDIOTest"> 
+			<unit name="sdiotest" unitID="sos.sdiotest" bldFile="\sf\os\kernelhwsrv\kerneltest\sdiotest" mrp="\sf\os\kernelhwsrv\kerneltest\sdiotest\base_sdiotests.mrp"/>
+			<unit name="sdiotest_restricted" unitID="sos.sdiotest_restricted" bldFile="\sf\os\kernelhwsrv\kerneltest\sdiotest_restricted" mrp="\sf\os\kernelhwsrv\kerneltest\sdiotest_restricted\base_sdiotests_restricted.mrp"/>
+		</module>
+
+
+		<module name="BSP_Test_Emulator"> 
+			<unit name="emulatorbsp_test" unitID="sos.emulatorbsp_test" bldFile="\sf\os\boardsupport\emulator\emulatorbsp\test" mrp=""/>
+		</module>
+		<module name="BSP_Test_NaviEngine"> 
+			<unit name="navienginebsp_ne1_tb_test" unitID="sos.navienginebsp_ne1_tb_test" bldFile="\sf\os\boardsupport\naviengine\navienginebsp\ne1_tb\test" mrp=""/>
+			<unit name="navienginebspflexible_test" unitID="sos.navienginebspflexible_test" bldFile="\sf\os\boardsupport\naviengine\navienginebspflexible\test" mrp=""/>
+		</module>
+		<module name="BSP_Test_OMAPH2"> 
+			<unit name="omaph2bsp_h2_test" unitID="sos.omaph2bsp_h2_test" bldFile="\sf\os\boardsupport\omaph2\omaph2bsp\h2\test" mrp=""/>
+		</module>
+		-->
+
+		<module name="BSP_Test_OMAP3Variants"> 
+			<unit name="34xx_sdp_flexible_test" unitID="sos.34xx_sdp_flexible_test" bldFile="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\34xx_sdp\flexible\test" mrp=""/>
+			<unit name="34xx_sdp_test" unitID="sos.34xx_sdp_test" bldFile="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\34xx_sdp\test" mrp=""/>
+			<unit name="lab_test" unitID="sos.lab_test" bldFile="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\lab\test" mrp=""/>
+		</module>
+		<module name="BSP_Test_OMAPH4"> 
+			<unit name="omaph4bsp_h4_test" unitID="sos.omaph4bsp_h4_test" bldFile="\sf\os\boardsupport\omaph4\omaph4bsp\h4\test" mrp=""/>
+			<unit name="omaph4bsp_h4_flexible_test" unitID="sos.omaph4bsp_h4_flexible_test" bldFile="\sf\os\boardsupport\omaph4\omaph4bsp\h4\flexible\test" mrp=""/>
+		</module>
+	</layer>
+  </systemModel>
+</SystemDefinition>

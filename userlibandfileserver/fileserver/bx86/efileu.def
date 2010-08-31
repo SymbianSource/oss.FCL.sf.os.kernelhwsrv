@@ -241,4 +241,6 @@ EXPORTS
 	?DriveInfo@CFileSystem@@UBEXAAVTDriveInfo@@H@Z @ 240 NONAME ; public: virtual void __thiscall CFileSystem::DriveInfo(class TDriveInfo &,int)const 
 	?GetDriveInfo@@YAXAAVTDriveInfo@@H@Z @ 241 NONAME ; void __cdecl GetDriveInfo(class TDriveInfo &,int)
 	?Volume@RFsPlugin@@QBEHAAVTVolumeInfo@@H@Z @ 242 NONAME ; public: int __thiscall RFsPlugin::Volume(class TVolumeInfo &,int)const 
-	?DirectIOMode@CFileCB@@QAEHABVRMessagePtr2@@@Z @ 243 NONAME ; int CFileCB::DirectIOMode(class RMessagePtr2 const &)
+	?IsSequentialMode@CFileCB@@QBEHXZ @ 243 NONAME ; public: int __thiscall CFileCB::IsSequentialMode(void)const 
+	?DirectIOMode@CFileCB@@QAEHABVRMessagePtr2@@@Z @ 244 NONAME ; int CFileCB::DirectIOMode(class RMessagePtr2 const &)
+

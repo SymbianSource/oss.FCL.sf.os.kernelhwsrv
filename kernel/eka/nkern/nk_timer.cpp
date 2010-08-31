@@ -153,7 +153,6 @@ EXPORT_C TInt NTimer::Again(TInt aTime)
 // Wait aTime from last trigger time - used for periodic timers
 //
 	{
-	__NK_ASSERT_DEBUG(aTime>0);
 	TInt irq=NKern::DisableAllInterrupts();
 	if (iState!=EIdle)
 		{

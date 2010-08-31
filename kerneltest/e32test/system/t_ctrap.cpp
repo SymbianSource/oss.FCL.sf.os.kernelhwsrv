@@ -39,6 +39,8 @@
 // - Test that the Cleanup stack can go re-entrant.
 // - Ensure that the stack is properly balanced with and without
 // leaving.
+// - Test creating cleanup with CCleanup::NewL in normal
+// memory conditions and condition where heap is full (panic)
 // Platforms/Drives/Compatibility:
 // All.
 // Assumptions/Requirement/Pre-requisites:
@@ -55,13 +57,17 @@
 #include <e32def.h>
 #include <e32def_private.h>
 
+#if defined(_DEBUG)
+	const TInt KInitialCount=2;
+	const TInt KInitialCountAll=3;
+#endif
 
-const TInt KInitialCount=2;
-const TInt KInitialCountAll=3;
 const TInt KLeaveValue=0x12345678;
 const TInt KMaxAlloc=6;	
+const TInt KTableSize = 1000;
 
 static const TInt KHeapSize = 0x2000;
+
 
 enum TWhat {EPop,EPopAndDestroy,EMulti,ENull};
 
@@ -106,12 +112,10 @@ LOCAL_D CBufFlat* gP2;
 
 LOCAL_C void ReallocateStackL()
 	{
-	TInt n = 0;
 	for(TInt i = 0; i < KMaxAlloc; ++i)
 		{
-		HBufC *p1 = HBufC::NewLC(4);   //Stack re-allocation will be performed due to the additional objects pushed
+		(void)HBufC::NewLC(4);   //Stack re-allocation will be performed due to the additional objects pushed
 									   //into the cleanup stack
-		n = p1->Length();			   //include this line to avoid warnigs for unused "p1" variable
 		}
 	test.Printf(_L("ReallocateStackL(): PopAndDestroy KMaxAlloc pointers\n"));
 	CleanupStack::PopAndDestroy(KMaxAlloc);
@@ -130,12 +134,10 @@ CTest3::~CTest3()
 	{
 	RDebug::Printf("~CTest3(): Modify Cleanup stack by pushing items");
 	
-	TInt n = 0;
 	for(TInt i = 0; i < KMaxAlloc; ++i)
 		{
-		HBufC *p1 = HBufC::NewLC(4);   //Stack re-allocation will be performed due to the additional objects pushed
+		HBufC::NewLC(4);   //Stack re-allocation will be performed due to the additional objects pushed
 									   //into the cleanup stack
-		n = p1->Length();			   //include this line to avoid warnigs for unused "p1" variable
 		}
 	}
 
@@ -148,12 +150,10 @@ LOCAL_C void ModifyStack()
 	CleanupStack::PopAndDestroy();
 	}
 
-LOCAL_C TInt PanicStackModifiedFn(TAny* aNopFn)
+LOCAL_C TInt PanicStackModifiedFn(TAny* /*aNopFn*/)
 	{
 	__UHEAP_MARK;
 	CTrapCleanup* cleanup = CTrapCleanup::New();
-
-	aNopFn = NULL;		//avoid warnings for unused "aNopFn" variable
 
 	TInt err = KErrNoMemory;
 
@@ -1091,9 +1091,11 @@ LOCAL_C void testSpecialCaseCleanup()
 // when we do the cleanup. This test only works in debug mode.
 //
 	__UHEAP_FAILNEXT(1);
-	TRAPD(r,pC->PushL(p6));
 #if defined(_DEBUG)
+	TRAPD(r,pC->PushL(p6));
 	test(r==KErrNoMemory);
+#else
+	TRAP_IGNORE(pC->PushL(p6));
 #endif
 	__UHEAP_CHECK(KInitialCount+6);
 	pC->PopAndDestroyAll();
@@ -1300,7 +1302,7 @@ LOCAL_C void reentrantCleanup(TAny*)
 // A cleanup operation which uses a trap harness and the cleanup stack
 //
 	{
-	TRAPD(ignore,useCleanupStackL())
+	TRAP_IGNORE(useCleanupStackL());
 	}
 
 LOCAL_C void addReentrantItemL()
@@ -1424,7 +1426,7 @@ LOCAL_C void testAutoClose()
 	test.Next(_L("Check the object has closed"));
 	__KHEAP_CHECK(0);
 
-	TRAPD(r, testAutoCloseL());
+	TRAP_IGNORE(testAutoCloseL());
 	test.Next(_L("Check object has been closed and cleaned up after leave"));
 	__KHEAP_MARKEND;
 	test.End();
@@ -1540,6 +1542,70 @@ void testTrapIgnore()
 	test.End();
 	}
 
+void testCCleanupNewL()
+	{
+	// don't want just in time debugging as we trap panics
+	TBool justInTime=User::JustInTime(); 
+	User::SetJustInTime(EFalse); 
+
+	// no need to test otherwise, since this calls only
+	// CCleanup::New and that has been tested.
+	test.Start(_L("Create cleanup NewL"));
+	CCleanup* pC=CCleanup::NewL();
+	test(pC!=NULL);
+	delete pC;
+
+	TAny* ptrTable[KTableSize];
+	TInt allocSize=sizeof(CCleanup);
+	TAny* ptr=0;
+
+	__UHEAP_MARK;
+
+	TInt i=0;
+	// first alloc 4Kb bits
+	do
+		{
+		ptr=User::Alloc(0x1000);
+		if(ptr!=NULL)
+			{
+			ptrTable[i]=ptr;
+			i++;
+			}
+		}
+		while (ptr!=NULL && i<KTableSize);
+
+	// then eat memory with size of CCleanup object granurality
+	do
+		{
+		ptr=User::Alloc(allocSize);
+		if(ptr!=NULL)
+			{
+			ptrTable[i]=ptr;
+			i++;
+			}
+		}
+		while (ptr!=NULL && i<KTableSize);
+	
+	i--; // last one failed, so lets adjust this to last successfull entry
+
+	TInt r=KErrNone;
+	test.Next(_L("Create cleanup NewL while no room in heap"));
+	TRAP(r,pC=CCleanup::NewL());
+	test_Equal(KErrNoMemory,r);
+
+	for (;i>=0;i--)
+		{
+		User::Free(ptrTable[i]);
+		}
+	
+	__UHEAP_MARKEND;
+
+	//restore settings
+	User::SetJustInTime(justInTime); 
+
+	test.End();
+	}
+
 GLDEF_C TInt E32Main()
     {
 	test.Title();
@@ -1598,6 +1664,11 @@ GLDEF_C TInt E32Main()
 
 	test.Next(_L("Test TRAP_IGNORE"));
 	testTrapIgnore();
+
+	test.Next(_L("Test CCleanup::NewL"));
+	testCCleanupNewL();
+
+	delete pT;
 
 	test.End();
 	return(0);

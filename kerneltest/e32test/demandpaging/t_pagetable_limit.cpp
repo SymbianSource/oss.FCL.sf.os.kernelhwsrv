@@ -33,8 +33,23 @@
 #include <hal.h>
 
 #include "t_dpcmn.h"
+#include "../mmu/freeram.h"
 
 RTest test(_L("T_PAGETABLE_LIMIT"));
+
+// The flexible memory model reserves 0xF800000-0xFFF00000 for page tables, which allows 130,048
+// pages tables.
+//
+// We attempt to map 40 * 40 * 100 == 160,000 page tables.
+// 
+// So that the limit is reached in the middle, half the chunks are mapped as paged and half as
+// unpaged.
+
+const TUint KPageTablesPerChunk = 40;
+const TUint KChunksPerProcess = 40;
+const TUint KNumProcesses = 100;
+
+const TUint KSizeMappedByPageTable = 1024 * 1024;  // the amount of RAM mapped by one page table
 
 
 _LIT(KClientPtServerName, "CClientPtServer");
@@ -46,6 +61,7 @@ enum TClientMsgType
 	EClientDisconnect = -2,
 	EClientGetChunk = 0,
 	EClientReadChunks = 1,
+	EClientGetParentProcess = 2,
 	};
 
 class RDataPagingSession : public RSessionBase
@@ -57,176 +73,244 @@ public:
 		}
 	TInt PublicSendReceive(TInt aFunction, const TIpcArgs &aPtr)
 		{
-		return (SendReceive(aFunction, aPtr));
-		}
-	TInt PublicSend(TInt aFunction, const TIpcArgs &aPtr)
-		{
-		return (Send(aFunction, aPtr));
+		return SendReceive(aFunction, aPtr);
 		}
 	};
 
+#define CLIENT_TEST_IMPL(condition, code, line)			\
+	if (!(condition))									\
+		{												\
+		RDebug::Printf("Test %s failed at line %d");	\
+		r = (code);										\
+		goto exit;										\
+		}
+
+#define CLIENT_TEST(condition, code) CLIENT_TEST_IMPL(condition, code, __LINE__)
 
 TInt ClientProcess(TInt aLen)
 	{
-	// Read the command line to get the number of chunk to map and whether or 
-	// not to access their data.
+	// Read the command line to get the number of chunk to map and whether or not to access their
+	// data.
 	HBufC* buf = HBufC::New(aLen);
 	test(buf != NULL);
 	TPtr ptr = buf->Des();
 	User::CommandLine(ptr);
-
 	TLex lex(ptr);
+
+	RChunk* chunks = NULL;
+	RDataPagingSession session;
+	RProcess parent;
+	TRequestStatus parentStatus;
+	TInt offset = 0;
+	TInt i;
+	
 	TInt chunkCount;
 	TInt r = lex.Val(chunkCount);
-	test_KErrNone(r);
+	CLIENT_TEST(r == KErrNone, r);	
 	lex.SkipSpace();
+	chunks = new RChunk[chunkCount];
+	CLIENT_TEST(chunks, KErrNoMemory);
 
 	TBool accessData;
 	r = lex.Val(accessData);
-	test_KErrNone(r);
+	CLIENT_TEST(r == KErrNone, r);
 
+	r = session.CreateSession(KClientPtServerName, 1);
+	CLIENT_TEST(r == KErrNone, r);
 
-	RDataPagingSession session;
-	test_KErrNone(session.CreateSession(KClientPtServerName, 1));
-
-	RChunk* chunks = new RChunk[chunkCount];
-	for (TInt i = 0; i < chunkCount; i++)
+	r = parent.SetReturnedHandle(session.PublicSendReceive(EClientGetParentProcess, TIpcArgs()));
+	CLIENT_TEST(r == KErrNone, r);
+	
+	for (i = 0; i < chunkCount; i++)
 		{
-		TInt r = chunks[i].SetReturnedHandle(session.PublicSendReceive(EClientGetChunk, TIpcArgs(i)));
+		r = chunks[i].SetReturnedHandle(session.PublicSendReceive(EClientGetChunk, TIpcArgs(i)));
 		if (r != KErrNone)
 			{
-			test.Printf(_L("Failed to create a handle to the server's chunk r=%d\n"), r);
-			for (TInt j = 0; j < i; j++)
-				chunks[j].Close();
-			session.Close();
-			return r;
+			RDebug::Printf("Failed to create a handle to chunk %d r=%d", i, r);
+			goto exit;
 			}
-		test_Value(chunks[i].Size(), chunks[i].Size() >= gPageSize);
+		CLIENT_TEST(chunks[i].Size() >= gPageSize, KErrGeneral);
 		}
-	if (!accessData)
+
+	// Logon to parent process
+	parent.Logon(parentStatus);
+
+	// Touch each mapped page of all of the chunks.
+	do
 		{
-		// Touch the 1st page of each of the chunks.
 		for (TInt i = 0; i < chunkCount; i++)
 			{
-			// Write the chunk data from top to bottom of the chunk's first page.
-			TUint8* base = chunks[i].Base();
-			TUint8* end = base + gPageSize - 1;
-			*base = *end;
-			}
-		// Tell parent we've touched each chunk.
-		TInt r =  (TThreadId)session.PublicSendReceive(EClientReadChunks,TIpcArgs());	// Assumes id is only 32-bit.
-		test_KErrNone(r);
-		for(;;)
-			{// Wake up every 100ms to be killed by the main process.
-			User::After(100000);
-			}
-		}
-	else
-		{
-		for (;;)
-			{
-			TInt offset = 0;
-			for (TInt i = 0; i < chunkCount; i++)
+			for (TUint j = 0 ; j < KPageTablesPerChunk ; j++)
 				{
 				// Write the chunk data from top to bottom of the chunk's first page.
-				TUint8* base = chunks[i].Base();
+				TUint8* base = chunks[i].Base() + j * KSizeMappedByPageTable;
 				TUint8* end = base + gPageSize - 1;
 				*(base + offset) = *(end - offset);
+
+				User::After(0);
+
+				// Check whether main process is still running
+				if (parentStatus != KRequestPending)
+					{
+					// if we get here the test failed and the main process exited without killing
+					// us, so just exit quietly
+					User::WaitForRequest(parentStatus);
+					r = KErrGeneral;
+					goto exit;
+					}
 				}
-			if (++offset >= (gPageSize >> 1))
-				offset = 0;
 			}
+		offset = (offset + 1) % (gPageSize / 2);
 		}
+	while (accessData);
+
+	// Tell parent we've touched each page.
+	r = (TThreadId)session.PublicSendReceive(EClientReadChunks,TIpcArgs());	
+	CLIENT_TEST(r == KErrNone, r);
+		
+	// Wait till we get killed by the main process or the main process dies
+	User::WaitForRequest(parentStatus);
+	// if we get here the test failed and the main process exited without killing us, so just exit
+	r = KErrGeneral;
+
+exit:
+	if (chunks)
+		{
+		for (TInt i = 0 ; i < chunkCount; ++i)
+			chunks[i].Close();
+		}
+	session.Close();
+	parent.Close();
+			
+	return r;
 	}
 
+TInt FreeSwap()
+	{
+	SVMSwapInfo swapInfo;
+	test_KErrNone(UserSvr::HalFunction(EHalGroupVM, EVMHalGetSwapInfo, &swapInfo, 0));
+	return swapInfo.iSwapFree;
+	}
+
+void PrintFreeRam()
+	{
+	test.Printf(_L("%d KB RAM / %d KB swap free\n"), FreeRam() / 1024, FreeSwap() / 1024);
+	}
+
+void CreateChunk(RChunk& aChunk, TInt aChunkIndex, TInt aPageTables, TBool aPaged)
+	{
+	// Creates a global chunk.
+	//
+	// The chunk uses KPageTablesPerChunk page tables by committing that number of pages at 1MB
+	// intervals.  Its max size is set so that it is not a multiple of 1MB and hence the FMM will
+	// use a fine mapping objects whose page tables are not shared between processes.
+	
+	test.Printf(_L("  creating chunk %d: "), aChunkIndex);
+	PrintFreeRam();
+	
+	TChunkCreateInfo createInfo;
+	createInfo.SetDisconnected(0, 0, aPageTables * KSizeMappedByPageTable + gPageSize);
+	createInfo.SetPaging(aPaged ? TChunkCreateInfo::EPaged : TChunkCreateInfo::EUnpaged);
+	TBuf<32> name;
+	name.AppendFormat(_L("t_pagetable_limit chunk %d"), aChunkIndex);
+	createInfo.SetGlobal(name);
+	test_KErrNone(aChunk.Create(createInfo));
+	for (TInt i = 0 ; i < aPageTables ; ++i)
+		test_KErrNone(aChunk.Commit(i * KSizeMappedByPageTable, gPageSize));
+	}
+
+void CreateProcess(RProcess& aProcess, TInt aProcessIndex, TInt aNumChunks, TBool aAccessData)
+	{
+	test.Printf(_L("  creating process %d: "), aProcessIndex);
+	PrintFreeRam();
+	
+	TBuf<80> args;
+	args.AppendFormat(_L("%d %d"), aNumChunks, aAccessData);
+	test_KErrNone(aProcess.Create(KClientProcessName, args));
+	aProcess.SetPriority(EPriorityLow);
+	}
 
 void TestMaxPt()
 	{
-	// Flexible memory model reserves 0xF800000-0xFFF00000 for page tables
-	// this allows 130,048 pages tables.  Therefore mapping 1000 one 
-	// page chunks into 256 processes would require 256,000 page tables, i.e.
-	// more than enough to hit the limit.  So that the limit is reached in the middle,
-	// map 500 unpaged and 500 paged chunks in each process.
-	const TUint KNumChunks = 1000;
-	const TUint KPagedChunksStart = (KNumChunks >> 1);
-	const TUint KNumProcesses = 256;
+	test.Printf(_L("Waiting for system idle and kernel cleanup\n"));
+	// If this test was run previously, there may be lots of dead processes waiting to be cleaned up
+	TInt r;
+	while((r = FreeRam(10 * 1000)), r == KErrTimedOut)
+		{
+		test.Printf(_L("  waiting: "));
+		PrintFreeRam();
+		}
+
+	// Remove the maximum limit on the cache size as the test requires that it can
+	// allocate as many page tables as possible but without stealing any pages as
+	// stealing pages may indirectly steal paged page table pages.
+	test.Printf(_L("Set paging cache max size unlimited\n"));
+	TUint minCacheSize, maxCacheSize, currentCacheSize;
+	test_KErrNone(DPTest::CacheSize(minCacheSize,maxCacheSize,currentCacheSize));
+	test_KErrNone(DPTest::SetCacheSize(minCacheSize, KMaxTUint));
+
 	const TInt KMinFreeRam = (1000 * gPageSize) + (130048 * (gPageSize>>2));
-	TInt freeRam;
-	HAL::Get(HALData::EMemoryRAMFree, freeRam);
+
+	// Ensure enough RAM available
+	PrintFreeRam();
+	TInt freeRam = FreeRam();
 	if (freeRam < KMinFreeRam)
 		{
 		test.Printf(_L("Only 0x%x bytes of free RAM not enough to perform the test.  Skipping test.\n"), freeRam);
 		return;
 		}
 
-	// Remove the maximum limit on the cache size as the test requires that it can
-	// allocate as many page tables as possible but without stealing any pages as
-	// stealing pages may indirectly steal paged page table pages.
-	TUint minCacheSize, maxCacheSize, currentCacheSize;
-	DPTest::CacheSize(minCacheSize,maxCacheSize,currentCacheSize);
-	test_KErrNone(DPTest::SetCacheSize(minCacheSize, KMaxTUint));
-
+	test.Printf(_L("Start server\n"));
 	RServer2 ptServer;
-	TInt r = ptServer.CreateGlobal(KClientPtServerName);
+	r = ptServer.CreateGlobal(KClientPtServerName);
 	test_KErrNone(r);
 
-	// Create the global unpaged chunks.  They have one page committed
-	// but have a maximum size large enough to prevent their page tables being
-	// shared between the chunks.  On arm with 4KB pages each page table maps 1MB
-	// so make chunk 1MB+4KB so chunk requires 2 page tables and is not aligned on
-	// a 1MB boundary so it is a fine memory object.
-	const TUint KChunkSize = (1024 * 1024) + gPageSize;
-	RChunk* chunks = new RChunk[KNumChunks];
-	TChunkCreateInfo createInfo;
-	createInfo.SetNormal(gPageSize, KChunkSize);
-	createInfo.SetGlobal(KNullDesC);
-	createInfo.SetPaging(TChunkCreateInfo::EUnpaged);
+	test.Printf(_L("Create chunks\n"));
+	const TUint KPagedChunksStart = (KChunksPerProcess >> 1);
+	RChunk* chunks = new RChunk[KChunksPerProcess];
+	test_NotNull(chunks);
 	TUint i = 0;
-	for (; i < KPagedChunksStart; i++)
-		{
-		r = chunks[i].Create(createInfo);
-		test_KErrNone(r);
-		}
-	// Create paged chunks.
-	createInfo.SetPaging(TChunkCreateInfo::EPaged);
-	for (; i< KNumChunks; i++)
-		{
-		r = chunks[i].Create(createInfo);
-		test_KErrNone(r);
-		}
+	for (i = 0 ; i< KChunksPerProcess; i++)
+		CreateChunk(chunks[i], i, KPageTablesPerChunk, i >= KPagedChunksStart);
 
 	// Start remote processes, giving each process handles to each chunk.
+	test.Printf(_L("Start remote processes\n"));
 	RProcess* processes = new RProcess[KNumProcesses];
-	RMessage2 ptMessage;
-	TUint processIndex = 0;
-	TUint processLimit = 0;
+	test_NotNull(processes);
+	TRequestStatus* statuses = new TRequestStatus[KNumProcesses];
+	test_NotNull(statuses);
+	TUint processIndex = 0;	
 	for (; processIndex < KNumProcesses; processIndex++)
 		{
 		// Start the process.
-		test.Printf(_L("Creating process %d\n"), processIndex);
-		TBuf<80> args;
-		args.AppendFormat(_L("%d %d"), KNumChunks, EFalse);
-		r = processes[processIndex].Create(KClientProcessName, args);
-		test_KErrNone(r);
-		TRequestStatus s;
-		processes[processIndex].Logon(s);
-		test_Equal(KRequestPending, s.Int());
+		CreateProcess(processes[processIndex], processIndex, KChunksPerProcess, EFalse);
+		
+		// logon to process
+		processes[processIndex].Logon(statuses[processIndex]);
+		test_Equal(KRequestPending, statuses[processIndex].Int());
 		processes[processIndex].Resume();
 
+		// wait for connect message
+		RMessage2 ptMessage;
 		ptServer.Receive(ptMessage);
 		test_Equal(EClientConnect, ptMessage.Function());
 		ptMessage.Complete(KErrNone);
-		TInt func = EClientGetChunk;
+
+		// pass client a handle to this process
+		ptServer.Receive(ptMessage);
+		test_Equal(EClientGetParentProcess, ptMessage.Function());
+		ptMessage.Complete(RProcess());
+
+		// pass client chunk handles
+		TInt func;
 		TUint chunkIndex = 0;
-		for (; chunkIndex < KNumChunks && func == EClientGetChunk; chunkIndex++)
+		for (; chunkIndex < KChunksPerProcess ; chunkIndex++)
 			{// Pass handles to all the unpaged chunks to the new process.
 			ptServer.Receive(ptMessage);
 			func = ptMessage.Function();
-			if (func == EClientGetChunk)
-				{
-				TUint index = ptMessage.Int0();
-				ptMessage.Complete(chunks[index]);
-				}
+			if (func != EClientGetChunk)
+				break;
+			ptMessage.Complete(chunks[ptMessage.Int0()]);
 			}
 		if (func != EClientGetChunk)
 			{
@@ -234,9 +318,10 @@ void TestMaxPt()
 			// sending a disconnect message in the process.
 			test_Equal(EClientDisconnect, func);
 			// Should only fail when mapping unpaged chunks.
-			test_Value(chunkIndex, chunkIndex < (KNumChunks >> 1));
+			test_Value(chunkIndex, chunkIndex < (KChunksPerProcess >> 1));
 			break;
 			}
+		
 		// Wait for the process to access all the chunks and therefore 
 		// allocate the paged page tables before moving onto the next process.
 		ptServer.Receive(ptMessage);
@@ -245,45 +330,44 @@ void TestMaxPt()
 		ptMessage.Complete(KErrNone);
 
 		// Should have mapped all the required chunks.
-		test_Equal(KNumChunks, chunkIndex);
+		test_Equal(KChunksPerProcess, chunkIndex);
 		}
+	
 	// Should hit page table limit before KNumProcesses have been created.
 	test_Value(processIndex, processIndex < KNumProcesses - 1);
-	processLimit = processIndex;
+	TUint processLimit = processIndex;
 
-	// Now create more processes to access paged data even though the page table 
-	// address space has been exhausted.  Limit to 10 more processes as test takes 
-	// long enough already.
+	// Now create more processes to access paged data even though the page table address space has
+	// been exhausted.  Limit to 10 more processes as test takes long enough already.
+	test.Printf(_L("Start accessor processes\n"));
 	processIndex++;
 	TUint excessProcesses = KNumProcesses - processIndex;
 	TUint pagedIndexEnd = (excessProcesses > 10)? processIndex + 10 : processIndex + excessProcesses;
 	for (; processIndex < pagedIndexEnd; processIndex++)
 		{
-		// Start the process.
-		test.Printf(_L("Creating process %d\n"), processIndex);
-		TBuf<80> args;
-		args.AppendFormat(_L("%d %d"), KNumChunks-KPagedChunksStart, ETrue);
-		r = processes[processIndex].Create(KClientProcessName, args);
-		if (r != KErrNone)
-			{// Have hit the limit of processes.
-			processIndex--;
-			// Should have created at least one more process.
-			test_Value(processIndex, processIndex > processLimit);
-			break;
-			}
-		TRequestStatus s;
-		processes[processIndex].Logon(s);
-		test_Equal(KRequestPending, s.Int());
+		// start the process.
+		CreateProcess(processes[processIndex], processIndex, KChunksPerProcess-KPagedChunksStart, ETrue);
+
+		// logon to process
+		processes[processIndex].Logon(statuses[processIndex]);
+		test_Equal(KRequestPending, statuses[processIndex].Int());
 		processes[processIndex].Resume();
 
+		// wait for connect message
+		RMessage2 ptMessage;
 		ptServer.Receive(ptMessage);
 		test_Equal(EClientConnect, ptMessage.Function());
 		ptMessage.Complete(KErrNone);
 
+		// pass client a handle to this process
+		ptServer.Receive(ptMessage);
+		test_Equal(EClientGetParentProcess, ptMessage.Function());
+		ptMessage.Complete(RProcess());
+		
 		TInt func = EClientGetChunk;
 		TUint chunkIndex = KPagedChunksStart;
-		for (; chunkIndex < KNumChunks && func == EClientGetChunk; chunkIndex++)
-			{// Pass handles to all the unpaged chunks to the new process.
+		for (; chunkIndex < KChunksPerProcess && func == EClientGetChunk; chunkIndex++)
+			{// Pass handles to all the paged chunks to the new process.
 			ptServer.Receive(ptMessage);
 			func = ptMessage.Function();
 			if (func == EClientGetChunk)
@@ -301,30 +385,36 @@ void TestMaxPt()
 			}
 
 		// Should have mapped all the required chunks.
-		test_Equal(KNumChunks, chunkIndex);
+		test_Equal(KChunksPerProcess, chunkIndex);
 		}
+	
 	// If we reached the end of then ensure that we kill only the running processes.
 	if (processIndex == pagedIndexEnd)
 		processIndex--;
+
+	// Let the accessor processes run awhile
+	test.Printf(_L("Waiting...\n"));
+	User::After(10 * 1000000);
+	
 	// Kill all the remote processes
+	test.Printf(_L("Killing processes...\n"));
 	for(TInt j = processIndex; j >= 0; j--)
 		{
-		test.Printf(_L("killing process %d\n"), j);
-		TRequestStatus req;
-		processes[j].Logon(req);
-		if (req == KRequestPending)
-			{
+		test.Printf(_L("  killing process %d\n"), j);
+		if (statuses[j] == KRequestPending)
 			processes[j].Kill(KErrNone);
-			User::WaitForRequest(req);
-			}
 		processes[j].Close();
+		User::WaitForRequest(statuses[j]);
 		}
-	delete[] processes;
+	delete [] processes;
+	delete [] statuses;
+	
 	// Close the chunks.
-	for (TUint k = 0; k < KNumChunks; k++)
+	for (TUint k = 0; k < KChunksPerProcess; k++)
 		chunks[k].Close();
 	delete[] chunks;
-	
+
+	// Reset live list size
 	test_KErrNone(DPTest::SetCacheSize(minCacheSize, maxCacheSize));
 	}
 

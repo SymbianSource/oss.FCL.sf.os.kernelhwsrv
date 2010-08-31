@@ -259,7 +259,7 @@ void NKern::Init0(TAny*)
 EXPORT_C TUint32 NKern::CpuTimeMeasFreq()
 	{
 #ifdef MONITOR_THREAD_CPU_TIME
-	return 1862000000;	// FIXME!!!!
+	return NKern::FastCounterFrequency();
 #else
 	return 0;
 #endif

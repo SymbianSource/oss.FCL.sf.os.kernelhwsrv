@@ -43,7 +43,7 @@ LOCAL_C void testInfo()
 // Test the HAL info.
 //
 	{
-
+	test.Next(_L("Test UserHal::MemoryInfo"));
     TInt pageSize=0;
     UserHal::PageSizeInBytes(pageSize);
 
@@ -56,55 +56,43 @@ LOCAL_C void testInfo()
 	TInt freeMem=memoryInfo.iFreeRamInBytes;
 #endif
 	TInt8* someMem = new TInt8[0x4000];
+	// make an access to each page in order to get pages actually allocated also on data paged systems
+	someMem[0]=1;
+	someMem[0x1000]=2;
+	someMem[0x2000]=3;
+	someMem[0x3000]=4;
  	UserHal::MemoryInfo(membuf);
 	delete someMem;
 #if !defined(__WINS__)
-	test(freeMem>memoryInfo.iFreeRamInBytes);
+	if (!(freeMem>memoryInfo.iFreeRamInBytes))
+		test.Printf(_L("Warning: free RAM value didn't go down"));
 #endif
 
     test.Printf(_L("Total RAM size= %- 5dKBytes      : Free RAM size   = %- 5dKBytes\n"),memoryInfo.iTotalRamInBytes/1024,memoryInfo.iFreeRamInBytes/1024);
     test.Printf(_L("Max free RAM  = %- 5dKBytes      : ROM size        = %- 5dKBytes\n"),memoryInfo.iMaxFreeRamInBytes/1024,memoryInfo.iTotalRomInBytes/1024);
 	test.Printf(_L("RAM disk size = %- 5dKBytes\n"),memoryInfo.iInternalDiskRamInBytes/1024);
 
+	test.Next(_L("Test UserHal::MachineInfo"));
+
     TMachineInfoV2Buf mbuf;
     UserHal::MachineInfo(mbuf);
     TMachineInfoV2& machineInfo=*(TMachineInfoV2*)mbuf.Ptr();
 
-        TName tn = machineInfo.iRomVersion.Name();
+    TName tn = machineInfo.iRomVersion.Name();
  	test.Printf(_L("Page Size     = %- 16d : Rom version     = %- 16S\n"),pageSize,&tn);
    	test.Printf(_L("ScreenOffsetX = %- 16d : ScreenOffsetY   = %- 16d\n"),machineInfo.iOffsetToDisplayInPixels.iX,machineInfo.iOffsetToDisplayInPixels.iY);
    
-        TBool password=EFalse; // Password::IsEnabled(); This API was removed by __SECURE_API__
+    TBool password=EFalse; // Password::IsEnabled(); This API was removed by __SECURE_API__
   
-        TPtrC t1=onOff(password);
-        TPtrC t2=yesNo(machineInfo.iBacklightPresent);
+    TPtrC t1=onOff(password);
+    TPtrC t2=yesNo(machineInfo.iBacklightPresent);
+
  	test.Printf(_L("Password      = %- 16S : BacklightPresent= %S\n"),&t1,&t2);
 	test.Printf(_L("LanguageIndex = %- 16d : KeyboardIndex   = %d\n"),machineInfo.iLanguageIndex,machineInfo.iKeyboardIndex);
 
+	test.Next(_L("Test deprecated UserHal::RomInfo API"));
 	TRomInfoV1Buf rombuf;
-	TRomInfoV1& rom=rombuf();
-	if (UserHal::RomInfo(rombuf)==KErrNone)		// KErrNotSupported in WINS
-		{
-		test.Getch();
-		TInt i, j;
-		j=0;
-		for( i=2; i<8; i++ )
-			{
-			j |= rom.iEntry[i].iSize;
-			j |= rom.iEntry[i].iWidth;
-			j |= rom.iEntry[i].iSpeed;
-			j |= (TInt)rom.iEntry[i].iType;
-			}
-		test(j==0);		// check that CS2-7 entries left blank
-		test.Printf(_L("CS0 ROM size      %08X\n"), rom.iEntry[0].iSize );
-		test.Printf(_L("CS0 ROM width     %d\n"), rom.iEntry[0].iWidth );
-		test.Printf(_L("CS0 ROM speed     %d\n"), rom.iEntry[0].iSpeed );
-		test.Printf(_L("CS0 ROM type      %d\n"), rom.iEntry[0].iType );
-		test.Printf(_L("CS1 ROM size      %08X\n"), rom.iEntry[1].iSize );
-		test.Printf(_L("CS1 ROM width     %d\n"), rom.iEntry[1].iWidth );
-		test.Printf(_L("CS1 ROM speed     %d\n"), rom.iEntry[1].iSpeed );
-		test.Printf(_L("CS1 ROM type      %d\n"), rom.iEntry[1].iType );
-		}
+	test(UserHal::RomInfo(rombuf)==KErrNotSupported); // kernel side API has been deprecated
 	}
 
 GLDEF_C TInt E32Main()
@@ -112,10 +100,10 @@ GLDEF_C TInt E32Main()
 // Display system information
 //
     {
-
 	test.Title();
+	test.Start(_L("Test UserHal info APIs"));
 	testInfo();
-    test.Getch();
+	test.End();
 	return(KErrNone);
     }
 

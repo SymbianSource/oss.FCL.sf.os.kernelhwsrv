@@ -1,0 +1,8 @@
+EXPORTS
+	CreatePhysicalDevice__Fv @ 1 NONAME R3UNUSED ; CreatePhysicalDevice(void)
+	DfcFunc__20TIicBusSlaveCallbackPv @ 2 NONAME R3UNUSED ; TIicBusSlaveCallback::DfcFunc(void *)
+	__25DIicBusChannelMasterSlaveQ214DIicBusChannel8TBusTypeQ214DIicBusChannel14TChannelDuplexP20DIicBusChannelMasterP19DIicBusChannelSlave @ 3 NONAME ; DIicBusChannelMasterSlave::DIicBusChannelMasterSlave(DIicBusChannel::TBusType, DIicBusChannel::TChannelDuplex, DIicBusChannelMaster *, DIicBusChannelSlave *)
+	__31DSimulatedIicBusChannelSlaveI2cQ214DIicBusChannel8TBusTypeQ214DIicBusChannel14TChannelDuplex @ 4 NONAME R3UNUSED ; DSimulatedIicBusChannelSlaveI2c::DSimulatedIicBusChannelSlaveI2c(DIicBusChannel::TBusType, DIicBusChannel::TChannelDuplex)
+	__32DSimulatedIicBusChannelMasterI2cQ214DIicBusChannel8TBusTypeQ214DIicBusChannel14TChannelDuplex @ 5 NONAME R3UNUSED ; DSimulatedIicBusChannelMasterI2c::DSimulatedIicBusChannelMasterI2c(DIicBusChannel::TBusType, DIicBusChannel::TChannelDuplex)
+	__37DSimulatedIicBusChannelMasterSlaveI2cQ214DIicBusChannel8TBusTypeQ214DIicBusChannel14TChannelDuplexP32DSimulatedIicBusChannelMasterI2cP31DSimulatedIicBusChannelSlaveI2c @ 6 NONAME ; DSimulatedIicBusChannelMasterSlaveI2c::DSimulatedIicBusChannelMasterSlaveI2c(DIicBusChannel::TBusType, DIicBusChannel::TChannelDuplex, DSimulatedIicBusChannelMasterI2c *, DSimulatedIicBusChannelSlaveI2c *)
+

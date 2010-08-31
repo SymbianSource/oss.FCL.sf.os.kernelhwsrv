@@ -149,11 +149,10 @@ extern "C" __NAKED__ void __ArmVectorSwi()
 	asm("beq	wait_for_any_request ");	// special case for Exec::WaitForAnyRequest
 	asm("ldr	r2, [r1, #%a0]" : : "i" _FOFF(NThread,iFastExecTable));
 	asm("ldr	r3, [r2], r12, lsr #7 ");	// r3=limit, r2->dispatch table entry
-	asm("ldr	r2, [r2] ");				// r2->kernel function
 	asm("cmp	r3, r12, lsr #9 ");			// r3-SWI number
-	__JUMP(hi,	r2);						// if SWI number valid, call kernel function
+	asm("ldrhi	pc, [r2] ");				// if SWI number valid, call kernel function
 	asm("mvn	r12, #0 ");					// put invalid SWI number into r12
-	asm("b		slow_swi ");					// go through slow SWI routine to call invalid SWI handler
+	asm("b		slow_swi ");				// go through slow SWI routine to call invalid SWI handler
 
 #ifndef __FAST_SEM_MACHINE_CODED__
 	asm("wait_for_any_request: ");
@@ -291,7 +290,7 @@ extern "C" __NAKED__ void __ArmVectorIrq()
 #ifdef BTRACE_CPU_USAGE
 	asm("ldr	r10, __BTraceCpuUsageFilter ");
 #endif
-	asm("ldr	r7, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, i_IrqNestCount));
+	asm("ldr	r7, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iIrqNestCount));
 	asm("ldrb	r0, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, iEventHandlersPending));
 	__DATA_MEMORY_BARRIER_Z__(r2);
 #ifdef BTRACE_CPU_USAGE
@@ -316,7 +315,7 @@ extern "C" __NAKED__ void __ArmVectorIrq()
 	asm("cmp	r2, #0x10 ");				// interrupted mode_usr ?
 	asm("cmpne	r2, #0x13 ");				// if not, interrupted mode_svc ?
 	asm("cmpeq	r0, #0 ");					// if mode_usr or mode_svc, is kernel locked?
-	asm("str	r7, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, i_IrqNestCount));
+	asm("str	r7, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iIrqNestCount));
 	asm("bne	irq_kernel_locked_exit ");	// if neither or if kernel locked, exit immediately
 	asm("cmp	r1, #0 ");					// If not, IDFCs/reschedule pending?
 	asm("beq	irq_kernel_locked_exit ");	// if not, exit
@@ -381,7 +380,7 @@ extern "C" __NAKED__ void __ArmVectorIrq()
 
 	asm("nested_irq_exit: ");
 	__ASM_CLI1();
-	asm("str	r7, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, i_IrqNestCount));
+	asm("str	r7, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iIrqNestCount));
 #ifdef BTRACE_CPU_USAGE
 	asm("cmp	r10, #0 ");
 	asm("blne	btrace_irq_exit ");
@@ -767,7 +766,7 @@ extern "C" __NAKED__ void __ArmVectorAbortData()
 	asm("mov	r2, r0 ");
 	asm("cmp	r11, #0 ");
 	asm("ldreq	r11, __SS0 ");
-	asm("ldr	r0, [r11, #%a0]" : : "i" _FOFF(TSubScheduler,i_Regs));	// pass in address of stored registers
+	asm("ldr	r0, [r11, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iRegs));	// pass in address of stored registers
 	asm("cmp	r0, #0 ");
 	asm("ldreq	r0, __DefaultRegs ");
 	asm("bl "	CSM_ZN3Arm9SaveStateER14SFullArmRegSet );
@@ -834,7 +833,7 @@ extern "C" __NAKED__ void send_generic_ipis(TUint32 /*aMask*/)
 	{
 	asm("movs	r0, r0, lsl #16 ");		// CPU mask into bits 16-23 - any bits set in aMask?
 	GET_RWNO_TID(ne,r3);
-	asm("ldrne	r2, [r3, #%a0]" : : "i" _FOFF(TSubScheduler, i_GicDistAddr));	// we assume i_GicDistAddr is the same for all CPUs
+	asm("ldrne	r2, [r3, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iGicDistAddr));	// we assume i_GicDistAddr is the same for all CPUs
 	__DATA_SYNC_BARRIER_Z__(r1);			// need DSB before sending any IPI
 	asm("orrne	r0, r0, #%a0" : : "i" ((TInt)GENERIC_IPI_VECTOR));
 	asm("strne	r0, [r2, #%a0]" : : "i" _FOFF(GicDistributor, iSoftIrq));	// trigger IPIs if any
@@ -853,12 +852,12 @@ extern "C" __NAKED__ void send_generic_ipis(TUint32 /*aMask*/)
 extern "C" __NAKED__ void handle_crash_ipi()
 	{
 	GET_RWNO_TID(,r0);
-	asm("ldr	r0, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_Regs));
+	asm("ldr	r0, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iRegs));
 	asm("ldr	r0, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet, iExcCode));
 	asm("cmp	r0, #0 ");
 	asm("bge	state_already_saved ");		// skip if this CPU has already saved its state (i.e. already crashed)
 	GET_RWNO_TID(,r0);
-	asm("ldr	r0, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_Regs));
+	asm("ldr	r0, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iRegs));
 	asm("bl "	CSM_ZN3Arm9SaveStateER14SFullArmRegSet );	// save machine state (NOTE: R0 trashed)
 	asm("ldr	r1, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet, iN.iFlags));	// mode on entry
 	asm("and	r1, r1, #0x1f ");

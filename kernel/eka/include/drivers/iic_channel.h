@@ -40,15 +40,17 @@ const static TInt KChannelDuplexShift= 5;
 const static TInt KChannelDuplexMask	= 0x01<<KChannelDuplexShift;
 const static TInt16 KTransCountMsBit = (TInt16)((TUint16)0x8000);
 
-const static TInt8 KMaxWaitTime = 0x21; // Maximum allowable time in milliseconds for a Slave channel to wait for a response
+const static TInt8 KMaxWaitTime = 0x7E; // Maximum allowable time in milliseconds for a Slave channel to wait for a response
 										// (from Master or Client). This constant is used to limit run-time selected values
 										// for timeouts. The value stated here is semi-arbitrary.
 
 #ifdef IIC_SIMULATED_PSL
 // In a real system, the following timeout values are likely to be excessive. However, they are available
 // for use in the test framework, to account for the processing overhead.
-const TInt KSlaveDefMWaitTime = 32;
-const TInt KSlaveDefCWaitTime = 16;
+// In particular, for the simulated master timeout tests.
+const TInt KSlaveDefMWaitTime = 125;
+const TInt KSlaveDefCWaitTime = 124;
+
 #else
 const TInt KSlaveDefMWaitTime = 1;	// Default wait time for Master timeout. PSL can use SetMasterWaitTime to override.
 const TInt KSlaveDefCWaitTime = 1;	// Default wait time for Client timeout. PSL can use SetClientWaitTime to override.
@@ -120,7 +122,6 @@ protected:
 	inline void DumpChannel();
 #endif
 protected:
-	NTimer iTimeoutTimer;	// timeout timer
 	TInt8 iChannelNumber;	// this is the Key for ordering channels in the array
 	TUint8 iFlags;			// combination of TChannelType, TChannelDuplex and TBusType
 	TInt8 iSpare1;
@@ -288,6 +289,8 @@ protected:
 	@prototype 9.6
 
 	Function to cancel the timer to check the Slave responsiveness.
+
+	Call either in a thread or an IDFC context. Do not call from an ISR.
 
 	*/
 	void CancelTimeOut();
@@ -499,6 +502,8 @@ private:
 
 	TDfc* iSlaveTimeoutDfc;
 
+	NTimer iTimeoutTimer;	// timeout timer
+
 	TInt16 iTransCount; // Count of pending transactions
 	TInt8 iChannelReady;
 	TInt8 iSpare1;
@@ -652,8 +657,13 @@ public:
 	virtual TInt Spare1(TInt aVal, TAny* aPtr1, TAny* aPtr2);
 
 	// Interface to TIicBusSlaveCallback
-	// channel-specific function to process data received/transmitted (called from NotifyClient or DFC queued from it)
-	// Must fill in the aCb object's iReturn, iRxWords and/or iTxWords using the appropriate funtions
+	//
+	// ProcessData is a channel-specific function to be provided by the PSL. Its purpose is to process
+	// data received/transmitted (called from NotifyClient or DFC queued from it). It Must fill in the
+	// aCb object's iReturn, iRxWords and/or iTxWords using the appropriate functions
+	//
+	// The functions UpdateReqTrig, StartTimerByState and StopTimer are for use by the PIL, only.
+	//
 	/**
 	@publishedPartner
 	@prototype 9.6
@@ -845,6 +855,7 @@ private:
 	TInt16 iSpare3;
 
 	TSpinLock iSpinLock;
+	NTimer iTimeoutTimer;	// timeout timer
 	TAny* iReserved1;
 	TAny* iReserved2;
 

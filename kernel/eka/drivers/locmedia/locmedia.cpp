@@ -1630,7 +1630,7 @@ EXPORT_C TInt TLocDrvRequest::CheckAndAdjustForPartition()
 //		    Otherwise the media driver adjust it internally
 		case DMediaPagingDevice::ECodePageInRequest:
 			__KTRACE_OPT(KLOCDPAGING,Kern::Printf("Adjusted Paging read request %lx@%lx",Length(),Pos()));
-			OstTraceDefExt4(OST_TRACE_CATEGORY_RND, TRACE_DEMANDPAGING, TLOCDRVREQUESTCHECKANDADJUSTFORPARTITION5, "Adjusted Paging read request length=%x:%x; position=%x:%x", (TUint) I64HIGH(Length()), (TUint) I64LOW(Length()),  (TUint) I64HIGH(Pos()), (TUint) I64LOW(Pos()));
+			OstTraceDefExt4(OST_TRACE_CATEGORY_RND, TRACE_DEMANDPAGING, TLOCDRVREQUESTCHECKANDADJUSTFORPARTITION5, "Adjusted Paging read request length=%x:%x; position=%x%:%x", (TUint) I64HIGH(Length()), (TUint) I64LOW(Length()),  (TUint) I64HIGH (Pos()), (TUint) I64LOW (Pos()));
 			if (Pos()+Length()>d.iPartitionLen)
 			    {
 				r = KErrArgument;
@@ -2654,7 +2654,7 @@ It handles the drive request encapsulated in TLocDrvRequest depending on the mes
 		}
 
 	__KTRACE_OPT(KFAIL,Kern::Printf("mdrq %d",m.Id()));
-	__KTRACE_OPT(KLOCDRV,Kern::Printf("DPrimaryMediaBase(%d)::HandleMsg state %d req %d",iMediaId,iState,m.Id()));
+	__KTRACE_OPT(KLOCDRV,Kern::Printf("DPrimaryMediaBase(%d)::HandleMsg(%08X) state %d req %d",iMediaId,&m,iState,m.Id()));
 
 	OstTraceDefExt3( OST_TRACE_CATEGORY_RND, TRACE_REQUEST, DPRIMARYMEDIABASE_HANDLEMSG2, "iMediaId=%d; iState=%d; req Id=%d", iMediaId, iState, m.Id());
 	
@@ -2754,7 +2754,7 @@ Then it completes the kernel thread message and the reference count of the threa
 */
 	{
 	OstTraceFunctionEntry1( DPRIMARYMEDIABASE_DOREQUEST_ENTRY, this );
-	__KTRACE_OPT2(KLOCDRV,KLOCDPAGING,Kern::Printf("DPrimaryMediaBase::DoRequest %d",m.Id()));
+	__KTRACE_OPT2(KLOCDRV,KLOCDPAGING,Kern::Printf("DPrimaryMediaBase(%d)::DoRequest(%08X) req %d", iMediaId, &m, m.Id()));
 	TLocDrv* pL=m.Drive();
 	DMedia* media=pL->iMedia;
 	TInt r=KErrNone;
@@ -3138,11 +3138,16 @@ void DPrimaryMediaBase::DoPartitionInfoComplete(TInt anError)
 #ifdef __DEMAND_PAGING__
 			if (DataPagingMedia(this))
 				{
-				__KTRACE_OPT(KLOCDRV,Kern::Printf("DoPartitionInfoComplete(%d) Close Media Driver aborted for data paging media %08X", this));
+				__KTRACE_OPT(KLOCDRV,Kern::Printf("DoPartitionInfoComplete() Close Media Driver aborted for data paging media %08X", this));
 				OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_DEMANDPAGING, DPRIMARYMEDIABASE_DOPARTITIONINFOCOMPLETE2, "Close Media Driver for data paging media 0x%08x", this);
 				}
 			else
 #endif
+			if (iBody->iMediaExtension)
+				{
+				__KTRACE_OPT(KLOCDRV,Kern::Printf("DoPartitionInfoComplete() Close Media Driver aborted for extension media %08X", this));
+				}
+			else
 				{
 				pM->iDriver->Close();
 				pM->iDriver=NULL;
@@ -3299,6 +3304,10 @@ void DPrimaryMediaBase::CompleteRequest(TLocDrvRequest& aMsg, TInt aResult)
 	{
 	OstTraceFunctionEntry1( DPRIMARYMEDIABASE_COMPLETEREQUEST_ENTRY, this );
 	OstTraceDefExt2(OST_TRACE_CATEGORY_RND, TRACE_REQUEST, DPRIMARYMEDIABASE_COMPLETEREQUEST1, "TLocDrvRequest Object=0x%x; aResult=%d", (TUint) &aMsg, aResult);
+
+
+	__KTRACE_OPT(KLOCDRV,Kern::Printf("DPrimaryMediaBase(%d)::CompleteRequest(%08x) r %d",iMediaId,&aMsg, aResult));
+
 	aMsg.Complete(aResult,EFalse);
 	OstTraceFunctionExit1( DPRIMARYMEDIABASE_COMPLETEREQUEST_EXIT, this );
 	}

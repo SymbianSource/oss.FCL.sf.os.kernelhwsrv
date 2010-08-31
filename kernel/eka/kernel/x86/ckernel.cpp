@@ -201,7 +201,7 @@ EXPORT_C void Exc::Fault(TAny* aPtr)
 	TheSuperPage().iKernelExcInfo=e;
 	NKern::DisableAllInterrupts();
 #ifdef __SMP__
-	SubScheduler().i_ExcInfo = aPtr;
+	SubScheduler().iSSX.iExcInfo = aPtr;
 #else
 	TheScheduler.i_ExcInfo = aPtr;
 #endif

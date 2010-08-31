@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -24,6 +24,10 @@
 #include <e32Test.h>	// RTest headder
 #include "testcaseroot.h"
 #include "testcase0457.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "testcase0457Traces.h"
+#endif
 
 
 
@@ -37,7 +41,10 @@ const TTestCaseFactoryReceipt<CTestCase0457> CTestCase0457::iFactoryReceipt(KTes
 
 CTestCase0457* CTestCase0457::NewL(TBool aHost)
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0457_NEWL);
+	    }
 	CTestCase0457* self = new (ELeave) CTestCase0457(aHost);
 	CleanupStack::PushL(self);
 	self->ConstructL();
@@ -49,7 +56,10 @@ CTestCase0457* CTestCase0457::NewL(TBool aHost)
 CTestCase0457::CTestCase0457(TBool aHost)
 :	CTestCaseRoot(KTestCaseId, aHost)
 	{	
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0457_CTESTCASE0457);
+	    }
 	} 
 
 
@@ -58,7 +68,10 @@ CTestCase0457::CTestCase0457(TBool aHost)
 */
 void CTestCase0457::ConstructL()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0457_CONSTRUCTL);
+	    }
 	iRepeats = OPEN_REPEATS;
 	
 	BaseConstructL();
@@ -67,7 +80,10 @@ void CTestCase0457::ConstructL()
 
 CTestCase0457::~CTestCase0457()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0457_DCTESTCASE0457);
+	    }
 
 	Cancel();
 	}
@@ -75,7 +91,10 @@ CTestCase0457::~CTestCase0457()
 
 void CTestCase0457::ExecuteTestCaseL()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0457_EXECUTETESTCASEL);
+	    }
 	iCaseStep = EPreconditions;
 	
 	CActiveScheduler::Add(this);
@@ -86,12 +105,16 @@ void CTestCase0457::ExecuteTestCaseL()
 void CTestCase0457::DescribePreconditions()
 	{
 	test.Printf(_L("Remove any USB plug beforehand.\n"));
+	OstTrace0(TRACE_NORMAL, CTESTCASE0457_DESCRIBEPRECONDITIONS, "Remove any USB plug beforehand.\n");
 	}
 
 	
 void CTestCase0457::DoCancel()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0457_DOCANCEL);
+	    }
 
 	// cancel our timer
 	iTimer.Cancel();
@@ -101,7 +124,10 @@ void CTestCase0457::DoCancel()
 // handle event completion	
 void CTestCase0457::RunStepL()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0457_RUNSTEPL);
+	    }
 
 	// Obtain the completion code for this CActive obj.
 	TInt completionCode(iStatus.Int()); 
@@ -111,6 +137,7 @@ void CTestCase0457::RunStepL()
 		case EPreconditions:
 			{
 			test.Printf(KPressAnyKeyToStart);
+			OstTrace0(TRACE_NORMAL, CTESTCASE0457_RUNSTEPL_DUP01, KPressAnyKeyToStart);
 			iCaseStep = ELoadLdd;
 			RequestCharacter();			
 			break;			
@@ -118,6 +145,7 @@ void CTestCase0457::RunStepL()
 
 		case ELoadLdd:
 			test.Printf(_L("Load the LDD iteration %d/%d\n"), OPEN_REPEATS-iRepeats+1, OPEN_REPEATS);
+			OstTraceExt2(TRACE_NORMAL, CTESTCASE0457_RUNSTEPL_DUP02, "Load the LDD iteration %d/%d\n", OPEN_REPEATS-iRepeats+1, OPEN_REPEATS);
 			if (!StepLoadLDD())
 				{
 				break;
@@ -136,6 +164,7 @@ void CTestCase0457::RunStepL()
 						
 		case ELoopDecrement:
 			test.Printf(_L("Repeat test\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0457_RUNSTEPL_DUP03, "Repeat test\n");
 
 			if (--iRepeats)
 				iCaseStep = ELoadLdd;
@@ -152,6 +181,7 @@ void CTestCase0457::RunStepL()
 			
 		default:
 			test.Printf(_L("<Error> unknown test step"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0457_RUNSTEPL_DUP04, "<Error> unknown test step");
 			Cancel();
 			TestPolicy().SignalTestComplete(KErrCorrupt);
 			break;

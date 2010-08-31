@@ -17,8 +17,9 @@
 
 #include "sf_std.h"
 #include "sf_file_cache.h"
-
-
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "sf_drvTraces.h"
+#endif
 //const TInt KMaxNotifierAttempts=4; // not used anywhere
 
 static TPtrC StripBackSlash(const TDesC& aName)
@@ -282,12 +283,12 @@ TBool TDrive::ReMount(CMountCB& aMount)
 	if (!aMount.IsDismounted() && !aMount.ProxyDriveDismounted())
 		{
 		aMount.SetDrive(this);
-		TRACE1(UTF::EBorder, UTraceModuleFileSys::ECMountCBReMount, EF32TraceUidFileSys, DriveNumber());
+		OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBREMOUNT1, "drive %d", DriveNumber());
 		
         //-- actually, this is asking CMountCB to see if it belongs to the current media. 
         iReason = aMount.ReMount();
 
-		TRACE1(UTF::EBorder, UTraceModuleFileSys::ECMountCBReMountRet, EF32TraceUidFileSys, iReason);
+		OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBREMOUNT1RET, "success %d", iReason);
 		
         if (iReason == KErrNone)	//	ReMount succeeded
 			{
@@ -323,13 +324,13 @@ void TDrive::DoMountFileSystemL(CMountCB*& apMount, TBool aForceMount, TUint32 a
     
     apMount = NULL;
 
-    TRACE2(UTF::EBorder, UTraceModuleFileSys::ECFileSystemNewMountL, EF32TraceUidFileSys, &FSys(), DriveNumber());
+    OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMNEWMOUNTL, "this %x drive %d", (TUint) &FSys(), (TUint) DriveNumber());
    
     //-- construct a new CmountCB object.
     //-- on return pMountsFs will be the pointer to the factory object of CFileSystem that produced this mount
     apMount = FSys().NewMountExL(this, &pMountsFs, aForceMount, aFsNameHash);
 
-	TRACE2(UTF::EBorder, UTraceModuleFileSys::ECFileSystemNewMountLRet, EF32TraceUidFileSys, KErrNone, apMount);
+	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMNEWMOUNTLRET, "r %d CMountCB %x", (TUint) KErrNone, (TUint) apMount);
 	__PRINT2(_L("TDrive::MountMediaL created mount:0x%x FileSys:0x%x"), apMount, pMountsFs);
 
     ASSERT(pMountsFs && apMount);
@@ -398,10 +399,10 @@ void TDrive::MountFileSystem(TBool aForceMount, TUint32 aFsNameHash /*=0*/ )
 */
 TInt TDrive::MountControl(TInt aLevel, TInt aOption, TAny* aParam)
     {
-	TRACE4(UTF::EBorder, UTraceModuleFileSys::ECMountCBMountControl, EF32TraceUidFileSys, DriveNumber(), aLevel, aOption, aParam);
+	OstTraceExt4(TRACE_FILESYSTEM, FSYS_ECMOUNTCBMOUNTCONTROL, "drive %d aLevel %d aOption %x aParam %x", (TUint) DriveNumber(), (TUint) aLevel, (TUint) aOption, (TUint) aParam);
     TInt r = CurrentMount().MountControl(aLevel, aOption, aParam);
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBMountControlRet, EF32TraceUidFileSys, r);
-
+	
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBMOUNTCONTROLRET, "r %d", r);
 	return r;
     }
 
@@ -430,9 +431,9 @@ TInt TDrive::RequestFreeSpaceOnMount(TUint64 aFreeSpaceRequired)
     //-- the caller will be suspended until aFreeSpaceRequired bytes is available or scanning process finishes
     {
         TUint64 freeSpaceReq = aFreeSpaceRequired;
-		TRACE1(UTF::EBorder, UTraceModuleFileSys::ECMountCBFreeSpace, EF32TraceUidFileSys, DriveNumber());
+		OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBFREESPACE, "drive %d", DriveNumber());
         nRes = CurrentMount().RequestFreeSpace(freeSpaceReq);
-		TRACERET3(UTF::EBorder, UTraceModuleFileSys::ECMountCBFreeSpaceRet, EF32TraceUidFileSys, nRes, I64LOW(freeSpaceReq), I64HIGH(freeSpaceReq));
+		OstTraceExt3(TRACE_FILESYSTEM, FSYS_ECMOUNTCBFREESPACERET, "r %d FreeSpace %x:%x", (TUint) nRes, (TUint) I64HIGH(freeSpaceReq), (TUint) I64LOW(freeSpaceReq));
         if(nRes == KErrNone)
             {
             return (freeSpaceReq >= aFreeSpaceRequired) ? KErrNone : KErrDiskFull;
@@ -462,11 +463,10 @@ TInt TDrive::MountedVolumeSize(TUint64& aSize)
     nRes = CheckMount();
     if(nRes != KErrNone)
         return nRes;
-
     //-- 1. Try mount-specific request first. It won't block this call as CMountCB::VolumeL() can do if some background activity is going on the mount
-	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECMountCBVolumeSize, EF32TraceUidFileSys, DriveNumber());
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBVOLUMESIZE, "drive %d", DriveNumber());
     nRes = CurrentMount().MountedVolumeSize(aSize);
-	TRACERET3(UTF::EBorder, UTraceModuleFileSys::ECMountCBVolumeSize, EF32TraceUidFileSys, nRes, I64LOW(aSize), I64HIGH(aSize));
+	OstTraceExt3(TRACE_FILESYSTEM, FSYS_ECMOUNTCBVOLUMESIZERET, "r %d aSize %x:%x", (TUint) nRes, (TUint) I64HIGH(aSize), (TUint) I64LOW(aSize));
     if(nRes == KErrNone)
         return nRes;
 
@@ -499,9 +499,9 @@ TInt TDrive::FreeDiskSpace(TInt64& aFreeDiskSpace)
         return nRes;
 
     //-- 1. Try mount-specific request first. It won't block this call as CMountCB::VolumeL() can do 
-	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECMountCBCurrentFreeSpace, EF32TraceUidFileSys, DriveNumber());
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBCURRENTFREESPACE, "drive %d", DriveNumber());
     nRes = CurrentMount().GetCurrentFreeSpaceAvailable(aFreeDiskSpace);
-	TRACERET3(UTF::EBorder, UTraceModuleFileSys::ECMountCBCurrentFreeSpaceRet, EF32TraceUidFileSys, nRes, I64LOW(aFreeDiskSpace), I64HIGH(aFreeDiskSpace));
+	OstTraceExt3(TRACE_FILESYSTEM, FSYS_ECMOUNTCBCURRENTFREESPACERET, "r %d FreeSpace %x:%x", (TUint) nRes, (TUint) I64HIGH(aFreeDiskSpace), (TUint) I64LOW(aFreeDiskSpace));
     if(nRes == KErrNone)
         return nRes;
 
@@ -539,9 +539,9 @@ TInt TDrive::FinaliseMount(TInt aOperation, TAny* aParam1/*=NULL*/, TAny* aParam
 	if(IsWriteProtected())
 		return(KErrAccessDenied);
 
-	TRACE4(UTF::EBorder, UTraceModuleFileSys::ECMountCBFinaliseMount2, EF32TraceUidFileSys, DriveNumber(), aOperation, aParam1, aParam2);
+	OstTraceExt4(TRACE_FILESYSTEM, FSYS_ECMOUNTCBFINALISEMOUNT2, "drive %d aOperation %d aParam1 %x aParam2 %x", (TUint) DriveNumber(), (TUint) aOperation, (TUint) aParam1, (TUint) aParam2);
 	TRAP(r,CurrentMount().FinaliseMountL(aOperation, aParam1, aParam2));
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBFinaliseMount2Ret, EF32TraceUidFileSys, r);
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBFINALISEMOUNT2RET, "r %d", r);
 	
 	// Pass FinaliseDrive notification down to media driver
 	TInt driveNumber = DriveNumber();
@@ -574,9 +574,10 @@ TInt TDrive::FinaliseMount()
 	if(IsWriteProtected())
 		return(KErrAccessDenied);
 
-	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECMountCBFinaliseMount1, EF32TraceUidFileSys, DriveNumber());
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBFINALISEMOUNT1, "drive %d", DriveNumber());
 	TRAP(r,CurrentMount().FinaliseMountL());
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBFinaliseMount1Ret, EF32TraceUidFileSys, r);
+	
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBFINALISEMOUNT1RET, "r %d", r);
 	
     return r;
 	}
@@ -824,7 +825,7 @@ TInt TDrive::ValidateShare(CFileCB& aFile, TShare aReqShare)
 // Check that the sharing rules are obeyed.
 //
 	{
-
+	// Check the correct share modes are passed in
 	switch (aReqShare)
 		{
 	case EFileShareExclusive:
@@ -833,47 +834,46 @@ TInt TDrive::ValidateShare(CFileCB& aFile, TShare aReqShare)
 	case EFileShareReadersOrWriters:
 		break;
 	default:
-		return(KErrArgument);
+		return KErrArgument;
 		}
+	
+	// Check the share mode of the file
 	switch (aFile.iShare)
 		{
 	case EFileShareExclusive:
-		return(KErrInUse);
+		return KErrInUse;
 
 	case EFileShareReadersOnly:
 	case EFileShareAny:
 		if (aReqShare != aFile.iShare && aReqShare != EFileShareReadersOrWriters)
-			return(KErrInUse);
+		    {
+            return KErrInUse;
+		    }
 		break;
 
 	case EFileShareReadersOrWriters:
-		if (aReqShare==EFileShareExclusive)
-			return(KErrInUse);
+		if (aReqShare == EFileShareExclusive)
+		    {
+            return KErrInUse;
+		    }
 		//
-		// If the file is currently open as EFileShareReadersOrWriters then
+		// If the file is currently opened as EFileShareReadersOrWriters then
 		// promote the share to the requested share mode.
+		// 
+		// If the requested share is EFileShareReadersOnly, verify that no
+		// other share has the file opened for writing.
 		//
-		// If the requested share is EFileShareReadersOnly, verfiy that no
-		// other share has the file open for writing.
-		//
-
 		if (aReqShare == EFileShareReadersOnly)
 			{
-			FileShares->Lock();
-			TInt count = FileShares->Count();
-			while(count--)
+			TDblQueIter<CFileShare> fileShareIter(aFile.FileShareList());
+			CFileShare* pFileShare;
+			while ((pFileShare = fileShareIter++) != NULL)
 				{
-				CFileShare* share = (CFileShare*)(*FileShares)[count];
-				if (&share->File() == &aFile)
+				if(pFileShare->iMode & EFileWrite)
 					{
-					if(share->iMode & EFileWrite)
-						{
-						FileShares->Unlock();
-						return KErrInUse;
-						}
+					return KErrInUse;
 					}
 				}
-			FileShares->Unlock();
 			}
 		break;
     
@@ -881,9 +881,9 @@ TInt TDrive::ValidateShare(CFileCB& aFile, TShare aReqShare)
 		Fault(EDrvIllegalShareValue);
         break;
 		}
-	return(KErrNone);
-	}
 
+	return KErrNone;
+	}
 void TDrive::DriveInfo(TDriveInfo& anInfo)
 //
 // Get the drive info.
@@ -896,10 +896,9 @@ void TDrive::DriveInfo(TDriveInfo& anInfo)
 
 	if(iFSys)
 		{
-		TRACE2(UTF::EBorder, UTraceModuleFileSys::ECFileSystemDriveInfo, EF32TraceUidFileSys, &FSys(), DriveNumber());
+		OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMDRIVEINFO, "this %x aDriveNumber %d", (TUint) &FSys(), (TUint) DriveNumber());
 		FSys().DriveInfo(anInfo,DriveNumber());
-		TRACE3(UTF::EBorder, UTraceModuleFileSys::ECFileSystemDriveInfoRet, EF32TraceUidFileSys, 
-			anInfo.iType, anInfo.iDriveAtt, anInfo.iMediaAtt);
+		OstTraceExt3(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMDRIVEINFORET, "type %d driveAtt %x mediaAtt %x", (TUint) anInfo.iType, (TUint) anInfo.iDriveAtt, (TUint) anInfo.iMediaAtt);
 		}
 
 	anInfo.iDriveAtt=Att();
@@ -919,12 +918,10 @@ TInt TDrive::Volume(TVolumeInfo& aVolume)
 		aVolume.iUniqueID=m.iUniqueID;
 		aVolume.iSize=m.iSize;
 
-		TRACE1(UTF::EBorder, UTraceModuleFileSys::ECMountCBVolumeL, EF32TraceUidFileSys, DriveNumber());
+		OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBVOLUMEL, "drive %d", DriveNumber());
 		TRAP(r,m.VolumeL(aVolume))
-		TRACE7(UTF::EBorder, UTraceModuleFileSys::ECMountCBVolumeLRet, EF32TraceUidFileSys, 
-			r, aVolume.iUniqueID, I64LOW(aVolume.iSize), I64HIGH(aVolume.iSize),
-			I64LOW(aVolume.iFree), I64HIGH(aVolume.iFree), aVolume.iFileCacheFlags);
-
+		OstTraceExt5(TRACE_FILESYSTEM, FSYS_ECMOUNTCBVOLUMELRETA, "r %d iSize %x:%x iFree %x:%x", (TUint) r, (TUint) I64HIGH(aVolume.iSize), (TUint) I64LOW(aVolume.iSize), (TUint) I64HIGH(aVolume.iFree), (TUint) I64LOW(aVolume.iFree));
+		OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECMOUNTCBVOLUMELRETB, "iUniqueID %x iFileCacheFlags %x", (TUint) aVolume.iUniqueID, (TUint) aVolume.iFileCacheFlags);
 		}
 	return(r);
 	}
@@ -938,12 +935,11 @@ void TDrive::SetVolumeL(const TDesC& aName,HBufC*& aBuf)
 	__CHECK_DRIVETHREAD(iDriveNumber);
 	aBuf=aName.AllocL();
 	TPtr volumeName=aBuf->Des();
-
-	TRACEMULT2(UTF::EBorder, UTraceModuleFileSys::ECMountCBSetVolumeL, EF32TraceUidFileSys, DriveNumber(), aName);
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBSETVOLUMEL, "drive %d", DriveNumber());
+	OstTraceData(TRACE_FILESYSTEM, FSYS_EVOLUMENAME, "VolumeName %S", aName.Ptr(), aName.Length()<<1);
+	
 	CurrentMount().SetVolumeL(volumeName);
-	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECMountCBSetVolumeLRet, EF32TraceUidFileSys, KErrNone);
-
-
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBSETVOLUMELRET, "r %d", KErrNone);
 	delete &CurrentMount().VolumeName();
 	CurrentMount().SetVolumeName(aBuf);
 	}
@@ -978,14 +974,12 @@ TInt TDrive::MkDir(const TDesC& aName)
 		return(KErrAccessDenied);
 	TParse newDirName;
 	newDirName.Set(aName,NULL,NULL);
-
-	TRACEMULT2(UTF::EBorder, UTraceModuleFileSys::ECMountCBMkDirL, EF32TraceUidFileSys, DriveNumber(), aName);
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBMKDIRL, "drive %d", DriveNumber());
+	OstTraceData(TRACE_FILESYSTEM, FSYS_ECMOUNTCBMKDIRLYS_EDIRNAME, "Dir %S", aName.Ptr(), aName.Length()<<1);
 	TRAP(r,CurrentMount().MkDirL(newDirName.FullName()))
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBMkDirLRet, EF32TraceUidFileSys, r);
-
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBMKDIRLRET, "r %d", r);
 	return(r);
 	}
-
 TInt TDrive::RmDir(const TDesC& aName)
 //
 // Remove a directory.
@@ -1002,11 +996,10 @@ TInt TDrive::RmDir(const TDesC& aName)
 		return(KErrPathNotFound);
 	if ((entry.iAtt&KEntryAttReadOnly) || IsWriteProtected())
 		return(KErrAccessDenied);
-
-	TRACEMULT2(UTF::EBorder, UTraceModuleFileSys::ECMountCBRmDirL, EF32TraceUidFileSys, DriveNumber(), aName);
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBRMDIRL, "drive %d", DriveNumber());
+	OstTraceData(TRACE_FILESYSTEM, FSYS_ECMOUNTCBRMDIRLYS_EDIRNAME, "Dir %S", aName.Ptr(), aName.Length()<<1);
 	TRAP(r,CurrentMount().RmDirL(aName))
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBRmDirLRet, EF32TraceUidFileSys, r);
-
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBRMDIRLRET, "r %d", r);
 	return(r);
 	}
 
@@ -1027,12 +1020,10 @@ TInt TDrive::Delete(const TDesC& aName)
 
     if (IsWriteProtected())
 		return(KErrAccessDenied);
-
-    //-- filesystems' CMountCB::DeleteL() implementations shall check the entry attributes themeselves. 
-	TRACEMULT2(UTF::EBorder, UTraceModuleFileSys::ECMountCBDeleteL, EF32TraceUidFileSys, DriveNumber(), aName);
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBDELETEL1, "drive %d", DriveNumber());
+	OstTraceData(TRACE_FILESYSTEM, FSYS_ECMOUNTCBDELETEL1_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
 	TRAP(r,CurrentMount().DeleteL(aName))
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBDeleteLRet, EF32TraceUidFileSys, r);
-
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBDELETEL1_RET, "r %d", r);
 	return r;
 	}
 
@@ -1103,11 +1094,11 @@ TInt TDrive::Rename(const TDesC& anOldName,const TDesC& aNewName)
 	// remove from closed queue
 	LocateClosedFile(anOldName, EFalse);
 	LocateClosedFile(aNewName, EFalse);
-
-	TRACEMULT3(UTF::EBorder, UTraceModuleFileSys::ECMountCBRenameL, EF32TraceUidFileSys, DriveNumber(), oldEntryName,newEntryName);
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBRENAMEL, "drive %d", DriveNumber());
+	OstTraceData(TRACE_FILESYSTEM, FSYS_ECMOUNTCBRENAMELYS_EOLDNAME, "OldName %S", oldEntryName.Ptr(), oldEntryName.Length()<<1);
+	OstTraceData(TRACE_FILESYSTEM, FSYS_ECMOUNTCBRENAMELYS_ENEWNAME, "NewName %S", newEntryName.Ptr(), newEntryName.Length()<<1);
 	TRAP(r,CurrentMount().RenameL(oldEntryName,newEntryName))
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBRenameLRet, EF32TraceUidFileSys, r);
-
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBRENAMELRET, "r %d", r);
 	return(r);
 	}
 
@@ -1141,11 +1132,11 @@ TInt TDrive::Replace(const TDesC& anOldName,const TDesC& aNewName)
 	// remove from closed queue
 	LocateClosedFile(anOldName, EFalse);
 	LocateClosedFile(aNewName, EFalse);
-
-	TRACEMULT3(UTF::EBorder, UTraceModuleFileSys::ECMountCBReplaceL, EF32TraceUidFileSys, DriveNumber(), anOldName, aNewName);
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBREPLACEL, "drive %d", DriveNumber());
+	OstTraceData(TRACE_FILESYSTEM, FSYS_ECMOUNTCBREPLACEL_EOLDNAME, "OldName %S", anOldName.Ptr(), anOldName.Length()<<1);
+	OstTraceData(TRACE_FILESYSTEM, FSYS_ECMOUNTCBREPLACEL_ENEWNAME, "NewName %S", aNewName.Ptr(), aNewName.Length()<<1);
 	TRAP(r,CurrentMount().ReplaceL(anOldName,aNewName))
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBReplaceLRet, EF32TraceUidFileSys, r);
-
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBREPLACELRET, "r %d", r);
 	return(r);
 	}
 
@@ -1174,7 +1165,8 @@ void TDrive::DoEntryL(const TDesC& aName, TEntry& anEntry)
 // Get entry details
 //
 	{
-	TRACEMULT2(UTF::EBorder, UTraceModuleFileSys::ECMountCBEntryL, EF32TraceUidFileSys, DriveNumber(), aName);
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBENTRYL, "drive %d", DriveNumber());
+	OstTraceData(TRACE_FILESYSTEM, FSYS_ECMOUNTCBENTRYL_EFILEPATH, "FilePath %S", aName.Ptr(), aName.Length()<<1);
 	CurrentMount().EntryL(aName,anEntry);
 
 	// If the file is already open then read the file attributes directly from the file
@@ -1202,11 +1194,7 @@ void TDrive::DoEntryL(const TDesC& aName, TEntry& anEntry)
 		}
 
 
-	TRACE5(UTF::EBorder, UTraceModuleFileSys::ECMountCBEntryLRet, EF32TraceUidFileSys, 
-		KErrNone, anEntry.iAtt, 
-		I64LOW(anEntry.iModified.Int64()), I64HIGH(anEntry.iModified.Int64()), 
-		anEntry.iSize);
-
+	OstTraceExt5(TRACE_FILESYSTEM, FSYS_ECMOUNTCBENTRYLRET, "att %x modified %x:%x  size %x:%x", (TUint) anEntry.iAtt, (TUint) I64HIGH(anEntry.iModified.Int64()), (TUint) I64LOW(anEntry.iModified.Int64()), (TUint) I64HIGH(anEntry.FileSize()), (TUint) anEntry.FileSize());
 	}
 
 TInt TDrive::CheckAttributes(TUint& aSetAttMask,TUint& aClearAttMask)
@@ -1239,11 +1227,11 @@ TInt TDrive::SetEntry(const TDesC& aName,const TTime& aTime,TUint aSetAttMask,TU
 	TTime nullTime(0);
 	if (aTime!=nullTime)
 		aSetAttMask|=KEntryAttModified;
-
-	TRACEMULT6(UTF::EBorder, UTraceModuleFileSys::ECMountCBSetEntryL, EF32TraceUidFileSys, 
-		DriveNumber(), aName, I64LOW(aTime.Int64()), I64HIGH(aTime.Int64()), aSetAttMask, aClearAttMask);
+	OstTraceExt5(TRACE_FILESYSTEM, FSYS_ECMOUNTCBSETENTRYL, "drive %d aTime %x:%x  aSetAttMask %x aClearAttMask %x", (TUint) DriveNumber(), (TUint) I64HIGH(aTime.Int64()), (TUint) I64LOW(aTime.Int64()), (TUint) aSetAttMask, (TUint) aClearAttMask);
+	OstTraceData(TRACE_FILESYSTEM, FSYS_ECMOUNTCBSETENTRYL_EFILEPATH, "FilePath %S", aName.Ptr(), aName.Length()<<1);
 	TRAP(r,CurrentMount().SetEntryL(entryName,aTime,aSetAttMask,aClearAttMask))
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBSetEntryLRet, EF32TraceUidFileSys, r);
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBSETENTRYLRET, "r %d", r);
+
 	// If the file is already open then write the file attributes directly to the file
 	TFileName foldedName;
 	TUint32 nameHash=0;
@@ -1385,88 +1373,89 @@ void TDrive::FileOpenL(CFsRequest* aRequest,TInt& aHandle,const TDesC& aName,TUi
 	if ((aMode & EDeleteOnClose) && (anOpen!=EFileCreate))
 		User::Leave(KErrArgument);
 
-	CFileCB* pF=LocateFile(aName);
+	CFileCB* pFile=LocateFile(aName);
 	CFileCache* pFileCache = NULL;
-	TBool openFile=EFalse;
-	if (pF!=NULL)
+	TBool openFile=EFalse;	// True if file is being opened for the first time
+	if (pFile!=NULL)		// File is already opened on the drive
 		{
-		if (pF->iShare==EFileShareReadersOnly && (aMode&EFileWrite)!=0)
+		if (pFile->iShare==EFileShareReadersOnly && (aMode&EFileWrite))
 			User::Leave(KErrInUse);
 		if (anOpen==EFileCreate)
 			User::Leave(KErrAlreadyExists);
-		TInt r=ValidateShare(*pF,share);
+		TInt r=ValidateShare(*pFile,share);
 		if (r!=KErrNone)
 			User::Leave(r);
-		if ((r=pF->Open())!=KErrNone)
+		if ((r=pFile->Open())!=KErrNone)
 			User::Leave(r);
-		aFileCB=pF;
-		pFileCache = pF->FileCache();
+		
+		aFileCB=pFile;
+		pFileCache = pFile->FileCache();
 		}
 	else
 		{
-		TRACE2(UTF::EBorder, UTraceModuleFileSys::ECFileSystemNewFileL, EF32TraceUidFileSys, &FSys(), DriveNumber());
-
+		OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMNEWFILEL, "this %x drive %d", (TUint) &FSys(), (TUint) DriveNumber());
         //-- construct CFileCB object, belonging to the corresponding mount
-        pF = aFileCB = CurrentMount().NewFileL();
+        pFile = aFileCB = CurrentMount().NewFileL();
 
-		TRACERET2(UTF::EBorder, UTraceModuleFileSys::ECFileSystemNewFileLRet, EF32TraceUidFileSys, r, pF);
+		OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMNEWFILELRET, "r %d CFileCB %x", (TUint) r, (TUint) pFile);
 		TDrive* createdDrive=!aRequest->SubstedDrive() ? this : aRequest->SubstedDrive();
 
     	HBufC* fileName = CreateFileNameL(aName);
 
-        pF->InitL(this, createdDrive, fileName);
+        pFile->InitL(this, createdDrive, fileName);
 
-
-		pF->iShare = share;
+		pFile->iShare = share;
+		pFile->SetSequentialMode(aMode & EFileSequential);
 		openFile=ETrue;
-		CurrentMount().iMountQ.AddLast(*pF);
-		Files->AddL(pF,ETrue);
+		CurrentMount().iMountQ.AddLast(*pFile);
+		Files->AddL(pFile,ETrue);
+		__PRINT1(_L("TDrive::FileOpenL - CFileCB->IsSequentialMode = %d"), pFile->IsSequentialMode());
 		}
 	
-    CFileShare* pS=aFileShare=new(ELeave) CFileShare(pF);
+    CFileShare* pFileShare=aFileShare=new(ELeave) CFileShare(pFile);
 
 	// We need to call CFileCB::PromoteShare immediately after the CFileShare 
 	// instance is created since the destructor calls CFileCB::DemoteShare()
 	// which checks the share count is non-zero
-	pS->iMode=aMode;
-	pF->PromoteShare(pS);
+	pFileShare->iMode=aMode;
+	pFile->PromoteShare(pFileShare);
 
-	pS->InitL();
+	pFileShare->InitL();
 	aFileCB=NULL; 
-	FileShares->AddL(pS,ETrue);
-	aHandle=aRequest->Session()->Handles().AddL(pS,ETrue);
+	FileShares->AddL(pFileShare,ETrue);
+	aHandle=aRequest->Session()->Handles().AddL(pFileShare,ETrue);
 
 
 	if (openFile)
 		{
-		TRACEMULT5(UTF::EBorder, UTraceModuleFileSys::ECMountCBFileOpenL, EF32TraceUidFileSys, DriveNumber(), aName, aMode, (TUint) anOpen, (TUint) pF);
-		CurrentMount().FileOpenL(aName,aMode,anOpen,pF);
-		TRACE1(UTF::EBorder, UTraceModuleFileSys::ECMountCBFileOpenLRet, EF32TraceUidFileSys, KErrNone);
-
+		OstTraceExt4(TRACE_FILESYSTEM, FSYS_ECMOUNTCBFILEOPENL, "drive %d aMode %x anOpen %d aFile %x", (TUint) DriveNumber(), (TUint) aMode, (TUint) anOpen, (TUint) pFile);
+		OstTraceData(TRACE_FILESYSTEM, FSYS_ECMOUNTCBFILEOPENL_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
+		CurrentMount().FileOpenL(aName,aMode,anOpen,pFile);
+		OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBFILEOPENLRET, "r %d", KErrNone);
 		// Delete on close may now be safely flagged if required.
 		// The file did not exist on the media prior to the
 		// CMountCB::FileOpenL() call for the case of a create.
 		if ((aMode & EDeleteOnClose) && (anOpen==EFileCreate))
-			pF->SetDeleteOnClose();
+			pFile->SetDeleteOnClose();
 
-		TBool localBufferSuppport = (CurrentMount().LocalBufferSupport(pF) == KErrNone)?(TBool)ETrue:(TBool)EFalse;
-		pF->SetLocalBufferSupport(localBufferSuppport);
+		TBool localBufferSuppport = (CurrentMount().LocalBufferSupport(pFile) == KErrNone)?(TBool)ETrue:(TBool)EFalse;
+		pFile->SetLocalBufferSupport(localBufferSuppport);
 		if (localBufferSuppport)
 			{
-			// if file exists on closed queue resurrect it or discard it,
+			// If file exists on closed queue resurrect it or discard it,
 			// depending on the file open mode
 			pFileCache = LocateClosedFile(aName, anOpen == EFileOpen?(TBool)ETrue:(TBool)EFalse);
 			if (pFileCache)
 				{
-				pFileCache = pFileCache->ReNewL(*pS);	// NB may return NULL if caching not enabled
+				pFileCache = pFileCache->ReNewL(*pFileShare);	// NB may return NULL if caching not enabled
 				}
 			else
 				{
-				pFileCache = CFileCache::NewL(*pS);		// NB may return NULL if caching not enabled
+				pFileCache = CFileCache::NewL(*pFileShare);		// NB may return NULL if caching not enabled
 				}
 			if (pFileCache)
-				// set the cached size to be the same as the uncached size
-				pF->SetCachedSize64(pF->Size64());
+				// Set the cached size to be the same as the uncached size
+				pFile->SetCachedSize64(pFile->Size64());
 			}
 		else
 			{
@@ -1474,9 +1463,9 @@ void TDrive::FileOpenL(CFsRequest* aRequest,TInt& aHandle,const TDesC& aName,TUi
 			}
 		}
 
-	// initialize share mode flags
+	// Initialize share mode flags
 	if (pFileCache != NULL)
-		pFileCache->Init(*pS);
+		pFileCache->Init(*pFileShare);
 	}
 
 TInt TDrive::FileOpen(CFsRequest* aRequest,TInt& aHandle,const TDesC& aName,TUint aMode,TFileOpen anOpen)
@@ -1488,7 +1477,7 @@ TInt TDrive::FileOpen(CFsRequest* aRequest,TInt& aHandle,const TDesC& aName,TUin
 	CFileCB* pF=NULL;
 	CFileShare* pS=NULL;
 	aHandle=0;
-	TRAPD(r,FileOpenL(aRequest,aHandle,aName,aMode,anOpen,pF,pS))
+	TRAPD(r,FileOpenL(aRequest,aHandle,aName,aMode,anOpen,pF,pS));
 
 	// Allow files > 2GB-1 to be opened only if EFileBigFile is specified in iMode
 	if (r == KErrNone && pS && ((TUint64)pS->File().Size64() > KMaxLegacyFileSize) && (!(pS->IsFileModeBig())))
@@ -1513,11 +1502,10 @@ void TDrive::DirOpenL(CSessionFs* aSession,TInt& aHandle,const TDesC& aName,TUin
 // Open a directory listing. Leave on error.
 //
 	{
-	TRACE2(UTF::EBorder, UTraceModuleFileSys::ECFileSystemNewDirL, EF32TraceUidFileSys, &FSys(), DriveNumber());
-
+	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMNEWDIRL, "this %x drive %d", (TUint) &FSys(), (TUint) DriveNumber());
     CDirCB* pD = aDir = CurrentMount().NewDirL(); //-- construct CDirCB object, belonging to the corresponding mount
 
-	TRACE2(UTF::EBorder, UTraceModuleFileSys::ECFileSystemNewDirLRet, EF32TraceUidFileSys, KErrNone, pD);
+	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMNEWDIRLRET, "r %d CDirCB %x", (TUint) KErrNone, (TUint) pD);
 	pD->InitL(this);
 	// modify resource counter after initialisation to ensure correct cleanup
 	AddResource(CurrentMount());
@@ -1525,10 +1513,10 @@ void TDrive::DirOpenL(CSessionFs* aSession,TInt& aHandle,const TDesC& aName,TUin
 	pD->iUidType=aUidType;
 	Dirs->AddL(pD,ETrue);
 	aHandle=aSession->Handles().AddL(pD,ETrue);
-
-	TRACEMULT3(UTF::EBorder, UTraceModuleFileSys::ECMountCBDirOpenL, EF32TraceUidFileSys, DriveNumber(), aName, (TUint) pD);
+	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECMOUNTCBDIROPENL, "drive %d aDir %x", (TUint) DriveNumber(), (TUint) pD);
+	OstTraceData(TRACE_FILESYSTEM, FSYS_ECMOUNTCBDIROPENL_EDIRNAME, "Dir %S", aName.Ptr(), aName.Length()<<1);
 	CurrentMount().DirOpenL(aName,pD);
-	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECMountCBDirOpenLRet, EF32TraceUidFileSys, KErrNone);
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBDIROPENLRET, "r %d", KErrNone);
 	}
 
 TInt TDrive::DirOpen(CSessionFs* aSession,TInt& aHandle,const TDesC& aName,TUint anAtt,const TUidType& aUidType)
@@ -1587,13 +1575,11 @@ TInt TDrive::ReadFileSection64(const TDesC& aName,TInt64 aPos,TAny* aTrg,TInt aL
 	if (r!=KErrNone)
 		return(r);
 	TPtrC entryName(StripBackSlash(aName));
-
 	TRACETHREADID(aMessage);
-	TRACEMULT7(UTF::EBorder, UTraceModuleFileSys::ECMountCBReadFileSectionL, EF32TraceUidFileSys, 
-		DriveNumber(), aName, I64LOW(aPos), I64HIGH(aPos), (TUint) aTrg, aLength, I64LOW(threadId));
+	OstTraceExt5(TRACE_FILESYSTEM, FSYS_ECMOUNTCBREADFILESECTIONL, "drive %d clientThreadId %x aPos %x:%x aLength %d", (TUint) DriveNumber(), (TUint) threadId, (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), (TUint) aLength);
+	OstTraceData(TRACE_FILESYSTEM, FSYS_ECMOUNTCBREADFILESECTIONL_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
 	TRAP(r,ReadSectionL(entryName,aPos,aTrg,aLength,aMessage));
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBReadFileSectionLRet, EF32TraceUidFileSys, r);
-
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBREADFILESECTIONLRET, "r %d", r);
 	if (r==KErrHidden)
 		r=KErrNotFound;	
 	else if (r==KErrPathHidden)
@@ -1625,9 +1611,9 @@ TInt TDrive::CheckDisk()
 		TRAP(r,FlushCachedFileInfoL());
 	if (r==KErrNone)
 		{
-		TRACE1(UTF::EBorder, UTraceModuleFileSys::ECMountCBCheckDisk1, EF32TraceUidFileSys, DriveNumber());
+		OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBCHECKDISK1, "drive %d", DriveNumber());
 		r=CurrentMount().CheckDisk();
-		TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBCheckDisk1Ret, EF32TraceUidFileSys, r);
+		OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBCHECKDISK1RET, "r %d", r);
 		}
 	return(r);
 	}
@@ -1642,9 +1628,9 @@ TInt TDrive::CheckDisk(TInt aOperation, TAny* aParam1/*=NULL*/, TAny* aParam2/*=
 		TRAP(r,FlushCachedFileInfoL());
 	if (r==KErrNone)
 		{
-		TRACE4(UTF::EBorder, UTraceModuleFileSys::ECMountCBCheckDisk2, EF32TraceUidFileSys, DriveNumber(), aOperation, aParam1, aParam2);
+		OstTraceExt4(TRACE_FILESYSTEM, FSYS_ECMOUNTCBCHECKDISK2, "drive %d aOperation %d aParam1 %x aParam2 %x", (TUint) DriveNumber(), (TUint) aOperation, (TUint) aParam1, (TUint) aParam2);
 		r=CurrentMount().CheckDisk(aOperation, aParam1, aParam2);
-		TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBCheckDisk2Ret, EF32TraceUidFileSys, r);
+		OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBCHECKDISK2RET, "r %d", r);
 		}
 
 	return(r);
@@ -1666,10 +1652,9 @@ TInt TDrive::ScanDrive()
 	// Empty closed file queue
 	TClosedFileUtils::Remove(DriveNumber());
 
-	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECMountCBScanDrive1, EF32TraceUidFileSys, DriveNumber());
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBSCANDRIVE1, "drive %d", DriveNumber());
 	r = CurrentMount().ScanDrive();
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBScanDrive1Ret, EF32TraceUidFileSys, r);
-
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBSCANDRIVE1RET, "r %d", r);
 	return r;
 	}
 
@@ -1693,10 +1678,9 @@ TInt TDrive::ScanDrive(TInt aOperation, TAny* aParam1/*=NULL*/, TAny* aParam2/*=
 	// Empty closed file queue
 	TClosedFileUtils::Remove(DriveNumber());
 
-	TRACE4(UTF::EBorder, UTraceModuleFileSys::ECMountCBScanDrive2, EF32TraceUidFileSys, DriveNumber(), aOperation, aParam1, aParam2);
+	OstTraceExt4(TRACE_FILESYSTEM, FSYS_ECMOUNTCBSCANDRIVE2, "drive %d aOperation %d aParam1 %x aParam2 %x", (TUint) DriveNumber(), (TUint) aOperation, (TUint) aParam1, (TUint) aParam2);
 	r = CurrentMount().ScanDrive(aOperation, aParam1, aParam2);
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBScanDrive2Ret, EF32TraceUidFileSys, r);
-
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBSCANDRIVE2RET, "r %d", r);
 	return r;
 	}
 
@@ -1710,11 +1694,11 @@ TInt TDrive::GetShortName(const TDesC& aName,TDes& aShortName)
 	if (r!=KErrNone)
 		return(r);
 	TPtrC entryName(StripBackSlash(aName));
-
-	TRACEMULT2(UTF::EBorder, UTraceModuleFileSys::ECMountCBGetShortNameL, EF32TraceUidFileSys, DriveNumber(), entryName);
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBGETSHORTNAMEL, "drive %d", DriveNumber());
+	OstTraceData(TRACE_FILESYSTEM, FSYS_ECMOUNTCBGETSHORTNAMEL_ELONGNAME, "LongName %S", entryName.Ptr(), entryName.Length()<<1);
 	TRAP(r,CurrentMount().GetShortNameL(entryName,aShortName));
-	TRACERETMULT2(UTF::EBorder, UTraceModuleFileSys::ECMountCBGetShortNameLRet, EF32TraceUidFileSys, r, aShortName);
-
+	OstTraceData(TRACE_FILESYSTEM, FSYS_ECMOUNTCBGETSHORTNAMEL_ESHORTNAME, "ShortName %S", aShortName.Ptr(), aShortName.Length()<<1);
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBGETSHORTNAMEL_ECMOUNTCBGETSHORTNAMELRET, "r %d", r);
 	return(r);
 	}
 
@@ -1727,11 +1711,11 @@ TInt TDrive::GetLongName(const TDesC& aShortName,TDes& aLongName)
 	if (r!=KErrNone)
 		return(r);
 	TPtrC entryName(StripBackSlash(aShortName));
-
-	TRACEMULT2(UTF::EBorder, UTraceModuleFileSys::ECMountCBGetLongNameL, EF32TraceUidFileSys, DriveNumber(), entryName);
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBGETLONGNAMEL, "drive %d", DriveNumber());
+	OstTraceData(TRACE_FILESYSTEM, FSYS_ECMOUNTCBGETLONGNAMEL_ESHORTNAME, "ShortName %S", entryName.Ptr(), entryName.Length()<<1);
 	TRAP(r,CurrentMount().GetLongNameL(entryName,aLongName));
-	TRACERETMULT2(UTF::EBorder, UTraceModuleFileSys::ECMountCBGetLongNameLRet, EF32TraceUidFileSys, r, aLongName);
-
+	OstTraceData(TRACE_FILESYSTEM, FSYS_ECMOUNTCBGETLONGNAMEL_ELONGNAME, "LongName %S", aLongName.Ptr(), aLongName.Length()<<1);
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBGETLONGNAMELRET, "r %d", r);
 	return(r);
 	}
 
@@ -1895,22 +1879,18 @@ TInt TDrive::ForceRemountDrive(const TDesC8* aMountInfo,TInt aMountInfoMessageHa
 		return(KErrNotReady);
 	TInt r;
 	CMountCB* pM=NULL;
-	TRACE2(UTF::EBorder, UTraceModuleFileSys::ECFileSystemNewMountL, EF32TraceUidFileSys, &FSys(), DriveNumber());
+	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMNEWMOUNTL1, "this %x drive %d", (TUint) &FSys(), (TUint) DriveNumber());
 	TRAP(r,pM=FSys().NewMountL());
-	TRACERET2(UTF::EBorder, UTraceModuleFileSys::ECFileSystemNewMountLRet, EF32TraceUidFileSys, r, pM);
+	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMNEWMOUNTL1RET, "r %d CMountCB %x", (TUint) r, (TUint) pM);
 	if(r!=KErrNone)
 		return(r);
 	pM->SetDrive(this);
-
-	TRACE4(UTF::EBorder, UTraceModuleFileSys::ECMountCBForceRemountDrive, EF32TraceUidFileSys, 
-		DriveNumber(), aMountInfo, aMountInfoMessageHandle, aFlags);
+	OstTraceExt4(TRACE_FILESYSTEM, FSYS_ECMOUNTCBFORCEREMOUNTDRIVE, "drive %d aMountInfo %x aMountInfoMessageHandle %x aFlags %x", (TUint) DriveNumber(), (TUint) aMountInfo, (TUint) aMountInfoMessageHandle, (TUint) aFlags);
 	r=pM->ForceRemountDrive(aMountInfo,aMountInfoMessageHandle,aFlags);
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBForceRemountDriveRet, EF32TraceUidFileSys, r);
-
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBFORCEREMOUNTDRIVERET, "r %d", r);
 	pM->Close();
 	return(r);
 	}
-
 TBool TDrive::IsExtensionMounted(CProxyDriveFactory* aFactory)
 //
 // return ETrue if extension mounted on the drive
@@ -1923,7 +1903,6 @@ TBool TDrive::IsExtensionMounted(CProxyDriveFactory* aFactory)
 		}
 	return(EFalse);
 	}
-
 TInt TDrive::MountExtension(CProxyDriveFactory* aFactory,TBool aIsPrimary)
 //
 // Mount an extension
@@ -1947,7 +1926,7 @@ TInt TDrive::MountExtension(CProxyDriveFactory* aFactory,TBool aIsPrimary)
 	if(iFSys==NULL)
 		return(KErrNotReady);
 	TBool extSupported = iFSys->IsExtensionSupported();
-	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECFileSystemIsExtensionSupported, EF32TraceUidFileSys, extSupported);
+	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMISEXTENSIONSUPPORTED1, "%x r %d", (TUint) iFSys, (TUint) extSupported);
 	if(!extSupported)
 		return(KErrNotSupported);
 	if(IsExtensionMounted(aFactory))
@@ -2035,17 +2014,16 @@ TInt TDrive::LockDevice(TMediaPassword& aOld,TMediaPassword& aNew,TBool aStore)
 		return(KErrNotReady);
 	TInt r;
 	CMountCB* pM=NULL;
-	TRACE2(UTF::EBorder, UTraceModuleFileSys::ECFileSystemNewMountL, EF32TraceUidFileSys, &FSys(), DriveNumber());
+	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMNEWMOUNTL2, "this %x drive %d", (TUint) &FSys(), (TUint) DriveNumber());
 	TRAP(r,pM=FSys().NewMountL());
-	TRACERET2(UTF::EBorder, UTraceModuleFileSys::ECFileSystemNewMountLRet, EF32TraceUidFileSys, r, pM);
+	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMNEWMOUNTL2RET, "r %d CMountCB %x", (TUint) r, (TUint) pM);
 	if(r!=KErrNone)
 		return(r);
 	pM->SetDrive(this);
 
-	TRACE2(UTF::EBorder, UTraceModuleFileSys::ECMountCBLock, EF32TraceUidFileSys, DriveNumber(), aStore);
+	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECMOUNTCBLOCK, "drive %d aStore %d", (TUint) DriveNumber(), (TUint) aStore);
 	r=pM->Lock(aOld,aNew,aStore);
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBLockRet, EF32TraceUidFileSys, r);
-
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBLOCKRET, "r %d", r);
 	pM->Close();
 	return(r);
 	}
@@ -2061,9 +2039,9 @@ TInt TDrive::UnlockDevice(TMediaPassword& aPassword,TBool aStore)
 		return(KErrNotReady);
 	TInt r;
 	CMountCB* pM=NULL;
-	TRACE2(UTF::EBorder, UTraceModuleFileSys::ECFileSystemNewMountL, EF32TraceUidFileSys, &FSys(), DriveNumber());
+	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMNEWMOUNTL3, "this %x drive %d", (TUint) &FSys(), (TUint) DriveNumber());
 	TRAP(r,pM=FSys().NewMountL());
-	TRACERET2(UTF::EBorder, UTraceModuleFileSys::ECFileSystemNewMountLRet, EF32TraceUidFileSys, r, pM);
+	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMNEWMOUNTL3RET, "r %d CMountCB %x", (TUint) r, (TUint) pM);
 	if(r!=KErrNone)
 		return(r);
 
@@ -2072,10 +2050,9 @@ TInt TDrive::UnlockDevice(TMediaPassword& aPassword,TBool aStore)
 
 	pM->SetDrive(this);
 
-	TRACE2(UTF::EBorder, UTraceModuleFileSys::ECMountCBUnlock, EF32TraceUidFileSys, DriveNumber(), aStore);
+	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECMOUNTCBUNLOCK, "drive %d aStore %d", (TUint) DriveNumber(), (TUint) aStore);
 	r=pM->Unlock(aPassword,aStore);
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBUnlockRet, EF32TraceUidFileSys, r);
-
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBUNLOCKRET, "r %d", r);
 	pM->Close();
 	return(r);
 	}
@@ -2091,9 +2068,9 @@ TInt TDrive::ClearDevicePassword(TMediaPassword& aPassword)
 		return(KErrNotReady);
 	TInt r;
 	CMountCB* pM=NULL;
-	TRACE2(UTF::EBorder, UTraceModuleFileSys::ECFileSystemNewMountL, EF32TraceUidFileSys, &FSys(), DriveNumber());
+	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMNEWMOUNTL4, "this %x drive %d", (TUint) &FSys(), (TUint) DriveNumber());
 	TRAP(r,pM=FSys().NewMountL());
-	TRACERET2(UTF::EBorder, UTraceModuleFileSys::ECFileSystemNewMountLRet, EF32TraceUidFileSys, r, pM);
+	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMNEWMOUNTL4RET, "r %d CMountCB %x", (TUint) r, (TUint) pM);
 	if(r!=KErrNone)
 		return(r);
 	pM->SetDrive(this);
@@ -2107,10 +2084,9 @@ TInt TDrive::ClearDevicePassword(TMediaPassword& aPassword)
 	if (info.iMediaAtt & KMediaAttLocked)
 		UnlockDevice(aPassword, EFalse);
 
-	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECMountCBClearPassword, EF32TraceUidFileSys, DriveNumber());
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBCLEARPASSWORD, "drive %d", DriveNumber());
 	r=pM->ClearPassword(aPassword);
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBClearPasswordRet, EF32TraceUidFileSys, r);
-
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBCLEARPASSWORDRET, "r %d", r);
 	pM->Close();
 	return(r);
 	}
@@ -2126,17 +2102,16 @@ TInt TDrive::EraseDevicePassword()
 		return(KErrNotReady);
 	TInt r;
 	CMountCB* pM=NULL;
-	TRACE2(UTF::EBorder, UTraceModuleFileSys::ECFileSystemNewMountL, EF32TraceUidFileSys, &FSys(), DriveNumber());
+	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMNEWMOUNTL5, "this %x drive %d", (TUint) &FSys(), (TUint) DriveNumber());
 	TRAP(r,pM=FSys().NewMountL());
-	TRACERET2(UTF::EBorder, UTraceModuleFileSys::ECFileSystemNewMountLRet, EF32TraceUidFileSys, r, pM);
+	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMNEWMOUNTL5RET, "r %d CMountCB %x", (TUint) r, (TUint) pM);
 	if(r!=KErrNone)
 		return(r);
 	pM->SetDrive(this);
 
-	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECMountCBErasePassword, EF32TraceUidFileSys, DriveNumber());
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBERASEPASSWORD, "drive %d", DriveNumber());
 	r=pM->ErasePassword();
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBErasePasswordRet, EF32TraceUidFileSys, r);
-
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBERASEPASSWORDRET, "r %d", r);
 	pM->Close();
 	return(r);
 	}
@@ -2221,8 +2196,9 @@ EXPORT_C TBool TDrive::GetNotifyUser()
 
 
 /**
-Dismounts the current mount. This is method is called from outside, so do some finalisation work on mount.
+    Gracefully dismounts the current mount. This is method is called from outside, so do some finalisation work on mount.
 After calling this function there is no current mount on the drive.
+
 */
 EXPORT_C void TDrive::Dismount()
 	{
@@ -2232,10 +2208,12 @@ EXPORT_C void TDrive::Dismount()
 	if (!iCurrentMount)
 		return;
 
+    //-- try to do the best flushing file caches
     TRAP_IGNORE(FlushCachedFileInfoL());
 
     //-- try our best to finalise the mount (the mount can decide to do some job during finalisation, e.g. write some data)
-    TRAP_IGNORE(iCurrentMount->FinaliseMountL());
+    //-- finalise the mount in RO mode, we are dismounting the FS anyway
+    TRAP_IGNORE(iCurrentMount->FinaliseMountL(RFs::EFinal_RO));
     
     DoDismount();
 	}
@@ -2244,8 +2222,7 @@ EXPORT_C void TDrive::Dismount()
 
 
 /**
-Forcibly dismounts the current mount and prevents it being remounted.
-After calling this function there is no current mount on the drive.
+    Dismounts the current mount by force.
 */
 void TDrive::ForceDismount()
 	{
@@ -2257,7 +2234,15 @@ void TDrive::ForceDismount()
 		return;
   
 	TRAP_IGNORE(FlushCachedFileInfoL());
-	iCurrentMount->SetDismounted(); //! this affects TDrive::ReMount()
+
+    //-- try our best to finalise the mount (the mount can decide to do some job during finalisation, e.g. write some data)
+    //-- finalise the mount in RO mode, we are dismounting the FS anyway
+    TRAP_IGNORE(iCurrentMount->FinaliseMountL(RFs::EFinal_RO));
+
+    //-- mark the mount as 'Dismounted'; this invalidates all object handles until the mount is successfully "remounted". 
+    //-- if there are still some objects opened on this mount, CMountCB::Close() won't destroy it until all objects are closed.
+    iCurrentMount->SetDismounted(); 
+    
     DoDismount();
 	}
 
@@ -2275,10 +2260,9 @@ void TDrive::DoDismount()
 	if (!iCurrentMount)
 		return;
 
-	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECMountCBDismounted, EF32TraceUidFileSys, DriveNumber());
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBDISMOUNTED, "drive %d", DriveNumber());
     iCurrentMount->Dismounted();
-	TRACE0(UTF::EBorder, UTraceModuleFileSys::ECMountCBDismountedRet, EF32TraceUidFileSys);
-
+	OstTrace0(TRACE_FILESYSTEM, FSYS_ECMOUNTCBDISMOUNTEDRET, "");
 	iCurrentMount->Close();
 	iCurrentMount=NULL;
     }
@@ -2375,7 +2359,6 @@ void TDrive::SetDismountDeferred(TBool aPending)
 	}
 
 
-
 TInt TDrive::ControlIO(const RMessagePtr2& aMessage,TInt aCommand,TAny* aParam1,TAny* aParam2)
 //
 // General purpose test interface - .FSY specific.
@@ -2385,10 +2368,9 @@ TInt TDrive::ControlIO(const RMessagePtr2& aMessage,TInt aCommand,TAny* aParam1,
 	if(r==KErrNone || (r==KErrInUse && iReason==KErrNone))
 		{
 		TRACETHREADID(aMessage);
-		TRACE5(UTF::EBorder, UTraceModuleFileSys::ECMountCBControlIO, EF32TraceUidFileSys, 
-			DriveNumber(), aCommand, aParam1, aParam2, I64LOW(threadId));
+		OstTraceExt5(TRACE_FILESYSTEM, FSYS_ECMOUNTCBCONTROLIO, "drive %d aCommand %d aParam1 %x aParam2 %x clientThreadId %x", (TUint) DriveNumber(), (TUint) aCommand, (TUint) aParam1, (TUint) aParam2, (TUint) threadId);
 		r=CurrentMount().ControlIO(aMessage,aCommand,aParam1,aParam2);
-		TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBControlIORet, EF32TraceUidFileSys, r);
+		OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBCONTROLIORET, "r %d", r);
 		}
 	return(r);
 	}
@@ -2605,11 +2587,10 @@ CFormatCB* TDrive::FormatOpenL(CFsRequest* aRequest, TInt& aFmtHandle, TFormatMo
     {
     ASSERT(!(apLDFormatInfo && apVolFormatParam));  //-- these parameters are mutually exclusive
     
-    TRACE2(UTF::EBorder, UTraceModuleFileSys::ECFileSystemNewFormatL, EF32TraceUidFileSys, &FSys(), DriveNumber()); 
-
+    OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMNEWFORMATL, "this %x drive %d", (TUint) &FSys(), (TUint) DriveNumber()); 
     CFormatCB* pFormat = CurrentMount().NewFormatL(); 
 
-	TRACE2(UTF::EBorder, UTraceModuleFileSys::ECFileSystemNewFormatLRet, EF32TraceUidFileSys, KErrNone, pFormat); 
+	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMNEWFORMATLRET, "r %d CFormatCB %x", (TUint) KErrNone, (TUint) pFormat); 
 	
     Formats->AddL(pFormat, ETrue); 
 	pFormat->InitL(this, aFmtMode); 

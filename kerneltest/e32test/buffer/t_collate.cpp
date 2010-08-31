@@ -100,6 +100,8 @@ void test_unicode_collation(const TDesC& x,const TDesC& y,TInt desired_order,
 	test(order == desired_order);
 	}
 
+#undef USE_SWEDISH_TABLE
+#ifdef USE_SWEDISH_TABLE
 static const TUint32 TheSwedishKey[] = 
 	{
 	0x8f60109,0x8f70109,0x8f80109,0x8f60121,0x8f70121,0x8f80121,0x8dd0109,0x8dd0121,
@@ -128,6 +130,7 @@ static const TCollationKeyTable TheSwedishTable =
 
 static const TCollationMethod TheSwedishMethod =
 	{ 0, NULL, &TheSwedishTable, 0 };
+#endif
 
 static const TCollationMethod TheSwapCaseMethod =
 	{ 0, NULL, NULL, TCollationMethod::ESwapCase };
@@ -33137,7 +33140,10 @@ void test_unicode_collations()
 	test_unicode_collation(_L("Liege"),_L("li\xe8ge"),-1);		// accentuation outweighs case
 	test_unicode_collation(_L("Liege"),_L("li\xe8ge"),0,0);		// ignore accents and case at level 0
 	test_unicode_collation(_L("\xe5ngstr\xf6m"),_L("zoo"),-1);	// a-ring before z by default
-	// test_unicode_collation(_L("\xe5ngstr\xf6m"),_L("zoo"),1,3,&TheSwedishMethod);	// a-ring after z in Sweden
+#undef USE_SWEDISH_TABLE
+#ifdef USE_SWEDISH_TABLE
+	test_unicode_collation(_L("\xe5ngstr\xf6m"),_L("zoo"),1,3,&TheSwedishMethod);	// a-ring after z in Sweden
+#endif
 	test_unicode_collation(_L("Antidisestablishmentarian"),_L("antidisestablishmentariac"),1); 	// long strings that don't have identical prefixes
 	
 	test_unicode_collation(_L("\xFF86"),_L(""),1);

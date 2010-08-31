@@ -36,5 +36,6 @@ ROMFILE :
 	@echo data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\megalarge2.dat    sys\data\megalarge2.dat		unpaged paging_unmovable
 	@echo data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\filerepos_bc0.dat sys\data\filerepos_bc0.dat	unpaged paging_unmovable
 	@echo data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\filerepos_bc1.dat sys\data\filerepos_bc1.dat	unpaged paging_unmovable
+	@echo data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\filerepos_cds.dat sys\data\filerepos_cds.dat  unpaged paging_unmovable
 	@echo hcrdata=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\filerepos.dat  sys\data\hcr.dat
 #endif

@@ -13,7 +13,7 @@
 // Description:
 // e32\drivers\dmapil.cpp
 // DMA Platform Independent Layer (PIL)
-// 
+//
 //
 
 #include <drivers/dma.h>
@@ -477,11 +477,14 @@ EXPORT_C void DDmaRequest::Queue()
 	iChannel.Wait();
 
 	TUint32 req_count = iChannel.iQueuedRequests++;
-	if (req_count == 0)
+	if (iChannel.iCallQueuedRequestFn)
 		{
-		iChannel.Signal();
-		iChannel.QueuedRequestCountChanged();
-		iChannel.Wait();
+		if (req_count == 0)
+			{
+			iChannel.Signal();
+			iChannel.QueuedRequestCountChanged();
+			iChannel.Wait();
+			}
 		}
 
 	if (!(iChannel.iIsrDfc & (TUint32)TDmaChannel::KCancelFlagMask))
@@ -500,9 +503,12 @@ EXPORT_C void DDmaRequest::Queue()
 		req_count = --iChannel.iQueuedRequests;
 		__DMA_INVARIANT();
 		iChannel.Signal();
-		if (req_count == 0)
+		if (iChannel.iCallQueuedRequestFn)
 			{
-			iChannel.QueuedRequestCountChanged();
+			if (req_count == 0)
+				{
+				iChannel.QueuedRequestCountChanged();
+				}
 			}
 		}
 	}
@@ -628,6 +634,7 @@ TDmaChannel::TDmaChannel()
 	  iReqQ(),
 	  iReqCount(0),
 	  iQueuedRequests(0),
+	  iCallQueuedRequestFn(ETrue),
 	  iCancelInfo(NULL)
 	{
 	__DMA_INVARIANT();
@@ -760,9 +767,12 @@ EXPORT_C void TDmaChannel::CancelAll()
 
 	// Only call PSL if there were requests queued when we entered AND there
 	// are now no requests left on the queue.
-	if ((req_count_before != 0) && (req_count_after == 0))
+	if (iCallQueuedRequestFn)
 		{
-		QueuedRequestCountChanged();
+		if ((req_count_before != 0) && (req_count_after == 0))
+			{
+			QueuedRequestCountChanged();
+			}
 		}
 
 	__DMA_INVARIANT();
@@ -800,7 +810,7 @@ void TDmaChannel::DoDfc()
 		// If an error occurred it must have been reported on the last interrupt since transfers are
 		// suspended after an error.
 		DDmaRequest::TResult res = (count==0 && error) ? DDmaRequest::EError : DDmaRequest::EOk;
-		__DMA_ASSERTD(!iReqQ.IsEmpty());
+		__DMA_ASSERTA(!iReqQ.IsEmpty());
 		DDmaRequest* pCompletedReq = NULL;
 		DDmaRequest* pCurReq = _LOFF(iReqQ.First(), DDmaRequest, iLink);
 		DDmaRequest::TCallback cb = 0;
@@ -942,9 +952,12 @@ void TDmaChannel::DoDfc()
 	// Only call PSL if there were requests queued when we entered AND there
 	// are now no requests left on the queue (after also having executed all
 	// client callbacks).
-	if ((req_count_before != 0) && (req_count_after == 0))
+	if (iCallQueuedRequestFn)
 		{
-		QueuedRequestCountChanged();
+		if ((req_count_before != 0) && (req_count_after == 0))
+			{
+			QueuedRequestCountChanged();
+			}
 		}
 
 	__DMA_INVARIANT();
@@ -972,14 +985,11 @@ void TDmaChannel::DoUnlink(SDmaDesHdr& /*aHdr*/)
 /** PSL may override */
 void TDmaChannel::QueuedRequestCountChanged()
 	{
-#ifdef _DEBUG
+	__KTRACE_OPT(KDMA, Kern::Printf("TDmaChannel::QueuedRequestCountChanged(): "
+									"disabling further calls"));
 	Wait();
-	__KTRACE_OPT(KDMA,
-				 Kern::Printf("TDmaChannel::QueuedRequestCountChanged() %d",
-							  iQueuedRequests));
-	__DMA_ASSERTA(iQueuedRequests >= 0);
+	iCallQueuedRequestFn = EFalse;
 	Signal();
-#endif
 	}
 
 

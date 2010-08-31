@@ -813,7 +813,7 @@ TInt LocateMatchStringFolded(const TText16* aCandidateStringStart, const TText16
         // Because this function is using TUTF32Iterator, which means the
         // original author want to support surrogate. Take it as a defect and
         // fix it, while do not define a new LocateMatchStringFoldedSurrogate().
-        if (IsSurrogate(*csSection))
+        if (TChar::IsSurrogate(*csSection))
         	++csSection;
 		}
 	// this should never happen!

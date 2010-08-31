@@ -703,11 +703,6 @@ TInt TPluginSessionHelper::CreateSubSession(const RSessionBase& aSession, TInt a
 	TPckgBuf<TInt> reply;
 	args.Set(3,&reply);
 
-	// copy session pointer
-	RLocalMessage message = iMessage;
-	message.SetFunction(aFunction);
-	message.SetArgs(args);
-
 	TInt err = Dispatch(aFunction, args);
 	if (err == KErrNone)
 		*aReply = reply();

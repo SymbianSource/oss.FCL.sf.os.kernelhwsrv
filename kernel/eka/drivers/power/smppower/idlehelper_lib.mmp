@@ -1,0 +1,39 @@
+// Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL " http://www.eclipse.org/legal/epl-v10.html ".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// \drivers\power\smppower\smpidlehelper_lib.mmp
+// Helper library required to implement CPU idle
+// functionality in a SMP BSP.
+
+
+#define NO_EKERN_LIB
+#include "kernel/kern_ext.mmh"
+
+target				idlehelper.lib
+targettype			klib
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+sourcepath       ../../power/smppower
+source           idlehelper.cpp idlehelper.cia
+
+start wins
+win32_headers
+end
+
+capability		all
+
+vendorid 0x70000001
+
+SMPSAFE
+

@@ -1172,14 +1172,16 @@ EXPORTS
 	_ZN4Kern10RandomSaltEPKhjj @ 1171 NONAME
 	_ZN4Kern12SecureRandomER5TDes8 @ 1172 NONAME
 	_ZN13DPagingDevice16NotificationLockEv @ 1173 NONAME
-	_ZN13KernCoreStats5StatsEPv @ 1174 NONAME ABSENT
-	_ZN13KernCoreStats6EngageEi @ 1175 NONAME ABSENT
-	_ZN13KernCoreStats6RetireEii @ 1176 NONAME ABSENT
-	_ZN13KernCoreStats9ConfigureEj @ 1177 NONAME ABSENT
-	_ZN13KernCoreStats9EnterIdleEv @ 1178 NONAME ABSENT
-	_ZN13KernCoreStats9LeaveIdleEj @ 1179 NONAME ABSENT
-	_ZN3Arm14SetIdleHandlerEPFvPvmES0_ @ 1180 NONAME ABSENT
-	_ZN4Epoc11FreeRamZoneEj @ 1181 NONAME ABSENT
+	_ZN13KernCoreStats5StatsEPv @ 1174 NONAME
+	_ZN13KernCoreStats6EngageEi @ 1175 NONAME
+	_ZN13KernCoreStats6RetireEii @ 1176 NONAME
+	_ZN13KernCoreStats9ConfigureEj @ 1177 NONAME
+	_ZN13KernCoreStats9EnterIdleEv @ 1178 NONAME
+	_ZN13KernCoreStats9LeaveIdleEj @ 1179 NONAME
+	_ZN3Arm14SetIdleHandlerEPFvPvmES0_ @ 1180 NONAME
+	_ZN4Epoc11FreeRamZoneEj @ 1181 NONAME
 	_ZN16TBitMapAllocator14SelectiveAllocEii @ 1182 NONAME
 	_ZN10RArrayBase12SetKeyOffsetEi @ 1183 NONAME
+	_ZN5Cache10CpuRetiresEv @ 1184 NONAME
+	_ZN5Cache13KernelRetiresEv @ 1185 NONAME
 

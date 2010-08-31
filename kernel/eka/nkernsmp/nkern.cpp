@@ -98,7 +98,10 @@ void NFastMutex::DoWaitL()
 			pC->iLinkedObj = this;
 			pC->iWaitState.SetUpWait(NThreadBase::EWaitFastMutex, NThreadWaitState::EWtStObstructed, this);
 			pC->iWaitLink.iPriority = pC->iPriority;
-			iWaitQ.Add(&pC->iWaitLink);
+			if (waited)
+				iWaitQ.AddHead(&pC->iWaitLink);	// we were next at this priority
+			else
+				iWaitQ.Add(&pC->iWaitLink);
 			pC->RelSLock();
 			if (pH)
 				pH->SetMutexPriority(this);
@@ -880,6 +883,9 @@ TBool NThreadBase::DoSuspendOrKillT(TInt aCount, TSubScheduler* aS)
 		iCsFunction = ECSDivertPending;
 		iSuspendCount = 0;
 		iSuspended = 0;
+
+		// If thread is killed before first resumption, set iACount=1
+		__e32_atomic_tau_ord8(&iACount, 1, 0, 1);
 		if (aS)
 			aS->iReadyListLock.UnlockOnly();
 		DoReleaseT(KErrDied,0);
@@ -894,7 +900,7 @@ TBool NThreadBase::DoSuspendOrKillT(TInt aCount, TSubScheduler* aS)
 TBool NThreadBase::SuspendOrKill(TInt aCount)
 	{
 	__KTRACE_OPT(KNKERN,DEBUGPRINT("%T nSuspendOrKill %d", this, aCount));
-	if (aCount==0)
+	if (aCount==0 || i_NThread_Initial)
 		return FALSE;
 	TBool result = FALSE;
 	TBool concurrent = FALSE;
@@ -1047,6 +1053,10 @@ TBool NThreadBase::Resume(TBool aForce)
 			{
 			result = TRUE;
 			iSuspended = 0;
+
+			// On first resumption set iACount=1
+			// From then on the thread must be killed before being deleted
+			__e32_atomic_tau_ord8(&iACount, 1, 0, 1);
 			if (!iPauseCount && !iReady && !iWaitState.iWtC.iWtStFlags)
 				ReadyT(0);
 			}
@@ -1212,6 +1222,9 @@ void NThreadBase::Exit()
 	if (xh)
 		pD = (*xh)((NThread*)this);		// call exit handler
 
+	// if CPU freeze still active, remove it
+	NKern::EndFreezeCpu(0);
+
 	// detach any tied events
 	DetachTiedEvents();
 
@@ -1283,34 +1296,65 @@ EXPORT_C void NThreadBase::Kill()
 			KCpuAny if it should be able to run on any CPU.
 	@return The previous affinity mask.
 */
-TUint32 NThreadBase::SetCpuAffinity(TUint32 aAffinity)
+TUint32 NSchedulable::SetCpuAffinityT(TUint32 aAffinity)
 	{
 	// check aAffinity is valid
-	AcqSLock();
-	TUint32 old_aff = iParent->iCpuAffinity;
-	TBool migrate = FALSE;
+	NThreadBase* t = 0;
+	NThreadGroup* g = 0;
+	NSchedulable* p = iParent;
+	if (!p)
+		g = (NThreadGroup*)this, p=g;
+	else
+		t = (NThreadBase*)this;
+	if (iParent && iParent!=this)
+		g = (NThreadGroup*)iParent;
+	TUint32 old_aff = p->iCpuAffinity;
 	TBool make_ready = FALSE;
 	TSubScheduler* ss0 = &SubScheduler();
 	TSubScheduler* ss = 0;
-	__KTRACE_OPT(KNKERN,DEBUGPRINT("%T nSetCpu %08x->%08x, F:%d R:%02x PR:%02x",this,iParent->iCpuAffinity,aAffinity,iParent->iFreezeCpu,iReady,iParent->iReady));
-	if (i_NThread_Initial)
-		goto done;	// can't change affinity of initial thread
-	iParent->iCpuAffinity = aAffinity;		// set new affinity, might not take effect yet
-	if (!iParent->iReady)
-		goto done;	// thread/group not currently on a ready list so can just change affinity
-	migrate = !CheckCpuAgainstAffinity(iParent->iReady & EReadyCpuMask, aAffinity);	// TRUE if thread's current CPU is incompatible with the new affinity
-	if (!migrate)
-		goto done;	// don't need to move thread, so just change affinity
-	ss = TheSubSchedulers + (iParent->iReady & EReadyCpuMask);
-	ss->iReadyListLock.LockOnly();
-	if (iParent->iCurrent)
+#ifdef KNKERN
+	if (iParent)
 		{
-		iParent->iCpuChange = TRUE;			// mark CPU change pending
+		__KTRACE_OPT(KNKERN,DEBUGPRINT("%T nSetCpu %08x->%08x, F:%d R:%02x PR:%02x",this,iParent->iCpuAffinity,aAffinity,iParent->iFreezeCpu,iReady,iParent->iReady));
+		}
+	else
+		{
+		__KTRACE_OPT(KNKERN,DEBUGPRINT("%G nSetCpu %08x->%08x, F:%d R:%02x",this,iCpuAffinity,aAffinity,iFreezeCpu,iReady));
+		}
+#endif
+	if (t && t->i_NThread_Initial)
+		goto done;	// can't change affinity of initial thread
+	if (aAffinity == NTHREADBASE_CPU_AFFINITY_MASK)
+		{
+		p->iTransientCpu = 0;
+		}
+	else if ( (aAffinity & (KCpuAffinityPref|NTHREADBASE_CPU_AFFINITY_MASK)) == KCpuAffinityPref)
+		{
+		p->iTransientCpu = 0;
+		p->iPreferredCpu = TUint8((aAffinity & (EReadyCpuMask|EReadyCpuSticky)) | EReadyOffset);
+		}
+	else if ( (aAffinity & (KCpuAffinityTransient|KCpuAffinityPref|NTHREADBASE_CPU_AFFINITY_MASK)) == KCpuAffinityTransient)
+		{
+		p->iTransientCpu = TUint8(aAffinity & EReadyCpuMask) | EReadyOffset;
+		}
+	else
+		p->iCpuAffinity = NSchedulable::PreprocessCpuAffinity(aAffinity);		// set new affinity, might not take effect yet
+	if (!p->iReady)
+		goto done;	// thread/group not currently on a ready list so can just change affinity
+
+	// Check if the thread needs to migrate or can stay where it is
+	if (!p->ShouldMigrate(p->iReady & EReadyCpuMask))
+		goto done;	// don't need to move thread, so just change affinity
+	ss = TheSubSchedulers + (p->iReady & EReadyCpuMask);
+	ss->iReadyListLock.LockOnly();
+	if (p->iCurrent)
+		{
+		p->iCpuChange = TRUE;			// mark CPU change pending
 		if (ss == ss0)
 			RescheduleNeeded();
 		else
 			// kick other CPU now so migration happens before acquisition of fast mutex
-			send_resched_ipi_and_wait(iParent->iReady & EReadyCpuMask);
+			send_resched_ipi_and_wait(p->iReady & EReadyCpuMask);
 		}
 	else
 		{
@@ -1318,21 +1362,79 @@ TUint32 NThreadBase::SetCpuAffinity(TUint32 aAffinity)
 		// This is handled by the scheduler - when a thread belonging to a group is context switched
 		// out while holding a fast mutex its iFastMutexDefer is set to 1 and the group's iFreezeCpu
 		// is incremented.
-		if (iParent->iFreezeCpu || (iParent==this && CheckFastMutexDefer()))
-			iParent->iCpuChange = TRUE;	// CPU frozen or fast mutex held so just mark deferred CPU migration
+		if (p->iFreezeCpu || (iParent==this && t->CheckFastMutexDefer()))
+			p->iCpuChange = TRUE;	// CPU frozen or fast mutex held so just mark deferred CPU migration
 		else
 			{
-			ss->Remove(iParent);
-			iParent->iReady = 0;
+			ss->SSRemoveEntry(p);
+			p->iReady = 0;
 			make_ready = TRUE;
 			}
 		}
 	ss->iReadyListLock.UnlockOnly();
 	if (make_ready)
-		iParent->ReadyT(0);
+		p->ReadyT(0);
 done:
-	RelSLock();
 	return old_aff;
+	}
+
+/** Force the current thread onto a particular CPU
+
+	@pre	Kernel must not be locked.
+	@pre	Call in a thread context.
+	@pre	Current thread must not be in a group
+	@pre	Current thread must not hold a fast mutex
+	@pre	Current thread must have an active CPU freeze
+	@pre	Current thread must not be an initial thread
+
+	@param	The number of the CPU to which this thread should be moved
+*/
+void NKern::JumpTo(TInt aCpu)
+	{
+	// check aAffinity is valid
+	NThreadBase* t = NKern::CurrentThread();
+	__KTRACE_OPT(KNKERN,DEBUGPRINT("%T NJumpTo %d", t, aCpu));
+	if (NKern::HeldFastMutex())
+		__crash();
+	t->LAcqSLock();
+	if (t->iParent!=t)
+		__crash();
+	if (!t->iFreezeCpu)
+		__crash();
+	if (t->i_NThread_Initial)
+		__crash();
+	if (TUint(aCpu) >= (TUint)NKern::NumberOfCpus())
+		__crash();
+	TUint8 fc = (TUint8)(aCpu | NSchedulable::EReadyOffset);
+	if (t->iCurrent != fc)
+		{
+		t->iForcedCpu = fc;
+		t->iCpuChange = TRUE;
+		RescheduleNeeded();
+		}
+	t->RelSLockU();		// reschedules and jumps to new CPU
+	}
+
+TBool NSchedulable::ShouldMigrate(TInt aCpu)
+	{
+	// Check if the thread's current CPU is compatible with the new affinity
+	TUint32 active = TheScheduler.iThreadAcceptCpus;
+
+	// If it can't stay where it is, migrate
+	if (!CheckCpuAgainstAffinity(aCpu, iCpuAffinity, active))
+		return TRUE;
+
+	TInt cpu = iTransientCpu ? iTransientCpu : iPreferredCpu;
+
+	// No preferred or transient CPU, so can stay where it is
+	if (!cpu)
+		return FALSE;
+
+	// If thread isn't on preferred CPU but could be, migrate
+	cpu &= EReadyCpuMask;
+	if (cpu!=aCpu && CheckCpuAgainstAffinity(cpu, iCpuAffinity, active))
+		return TRUE;
+	return FALSE;
 	}
 
 
@@ -1412,7 +1514,7 @@ TInt NThreadWaitState::UnBlockT(TUint aType, TAny* aWaitObj, TInt aReturnValue)
 		{
 		NThreadBase* t = Thread();
 		if (!t->iPauseCount && !t->iSuspended)
-			t->ReadyT(0);
+			t->ReadyT(oldws64 & EWtStObstructed);
 		}
 	return KErrNone;
 	}
@@ -1756,6 +1858,24 @@ EXPORT_C void NKern::ThreadSetPriority(NThread* aThread, TInt aPriority, NFastMu
 	}
 
 
+/** Changes the nominal priority of a thread.
+
+	This function is intended to be used by the EPOC layer and personality layers.
+	Do not use this function directly on a Symbian OS thread - use Kern::ThreadSetPriority().
+
+    @param aThread Thread to receive the new priority.
+    @param aPriority New inherited priority for aThread.
+    
+	@see Kern::SetThreadPriority()
+*/
+void NKern::ThreadSetNominalPriority(NThread* aThread, TInt aPriority)
+	{
+	NKern::Lock();
+	aThread->SetNominalPriority(aPriority);
+	NKern::Unlock();
+	}
+
+
 /** Atomically signals the request semaphore of a nanothread and a fast mutex.
 
 	This function is intended to be used by the EPOC layer and personality
@@ -1947,6 +2067,7 @@ EXPORT_C TInt NKern::FreezeCpu()
 		return 1;
 		}
 	pC->iFreezeCpu = 1;
+	__e32_atomic_add_rlx32(&ss.iDeferShutdown, 1);
 	if (pC->iParent != pC)
 		{
 		pC->AcqSLock();
@@ -1986,6 +2107,7 @@ EXPORT_C void NKern::EndFreezeCpu(TInt aCookie)
 			}
 		else if (pC->iCpuChange)		// deferred CPU change?
 			RescheduleNeeded();
+		__e32_atomic_add_rlx32(&ss.iDeferShutdown, TUint32(-1));
 		}
 	NKern::Unlock();
 	}
@@ -2000,9 +2122,9 @@ EXPORT_C void NKern::EndFreezeCpu(TInt aCookie)
  */
 EXPORT_C TUint32 NKern::ThreadSetCpuAffinity(NThread* aThread, TUint32 aAffinity)
 	{
-	NKern::Lock();
-	TUint32 r = aThread->SetCpuAffinity(aAffinity);
-	NKern::Unlock();
+	aThread->LAcqSLock();
+	TUint32 r = aThread->SetCpuAffinityT(aAffinity);
+	aThread->RelSLockU();
 	return r;
 	}
 
@@ -2327,7 +2449,15 @@ EXPORT_C NThreadGroup* NKern::LeaveGroup()
 		pC->UnReadyT();
 		pC->iParent = pC;
 		g->iCurrent = 0;	// since current thread is no longer in g
-		ss.AddHead(pC);
+		TUint64 now = NKern::Timestamp();
+		g->iLastRunTime.i64 = now;
+		g->iTotalCpuTime.i64 += (now - g->iLastStartTime.i64);
+		if (--g->iActiveState == 0)
+			{
+			// group no longer active
+			g->iTotalActiveTime.i64 += (now - g->iLastActivationTime.i64);
+			}
+		ss.SSAddEntryHead(pC);
 		pC->iReady = TUint8(ss.iCpuNum | NSchedulable::EReadyOffset);
 		pC->iCpuAffinity = g->iCpuAffinity;	// keep same CPU affinity
 		// if we're frozen, the group's freeze count was incremented
@@ -2351,7 +2481,7 @@ EXPORT_C NThreadGroup* NKern::LeaveGroup()
 				g->iCpuChange = FALSE;
 				if (g->iReady)
 					{
-					ss.Remove(g);
+					ss.SSRemoveEntry(g);
 					g->iReady = 0;
 					make_group_ready = TRUE;
 					}
@@ -2393,7 +2523,9 @@ EXPORT_C void NKern::JoinGroup(NThreadGroup* aGroup)
 	__KTRACE_OPT(KNKERN,DEBUGPRINT("NJoinGroup %T->%G",pC,aGroup));
 	pC->AcqSLock();
 	aGroup->AcqSLock();
-	TBool migrate = !CheckCpuAgainstAffinity(ss.iCpuNum, aGroup->iCpuAffinity);	// TRUE if thread's current CPU is incompatible with the group's affinity
+
+	// Check if current CPU is compatible with group's affinity
+	TBool migrate = !CheckCpuAgainstAffinity(ss.iCpuNum, aGroup->iCpuAffinity);
 	if (!aGroup->iReady || aGroup->iReady==pC->iReady)
 		{
 		// group not ready or ready on this CPU
@@ -2406,17 +2538,19 @@ EXPORT_C void NKern::JoinGroup(NThreadGroup* aGroup)
 			if (!aGroup->iReady)
 				{
 				aGroup->iPriority = pC->iPriority;
-				ss.AddHead(aGroup);
+				ss.SSAddEntryHead(aGroup);
 				aGroup->iReady = TUint8(ss.iCpuNum | NSchedulable::EReadyOffset);
 				}
 			else if (pC->iPriority > aGroup->iPriority)
-				{
-				ss.ChangePriority(aGroup, pC->iPriority);
-				}
+				ss.SSChgEntryP(aGroup, pC->iPriority);
 			pC->iReady = NSchedulable::EReadyGroup;
 			aGroup->iCurrent = aGroup->iReady;
 			ss.iReadyListLock.UnlockOnly();
 			++aGroup->iThreadCount;
+			TUint64 now = NKern::Timestamp();
+			aGroup->iLastStartTime.i64 = now;
+			if (++aGroup->iActiveState == 1)
+				aGroup->iLastActivationTime.i64 = now;
 			goto done;
 			}
 		}
@@ -2444,6 +2578,45 @@ done:
 
 
 /******************************************************************************
+ * Iterable Doubly Linked List
+ ******************************************************************************/
+TInt SIterDQIterator::Step(SIterDQLink*& aObj, TInt aMaxSteps)
+	{
+	if (aMaxSteps <= 0)
+		aMaxSteps = KMaxCpus + 3;
+	SIterDQLink* p = Next();
+	SIterDQLink* q = p;
+	__NK_ASSERT_DEBUG(p!=0);
+	for(; p->IsIterator() && --aMaxSteps>0; p=p->Next())
+		{}
+	if (p->IsObject())
+		{
+		// found object
+		Deque();
+		InsertAfter(p);
+		aObj = p;
+		return KErrNone;
+		}
+	if (p->IsAnchor())
+		{
+		// reached end of list
+		if (p != q)
+			{
+			Deque();
+			InsertBefore(p);	// put at the end
+			}
+		aObj = 0;
+		return KErrEof;
+		}
+	// Maximum allowed number of other iterators skipped
+	Deque();
+	InsertAfter(p);
+	aObj = 0;
+	return KErrGeneral;
+	}
+
+
+/******************************************************************************
  * Priority Lists
  ******************************************************************************/
 
@@ -2454,8 +2627,6 @@ done:
  */
 EXPORT_C TInt TPriListBase::HighestPriority()
 	{
-//	TUint64 present = MAKE_TUINT64(iPresent[1], iPresent[0]);
-//	return __e32_find_ms1_64(present);
 	return __e32_find_ms1_64(iPresent64);
 	}
 
@@ -2564,28 +2735,22 @@ EXPORT_C void TPriListBase::AddHead(TPriListLink* aLink)
  * Generic IPIs
  ******************************************************************************/
 
-TGenIPIList::TGenIPIList()
-	:	iGenIPILock(TSpinLock::EOrderGenericIPIList)
-	{
-	}
-
-TGenIPIList GenIPIList;
-
 extern "C" {
 extern void send_generic_ipis(TUint32);
 
 void generic_ipi_isr(TSubScheduler* aS)
 	{
+	TScheduler& s = TheScheduler;
 	TGenericIPI* ipi = aS->iNextIPI;
 	if (!ipi)
 		return;
 	TUint32 m = aS->iCpuMask;
-	SDblQueLink* anchor = &GenIPIList.iA;
+	SDblQueLink* anchor = &s.iGenIPIList.iA;
 	while (ipi != anchor)
 		{
 		__e32_atomic_and_acq32(&ipi->iCpusIn, ~m);
 		(*ipi->iFunc)(ipi);
-		TInt irq = GenIPIList.iGenIPILock.LockIrqSave();
+		TInt irq = s.iGenIPILock.LockIrqSave();
 		TGenericIPI* n = (TGenericIPI*)ipi->iNext;
 		ipi->iCpusOut &= ~m;
 		if (ipi->iCpusOut == 0)
@@ -2599,7 +2764,7 @@ void generic_ipi_isr(TSubScheduler* aS)
 			ipi = (TGenericIPI*)ipi->iNext;
 		if (ipi == anchor)
 			aS->iNextIPI = 0;
-		GenIPIList.iGenIPILock.UnlockIrqRestore(irq);
+		s.iGenIPILock.UnlockIrqRestore(irq);
 		}
 	}
 }
@@ -2611,13 +2776,13 @@ void TGenericIPI::Queue(TGenericIPIFn aFunc, TUint32 aCpuMask)
 	TScheduler& s = TheScheduler;
 	TInt i;
 	TUint32 ipis = 0;
-	TInt irq = GenIPIList.iGenIPILock.LockIrqSave();
+	TInt irq = s.iGenIPILock.LockIrqSave();
 	if (aCpuMask & 0x80000000u)
 		{
 		if (aCpuMask==0xffffffffu)
-			aCpuMask = s.iActiveCpus2;
+			aCpuMask = s.iIpiAcceptCpus;
 		else if (aCpuMask==0xfffffffeu)
-			aCpuMask = s.iActiveCpus2 &~ SubScheduler().iCpuMask;
+			aCpuMask = s.iIpiAcceptCpus &~ SubScheduler().iCpuMask;
 		else
 			aCpuMask = 0;
 		}
@@ -2625,11 +2790,11 @@ void TGenericIPI::Queue(TGenericIPIFn aFunc, TUint32 aCpuMask)
 	iCpusOut = aCpuMask;
 	if (!aCpuMask)
 		{
-		GenIPIList.iGenIPILock.UnlockIrqRestore(irq);
+		s.iGenIPILock.UnlockIrqRestore(irq);
 		iNext = 0;
 		return;
 		}
-	GenIPIList.Add(this);
+	s.iGenIPIList.Add(this);
 	for (i=0; i<s.iNumCpus; ++i)
 		{
 		if (!(aCpuMask & (1<<i)))
@@ -2642,7 +2807,7 @@ void TGenericIPI::Queue(TGenericIPIFn aFunc, TUint32 aCpuMask)
 			}
 		}
 	send_generic_ipis(ipis);
-	GenIPIList.iGenIPILock.UnlockIrqRestore(irq);
+	s.iGenIPILock.UnlockIrqRestore(irq);
 	__KTRACE_OPT(KSCHED2,DEBUGPRINT("GenIPI ipis=%08x", ipis));
 	}
 
@@ -2681,28 +2846,168 @@ void TGenericIPI::WaitCompletion()
 
 /**	Stop all other CPUs
 
-	Call with kernel locked
+Call with kernel unlocked, returns with kernel locked.
+Returns mask of CPUs halted plus current CPU.
 */
-void TStopIPI::StopCPUs()
+TUint32 TStopIPI::StopCPUs()
 	{
+	CHECK_PRECONDITIONS(MASK_THREAD_STANDARD,"TStopIPI::StopCPUs()");
+	TScheduler& s = TheScheduler;
 	iFlag = 0;
+	NKern::ThreadEnterCS();
+
+	// Stop any cores powering up or down for now
+	// A core already on the way down will stop just before the transition to SHUTDOWN_FINAL
+	// A core already on the way up will carry on powering up
+	TInt irq = s.iGenIPILock.LockIrqSave();
+	++s.iCCDeferCount;	// stops bits in iIpiAcceptCpus being cleared, but doesn't stop them being set
+						// but iIpiAcceptCpus | s.iCpusComingUp is constant
+	TUint32 act2 = s.iIpiAcceptCpus;		// CPUs still accepting IPIs
+	TUint32 cu = s.iCpusComingUp;			// CPUs powering up
+	s.iGenIPILock.UnlockIrqRestore(irq);
+	TUint32 cores = act2 | cu;
+	if (cu)
+		{
+		// wait for CPUs coming up to start accepting IPIs
+		while (cores & ~s.iIpiAcceptCpus)
+			{
+			__snooze();	// snooze until cores have come up
+			}
+		}
+	NKern::Lock();
 	QueueAllOther(&Isr);	// send IPIs to all other CPUs
 	WaitEntry();			// wait for other CPUs to reach the ISR
+	return cores;
 	}
 
+
+/**	Release the stopped CPUs
+
+Call with kernel locked, returns with kernel unlocked.
+*/
 void TStopIPI::ReleaseCPUs()
 	{
-	iFlag = 1;				// allow other CPUs to proceed
+	__e32_atomic_store_rel32(&iFlag, 1);	// allow other CPUs to proceed
 	WaitCompletion();		// wait for them to finish with this IPI
+	NKern::Unlock();
+	TheScheduler.CCUnDefer();
+	NKern::ThreadLeaveCS();
 	}
 
 void TStopIPI::Isr(TGenericIPI* a)
 	{
 	TStopIPI* s = (TStopIPI*)a;
-	while (!s->iFlag)
+	while (!__e32_atomic_load_acq32(&s->iFlag))
 		{
 		__chill();
 		}
+	__e32_io_completion_barrier();
 	}
 
 
+/******************************************************************************
+ * TCoreCycler - general method to execute something on all active cores
+ ******************************************************************************/
+TCoreCycler::TCoreCycler()
+	{
+	iCores = 0;
+	iG = 0;
+	}
+
+void TCoreCycler::Init()
+	{
+	CHECK_PRECONDITIONS(MASK_THREAD_STANDARD,"TCoreCycler::Init()");
+	TScheduler& s = TheScheduler;
+	NKern::ThreadEnterCS();
+	iG = NKern::LeaveGroup();
+	NThread* t = NKern::CurrentThread();
+	if (t->iCoreCycling)
+		{
+		__crash();
+		}
+	t->iCoreCycling = TRUE;
+
+	// Stop any cores powering up or down for now
+	// A core already on the way down will stop just before the transition to SHUTDOWN_FINAL
+	// A core already on the way up will carry on powering up
+	TInt irq = s.iGenIPILock.LockIrqSave();
+	++s.iCCDeferCount;	// stops bits in iIpiAcceptCpus being cleared, but doesn't stop them being set
+						// but iIpiAcceptCpus | s.iCpusComingUp is constant
+	TUint32 act2 = s.iIpiAcceptCpus;		// CPUs still accepting IPIs
+	TUint32 cu = s.iCpusComingUp;			// CPUs powering up
+	TUint32 gd = s.iCpusGoingDown;			// CPUs no longer accepting IPIs on the way down
+	s.iGenIPILock.UnlockIrqRestore(irq);
+	if (gd)
+		{
+		// wait for CPUs going down to reach INACTIVE state
+		TUint32 remain = gd;
+		FOREVER
+			{
+			TInt i;
+			for (i=0; i<KMaxCpus; ++i)
+				{
+				if (remain & (1u<<i))
+					{
+					// platform specific function returns TRUE when core has detached from SMP cluster
+					if (s.iSub[i]->Detached())
+						remain &= ~(1u<<i);	// core is now down
+					}
+				}
+			if (!remain)
+				break;		// all done
+			else
+				{
+				__snooze();	// snooze until cores have gone down
+				}
+			}
+		}
+	iCores = act2 | cu;
+	if (cu)
+		{
+		// wait for CPUs coming up to start accepting IPIs
+		while (iCores & ~s.iIpiAcceptCpus)
+			{
+			__snooze();	// snooze until cores have come up
+			}
+		}
+	iFrz = NKern::FreezeCpu();
+	if (iFrz)
+		__crash();	// already frozen so won't be able to migrate :-(
+	iInitialCpu = NKern::CurrentCpu();
+	iCurrentCpu = iInitialCpu;
+	iRemain = iCores;
+	}
+
+TInt TCoreCycler::Next()
+	{
+	NThread* t = NKern::CurrentThread();
+	if (iCores == 0)
+		{
+		Init();
+		return KErrNone;
+		}
+	if (NKern::CurrentCpu() != iCurrentCpu)
+		__crash();
+	iRemain &= ~(1u<<iCurrentCpu);
+	TInt nextCpu = iRemain ? __e32_find_ms1_32(iRemain) : iInitialCpu;
+	if (nextCpu != iCurrentCpu)
+		{
+		NKern::JumpTo(nextCpu);
+		iCurrentCpu = nextCpu;
+		if (NKern::CurrentCpu() != iCurrentCpu)
+			__crash();
+		}
+	if (iRemain)
+		{
+		return KErrNone;
+		}
+	NKern::EndFreezeCpu(iFrz);
+	iCores = 0;
+	TScheduler& s = TheScheduler;
+	s.CCUnDefer();
+	t->iCoreCycling = FALSE;
+	if (iG)
+		NKern::JoinGroup(iG);
+	NKern::ThreadLeaveCS();
+	return KErrEof;
+	}

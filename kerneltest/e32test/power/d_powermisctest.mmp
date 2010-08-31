@@ -1,0 +1,42 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/d_lddpowerseqtest.mmp
+// 
+//
+
+#include "kernel/kern_ext.mmh"
+
+TARGET         d_powermisctest.ldd
+TARGETTYPE     LDD
+SOURCEPATH     ../power
+SOURCE         d_powermisctest.cpp
+
+SYMBIAN_BASE_SYSTEMINCLUDE(drivers)
+USERINCLUDE		../../../kernel/eka/include/drivers/smppower/sample_idlehandler
+
+staticlibrary		idlehelper.lib
+staticlibrary		sample_smpidlehandler.lib
+
+EPOCALLOWDLLDATA
+
+UID		0x100000af
+VENDORID 0x70000001
+
+
+capability		all
+
+start wins
+win32_headers
+end
+SMPSAFE

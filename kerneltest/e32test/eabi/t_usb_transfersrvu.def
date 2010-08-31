@@ -1,0 +1,9 @@
+EXPORTS
+	_ZN12RTransferSrv17SetConfigFileNameER6TDes16 @ 1 NONAME
+	_ZN12RTransferSrv7ConnectEv @ 2 NONAME
+	_ZN12RTransferSrvC1Ev @ 3 NONAME
+	_ZN12RTransferSrvC2Ev @ 4 NONAME
+	_ZN12RTransferSrvD1Ev @ 5 NONAME
+	_ZN12RTransferSrvD2Ev @ 6 NONAME
+	_ZNK12RTransferSrv7VersionEv @ 7 NONAME
+

@@ -26,6 +26,10 @@
 // Global Controller pointer
 static DIicBusController* TheController = NULL;
 
+#ifdef IIC_SIMULATED_PSL
+DIicBusController*& gTheController = TheController;
+#endif
+
 //
 //		Implementation of generic IicBus API for client interface
 //
@@ -1014,63 +1018,8 @@ void DIicBusController::DumpChannelArray()
 
 #endif
 
-#ifdef IIC_SIMULATED_PSL
-TVersion DIicPdd::VersionRequired()
-	{
-	const TInt KIicMajorVersionNumber=1;
-	const TInt KIicMinorVersionNumber=0;
-	const TInt KIicBuildVersionNumber=KE32BuildVersionNumber;
-	return TVersion(KIicMajorVersionNumber,KIicMinorVersionNumber,KIicBuildVersionNumber);
-	}
-
-/** Factory class constructor */
-DIicPdd::DIicPdd()
-	{
-    iVersion = DIicPdd::VersionRequired();
-	}
-
-DIicPdd::~DIicPdd()
-	{
-	delete TheController;
-	}
-
-TInt DIicPdd::Install()
-    {
-    return(SetName(&KPddName));
-    }
-
-/**  Called by the kernel's device driver framework to create a Physical Channel. */
-TInt DIicPdd::Create(DBase*& /*aChannel*/, TInt /*aUint*/, const TDesC8* /*anInfo*/, const TVersion& /*aVer*/)
-    {
-    return KErrNone;
-    }
-
-/**  Called by the kernel's device driver framework to check if this PDD is suitable for use with a Logical Channel.*/
-TInt DIicPdd::Validate(TInt /*aUnit*/, const TDesC8* /*anInfo*/, const TVersion& aVer)
-    {
-   	if (!Kern::QueryVersionSupported(DIicPdd::VersionRequired(),aVer))
-		return(KErrNotSupported);
-    return KErrNone;
-    }
-
-/** Return the driver capabilities */
-void DIicPdd::GetCaps(TDes8& aDes) const
-    {
-	// Create a capabilities object
-	TCaps caps;
-	caps.iVersion = iVersion;
-	// Zero the buffer
-	TInt maxLen = aDes.MaxLength();
-	aDes.FillZ(maxLen);
-	// Copy cpabilities
-	TInt size=sizeof(caps);
-	if(size>maxLen)
-	   size=maxLen;
-	aDes.Copy((TUint8*)&caps,size);
-    }
-#endif
-
 #ifndef IIC_SIMULATED_PSL
+
 // Client interface entry point
 DECLARE_EXTENSION_WITH_PRIORITY(KExtensionMaximumPriority-1)	// highest priority after Resource Manager
 	{
@@ -1080,26 +1029,6 @@ DECLARE_EXTENSION_WITH_PRIORITY(KExtensionMaximumPriority-1)	// highest priority
 	TInt r=TheController->Create();
 	return r;
 	}
-#else
-static DIicPdd* TheIicPdd;
-
-DECLARE_STANDARD_PDD()
-	{
-	TheController = new DIicBusController;
-	if(!TheController)
-		return NULL;
-	TInt r = TheController->Create();
-	if(r == KErrNone)
-		{
-		TheIicPdd = new DIicPdd;
-		if(TheIicPdd)
-			return TheIicPdd;
-		}
-	
-	delete TheController; 
-	return NULL;
-	}
 #endif
-
 
 

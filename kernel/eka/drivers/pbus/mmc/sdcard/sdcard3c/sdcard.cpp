@@ -29,6 +29,7 @@
 TSDCard::TSDCard()
 :	iProtectedAreaSize(0), iPARootDirEnd(KPARootDirEndUnknown), iClientCountSD(0)
 	{
+	// empty
 	}
 
 TInt64 TSDCard::DeviceSize64() const
@@ -423,6 +424,10 @@ void DSDSession::FillSdSpecificCommandDesc(TMMCCommandDesc& aDesc)
 EXPORT_C TInt DSDStack::Init()
 	{
 	OstTraceFunctionEntry1( DSDSTACK_INIT_ENTRY, this );
+
+	if((iAddressCard = new DAddressCard(*this)) == NULL)
+        return KErrNoMemory;
+	
 	TInt ret = DMMCStack::Init();
 	OstTraceFunctionExitExt( DSDSTACK_INIT_EXIT, this, ret );
 	return ret;
@@ -1135,7 +1140,7 @@ EXPORT_C TMMCErr DSDStack::InitStackAfterUnlockSM()
 		    {
 			AddressCard(KBroadcastToAllCards);
 			__KTRACE_OPT(KPBUS1, Kern::Printf("<DSDStack::InitStackAfterUnlockSM()"));
-		    }
+ 		    }
 
 	SMF_END
 	
@@ -1653,6 +1658,31 @@ EXPORT_C DSDStack::TSDCardType DSDStack::CardType(TInt /*aSocket*/, TInt /*aCard
     }
 
 
+DAddressCard::DAddressCard(DSDStack& aStack) :iStack(aStack)
+	{
+	}
+
+void DAddressCard::AddressCard(TInt aCardNumber)
+	{
+	iStack.AddressCard(aCardNumber);
+	}
+
+/**
+Gets an interface from a derived class
+
+N.B the derived class should call this function if it does not support the specified interface
+*/
+EXPORT_C void DSDStack::GetInterface(TInterfaceId aInterfaceId, MInterface*& aInterfacePtr)
+	{
+	if (aInterfaceId == KInterfaceAddressCard)
+		{
+		aInterfacePtr = (DMMCStack::MInterface*) iAddressCard;
+		}
+	else
+		{
+		DMMCStack::GetInterface(aInterfaceId, aInterfacePtr);
+		}
+	}
+
 EXPORT_C void DSDStack::Dummy1() {}
 EXPORT_C void DSDStack::Dummy2() {}
-EXPORT_C void DSDStack::Dummy3() {}

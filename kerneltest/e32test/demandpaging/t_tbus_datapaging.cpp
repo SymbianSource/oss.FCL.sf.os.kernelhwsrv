@@ -701,6 +701,7 @@ TInt FindFsDriveNumber(TInt aLocalDriveNumber)
 		TPtrC mediaType = GetMediaType(di.iType);
 		if (di.iType == EMediaRam)
 			gMediaIsRam = ETrue;
+
 		test.Printf(_L("Drive %C Type %S DriveAtt 0x%x MediaAtt 0x%x FileSysId %S SerialNum %S\n"), 
 			'A' + n, &mediaType, di.iDriveAtt, di.iMediaAtt, &fsName, &GetSerialNumber(serialNum));
 

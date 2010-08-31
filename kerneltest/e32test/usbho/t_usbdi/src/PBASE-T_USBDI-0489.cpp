@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -20,6 +20,10 @@
 #include "testpolicy.h"
 #include "testdebug.h"
 #include "modelleddevices.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "PBASE-T_USBDI-0489Traces.h"
+#endif
 
 namespace NUnitTesting_USBDI
 	{
@@ -29,10 +33,12 @@ const TFunctorTestCase<CUT_PBASE_T_USBDI_0489,TBool> CUT_PBASE_T_USBDI_0489::iFu
 
 CUT_PBASE_T_USBDI_0489* CUT_PBASE_T_USBDI_0489::NewL(TBool aHostRole)
 	{
+	OstTraceFunctionEntry1( CUT_PBASE_T_USBDI_0489_NEWL_ENTRY, aHostRole );
 	CUT_PBASE_T_USBDI_0489* self = new (ELeave) CUT_PBASE_T_USBDI_0489(aHostRole);
 	CleanupStack::PushL(self);
 	self->ConstructL();
 	CleanupStack::Pop(self);
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0489_NEWL_EXIT, ( TUint )( self ) );
 	return self;
 	} 
 	
@@ -41,19 +47,23 @@ CUT_PBASE_T_USBDI_0489::CUT_PBASE_T_USBDI_0489(TBool aHostRole)
 :	CBaseTestCase(KTestCaseId,aHostRole),
 	iCaseStep(EInProgress)
 	{
+	OstTraceFunctionEntryExt( CUT_PBASE_T_USBDI_0489_CUT_PBASE_T_USBDI_0489_ENTRY, this );
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0489_CUT_PBASE_T_USBDI_0489_EXIT, this );
 	} 
 
 
 void CUT_PBASE_T_USBDI_0489::ConstructL()
 	{
+	OstTraceFunctionEntry1( CUT_PBASE_T_USBDI_0489_CONSTRUCTL_ENTRY, this );
 	iTestDevice = new RUsbDeviceVendor(this);
 	BaseConstructL();
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0489_CONSTRUCTL_EXIT, this );
 	}
 
 
 CUT_PBASE_T_USBDI_0489::~CUT_PBASE_T_USBDI_0489()
 	{
-	LOG_FUNC
+	OstTraceFunctionEntry1( CUT_PBASE_T_USBDI_0489_CUT_PBASE_T_USBDI_0489_ENTRY_DUP01, this );
 	
 	Cancel();
 	
@@ -67,11 +77,12 @@ CUT_PBASE_T_USBDI_0489::~CUT_PBASE_T_USBDI_0489()
 		iTestDevice->Close();
 		}		
 	delete iTestDevice;
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0489_CUT_PBASE_T_USBDI_0489_EXIT_DUP01, this );
 	}
 	
 void CUT_PBASE_T_USBDI_0489::ExecuteHostTestCaseL()	
 	{
-	LOG_FUNC
+    OstTraceFunctionEntry1( CUT_PBASE_T_USBDI_0489_EXECUTEHOSTTESTCASEL_ENTRY, this );
 
 	// Create the actor for the Function Driver Framework 
 	
@@ -88,12 +99,13 @@ void CUT_PBASE_T_USBDI_0489::ExecuteHostTestCaseL()
 	// Start the connection timeout timer
 
 	TimeoutIn(30);
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0489_EXECUTEHOSTTESTCASEL_EXIT, this );
 	}
 
 
 void CUT_PBASE_T_USBDI_0489::ExecuteDeviceTestCaseL()	
 	{
-	LOG_FUNC
+	OstTraceFunctionEntry1( CUT_PBASE_T_USBDI_0489_EXECUTEDEVICETESTCASEL_ENTRY, this );
 	
 	// Create the test device
 	
@@ -104,40 +116,44 @@ void CUT_PBASE_T_USBDI_0489::ExecuteDeviceTestCaseL()
 	// Connect the device to the host
 	
 	iTestDevice->SoftwareConnect();
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0489_EXECUTEDEVICETESTCASEL_EXIT, this );
 	}
 
 
 void CUT_PBASE_T_USBDI_0489::HostDoCancel()
 	{
-	LOG_FUNC
+	OstTraceFunctionEntry1( CUT_PBASE_T_USBDI_0489_HOSTDOCANCEL_ENTRY, this );
 	
 	// Cancel the test step action timeout timer
 	
 	CancelTimeout();
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0489_HOSTDOCANCEL_EXIT, this );
 	}
 
 	
 void CUT_PBASE_T_USBDI_0489::DeviceDoCancel()
 	{
-	LOG_FUNC
+	OstTraceFunctionEntry1( CUT_PBASE_T_USBDI_0489_DEVICEDOCANCEL_ENTRY, this );
 	
 	// Cancel the device (the activity timer and the error reporting)
 	
 	iTestDevice->CancelSubscriptionToReports();
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0489_DEVICEDOCANCEL_EXIT, this );
 	}
 	
 	
 void CUT_PBASE_T_USBDI_0489::DeviceStateChangeL(RUsbDevice::TDeviceState aPreviousState,
 		RUsbDevice::TDeviceState aNewState,TInt aCompletionCode)
 	{
-	LOG_FUNC
+	OstTraceFunctionEntryExt( CUT_PBASE_T_USBDI_0489_DEVICESTATECHANGEL_ENTRY, this );
 	
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0489_DEVICESTATECHANGEL_EXIT, this );
 	}
 	
 	
 void CUT_PBASE_T_USBDI_0489::DeviceInsertedL(TUint aDeviceHandle)
 	{
-	LOG_FUNC
+    OstTraceFunctionEntryExt( CUT_PBASE_T_USBDI_0489_DEVICEINSERTEDL_ENTRY, this );
 
 	// Cancel the timeout timer
 	
@@ -152,12 +168,13 @@ void CUT_PBASE_T_USBDI_0489::DeviceInsertedL(TUint aDeviceHandle)
 		{
 		// Incorrect device for this test case	
 
-		RDebug::Printf("<Warning %d> Incorrect device serial number (%S) connected for this test case (%S)",
-			KErrNotFound,&testDevice.SerialNumber(),&TestCaseId());
+		OstTraceExt3(TRACE_NORMAL, CUT_PBASE_T_USBDI_0489_DEVICEINSERTEDL, "<Warning %d> Incorrect device serial number (%S) connected for this test case (%S)",
+			KErrNotFound,testDevice.SerialNumber(),TestCaseId());
 
 		// Start the connection timeout again
 
 		TimeoutIn(30);
+		OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0489_DEVICEINSERTEDL_EXIT, this );
 		return;
 		}	
 	
@@ -166,7 +183,7 @@ void CUT_PBASE_T_USBDI_0489::DeviceInsertedL(TUint aDeviceHandle)
 	err = testDevice.Device().GetTokenForInterface(0,iToken0);
 	if(err != KErrNone)
 		{
-		RDebug::Printf("<Error %d> Unable to retrieve token for interface 0",err);
+		OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_0489_DEVICEINSERTEDL_DUP01, "<Error %d> Unable to retrieve token for interface 0",err);
 		TestFailed(err);
 		}
 	
@@ -174,7 +191,7 @@ void CUT_PBASE_T_USBDI_0489::DeviceInsertedL(TUint aDeviceHandle)
 	err = iUsbInterface0.Open(iToken0);
 	if(err != KErrNone)
 		{
-		RDebug::Printf("<Error %d> Unable to open interface 0");
+		OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_0489_DEVICEINSERTEDL_DUP02, "<Error %d> Unable to open interface 0", err);
 		TestFailed(err);
 		}
 	
@@ -187,13 +204,14 @@ void CUT_PBASE_T_USBDI_0489::DeviceInsertedL(TUint aDeviceHandle)
 	
 	// Wait 1 second then cancel EP0 transfer
 	User::After(1000000);
-	RDebug::Printf("Cancelling EP0 transfer");
+	OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_0489_DEVICEINSERTEDL_DUP03, "Cancelling EP0 transfer");
 	iUsbInterface0.CancelEP0Transfer();
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0489_DEVICEINSERTEDL_EXIT_DUP01, this );
 	}
 	
 void CUT_PBASE_T_USBDI_0489::Ep0TransferCompleteL(TInt aCompletionCode)
 	{
-	LOG_FUNC
+	OstTraceFunctionEntryExt( CUT_PBASE_T_USBDI_0489_EP0TRANSFERCOMPLETEL_ENTRY, this );
 	
 	switch(iCaseStep)
 		{
@@ -201,23 +219,23 @@ void CUT_PBASE_T_USBDI_0489::Ep0TransferCompleteL(TInt aCompletionCode)
 			{
 			if(aCompletionCode != KErrCancel)
 				{
-				RDebug::Printf("<Error %d> Nakking request was not cancelled by stack",aCompletionCode);
+				OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_0489_EP0TRANSFERCOMPLETEL, "<Error %d> Nakking request was not cancelled by stack",aCompletionCode);
 				return TestFailed(aCompletionCode);
 				}
 		
 			// No panic or leave so passed
 			
-			RDebug::Printf("No leave or panic occured so open interface again and send test passed");
+			OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_0489_EP0TRANSFERCOMPLETEL_DUP01, "No leave or panic occured so open interface again and send test passed");
 			
 			// Open the interface		
 			/*TODO DMA TInt err(iUsbInterface0.Open(iToken0));
 			if(err != KErrNone)
 				{
-				RDebug::Printf("<Error %d> Unable to open interface 0"));
+				OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_0489_EP0TRANSFERCOMPLETEL_DUP02, "<Error %d> Unable to open interface 0"));
 				return TestFailed(err);
 				}
 			
-			RDebug::Printf("Interface 0 re-opened"));*/
+			OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_0489_EP0TRANSFERCOMPLETEL_DUP03, "Interface 0 re-opened"));*/
 			
 			iCaseStep = EPassed;
 			TTestCasePassed request;
@@ -234,32 +252,35 @@ void CUT_PBASE_T_USBDI_0489::Ep0TransferCompleteL(TInt aCompletionCode)
 			TestFailed(KErrCompletion);
 			break;
 		}
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0489_EP0TRANSFERCOMPLETEL_EXIT, this );
 	}
 	
 void CUT_PBASE_T_USBDI_0489::DeviceRemovedL(TUint aDeviceHandle)
 	{
-	LOG_FUNC
+    OstTraceFunctionEntryExt( CUT_PBASE_T_USBDI_0489_DEVICEREMOVEDL_ENTRY, this );
 
 	// The test device should not be removed until the test case has passed
 	// so this test case has not completed, and state this event as an error
 
 	TestFailed(KErrDisconnected);
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0489_DEVICEREMOVEDL_EXIT, this );
 	}
 	
 	
 void CUT_PBASE_T_USBDI_0489::BusErrorL(TInt aError)
 	{
-	LOG_FUNC
+    OstTraceFunctionEntryExt( CUT_PBASE_T_USBDI_0489_BUSERRORL_ENTRY, this );
 
 	// This test case handles no failiures on the bus
 
 	TestFailed(aError);
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0489_BUSERRORL_EXIT, this );
 	}
 
 
 void CUT_PBASE_T_USBDI_0489::HostRunL()
 	{
-	LOG_FUNC
+	OstTraceFunctionEntry1( CUT_PBASE_T_USBDI_0489_HOSTRUNL_ENTRY, this );
 	
 	// Obtain the completion code
 	TInt completionCode(iStatus.Int());
@@ -267,14 +288,15 @@ void CUT_PBASE_T_USBDI_0489::HostRunL()
 	if(completionCode == KErrNone)
 		{
 		// Action timeout
-		RDebug::Printf("<Error> Action timeout");
+		OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_0489_HOSTRUNL, "<Error> Action timeout");
 		TestFailed(KErrTimedOut);
 		}
 	else
 		{
-		RDebug::Printf("<Error %d> Timeout timer could not complete",completionCode);
+		OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_0489_HOSTRUNL_DUP01, "<Error %d> Timeout timer could not complete",completionCode);
 		TestFailed(completionCode);
 		}
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0489_HOSTRUNL_EXIT, this );
 	}
 
 /**
@@ -283,7 +305,7 @@ or when the device has been informed by the host to report success
 */
 void CUT_PBASE_T_USBDI_0489::DeviceRunL()
 	{
-	LOG_FUNC
+	OstTraceFunctionEntry1( CUT_PBASE_T_USBDI_0489_DEVICERUNL_ENTRY, this );
 	
 	// Disconnect the device
 	
@@ -292,6 +314,7 @@ void CUT_PBASE_T_USBDI_0489::DeviceRunL()
 	// Complete the test case request
 	
 	TestPolicy().SignalTestComplete(iStatus.Int());
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0489_DEVICERUNL_EXIT, this );
 	}
 
 	

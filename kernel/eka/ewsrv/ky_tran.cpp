@@ -1,4 +1,4 @@
-// Copyright (c) 1996-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1996-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -23,8 +23,21 @@
 #include <e32keys.h>
 #include <e32uid.h>
 
-enum	{EDummy,EKeyDataConv,EKeyDataFunc,EKeyDataSettings};
-  
+/**
+Ordinals of the functions which keymap dlls export.
+
+@note These values depend on the ordering of the exports.
+If the existing def files were ever re-frozen, it would
+lead to a runtime error.
+*/
+enum
+	{
+	EDummy,
+	EKeyDataConv, ///< Access conversion tables, signature TLibFnDataConv
+	EKeyDataFunc, ///< Access function tables, signature TLibFnDataFunc
+	EKeyDataSettings ///< Access data needed for control code entry @see TCtrlDigits, signature TLibFnDataSetting
+	};
+
 EXPORT_C CKeyTranslator* CKeyTranslator::New()
 //
 // Return the actual key translator
@@ -482,7 +495,9 @@ TUint TCtrlDigits::SetStateToCtrlDigits() const
 //
 typedef void (*TLibFnDataConv)(SConvTable &aConvTable, TUint &aConvTableFirstScanCode,TUint &aConvTableLastScanCode,
 							   SScanCodeBlockList &aKeypadScanCode,SKeyCodeList &aNonAutorepKeyCodes);
-//
+/**
+Populates the object with conversion table data from aLibrary
+*/
 void TConvTable::Update(RLibrary aLibrary)
 #pragma warning (disable: 4705)
 	{
@@ -526,6 +541,7 @@ SConvKeyData TConvTable::Convert(TUint aScanCode, const TInt &aModifiers) const
 	SConvKeyData returnVal;
 	returnVal.keyCode=EKeyNull;
 	returnVal.modifiers=0;
+	returnVal.filler = 0;
 
 	for (TUint i=0; i<iConvTable.numNodes; i++)
         {

@@ -1,4 +1,4 @@
-// Copyright (c) 1994-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1994-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -229,7 +229,6 @@ const TUint8 KMutexOrdGeneral0			= 0xf0;
 
 
 const TUint8 KMutexOrdRamDrive			= KMutexOrdGeneral7; /**< @internalComponent */
-const TUint8 KMutexOrdDmaChannel		= 0x70; /**< @internalComponent */
 const TUint8 KMutexOrdShPool			= 0x68; /**< @internalComponent */
 const TUint8 KMutexOrdCodeSegLock		= 0x60; /**< @internalComponent */
 const TUint8 KMutexOrdPubSub2			= 0x5e; /**< @internalComponent */
@@ -2845,6 +2844,12 @@ public:
 	inline virtual TInt DeleteNotify(TThreadMessage* aReq,TUint aOffset,TUint aSize);
 
 	/**
+	Return the lock that should be used to synchronise calculation of the idle/busy state and
+	subsequent calls to #NotifyIdle and #NotifyBusy.
+	*/
+	IMPORT_C NFastMutex* NotificationLock();
+	
+	/**
 	Called by the paging system to read data from the media represented by this device using
 	physical addresses, if the device supports it.
 	
@@ -2892,12 +2897,6 @@ public:
 	@return KErrNone or standard error code.
 	*/
 	inline virtual TInt WritePhysical(TThreadMessage* aReq, TPhysAddr* aPageArray, TUint aPageCount, TUint aOffset, TBool aBackground);
-	
-	/**
-	Return the lock that should be used to synchronise calculation of the idle/busy state and
-	subsequent calls to #NotifyIdle and #NotifyBusy.
-	*/
-	IMPORT_C NFastMutex* NotificationLock();
 	
 	/**
 	Called by the paging device to notify the kernel that the device has just become idle and is not

@@ -715,7 +715,8 @@ void ArmMmu::Init1()
 			// we have an L1 data cache...
 			TUint32 csir = InternalCache::SizeIdRegister(0,0);
 			TUint sets = ((csir>>13)&0x7fff)+1;
-			TUint ways = ((csir>>3)&0x3ff)+1;
+			TUint ways = ((csir>>3)&0x3ff);
+			ways+=1;
 			TUint lineSizeShift = (csir&7)+4;
 			// assume L1 data cache is VIPT and alias checks broken and so we need data cache colouring...
 			dColourCount = (sets<<lineSizeShift)>>KPageShift;
@@ -729,7 +730,8 @@ void ArmMmu::Init1()
 			// we have a separate L1 instruction cache...
 			TUint32 csir = InternalCache::SizeIdRegister(1,0);
 			TUint sets = ((csir>>13)&0x7fff)+1;
-			TUint ways = ((csir>>3)&0x3ff)+1;
+			TUint ways = ((csir>>3)&0x3ff);
+			ways+=1;
 			TUint lineSizeShift = (csir&7)+4;
 			iColourCount = (sets<<lineSizeShift)>>KPageShift;
 			__KTRACE_OPT2(KBOOT,KMMU,Kern::Printf("L1ICache = 0x%x,0x%x,%d colourCount=%d",sets,ways,lineSizeShift,(sets<<lineSizeShift)>>KPageShift));

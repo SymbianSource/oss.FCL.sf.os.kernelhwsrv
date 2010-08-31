@@ -20,7 +20,7 @@
 #include <drivers/iic_trace.h>
 #endif
 
-
+#ifndef STANDALONE_CHANNEL
 #if defined(MASTER_MODE) && !defined(SLAVE_MODE)
 const TInt KChannelTypeArray[NUM_CHANNELS] = {DIicBusChannel::EMaster, DIicBusChannel::EMaster, DIicBusChannel::EMaster};
 #elif defined(MASTER_MODE) && defined(SLAVE_MODE)
@@ -30,6 +30,7 @@ const TInt KChannelTypeArray[NUM_CHANNELS] = {DIicBusChannel::ESlave, DIicBusCha
 #endif
 #define CHANNEL_TYPE(n) (KChannelTypeArray[n])	
 #define CHANNEL_DUPLEX(n) (DIicBusChannel::EHalfDuplex)
+#endif/*STANDALONE_CHANNEL*/
 
 #ifdef STANDALONE_CHANNEL
 _LIT(KPddNameI2c,"i2c_ctrless.pdd");
@@ -46,14 +47,15 @@ LOCAL_C TInt8 AssignChanNum()
 	}
 #endif/*STANDALONE_CHANNEL*/
 
-#ifdef SLAVE_MODE
+//Macros MASTER_MODE and SLAVE_MODE are intentionally omitted from this file
+//This is for master and slave stubs to exercise the channel class,
+//and we need these stubs for code coverage tests.
 LOCAL_C TInt16 AssignSlaveChanId()
 	{
 	static TInt16 iBaseSlaveChanId = KI2cSlaveChannelIdBase;
 	I2C_PRINT(("I2C AssignSlaveChanId - on entry, iBaseSlaveChanId = 0x%x\n",iBaseSlaveChanId));
 	return iBaseSlaveChanId++; // Arbitrary, for illustration
 	}
-#endif/*SLAVE_MODE*/
 
 NONSHARABLE_CLASS(DSimulatedI2cDevice) : public DPhysicalDevice
 	{
@@ -125,9 +127,10 @@ void DSimulatedI2cDevice::GetCaps(TDes8& aDes) const
 	aDes.Copy((TUint8*)&caps,size);
     }
 
+#ifndef STANDALONE_CHANNEL
 // supported channels for this implementation
 static DIicBusChannel* ChannelPtrArray[NUM_CHANNELS];
-
+#endif
 
 //DECLARE_EXTENSION_WITH_PRIORITY(BUS_IMPLMENTATION_PRIORITY)	
 DECLARE_STANDARD_PDD()		// I2c test driver to be explicitly loaded as an LDD, not kernel extension
@@ -228,8 +231,6 @@ DECLARE_STANDARD_PDD()		// I2c test driver to be explicitly loaded as an LDD, no
 	return new DSimulatedI2cDevice;
 	}
 
-
-#ifdef MASTER_MODE
 #ifdef STANDALONE_CHANNEL
 EXPORT_C
 #endif
@@ -251,6 +252,8 @@ TInt DSimulatedIicBusChannelMasterI2c::DoCreate()
 	if(r == KErrNone)
 		SetDfcQ((TDfcQue*)iDynamicDfcQ);
 	DSimulatedIicBusChannelMasterI2c::SetRequestDelayed(this,EFalse);
+	//Call to base class DoCreate(not strictly necessary)
+	DIicBusChannelMaster::DoCreate();
 	return r;
 	}
 
@@ -421,7 +424,8 @@ TInt DSimulatedIicBusChannelMasterI2c::StaticExtension(TUint aFunction, TAny* aP
 		default:
 			{
 			Kern::Printf("aFunction %d is not recognised \n",aFunction);
-			r=KErrNotSupported;
+			//For default case call the base class method for consistent handling
+            r=DIicBusChannelMaster::StaticExtension(aFunction,NULL,NULL);
 			}
 		}
 		
@@ -431,22 +435,49 @@ TInt DSimulatedIicBusChannelMasterI2c::StaticExtension(TUint aFunction, TAny* aP
 	return r;
 	}
 
-//#ifdef MASTER_MODE
-#endif
-
-#ifdef SLAVE_MODE
-
 void DSimulatedIicBusChannelSlaveI2c::SlaveAsyncSimCallback(TAny* aPtr)
 	{
 	// To support simulating an asynchronous capture operation
-	// NOTE: this will be invoked in the context of DfcThread1
 	I2C_PRINT(("SlaveAsyncSimCallback\n"));
 	DSimulatedIicBusChannelSlaveI2c* channel = (DSimulatedIicBusChannelSlaveI2c*)aPtr;
-	TInt r=KErrNone;// Just simulate successful capture
+
+	// This will be invoked in the context of DfcThread1, so require
+	// synchronised access to iAsyncEvent and iRxTxTrigger
+	// Use local variables to enable early release of the spin lock
+	//
+	// If DfcThread1 runs on a separate core to the simulated I2C bus, the other core
+	// will have updated values, and since this core may cached copies, memory access
+	// should be observed. The spin lock mechanism is expected to incorpoate this.
+	TInt intState=__SPIN_LOCK_IRQSAVE(channel->iEventSpinLock);
+	
+	TAsyncEvent asyncEvent = channel->iAsyncEvent;
+	TInt rxTxTrigger = channel->iRxTxTrigger;
+	channel->iAsyncEvent = ENoEvent;
+	channel->iRxTxTrigger =  0;
+	__SPIN_UNLOCK_IRQRESTORE(channel->iEventSpinLock,intState);
+
+	switch(asyncEvent)
+		{
+		case (EAsyncChanCapture):
+			{
+			TInt r=KErrNone;// Just simulate successful capture
 #ifdef IIC_INSTRUMENTATION_MACRO
-	IIC_SCAPTCHANASYNC_END_PSL_TRACE;
+			IIC_SCAPTCHANASYNC_END_PSL_TRACE;
 #endif
-	channel->ChanCaptureCb(r);
+			channel->ChanCaptureCb(r);
+			break;
+			}
+		case (ERxWords):
+		case (ETxWords):
+		case (ERxTxWords):
+			{
+			channel->ChanNotifyClient(rxTxTrigger);
+			break;
+			}
+		default:
+			{
+			}
+		}
 	}
 
 #ifdef STANDALONE_CHANNEL
@@ -454,8 +485,9 @@ EXPORT_C
 #endif
 DSimulatedIicBusChannelSlaveI2c::DSimulatedIicBusChannelSlaveI2c(const DIicBusChannel::TBusType aBusType, const DIicBusChannel::TChannelDuplex aChanDuplex)
 	: DIicBusChannelSlave(aBusType,aChanDuplex,0), // 0 to be ignored by base class
-	iBlockedTrigger(0),iBlockNotification(EFalse),
-	iSlaveTimer(DSimulatedIicBusChannelSlaveI2c::SlaveAsyncSimCallback,this)
+	iBlockedTrigger(0),iBlockNotification(EFalse),iAsyncEvent(ENoEvent),iRxTxTrigger(0),
+	iSlaveTimer(DSimulatedIicBusChannelSlaveI2c::SlaveAsyncSimCallback,this),
+	iEventSpinLock(TSpinLock::EOrderGenericIrqHigh2)  // Semi-arbitrary, high priority value (NTimer used)
 	{
 	I2C_PRINT(("DSimulatedIicBusChannelSlaveI2c::DSimulatedIicBusChannelSlaveI2c, aBusType=%d,aChanDuplex=%d\n",aBusType,aChanDuplex));
 #ifndef STANDALONE_CHANNEL
@@ -488,7 +520,10 @@ TInt DSimulatedIicBusChannelSlaveI2c::CaptureChannelPsl(TBool aAsynch)
 	IIC_SCAPTCHANASYNC_START_PSL_TRACE;
 #endif
 		// To simulate an asynchronous capture operation, just set a timer to expire
-		iSlaveTimer.OneShot(1000, ETrue); // Arbitrary timeout - expiry executes callback in context of DfcThread1
+		TInt intState=__SPIN_LOCK_IRQSAVE(iEventSpinLock);
+		iAsyncEvent = EAsyncChanCapture;
+		__SPIN_UNLOCK_IRQRESTORE(iEventSpinLock,intState);
+		iSlaveTimer.OneShot(KI2cSlaveAsyncDelaySim, ETrue); // Arbitrary timeout - expiry executes callback in context of DfcThread1
 		}
 	else
 		{
@@ -600,7 +635,7 @@ TInt DSimulatedIicBusChannelSlaveI2c::DoRequest(TInt aOperation)
 
 void DSimulatedIicBusChannelSlaveI2c::ProcessData(TInt aTrigger, TIicBusSlaveCallback*  aCb)
 	{
-	I2C_PRINT(("DSimulatedIicBusChannelSlaveI2c::ProcessData\n"));
+	I2C_PRINT(("DSimulatedIicBusChannelSlaveI2c::ProcessData trigger=0x%x\n",aTrigger));
 	// fills in iReturn, iRxWords and/or iTxWords
 	//
 	if(aTrigger & ERxAllBytes)
@@ -631,7 +666,6 @@ void DSimulatedIicBusChannelSlaveI2c::ProcessData(TInt aTrigger, TIicBusSlaveCal
 			iRxTxUnderOverRun&= ~ETxOverrun;
 			}
 		}
-
 	aCb->SetTrigger(aTrigger);
 	}
 
@@ -709,8 +743,13 @@ TInt DSimulatedIicBusChannelSlaveI2c::StaticExtension(TUint aFunction, TAny* aPa
 			if(iBlockNotification == EFalse)
 				{
 				//
-				// Invoke DIicBusChannelSlave::NotifyClient - this will invoke ProcessData and invoke the client callback
-				NotifyClient(trigger);
+				// Use a timer for asynchronous call to NotifyClient - this will invoke ProcessData and invoke the client callback
+				TInt intState=__SPIN_LOCK_IRQSAVE(iEventSpinLock);
+				// Tx may already have been requested, to add to the existing flags set in iRxTxTrigger
+				iRxTxTrigger |= trigger;
+				iAsyncEvent = ERxWords;
+				__SPIN_UNLOCK_IRQRESTORE(iEventSpinLock,intState);
+				iSlaveTimer.OneShot(KI2cSlaveAsyncDelaySim, ETrue); // Arbitrary timeout - expiry executes callback in context of DfcThread1
 				}
 			else
 				{
@@ -784,8 +823,14 @@ TInt DSimulatedIicBusChannelSlaveI2c::StaticExtension(TUint aFunction, TAny* aPa
 			if(iBlockNotification == EFalse)
 				{
 				//
-				// Invoke DIicBusChannelSlave::NotifyClient - this will invoke ProcessData and invoke the client callback
-				NotifyClient(trigger);
+				// Use a timer for asynchronous call to NotifyClient - this will invoke ProcessData and invoke the client callback
+				TInt intState=__SPIN_LOCK_IRQSAVE(iEventSpinLock);
+				// Rx may already have been requested, to add to the existing flags set in iRxTxTrigger
+				iRxTxTrigger |= trigger;
+				iAsyncEvent = ETxWords;
+				__SPIN_UNLOCK_IRQRESTORE(iEventSpinLock,intState);
+				iSlaveTimer.OneShot(KI2cSlaveAsyncDelaySim, ETrue); // Arbitrary timeout - expiry executes callback in context of DfcThread1
+																	// No effect if OneShot already invoked
 				}
 			else
 				{
@@ -868,8 +913,13 @@ TInt DSimulatedIicBusChannelSlaveI2c::StaticExtension(TUint aFunction, TAny* aPa
 			if(iBlockNotification == EFalse)
 				{
 				//
-				// Invoke DIicBusChannelSlave::NotifyClient - this will invoke ProcessData and invoke the client callback
-				NotifyClient(trigger);
+				// Use a timer for asynchronous call to NotifyClient - this will invoke ProcessData and invoke the client callback
+				TInt intState=__SPIN_LOCK_IRQSAVE(iEventSpinLock);
+				// Rx or Tx may already have been requested, to add to the existing flags set in iRxTxTrigger
+				iRxTxTrigger |= trigger;
+				iAsyncEvent = ERxTxWords;
+				__SPIN_UNLOCK_IRQRESTORE(iEventSpinLock,intState);
+				iSlaveTimer.OneShot(KI2cSlaveAsyncDelaySim, ETrue); // Arbitrary timeout - expiry executes callback in context of DfcThread1
 				}
 			else
 				{
@@ -989,7 +1039,8 @@ TInt DSimulatedIicBusChannelSlaveI2c::StaticExtension(TUint aFunction, TAny* aPa
 		default:
 			{
 			Kern::Printf("aFunction %d is not recognised \n",aFunction);
-			r=KErrNotSupported;
+			//For default case call the base class method for consistent handling
+            r=DIicBusChannelSlave::StaticExtension(aFunction,NULL,NULL);
 			}
 		}
 #ifdef IIC_INSTRUMENTATION_MACRO
@@ -998,12 +1049,6 @@ TInt DSimulatedIicBusChannelSlaveI2c::StaticExtension(TUint aFunction, TAny* aPa
 	return r;
 	}
 
-
-
-//#ifdef MASTER_MODE
-#endif
-
-#if defined(MASTER_MODE) && defined(SLAVE_MODE)
 #ifdef STANDALONE_CHANNEL
 EXPORT_C
 #endif
@@ -1035,7 +1080,7 @@ TInt DSimulatedIicBusChannelMasterSlaveI2c::StaticExtension(TUint aFunction, TAn
 #ifndef STANDALONE_CHANNEL
 			r=DIicBusController::DeRegisterChannel(this);
 #else
-			return KErrNotSupported;
+			r = KErrNotSupported;
 #endif
 			break;
 			}
@@ -1054,15 +1099,13 @@ TInt DSimulatedIicBusChannelMasterSlaveI2c::StaticExtension(TUint aFunction, TAn
 		default:
 			{
 			Kern::Printf("aFunction %d is not recognised \n",aFunction);
-			r=KErrNotSupported;
+			//For default case call the base class method for consistent handling
+			r=DIicBusChannelMasterSlave::StaticExtension(aFunction,NULL,NULL);
 			}
 		}
 	return r;
 	}
 
-
-//#if defined(MASTER_MODE) && defined(SLAVE_MODE)
-#endif
 
 
 

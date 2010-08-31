@@ -17,10 +17,6 @@
 
 #include <x86.h>
 
-extern "C" {
-extern SVariantInterfaceBlock* VIB;
-}
-
 //#define __DBG_MON_FAULT__
 //#define __RAM_LOADED_CODE__
 //#define __EARLY_DEBUG__
@@ -32,7 +28,7 @@ TUint32 NKern::IdleGenerationCount()
 	return TheScheduler.iIdleGenerationCount;
 	}
 
-void NKern::Idle()
+void NKern::DoIdle()
 	{
 	TScheduler& s = TheScheduler;
 	TSubScheduler& ss = SubScheduler();	// OK since idle thread is locked to CPU
@@ -57,8 +53,19 @@ void NKern::Idle()
 			return;
 			}
 		}
+	if (ss.iCurrentThread->iSavedSP)
+		{
+		// rescheduled between entry to NKern::Idle() and here
+		// go round again to see if any more threads to pull from other CPUs
+		__e32_atomic_ior_ord32(&s.iCpusNotIdle, m);	// we aren't idle after all
+		s.iIdleSpinLock.UnlockIrq();
+		return;
+		}
+
 	s.iIdleSpinLock.UnlockOnly();	// leave interrupts disabled
+
 	NKIdle(0);
+	
 	}
 
 TUint32 ContextId()
@@ -314,23 +321,25 @@ EXPORT_C SCpuIdleHandler* NKern::CpuIdleHandler()
 void NKern::Init0(TAny* a)
 	{
 	__KTRACE_OPT(KBOOT,DEBUGPRINT("VIB=%08x", a));
-	VIB = (SVariantInterfaceBlock*)a;
-	__NK_ASSERT_ALWAYS(VIB && VIB->iVer==0 && VIB->iSize==sizeof(SVariantInterfaceBlock));
-	__KTRACE_OPT(KBOOT,DEBUGPRINT("iVer=%d iSize=%d", VIB->iVer, VIB->iSize));
-	__KTRACE_OPT(KBOOT,DEBUGPRINT("iMaxCpuClock=%08x %08x", I64HIGH(VIB->iMaxCpuClock), I64LOW(VIB->iMaxCpuClock)));
-	__KTRACE_OPT(KBOOT,DEBUGPRINT("iTimestampFreq=%u", VIB->iTimestampFreq));
-	__KTRACE_OPT(KBOOT,DEBUGPRINT("iMaxTimerClock=%u", VIB->iMaxTimerClock));
+	SVariantInterfaceBlock* v = (SVariantInterfaceBlock*)a;
+	TheScheduler.iVIB = v;
+	__NK_ASSERT_ALWAYS(v && v->iVer==0 && v->iSize==sizeof(SVariantInterfaceBlock));
+	__KTRACE_OPT(KBOOT,DEBUGPRINT("iVer=%d iSize=%d", v->iVer, v->iSize));
+	__KTRACE_OPT(KBOOT,DEBUGPRINT("iMaxCpuClock=%08x %08x", I64HIGH(v->iMaxCpuClock), I64LOW(v->iMaxCpuClock)));
+	__KTRACE_OPT(KBOOT,DEBUGPRINT("iTimestampFreq=%u", v->iTimestampFreq));
+	__KTRACE_OPT(KBOOT,DEBUGPRINT("iMaxTimerClock=%u", v->iMaxTimerClock));
 	TInt i;
 	for (i=0; i<KMaxCpus; ++i)
 		{
 		TSubScheduler& ss = TheSubSchedulers[i];
-		ss.i_TimerMultF = (TAny*)KMaxTUint32;
-		ss.i_TimerMultI = (TAny*)0x01000000u;
-		ss.i_CpuMult = (TAny*)KMaxTUint32;
-		VIB->iTimerMult[i] = (volatile STimerMult*)&ss.i_TimerMultF;
-		VIB->iCpuMult[i] = (volatile TUint32*)&ss.i_CpuMult;
+		ss.iSSX.iCpuFreqRI.Set(v->iCpuFreqR[i]);
+		ss.iSSX.iTimerFreqRI.Set(v->iTimerFreqR[i]);
+
+		ss.iSSX.iTimestampOffset.i64 = 0;
+		v->iCpuFreqR[i] = 0;
+		v->iTimerFreqR[i] = 0;
 		}
-	TheScheduler.i_TimerMax = (TAny*)(VIB->iMaxTimerClock / 128);
+	TheScheduler.iSX.iTimerMax = (v->iMaxTimerClock / 128);
 	InitFpu();
 	InterruptInit0();
 	}
@@ -351,7 +360,7 @@ EXPORT_C TUint32 NKern::CpuTimeMeasFreq()
  */
 EXPORT_C TInt NKern::TimesliceTicks(TUint32 aMicroseconds)
 	{
-	TUint32 mf32 = (TUint32)TheScheduler.i_TimerMax;
+	TUint32 mf32 = (TUint32)TheScheduler.iSX.iTimerMax;
 	TUint64 mf(mf32);
 	TUint64 ticks = mf*TUint64(aMicroseconds) + UI64LIT(999999);
 	ticks /= UI64LIT(1000000);
@@ -361,3 +370,24 @@ EXPORT_C TInt NKern::TimesliceTicks(TUint32 aMicroseconds)
 		return (TInt)ticks;
 	}
 
+TBool TSubScheduler::Detached()
+	{
+	return FALSE;
+	}
+
+TBool TScheduler::CoreControlSupported()
+	{
+	return FALSE;
+	}
+
+void TScheduler::CCInitiatePowerUp(TUint32 /*aCores*/)
+	{
+	}
+
+void TScheduler::CCIndirectPowerDown(TAny*)
+	{
+	}
+
+void TScheduler::DoFrequencyChanged(TAny*)
+	{
+	}

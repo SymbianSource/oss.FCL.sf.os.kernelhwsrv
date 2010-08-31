@@ -130,9 +130,9 @@ TInt DriveStatus(TInt aNfeDrive, TNfeDiskStatus& aStatus, TInt &aProgress)
 	return r;
 	}
 
-void DisplayNfeDeviceInfo(TInt aNfeDrive, TNfeDeviceInfo& aDeviceInfo)
+void DisplayNfeDeviceInfo(TInt aNfeDrive, TNfeDeviceInfo& aDeviceInfo, TBool (&aNfeDrives)[KMaxLocalDrives])
 	{
-	test.Printf(_L("Stats: \n"));
+//	test.Printf(_L("Stats: \n"));
 
 	RLocalDrive	d;
 	TBool change = EFalse;
@@ -152,6 +152,13 @@ void DisplayNfeDeviceInfo(TInt aNfeDrive, TNfeDeviceInfo& aDeviceInfo)
 	for (TInt i=0; i<aDeviceInfo.iDriveCount; i++)
 		{
 		TNfeDriveInfo& di = aDeviceInfo.iDrives[i];
+
+		TInt localDriveNum = di.iLocalDriveNum;
+		test_Value(localDriveNum, di.iLocalDriveNum < KMaxLocalDrives);
+		
+		if (aNfeDrives[localDriveNum])
+			continue;
+		aNfeDrives[localDriveNum] = 1;
 
 		test.Printf(_L("*** drive index %d ***\n"), i);
 		test.Printf(_L("iLocalDriveNum %x\n"), di.iLocalDriveNum);
@@ -389,10 +396,13 @@ TInt E32Main()
 		}
 
 
+	TBool nfeDrives[KMaxLocalDrives];
+	memclr(nfeDrives, sizeof(nfeDrives));
+	
 	for(TInt nfeDrive = FindNfeDrive(0); nfeDrive != KErrNotFound; nfeDrive = FindNfeDrive(++nfeDrive))
 		{
 		TNfeDeviceInfo deviceInfo;
-		DisplayNfeDeviceInfo(nfeDrive, deviceInfo);
+		DisplayNfeDeviceInfo(nfeDrive, deviceInfo, nfeDrives);
 		}
 
 	fs.Close();

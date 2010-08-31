@@ -262,20 +262,24 @@ void TSessionTest::testSubst()
 	test(w.iDrive.iDriveAtt==KDriveAttSubsted);
 	test(w.iDrive.iMediaAtt==v.iDrive.iMediaAtt);
 	test(w.iUniqueID==v.iUniqueID);
-	test(w.iSize==v.iSize);
 
-// If this test is being run under windows using drive C then skip free space comparison
-// as it is likely to fail as the windows file system is unlike to have static freespace
+    if(v.iDrive.iType != EMediaRam) // We can't assume that RAM disk will be the same size since last recorded...
+    {
+	    test(w.iSize==v.iSize);
+
+    // If this test is being run under windows using drive C then skip free space comparison
+    // as it is likely to fail as the windows file system is unlike to have static freespace
 #ifdef __WINS__
-	if(User::UpperCase(gTestSessionPath[0]) != 'C')
-		{
+	    if(User::UpperCase(gTestSessionPath[0]) != 'C')
+		    {
 #endif
-		test(w.iFree==v.iFree);
+		    test(w.iFree==v.iFree);
 
 #ifdef __WINS__
-		}
+		    }
 #endif
-	
+    }
+
 	test(w.iName==v.iName);
 	TDriveList driveList;
 	r=iFs.DriveList(driveList);

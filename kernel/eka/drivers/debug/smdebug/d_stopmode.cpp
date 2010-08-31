@@ -1,4 +1,4 @@
-// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -20,13 +20,7 @@
 @prototype
 */
 
-#include <rm_debug_api.h>
 #include <sm_debug_api.h>
-
-#include "d_rmd_breakpoints.h"
-
-
-#ifdef __LAUNCH_AS_EXTENSION__
 
 using namespace Debug;
 
@@ -168,8 +162,5 @@ void StopModeDebug::GetObjectFullName(const DObject* aObj, TFullName& aName)
         aName.AppendNumFixedWidth((TInt)aObj,EHex,8);
         }
 	}
-
-#endif
-
 
 // End of file d_stopmode.cpp

@@ -20,4 +20,5 @@ EXPORTS
 	_ZN15TEndpointBuffer10TakeBufferERPvRjRiR14TRequestStatusj @ 19 NONAME
 	_ZN15TEndpointBuffer6ExpireEv @ 20 NONAME
 	_ZN15TEndpointBuffer6ExpireEPv @ 21 NONAME
+	_ZN16RDevUsbcScClient15ResetAltSettingEv @ 22 NONAME
 

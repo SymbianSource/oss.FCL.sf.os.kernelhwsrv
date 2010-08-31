@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -14,13 +14,17 @@
 // e32test/usb/t_usb_device/main.cpp
 // USB Test Program, main part.
 // Device-side part, to work against t_usb_host running on the host.
-// 
+//
 //
 
 #include "general.h"
 #include "config.h"
 #include "activecontrol.h"
-#include "activeRW.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "mainTraces.h"
+#endif
+#include "activerw.h"
 
 // --- Global Top Level Variables
 
@@ -29,6 +33,10 @@ CActiveControl* gActiveControl;
 RTest test(_L("T_USB_SCDEVICE"));
 #else
 RTest test(_L("T_USB_DEVICE"));
+#endif
+
+#ifdef USB_SC
+TBool gShareHandle = EFalse;
 #endif
 TBool gVerbose = EFalse;
 TBool gSkip = EFalse;
@@ -43,7 +51,7 @@ TInt gActiveTestCount = 0;
 #ifdef USB_SC
 RChunk gChunk;
 #endif
-	
+
 
 void RunAppL(TDes * aConfigFile, TDes * aScriptFile)
 	{
@@ -62,15 +70,19 @@ void RunAppL(TDes * aConfigFile, TDes * aScriptFile)
 	CleanupStack::PushL(myConsole);
 
 	myConsole->Printf(_L("T_USB_SCDEVICE v%d.%d.%d\n"),KDeviceVersionMajor,KDeviceVersionMinor,KDeviceVersionMicro);
+	OstTraceExt3(TRACE_NORMAL, RUNAPPL_RUNAPPL, "T_USB_SCDEVICE v%d.%d.%d\n",(TInt32)KDeviceVersionMajor,(TInt32)KDeviceVersionMinor,(TInt32)KDeviceVersionMicro);
 	test.Printf(_L("T_USB_SCDEVICE v%d.%d.%d\n"),KDeviceVersionMajor,KDeviceVersionMinor,KDeviceVersionMicro);
+	OstTraceExt3(TRACE_NORMAL, RUNAPPL_RUNAPPL_DUP01, "T_USB_SCDEVICE v%d.%d.%d\n",(TInt32)KDeviceVersionMajor,(TInt32)KDeviceVersionMinor,(TInt32)KDeviceVersionMicro);
 	#else
 	CConsoleBase* myConsole = Console::NewL(_L("T_USB_DEVICE - USB Client Test"), TSize(KConsFullScreen, KConsFullScreen));
 	CleanupStack::PushL(myConsole);
 
 	myConsole->Printf(_L("T_USB_DEVICE v%d.%d.%d\n"),KDeviceVersionMajor,KDeviceVersionMinor,KDeviceVersionMicro);
+	OstTraceExt3(TRACE_NORMAL, RUNAPPL_RUNAPPL_DUP02, "T_USB_DEVICE v%u.%u.%u\n",KDeviceVersionMajor,KDeviceVersionMinor,KDeviceVersionMicro);
 	test.Printf(_L("T_USB_DEVICE v%d.%d.%d\n"),KDeviceVersionMajor,KDeviceVersionMinor,KDeviceVersionMicro);
+	OstTraceExt3(TRACE_NORMAL, RUNAPPL_RUNAPPL_DUP03, "T_USB_DEVICE v%u.%u.%u\n",KDeviceVersionMajor,KDeviceVersionMinor,KDeviceVersionMicro);
 	#endif
-	
+
 	// outermost test begin
 	test.Start(_L("Outermost test of t_usb_device\n"));
 
@@ -79,14 +91,19 @@ void RunAppL(TDes * aConfigFile, TDes * aScriptFile)
 		gActiveControl = CActiveControl::NewL(myConsole, aConfigFile, aScriptFile);
 		CleanupStack::PushL(gActiveControl);
 
-	
-		// Call request function
-		gActiveControl->RequestEp0ControlPacket();
 
+		// Call request function
+#ifdef USB_SC
+		if (!gShareHandle)
+			gActiveControl->RequestEp0ControlPacket();
+#else
+		gActiveControl->RequestEp0ControlPacket();
+#endif
 		CActiveScheduler::Start();
-		
+
 		test.Printf (_L("Test Run Completed\n"));
-		
+		OstTrace0(TRACE_NORMAL, RUNAPPL_RUNAPPL_DUP04, "Test Run Completed\n");
+
 		if (gSoakCount > 0)
 			{
 			gSoakCount--;
@@ -94,7 +111,7 @@ void RunAppL(TDes * aConfigFile, TDes * aScriptFile)
 
 		// Suspend thread for 2 seconds
 		User::After(2000000);
-		
+
 		CleanupStack::PopAndDestroy(gActiveControl);
 
 		}
@@ -114,7 +131,7 @@ void RunAppL(TDes * aConfigFile, TDes * aScriptFile)
 void ParseCommandLine (TDes& aConfigFileName, TDes& aScriptFileName)
 	{
 	TBuf<64> c;
-	
+
 	User::CommandLine(c);
 	c.LowerCase();
 
@@ -129,24 +146,31 @@ void ParseCommandLine (TDes& aConfigFileName, TDes& aScriptFileName)
 			{
 			if (token == _L("/v"))
 				{
-				RDebug::Print(_L("Verbose output enabled\n"));
+				OstTrace0(TRACE_NORMAL, PARSECOMMANDLINE_PARSECOMMANDLINE, "Verbose output enabled\n");
 				gVerbose = ETrue;
 				}
 			else if (token == _L("/s"))
 				{
-				RDebug::Print(_L("Skipping some tests\n"));
+				OstTrace0(TRACE_NORMAL, PARSECOMMANDLINE_PARSECOMMANDLINE_DUP01, "Skipping some tests\n");
 				gSkip = ETrue;
 				}
 			else if (token == _L("/t"))
 				{
-				RDebug::Print(_L("Temporary Test\n"));
+				OstTrace0(TRACE_NORMAL, PARSECOMMANDLINE_PARSECOMMANDLINE_DUP02, "Temporary Test\n");
 				gTempTest = ETrue;
 				}
 			else if (token == _L("/n"))
 				{
-				RDebug::Print(_L("Not Stopping on Test Fail\n"));
+				OstTrace0(TRACE_NORMAL, PARSECOMMANDLINE_PARSECOMMANDLINE_DUP03, "Not Stopping on Test Fail\n");
 				gStopOnFail = EFalse;
 				}
+#ifdef USB_SC
+			else if (token == _L("/a"))
+				{
+				OstTrace0(TRACE_NORMAL, PARSECOMMANDLINE_PARSECOMMANDLINE_DUP04, "share handle test\n");
+				gShareHandle = ETrue;
+				}
+#endif
 			else if (token.Left(5) == _L("/soak"))
 				{
 				TInt equalPos;
@@ -155,9 +179,9 @@ void ParseCommandLine (TDes& aConfigFileName, TDes& aScriptFileName)
 				if ((equalPos+1) < token.Length())
 					{
 					TLex lexNum(token.Mid(equalPos+1));
-					lexNum.Val(gSoakCount,EDecimal);	
+					lexNum.Val(gSoakCount,EDecimal);
 					}
-				RDebug::Print(_L("Soak test for %d iterations\n"),gSoakCount);
+				OstTrace1(TRACE_NORMAL, PARSECOMMANDLINE_PARSECOMMANDLINE_DUP05, "Soak test for %d iterations\n",gSoakCount);
 				}
 			else if (token.Left(8) == _L("/script="))
 				{
@@ -169,31 +193,31 @@ void ParseCommandLine (TDes& aConfigFileName, TDes& aScriptFileName)
 				}
 			}
 		}
-		
+
 	}
-	
+
 TInt E32Main()
 	{
 	__UHEAP_MARK;
-	
+
 	CTrapCleanup* cleanup = CTrapCleanup::New();			// get clean-up stack
 
 	TBuf<64> configFileName;
 	TBuf<64> scriptFileName;
 	ParseCommandLine (configFileName,scriptFileName);
-	
+
 	if (configFileName.Length() == 0)
 		{
-			RDebug::Print(_L("(T_USB: Warning - No Configuration File.)\n"));		
+		OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN, "(T_USB: Warning - No Configuration File.\n");
 		}
 	else
 		{
-		RDebug::Print(_L("T_USB: Config File Name %s\n"),configFileName.PtrZ());
+		OstTraceExt1(TRACE_NORMAL, E32MAIN_E32MAIN_DUP01, "T_USB: Config File Name %S\n",configFileName);
 		}
 
 	if (scriptFileName.Length() != 0)
 		{
-		RDebug::Print(_L("T_USB: Script File Name %s\n"),scriptFileName.PtrZ());
+		OstTraceExt1(TRACE_NORMAL, E32MAIN_E32MAIN_DUP02, "T_USB: Script File Name %S\n",scriptFileName);
 		}
 
 	TRAPD(error, RunAppL(& configFileName, &scriptFileName));
@@ -204,7 +228,7 @@ TInt E32Main()
 
 	__UHEAP_MARKEND;
 
-	RDebug::Print(_L("Program exit: done.\n"));
+	OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN_DUP03, "Program exit: done.\n");
 
 	return 0;												// and return
 	}

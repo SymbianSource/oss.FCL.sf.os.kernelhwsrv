@@ -1,4 +1,4 @@
-// Copyright (c) 2000-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2000-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -24,6 +24,11 @@
 
 #include <kernel/kern_priv.h>
 #include <drivers/usbc.h>
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "descriptorsTraces.h"
+#endif
+
 
 
 // Debug Support
@@ -39,13 +44,15 @@ TUsbcDescriptorBase::TUsbcDescriptorBase()
 #endif
 	iBufPtr(NULL, 0)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorBase::TUsbcDescriptorBase()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORBASE_TUSBCDESCRIPTORBASE_CONS,
+	        "TUsbcDescriptorBase::TUsbcDescriptorBase()" );
 	}
 
 
 TUsbcDescriptorBase::~TUsbcDescriptorBase()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorBase::~TUsbcDescriptorBase()"));
+    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORBASE_TUSBCDESCRIPTORBASE_DES,
+	        "TUsbcDescriptorBase::~TUsbcDescriptorBase()" );
 	}
 
 
@@ -146,7 +153,8 @@ void TUsbcDescriptorBase::SetBufferPointer(const TDesC8& aDes)
 TUsbcDeviceDescriptor::TUsbcDeviceDescriptor()
 	: iBuf()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDeviceDescriptor::TUsbcDeviceDescriptor()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDEVICEDESCRIPTOR_TUSBCDEVICEDESCRIPTOR_CONS, 
+	        "TUsbcDeviceDescriptor::TUsbcDeviceDescriptor()" );
 	}
 
 
@@ -155,7 +163,8 @@ TUsbcDeviceDescriptor* TUsbcDeviceDescriptor::New(TUint8 aDeviceClass, TUint8 aD
 												  TUint16 aVendorId, TUint16 aProductId,
 												  TUint16 aDeviceRelease, TUint8 aNumConfigurations)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDeviceDescriptor::New()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDEVICEDESCRIPTOR_NEW, 
+	        "TUsbcDeviceDescriptor::New()" );
 	TUsbcDeviceDescriptor* self = new TUsbcDeviceDescriptor();
 	if (self)
 		{
@@ -174,7 +183,8 @@ TInt TUsbcDeviceDescriptor::Construct(TUint8 aDeviceClass, TUint8 aDeviceSubClas
 									  TUint8 aMaxPacketSize0, TUint16 aVendorId, TUint16 aProductId,
 									  TUint16 aDeviceRelease, TUint8 aNumConfigurations)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDeviceDescriptor::Construct()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDEVICEDESCRIPTOR_CONSTRUCT,
+	        "TUsbcDeviceDescriptor::Construct()" );
 	iBuf.SetMax();
 	SetBufferPointer(iBuf);
 	iBuf[0] = iBuf.Size();									// bLength
@@ -198,14 +208,16 @@ TInt TUsbcDeviceDescriptor::Construct(TUint8 aDeviceClass, TUint8 aDeviceSubClas
 
 void TUsbcDeviceDescriptor::UpdateFs()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDeviceDescriptor::UpdateFs()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDEVICEDESCRIPTOR_UPDATEFS, 
+	        "TUsbcDeviceDescriptor::UpdateFs()" );
 	SetByte(7, iEp0Size_Fs);								// bMaxPacketSize0
 	}
 
 
 void TUsbcDeviceDescriptor::UpdateHs()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDeviceDescriptor::UpdateHs()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDEVICEDESCRIPTOR_UPDATEHS,
+	        "TUsbcDeviceDescriptor::UpdateHs()" );
 	SetByte(7, 64);											// bMaxPacketSize0
 	}
 
@@ -215,7 +227,8 @@ void TUsbcDeviceDescriptor::UpdateHs()
 TUsbcDeviceQualifierDescriptor::TUsbcDeviceQualifierDescriptor()
 	: iBuf()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDeviceDescriptor::TUsbcDeviceQualifierDescriptor()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDEVICEQUALIFIERDESCRIPTOR_TUSBCDEVICEQUALIFIERDESCRIPTOR_CONS,
+	        "TUsbcDeviceQualifierDescriptor::TUsbcDeviceQualifierDescriptor()" );
 	}
 
 
@@ -226,7 +239,8 @@ TUsbcDeviceQualifierDescriptor* TUsbcDeviceQualifierDescriptor::New(TUint8 aDevi
 																	TUint8 aNumConfigurations,
 																	TUint8 aReserved)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDeviceQualifierDescriptor::New()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDEVICEQUALIFIERDESCRIPTOR_NEW, 
+	        "TUsbcDeviceQualifierDescriptor::New()" );
 	TUsbcDeviceQualifierDescriptor* self = new TUsbcDeviceQualifierDescriptor();
 	if (self)
 		{
@@ -245,7 +259,8 @@ TInt TUsbcDeviceQualifierDescriptor::Construct(TUint8 aDeviceClass, TUint8 aDevi
 											   TUint8 aDeviceProtocol, TUint8 aMaxPacketSize0,
 											   TUint8 aNumConfigurations, TUint8 aReserved)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDeviceQualifierDescriptor::Construct()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDEVICEQUALIFIERDESCRIPTOR_CONSTRUCT,
+	        "TUsbcDeviceQualifierDescriptor::Construct()" );
 	iBuf.SetMax();
 	SetBufferPointer(iBuf);
 	iBuf[0] = iBuf.Size();									// bLength
@@ -265,7 +280,8 @@ TInt TUsbcDeviceQualifierDescriptor::Construct(TUint8 aDeviceClass, TUint8 aDevi
 
 void TUsbcDeviceQualifierDescriptor::UpdateFs()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDeviceQualifierDescriptor::UpdateFs()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDEVICEQUALIFIERDESCRIPTOR_UPDATEFS,
+	        "TUsbcDeviceQualifierDescriptor::UpdateFs()" );
 	// Here we do exactly the opposite of what's done in the Device descriptor (as this one's
 	// documenting the 'other than the current speed').
 	SetByte(7, 64);											// bMaxPacketSize0
@@ -274,7 +290,8 @@ void TUsbcDeviceQualifierDescriptor::UpdateFs()
 
 void TUsbcDeviceQualifierDescriptor::UpdateHs()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDeviceQualifierDescriptor::UpdateHs()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDEVICEQUALIFIERDESCRIPTOR_UPDATEHS,
+	        "TUsbcDeviceQualifierDescriptor::UpdateHs()" );
 	// Here we do exactly the opposite of what's done in the Device descriptor (as this one's
 	// documenting the 'other than the current speed').
 	SetByte(7, iEp0Size_Fs);								// bMaxPacketSize0
@@ -286,14 +303,16 @@ void TUsbcDeviceQualifierDescriptor::UpdateHs()
 TUsbcConfigDescriptor::TUsbcConfigDescriptor()
 	: iBuf()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcConfigDescriptor::TUsbcConfigDescriptor()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCCONFIGDESCRIPTOR_TUSBCCONFIGDESCRIPTOR_CONS,
+	        "TUsbcConfigDescriptor::TUsbcConfigDescriptor()" );
 	}
 
 
 TUsbcConfigDescriptor* TUsbcConfigDescriptor::New(TUint8 aConfigurationValue, TBool aSelfPowered,
 												  TBool aRemoteWakeup, TUint16 aMaxPower)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcConfigDescriptor::New()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCCONFIGDESCRIPTOR_NEW,
+	        "TUsbcConfigDescriptor::New()" );
 	TUsbcConfigDescriptor* self = new TUsbcConfigDescriptor();
 	if (self)
 		{
@@ -310,7 +329,8 @@ TUsbcConfigDescriptor* TUsbcConfigDescriptor::New(TUint8 aConfigurationValue, TB
 TInt TUsbcConfigDescriptor::Construct(TUint8 aConfigurationValue, TBool aSelfPowered,
 									   TBool aRemoteWakeup, TUint16 aMaxPower)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcConfigDescriptor::Construct()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCCONFIGDESCRIPTOR_CONSTRUCT,
+	        "TUsbcConfigDescriptor::Construct()" );
 	iBuf.SetMax();
 	SetBufferPointer(iBuf);
 	iBuf[0] = iBuf.Size();									// bLength
@@ -323,7 +343,8 @@ TInt TUsbcConfigDescriptor::Construct(TUint8 aConfigurationValue, TBool aSelfPow
 		(aSelfPowered ? KUsbDevAttr_SelfPowered : 0) |
 		(aRemoteWakeup ? KUsbDevAttr_RemoteWakeup : 0);		// bmAttributes (bit 7 always 1)
 	if (aMaxPower > 510)
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Invalid value for bMaxPower: %d", aMaxPower));
+		OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUP1_TUSBCCONFIGDESCRIPTOR_CONSTRUCT_DUP1,
+		        "  Error: Invalid value for bMaxPower: %d", aMaxPower );
 	iBuf[8] = aMaxPower / 2;								// bMaxPower (2mA units!)
 	return KErrNone;
 	}
@@ -334,14 +355,16 @@ TInt TUsbcConfigDescriptor::Construct(TUint8 aConfigurationValue, TBool aSelfPow
 TUsbcInterfaceDescriptor::TUsbcInterfaceDescriptor()
 	: iBuf()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcInterfaceDescriptor::TUsbcInterfaceDescriptor()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCINTERFACEDESCRIPTOR_TUSBCINTERFACEDESCRIPTOR_CONS,
+	        "TUsbcInterfaceDescriptor::TUsbcInterfaceDescriptor()" );
 	}
 
 
 TUsbcInterfaceDescriptor* TUsbcInterfaceDescriptor::New(TUint8 aInterfaceNumber, TUint8 aAlternateSetting,
 														TInt aNumEndpoints, const TUsbcClassInfo& aClassInfo)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcInterfaceDescriptor::New()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCINTERFACEDESCRIPTOR_NEW,
+	        "TUsbcInterfaceDescriptor::New()" );
 	TUsbcInterfaceDescriptor* self = new TUsbcInterfaceDescriptor();
 	if (self)
 		{
@@ -358,7 +381,8 @@ TUsbcInterfaceDescriptor* TUsbcInterfaceDescriptor::New(TUint8 aInterfaceNumber,
 TInt TUsbcInterfaceDescriptor::Construct(TUint8 aInterfaceNumber, TUint8 aAlternateSetting,
 										 TInt aNumEndpoints, const TUsbcClassInfo& aClassInfo)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcInterfaceDescriptor::Construct()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCINTERFACEDESCRIPTOR_CONSTRUCT,
+	        "TUsbcInterfaceDescriptor::Construct()" );
 	iBuf.SetMax();
 	SetBufferPointer(iBuf);
 	iBuf[0] = iBuf.Size();									// bLength
@@ -378,20 +402,24 @@ TInt TUsbcInterfaceDescriptor::Construct(TUint8 aInterfaceNumber, TUint8 aAltern
 
 TUsbcEndpointDescriptorBase::TUsbcEndpointDescriptorBase()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcEndpointDescriptorBase::TUsbcEndpointDescriptorBase()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCENDPOINTDESCRIPTORBASE_TUSBCENDPOINTDESCRIPTORBASE_CONS,
+	        "TUsbcEndpointDescriptorBase::TUsbcEndpointDescriptorBase()" );
 	}
 
 
 TInt TUsbcEndpointDescriptorBase::Construct(const TUsbcEndpointInfo& aEpInfo)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcEndpointDescriptorBase::Construct()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCENDPOINTDESCRIPTORBASE_CONSTRUCT,
+	        "TUsbcEndpointDescriptorBase::Construct()" );
 	//  Adjust FS/HS endpoint sizes
 	if (aEpInfo.AdjustEpSizes(iEpSize_Fs, iEpSize_Hs) != KErrNone)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Unknown endpoint type: %d", aEpInfo.iType));
+		OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCENDPOINTDESCRIPTORBASE_CONSTRUCT_DUP1,
+		        "  Error: Unknown endpoint type: %d", aEpInfo.iType );
 		}
-	__KTRACE_OPT(KUSB, Kern::Printf("  Now set: iEpSize_Fs=%d iEpSize_Hs=%d (aEpInfo.iSize=%d)",
-									iEpSize_Fs, iEpSize_Hs, aEpInfo.iSize));
+	OstTraceDefExt3( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINTDESCRIPTORBASE_CONSTRUCT_DUP2,
+	        "  Now set: iEpSize_Fs=%d iEpSize_Hs=%d (aEpInfo.iSize=%d)",
+	        iEpSize_Fs, iEpSize_Hs, aEpInfo.iSize );
 
 	//  Adjust HS endpoint size for additional transactions
 	if ((aEpInfo.iType == KUsbEpTypeIsochronous) || (aEpInfo.iType == KUsbEpTypeInterrupt))
@@ -400,14 +428,16 @@ TInt TUsbcEndpointDescriptorBase::Construct(const TUsbcEndpointInfo& aEpInfo)
 			{
 			// Bits 12..11 specify the number of additional transactions per microframe
 			iEpSize_Hs |= (aEpInfo.iTransactions << 12);
-			__KTRACE_OPT(KUSB, Kern::Printf("  Adjusted for add. transact.: iEpSize_Hs=0x%02x "
-											"(aEpInfo.iTransactions=%d)",
-											iEpSize_Hs, aEpInfo.iTransactions));
+			 OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCENDPOINTDESCRIPTORBASE_CONSTRUCT_DUP3,
+			         "  Adjusted for add. transact.: iEpSize_Hs=0x%02x (aEpInfo.iTransactions=%d)",
+			         iEpSize_Hs, aEpInfo.iTransactions );
+
 			}
 		else if (aEpInfo.iTransactions != 0)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Warning: Invalid iTransactions value: %d (ignored)",
-											  aEpInfo.iTransactions));
+            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCENDPOINTDESCRIPTORBASE_CONSTRUCT_DUP4,
+                    "  Warning: Invalid iTransactions value: %d (ignored)", aEpInfo.iTransactions );
+
 			}
 		}
 
@@ -415,20 +445,22 @@ TInt TUsbcEndpointDescriptorBase::Construct(const TUsbcEndpointInfo& aEpInfo)
 	TUsbcEndpointInfo info(aEpInfo);						// create local writeable copy
 	if (info.AdjustPollInterval() != KErrNone)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Unknown ep type (%d) or invalid interval value (%d)",
-										  info.iType, info.iInterval));
+        OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCENDPOINTDESCRIPTORBASE_CONSTRUCT_DUP5,
+                "  Error: Unknown ep type (%d) or invalid interval value (%d)", info.iType, info.iInterval );
 		}
 	iInterval_Fs = info.iInterval;
 	iInterval_Hs = info.iInterval_Hs;
-	__KTRACE_OPT(KUSB, Kern::Printf("  Now set: iInterval_Fs=%d iInterval_Hs=%d",
-									iInterval_Fs, iInterval_Hs));
+    OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCENDPOINTDESCRIPTORBASE_CONSTRUCT_DUP6,
+            "  Now set: iInterval_Fs=%d iInterval_Hs=%d", iInterval_Fs, iInterval_Hs );
+
 	return KErrNone;
 	}
 
 
 void TUsbcEndpointDescriptorBase::UpdateFs()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcEndpointDescriptorBase::UpdateFs()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCENDPOINTDESCRIPTORBASE_UPDATEFS,
+	        "TUsbcEndpointDescriptorBase::UpdateFs" );
 	// (TUsbcEndpointDescriptorBase's FS/HS endpoint sizes and interval values got
 	//  adjusted in its Construct() method.)
 	SetWord(4, iEpSize_Fs);									// wMaxPacketSize
@@ -438,7 +470,8 @@ void TUsbcEndpointDescriptorBase::UpdateFs()
 
 void TUsbcEndpointDescriptorBase::UpdateHs()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcEndpointDescriptorBase::UpdateHs()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCENDPOINTDESCRIPTORBASE_UPDATEHS,
+	        "TUsbcEndpointDescriptorBase::UpdateHs()" );
 	// (TUsbcEndpointDescriptorBase's FS/HS endpoint sizes and interval values get
 	//  adjusted in its Construct() method.)
 	SetWord(4, iEpSize_Hs);									// wMaxPacketSize
@@ -451,14 +484,16 @@ void TUsbcEndpointDescriptorBase::UpdateHs()
 TUsbcEndpointDescriptor::TUsbcEndpointDescriptor()
 	: iBuf()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcEndpointDescriptor::TUsbcEndpointDescriptor()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCENDPOINTDESCRIPTOR_TUSBCENDPOINTDESCRIPTOR_CONS,
+	        "TUsbcEndpointDescriptor::TUsbcEndpointDescriptor()" );
 	}
 
 
 TUsbcEndpointDescriptor* TUsbcEndpointDescriptor::New(TUint8 aEndpointAddress,
 													  const TUsbcEndpointInfo& aEpInfo)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcEndpointDescriptor::New()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCENDPOINTDESCRIPTOR_NEW,
+	        "TUsbcEndpointDescriptor::New()" );
 	TUsbcEndpointDescriptor* self = new TUsbcEndpointDescriptor();
 	if (self)
 		{
@@ -474,7 +509,8 @@ TUsbcEndpointDescriptor* TUsbcEndpointDescriptor::New(TUint8 aEndpointAddress,
 
 TInt TUsbcEndpointDescriptor::Construct(TUint8 aEndpointAddress, const TUsbcEndpointInfo& aEpInfo)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcEndpointDescriptor::Construct()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCENDPOINTDESCRIPTOR_CONSTRUCT,
+	        "TUsbcEndpointDescriptor::Construct()" );
 	(void) TUsbcEndpointDescriptorBase::Construct(aEpInfo);	// Init Base class
 	iBuf.SetMax();
 	SetBufferPointer(iBuf);
@@ -493,14 +529,16 @@ TInt TUsbcEndpointDescriptor::Construct(TUint8 aEndpointAddress, const TUsbcEndp
 TUsbcAudioEndpointDescriptor::TUsbcAudioEndpointDescriptor()
 	: iBuf()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcAudioEndpointDescriptor::TUsbcAudioEndpointDescriptor()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCAUDIOENDPOINTDESCRIPTOR_TUSBCAUDIOENDPOINTDESCRIPTOR_CONS,
+	        "TUsbcAudioEndpointDescriptor::TUsbcAudioEndpointDescriptor()" );
 	}
 
 
 TUsbcAudioEndpointDescriptor* TUsbcAudioEndpointDescriptor::New(TUint8 aEndpointAddress,
 																const TUsbcEndpointInfo& aEpInfo)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcAudioEndpointDescriptor::New()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCAUDIOENDPOINTDESCRIPTOR_NEW,
+	        "TUsbcAudioEndpointDescriptor::New()" );
 	TUsbcAudioEndpointDescriptor* self = new TUsbcAudioEndpointDescriptor();
 	if (self)
 		{
@@ -516,7 +554,8 @@ TUsbcAudioEndpointDescriptor* TUsbcAudioEndpointDescriptor::New(TUint8 aEndpoint
 
 TInt TUsbcAudioEndpointDescriptor::Construct(TUint8 aEndpointAddress, const TUsbcEndpointInfo& aEpInfo)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcAudioEndpointDescriptor::Construct()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCAUDIOENDPOINTDESCRIPTOR_CONSTRUCT,
+	        "TUsbcAudioEndpointDescriptor::Construct()" );
 	(void) TUsbcEndpointDescriptorBase::Construct(aEpInfo);	// Init Base class
 	iBuf.SetMax();
 	SetBufferPointer(iBuf);
@@ -536,7 +575,8 @@ TInt TUsbcAudioEndpointDescriptor::Construct(TUint8 aEndpointAddress, const TUsb
 
 TUsbcOtgDescriptor* TUsbcOtgDescriptor::New(TBool aHnpSupport, TBool aSrpSupport)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcOtgDescriptor::New()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCOTGDESCRIPTOR_NEW,
+	        "TUsbcOtgDescriptor::New()" );
 	TUsbcOtgDescriptor* self = new TUsbcOtgDescriptor();
 	if (self && (self->Construct(aHnpSupport, aSrpSupport) != KErrNone))
 		{
@@ -550,13 +590,15 @@ TUsbcOtgDescriptor* TUsbcOtgDescriptor::New(TBool aHnpSupport, TBool aSrpSupport
 TUsbcOtgDescriptor::TUsbcOtgDescriptor()
 	: iBuf()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcOtgDescriptor::TUsbcOtgDescriptor()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCOTGDESCRIPTOR_TUSBCOTGDESCRIPTOR_CONS, 
+	        "TUsbcOtgDescriptor::TUsbcOtgDescriptor()" );
 	}
 
 
 TInt TUsbcOtgDescriptor::Construct(TBool aHnpSupport, TBool aSrpSupport)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcOtgDescriptor::Construct()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCOTGDESCRIPTOR_CONSTRUCT,
+	        "TUsbcOtgDescriptor::Construct()" );
 	iBuf.SetMax();
 	SetBufferPointer(iBuf);
 	iBuf[0] = iBuf.Size();									// bLength
@@ -572,20 +614,23 @@ TInt TUsbcOtgDescriptor::Construct(TBool aHnpSupport, TBool aSrpSupport)
 TUsbcClassSpecificDescriptor::TUsbcClassSpecificDescriptor()
 	: iBuf(NULL)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcClassSpecificDescriptor::TUsbcClassSpecificDescriptor()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCCLASSSPECIFICDESCRIPTOR_TUSBCCLASSSPECIFICDESCRIPTOR_CONS,
+	        "TUsbcClassSpecificDescriptor::TUsbcClassSpecificDescriptor()" );
 	}
 
 
 TUsbcClassSpecificDescriptor::~TUsbcClassSpecificDescriptor()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcClassSpecificDescriptor::~TUsbcClassSpecificDescriptor()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCCLASSSPECIFICDESCRIPTOR_TUSBCCLASSSPECIFICDESCRIPTOR_DES,
+	        "TUsbcClassSpecificDescriptor::~TUsbcClassSpecificDescriptor()" );
 	delete iBuf;
 	}
 
 
 TUsbcClassSpecificDescriptor* TUsbcClassSpecificDescriptor::New(TUint8 aType, TInt aSize)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcClassSpecificDescriptor::New()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCCLASSSPECIFICDESCRIPTOR_NEW,
+	        "TUsbcClassSpecificDescriptor::New()" );
 	TUsbcClassSpecificDescriptor* self = new TUsbcClassSpecificDescriptor();
 	if (self)
 		{
@@ -601,11 +646,13 @@ TUsbcClassSpecificDescriptor* TUsbcClassSpecificDescriptor::New(TUint8 aType, TI
 
 TInt TUsbcClassSpecificDescriptor::Construct(TUint8 aType, TInt aSize)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcClassSpecificDescriptor::Construct()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCCLASSSPECIFICDESCRIPTOR_CONSTRUCT, 
+	        "TUsbcClassSpecificDescriptor::Construct()" );
 	iBuf = HBuf8::New(aSize);
 	if (!iBuf)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Allocation of CS desc buffer failed"));
+		OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCCLASSSPECIFICDESCRIPTOR_CONSTRUCT_DUP1,
+		        "  Error: Allocation of CS desc buffer failed" );
 		return KErrNoMemory;
 		}
 	iBuf->SetMax();
@@ -620,13 +667,15 @@ TInt TUsbcClassSpecificDescriptor::Construct(TUint8 aType, TInt aSize)
 TUsbcStringDescriptorBase::TUsbcStringDescriptorBase()
 	: /*iIndex(0),*/ iSBuf(0), iBufPtr(NULL, 0)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcStringDescriptorBase::TUsbcStringDescriptorBase()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCSTRINGDESCRIPTORBASE_TUSBCSTRINGDESCRIPTORBASE_CONS,
+	        "TUsbcStringDescriptorBase::TUsbcStringDescriptorBase()" );
 	}
 
 
 TUsbcStringDescriptorBase::~TUsbcStringDescriptorBase()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcStringDescriptorBase::~TUsbcStringDescriptorBase()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCSTRINGDESCRIPTORBASE_TUSBCSTRINGDESCRIPTORBASE_DES, 
+	        "TUsbcStringDescriptorBase::~TUsbcStringDescriptorBase()" );
 	}
 
 
@@ -634,8 +683,8 @@ TUint16 TUsbcStringDescriptorBase::Word(TInt aPosition) const
 	{
 	if (aPosition <= 1)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Word(%d) in string descriptor "
-										  "(TUsbcStringDescriptorBase::Word)", aPosition));
+		OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCSTRINGDESCRIPTORBASE_WORD,
+		        "  Error: Word(%d) in string descriptor (TUsbcStringDescriptorBase::Word)", aPosition );
 		return 0;
 		}
 	else
@@ -651,8 +700,8 @@ void TUsbcStringDescriptorBase::SetWord(TInt aPosition, TUint16 aValue)
 	{
 	if (aPosition <= 1)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: SetWord(%d) in string descriptor "
-										  "(TUsbcStringDescriptorBase::SetWord)", aPosition));
+		OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCSTRINGDESCRIPTORBASE_SETWORD,
+		        "  Error: SetWord(%d) in string descriptor (TUsbcStringDescriptorBase::SetWord)", aPosition );
 		return;
 		}
 	else
@@ -713,20 +762,23 @@ void TUsbcStringDescriptorBase::SetBufferPointer(const TDesC8& aDes)
 TUsbcStringDescriptor::TUsbcStringDescriptor()
 	: iBuf(NULL)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcStringDescriptor::TUsbcStringDescriptor()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCSTRINGDESCRIPTOR_TUSBCSTRINGDESCRIPTOR_CONS, 
+	        "TUsbcStringDescriptor::TUsbcStringDescriptor()" );
 	}
 
 
 TUsbcStringDescriptor::~TUsbcStringDescriptor()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcStringDescriptor::~TUsbcStringDescriptor()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCSTRINGDESCRIPTOR_TUSBCSTRINGDESCRIPTOR_DES,
+	        "TUsbcStringDescriptor::~TUsbcStringDescriptor()" );
 	delete iBuf;
 	}
 
 
 TUsbcStringDescriptor* TUsbcStringDescriptor::New(const TDesC8& aString)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcStringDescriptor::New"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCSTRINGDESCRIPTOR_NEW, 
+	        "TUsbcStringDescriptor::New()" );
 	TUsbcStringDescriptor* self = new TUsbcStringDescriptor();
 	if (self)
 		{
@@ -742,11 +794,13 @@ TUsbcStringDescriptor* TUsbcStringDescriptor::New(const TDesC8& aString)
 
 TInt TUsbcStringDescriptor::Construct(const TDesC8& aString)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcStringDescriptor::Construct"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCSTRINGDESCRIPTOR_CONSTRUCT,
+	        "TUsbcStringDescriptor::Construct()" );
 	iBuf = HBuf8::New(aString.Size());						// bytes, not UNICODE chars
 	if (!iBuf)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Allocation of string buffer failed"));
+		OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCSTRINGDESCRIPTOR_CONSTRUCT_DUP1,
+		        "  Error: Allocation of string buffer failed" );
 		return KErrNoMemory;
 		}
 	iBuf->SetMax();
@@ -764,19 +818,22 @@ TInt TUsbcStringDescriptor::Construct(const TDesC8& aString)
 TUsbcLangIdDescriptor::TUsbcLangIdDescriptor()
 	: iBuf(NULL)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcLangIdDescriptor::TUsbcLangIdDescriptor()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCLANGIDDESCRIPTOR_TUSBCLANGIDDESCRIPTOR_CONS, 
+	        "TUsbcLangIdDescriptor::TUsbcLangIdDescriptor()" );
 	}
 
 
 TUsbcLangIdDescriptor::~TUsbcLangIdDescriptor()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcLangIdDescriptor::~TUsbcLangIdDescriptor()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCLANGIDDESCRIPTOR_TUSBCLANGIDDESCRIPTOR_DES,
+	        "TUsbcLangIdDescriptor::~TUsbcLangIdDescriptor()" );
 	}
 
 
 TUsbcLangIdDescriptor* TUsbcLangIdDescriptor::New(TUint16 aLangId)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcLangIdDescriptor::New"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCLANGIDDESCRIPTOR_NEW, 
+	        "TUsbcLangIdDescriptor::New()" );
 	TUsbcLangIdDescriptor* self = new TUsbcLangIdDescriptor();
 	if (self)
 		{
@@ -792,7 +849,8 @@ TUsbcLangIdDescriptor* TUsbcLangIdDescriptor::New(TUint16 aLangId)
 
 TInt TUsbcLangIdDescriptor::Construct(TUint16 aLangId)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcLangIdDescriptor::Construct"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCLANGIDDESCRIPTOR_CONSTRUCT,
+	        "TUsbcLangIdDescriptor::Construct()" );
 	iBuf.SetMax();
 	SetBufferPointer(iBuf);
 	iBufPtr[0] = LowByte(SWAP_BYTES_16(aLangId));			// Language ID value
@@ -812,17 +870,22 @@ TUsbcDescriptorPool::TUsbcDescriptorPool(TUint8* aEp0_TxBuf)
 //
 	: iDescriptors(), iStrings(), iIfcIdx(0), iEp0_TxBuf(aEp0_TxBuf), iHighSpeed(EFalse)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::TUsbcDescriptorPool()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_TUSBCDESCRIPTORPOOL_CONS,
+	        "TUsbcDescriptorPool::TUsbcDescriptorPool()" );
 	}
 
 
 TUsbcDescriptorPool::~TUsbcDescriptorPool()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::~TUsbcDescriptorPool()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_TUSBCDESCRIPTORPOOL_DES, 
+	        "TUsbcDescriptorPool::~TUsbcDescriptorPool()" );
 	// The destructor of each <class T> object is called before the objects themselves are destroyed.
-	__KTRACE_OPT(KUSB, Kern::Printf("  iDescriptors.Count(): %d", iDescriptors.Count()));
+	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_TUSBCDESCRIPTORPOOL_DES_DUP1,
+	        "  iDescriptors.Count(): %d", iDescriptors.Count() );
 	iDescriptors.ResetAndDestroy();
-	__KTRACE_OPT(KUSB, Kern::Printf("  iStrings.Count(): %d", iStrings.Count()));
+    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_TUSBCDESCRIPTORPOOL_DES_DUP2,
+            "  iStrings.Count(): %d", iStrings.Count() );
+
 	iStrings.ResetAndDestroy();
 	}
 
@@ -832,19 +895,27 @@ TInt TUsbcDescriptorPool::Init(TUsbcDeviceDescriptor* aDeviceDesc, TUsbcConfigDe
 							   TUsbcStringDescriptor* aProduct, TUsbcStringDescriptor* aSerialNum,
 							   TUsbcStringDescriptor* aConfig, TUsbcOtgDescriptor* aOtgDesc)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::Init()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_INIT, 
+	        "TUsbcDescriptorPool::Init()" );
 	if (!aDeviceDesc || !aConfigDesc)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: No Device or Config descriptor specified"));
+		OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_INIT_DUP1, 
+		        "  Error: No Device or Config descriptor specified" );
 		return KErrArgument;
 		}
 	for (TInt n = 0; n < KDescPosition_FirstAvailable; n++)
 		{
 		iDescriptors.Append(NULL);
 		}
-	__ASSERT_DEBUG((iDescriptors.Count() == KDescPosition_FirstAvailable),
-				   Kern::Printf("  Error: iDescriptors.Count() (%d) != KDescPosition_FirstAvailable (%d)",
-								iDescriptors.Count(), KDescPosition_FirstAvailable));
+#ifdef _DEBUG
+	if (iDescriptors.Count() != KDescPosition_FirstAvailable)
+	    {
+        OstTraceDefExt2( OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_INIT_DUP2,
+                "  Error: iDescriptors.Count() (%d) != KDescPosition_FirstAvailable (%d)",
+                iDescriptors.Count(), KDescPosition_FirstAvailable );
+
+	    }
+#endif
 	iDescriptors[KDescPosition_Device] = aDeviceDesc;
 	iDescriptors[KDescPosition_Config] = aConfigDesc;
 	if (aOtgDesc)
@@ -859,7 +930,9 @@ TInt TUsbcDescriptorPool::Init(TUsbcDeviceDescriptor* aDeviceDesc, TUsbcConfigDe
 		// that contains an array of two-byte LANGID codes supported by the device. ...
 		// USB devices that omit all string descriptors must not return an array of LANGID codes."
 		// So if we have at least one string descriptor, we must also have a LANGID descriptor.
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: No LANGID string descriptor specified"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_INIT_DUP3, 
+                "  Error: No LANGID string descriptor specified" );
+
 		return KErrArgument;
 		}
 	iStrings.Insert(aLangId, KStringPosition_Langid);
@@ -867,12 +940,18 @@ TInt TUsbcDescriptorPool::Init(TUsbcDeviceDescriptor* aDeviceDesc, TUsbcConfigDe
 	iStrings.Insert(aProduct, KStringPosition_Product);
 	iStrings.Insert(aSerialNum, KStringPosition_Serial);
 	iStrings.Insert(aConfig, KStringPosition_Config);
-	__ASSERT_DEBUG((iStrings.Count() == 5),
-				   Kern::Printf("  Error: iStrings.Count() != 5 (%d)", iStrings.Count()));
+#ifdef _DEBUG
+	if (iStrings.Count() != 5)
+	    {
+        OstTraceDef1( OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_INIT_DUP4,
+                "  Error: iStrings.Count() != 5 (%d)", iStrings.Count() );
+	    }
+#endif
 #ifdef _DEBUG
 	for (TInt i = KStringPosition_Langid; i <= KStringPosition_Config; i++)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool.iStrings[%d] = 0x%x", i, iStrings[i]));
+        OstTraceDefExt2( OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_INIT_DUP5,
+                "TUsbcDescriptorPool.iStrings[%d] = 0x%x", i, reinterpret_cast<TUint>(iStrings[i]) );
 		}
 #endif
 	// Set string indices
@@ -894,9 +973,16 @@ TInt TUsbcDescriptorPool::Init(TUsbcDeviceDescriptor* aDeviceDesc, TUsbcConfigDe
 
 TInt TUsbcDescriptorPool::InitHs()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::InitHs()"));
-	__ASSERT_DEBUG((iDescriptors.Count() >= KDescPosition_FirstAvailable),
-				   Kern::Printf("  Error: Call Init() first)"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_INITHS, 
+	        "TUsbcDescriptorPool::InitHs()" );
+#ifdef _DEBUG
+	if (iDescriptors.Count() < KDescPosition_FirstAvailable)
+	    {
+        OstTraceDef0( OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_INITHS_DUP1, 
+                "  Error: Call Init() first)" );
+
+	    }
+#endif
 
 	TUsbcDeviceQualifierDescriptor* const dq_desc = TUsbcDeviceQualifierDescriptor::New(
 		iDescriptors[KDescPosition_Device]->Byte(4),		// aDeviceClass
@@ -906,7 +992,8 @@ TInt TUsbcDescriptorPool::InitHs()
 		iDescriptors[KDescPosition_Device]->Byte(17));		// aNumConfigurations
 	if (!dq_desc)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Memory allocation for dev qualif desc failed."));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_INITHS_DUP2,
+                "  Error: Memory allocation for dev qualif desc failed." );
 		return KErrGeneral;
 		}
 	iDescriptors[KDescPosition_DeviceQualifier] = dq_desc;
@@ -918,7 +1005,8 @@ TInt TUsbcDescriptorPool::InitHs()
 		iDescriptors[KDescPosition_Config]->Byte(8) * 2);	// aMaxPower (mA)
 	if (!osc_desc)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Memory allocation for other speed conf desc failed."));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_INITHS_DUP3,
+                "  Error: Memory allocation for other speed conf desc failed." );
 		return KErrGeneral;
 		}
 
@@ -939,7 +1027,8 @@ TInt TUsbcDescriptorPool::InitHs()
 
 TInt TUsbcDescriptorPool::UpdateDescriptorsFs()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::UpdateDescriptorsFs()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_UPDATEDESCRIPTORSFS,
+	        "TUsbcDescriptorPool::UpdateDescriptorsFs()" );
 	const TInt count = iDescriptors.Count();
 	for (TInt i = KDescPosition_FirstAvailable; i < count; i++)
 		{
@@ -953,7 +1042,8 @@ TInt TUsbcDescriptorPool::UpdateDescriptorsFs()
 
 TInt TUsbcDescriptorPool::UpdateDescriptorsHs()
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::UpdateDescriptorsHs()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_UPDATEDESCRIPTORSHS,
+	        "TUsbcDescriptorPool::UpdateDescriptorsHs()" );
 	const TInt count = iDescriptors.Count();
 	for (TInt i = KDescPosition_FirstAvailable; i < count; i++)
 		{
@@ -970,18 +1060,21 @@ TInt TUsbcDescriptorPool::UpdateDescriptorsHs()
 //
 TInt TUsbcDescriptorPool::FindDescriptor(TUint8 aType, TUint8 aIndex, TUint16 aLangid, TInt& aSize) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::FindDescriptor()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_FINDDESCRIPTOR, 
+	        "TUsbcDescriptorPool::FindDescriptor()" );
 	TInt result = KErrGeneral;
 	switch (aType)
 		{
 	case KUsbDescType_Device:
 		if (aLangid != 0)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: bad langid: 0x%04x", aLangid));
+		 OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_FINDDESCRIPTOR_DUP1,
+		         "  Error: bad langid: 0x%04x", aLangid );
 			}
 		else if (aIndex > 0)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: bad device index: %d", aIndex));
+	       OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_FINDDESCRIPTOR_DUP2,
+	               "  Error: bad device index: %d", aIndex );
 			}
 		else
 			{
@@ -992,11 +1085,13 @@ TInt TUsbcDescriptorPool::FindDescriptor(TUint8 aType, TUint8 aIndex, TUint16 aL
 	case KUsbDescType_Config:
 		if (aLangid != 0)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: bad langid: 0x%04x", aLangid));
+            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_FINDDESCRIPTOR_DUP3,
+                    "  Error: bad langid: 0x%04x", aLangid );
 			}
 		else if (aIndex > 0)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: bad config index: %d", aIndex));
+            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_FINDDESCRIPTOR_DUP4,
+                    "  Error: bad config index: %d", aIndex );
 			}
 		else
 			{
@@ -1007,11 +1102,13 @@ TInt TUsbcDescriptorPool::FindDescriptor(TUint8 aType, TUint8 aIndex, TUint16 aL
 	case KUsbDescType_DeviceQualifier:
 		if (aLangid != 0)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: bad langid: 0x%04x", aLangid));
+            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_FINDDESCRIPTOR_DUP5,
+                    "  Error: bad langid: 0x%04x", aLangid );
 			}
 		else if (aIndex > 0)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: bad device index: %d", aIndex));
+            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_FINDDESCRIPTOR_DUP6,
+                    "  Error: bad device index: %d", aIndex );
 			}
 		else
 			{
@@ -1022,11 +1119,13 @@ TInt TUsbcDescriptorPool::FindDescriptor(TUint8 aType, TUint8 aIndex, TUint16 aL
 	case KUsbDescType_OtherSpeedConfig:
 		if (aLangid != 0)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: bad langid: 0x%04x", aLangid));
+            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_FINDDESCRIPTOR_DUP7,
+                    "  Error: bad langid: 0x%04x", aLangid );
 			}
 		else if (aIndex > 0)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: bad config index: %d", aIndex));
+            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_FINDDESCRIPTOR_DUP8,
+                    "  Error: bad config index: %d", aIndex );
 			}
 		else
 			{
@@ -1048,24 +1147,25 @@ TInt TUsbcDescriptorPool::FindDescriptor(TUint8 aType, TUint8 aIndex, TUint16 aL
 				}
 			else
 				{
-				__KTRACE_OPT(KUSB, Kern::Printf("  No string descriptors: not returning LANGID array"));
+                OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_FINDDESCRIPTOR_DUP9,
+                        "  No string descriptors: not returning LANGID array" );
 				}
 			}
 		else
 			{
    			if (!aLangid)
    				{
-   				__KTRACE_OPT(KUSB,
- 							 Kern::Printf("  Strange: LANGID=0 for a $ descriptor (ignoring LANGID)"));
+                OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_FINDDESCRIPTOR_DUP10,
+                        "  Strange: LANGID=0 for a $ descriptor (ignoring LANGID)" );
 				// The USB spec doesn't really say what to do in this case, but as there are host apps
 				// that fail if we return an error here, we choose to ignore the issue.
    				}
 			else if (aLangid != iStrings[KStringPosition_Langid]->Word(2))
 				{
 				// We have only one (this) language
-				__KTRACE_OPT(KUSB,
-							 Kern::Printf("  Bad LANGID: 0x%04X requested, 0x%04X supported (ignoring LANGID)",
-										  aLangid, iStrings[KStringPosition_Langid]->Word(2)));
+                OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_FINDDESCRIPTOR_DUP11,
+                        "  Bad LANGID: 0x%04X requested, 0x%04X supported (ignoring LANGID)",
+                        aLangid, iStrings[KStringPosition_Langid]->Word(2) );
 				// We could return an error here, but rather choose to ignore the discrepancy
 				// (the USB spec is not very clear what to do in such a case anyway).
 				}
@@ -1076,10 +1176,12 @@ TInt TUsbcDescriptorPool::FindDescriptor(TUint8 aType, TUint8 aIndex, TUint16 aL
 	case KUsbDescType_CS_Interface:
 		/* fall through */
 	case KUsbDescType_CS_Endpoint:
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Warning: finding of class specific descriptors not supported"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_FINDDESCRIPTOR_DUP12,
+                "  Warning: finding of class specific descriptors not supported" );
 		break;
 	default:
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: unknown descriptor type requested: %d", aType));
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_FINDDESCRIPTOR_DUP13,
+                "  Error: unknown descriptor type requested: %d", aType );
 		break;
 		}
 	return result;
@@ -1088,7 +1190,8 @@ TInt TUsbcDescriptorPool::FindDescriptor(TUint8 aType, TUint8 aIndex, TUint16 aL
 
 void TUsbcDescriptorPool::InsertDescriptor(TUsbcDescriptorBase* aDesc)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::InsertDescriptor()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_INSERTDESCRIPTOR, 
+	        "TUsbcDescriptorPool::InsertDescriptor()" );
 	switch (aDesc->Type())
 		{
 	case KUsbDescType_Interface:
@@ -1098,19 +1201,21 @@ void TUsbcDescriptorPool::InsertDescriptor(TUsbcDescriptorBase* aDesc)
 		InsertEpDesc(aDesc);
 		break;
 	default:
-		__KTRACE_OPT(KUSB, Kern::Printf("  Error: unsupported descriptor type"));
+	    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_INSERTDESCRIPTOR_DUP1,
+	            "  Error: unsupported descriptor type" );
 		}
 	}
 
 
 void TUsbcDescriptorPool::SetIfcStringDescriptor(TUsbcStringDescriptor* aDesc, TInt aNumber, TInt aSetting)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::SetIfcDescriptor(%d, %d)", aNumber, aSetting));
+	OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_SETIFCSTRINGDESCRIPTOR,
+	        "TUsbcDescriptorPool::SetIfcDescriptor(%d, %d)", aNumber, aSetting );
 	const TInt i = FindIfcDescriptor(aNumber, aSetting);
 	if (i < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Ifc descriptor not found (%d, %d)",
-										  aNumber, aSetting));
+	    OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_SETIFCSTRINGDESCRIPTOR_DUP1,
+	           "  Error: Ifc descriptor not found (%d, %d)", aNumber, aSetting );
 		return;
 		}
 	// Try to find available NULL postition
@@ -1126,7 +1231,8 @@ void TUsbcDescriptorPool::SetIfcStringDescriptor(TUsbcStringDescriptor* aDesc, T
 		str_idx = iStrings.Count();
 		if (str_idx > 0xff)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: $ descriptor array full (idx=%d)", str_idx));
+            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_SETIFCSTRINGDESCRIPTOR_DUP2,
+                    "  Error: $ descriptor array full (idx=%d)", str_idx );
 			return;
 			}
 		while (str_idx < KStringPosition_FirstAvailable)
@@ -1139,19 +1245,21 @@ void TUsbcDescriptorPool::SetIfcStringDescriptor(TUsbcStringDescriptor* aDesc, T
 		}
 	// Update this ifc descriptor's string index field
 	iDescriptors[i]->SetByte(8, str_idx);
-	__KTRACE_OPT(KUSB, Kern::Printf("  String for ifc %d/%d (@ pos %d): \"%S\"", aNumber, aSetting, str_idx,
-									&iStrings[str_idx]->StringData()));
+	OstTraceDefExt4( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_SETIFCSTRINGDESCRIPTOR_DUP3,
+	        "  String for ifc %d/%d (@ pos %d): \"%s\"", aNumber, aSetting, str_idx,
+	        iStrings[str_idx]->StringData() );
 	}
 
 
 void TUsbcDescriptorPool::DeleteIfcDescriptor(TInt aNumber, TInt aSetting)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::DeleteIfcDescriptor(%d, %d)", aNumber, aSetting));
+	OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_DELETEIFCDESCRIPTOR,
+	        "TUsbcDescriptorPool::DeleteIfcDescriptor(%d, %d)", aNumber, aSetting );	        
 	const TInt i = FindIfcDescriptor(aNumber, aSetting);
 	if (i < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: DeleteIfcDescriptor - descriptor not found (%d, %d)",
-										  aNumber, aSetting));
+        OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_DELETEIFCDESCRIPTOR_DUP1,
+                "  Error: DeleteIfcDescriptor - descriptor not found (%d, %d)", aNumber, aSetting );
 		return;
 		}
 	// Delete (if necessary) specified interface's string descriptor
@@ -1179,14 +1287,16 @@ void TUsbcDescriptorPool::DeleteIfcDescriptor(TInt aNumber, TInt aSetting)
 
 TInt TUsbcDescriptorPool::GetDeviceDescriptorTC(DThread* aThread, TDes8& aBuffer) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::GetDeviceDescriptorTC()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_GETDEVICEDESCRIPTORTC, 
+	        "TUsbcDescriptorPool::GetDeviceDescriptorTC()" );
 	return Kern::ThreadDesWrite(aThread, &aBuffer, iDescriptors[KDescPosition_Device]->DescriptorData(), 0);
 	}
 
 
 TInt TUsbcDescriptorPool::SetDeviceDescriptorTC(DThread* aThread, const TDes8& aBuffer)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::SetDeviceDescriptorTC()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_SETDEVICEDESCRIPTORTC, 
+	        "TUsbcDescriptorPool::SetDeviceDescriptorTC()" );
 	TBuf8<KUsbDescSize_Device> device;
 	const TInt r = Kern::ThreadDesRead(aThread, &aBuffer, device, 0);
 	if (r != KErrNone)
@@ -1210,14 +1320,16 @@ TInt TUsbcDescriptorPool::SetDeviceDescriptorTC(DThread* aThread, const TDes8& a
 
 TInt TUsbcDescriptorPool::GetConfigurationDescriptorTC(DThread* aThread, TDes8& aBuffer) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::GetConfigurationDescriptorTC()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_GETCONFIGURATIONDESCRIPTORTC, 
+	        "TUsbcDescriptorPool::GetConfigurationDescriptorTC()" );
 	return Kern::ThreadDesWrite(aThread, &aBuffer, iDescriptors[KDescPosition_Config]->DescriptorData(), 0);
 	}
 
 
 TInt TUsbcDescriptorPool::SetConfigurationDescriptorTC(DThread* aThread, const TDes8& aBuffer)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::SetConfigurationDescriptorTC()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_SETCONFIGURATIONDESCRIPTORTC, 
+	        "TUsbcDescriptorPool::SetConfigurationDescriptorTC()" );
 	TBuf8<KUsbDescSize_Config> config;
 	const TInt r = Kern::ThreadDesRead(aThread, &aBuffer, config, 0);
 	if (r != KErrNone)
@@ -1246,11 +1358,13 @@ TInt TUsbcDescriptorPool::SetOtgDescriptor(const TDesC8& aBuffer)
 TInt TUsbcDescriptorPool::GetInterfaceDescriptorTC(DThread* aThread, TDes8& aBuffer,
 												   TInt aInterface, TInt aSetting) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::GetInterfaceDescriptorTC()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_GETINTERFACEDESCRIPTORTC,
+	        "TUsbcDescriptorPool::GetInterfaceDescriptorTC()" );
 	const TInt i = FindIfcDescriptor(aInterface, aSetting);
 	if (i < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: no such interface"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_GETINTERFACEDESCRIPTORTC_DUP1,
+                "  Error: no such interface" );
 		return KErrNotFound;
 		}
 	return Kern::ThreadDesWrite(aThread, &aBuffer, iDescriptors[i]->DescriptorData(), 0);
@@ -1259,11 +1373,13 @@ TInt TUsbcDescriptorPool::GetInterfaceDescriptorTC(DThread* aThread, TDes8& aBuf
 
 TInt TUsbcDescriptorPool::SetInterfaceDescriptor(const TDes8& aBuffer, TInt aInterface, TInt aSetting)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::SetInterfaceDescriptor()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_SETINTERFACEDESCRIPTOR, 
+	        "TUsbcDescriptorPool::SetInterfaceDescriptor()" );
 	const TInt i = FindIfcDescriptor(aInterface, aSetting);
 	if (i < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: no such interface"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_SETINTERFACEDESCRIPTOR_DUP1,
+                "  Error: no such interface" );
 		return KErrNotFound;
 		}
 	iDescriptors[i]->SetByte(2, aBuffer[2]);				// bInterfaceNumber
@@ -1277,11 +1393,13 @@ TInt TUsbcDescriptorPool::SetInterfaceDescriptor(const TDes8& aBuffer, TInt aInt
 TInt TUsbcDescriptorPool::GetEndpointDescriptorTC(DThread* aThread, TDes8& aBuffer,
 												  TInt aInterface, TInt aSetting, TUint8 aEndpointAddress) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::GetEndpointDescriptorTC()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_GETENDPOINTDESCRIPTORTC,
+	        "TUsbcDescriptorPool::GetEndpointDescriptorTC()" );
 	const TInt i = FindEpDescriptor(aInterface, aSetting, aEndpointAddress);
 	if (i < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: no such endpoint"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_GETENDPOINTDESCRIPTORTC_DUP1,
+                "  Error: no such endpoint" );
 		return KErrNotFound;
 		}
 	return Kern::ThreadDesWrite(aThread, &aBuffer, iDescriptors[i]->DescriptorData(), 0);
@@ -1291,11 +1409,13 @@ TInt TUsbcDescriptorPool::GetEndpointDescriptorTC(DThread* aThread, TDes8& aBuff
 TInt TUsbcDescriptorPool::SetEndpointDescriptorTC(DThread* aThread, const TDes8& aBuffer,
 												  TInt aInterface, TInt aSetting, TUint8 aEndpointAddress)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::SetEndpointDescriptorTC()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_SETENDPOINTDESCRIPTORTC, 
+	        "TUsbcDescriptorPool::SetEndpointDescriptorTC()" );
 	const TInt i = FindEpDescriptor(aInterface, aSetting, aEndpointAddress);
 	if (i < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: no such endpoint"));
+	    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_SETENDPOINTDESCRIPTORTC_DUP1, 
+	            "  Error: no such endpoint" );
 		return KErrNotFound;
 		}
 	TBuf8<KUsbDescSize_AudioEndpoint> ep;					// it could be an audio endpoint
@@ -1318,11 +1438,13 @@ TInt TUsbcDescriptorPool::SetEndpointDescriptorTC(DThread* aThread, const TDes8&
 TInt TUsbcDescriptorPool::GetEndpointDescriptorSize(TInt aInterface, TInt aSetting, TUint8 aEndpointAddress,
 													TInt& aSize) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::GetEndpointDescriptorSize()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_GETENDPOINTDESCRIPTORSIZE,
+	        "TUsbcDescriptorPool::GetEndpointDescriptorSize()" );
 	const TInt i = FindEpDescriptor(aInterface, aSetting, aEndpointAddress);
 	if (i < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: no such endpoint"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_GETENDPOINTDESCRIPTORSIZE_DUP1,
+                "  Error: no such endpoint" );
 		return KErrNotFound;
 		}
 	aSize = iDescriptors[i]->Size();
@@ -1332,10 +1454,12 @@ TInt TUsbcDescriptorPool::GetEndpointDescriptorSize(TInt aInterface, TInt aSetti
 
 TInt TUsbcDescriptorPool::GetDeviceQualifierDescriptorTC(DThread* aThread, TDes8& aBuffer) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::GetDeviceQualifierDescriptorTC()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_GETDEVICEQUALIFIERDESCRIPTORTC, 
+	        "TUsbcDescriptorPool::GetDeviceQualifierDescriptorTC()" );
 	if (iDescriptors[KDescPosition_DeviceQualifier] == NULL)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Warning: Device_Qualifier descriptor not supported"));
+	    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_GETDEVICEQUALIFIERDESCRIPTORTC_DUP1, 
+	            "  Warning: Device_Qualifier descriptor not supported" );
 		return KErrNotSupported;
 		}
 	return Kern::ThreadDesWrite(aThread, &aBuffer,
@@ -1345,10 +1469,12 @@ TInt TUsbcDescriptorPool::GetDeviceQualifierDescriptorTC(DThread* aThread, TDes8
 
 TInt TUsbcDescriptorPool::SetDeviceQualifierDescriptorTC(DThread* aThread, const TDes8& aBuffer)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::SetDeviceQualifierDescriptorTC()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_SETDEVICEQUALIFIERDESCRIPTORTC,
+	        "TUsbcDescriptorPool::SetDeviceQualifierDescriptorTC()" );
 	if (iDescriptors[KDescPosition_DeviceQualifier] == NULL)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Warning: Device_Qualifier descriptor not supported"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_SETDEVICEQUALIFIERDESCRIPTORTC_DUP1,
+                "  Warning: Device_Qualifier descriptor not supported" );
 		return KErrNotSupported;
 		}
 	TBuf8<KUsbDescSize_DeviceQualifier> device;
@@ -1368,10 +1494,12 @@ TInt TUsbcDescriptorPool::SetDeviceQualifierDescriptorTC(DThread* aThread, const
 
 TInt TUsbcDescriptorPool::GetOtherSpeedConfigurationDescriptorTC(DThread* aThread, TDes8& aBuffer) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::GetOtherSpeedConfigurationDescriptorTC()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_GETOTHERSPEEDCONFIGURATIONDESCRIPTORTC, 
+	        "TUsbcDescriptorPool::GetOtherSpeedConfigurationDescriptorTC()" );
 	if (iDescriptors[KDescPosition_OtherSpeedConfig] == NULL)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Warning: Other_Speed_Configuration descriptor not supported"));
+	    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_GETOTHERSPEEDCONFIGURATIONDESCRIPTORTC_DUP1, 
+	            "  Warning: Other_Speed_Configuration descriptor not supported" );
 		return KErrNotSupported;
 		}
 	return Kern::ThreadDesWrite(aThread, &aBuffer,
@@ -1381,10 +1509,12 @@ TInt TUsbcDescriptorPool::GetOtherSpeedConfigurationDescriptorTC(DThread* aThrea
 
 TInt TUsbcDescriptorPool::SetOtherSpeedConfigurationDescriptorTC(DThread* aThread, const TDes8& aBuffer)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::SetOtherSpeedConfigurationDescriptorTC()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_SETOTHERSPEEDCONFIGURATIONDESCRIPTORTC, 
+	        "TUsbcDescriptorPool::SetOtherSpeedConfigurationDescriptorTC()" );
 	if (iDescriptors[KDescPosition_OtherSpeedConfig] == NULL)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Warning: Other_Speed_Configuration descriptor not supported"));
+	    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_SETOTHERSPEEDCONFIGURATIONDESCRIPTORTC_DUP1, 
+	            "  Warning: Other_Speed_Configuration descriptor not supported" );
 		return KErrNotSupported;
 		}
 	TBuf8<KUsbDescSize_OtherSpeedConfig> config;
@@ -1406,7 +1536,8 @@ TInt TUsbcDescriptorPool::GetCSInterfaceDescriptorTC(DThread* aThread, TDes8& aB
 	TInt i = FindIfcDescriptor(aInterface, aSetting);
 	if (i < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: no such interface"));
+		OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_GETCSINTERFACEDESCRIPTORTC,
+		        "  Error: no such interface" );
 		return KErrNotFound;
 		}
 	TInt r = KErrNotFound;
@@ -1431,7 +1562,8 @@ TInt TUsbcDescriptorPool::SetCSInterfaceDescriptorTC(DThread* aThread, const TDe
 	TInt i = FindIfcDescriptor(aInterface, aSetting);
 	if (i < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: no such interface"));
+		OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_SETCSINTERFACEDESCRIPTORTC, 
+		        "  Error: no such interface" );
 		return KErrNotFound;
 		}
 	// Find a position where to insert the new class specific interface descriptor(s)
@@ -1444,7 +1576,8 @@ TInt TUsbcDescriptorPool::SetCSInterfaceDescriptorTC(DThread* aThread, const TDe
 		{
 		return KErrNoMemory;
 		}
-	__KTRACE_OPT(KUSB, Kern::Printf("  inserting descriptor at position %d", i));
+    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_SETCSINTERFACEDESCRIPTORTC_DUP1,
+            "  inserting descriptor at position %d", i );
 	iDescriptors.Insert(desc, i);
 
 	// Update the config descriptor's wTotalLength field
@@ -1461,7 +1594,8 @@ TInt TUsbcDescriptorPool::GetCSInterfaceDescriptorSize(TInt aInterface, TInt aSe
 	TInt i = FindIfcDescriptor(aInterface, aSetting);
 	if (i < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: no such interface"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_GETCSINTERFACEDESCRIPTORSIZE, 
+                "  Error: no such interface" );
 		return KErrNotFound;
 		}
 	TInt r = KErrNotFound;
@@ -1485,7 +1619,8 @@ TInt TUsbcDescriptorPool::GetCSEndpointDescriptorTC(DThread* aThread, TDes8& aBu
 	TInt i = FindEpDescriptor(aInterface, aSetting, aEndpointAddress);
 	if (i < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: no such endpoint"));
+		OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_GETCSENDPOINTDESCRIPTORTC,
+		        "  Error: no such endpoint" );
 		return KErrNotFound;
 		}
 	TInt r = KErrNotFound;
@@ -1510,7 +1645,8 @@ TInt TUsbcDescriptorPool::SetCSEndpointDescriptorTC(DThread* aThread, const TDes
 	TInt i = FindEpDescriptor(aInterface, aSetting, aEndpointAddress);
 	if (i < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: no such endpoint"));
+		OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_SETCSENDPOINTDESCRIPTORTC,
+		        "  Error: no such endpoint" );
 		return KErrNotFound;
 		}
 	// find a position where to insert the new class specific endpoint descriptor(s)
@@ -1538,7 +1674,8 @@ TInt TUsbcDescriptorPool::GetCSEndpointDescriptorSize(TInt aInterface, TInt aSet
 	TInt i = FindEpDescriptor(aInterface, aSetting, aEndpointAddress);
 	if (i < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: no such endpoint"));
+		OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_GETCSENDPOINTDESCRIPTORSIZE, 
+		        "  Error: no such endpoint" );
 		return KErrNotFound;
 		}
 	TInt r = KErrNotFound;
@@ -1636,14 +1773,16 @@ TInt TUsbcDescriptorPool::GetConfigurationStringDescriptorTC(DThread* aThread, T
 	if (str_idx)
 		{
 		__ASSERT_ALWAYS((str_idx == KStringPosition_Config), Kern::Fault(KUsbPanicCat, __LINE__));
-		__KTRACE_OPT(KUSB, Kern::Printf("  String @ pos %d (conf $): \"%S\"",
-										str_idx, &iStrings[str_idx]->StringData()));
+		OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_GETCONFIGURATIONSTRINGDESCRIPTORTC, 
+		        "  String @ pos %d (conf $): \"%s\"", str_idx, iStrings[str_idx]->StringData() );
 		return Kern::ThreadDesWrite(aThread, &aString,
 									iStrings[str_idx]->StringData(), 0);
 		}
 	else
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  No config string descriptor @ pos %d", str_idx));
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_GETCONFIGURATIONSTRINGDESCRIPTORTC_DUP1,
+                "  No config string descriptor @ pos %d", str_idx );
+
 		return KErrNotFound;
 		}
 	}
@@ -1655,13 +1794,15 @@ TInt TUsbcDescriptorPool::SetConfigurationStringDescriptorTC(DThread* aThread, c
 	TUint strlen = Kern::ThreadGetDesLength(aThread, &aString);
 	if (strlen > KUsbStringDescStringMaxSize)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Warning: config $ descriptor too long - will be truncated"));
+		OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_SETCONFIGURATIONSTRINGDESCRIPTORTC,
+		        "  Warning: config $ descriptor too long - will be truncated" );
 		strlen = KUsbStringDescStringMaxSize;
 		}
 	HBuf8* const strbuf = HBuf8::New(strlen);
 	if (!strbuf)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Memory allocation for config $ desc string failed (1)"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_SETCONFIGURATIONSTRINGDESCRIPTORTC_DUP1,
+                "  Error: Memory allocation for config $ desc string failed (1)" );
 		return KErrNoMemory;
 		}
 	strbuf->SetMax();
@@ -1669,14 +1810,16 @@ TInt TUsbcDescriptorPool::SetConfigurationStringDescriptorTC(DThread* aThread, c
 	const TInt r = Kern::ThreadDesRead(aThread, &aString, *strbuf, 0);
 	if (r != KErrNone)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Thread read error"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_SETCONFIGURATIONSTRINGDESCRIPTORTC_DUP2,
+                "  Error: Thread read error" );
 		delete strbuf;
 		return r;
 		}
 	TUsbcStringDescriptor* sd = TUsbcStringDescriptor::New(*strbuf);
 	if (!sd)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Memory allocation for config $ desc failed (2)"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_SETCONFIGURATIONSTRINGDESCRIPTORTC_DUP3,
+                "  Error: Memory allocation for config $ desc failed (2)" );
 		delete strbuf;
 		return KErrNoMemory;
 		}
@@ -1697,8 +1840,8 @@ TInt TUsbcDescriptorPool::RemoveConfigurationStringDescriptor()
 	{
 	if (iDescriptors[KDescPosition_Config]->Byte(KUsbDescStringIndex_Config) == 0)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  RemoveConfigurationStringDescriptor: no $ desc @ index %d",
-										KUsbDescStringIndex_Config));
+		OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_REMOVECONFIGURATIONSTRINGDESCRIPTOR,
+		        "  RemoveConfigurationStringDescriptor: no $ desc @ index %d", KUsbDescStringIndex_Config );
 		return KErrNotFound;
 		}
 	// Delete old string, put in NULL pointer
@@ -1714,31 +1857,35 @@ TInt TUsbcDescriptorPool::RemoveConfigurationStringDescriptor()
 
 TInt TUsbcDescriptorPool::GetStringDescriptorTC(DThread* aThread, TInt aIndex, TDes8& aString) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::GetStringDescriptorTC()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_GETSTRINGDESCRIPTORTC,
+	        "TUsbcDescriptorPool::GetStringDescriptorTC()" );
 	if (!StringDescriptorExists(aIndex))
 		{
 		return KErrNotFound;
 		}
-	__KTRACE_OPT(KUSB, Kern::Printf("  String @ pos %d: \"%S\"",
-									aIndex, &iStrings[aIndex]->StringData()));
+	OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_GETSTRINGDESCRIPTORTC_DUP1,
+	        "  String @ pos %d: \"%s\"", aIndex, iStrings[aIndex]->StringData() );
 	return Kern::ThreadDesWrite(aThread, &aString, iStrings[aIndex]->StringData(), 0);
 	}
 
 
 TInt TUsbcDescriptorPool::SetStringDescriptorTC(DThread* aThread, TInt aIndex, const TDes8& aString)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::SetStringDescriptorTC()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_SETSTRINGDESCRIPTORTC,
+	        "TUsbcDescriptorPool::SetStringDescriptorTC()" );
 	// we don't know the length of the string, so we have to allocate memory dynamically
 	TUint strlen = Kern::ThreadGetDesLength(aThread, &aString);
 	if (strlen > KUsbStringDescStringMaxSize)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Warning: $ descriptor too long - will be truncated"));
+	   OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_SETSTRINGDESCRIPTORTC_DUP1,
+	           "  Warning: $ descriptor too long - will be truncated" );
 		strlen = KUsbStringDescStringMaxSize;
 		}
 	HBuf8* strbuf = HBuf8::New(strlen);
 	if (!strbuf)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Mem alloc for $ desc string failed (1)"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_SETSTRINGDESCRIPTORTC_DUP2,
+                "  Error: Mem alloc for $ desc string failed (1)" );
 		return KErrNoMemory;
 		}
 	strbuf->SetMax();
@@ -1746,14 +1893,16 @@ TInt TUsbcDescriptorPool::SetStringDescriptorTC(DThread* aThread, TInt aIndex, c
 	const TInt r = Kern::ThreadDesRead(aThread, &aString, *strbuf, 0);
 	if (r != KErrNone)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Thread read error"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_SETSTRINGDESCRIPTORTC_DUP3,
+                "  Error: Thread read error" );
 		delete strbuf;
 		return r;
 		}
 	TUsbcStringDescriptor* const sd = TUsbcStringDescriptor::New(*strbuf);
 	if (!sd)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Mem alloc for $ desc failed (2)"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_SETSTRINGDESCRIPTORTC_DUP4,
+                "  Error: Mem alloc for $ desc failed (2)" );
 		delete strbuf;
 		return KErrNoMemory;
 		}
@@ -1776,13 +1925,14 @@ TInt TUsbcDescriptorPool::SetStringDescriptorTC(DThread* aThread, TInt aIndex, c
 
 TInt TUsbcDescriptorPool::RemoveStringDescriptor(TInt aIndex)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::RemoveStringDescriptor()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_REMOVESTRINGDESCRIPTOR, 
+	        "TUsbcDescriptorPool::RemoveStringDescriptor()" );
 	if (!StringDescriptorExists(aIndex))
 		{
 		return KErrNotFound;
 		}
-	__KTRACE_OPT(KUSB, Kern::Printf("  Removing string @ pos %d: \"%S\"",
-									aIndex, &iStrings[aIndex]->StringData()));
+   OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_REMOVESTRINGDESCRIPTOR_DUP1, 
+           "  Removing string @ pos %d: \"%s\"", aIndex, iStrings[aIndex]->StringData() );
 	ExchangeStringDescriptor(aIndex, NULL);
 
 	// Make sure there's no $ after aIndex.
@@ -1791,28 +1941,33 @@ TInt TUsbcDescriptorPool::RemoveStringDescriptor(TInt aIndex)
 		{
 		if (iStrings[i] != NULL)
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  Found $ @ idx %d - not compressing", i));
+            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_REMOVESTRINGDESCRIPTOR_DUP2, 
+                    "  Found $ @ idx %d - not compressing", i );
 			return KErrNone;
 			}
 		}
 
-	__KTRACE_OPT(KUSB, Kern::Printf("  No $ found after idx %d - compressing array", aIndex));
+    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_REMOVESTRINGDESCRIPTOR_DUP3,
+            "  No $ found after idx %d - compressing array", aIndex );
 	// Move aIndex back just before the first !NULL element.
 	while (iStrings[--aIndex] == NULL)
 		;
 	// Let aIndex point to first NULL.
 	aIndex++;
-	__KTRACE_OPT(KUSB, Kern::Printf("  Starting at index %d", aIndex));
+    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_REMOVESTRINGDESCRIPTOR_DUP4,
+            "  Starting at index %d", aIndex );
 	// Now remove NULL pointers until (Count() == aIndex).
-	__KTRACE_OPT(KUSB, Kern::Printf("  iStrings.Count() before: %d", iStrings.Count()));
+    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_REMOVESTRINGDESCRIPTOR_DUP5,
+            "  iStrings.Count() before: %d", iStrings.Count() );
 	do
 		{
 		iStrings.Remove(aIndex);
-		__KTRACE_OPT(KUSB, Kern::Printf("  Removing $"));
+	    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_REMOVESTRINGDESCRIPTOR_DUP6,
+	            "  Removing $" );
 		}
 	while (iStrings.Count() > aIndex);
-	__KTRACE_OPT(KUSB, Kern::Printf("  iStrings.Count() after: %d", iStrings.Count()));
-
+    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_REMOVESTRINGDESCRIPTOR_DUP7,
+            "  iStrings.Count() after: %d", iStrings.Count() );
 	// Regain some memory.
 	iStrings.Compress();
 
@@ -1829,7 +1984,8 @@ TInt TUsbcDescriptorPool::RemoveStringDescriptor(TInt aIndex)
 //
 void TUsbcDescriptorPool::InsertIfcDesc(TUsbcDescriptorBase* aDesc)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::InsertIfcDesc()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_INSERTIFCDESC, 
+	        "TUsbcDescriptorPool::InsertIfcDesc()" );
 
 	const TInt count = iDescriptors.Count();
 	TBool ifc_exists = EFalse;								// set to 'true' if we're adding an alternate
@@ -1837,7 +1993,8 @@ void TUsbcDescriptorPool::InsertIfcDesc(TUsbcDescriptorBase* aDesc)
 	TInt i = KDescPosition_FirstAvailable;
 	while (i < count)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  already descriptors there (%d)...", count));
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_INSERTIFCDESC_DUP1, 
+                "  already descriptors there (%d)...", count );
 		if (iDescriptors[i]->Type() == KUsbDescType_Interface)
 			{
 			if (iDescriptors[i]->Byte(2) > aDesc->Byte(2))
@@ -1856,8 +2013,8 @@ void TUsbcDescriptorPool::InsertIfcDesc(TUsbcDescriptorBase* aDesc)
 					}
 				else if (iDescriptors[i]->Byte(3) == aDesc->Byte(3))
 					{
-					__KTRACE_OPT(KPANIC, Kern::Printf("  Error: first delete old desc "
-													  "(TUsbcDescriptorPool::InsertIfcDesc)"));
+                    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_INSERTIFCDESC_DUP2, 
+                            "  Error: first delete old desc (TUsbcDescriptorPool::InsertIfcDesc)" );
 					return;
 					}
 				}
@@ -1865,7 +2022,8 @@ void TUsbcDescriptorPool::InsertIfcDesc(TUsbcDescriptorBase* aDesc)
 		++i;
 		}
 	// In any case: put the new descriptor at position i.
-	__KTRACE_OPT(KUSB, Kern::Printf("  inserting descriptor at position %d", i));
+    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_INSERTIFCDESC_DUP3,
+            "  inserting descriptor at position %d", i );
 	iDescriptors.Insert(aDesc, i);
 
 	// Update the config descriptor's wTotalLength field.
@@ -1886,11 +2044,12 @@ void TUsbcDescriptorPool::InsertIfcDesc(TUsbcDescriptorBase* aDesc)
 //
 void TUsbcDescriptorPool::InsertEpDesc(TUsbcDescriptorBase* aDesc)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::InsertEpDesc()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_INSERTEPDESC, 
+	        "TUsbcDescriptorPool::InsertEpDesc()" );
 	if (iIfcIdx == 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: only after interface "
-										  "(TUsbcDescriptorPool::InsertEpDesc)"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_INSERTEPDESC_DUP1, 
+                "  Error: only after interface (TUsbcDescriptorPool::InsertEpDesc)" );
 		return;
 		}
 	const TInt count = iDescriptors.Count();
@@ -1913,8 +2072,8 @@ void TUsbcDescriptorPool::InsertEpDesc(TUsbcDescriptorBase* aDesc)
 //
 TInt TUsbcDescriptorPool::FindIfcDescriptor(TInt aIfcNumber, TInt aIfcSetting) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::FindIfcDescriptor(%d, %d)",
-									aIfcNumber, aIfcSetting));
+	OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_FINDIFCDESCRIPTOR,
+	        "TUsbcDescriptorPool::FindIfcDescriptor(%d, %d)", aIfcNumber, aIfcSetting );
 	const TInt count = iDescriptors.Count();
 	for (TInt i = KDescPosition_FirstAvailable; i < count; i++)
 		{
@@ -1925,7 +2084,8 @@ TInt TUsbcDescriptorPool::FindIfcDescriptor(TInt aIfcNumber, TInt aIfcSetting) c
 			return i;
 			}
 		}
-	__KTRACE_OPT(KPANIC, Kern::Printf("  Error: no such interface"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_FINDIFCDESCRIPTOR_DUP1,
+	        "  Error: no such interface" );
 	return -1;
 	}
 
@@ -1935,13 +2095,14 @@ TInt TUsbcDescriptorPool::FindIfcDescriptor(TInt aIfcNumber, TInt aIfcSetting) c
 //
 TInt TUsbcDescriptorPool::FindEpDescriptor(TInt aIfcNumber, TInt aIfcSetting, TUint8 aEpAddress) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::FindEpDescriptor(%d, %d, 0x%02x)",
-									aIfcNumber, aIfcSetting, aEpAddress));
+	OstTraceDefExt3( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_FINDEPDESCRIPTOR,
+	        "TUsbcDescriptorPool::FindEpDescriptor(%d, %d, 0x%02x)", aIfcNumber, aIfcSetting, aEpAddress );
 	// first find the interface
 	const TInt ifc = FindIfcDescriptor(aIfcNumber, aIfcSetting);
 	if (ifc < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: no such interface"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_FINDEPDESCRIPTOR_DUP1,
+                "  Error: no such interface" );
 		return ifc;
 		}
 	const TInt count = iDescriptors.Count();
@@ -1950,7 +2111,8 @@ TInt TUsbcDescriptorPool::FindEpDescriptor(TInt aIfcNumber, TInt aIfcSetting, TU
 		{
 		if (iDescriptors[i]->Type() == KUsbDescType_Interface)
 			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: no such endpoint before next interface"));
+            OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_FINDEPDESCRIPTOR_DUP2,
+                    "  Error: no such endpoint before next interface" );
 			return -1;
 			}
 		else if ((iDescriptors[i]->Type() == KUsbDescType_Endpoint) &&
@@ -1960,7 +2122,8 @@ TInt TUsbcDescriptorPool::FindEpDescriptor(TInt aIfcNumber, TInt aIfcSetting, TU
 			return i;
 			}
 		}
-	__KTRACE_OPT(KPANIC, Kern::Printf("  Error: no such endpoint"));
+    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_FINDEPDESCRIPTOR_DUP3,
+            "  Error: no such endpoint" );
 	return -1;
 	}
 
@@ -1970,18 +2133,22 @@ TInt TUsbcDescriptorPool::FindEpDescriptor(TInt aIfcNumber, TInt aIfcSetting, TU
 //
 void TUsbcDescriptorPool::DeleteDescriptors(TInt aIndex, TInt aCount)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::DeleteDescriptors()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_DELETEDESCRIPTORS, 
+	        "TUsbcDescriptorPool::DeleteDescriptors()" );
 	if (aIndex < KDescPosition_FirstAvailable)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: aIndex < KDescPosition_FirstAvailable"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_DELETEDESCRIPTORS_DUP1, 
+                "  Error: aIndex < KDescPosition_FirstAvailable" );
 		return;
 		}
 	if (aCount <= 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: aCount <= 0"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_DELETEDESCRIPTORS_DUP2, 
+                "  Error: aCount <= 0" );
 		return;
 		}
-	__KTRACE_OPT(KUSB, Kern::Printf("  Removing descriptors at index %d:", aIndex));
+    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_DELETEDESCRIPTORS_DUP3, 
+            "  Removing descriptors at index %d:", aIndex );
 	// Try to update wTotalLength field in Config descriptor
 	while (aCount--)
 		{
@@ -1991,22 +2158,27 @@ void TUsbcDescriptorPool::DeleteDescriptors(TInt aIndex, TInt aCount)
 		switch (ptr->Type())
 			{
 		case KUsbDescType_Interface:
-			__KTRACE_OPT(KUSB, Kern::Printf("  - an interface descriptor"));
+		    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_DELETEDESCRIPTORS_DUP4,
+		            "  - an interface descriptor" );
 			UpdateConfigDescriptorLength(-KUsbDescSize_Interface);
 			break;
 		case KUsbDescType_Endpoint:
-			__KTRACE_OPT(KUSB, Kern::Printf("  - an endpoint descriptor"));
+			OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_DELETEDESCRIPTORS_DUP5,
+			        "  - an endpoint descriptor" );
 			UpdateConfigDescriptorLength(-ptr->Size());
 			break;
 		case KUsbDescType_CS_Interface:
 			/* fall through */
 		case KUsbDescType_CS_Endpoint:
-			__KTRACE_OPT(KUSB, Kern::Printf("  - a class specific descriptor"));
+		    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_DELETEDESCRIPTORS_DUP6,
+		            "  - a class specific descriptor" );
 			UpdateConfigDescriptorLength(-ptr->Size());
 			break;
 		default:
-			__KTRACE_OPT(KUSB, Kern::Printf("  - an unknown descriptor"));
-			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: unknown descriptor type"));
+		    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_DELETEDESCRIPTORS_DUP7,
+		            "  - an unknown descriptor" );
+		    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_DELETEDESCRIPTORS_DUP8,
+		            "  Error: unknown descriptor type" );
 			}
 		iDescriptors.Remove(aIndex);
 		delete ptr;
@@ -2019,12 +2191,15 @@ void TUsbcDescriptorPool::DeleteDescriptors(TInt aIndex, TInt aCount)
 //
 void TUsbcDescriptorPool::UpdateConfigDescriptorLength(TInt aLength)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::UpdateConfigDescriptorLength(%d)", aLength));
+	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_UPDATECONFIGDESCRIPTORLENGTH,
+	        "TUsbcDescriptorPool::UpdateConfigDescriptorLength(%d)", aLength );
 	TUsbcDescriptorBase* const cnf = iDescriptors[KDescPosition_Config];
-	__KTRACE_OPT(KUSB, Kern::Printf("  wTotalLength old: %d", cnf->Word(2)));
+	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_UPDATECONFIGDESCRIPTORLENGTH_DUP1,
+	        "  wTotalLength old: %d", cnf->Word(2) );
 	// Update Config descriptor
 	cnf->SetWord(2, cnf->Word(2) + aLength);
-	__KTRACE_OPT(KUSB, Kern::Printf("  wTotalLength new: %d", cnf->Word(2)));
+	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_UPDATECONFIGDESCRIPTORLENGTH_DUP2,
+	        "  wTotalLength new: %d", cnf->Word(2) );
 	// Update Other_Speed_Config descriptor as well, if applicable
 	if (iDescriptors[KDescPosition_OtherSpeedConfig])
 		iDescriptors[KDescPosition_OtherSpeedConfig]->SetWord(2, cnf->Word(2));
@@ -2036,18 +2211,22 @@ void TUsbcDescriptorPool::UpdateConfigDescriptorLength(TInt aLength)
 //
 void TUsbcDescriptorPool::UpdateConfigDescriptorNumIfcs(TInt aNumber)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::UpdateConfigDescriptorNumIfcs(%d)", aNumber));
+	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_UPDATECONFIGDESCRIPTORNUMIFCS,
+	        "TUsbcDescriptorPool::UpdateConfigDescriptorNumIfcs(%d)", aNumber );
 	TUsbcDescriptorBase* const cnf = iDescriptors[KDescPosition_Config];
-	__KTRACE_OPT(KUSB, Kern::Printf("  bNumInterfaces old: %d", cnf->Byte(4)));
+	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_UPDATECONFIGDESCRIPTORNUMIFCS_DUP1,
+	        "  bNumInterfaces old: %d", cnf->Byte(4) );
 	const TInt n = cnf->Byte(4) + aNumber;
 	if (n < 0)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: bNumInterfaces + aNumber < 0"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_UPDATECONFIGDESCRIPTORNUMIFCS_DUP2,
+                "  Error: bNumInterfaces + aNumber < 0" );
 		return;
 		}
 	// Update Config descriptor
 	cnf->SetByte(4, n);
-	__KTRACE_OPT(KUSB, Kern::Printf("  bNumInterfaces new: %d", cnf->Byte(4)));
+    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_UPDATECONFIGDESCRIPTORNUMIFCS_DUP3,
+            "  bNumInterfaces new: %d", cnf->Byte(4) );
 	// Update Other_Speed_Config descriptor as well, if applicable
 	if (iDescriptors[KDescPosition_OtherSpeedConfig])
 		iDescriptors[KDescPosition_OtherSpeedConfig]->SetByte(4, n);
@@ -2059,7 +2238,8 @@ void TUsbcDescriptorPool::UpdateConfigDescriptorNumIfcs(TInt aNumber)
 //
 void TUsbcDescriptorPool::UpdateIfcNumbers(TInt aNumber)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::UpdateIfcNumbers(%d)", aNumber));
+	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_UPDATEIFCNUMBERS,
+	        "TUsbcDescriptorPool::UpdateIfcNumbers(%d)", aNumber );
 	const TInt count = iDescriptors.Count();
 	for (TInt i = KDescPosition_FirstAvailable; i < count; i++)
 		{
@@ -2081,14 +2261,21 @@ void TUsbcDescriptorPool::UpdateIfcNumbers(TInt aNumber)
 //
 TInt TUsbcDescriptorPool::GetDeviceDescriptor(TInt aIndex) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::GetDeviceDescriptor()"));
-	__ASSERT_DEBUG((aIndex == KDescPosition_Device) || (aIndex == KDescPosition_DeviceQualifier),
-				   Kern::Printf("  Error: invalid descriptor index: %d", aIndex));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_GETDEVICEDESCRIPTOR, 
+	        "TUsbcDescriptorPool::GetDeviceDescriptor()" );
+#ifdef _DEBUG
+	if (!((aIndex == KDescPosition_Device) || (aIndex == KDescPosition_DeviceQualifier)))
+	    {
+        OstTraceDef1( OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_GETDEVICEDESCRIPTOR_DUP1, 
+                "  Error: invalid descriptor index: %d", aIndex );
+	    }
+#endif
 	if (iDescriptors[aIndex] == NULL)
 		{
 		// This doesn't have to be an error - we might get asked here for the Device_Qualifier descriptor
 		// on a FS-only device.
-		__KTRACE_OPT(KUSB, Kern::Printf("  Descriptor #%d requested but not available", aIndex));
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_GETDEVICEDESCRIPTOR_DUP2, 
+                "  Descriptor #%d requested but not available", aIndex );
 		return 0;
 		}
 	return iDescriptors[aIndex]->GetDescriptorData(iEp0_TxBuf, KUsbcBufSz_Ep0Tx);
@@ -2102,14 +2289,21 @@ TInt TUsbcDescriptorPool::GetDeviceDescriptor(TInt aIndex) const
 //
 TInt TUsbcDescriptorPool::GetConfigurationDescriptor(TInt aIndex) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::GetConfigDescriptor(%d)", aIndex));
-	__ASSERT_DEBUG((aIndex == KDescPosition_Config) || (aIndex == KDescPosition_OtherSpeedConfig),
-				   Kern::Printf("  Error: invalid descriptor index: %d", aIndex));
+	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_GETCONFIGURATIONDESCRIPTOR,
+	        "TUsbcDescriptorPool::GetConfigDescriptor(%d)", aIndex );
+#ifdef _DEBUG
+	if (!((aIndex == KDescPosition_Config) || (aIndex == KDescPosition_OtherSpeedConfig)))
+	    {
+        OstTraceDef1( OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_GETCONFIGURATIONDESCRIPTOR_DUP1,
+                "  Error: invalid descriptor index: %d", aIndex );
+	    }
+#endif
 	if (iDescriptors[aIndex] == NULL)
 		{
 		// This is always an error: We should always have a Configuration descriptor and we should never
 		// get asked for the Other_Speed_Configuration descriptor if we don't have one (9.6.2).
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Warning: Descriptor %d requested but not available", aIndex));
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_GETCONFIGURATIONDESCRIPTOR_DUP2,
+                "  Warning: Descriptor %d requested but not available", aIndex );
 		return 0;
 		}
 		
@@ -2138,7 +2332,8 @@ TInt TUsbcDescriptorPool::GetConfigurationDescriptor(TInt aIndex) const
 				if (iDescriptors[KDescPosition_Otg] == NULL)
 					{
 					// Skip since there is no otg descriptor
-					__KTRACE_OPT(KUSB, Kern::Printf("  no otg descriptor"));
+                    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_GETCONFIGURATIONDESCRIPTOR_DUP3,
+                            "  no otg descriptor" );
 					continue;				
 					}
 				else
@@ -2168,28 +2363,29 @@ TInt TUsbcDescriptorPool::GetConfigurationDescriptor(TInt aIndex) const
 				}
 			}
 
-		__KTRACE_OPT(KUSB, Kern::Printf("  desc[%02d]: type = 0x%02x size = %d ",
-										pos, ptr->Type(), ptr->Size()));				
+        OstTraceDefExt3( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_GETCONFIGURATIONDESCRIPTOR_DUP4,
+                "  desc[%02d]: type = 0x%02x size = %d ", pos, ptr->Type(), ptr->Size() );			
 		const TInt size = ptr->GetDescriptorData(buf, KUsbcBufSz_Ep0Tx - copied);
 		if (size == 0)
 			{
 			
-			__KTRACE_OPT(KPANIC,
-						 Kern::Printf("  Error: No Tx buffer space to copy this descriptor -> exiting"));
+            OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_GETCONFIGURATIONDESCRIPTOR_DUP5,
+                    "  Error: No Tx buffer space to copy this descriptor -> exiting" );
 			break;
 			}
 		copied += size;
 		if (copied >= KUsbcBufSz_Ep0Tx)
 			{
-			__KTRACE_OPT(KPANIC,
-						 Kern::Printf("  Error: No Tx buffer space left -> stopping here"));
+            OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_GETCONFIGURATIONDESCRIPTOR_DUP6,
+                    "  Error: No Tx buffer space left -> stopping here" );
 			break;
 			}
 		buf += size;
 		}
 		
 		
-	__KTRACE_OPT(KUSB, Kern::Printf("  copied %d bytes", copied));
+    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_GETCONFIGURATIONDESCRIPTOR_DUP7,
+            "  copied %d bytes", copied );
 	return copied;
 	}
 
@@ -2200,10 +2396,12 @@ TInt TUsbcDescriptorPool::GetConfigurationDescriptor(TInt aIndex) const
 //
 TInt TUsbcDescriptorPool::GetOtgDescriptor() const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::GetOtgDescriptor()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_GETOTGDESCRIPTOR,
+	        "TUsbcDescriptorPool::GetOtgDescriptor()" );
 	if (iDescriptors[KDescPosition_Otg] == NULL)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  OTG Descriptor not set"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_GETOTGDESCRIPTOR_DUP1,
+                "  OTG Descriptor not set" );
 		return 0;
 		}
 	return iDescriptors[KDescPosition_Otg]->GetDescriptorData(iEp0_TxBuf, KUsbcBufSz_Ep0Tx);
@@ -2216,7 +2414,8 @@ TInt TUsbcDescriptorPool::GetOtgDescriptor() const
 //
 TInt TUsbcDescriptorPool::GetStringDescriptor(TInt aIndex) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::GetStringDescriptor(%d)", aIndex));
+	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_GETSTRINGDESCRIPTOR,
+	        "TUsbcDescriptorPool::GetStringDescriptor(%d)", aIndex );
 	// I really would have liked to display the descriptor contents here, but without trailing zero
 	// we got a problem: how can we tell printf where the string ends? We would have to
 	// dynamically allocate memory (since we don't know the size in advance), copy the descriptor
@@ -2236,19 +2435,21 @@ TInt TUsbcDescriptorPool::GetStringDescriptor(TInt aIndex) const
 TInt TUsbcDescriptorPool::GetDeviceStringDescriptorTC(DThread* aThread, TDes8& aString,
 													  TInt aIndex, TInt aPosition) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::GetDeviceStringDescriptorTC()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_GETDEVICESTRINGDESCRIPTORTC, 
+	        "TUsbcDescriptorPool::GetDeviceStringDescriptorTC()" );
 	const TInt str_idx = iDescriptors[KDescPosition_Device]->Byte(aIndex);
 	if (str_idx)
 		{
 		__ASSERT_ALWAYS((str_idx == aPosition), Kern::Fault(KUsbPanicCat, __LINE__));
-		__KTRACE_OPT(KUSB, Kern::Printf("  String @ pos %d (device $): \"%S\"",
-										str_idx, &iStrings[str_idx]->StringData()));
+        OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_GETDEVICESTRINGDESCRIPTORTC_DUP1, 
+                "  String @ pos %d (device $): \"%s\"", str_idx, iStrings[str_idx]->StringData() );
 		return Kern::ThreadDesWrite(aThread, &aString,
 									iStrings[str_idx]->StringData(), 0);
 		}
 	else
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  No string descriptor @ pos %d", aIndex));
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_GETDEVICESTRINGDESCRIPTORTC_DUP2, 
+                "  No string descriptor @ pos %d", aIndex );
 		return KErrNotFound;
 		}
 	}
@@ -2261,18 +2462,21 @@ TInt TUsbcDescriptorPool::GetDeviceStringDescriptorTC(DThread* aThread, TDes8& a
 TInt TUsbcDescriptorPool::SetDeviceStringDescriptorTC(DThread* aThread, const TDes8& aString,
 													  TInt aIndex, TInt aPosition)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::SetDeviceStringDescriptorTC()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_SETDEVICESTRINGDESCRIPTORTC,
+	        "TUsbcDescriptorPool::SetDeviceStringDescriptorTC()" );
 	// we don't know the length of the string, so we have to allocate memory dynamically
 	TUint strlen = Kern::ThreadGetDesLength(aThread, &aString);
 	if (strlen > KUsbStringDescStringMaxSize)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Warning: $ descriptor too long - will be truncated"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_SETDEVICESTRINGDESCRIPTORTC_DUP1,
+                "  Warning: $ descriptor too long - will be truncated" );
 		strlen = KUsbStringDescStringMaxSize;
 		}
 	HBuf8* const strbuf = HBuf8::New(strlen);
 	if (!strbuf)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Memory allocation for dev $ desc string failed (1)"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_SETDEVICESTRINGDESCRIPTORTC_DUP2,
+                "  Error: Memory allocation for dev $ desc string failed (1)" );
 		return KErrNoMemory;
 		}
 	strbuf->SetMax();
@@ -2280,14 +2484,16 @@ TInt TUsbcDescriptorPool::SetDeviceStringDescriptorTC(DThread* aThread, const TD
 	const TInt r = Kern::ThreadDesRead(aThread, &aString, *strbuf, 0);
 	if (r != KErrNone)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Thread read error"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_SETDEVICESTRINGDESCRIPTORTC_DUP3,
+                "  Error: Thread read error" );
 		delete strbuf;
 		return r;
 		}
 	TUsbcStringDescriptor* const sd = TUsbcStringDescriptor::New(*strbuf);
 	if (!sd)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Memory allocation for dev $ desc failed (2)"));
+        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_SETDEVICESTRINGDESCRIPTORTC_DUP4,
+                "  Error: Memory allocation for dev $ desc failed (2)" );
 		delete strbuf;
 		return KErrNoMemory;
 		}
@@ -2304,10 +2510,12 @@ TInt TUsbcDescriptorPool::SetDeviceStringDescriptorTC(DThread* aThread, const TD
 //
 TInt TUsbcDescriptorPool::RemoveDeviceStringDescriptor(TInt aIndex, TInt aPosition)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::RemoveDeviceStringDescriptor()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_REMOVEDEVICESTRINGDESCRIPTOR, 
+	        "TUsbcDescriptorPool::RemoveDeviceStringDescriptor()" );
 	if (iDescriptors[KDescPosition_Device]->Byte(aIndex) == 0)
 		{
-		__KTRACE_OPT(KUSB, Kern::Printf("  RemoveDeviceStringDescriptor: no $ desc @ index %d", aIndex));
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_REMOVEDEVICESTRINGDESCRIPTOR_DUP1, 
+                "  RemoveDeviceStringDescriptor: no $ desc @ index %d", aIndex );
 		return KErrNotFound;
 		}
 	ExchangeStringDescriptor(aPosition, NULL);
@@ -2321,12 +2529,15 @@ TInt TUsbcDescriptorPool::RemoveDeviceStringDescriptor(TInt aIndex, TInt aPositi
 //
 void TUsbcDescriptorPool::ExchangeStringDescriptor(TInt aIndex, const TUsbcStringDescriptor* aDesc)
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::ExchangeStringDescriptor()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_EXCHANGESTRINGDESCRIPTOR,
+	        "TUsbcDescriptorPool::ExchangeStringDescriptor()" );
 	TUsbcStringDescriptorBase* const ptr = iStrings[aIndex];
-	__KTRACE_OPT(KUSB, Kern::Printf("  Deleting string descriptor at index %d: 0x%x", aIndex, ptr));
+    OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_EXCHANGESTRINGDESCRIPTOR_DUP1,
+            "  Deleting string descriptor at index %d: 0x%x", aIndex, reinterpret_cast<TUint>(ptr) );
 	iStrings.Remove(aIndex);
 	delete ptr;
-	__KTRACE_OPT(KUSB, Kern::Printf("  Inserting string descriptor at index %d: 0x%x", aIndex, aDesc));
+    OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_EXCHANGESTRINGDESCRIPTOR_DUP2,
+            "  Inserting string descriptor at index %d: 0x%x", aIndex, reinterpret_cast<TUint>(aDesc) );
 	iStrings.Insert(aDesc, aIndex);
 	}
 
@@ -2351,15 +2562,18 @@ TBool TUsbcDescriptorPool::AnyStringDescriptors() const
 //
 TBool TUsbcDescriptorPool::StringDescriptorExists(TInt aIndex) const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::StringDescriptorExists()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_STRINGDESCRIPTOREXISTS, 
+	        "TUsbcDescriptorPool::StringDescriptorExists" );
 	if (aIndex >= iStrings.Count())
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Bad string index: %d", aIndex));
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_STRINGDESCRIPTOREXISTS_DUP1, 
+                "  Error: Bad string index: %d", aIndex );
 		return EFalse;
 		}
 	else if (iStrings[aIndex] == NULL)
 		{
-		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: No $ descriptor @ pos %d", aIndex));
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCDESCRIPTORPOOL_STRINGDESCRIPTOREXISTS_DUP2,
+                "  Error: No $ descriptor @ pos %d", aIndex );
 		return EFalse;
 		}
 	return ETrue;
@@ -2371,14 +2585,16 @@ TBool TUsbcDescriptorPool::StringDescriptorExists(TInt aIndex) const
 //
 TInt TUsbcDescriptorPool::FindAvailableStringPos() const
 	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcDescriptorPool::FindAvailableStringPos()"));
+	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCDESCRIPTORPOOL_FINDAVAILABLESTRINGPOS,
+	        "TUsbcDescriptorPool::FindAvailableStringPos()" );
 	const TInt n = iStrings.Count();
 	// We don't start from 0 because the first few locations are 'reserved'.
 	for (TInt i = KStringPosition_FirstAvailable; i < n; i++)
 		{
 		if (iStrings[i] == NULL)
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf(" Found available NULL position: %d", i));
+            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCDESCRIPTORPOOL_FINDAVAILABLESTRINGPOS_DUP1,
+                    " Found available NULL position: %d", i );
 			return i;
 			}
 		}

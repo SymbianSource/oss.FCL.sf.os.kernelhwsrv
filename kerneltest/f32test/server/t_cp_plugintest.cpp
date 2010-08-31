@@ -45,7 +45,7 @@ void QuickFormat()
 void ReadBootSector(TFatBootSector& aBootSector)
 	{
     TInt nRes = ReadBootSector(TheFs, CurrentDrive(), KBootSectorNum<<KDefaultSectorLog2, aBootSector);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     if(!aBootSector.IsValid())
         {
@@ -73,32 +73,32 @@ void doDirNameTest(const TDesC& aLongName, const TDesC& aShortName)
 
 	// Create new directory and check creation
 	TInt r = TheFs.MkDir(longDirNamePath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	TUint dumUint=0;
 	CDir* dumDir;
 	r= TheFs.GetDir(longDirNamePath, dumUint, dumUint, dumDir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test_NotNull(dumDir);
 	delete dumDir;
 
 	// Check short name
 	r = TheFs.GetShortName(longDirNamePath, shortName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = shortName.Compare(aShortName);
-	test(r==0);
+	test_Value(r, r == 0);
 	
 	// Check long name
 	shortDirNamePath = gSessionPath;
 	shortDirNamePath += shortName;
 	shortDirNamePath.Append('\\');
 	r = TheFs.GetLongName(shortDirNamePath, longName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = longName.Compare(aLongName);
-	test(r==0);
+	test_Value(r, r == 0);
 
 	r = TheFs.RmDir(longDirNamePath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 void doFileNameTest(const TDesC& aLongName, const TDesC& aShortName)
@@ -109,28 +109,28 @@ void doFileNameTest(const TDesC& aLongName, const TDesC& aShortName)
 	TFileName shn;
 
 	TInt r = TheFs.SessionPath(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	lgnFullPath = gSessionPath;
 	lgnFullPath += aLongName;
 	
 	MakeFile_CPTest(lgnFullPath);
 	// Check short name	
 	r = TheFs.GetShortName(lgnFullPath, shn);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = shn.Compare(aShortName);
-	test(r==0);
+	test_Value(r, r == 0);
 
 	// Check long name	
 	shnFullPath = gSessionPath;
 	shnFullPath += aShortName;
 
 	r = TheFs.GetLongName(shnFullPath, lgn);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = lgn.Compare(aLongName);
-	test(r==0);
+	test_Value(r, r == 0);
 
 	r = TheFs.Delete(lgnFullPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	}
 #endif //_DEBUG || _DEBUG_RELEASE
@@ -160,10 +160,10 @@ void TestUnicodeVolumeLabel()
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)
 
 	TInt r = TheFs.SessionPath(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt driveNum;
 	r = TheFs.CharToDrive(gSessionPath[0], driveNum);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// Retrieves the original volume label
 	TVolumeInfo vInfo;
@@ -175,24 +175,24 @@ void TestUnicodeVolumeLabel()
 	_LIT(KUnicodeVolumeLabel, 		"\x65B0\x65B0\x65B0");
 
 	r = TheFs.SetVolumeLabel(KUnicodeVolumeLabel, driveNum);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = TheFs.Volume(vInfo, driveNum);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = vInfo.iName.Compare(KUnicodeVolumeLabel);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// Tests setting volume label with unicode characters that bigger than 11 bytes
 	_LIT(KVolumeLabelOverflow,		"\x65B0\x65B0\x65B0\x65B0\x65B0\x65B0");
 	r = TheFs.SetVolumeLabel(KVolumeLabelOverflow, driveNum);
-	test(r==KErrOverflow);
+	test_Value(r, r == KErrOverflow);
 
 	// Sets back the original volume label
 	r = TheFs.SetVolumeLabel(originalVolumeLabel, driveNum);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = TheFs.Volume(vInfo, driveNum);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = vInfo.iName.Compare(originalVolumeLabel);
-	test(r==0);
+	test_Value(r, r == 0);
 #else
 	test.Printf(_L("Test only runs on DEBUG builds, see test logs of debug builds for details."));
 #endif  // _DEBUG) || _DEBUG_RELEASE
@@ -432,25 +432,25 @@ void TestDuplicateLongFileNames()
 	MakeFile_CPTest(KTestFileName4C8B);
 	MakeFile_CPTest(KTestFileName7C11B);
 	r = TheFs.GetShortName(KTestFileName7C11B, sn);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = sn.Compare(KTestFileName7C11B_short);
-	test(r==0);
+	test_Value(r, r == 0);
 
 
 	MakeFile_CPTest(KTestFileName8C12B);
 	r = TheFs.GetShortName(KTestFileName8C12B, sn);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = sn.Compare(KTestFileName8C12B_short);
-	test(r==0);
+	test_Value(r, r == 0);
 
 	r = TheFs.Delete(KTestFileName4C8B);
-	test(r==KErrNone);
+	test_KErrNone(r);
 		
 	r = TheFs.Delete(KTestFileName7C11B);
-	test(r==KErrNone);
+	test_KErrNone(r);
 		
 	r = TheFs.Delete(KTestFileName8C12B);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 #else
 	test.Printf(_L("Test only runs on DEBUG builds, see test logs of debug builds for details."));
@@ -509,15 +509,15 @@ void TestDuplicateLongDirNames()
 	TFileName sn;
 	
 	r = TheFs.GetShortName(KTestDirName7C11B, sn);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = sn.Compare(KTestDirName7C11B_short);
-	test(r==0);
+	test_Value(r, r == 0);
 
 	MakeDir(KTestDirName8C12B);
 	r = TheFs.GetShortName(KTestDirName8C12B, sn);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = sn.Compare(KTestDirName8C12B_short);
-	test(r==0);
+	test_Value(r, r == 0);
 
 #else
 	test.Printf(_L("Test only runs on DEBUG builds, see test logs of debug builds for details."));
@@ -552,9 +552,9 @@ void TestLeadingE5Handling()
 	MakeFile_CPTest(KTestFilePathAndName);
 	TFileName sn;
 	r = TheFs.GetShortName(KTestFilePathAndName, sn);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = sn.Compare(KTestFileShortName);
-	test(r==0);
+	test_Value(r, r == 0);
 
 #else
 	test.Printf(_L("Test only runs on DEBUG builds, see test logs of debug builds for details."));
@@ -587,14 +587,14 @@ void TestDEF130334()
 	
 	TFileName sn;
 	r = TheFs.GetShortName(KTestFilePathAndName, sn);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = sn.Compare(KTestFileName);
-	test(r==0);
+	test_Value(r, r == 0);
 	TFileName ln;
 	r = TheFs.GetLongName(KTestFilePathAndName, ln);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = ln.Compare(KTestFileName);
-	test(r==0);
+	test_Value(r, r == 0);
 
 #else
 	test.Printf(_L("Test only runs on DEBUG builds, see test logs of debug builds for details."));
@@ -624,12 +624,12 @@ void TestCompatibility()
 	TFileName fn = _L("\\ABCD");
 	
 	TInt r=file.Create(TheFs,fn,EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 	//	Assume this file is the first entry in the root directory
 	r=TheDisk.Open(TheFs,CurrentDrive());
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
     //-- read the 1st dir entry, it should be a DOS entry 
     const TInt posEntry1=gBootSector.RootDirStartSector() << KDefaultSectorLog2; //-- dir entry1 position
@@ -665,9 +665,9 @@ void TestCompatibility()
 	
 	TEntry entry;
 	TInt err = TheFs.Entry(fn, entry);
-	test(err==KErrNone);
+	test_KErrNone(err);
 	err = TheFs.Delete(fn);
-	test(err==KErrNone);
+	test_KErrNone(err);
 #else
 	test.Printf(_L("Test only runs on DEBUG builds, see test logs of debug builds for details."));
 #endif  // _DEBUG) || _DEBUG_RELEASE
@@ -697,13 +697,13 @@ void TestINC126563()
 	
 	test.Next(_L("create file \"AB\" under root directory"));
 	TInt r=file.Create(TheFs,fn,EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 	test.Next(_L("manually change file name to \"0x7F0x450x7F0x45\" via raw disk accessing"));
 	//	Assume this file is the first entry in the root directory
 	r=TheDisk.Open(TheFs,CurrentDrive());
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
     //-- read the first dir entry, it should be a DOS entry 
     const TInt posEntry1=gBootSector.RootDirStartSector() << KDefaultSectorLog2; //-- dir entry1 position
@@ -783,15 +783,15 @@ void TestINC127905()
 	_LIT(KShortName, "\x3055\x307E\x3056~1");
 	TFileName sn;
 	r = TheFs.GetShortName(fn, sn);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = sn.Compare(KShortName);
-	test(r==0);
+	test_Value(r, r == 0);
 	
 	r = TheFs.ScanDrive(_L("gSessionPath"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r = TheFs.Delete(fn);
-	test(r == KErrNone);
+	test_KErrNone(r);
 #else
 	test.Printf(_L("Test only runs on DEBUG builds, see test logs of debug builds for details."));
 #endif  // _DEBUG) || _DEBUG_RELEASE

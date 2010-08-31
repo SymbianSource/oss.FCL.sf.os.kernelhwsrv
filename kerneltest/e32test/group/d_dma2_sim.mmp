@@ -1,0 +1,52 @@
+// Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#include "kernel/kern_ext.mmh"
+
+target		d_dma2_sim.ldd
+targettype	ldd
+
+// It is not actually necessary to export DMA API functions
+// from this simulated binary
+noexportlibrary
+
+deffile		../~/d_dma2_sim.def
+
+sourcepath	../../../../kernelhwsrv/kernel/eka/drivers/dma
+source		dma2_pil.cpp dma2_shared.cpp
+
+sourcepath	../dmav2
+source		d_dma2.cpp d_dma2_cmn.cpp dma2_sim.cpp
+
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+epocallowdlldata
+
+start wins
+win32_headers
+end
+
+capability	all
+VENDORID 0x70000001
+
+#ifdef SMP
+MACRO CPU_AFFINITY_ANY
+#endif
+
+SMPSAFE
+
+MACRO DMA_APIV2
+MACRO __DMASIM__

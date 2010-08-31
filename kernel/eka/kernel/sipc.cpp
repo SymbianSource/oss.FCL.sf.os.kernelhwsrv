@@ -1517,7 +1517,9 @@ TInt DSession::SendSync(TInt aHandle, TInt aFunction, const TInt* aPtr, TRequest
 	DSession* session = (DSession*)K::ObjectFromHandle(aHandle, ESession);
 	RMessageK* m = TheCurrentThread->iSyncMsgPtr;
 	__ASSERT_ALWAYS(m->IsFree(), K::PanicCurrentThread(ESyncMsgSentTwice));
-	return session->Send(m, aFunction, aPtr ? &msgArgs : NULL, aStatus);
+	TInt r = session->Send(m, aFunction, aPtr ? &msgArgs : NULL, aStatus);
+	NKern::YieldTimeslice();
+	return r;
 	}
 
 TInt DSession::Send(RMessageK* aMsg, TInt aFunction, const RMessageK::TMsgArgs* aArgs, TRequestStatus* aStatus)
@@ -2042,7 +2044,7 @@ void ExecHandler::MessageKill(TInt aHandle, TExitType aType, TInt aReason, const
 	TBuf<KMaxExitCategoryName> cat;
 	if (aType==EExitPanic && aCategory)
 		GetCategory(cat,*aCategory);
-	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::MessageKill %d,%d,%lS",aType,aReason,&cat));
+	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::MessageKill %d,%d,%S",aType,aReason,&cat));
 	K::CheckKernelUnlocked();
 	NKern::LockSystem();
 	RMessageK* pM = RMessageK::MessageK(aHandle);

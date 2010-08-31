@@ -18,8 +18,8 @@
 // depends on the mmctest_test being built first (it includes it)
 
 #define BASE_ROM
-#define MMCLOADER_ROM
 #define REBOOT_DRIVER
+#define MMCLOADER_ROM
 
 #include <rom\##VARIANT##\header.iby>
 
@@ -58,13 +58,13 @@ data=##VARIANT##.##KMAIN##.##BUILD##.core.img					\core.img
 
 #if defined(MULTIPLEROFS)
 // Built by rom.pl with type=nandtest_test
-data=tests.rofs								\rofs1.img
-data=dir.rofs								\rofs2.img
-data=extension.rofs							\rofsextension3.img
-data=dir1.rofs								\rofs4.img
-data=dir2.rofs								\rofs5.img
-data=dir3.rofs								\rofs6.img
+data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\tests.rofs								\rofs1.img
+data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\dir.rofs								\rofs2.img
+data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\extension.rofs							\rofsextension3.img
+data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\dir1.rofs								\rofs4.img
+data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\dir2.rofs								\rofs5.img
+data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\dir3.rofs								\rofs6.img
 data=\epoc32\rom\rofstest\fatimage.bin					\user3.img
 #else
-data=dir.rofs								\rofs1.img
+data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\dir.rofs								\rofs1.img
 #endif

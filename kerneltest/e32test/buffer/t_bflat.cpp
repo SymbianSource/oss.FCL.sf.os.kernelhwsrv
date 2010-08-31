@@ -18,7 +18,7 @@
 // CBufFlat.
 // Details:
 // - Test all the operations of the class and see if methods are implemented -- 
-// including NewL, Reset, Size, Set Reserve, InsertL, Delete, Ptr, Read, Write and Compress.
+// including NewL, Reset, Size, Set Reserve, InsertL, Delete, Ptr, Read, ResizeL, Write and Compress.
 // - Test CBufFlat constructor is as expected.
 // - Insert data into the flat storage dynamic buffer and verify that InsertL method
 // is as expected.
@@ -106,11 +106,13 @@ GLDEF_C void TestCBufFlat::Test2()
 	bf1->InsertL(5,tb1);
 	bf1->Delete(16,bf1->Size()-16);
 	test(bf1->Ptr(0)==TPtrC8((TText8*)"HelloHello World"));
+	bf1->InsertL(10,tb1,5);
+	test(bf1->Ptr(0)==TPtrC8((TText8*)"HelloHelloHello World"));
 //
 	test.Next(_L("SetReserve"));
 	bf1->SetReserveL(50); // SetReserve > 0
-	test(bf1->Size()==16);
-	test(bf1->Ptr(0).Length()==16);
+	test(bf1->Size()==21);
+	test(bf1->Ptr(0).Length()==21);
 	bf1->Reset();
 	bf1->SetReserveL(0); // SetReserve = 0
 	test(bf1->Size()==0);
@@ -136,10 +138,23 @@ GLDEF_C void TestCBufFlat::Test2()
 	bf1->Compress(); // Compress
 	test(bf1->Size()==7);
 
-	test.Next(_L("Read"));
+	test.Next(_L("Read, Resize"));
 	bf1->Read(4,tb1,bf1->Size()-4);
 	test(tb1.Size()==3);
 	test(tb1==TPtrC8((TText8*)"lol"));
+	TBuf8<0x10> tb4=(TText8*)"Hello Hello Sun ";;
+	TBuf8<0x10> tb5;
+	test(bf1->Size()==7);
+	bf1->ResizeL(64); // ResizeL
+	test(bf1->Size()==64);
+	bf1->Write(0,tb4,16);
+	bf1->Write(16,tb4,16);
+	bf1->Write(32,tb4,16);
+	bf1->Write(48,tb4,16);
+	bf1->Read(0,tb5); //Reads maxlength of tb5 that is 16
+	bf1->Read(0,tb3); //Reads maxlength of tb3 that is 64
+	test(tb5==TPtrC8((TText8*)"Hello Hello Sun "));
+	test(tb3==TPtrC8((TText8*)"Hello Hello Sun Hello Hello Sun Hello Hello Sun Hello Hello Sun "));
 //
 	test.End();
 	}

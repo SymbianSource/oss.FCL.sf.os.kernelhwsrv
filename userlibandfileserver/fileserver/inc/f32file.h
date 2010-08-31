@@ -680,6 +680,15 @@ enum TQueryVolumeInfoExtCmd
     ETrue value means that the drive is finalised
     */
     EIsDriveFinalised,
+    
+    /**
+    Query the volume to ascertain whether File system extensions
+    are supported on this volume.
+    A boolean value is returned within the buffer defined as TPckgBuf<TBool>. 
+    ETrue value means that extensions are supported.
+    EFalse means they are not supported.
+     */
+    EFSysExtensionsSupported,
 	};
 
 /**
@@ -1141,7 +1150,32 @@ Additionally, it may be OR’ed with either EFileRead or EFileWrite.
 	@internalTechnology
 	
 	*/
-	EFileBigFile        =0x00040000
+	EFileBigFile        =0x00040000,
+	
+	/**
+	Using this flag implies that the client is making large sequential reads and/or writes
+	and it is interested in maximising the performance of the large reads and/or writes.
+	
+	The flag gives a hint to the file server and filesystem to adjust to a streaming
+	data pattern and try their best to make it optimal.
+	
+	Some conditions apply:
+	- This does not guarantee that the performance of read/write operations will increase.
+	- Using this flag for other purposes other than data streaming may lead to performance degradation.
+	- This may sacrifice user data integrity for the sake of performance.
+	
+	If a file is opened by Client A with EFileSequential, and the file is then opened
+	without EFileSequential by Client B, then this file mode will be disabled.
+	When the file handle is closed by Client B, then the EFileSequential file mode
+	will be enabled again.
+	Therefore, this mode will only be enabled if all clients set the file as such,
+	otherwise the file mode will be disabled.
+	
+	FAT file system specific information:
+	This flag improves write and file expansion performance whilst decreasing robustness
+	on a "Rugged-FAT" file system, which is applicable to internal non-removable drives.
+	*/
+	EFileSequential		=0x00080000
 
 	};
 
@@ -2908,7 +2942,6 @@ public:
 	IMPORT_C TInt Copy(const RFile& anOld,const TDesC& aNew,TUint aSwitches,TRequestStatus& aStatus);
 protected:
 	CFileMan(RFs& aFs);
-	TInt RenameInvalidEntry(const TDesC& anOld,const TDesC& aNew,TUint aSwitch=EOverWrite);
 private:
 	/**
 	This is an internal enumeration for CFileMan implementation. 

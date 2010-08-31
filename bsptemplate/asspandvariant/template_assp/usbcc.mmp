@@ -26,6 +26,8 @@ targettype			kext
 linkas				usbcc.dll
 noexportlibrary
 
+USERINCLUDE traces_usbcc
+
 sourcepath			../../../kernel/eka/drivers/usbcc
 source				chapter9.cpp
 source				descriptors.cpp
@@ -46,3 +48,4 @@ epocallowdlldata
 capability			all
 
 VENDORID 0x70000001
+uid           0x100039d0 0x1000015f

@@ -19,8 +19,9 @@
 #include <f32dbg.h>
 #include "f32image.h"
 #include <f32plugin.h>
+#include <filesystem_fat.h>
 #include "sf_file_cache.h"
-
+#include "sf_memory_man.h"
 
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)
 
@@ -621,6 +622,128 @@ TInt TFsControlIo::DoRequestL(CFsRequest* aRequest)
             TInt r=aRequest->Write(2,pkgBuf);
             return r;
             }
+        // Check if the file is in 'file sequential/non-rugged file' mode
+        case KControlIoIsFileSequential:
+        	{
+        	TDrive* drive = aRequest->Drive();
+        	if(!drive)
+        		return KErrNotSupported;
+        	
+        	// RFs::ControlIO uses narrow descriptors, so convert narrow back to wide
+        	TBuf8<KMaxPath> fileNameNarrow;
+        	TInt r = aRequest->Read(2, fileNameNarrow);
+        	if (r != KErrNone)
+        		return r;
+        	TFileName fileNameWide;
+        	fileNameWide.Copy(fileNameNarrow);
+        	
+        	// Locate the file
+        	CFileCB* file = drive->LocateFile(fileNameWide);
+        	if(!file)
+        		return KErrNotFound;
+        	
+        	// isFileSequential = 1 or 0 for EFileSequential mode enabled or disabled respectively
+        	TUint8 isFileSequential = (file->IsSequentialMode() != 0);
+        	TPtr8 pkgBuf(&isFileSequential,1,1);
+        	aRequest->Write(3, pkgBuf);
+        	
+        	return KErrNone;
+        	}
+        case KControlIoGlobalCacheConfig:
+		// read ESTART.TXT file for global memory settings
+            {
+            TGlobalCacheConfig globalCacheConfig;
+            TInt32 rel;
+            
+            const TInt KByteToByteShift = 10;
+            _LIT8(KLitSectionNameCacheMemory,"CacheMemory");
+            
+            if (F32Properties::GetInt(KLitSectionNameCacheMemory, _L8("GlobalCacheMemorySize"), rel))
+                globalCacheConfig.iGlobalCacheSizeInBytes = rel << KByteToByteShift;
+            else
+                globalCacheConfig.iGlobalCacheSizeInBytes = KErrNotFound;
+
+            if (F32Properties::GetInt(KLitSectionNameCacheMemory, _L8("LowMemoryThreshold"), rel))
+                globalCacheConfig.iGlobalLowMemoryThreshold = rel;
+            else
+                globalCacheConfig.iGlobalLowMemoryThreshold = KErrNotFound;
+
+            TPckgBuf<TGlobalCacheConfig> pkgBuf(globalCacheConfig);
+            TInt r=aRequest->Write(2,pkgBuf);
+            return r;
+            }
+        case KControlIoGlobalCacheInfo:
+    	// get system's current global cache memory info
+            {
+            TGlobalCacheInfo info;
+            info.iGlobalCacheSizeInBytes = TGlobalCacheMemorySettings::CacheSize();
+            info.iGlobalLowMemoryThreshold = TGlobalCacheMemorySettings::LowMemoryThreshold();
+            TPckgBuf<TGlobalCacheInfo> pkgBuf(info);
+            TInt r=aRequest->Write(2,pkgBuf);
+            return r;
+            }
+         case KControlIoDirCacheConfig:
+         // read ESTART.TXT file for per-drive directory cache settings
+            {
+            TInt driveNumber = aRequest->Drive()->DriveNumber();
+            TDirCacheConfig dirCacheConfig;
+            TInt32 rel;
+            dirCacheConfig.iDrive = driveNumber;
+            TBuf8<32> driveSection;
+            driveSection.Format(_L8("Drive%c"), 'A' + driveNumber);
+            
+            if (F32Properties::GetInt(driveSection, _L8("FAT_LeafDirCacheSize"), rel))
+                dirCacheConfig.iLeafDirCacheSize = rel;
+            else
+                dirCacheConfig.iLeafDirCacheSize = KErrNotFound;
+
+            if (F32Properties::GetInt(driveSection, _L8("FAT_DirCacheSizeMin"), rel))
+                dirCacheConfig.iDirCacheSizeMin = rel << KByteToByteShift;
+            else
+                dirCacheConfig.iDirCacheSizeMin = KErrNotFound;
+
+            if (F32Properties::GetInt(driveSection, _L8("FAT_DirCacheSizeMax"), rel))
+                dirCacheConfig.iDirCacheSizeMax = rel << KByteToByteShift;
+            else
+                dirCacheConfig.iDirCacheSizeMax = KErrNotFound;
+
+            TPckgBuf<TDirCacheConfig> pkgBuf(dirCacheConfig);
+            TInt r=aRequest->Write(2,pkgBuf);
+            return r;
+            }
+         case KControlIoDirCacheInfo:
+         // get system's current per-drive directory cache settings
+		 //  currently only supports FAT file system
+             {
+             TFSName fsName;
+             aRequest->Drive()->CurrentMount().FileSystemName(fsName);
+             if (fsName.CompareF(KFileSystemName_FAT) == 0)
+                 {
+                 // 16 is the control cmd used for FAT
+                 //  see EFATDirCacheInfo in FAT code please. 
+                 const TInt KFATDirCacheInfo = 16;
+                 return(aRequest->Drive()->ControlIO(aRequest->Message(),KFATDirCacheInfo,param1,param2));
+                 }
+             return KErrNotSupported;
+             }
+         case KControlIoSimulateMemoryLow:
+             {
+             CCacheMemoryManager* cacheMemManager = CCacheMemoryManagerFactory::CacheMemoryManager();
+             if (cacheMemManager)
+                 cacheMemManager->SetMemoryLow(ETrue);
+             else
+                 return KErrNotSupported;
+             return KErrNone;
+             }
+         case KControlIoStopSimulateMemoryLow:
+             {
+             CCacheMemoryManager* cacheMemManager = CCacheMemoryManagerFactory::CacheMemoryManager();
+             if (cacheMemManager)
+                 cacheMemManager->SetMemoryLow(EFalse);
+             else
+                 return KErrNotSupported;
+             return KErrNone;
+             }
 		
 		}
 #endif

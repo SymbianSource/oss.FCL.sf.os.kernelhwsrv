@@ -100,7 +100,7 @@ __NAKED__ void TScheduler::Reschedule()
 	asm("je same_thread ");
 	asm("mov eax, [ebx+%0]" : : "i" _FOFF(NThreadBase, iStackBase));
 	asm("add eax, [ebx+%0]" : : "i" _FOFF(NThreadBase, iStackSize));
-	asm("mov ecx, [esi+60+%0]" : : "i" _FOFF(TSubScheduler, iExtras));		// iExtras[15] points to TSS
+	asm("mov ecx, [esi+%0]" : : "i" _FOFF(TSubScheduler, iSSX.iTss));		// iExtras[15] points to TSS
 	asm("mov [ecx+%0], eax" : : "i" _FOFF(TX86Tss, iEsp0));					// set ESP0 to top of new thread supervisor stack
 
 	asm("test byte ptr [ebx+%0], 2" : : "i" _FOFF(NThreadBase,i_ThrdAttr));	// test for address space switch
@@ -551,7 +551,7 @@ EXPORT_C __NAKED__ TInt NKern::CurrentContext()
 	asm("jz bad_cc");
 	asm("test dl, 3");
 	asm("jnz bad_cc");
-	asm("cmp eax, [edx+52+%0]": : "i"_FOFF(TSubScheduler,iExtras)); // i_IrqNestCount
+	asm("cmp eax, [edx+%0]": : "i"_FOFF(TSubScheduler,iSSX.iIrqNestCount)); // i_IrqNestCount
 	asm("jle irq");
 	asm("cmp al, [edx+%0]": : "i"_FOFF(TSubScheduler, iInIDFC));
 	asm("jz thread");
@@ -609,16 +609,22 @@ extern "C" __NAKED__ void send_self_resched_ipi()
 	asm("ret ");
 	}
 
-extern "C" __NAKED__ void send_irq_ipi(TSubScheduler*)
+extern "C" __NAKED__ void send_irq_ipi(TSubScheduler*, TInt)
 	{
+	/* check that EQueueEvent_WakeUp isn't set since we don't support that on x86 yet */
+	asm("test dword ptr [esp+8], 2 ");
+	asm("jnz wake_up_requested ");
 	asm("mov ecx, [esp+4] ");
 	asm("pushfd ");
-	asm("mov edx, [ecx+%0]" : : "i" _FOFF(TSubScheduler, i_APICID));
+	asm("mov edx, [ecx+%0]" : : "i" _FOFF(TSubScheduler, iSSX.iAPICID));
 	asm("cli ");
 	asm("mov ds:[%0], edx" : : "i" (X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ICRH));
 	asm("mov eax, %0" : : "i" (TRANSFERRED_IRQ_VECTOR | 0x4000));
 	asm("mov ds:[%0], eax" : : "i" (X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ICRL));
 	asm("popfd ");
 	asm("ret ");
+
+	asm("wake_up_requested: ");
+	asm("int 0xff ");
 	}
 

@@ -115,6 +115,7 @@ LOCAL_C void RunTestsForScreen(TInt aScreenID)
 		test(KErrNone == ret);
 		
 		pChunkBase = reinterpret_cast<TUint32 *>(chunk.Base());
+		test.Printf(_L("Display Memory Address = %08x\n"), reinterpret_cast<TUint>(pChunkBase));
 		*pChunkBase = KTestValue2;
 		test(KTestValue2 == *pChunkBase);
 		// We should see the new value through the pMemory pointer!
@@ -122,8 +123,7 @@ LOCAL_C void RunTestsForScreen(TInt aScreenID)
 			{
 			test(KTestValue2 == *pMemory);
 			}
-        // print it after test as this will corrupt memory buffer
-		test.Printf(_L("Display Memory Address = %08x\n"), reinterpret_cast<TUint>(pChunkBase));
+	
 		}
 	else
 		{
@@ -186,11 +186,10 @@ LOCAL_C void RunTestsForScreen(TInt aScreenID)
 		test(KErrNone == ret);
 		
 		pChunkBase2 = reinterpret_cast<TUint32 *>(chunk2.Base());
+		test.Printf(_L("Display Memory Address = %08x\n"), reinterpret_cast<TUint>(pChunkBase));
 		test(KTestValue2 == *pChunkBase2);
 		*pChunkBase2 = KTestValue3;
 		test(KTestValue3 == *pChunkBase2);
-        // print it after test as this will corrupt memory buffer
-        test.Printf(_L("Display Memory Address = %08x\n"), reinterpret_cast<TUint>(pChunkBase));
 		chunk2.Close();
 		}
 	

@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -13,7 +13,7 @@
 // Description:
 // @file endpointwriter.cpp
 // @internalComponent
-// 
+//
 //
 
 #include <e32base.h>
@@ -21,6 +21,10 @@
 #include <d32usbc.h>
 #include "endpointwriter.h"
 #include "testdebug.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "endpointwriterTraces.h"
+#endif
 
 namespace NUnitTesting_USBDI
 	{
@@ -33,48 +37,54 @@ CEndpointWriter::CEndpointWriter(RDevUsbcClient& aClientDriver,TEndpointNumber a
 	iEndpoint(aEndpoint),
 	iBufPtr(NULL,0)
 	{
+	OstTraceFunctionEntryExt( CENDPOINTWRITER_CENDPOINTWRITER_ENTRY, this );
 	CActiveScheduler::Add(this);
+	OstTraceFunctionExit1( CENDPOINTWRITER_CENDPOINTWRITER_EXIT, this );
 	}
-	
-					
+
+
 CEndpointWriter::~CEndpointWriter()
 	{
-	LOG_FUNC
-	
+	OstTraceFunctionEntry1( CENDPOINTWRITER_CENDPOINTWRITER_ENTRY_DUP01, this );
+
 	Cancel();
 	if(iBuffer)
 		{
-		RDebug::Printf("Freeing %d bytes", iBuffer->Size());
+		OstTrace1(TRACE_NORMAL, CENDPOINTWRITER_DCENDPOINTWRITER, "Freeing %d bytes", iBuffer->Size());
 		}
 	delete iBuffer;
+	OstTraceFunctionExit1( CENDPOINTWRITER_CENDPOINTWRITER_EXIT_DUP01, this );
 	}
 
 
 void CEndpointWriter::DoCancel()
 	{
-	LOG_FUNC
-	
+	OstTraceFunctionEntry1( CENDPOINTWRITER_DOCANCEL_ENTRY, this );
+
 	// Cancel the write to the endpoint
-	
+
 	iClientDriver.WriteCancel(iEndpoint);
+	OstTraceFunctionExit1( CENDPOINTWRITER_DOCANCEL_EXIT, this );
 	}
-	
-	
+
+
 TUint CEndpointWriter::NumBytesWrittenSoFar()
 	{
+	OstTraceFunctionEntry1( CENDPOINTWRITER_NUMBYTESWRITTENSOFAR_ENTRY, this );
+	OstTraceFunctionExitExt( CENDPOINTWRITER_NUMBYTESWRITTENSOFAR_EXIT, this, iNumBytesWritten );
 	return iNumBytesWritten;
 	}
 
 void CEndpointWriter::RunL()
 	{
-	LOG_FUNC
-	
+	OstTraceFunctionEntry1( CENDPOINTWRITER_RUNL_ENTRY, this );
+
 	TInt completionCode(iStatus.Int());
-	RDebug::Printf("Write completed, err=%d",completionCode);
-	
+	OstTrace1(TRACE_NORMAL, CENDPOINTWRITER_RUNL, "Write completed, err=%d",completionCode);
+
 	iNumBytesWritten += iNumBytesOnCurrentWrite; // all zero if not a repeated write
 	if(iNumBytesWritten < iTotalNumBytes)
-		//This conditional will not be entered for non-repeat cases because then 
+		//This conditional will not be entered for non-repeat cases because then
 		//'iNumBytesWritten' and 'iTotalNumBytes' will both be zero.
 		{
 		TUint totalNumBytesStillToWrite = iTotalNumBytes - iNumBytesWritten;
@@ -85,30 +95,30 @@ void CEndpointWriter::RunL()
 		//Only add a ZLP, if requested and if the last 'Write'
 		TBool useUsb = totalNumBytesStillToWrite <= iNumBytesOnCurrentWrite ? iUseZLP : EFalse;
 		TPtrC8 writeDesc = iBufPtr.Mid(iNumBytesWritten%iDataPatternLength, iNumBytesOnCurrentWrite);
-		RDebug::Printf("Total Bytes To Write = %d, Bytes Still To Write = %d, Bytes Written = %d, Bytes on Current 'Write'", iTotalNumBytes, totalNumBytesStillToWrite, iNumBytesWritten, iNumBytesOnCurrentWrite);
-		 
-		RDebug::Printf("\n");
-		RDebug::Printf("First 256 bytes (or all) of data to write");
-		RDebug::RawPrint(writeDesc);
-		RDebug::Printf("\n");
-		
-		
+		OstTraceExt4(TRACE_NORMAL, CENDPOINTWRITER_RUNL_DUP01, "Total Bytes To Write = %u, Bytes Still To Write = %u, Bytes Written = %d, Bytes on Current Write = %d", iTotalNumBytes, totalNumBytesStillToWrite, iNumBytesWritten, iNumBytesOnCurrentWrite);
+
+		OstTrace0(TRACE_NORMAL, CENDPOINTWRITER_RUNL_DUP02, "\n");
+		OstTrace0(TRACE_NORMAL, CENDPOINTWRITER_RUNL_DUP03, "First 256 bytes (or all) of data to write");
+		OstTraceData(TRACE_NORMAL, CENDPOINTWRITER_RUNL_DUP53, "", writeDesc.Ptr(), writeDesc.Length());
+		OstTrace0(TRACE_NORMAL, CENDPOINTWRITER_RUNL_DUP04, "\n");
+
+
 		Write(writeDesc, useUsb, EFalse);
 		}
 	else
 		{
 		if(iBuffer!=NULL)
 			{
-			RDebug::Printf("Freeing %d bytes", iBuffer->Size());
+			OstTrace1(TRACE_NORMAL, CENDPOINTWRITER_RUNL_DUP05, "Freeing %d bytes", iBuffer->Size());
 			}
 		else
 			{
-			RDebug::Printf("iBuffer is NULL");
+			OstTrace0(TRACE_NORMAL, CENDPOINTWRITER_RUNL_DUP06, "iBuffer is NULL");
 			}
 		if(iTotalNumBytes != 0)
 			//if a repeated write
 			{
-			RDebug::Printf("Total Bytes = %d, Bytes Written = %d", iTotalNumBytes, iNumBytesWritten);
+			OstTraceExt2(TRACE_NORMAL, CENDPOINTWRITER_RUNL_DUP07, "Total Bytes = %u, Bytes Written = %u", iTotalNumBytes, iNumBytesWritten);
 			}
 		delete iBuffer;
 		iBuffer = 0;
@@ -118,33 +128,36 @@ void CEndpointWriter::RunL()
 		iDataPatternLength = 0;
 		iUseZLP = EFalse;
 		}
+	OstTraceFunctionExit1( CENDPOINTWRITER_RUNL_EXIT, this );
 	}
 
 
 TInt CEndpointWriter::RunError(TInt aError)
 	{
-	LOG_FUNC
-	
+	OstTraceFunctionEntryExt( CENDPOINTWRITER_RUNERROR_ENTRY, this );
+
 	aError = KErrNone;
+	OstTraceFunctionExitExt( CENDPOINTWRITER_RUNERROR_EXIT, this, aError );
 	return aError;
 	}
 
 
 void CEndpointWriter::Write(const TDesC8& aData, TBool aUseZLP, TBool aCreateBuffer)
 	{
-	LOG_FUNC
-	
+	OstTraceFunctionEntryExt( CENDPOINTWRITER_WRITE_ENTRY, this );
+
   	if(aCreateBuffer == EFalse)
   		{
-  		RDebug::Printf("Use ZLP %d", aUseZLP?1:0);
+  		OstTrace1(TRACE_NORMAL, CENDPOINTWRITER_WRITE, "Use ZLP %d", aUseZLP?1:0);
   		iClientDriver.Write(iStatus,iEndpoint,aData,aData.Length(),aUseZLP);
   		SetActive();
+ 		OstTraceFunctionExit1( CENDPOINTWRITER_WRITE_EXIT, this );
  		return;
   		}
 
-	
+
 	//Copy aData to this object's buffer
-	//'aData' will go out of scope before the USB driver 'Write' completes	
+	//'aData' will go out of scope before the USB driver 'Write' completes
 	delete iBuffer;
   	iBuffer = NULL;
 	iBuffer = HBufC8::NewL(aData.Length());
@@ -152,32 +165,33 @@ void CEndpointWriter::Write(const TDesC8& aData, TBool aUseZLP, TBool aCreateBuf
 	iBufPtr.Copy(aData);
 
 	// Write the data to the host through the endpoint (host opened pipe)
-	RDebug::Printf("Write Length = %d", iBufPtr.Length());
-	RDebug::RawPrint(iBufPtr);
-	RDebug::Printf("\n");
-	RDebug::Printf("Use ZLP %d", aUseZLP?1:0);
+	OstTrace1(TRACE_NORMAL, CENDPOINTWRITER_WRITE_DUP01, "Write Length = %d", iBufPtr.Length());
+	OstTraceData(TRACE_NORMAL, CENDPOINTWRITER_WRITE_DUP51, "", iBufPtr.Ptr(), iBufPtr.Length());
+	OstTrace0(TRACE_NORMAL, CENDPOINTWRITER_WRITE_DUP02, "\n");
+	OstTrace1(TRACE_NORMAL, CENDPOINTWRITER_WRITE_DUP03, "Use ZLP %d", aUseZLP?1:0);
 	iClientDriver.Write(iStatus,iEndpoint,iBufPtr,iBufPtr.Length(),aUseZLP);
 	SetActive();
+	OstTraceFunctionExit1( CENDPOINTWRITER_WRITE_EXIT_DUP01, this );
 	}
 
 TInt CEndpointWriter::WriteSynchronous(const TDesC8& aData, TBool aUseZLP)
 	{
-	LOG_FUNC
-	
+	OstTraceFunctionEntryExt( CENDPOINTWRITER_WRITESYNCHRONOUS_ENTRY, this );
+
 	TRequestStatus status = KRequestPending;
-	RDebug::Printf("Write Length = %d", aData.Length());
-	RDebug::RawPrint(aData);
-	RDebug::Printf("\n");
-	RDebug::Printf("Use ZLP %d", aUseZLP?1:0);
+	OstTrace1(TRACE_NORMAL, CENDPOINTWRITER_WRITESYNCHRONOUS, "Write Length = %d", aData.Length());
+	OstTraceData(TRACE_NORMAL, CENDPOINTWRITER_WRITESYNCHRONOUS_DUP50, "", aData.Ptr(), aData.Length());
+	OstTrace0(TRACE_NORMAL, CENDPOINTWRITER_WRITESYNCHRONOUS_DUP01, "\n");
+	OstTrace1(TRACE_NORMAL, CENDPOINTWRITER_WRITESYNCHRONOUS_DUP02, "Use ZLP %d", aUseZLP?1:0);
 	iClientDriver.Write(status,iEndpoint,aData,aData.Length(),aUseZLP);
 	User::WaitForRequest(status);
-	RDebug::Printf("Write has completed with error %d", status.Int());
+	OstTrace1(TRACE_NORMAL, CENDPOINTWRITER_WRITESYNCHRONOUS_DUP03, "Write has completed with error %d", status.Int());
 	return status.Int();
 	}
 
 void CEndpointWriter::WriteSynchronousUsingPatternL(const TDesC8& aData, const TUint aNumBytes, const TBool aUseZLP)
 	{
-	LOG_FUNC
+    OstTraceFunctionEntryExt( CENDPOINTWRITER_WRITESYNCHRONOUSUSINGPATTERNL_ENTRY, this );
 
 	TBool useZLP = EFalse; //only want this if you are making the last call to client Write (=WriteSynchronous)
 	if(aNumBytes <= aData.Length())
@@ -246,29 +260,33 @@ void CEndpointWriter::WriteSynchronousUsingPatternL(const TDesC8& aData, const T
 		}
 	delete iBuffer;
 	iBuffer = 0;
+	OstTraceFunctionExit1( CENDPOINTWRITER_WRITESYNCHRONOUSUSINGPATTERNL_EXIT, this );
 	}
 
 void CEndpointWriter::WriteSynchronousUsingPatternL(const TDesC8& aData, const TUint aNumBytes)
 	{
+	OstTraceFunctionEntryExt( CENDPOINTWRITER_WRITESYNCHRONOUSUSINGPATTERNL_ENTRY_DUP01, this );
 	WriteSynchronousUsingPatternL(aData, aNumBytes, ETrue);
+	OstTraceFunctionExit1( CENDPOINTWRITER_WRITESYNCHRONOUSUSINGPATTERNL_EXIT_DUP01, this );
 	}
 
 void CEndpointWriter::WriteSynchronousUsingPatternAndHaltL(const TDesC8& aData, const TUint aNumBytes)
 	{
-	LOG_FUNC
+	OstTraceFunctionEntryExt( CENDPOINTWRITER_WRITESYNCHRONOUSUSINGPATTERNANDHALTL_ENTRY, this );
 	WriteSynchronousUsingPatternL(aData, aNumBytes, EFalse);
 	iClientDriver.HaltEndpoint(iEndpoint);
+	OstTraceFunctionExit1( CENDPOINTWRITER_WRITESYNCHRONOUSUSINGPATTERNANDHALTL_EXIT, this );
 	}
 
 void CEndpointWriter::WriteUsingPatternL(const TDesC8& aData, const TUint aNumBytes, const TBool aUseZLP)
 	{
-	LOG_FUNC
+    OstTraceFunctionEntryExt( CENDPOINTWRITER_WRITEUSINGPATTERNL_ENTRY, this );
 
-	RDebug::Printf("Allocating %d bytes", aNumBytes);
+	OstTrace1(TRACE_NORMAL, CENDPOINTWRITER_WRITEUSINGPATTERNL, "Allocating %d bytes", aNumBytes);
   	delete iBuffer;
   	iBuffer = NULL;
 	iBuffer = HBufC8::NewL(aNumBytes);
-	RDebug::Printf("Allocated %d bytes", aNumBytes);
+	OstTrace1(TRACE_NORMAL, CENDPOINTWRITER_WRITEUSINGPATTERNL_DUP01, "Allocated %d bytes", aNumBytes);
 	iBufPtr.Set(iBuffer->Des());
 	iBufPtr.Zero();
 	TInt repeats = aNumBytes/aData.Length();
@@ -281,11 +299,12 @@ void CEndpointWriter::WriteUsingPatternL(const TDesC8& aData, const TUint aNumBy
 		iBufPtr.Append(aData.Left(extraBytes));
 		}
 	Write(*iBuffer, aUseZLP, EFalse);
+	OstTraceFunctionExit1( CENDPOINTWRITER_WRITEUSINGPATTERNL_EXIT, this );
 	}
 
 void CEndpointWriter::WriteInPartsUsingPatternL(const TDesC8& aData, const TUint aNumBytesPerWrite, TUint aTotalNumBytes, const TBool aUseZLP)
 	{
-	LOG_FUNC
+    OstTraceFunctionEntryExt( CENDPOINTWRITER_WRITEINPARTSUSINGPATTERNL_ENTRY, this );
 
 	iUseZLP = aUseZLP;
 	TInt repeats = aNumBytesPerWrite/aData.Length() + 1;
@@ -296,8 +315,9 @@ void CEndpointWriter::WriteInPartsUsingPatternL(const TDesC8& aData, const TUint
 	iNumBytesOnCurrentWrite = aNumBytesPerWrite;
 	iNumBytesWritten = 0;
 	Write(iBufPtr.Mid(iNumBytesWritten%iDataPatternLength, iNumBytesOnCurrentWrite), EFalse, EFalse); //this is not the first 'Write' so do not use a ZLP
-	RDebug::Printf("Write %d bytes",iNumBytesOnCurrentWrite);
-	RDebug::Printf("Total Bytes = %d, Data Pattern Length = %d", iTotalNumBytes, iDataPatternLength);
+	OstTrace1(TRACE_NORMAL, CENDPOINTWRITER_WRITEINPARTSUSINGPATTERNL, "Write %d bytes",iNumBytesOnCurrentWrite);
+	OstTraceExt2(TRACE_NORMAL, CENDPOINTWRITER_WRITEINPARTSUSINGPATTERNL_DUP01, "Total Bytes = %u, Data Pattern Length = %u", iTotalNumBytes, iDataPatternLength);
+	OstTraceFunctionExit1( CENDPOINTWRITER_WRITEINPARTSUSINGPATTERNL_EXIT, this );
 	}
 
 void CEndpointWriter::CreateBigBuffer(const TDesC8& aData, const TUint aRepeats)
@@ -305,11 +325,12 @@ void CEndpointWriter::CreateBigBuffer(const TDesC8& aData, const TUint aRepeats)
 Create a payload buffer a section of which can always be used for each cyclic 'Write'.
 */
 	{
+	OstTraceFunctionEntryExt( CENDPOINTWRITER_CREATEBIGBUFFER_ENTRY, this );
 	//We require a buffer containing a sufficient number of repeats of the data pattern
 	//to allow us simply to use a section of it for any individual 'Write' payload.
  	delete iBuffer;
  	iBuffer = NULL;
- 	RDebug::Printf("Data buffer is using %d repeats of string starting...\n\"%S\"", aRepeats, &aData);
+ 	OstTraceExt2(TRACE_NORMAL, CENDPOINTWRITER_CREATEBIGBUFFER, "Data buffer is using %u repeats of string starting...\n\"%s\"", aRepeats, aData);
  	iBuffer = HBufC8::NewL(aRepeats*aData.Length());
 	iBufPtr.Set(iBuffer->Des());
 	iBufPtr.Zero();
@@ -317,6 +338,7 @@ Create a payload buffer a section of which can always be used for each cyclic 'W
   		{
   		iBufPtr.Append(aData);
   		}
+	OstTraceFunctionExit1( CENDPOINTWRITER_CREATEBIGBUFFER_EXIT, this );
 	}
 
 	}

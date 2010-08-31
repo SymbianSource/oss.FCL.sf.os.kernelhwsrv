@@ -45,6 +45,11 @@ const TInt KDfcThread0Priority=27;
 const TInt KDfcThread1Priority=48;
 const TInt KMaxEventQueue=40;
 
+#ifdef __SMP__
+_LIT(KRebalanceName, "LB");
+const TInt KRebalancePriority=26;
+#endif
+
 TInt SupervisorThread(TAny*);
 TInt DebuggerInit();
 extern TInt InitialiseEntropyBuffers();
@@ -395,7 +400,14 @@ TInt SupervisorThread(TAny*)
 		K::Fault(K::EInit3Failed);
 
 	P::StartExtensions();
+
 	M::Init4();
+
+#ifdef __SMP__
+	TheScheduler.InitLB();
+	TheScheduler.StartPeriodicBalancing();
+#endif
+
 	K::StartKernelServer();
 	return 0;
 	}
@@ -435,6 +447,18 @@ TInt K::Init3()
 	r = Kern::DfcQInit(&DShPool::iSharedDfcQue,KDShBufThreadPriority,&KDShBufThreadName);
 	if (r!=KErrNone)
 		return r;
+
+#ifdef __SMP__
+	// create thread and DFC queue for load balancing
+	TScheduler& s = TheScheduler;
+	r = Kern::DfcQCreate(s.iRebalanceDfcQ, KRebalancePriority, &KRebalanceName);
+	if (r!=KErrNone)
+		return r;
+	NThread* nt = TScheduler::LBThread();
+	NKern::ThreadSetCpuAffinity(nt, KCpuAffinityAny);
+	pT = _LOFF(nt, DThread, iNThread);
+	pT->iFlags |= KThreadFlagSystemPermanent;
+#endif
 
 	// Initialise the RAM drive
 	K::InitNvRam();
