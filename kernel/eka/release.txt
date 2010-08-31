@@ -1,3 +1,11 @@
+Version 2.00.3117
+=================
+(Made by fadhliM 26/08/2010)
+
+1.	kunmitta
+	1.	ou1cimx1#541901 Default macro for TB10.1 builds should be RVCT4_0
+
+
 Version 2.00.3116
 =================
 (Made by fadhliM 23/08/2010)
