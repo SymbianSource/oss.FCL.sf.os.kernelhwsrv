@@ -138,11 +138,6 @@
         <unit bldFile="userlibandfileserver/fileserver/etshell" mrp="userlibandfileserver/fileserver/etshell/base_f32_eshell.mrp"/>
       </component>
     </collection>
-    <collection id="baseapitest" name="Base API Tests" level="test">
-      <component id="basesvs" name="Base Verification Suite" introduced="^2" purpose="development" filter="test">
-        <unit mrp="baseapitest/basesvs/group/basesvs.mrp" bldFile="baseapitest/basesvs/group"/>
-      </component>
-    </collection>
     <collection id="kernelhwsrv_info" name="Kernel and Hardware Services Info" level="test">
       <component id="kernelhwsrv_metadata" name="Kernel and Hardware Services Metadata" class="config" introduced="^2" purpose="development" target="desktop">
         <unit mrp="kernelhwsrv_info/kernelhwsrv_metadata/kernelhwsrv_metadata.mrp"/>

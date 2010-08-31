@@ -1,3 +1,18 @@
+Version 2.00.3059
+=================
+(Made by fadhliM 23/08/2010)
+
+1.	niccox
+	1.	ou1cimx1#536256 smassstorage is SMPSAFE
+
+2.	famustaf
+	1.	ou1cimx1#448104 [DEV] Improve RFile64 Code Coverage
+
+3.	dlyokhin
+	1.	ou1cimx1#473234 File Server shouldn't allow removable drives be rugged
+	2.	ou1cimx1#491766 ENV mcl : CAtaFatTable::DataPositionInBytes() Should Fail 'Gracefully' if Cluster is Invalid (Corrupted Media)
+
+
 Version 2.00.3058
 =================
 (Made by fadhliM 30/07/2010)

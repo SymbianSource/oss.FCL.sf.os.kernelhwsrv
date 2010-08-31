@@ -20,6 +20,7 @@
 #include <f32file.h>
 #include <f32file_private.h>
 #include <e32test.h>
+#include <e32math.h>
 #include "t_server.h"
 #include "fat_utils.h"
 #include "filesystem_fat.h"
@@ -27,6 +28,154 @@
 using namespace Fat_Test_Utils;
 
 RTest test(_L("T_FSYS"));
+static TInt64   gRndSeed;
+
+//---------------------------------------------------
+
+
+void InitGlobals()
+{
+    //-- initialise random generator 
+    gRndSeed = 0xf73c1ab;
+    Math::Rand(gRndSeed);
+}
+
+//---------------------------------------------------
+void DestroyGlobals()
+{
+}
+
+//---------------------------------------------------
+
+/**
+    The maximum length for the file system and extension names is KMaxFSNameLength
+    test how the file server supports this
+*/
+void TestFileSystemNameLength()
+{
+    test.Next(_L("Test file system name lenght limits"));
+    if(Is_SimulatedSystemDrive(TheFs, CurrentDrive()))
+    {
+        test.Printf(_L("Can't test on a simulated drive, skipping!"));
+        return;
+    }
+
+    TInt nRes;
+    TBuf<1024> name;
+    TInt i;
+
+    _LIT(KEmptyName, "");                //-- invalid length == 0
+    _LIT(KDoesNotExist,  "RubbishName"); //-- valid length == 11
+    _LIT(KDoesNotExist1, "RubbishName123456789012345678901"); //-- valid length == 32 (KMaxFSNameLength)
+
+    _LIT(KNameTooLong1,  "RubbishName123456789012345678901_"); //-- invalid length == 33 (KMaxFSNameLength+1)
+
+
+    test(KDoesNotExist1().Length() == KMaxFSNameLength);
+
+    //-- generate a very long name
+    name.Zero();
+    for(i=0; i<(name.MaxLength()/KDoesNotExist1().Length()); ++i)
+    {
+        name.Append(KDoesNotExist1);
+    }
+
+    //-- 1. try to dismount the existing FS/extension specifying invalid name
+
+    //-- 1.1 try empty names
+    nRes = TheFs.DismountFileSystem(KEmptyName, CurrentDrive());
+    test_Value(nRes, nRes == KErrArgument);
+
+    nRes = TheFs.DismountExtension(KEmptyName, CurrentDrive());
+    test_Value(nRes, nRes == KErrArgument);
+
+    //-- 1.2 valid length, but non-existing name
+    nRes = TheFs.DismountFileSystem(KDoesNotExist, CurrentDrive());
+    test_Value(nRes, nRes == KErrNotFound);
+
+    nRes = TheFs.DismountExtension(KDoesNotExist, CurrentDrive());
+    test_Value(nRes, nRes == KErrNotFound);
+
+    //-- 1.2 valid length == KMaxFSNameLength, but non-existing name
+    nRes = TheFs.DismountFileSystem(KDoesNotExist1, CurrentDrive());
+    test_Value(nRes, nRes == KErrNotFound);
+
+    nRes = TheFs.DismountExtension(KDoesNotExist1, CurrentDrive());
+    test_Value(nRes, nRes == KErrNotFound);
+
+    //-- 1.3 too long name == KMaxFSNameLength+1, 
+    nRes = TheFs.DismountFileSystem(KNameTooLong1, CurrentDrive());
+    test_Value(nRes, nRes == KErrArgument);
+
+    nRes = TheFs.DismountExtension(KNameTooLong1, CurrentDrive());
+    test_Value(nRes, nRes == KErrArgument);
+
+    //-- 1.4 a very long name ~ 1024 characters, 
+    nRes = TheFs.DismountFileSystem(name, CurrentDrive());
+    test_Value(nRes, nRes == KErrArgument);
+
+    nRes = TheFs.DismountExtension(name, CurrentDrive());
+    test_Value(nRes, nRes == KErrArgument);
+
+    
+    //-- try mounting extensions with valid, bu non-existing names
+    nRes = TheFs.MountExtension(KDoesNotExist, CurrentDrive());
+    test_Value(nRes, nRes == KErrNotFound);
+
+    nRes = TheFs.MountExtension(KDoesNotExist1, CurrentDrive());
+    test_Value(nRes, nRes == KErrNotFound);
+    
+    
+    //====================================================
+    //-- dismount original file system from the drive
+    TFSDescriptor orgFSDesc;
+    nRes = GetFileSystemDescriptor(TheFs, CurrentDrive(), orgFSDesc);
+    test_KErrNone(nRes);
+
+    nRes = TheFs.DismountFileSystem(orgFSDesc.iFsName, CurrentDrive());
+    test_KErrNone(nRes);
+
+    //-- 2. try to mount a FS/extension with the invalid name
+    
+    //-- 2.1 try empty names
+    nRes = TheFs.MountFileSystem(KEmptyName, CurrentDrive());
+    test_Value(nRes, nRes == KErrArgument);
+
+    nRes = TheFs.MountExtension(KEmptyName, CurrentDrive());
+    test_Value(nRes, nRes == KErrArgument);
+
+    //-- 1.2 valid length, but non-existing name
+    nRes = TheFs.MountFileSystem(KDoesNotExist, CurrentDrive());
+    test_Value(nRes, nRes == KErrNotFound);
+
+
+    //-- 1.2 valid length == KMaxFSNameLength, but non-existing name
+    nRes = TheFs.MountFileSystem(KDoesNotExist1, CurrentDrive());
+    test_Value(nRes, nRes == KErrNotFound);
+
+
+    //-- 1.3 too long name == KMaxFSNameLength+1, 
+    nRes = TheFs.MountFileSystem(KNameTooLong1, CurrentDrive());
+    test_Value(nRes, nRes == KErrArgument);
+
+    nRes = TheFs.MountExtension(KNameTooLong1, CurrentDrive());
+    test_Value(nRes, nRes == KErrArgument);
+
+    //-- 1.4 a very long name ~ 1024 characters, 
+    nRes = TheFs.MountFileSystem(name, CurrentDrive());
+    test_Value(nRes, nRes == KErrArgument);
+
+    nRes = TheFs.MountExtension(name, CurrentDrive());
+    test_Value(nRes, nRes == KErrArgument);
+    
+    
+    
+    
+    //-- mount original file system back to the drive
+    nRes = MountFileSystem(TheFs, CurrentDrive(), orgFSDesc);
+    test_KErrNone(nRes);
+}
+
 
 static void TestFileSystemNames()
     {
@@ -1064,7 +1213,11 @@ GLDEF_C void CallTestsL()
 
     //---------------------------------------
 
+    InitGlobals();
+    
+    //---------------------------------------
     TestFileSystemNames();
+    TestFileSystemNameLength();
     TestDismountFileSystem(CurrentDrive());
 #if defined(__EPOC32__)
     TestFileSystem(CurrentDrive());
@@ -1085,6 +1238,7 @@ GLDEF_C void CallTestsL()
     TestFileSystem_MaxSupportedFileSizeQuery();
 
     TestRemountFSWithOpenedObjects();
-    
-    
+
+    //---------------------------------------
+    DestroyGlobals();    
     }

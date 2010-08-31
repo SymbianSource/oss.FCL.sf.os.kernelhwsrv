@@ -3414,6 +3414,8 @@ public:
 	IMPORT_C static TBool GetString(const TDesC8& aSection, const TDesC8& aProperty, TDes8&  aPropVal);
 	IMPORT_C static TBool GetInt(const TDesC8& aSection,    const TDesC8& aProperty, TInt32& aPropVal);
 	IMPORT_C static TBool GetBool(const TDesC8& aSection,   const TDesC8& aProperty, TBool&  aPropVal);
+    static void  GetDriveSection(TInt aDrvNum, TDes8& aSectionName);
+ 
 private:
 	static TBool iInitialised;
 	static TInt iRomAddress;

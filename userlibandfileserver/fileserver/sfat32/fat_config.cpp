@@ -55,6 +55,18 @@ static const TUint32 KDef_FAT32_UseFsInfoOnMount = 1;
 _LIT8(KPN_FAT32_UseFatBitSupercache, "FAT_FAT32_UseBitSupercache"); 
 static const TUint32 KDef_FAT32_UseFatBitSupercache = 1;
 
+//-- FAT free space scan thread threshold in MegaBytes. If this value is set, the call to ::VolumeL() may be blocked until
+//-- the given amount of free space (MB) is counted  by FAT32 free space scan thread. After this calls to ::VolumeL() will
+//-- become asynchronous, returning _current_ amount of free space (whic is > than the given threshold)
+//-- This may help avoiding the situation when FAT32 asynchronous mounting basically turns into a synchronous one,  when someone is calling RFs::Volume()
+//-- just after FAT free space scan thread started. In such a case only first free NNN megabytes will be discovered synchronously, after this
+//-- the RFs::Volume() call will become asynchronous, returning the changing amount of free spece on the volume.
+
+//-- the default value is 0, which means: "no threshold, don't use it"
+_LIT8(KPN_FAT32_SyncScanThreshold, "FAT_FAT32_SyncScanThr"); 
+static const TUint32 KDef_FAT32_SyncScanThreshold = 0;
+
+
 
 //-- if this parameter is not 0, "clean shutdown mask" bit in FAT16[1] will be used during volume finalisation.
 //-- Otherwise, FAT16[1] will not be affected during finalisation
@@ -235,7 +247,8 @@ void TFatConfig::ReadConfig(TInt aDrvNumber, TBool aForceRead /*=EFalse*/)
     iFAT32_AsynchMount          = ReadUint(section, KPN_FAT32_AsynchMount,          KDef_FAT32_AsynchMount);
     iFAT32_UseFSInfoOnMount     = ReadUint(section, KPN_FAT32_UseFsInfoOnMount,     KDef_FAT32_UseFsInfoOnMount);
     iFAT32_UseBitSupercache     = ReadUint(section, KPN_FAT32_UseFatBitSupercache,  KDef_FAT32_UseFatBitSupercache);
-    iFAT16_UseCleanShutDownBit  = ReadUint(section, KPN_FAT16_UseCleanShutDownBit, KDef_FAT16_UseCleanShutDownBit);
+    iFAT16_UseCleanShutDownBit  = ReadUint(section, KPN_FAT16_UseCleanShutDownBit,  KDef_FAT16_UseCleanShutDownBit);
+    iSyncScanThresholdMB        = ReadUint(section, KPN_FAT32_SyncScanThreshold,    KDef_FAT32_SyncScanThreshold);           
 
     // If leaf dir cache is supported, read the configuration from estart.txt file
     iLeafDirCacheSize			= ReadUint(section, KPN_FAT_LeafDirCache,  			KDef_KLeafDirCacheSize);
@@ -360,6 +373,8 @@ void TFatConfig::DumpParameters() const
     DoDumpUintParam(KPN_FAT32_UseFsInfoOnMount, iFAT32_UseFSInfoOnMount);
     DoDumpUintParam(KPN_FAT32_UseFatBitSupercache, iFAT32_UseBitSupercache);
     DoDumpUintParam(KPN_FAT16_UseCleanShutDownBit, iFAT16_UseCleanShutDownBit);
+    DoDumpUintParam(KPN_FAT32_SyncScanThreshold, iSyncScanThresholdMB);
+    
 
     DoDumpUintParam(_L8("FAT_DirCache Size, KB"), iDirCacheSizeKB);
     DoDumpUintParam(_L8("FAT_DirCache MaxPage Size Log2"), iDirCacheMaxPageSizeLog2);
@@ -371,6 +386,8 @@ void TFatConfig::DumpParameters() const
     DoDumpUintParam(_L8("FAT_32Cache RdGr Log2"), iFat32LRUCacheReadGrLog2);
     DoDumpUintParam(_L8("FAT_32Cache WrGr Log2"), iFat32LRUCacheWriteGrLog2);
 
+
+    
     
     DoDumpUintParam(KPN_FAT_LeafDirCache,       iLeafDirCacheSize);
     DoDumpUintParam(KPN_FAT_DynamicDirCacheMin, iDynamicDirCacheSizeMinKB);

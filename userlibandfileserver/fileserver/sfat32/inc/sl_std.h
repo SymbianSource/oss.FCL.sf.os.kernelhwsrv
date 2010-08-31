@@ -192,7 +192,7 @@ public:
     //-- pure virtual interface
     virtual TUint32 ReadL(TUint32 aFatIndex) const = 0;
 	virtual void WriteL(TUint32 aFatIndex, TUint32 aValue) = 0;
-	virtual TInt64 DataPositionInBytes(TUint32 aCluster) const = 0;
+	virtual TInt64 DataPositionInBytesL(TUint32 aCluster) const = 0;
     virtual void MountL(const TMountParams& aMountParam) = 0;
     //-----------------------------------------------------------------
     //-- just virtual interface
@@ -266,7 +266,7 @@ protected:
     inline TBool ClusterNumberValid(TUint32 aClusterNo) const;
 
     typedef RArray<TUint> RClusterArray;
-    void DoFreedClustersNotify(RClusterArray &aFreedClusters);
+    void DoFreedClustersNotifyL(RClusterArray &aFreedClusters);
 
 
 protected:

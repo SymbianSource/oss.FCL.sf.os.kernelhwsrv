@@ -690,10 +690,31 @@ void CFatMountCB::VolumeL(TVolumeInfo& aVolume) const
 
 #endif
 
+    //-- find out number of free clusters on the volume
+    TUint32 freeClusters = FAT().NumberOfFreeClusters(EFalse);  //-- this is a _current_ amount of free clusters, this operation is non-blocking
 
-    const TUint32 freeClusters = FAT().NumberOfFreeClusters(bSyncOp);
+    if(bSyncOp)
+        {//-- the "::VolumeL()" query is synchronous, see if we can make it semi-synchronous
+        const TUint32 KSyncScanThresholdMB = FatConfig().FAT32_SyncScanThresholdMB();    
+        
+        if(!KSyncScanThresholdMB)
+            {//-- the free clusters scan threshold isn't set, the query is fully synchronous.
+             //-- this call will block until FAT scan thread finishes     
+            __PRINT1(_L("CFatMountCB::VolumeL() drv:%d #1"), DriveNumber());
+            freeClusters = FAT().NumberOfFreeClusters(ETrue);  //-- this will be _true_ amount of free clusters 
+            }
+         else
+            {//-- request number of free clusters enough to satisfy the threshold value
+            const TUint32 KClustersRequired = (TUint32)((TUint64)KSyncScanThresholdMB << 20) >> ClusterSizeLog2();    
+            __PRINT2(_L("CFatMountCB::VolumeL() drv:%d req clusters:%d"), DriveNumber(), KClustersRequired);
+            (void)FAT().RequestFreeClusters(KClustersRequired);  
+            freeClusters = FAT().NumberOfFreeClusters(EFalse);  //-- _current_ amount of free clusters, this operation is non-blocking
+            }
+        
+        }
+    
     aVolume.iFree = (TInt64)freeClusters << ClusterSizeLog2();
-    __PRINT1(_L("CFatMountCB::VolumeL() free clusters:%d"), freeClusters);
+    __PRINT2(_L("CFatMountCB::VolumeL() drv:%d, free clusters:%d"), DriveNumber(), freeClusters);
 
 
     if(drvInfo.iType==EMediaRam)
@@ -1639,7 +1660,7 @@ void CFatMountCB::DoWriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny*
     const TInt maxClusters=((aLength+clusterRelativePos-1)>>ClusterSizeLog2())+1;
     const TInt clusterListLen=FAT().CountContiguousClustersL(aPos.iCluster,endCluster,maxClusters);
     const TInt writeLength=Min(aLength,(clusterListLen<<ClusterSizeLog2())-clusterRelativePos);
-    TInt64 dataStart=FAT().DataPositionInBytes(aPos.iCluster)+clusterRelativePos;
+    TInt64 dataStart=FAT().DataPositionInBytesL(aPos.iCluster)+clusterRelativePos;
 
     TRAPD(r, iRawDisk->WriteL(dataStart,writeLength,aSrc,aMessage,anOffset, aFlag));
 
@@ -1670,7 +1691,7 @@ void CFatMountCB::DoWriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny*
         if((aPos.iPos != 0) && (badcluster == aPos.iCluster) && (aLastcluster == 0) && (aPos.iCluster == cluster))
             { //Copy the contents already present in this cluster to new cluster allocated.
             const TInt sizeToRead = aPos.iPos - ((aPos.iPos >> ClusterSizeLog2()) << ClusterSizeLog2());
-            dataStart = FAT().DataPositionInBytes(aPos.iCluster) + ClusterRelativePos((aPos.iPos - sizeToRead));
+            dataStart = FAT().DataPositionInBytesL(aPos.iCluster) + ClusterRelativePos((aPos.iPos - sizeToRead));
 
 
             //-- Allocate the buffer required to copy the contents from bad cluster
@@ -1699,7 +1720,7 @@ void CFatMountCB::DoWriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny*
                 {
                 //Calculate and copy the contents to new cluster.
                 aPos.iCluster = goodcluster;
-                dataStart = FAT().DataPositionInBytes(aPos.iCluster) + ClusterRelativePos(aPos.iPos - sizeToRead);
+                dataStart = FAT().DataPositionInBytesL(aPos.iCluster) + ClusterRelativePos(aPos.iPos - sizeToRead);
 
                 r = LocalDrive()->Write(dataStart, clustBuf);
                 if(r == KErrNone)
@@ -1807,7 +1828,7 @@ void CFatMountCB::DoReadFromClusterListL(TEntryPos& aPos,TInt aLength,const TAny
     const TInt maxClusters=((aLength+clusterRelativePos-1)>>ClusterSizeLog2())+1;
     const TInt clusterListLen=FAT().CountContiguousClustersL(aPos.iCluster,endCluster,maxClusters);
     const TInt readLength=Min(aLength,(clusterListLen<<ClusterSizeLog2())-clusterRelativePos);
-    const TInt64 dataStart=FAT().DataPositionInBytes(aPos.iCluster)+clusterRelativePos;
+    const TInt64 dataStart=FAT().DataPositionInBytesL(aPos.iCluster)+clusterRelativePos;
 
     TRAPD(r, iRawDisk->ReadL(dataStart,readLength,aTrg,aMessage,anOffset, aFlag));
 
@@ -3171,7 +3192,7 @@ void CFatMountCB::ReadUidL(TUint32 aCluster,TEntry& anEntry) const
         User::Leave(KErrCorrupt);
 
     TBuf8<sizeof(TCheckedUid)> uidBuf;
-    iRawDisk->ReadCachedL(FAT().DataPositionInBytes(aCluster),sizeof(TCheckedUid),uidBuf);
+    iRawDisk->ReadCachedL(FAT().DataPositionInBytesL(aCluster),sizeof(TCheckedUid),uidBuf);
     __ASSERT_DEBUG(uidBuf.Length()==sizeof(TCheckedUid),Fault(EFatReadUidFailed));
     TCheckedUid uid(uidBuf);
     anEntry.iType=uid.UidType();
@@ -3247,7 +3268,7 @@ void CFatMountCB::ReadSectionL(const TDesC& aName,TInt aPos,TAny* aTrg,TInt aLen
 			//  Read the remaining length or the entire cluster block whichever is smaller
 			TInt readLength = Min(aLength-readTotal,(clusterListLen<<ClusterSizeLog2())-pos);
 			__ASSERT_DEBUG(readLength>0,Fault(EReadFileSectionFailed));
-			TInt64 dataAddress=(FAT().DataPositionInBytes(cluster))+pos;
+			TInt64 dataAddress=(FAT().DataPositionInBytesL(cluster))+pos;
 			iRawDisk->ReadL(dataAddress,readLength,aTrg,aMessage,readTotal, 0);
 			readTotal += readLength;
 
@@ -3451,7 +3472,7 @@ TInt64 CFatMountCB::MakeLinAddrL(const TEntryPos& aPos) const
     if (!IsRootDir(aPos))
         {
         TInt relPos=ClusterRelativePos(aPos.iPos);
-        return FAT().DataPositionInBytes(aPos.iCluster)+relPos;
+        return FAT().DataPositionInBytesL(aPos.iCluster)+relPos;
         }
     if (aPos.iPos+StartOfRootDirInBytes()>=RootDirEnd())
         User::Leave(KErrDirFull); // Past last root dir entry
@@ -4100,7 +4121,7 @@ void CFatMountCB::BlockMapReadFromClusterListL(TEntryPos& aPos, TInt aLength, SB
             User::LeaveIfError(r);
         if ( caps().iType&EMediaRam )
             {
-            realPosition = FAT().DataPositionInBytes( aPos.iCluster );
+            realPosition = FAT().DataPositionInBytesL( aPos.iCluster );
             aPos.iCluster = I64LOW((realPosition - aInfo.iStartBlockAddress)>>ClusterSizeLog2());
             blockMapEntry.SetStartBlock( aPos.iCluster );
             }

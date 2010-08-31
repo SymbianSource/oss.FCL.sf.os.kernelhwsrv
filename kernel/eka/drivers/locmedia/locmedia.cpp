@@ -5386,8 +5386,6 @@ EXPORT_C TInt LocDrv::RegisterPagingDevice(DPrimaryMediaBase* aPrimaryMedia, con
 
 		TLocalDriveCapsV6& caps = *(TLocalDriveCapsV6*)capsBuf.Ptr();
 		blockSize = caps.iBlockSize;
-		__ASSERT_DEBUG(blockSize,LOCM_FAULT());
-		__ASSERT_DEBUG(__e32_bit_count_32(blockSize)==1,LOCM_FAULT());
 		
 		TLocDrv* drive;
 		for (i=0; i<KMaxLocalDrives; ++i)

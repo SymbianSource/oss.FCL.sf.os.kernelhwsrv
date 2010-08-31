@@ -1067,7 +1067,7 @@ void CFatMountCB::ReadSection64L(const TDesC& aName, TInt64 aPos, TAny* aTrg, TI
 			//  Read the remaining length or the entire cluster block whichever is smaller
 			TInt readLength = (TInt)Min((TInt64)(aLength-readTotal),(clusterListLen<<ClusterSizeLog2())-pos);
 			__ASSERT_DEBUG(readLength>0,Fault(EReadFileSectionFailed));
-			TInt64 dataAddress=(FAT().DataPositionInBytes(cluster))+pos;
+			TInt64 dataAddress=(FAT().DataPositionInBytesL(cluster))+pos;
 			iRawDisk->ReadL(dataAddress,readLength,aTrg,aMessage,readTotal, 0);
 			readTotal += readLength;
 

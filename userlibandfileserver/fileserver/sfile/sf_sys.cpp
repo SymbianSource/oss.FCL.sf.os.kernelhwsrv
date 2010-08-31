@@ -32,11 +32,7 @@ extern CProxyDriveFactory* GetExtension(const TDesC& aName);
 extern TBool gInitCacheCheckDrivesAndAddNotifications;
 #endif
 
-struct TFatUtilityFunctions;
 GLREF_D TCodePageUtils TheCodePage;
-const TInt KMaxLengthShortNameWithDot = 12;
-const TUint8 KLeadingE5Replacement = 0x05;
-const TUint8 KEntryErasedMarker=0xE5;           ///< Erased entry marker for a directory entry
 
 /**
 Default constructor.
@@ -353,6 +349,7 @@ TInt TFsAddFileSystem::Initialise(CFsRequest* aRequest)
 	TSecurityPolicy policy(RProcess().SecureId(), ECapabilityTCB);
 	if (!policy.CheckPolicy(aRequest->Message(), __PLATSEC_DIAGNOSTIC_STRING("Add File System")))
 		return KErrPermissionDenied;
+	
 	return KErrNone;
 	}
 
@@ -398,12 +395,15 @@ TInt TFsRemoveFileSystem::DoRequestL(CFsRequest* aRequest)
 	}
 
 TInt TFsRemoveFileSystem::Initialise(CFsRequest* aRequest)
-//
-//
-//
 	{
 	if (!KCapFsRemoveFileSystem.CheckPolicy(aRequest->Message(), __PLATSEC_DIAGNOSTIC_STRING("Remove File System")))
 		return KErrPermissionDenied;
+
+    //-- check file system name length. It should not exceed KMaxFSNameLength (32 characters)
+    TInt r = aRequest->GetDesLength(KMsgPtr0);
+    if(r <=0 || r >KMaxFSNameLength)
+        return KErrArgument;
+    
 	return KErrNone;
 	}
 
@@ -419,11 +419,160 @@ LOCAL_C TInt DoMountFileSystem(CFsRequest* aRequest)
 	return(aRequest->Drive()->CheckMount());
 	}
 
+//----------------------------------------------------------------------------- 
+/**
+    Read optional drive setting from estart.txt that may contain additional drive attributes, like KDRIVEATTLOGICALLYREMOVABLE, KDRIVEATTHIDDEN
+    and process them. 
+    This may lead to addding/removing some attributes to the existing drive's ones.
+    N.B Implementation of this is quite strange, it knows only about 2 specific additional attributes..
 
-LOCAL_C TInt DoMountFsInitialise(CFsRequest* aRequest,TDesC& aFsName,TBool aIsExtension,TBool aIsSync)
-//
-//
-//
+    @param  aDrvNum drive number
+    @param  aDrvAtt in: original drive attributes, out: altered drive attributes.    
+
+
+*/
+static void DoProcessAdditionalDriveAttributes(TInt aDrvNum, TUint& aDrvAtt)
+{
+	TUint add_Att= 0;       //-- additional drive attributes to be added
+	TUint remove_Att = 0;   //-- additional drive attributes to be removed
+
+	_LIT8( KAddAtt, "AddDriveAttributes");
+	_LIT8( KRemoveAtt, "RemoveDriveAttributes");
+	_LIT8( KLogicallyRemovableAtt, "KDRIVEATTLOGICALLYREMOVABLE");
+	_LIT8( KHiddenAtt, "KDRIVEATTHIDDEN");
+	_LIT8( KLogicallyRemovableAttHex, "0X200");
+	_LIT8( KHiddenAttHex, "0X400");
+	
+    TBuf8<0x100> buf;
+	TBuf8<8> sectionName;
+    F32Properties::GetDriveSection(aDrvNum, sectionName);
+    
+    //-- read and parse "AddDriveAttributes" string
+    buf.Zero();
+    TBool bSectFound = F32Properties::GetString(sectionName, KAddAtt, buf);
+
+	if(bSectFound && buf.Length() > 0)
+		{
+		TInt pos = 0;
+		TInt length = 0;
+		TPtrC8 ptr;
+		TBool endOfFlag=EFalse; 
+
+		while(!endOfFlag)
+		    {
+		    ptr.Set(buf.Mid(pos));
+		    length = ptr.Locate(',');
+	    
+		    if(length == KErrNotFound)
+			    {
+			    endOfFlag = ETrue;
+			    } 
+		    else{
+			    ptr.Set(ptr.Left(length));
+			    pos += (length +1);
+			    }
+		    
+		    if(((ptr.MatchF(KLogicallyRemovableAtt)) != KErrNotFound) || ((ptr.MatchF(KLogicallyRemovableAttHex)) != KErrNotFound))
+			    add_Att |= KDriveAttLogicallyRemovable;
+
+		    if(((ptr.MatchF(KHiddenAtt)) != KErrNotFound)  || ((ptr.MatchF(KHiddenAttHex)) != KErrNotFound))
+			    add_Att |= KDriveAttHidden;
+		    
+		    }//while(!endOfFlag)
+        }
+
+    //-- read and parse "RemoveDriveAttributes" string
+    buf.Zero();
+    bSectFound = F32Properties::GetString(sectionName, KRemoveAtt, buf);  //oldAtt now contains value of the attributes to be removed from iDriveAtt.
+
+	if(bSectFound && buf.Length() > 0)
+		{
+		TInt pos = 0;
+		TInt length = 0;
+		TPtrC8 ptr;
+		TBool endOfFlag=EFalse; 
+
+		while(!endOfFlag)
+            {
+            ptr.Set(buf.Mid(pos));
+            length = ptr.Locate(',');
+	
+            if(length == KErrNotFound)
+                {
+                endOfFlag = ETrue;
+                } 
+            else
+                {
+                ptr.Set(ptr.Left(length));
+                pos += (length +1);
+                }
+		
+            if(((ptr.MatchF(KLogicallyRemovableAtt)) != KErrNotFound) || ((ptr.MatchF(KLogicallyRemovableAttHex)) != KErrNotFound))
+                remove_Att |= KDriveAttLogicallyRemovable;
+
+            if(((ptr.MatchF(KHiddenAtt)) != KErrNotFound) || ((ptr.MatchF(KHiddenAttHex)) != KErrNotFound))
+                remove_Att |= KDriveAttHidden;
+		
+            }//while(!endOfFlag)
+		
+        }
+	
+	if ((add_Att & KDriveAttLogicallyRemovable))
+		{
+		add_Att |= KDriveAttRemovable; 	//KDriveAttLogicallyRemovale should always set KDriveAttRemovale
+		}
+	
+    if ((remove_Att & KDriveAttRemovable))
+		{
+		remove_Att |= KDriveAttLogicallyRemovable;
+		}
+	
+    
+	aDrvAtt |= add_Att;     //-- add new attributes to drive's ones
+    aDrvAtt &= ~remove_Att; //-- remove drive attributes if there are soem indicated
+}
+
+//----------------------------------------------------------------------------- 
+/**
+    Try to find and process "ForceRugged" key in the drive section. It looks like:
+    [DriveX]
+    ForceRugged N
+        
+    where when N==0, the drive forced to be non-rugged, when N==1, the drive forced to be rugged,
+    otherwise the original value is not overridden.
+
+    @param  aDrvNum drive number
+    @param  aRugged out: true/false if the setting is found, not changed if there is no such a key in the config file
+*/
+static void DoProcessForceRuggedSetting(TInt aDrvNum, TBool& aRugged)
+{
+    _LIT8(KKeyname, "ForceRugged");
+	TBuf8<8> sectionName;
+    F32Properties::GetDriveSection(aDrvNum, sectionName);
+
+    TInt32 val=-1;
+    if(F32Properties::GetInt(sectionName, KKeyname, val))
+        {
+        if(val == 0)
+            aRugged = EFalse;
+        else if(val == 1)
+            aRugged = ETrue;
+        //else the value is considered to be invalid and nothing changed
+        }
+}
+
+//----------------------------------------------------------------------------- 
+/**
+    A helper function that binds a file system to the drive along with the optional primary extension etc.
+    
+    @param  aRequest        FS request object
+    @param  aFsName         file system name to be bound to the drive
+    @param  aIsExtension    if true, this means that it's necessary to mount aprimary extension as well
+    @param  aIsSync         specifies if this drive is synchronous one or not 
+
+    @return standard error code
+*/
+static TInt DoMountFsInitialise(CFsRequest* aRequest, TDesC& aFsName, TBool aIsExtension, TBool aIsSync)
 	{
 	if (!KCapFsMountFileSystem.CheckPolicy(aRequest->Message(), __PLATSEC_DIAGNOSTIC_STRING("Mount File System")))
 		return KErrPermissionDenied;
@@ -432,12 +581,14 @@ LOCAL_C TInt DoMountFsInitialise(CFsRequest* aRequest,TDesC& aFsName,TBool aIsEx
 	if(r!=KErrNone)
 		return(r);
 
-	TBool driveThreadExists = FsThreadManager::IsDriveAvailable(aRequest->DriveNumber(), ETrue);
+	const TBool driveThreadExists = FsThreadManager::IsDriveAvailable(aRequest->DriveNumber(), ETrue);
+	TDrive& drive = *aRequest->Drive();
+    
 	if(driveThreadExists)
 		{
 		// A drive thread already exists for this drive.This could be because a filesystem
 		// is already mounted, or a proxy drive is loaded.  Check the mount to be sure...
-		if(aRequest->Drive()->GetFSys())
+		if(drive.GetFSys())
 			{
 			// Yes, a mount already exists so we can't mount another one!
 			return(KErrAccessDenied);
@@ -447,18 +598,18 @@ LOCAL_C TInt DoMountFsInitialise(CFsRequest* aRequest,TDesC& aFsName,TBool aIsEx
 		}
 
 	// ...therefore no drive thread can be present
-	__ASSERT_DEBUG(!&aRequest->Drive()->FSys(),Fault(EMountFileSystemFSys));
+	__ASSERT_DEBUG(! &drive.FSys(),Fault(EMountFileSystemFSys));
 
-	if(aRequest->Drive()->IsSubsted())
+	if(drive.IsSubsted())
 		return(KErrAccessDenied);
 
 	CFileSystem* pF = GetFileSystem(aFsName);
-	
-	if (pF == NULL)
+	if(!pF)
 		return(KErrNotFound);
 
+
 	// Check that if the drive is a proxy drive (not using TBusLocalDrive) then the filesystem supports these...
-	TInt driveNumber = aRequest->DriveNumber();
+	const TInt driveNumber = aRequest->DriveNumber();
 	if(IsProxyDrive(driveNumber))
 		{
 		if(!pF->IsProxyDriveSupported())
@@ -467,15 +618,16 @@ LOCAL_C TInt DoMountFsInitialise(CFsRequest* aRequest,TDesC& aFsName,TBool aIsEx
 		r = LocalDrives::SetupMediaChange(driveNumber);
 		}
 
+	
+    //-- get drive information from the file system
 	TDriveInfo driveInfo;
 	driveInfo.iDriveAtt=0;
-	pF->DriveInfo(driveInfo, driveNumber);
+	pF->DriveInfo(driveInfo, driveNumber); //-- the file system can override some driveInfo properties
 	if(!driveInfo.iDriveAtt)
 		r = KErrArgument;
 	
     if(r == KErrNone && !driveThreadExists)
-	    {
-    	// determine whether file system synchronous or not not by flag passed in
+	    {// determine whether file system synchronous or not not by flag passed in
 		r=FsThreadManager::InitDrive(driveNumber, aIsSync);
         }
 
@@ -483,129 +635,66 @@ LOCAL_C TInt DoMountFsInitialise(CFsRequest* aRequest,TDesC& aFsName,TBool aIsEx
 		return(r);
 
     
-    //-- let TDrive object know if the drive is synchronous
-	aRequest->Drive()->SetSynchronous(aIsSync);
-
+    //-- add a primary drive extension if it is specified
     if(aIsExtension && aRequest->Message().Ptr2()!=NULL)
 		{
-		TFullName extName;
+        //-- check extension name length. It should not exceed KMaxFSNameLength (32 characters)
+        r = aRequest->GetDesLength(KMsgPtr2);
+        if(r <=0 || r >KMaxFSNameLength)
+            return KErrArgument;
+
+		TFSName extName;
+		
 		r = aRequest->Read(KMsgPtr2,extName);
 		if (r!=KErrNone)
 			return r;
+		
 		CProxyDriveFactory* pE=GetExtension(extName);
 		if(pE==NULL)
 			return(KErrNotFound);
-		r=aRequest->Drive()->MountExtension(pE,ETrue);
+		
+        r=drive.MountExtension(pE,ETrue);
 		if(r!=KErrNone)
 			return(r);
 		}
 
-	TInt32 newAtt = 0;
-	TInt32 oldAtt = 0;
-	_LIT8( KAddAtt, "AddDriveAttributes");
-	_LIT8( KRemoveAtt, "RemoveDriveAttributes");
-	_LIT8( KLogicallyRemovableAtt, "KDRIVEATTLOGICALLYREMOVABLE");
-	_LIT8( KHiddenAtt, "KDRIVEATTHIDDEN");
-	_LIT8( KLogicallyRemovableAttHex, "0X200");
-	_LIT8( KHiddenAttHex, "0X400");
-	TBuf8<0x1000> addbuf;
-	addbuf.FillZ();
-	TBuf8<0x1000> removebuf;
-	removebuf.FillZ();
-	TInt drive = aRequest->Message().Int1();
-	_LIT8(KLitSectionNameDrive,"Drive%C");
-	TBuf8<8> sectionName;
-	sectionName.Format(KLitSectionNameDrive, 'A' + drive);
-	F32Properties::GetString(sectionName, KAddAtt, addbuf);
-	F32Properties::GetString(sectionName, KRemoveAtt, removebuf);  //oldAtt now contains value of the attributes to be removed from iDriveAtt.
+	//-- process optional additional drive attributes that can be specified in estart.txt 
+    DoProcessAdditionalDriveAttributes(driveNumber, driveInfo.iDriveAtt);
+
+    if(driveInfo.iDriveAtt & KDriveAttLogicallyRemovable)
+        {
+        ASSERT(driveInfo.iDriveAtt & KDriveAttRemovable);
+        }
+
+    
+    //-- process 'rugged drive' property
+    TBool bRuggedDrive = drive.IsRugged();
+    
+    //-- reset 'Rugged drive' attribute if this drive is removable. Having 'rugged' file system on a removable drive 
+    //-- doesn't make any sense and leads only to the performance degradation
+    if(bRuggedDrive && (driveInfo.iDriveAtt & KDriveAttRemovable))
+        {
+        __PRINT1(_L("DoMountFsInitialise() drv:%d is removable. resetting 'Rugged' flag!"), driveNumber);
+        bRuggedDrive = EFalse;
+        }
+
+    DoProcessForceRuggedSetting(driveNumber, bRuggedDrive); //-- setting in estart.txt can override this flag
+    drive.SetRugged(bRuggedDrive);
+
+
+    //-- let TDrive object know if the drive is synchronous
+	drive.SetSynchronous(aIsSync);
+    
+    drive.SetAtt(driveInfo.iDriveAtt); //-- finally set drive attributes
+	drive.GetFSys()=pF;                //-- bind a file system to the drive 
+
 	
-	if(addbuf.Length() != 0)
-		{
-		TInt pos = 0;
-		TInt length = 0;
-		TPtrC8 ptr;
-		TBool endOfFlag=EFalse; 
+	TClosedFileUtils::Remove(driveNumber); // empty the closed file queue
 
-		while(!endOfFlag)
-		{
-		ptr.Set(addbuf.Mid(pos));
-		length = ptr.Locate(',');
-	
-		if(length == KErrNotFound)
-			{
-			endOfFlag = ETrue;
-			} 
-		else{
-			ptr.Set(ptr.Left(length));
-			pos += (length +1);
-			}
-		
-		if(((ptr.MatchF(KLogicallyRemovableAtt)) != KErrNotFound) || ((ptr.MatchF(KLogicallyRemovableAttHex)) != KErrNotFound))
-			newAtt |= KDriveAttLogicallyRemovable;
-		if(((ptr.MatchF(KHiddenAtt)) != KErrNotFound)  || ((ptr.MatchF(KHiddenAttHex)) != KErrNotFound))
-			newAtt |= KDriveAttHidden;
-		
-		}
-		}
-
-	if(removebuf.Length() != 0)
-		{
-		TInt pos = 0;
-		TInt length = 0;
-		TPtrC8 ptr;
-		TBool endOfFlag=EFalse; 
-
-		while(!endOfFlag)
-		{
-		ptr.Set(removebuf.Mid(pos));
-		length = ptr.Locate(',');
-	
-		if(length == KErrNotFound)
-			{
-			endOfFlag = ETrue;
-			} 
-		else{
-			ptr.Set(ptr.Left(length));
-			pos += (length +1);
-			}
-		
-		if(((ptr.MatchF(KLogicallyRemovableAtt)) != KErrNotFound) || ((ptr.MatchF(KLogicallyRemovableAttHex)) != KErrNotFound))
-			oldAtt |= KDriveAttLogicallyRemovable;
-		if(((ptr.MatchF(KHiddenAtt)) != KErrNotFound) || ((ptr.MatchF(KHiddenAttHex)) != KErrNotFound))
-			oldAtt |= KDriveAttHidden;
-		
-		}
-		}
-	
-	if ((newAtt & KDriveAttLogicallyRemovable) && (!(driveInfo.iDriveAtt & KDriveAttRemovable)) && (!(newAtt & KDriveAttRemovable)))
-		{
-		newAtt |= KDriveAttRemovable; 	//KDriveAttLogicallyRemovale should always set KDriveAttRemovale
-		}
-	if ((oldAtt & KDriveAttRemovable)  && (!(oldAtt & KDriveAttLogicallyRemovable)))
-		{
-		oldAtt |= KDriveAttLogicallyRemovable;
-		}
-	if(newAtt)
-		{
-		driveInfo.iDriveAtt |= newAtt;
-		}
-	if(oldAtt)
-		{
-		if(oldAtt & driveInfo.iDriveAtt)
-			{
-			driveInfo.iDriveAtt ^= oldAtt;  
-			}
-		}
-	aRequest->Drive()->SetAtt(driveInfo.iDriveAtt);
-	aRequest->Drive()->GetFSys()=pF;
-
-	// empty the closed file queue
-	TClosedFileUtils::Remove(aRequest->DriveNumber());
-
-	return(KErrNone);
+	return KErrNone;
 	}
 
-
+//----------------------------------------------------------------------------- 
 TInt TFsMountFileSystem::DoRequestL(CFsRequest* aRequest)
 //
 // Mount a filesystem on a drive.
@@ -625,19 +714,26 @@ TInt TFsMountFileSystem::DoRequestL(CFsRequest* aRequest)
 	return r;
 	}
 
-
+//----------------------------------------------------------------------------- 
 TInt TFsMountFileSystem::Initialise(CFsRequest* aRequest)
-//
-//	
-//
 	{
-	TFullName name;
-	TInt r = aRequest->Read(KMsgPtr0,name);
+    TInt r;
+    
+    //-- check file system name length. It should not exceed KMaxFSNameLength (32 characters)
+    r = aRequest->GetDesLength(KMsgPtr0);
+    if(r <=0 || r >KMaxFSNameLength)
+        return KErrArgument;
+
+    TFSName name;
+	r = aRequest->Read(KMsgPtr0, name);
+
 	if (r == KErrNone)
 		r = DoMountFsInitialise(aRequest,name,ETrue,aRequest->Message().Int3());
+	
 	return r;
 	}
 
+//----------------------------------------------------------------------------- 
 TInt TFsMountFileSystemScan::DoRequestL(CFsRequest* aRequest)
 //
 // mount file system and then call scandrive
@@ -651,25 +747,33 @@ TInt TFsMountFileSystemScan::DoRequestL(CFsRequest* aRequest)
 		r=aRequest->Drive()->ScanDrive();
 		FsNotify::DiskChange(aRequest->DriveNumber());
 		}
+
 	TPtrC8 pMS((TUint8*)&isMountSuccess,sizeof(TBool));
 	aRequest->WriteL(KMsgPtr3,pMS);
 	return(r);
 	}
 
 
+//----------------------------------------------------------------------------- 
 TInt TFsMountFileSystemScan::Initialise(CFsRequest* aRequest)
-//
-//	
-//
 	{
-	TFullName name;
-	TInt r = aRequest->Read(KMsgPtr0,name);
+    TInt r;
+
+    //-- check file system name length. It should not exceed KMaxFSNameLength (32 characters)
+    r = aRequest->GetDesLength(KMsgPtr0);
+    if(r <=0 || r >KMaxFSNameLength)
+        return KErrArgument;
+	
+    TFSName name;
+	r = aRequest->Read(KMsgPtr0,name);
 	if (r == KErrNone)
 		r = DoMountFsInitialise(aRequest,name,ETrue,EFalse);
+	
 	return r;
 	}
 
-LOCAL_C TInt DoDismountFileSystem(const TDesC& aName, TDrive* aDrive, TBool aAllowRom, TBool aForceDismount)
+//----------------------------------------------------------------------------- 
+static TInt DoDismountFileSystem(const TDesC& aName, TDrive* aDrive, TBool aAllowRom, TBool aForceDismount)
 //
 // Do file system dismount
 //
@@ -747,6 +851,7 @@ LOCAL_C TInt DoDismountFileSystem(const TDesC& aName, TDrive* aDrive, TBool aAll
 	return(KErrNone);
 	}
 
+//----------------------------------------------------------------------------- 
 TInt TFsDismountFileSystem::DoRequestL(CFsRequest* aRequest)
 //
 // Dismount a filesystem from a drive.
@@ -754,7 +859,8 @@ TInt TFsDismountFileSystem::DoRequestL(CFsRequest* aRequest)
 	{
 	TDrive* drive=aRequest->Drive();
 	__ASSERT_DEBUG(&aRequest->Drive()->FSys() && !drive->IsSubsted(),Fault(EDisMountFileSystemFSys));
-	TFullName name;
+	
+    TFSName name;
 	aRequest->ReadL(KMsgPtr0,name);
 
 	if(drive->DismountDeferred())
@@ -763,14 +869,24 @@ TInt TFsDismountFileSystem::DoRequestL(CFsRequest* aRequest)
 	return DoDismountFileSystem(name, drive, EFalse, EFalse);
 	}
 
+//----------------------------------------------------------------------------- 
 TInt TFsDismountFileSystem::Initialise(CFsRequest* aRequest)
 //
 //	
 //
 	{
+    TInt r;
+
 	if (!KCapFsDismountFileSystem.CheckPolicy(aRequest->Message(), __PLATSEC_DIAGNOSTIC_STRING("Dismount File System")))
 		return KErrPermissionDenied;
-	TInt r = ValidateDrive(aRequest->Message().Int1(),aRequest);
+
+    //-- check file system name length. It should not exceed KMaxFSNameLength (32 characters)
+    r = aRequest->GetDesLength(KMsgPtr0);
+    if(r <=0 || r >KMaxFSNameLength)
+        return KErrArgument;
+	
+    
+    r = ValidateDrive(aRequest->Message().Int1(),aRequest);
 	if(r == KErrNone)
 		{
 		TInt driveNumber = aRequest->DriveNumber();
@@ -873,12 +989,13 @@ TInt TFsSwapFileSystem::DoRequestL(CFsRequest* aRequest)
 // Should always leave a filesystem mounted on the drive
 //
 	{
-	TFileName newName;
+	TFSName newName;
 	aRequest->ReadL(KMsgPtr0,newName);										
 	CFileSystem* pF=GetFileSystem(newName);												
 	if (pF==NULL)															
 		return(KErrNotFound);
-	TFileName oldName;			
+	
+    TFSName oldName;			
 	aRequest->ReadL(KMsgPtr2,oldName);										
 	TInt drvNumber=aRequest->Message().Int1();	
 	TBool newFsIsComposite = (newName.CompareF(KCompositeFsName) == 0);	
@@ -946,11 +1063,19 @@ TInt TFsSwapFileSystem::DoRequestL(CFsRequest* aRequest)
 	return(r);
 	}
 
-TInt TFsSwapFileSystem::Initialise(CFsRequest* /*aRequest*/)
-//
-//	
-//
+TInt TFsSwapFileSystem::Initialise(CFsRequest* aRequest)
 	{
+    TInt len;
+    
+    //-- check file system name length. It should not exceed KMaxFSNameLength (32 characters)
+    len = aRequest->GetDesLength(KMsgPtr0); //-- new name
+    if(len <=0 || len >KMaxFSNameLength)
+        return KErrArgument;
+
+    len = aRequest->GetDesLength(KMsgPtr2); //-- old name
+    if(len <=0 || len >KMaxFSNameLength)
+        return KErrArgument;
+
 	return KErrNone;
 	}	
 
@@ -1569,6 +1694,10 @@ Convert to Unicode, truncating if there is not enough room in the output.
 @return False if and only if aUnicode has not enough space remaining.
 */
 	{
+    const TInt KMaxLengthShortNameWithDot = 12;
+    const TUint8 KLeadingE5Replacement = 0x05;
+    const TUint8 KEntryErasedMarker=0xE5;           ///< Erased entry marker for a directory entry
+	
 	// A workaround to handle leading 'E5' byte in short file names 
 	TBuf8<KMaxLengthShortNameWithDot> shortFileNameWithLeadingE5;
 	TBool convertedLeading05toE5 = EFalse;

@@ -689,8 +689,9 @@ TInt TFsControlIo::DoRequestL(CFsRequest* aRequest)
             TDirCacheConfig dirCacheConfig;
             TInt32 rel;
             dirCacheConfig.iDrive = driveNumber;
+            
             TBuf8<32> driveSection;
-            driveSection.Format(_L8("Drive%c"), 'A' + driveNumber);
+            F32Properties::GetDriveSection(driveNumber, driveSection);
             
             if (F32Properties::GetInt(driveSection, _L8("FAT_LeafDirCacheSize"), rel))
                 dirCacheConfig.iLeafDirCacheSize = rel;

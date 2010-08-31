@@ -331,23 +331,20 @@ Gets the client side version number.
 
 
 
-EFSRV_EXPORT_C TInt RFs::AddFileSystem(const TDesC& aFileName) const
 /**
-Adds a file system to the file server.
+    Load file system plugin (*.fsy module) and add a file system that it implements to the file server. 
+    After loading the file system plugin  RFs::MountFileSystem() can be used to mount the file system on a drive.
 
-After calling this function, use MountFileSystem() to mount the file system
-on a drive.
+    @param aFileName    The name of the file system plugin (*.FSY) to install. If only file name without extension is specified, 
+                        ".fsy" extension is assumed by default.
+                        A full path to the FSY module can be specified, otherwise standard rules of loading DLLs apply. 
 
-@param aFileName The name of the file system .FSY to install. Its full path can
-				 be specified.
-
-@return KErrNone, if successful, otherwise one of the other system-wide
-        error codes.
+    @return KErrNone    if successful, otherwise one of the other system-wide error codes.
 
 @capability DiskAdmin
-        
 @see RFs::MountFileSystem        
 */
+EFSRV_EXPORT_C TInt RFs::AddFileSystem(const TDesC& aFileName) const
 	{
 	OstTrace1(TRACE_BORDER, EFSRV_EFSADDFILESYSTEM, "sess %x", Handle());
 	OstTraceData(TRACE_BORDER, EFSRV_EFSADDFILESYSTEM_EFILENAME, "FileName %S", aFileName.Ptr(), aFileName.Length()<<1);
@@ -365,20 +362,20 @@ on a drive.
 
 
 
-EFSRV_EXPORT_C TInt RFs::RemoveFileSystem(const TDesC& aFileSystemName) const
 /**
-Removes the specified file system.
+    Removes the specified file system from the file server and unloads its plugin dll (*.fsy)
 
-@param aFileSystemName The fullname of the file system, as returned from
-                       a call to FileSystemName(), to be removed.
+    @param aFileSystemName  The name of the file system to be removed. File system name that is bound to some drive can be retrieved by 
+                            RFs::FileSystemName(). Note that this is _not_ the name of the plugin (*.fsy).
 
-@return KErrNone, if successful;
-        KErrNotFound, if aFileSystemName is not found;
-        otrherwise one of the other system-wide error codes.
+    @return KErrNone        if successful
+            KErrNotFound    if aFileSystemName is not found
+            otherwise one of the other system-wide error codes.
 
-@capability DiskAdmin
+    @capability DiskAdmin
 
 */
+EFSRV_EXPORT_C TInt RFs::RemoveFileSystem(const TDesC& aFileSystemName) const
 	{
 	OstTrace1(TRACE_BORDER, EFSRV_EFSREMOVEFILESYSTEM, "sess %x", Handle());
 	OstTraceData(TRACE_BORDER, EFSRV_EFSREMOVEFILESYSTEM_EFILESYSTEMNAME, "FileSystemName %S", aFileSystemName.Ptr(), aFileSystemName.Length()<<1);
@@ -390,23 +387,31 @@ Removes the specified file system.
 
 
 
-EFSRV_EXPORT_C TInt RFs::MountFileSystem(const TDesC& aFileSystemName,TInt aDrive) const
 /**
-Mounts a file system on a drive.
+    Mounts a file system on a drive.
+    The file system must first have been added to the file server using AddFileSystem().
+    The drive is mounted as asynchronous, i.e operations on it don't block the file server and other drives;
 
-The file system must first have been added to the file server using AddFileSystem().
-The drive is mounted as asynchronous, i.e operations on it don't block the file server and other drives;
+    @param aFileSystemName  The name the file system, like "FAT". Note that this is _not_ the name of the plugin (*.fsy).
+                            The file system name is case-insensitive, i.e. "FAT", "fat", "Fat" are equivalent.
+                            The maximum lentgth of the file name is KMaxFSNameLength.
 
-@param aFileSystemName The fullname of the file system, as returned from  a call to FileSystemName().
-@param aDrive          The drive on which the file system is to be mounted; this can be one of the values defined by TDriveNumber.
+    @param aDrive           The drive number on which the file system is to be mounted; this can be one of the values defined by TDriveNumber.
 
-@return KErrNone if successful, otherwise one of the other system-wide error codes.
+    @return KErrNone        if successful 
+            KErrLocked      if the media is locked
+            KErrCorrupt     most likely means that the data structures on the media are not recognized by the given file system. This 
+                            usually happens when the medium is damaged, unformatted, formatted with a different file system or vital file system structures are 
+                            corrupted.
 
-@capability DiskAdmin
+            otherwise one of the other system-wide error codes.
 
-@see RFs::AddFileSystem
-@see RFs::FileSystemName
+    @capability DiskAdmin
+
+    @see RFs::AddFileSystem
+    @see RFs::FileSystemName
 */
+EFSRV_EXPORT_C TInt RFs::MountFileSystem(const TDesC& aFileSystemName,TInt aDrive) const
 	{
 	OstTraceExt2(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEM1, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
 	OstTraceData(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEM1_EFILESYSTEMNAME, "FileSystemName %S", aFileSystemName.Ptr(), aFileSystemName.Length()<<1);
@@ -419,10 +424,8 @@ The drive is mounted as asynchronous, i.e operations on it don't block the file 
 
 
 
-EFSRV_EXPORT_C TInt RFs::MountFileSystem(const TDesC& aFileSystemName,TInt aDrive, TBool aIsSync) const
 /**
-Mounts a file system on a specified drive.
-
+    Mounts a file system on a drive.
 The file system must first have been added to the file server using AddFileSystem().
 Depending on the aIsSync parameter, the drive can be mounted as synchronous or asynchronous.
 
@@ -431,17 +434,22 @@ Synchronous drives' requests are being processed by the main file server thread 
 all operations on other drives. Mounting a drive as synch. makes a sense if the operations on such drive are very fast e.g. this is an
 internal RAM or ROFS drive.
 
-@param aFileSystemName The fullname of the file system, as returned from a call to FileSystemName().
+    @param aFileSystemName  The name the file system, like "FAT". Note that this is _not_ the name of the plugin (*.fsy).
+                            The file system name is case-insensitive, i.e. "FAT", "fat", "Fat" are equivalent.
+                            The maximum lentgth of the file name is KMaxFSNameLength.
+
 @param aDrive          The drive number on which the file system is to be mounted; this can be one of the values defined by TDriveNumber.
 
 @param aIsSync         if ETrue  the drive will be mounted as synchronous one;
                        if EFalse the drive will be mounted as Asynchronous.
 
 @return KErrNone if successful, otherwise one of the other system-wide error codes.
+
 @capability DiskAdmin
 @see RFs::AddFileSystem
 @see RFs::FileSystemName
 */
+EFSRV_EXPORT_C TInt RFs::MountFileSystem(const TDesC& aFileSystemName,TInt aDrive, TBool aIsSync) const
 	{
 	OstTraceExt3(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEM2, "sess %x aDrive %d aIsSync %d", (TUint) Handle(), (TUint) aDrive, (TUint) aIsSync);
 	OstTraceData(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEM2_EFILESYSTEMNAME, "FileSystemName %S", aFileSystemName.Ptr(), aFileSystemName.Length()<<1);
@@ -453,24 +461,29 @@ internal RAM or ROFS drive.
 
 
 
-EFSRV_EXPORT_C TInt RFs::MountFileSystem(const TDesC& aFileSystemName,const TDesC& aExtensionName,TInt aDrive)
 /**
-Mounts a file system on a drive, and the specified extension.
+    Mounts a file system on a drive, along with the specified primary drive extension.
 
-The file system must first have been added to the file server using AddFileSystem().
-The drive is mounted as asynchronous, i.e operations on it don't block the file server and other drives;
+    The file system must first have been added to the file server using AddFileSystem().
+    The extension must first have been added to the file server using AddExtension().
+    The drive is mounted as asynchronous, i.e operations on it don't block the file server and other drives;
 
-@param aFileSystemName The fullname of the file system, as returned from a call to FileSystemName().
-@param aExtensionName  The filename of the extension.
-@param aDrive          The drive on which the file system is to be mounted; this can be one of the values defined by TDriveNumber.
+    @param aFileSystemName  The name the file system, like "FAT". Note that this is _not_ the name of the plugin (*.fsy).
+                            The file system name is case-insensitive, i.e. "FAT", "fat", "Fat" are equivalent.
+                            The maximum lentgth of the file name is KMaxFSNameLength.
 
-@return KErrNone if successful, otherwise one of the other system-wide error codes.
+    @param aExtensionName   The name of the primary drive extension. It has the same conventions as the aFileSystemName.
 
-@capability DiskAdmin
+    @param aDrive           The drive on which the file system is to be mounted; this can be one of the values defined by TDriveNumber.
 
-@see RFs::AddFileSystem
-@see RFs::FileSystemName
+    @return KErrNone if successful, otherwise one of the other system-wide error codes.
+
+    @capability DiskAdmin
+
+    @see RFs::AddFileSystem
+    @see RFs::FileSystemName
 */
+EFSRV_EXPORT_C TInt RFs::MountFileSystem(const TDesC& aFileSystemName,const TDesC& aExtensionName,TInt aDrive)
 	{
 	OstTraceExt2(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEM3, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
 	OstTraceData(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEM3_EEXTENSIONNAME, "ExtensionName %S", aExtensionName.Ptr(), aExtensionName.Length()<<1);
@@ -483,33 +496,34 @@ The drive is mounted as asynchronous, i.e operations on it don't block the file 
 
 
 
-EFSRV_EXPORT_C TInt RFs::MountFileSystem(const TDesC& aFileSystemName,const TDesC& aExtensionName,TInt aDrive, TBool aIsSync)
 /**
-Mounts a file system on a drive, and the specified extension.
+    Mounts a file system on a drive, along with the specified primary drive extension.
 
-The file system must first have been added to the file server using AddFileSystem().
+    The file system must first have been added to the file server using AddFileSystem().
+    The extension must first have been added to the file server using AddExtension().
+    Depending on the aIsSync parameter, the drive can be mounted as synchronous or asynchronous.
 
-Depending on the aIsSync parameter, the drive can be mounted as synchronous or asynchronous.
+    @param aFileSystemName  The name the file system, like "FAT". Note that this is _not_ the name of the plugin (*.fsy).
+                            The file system name is case-insensitive, i.e. "FAT", "fat", "Fat" are equivalent.
+                            The maximum lentgth of the file name is KMaxFSNameLength.
 
-Asynchronous drive has its own processing thread, i.e operations on it don't block the file server and other drives;
-Synchronous drives' requests are being processed by the main file server thread and there is a possibility to block it along with
-all operations on other drives. Mounting a drive as synch. makes  sense if the operations on such drive are very fast e.g. this is an
-internal RAM or ROFS drive.
+    @param aExtensionName   The name of the primary drive extension. It has the same conventions as the aFileSystemName.
 
-@param aFileSystemName The fullname of the file system, as returned from a call to FileSystemName().
-@param aExtensionName  The filename of the extension.
-@param aDrive          The drive on which the file system is to be mounted; this can be one of the values defined by TDriveNumber.
+    @param aDrive           The drive on which the file system is to be mounted; this can be one of the values defined by TDriveNumber.
 
-@param aIsSync         if ETrue  the drive will be mounted as synchronous one;
-                       if EFalse the drive will be mounted as Asynchronous.
+    @param aIsSync         if ETrue  the drive will be mounted as synchronous one;
+                           if EFalse the drive will be mounted as Asynchronous.
 
-@return KErrNone if successful, otherwise one of the other system-wide error codes.
 
-@capability DiskAdmin
+    @return KErrNone if successful, otherwise one of the other system-wide error codes.
 
-@see RFs::AddFileSystem
-@see RFs::FileSystemName
+    @capability DiskAdmin
+
+    @see RFs::AddFileSystem
+    @see RFs::FileSystemName
+
 */
+EFSRV_EXPORT_C TInt RFs::MountFileSystem(const TDesC& aFileSystemName,const TDesC& aExtensionName,TInt aDrive, TBool aIsSync)
 	{
 	OstTraceExt3(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEM4, "sess %x aDrive %d aIsSync %d", (TUint) Handle(), (TUint) aDrive, (TUint) aIsSync);
 	OstTraceData(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEM4_EFILESYSTEMNAME, "FileSystemName %S", aFileSystemName.Ptr(), aFileSystemName.Length()<<1);
@@ -521,28 +535,31 @@ internal RAM or ROFS drive.
 
 
 
-
-EFSRV_EXPORT_C TInt RFs::MountFileSystemAndScan(const TDesC& aFileSystemName,TInt aDrive,TBool& aIsMountSuccess) const
 /**
-Mounts a file system on a drive, and performs a scan on that drive.
-The file system must first have been added to the file server using AddFileSystem().
+    Mounts a file system on a drive, and performs a scan on that drive by calling RFs::ScanDrive.
+    The file system must first have been added to the file server using AddFileSystem().
+    Note that the scan is done only if the mount is successful.
 
-Note that the scan is done only if the mount is successful.
+    The drive is mounted as asynchronous, i.e operations on it don't block the file server and other drives;
 
-The drive is mounted as asynchronous, i.e operations on it don't block the file server and other drives;
+    @param aFileSystemName  The name the file system, like "FAT". Note that this is _not_ the name of the plugin (*.fsy).
+                            The file system name is case-insensitive, i.e. "FAT", "fat", "Fat" are equivalent.
+                            The maximum lentgth of the file name is KMaxFSNameLength.
+    
+    @param aDrive           The drive on which the file system is to be mounted; this can be one of the values defined by TDriveNumber.
+    
+    @param aIsMountSuccess  On return, set to: ETrue, if the  if the mount is successful, set to EFalse otherwise.
 
-@param aFileSystemName The fullname of the file system, as returned from a call to FileSystemName().
-@param aDrive          The drive on which the file system is to be mounted; this can be one of the values defined by TDriveNumber.
-@param aIsMountSuccess On return, set to: ETrue, if the  if the mount is successful, set to EFalse otherwise.
+    @return KErrNone if successful, otherwise one of the other system-wide error codes, reflecting the failure of the mount operation. 
 
-@return KErrNone if successful, otherwise one of the other system-wide error codes, reflecting the failure of the mount operation. 
+    @capability DiskAdmin
 
-@capability DiskAdmin
-
-@see RFs::TDriveNumber
-@see RFs::AddFileSystem
-@see RFs::FileSystemName
+    @see RFs::ScanDrive
+    @see RFs::TDriveNumber
+    @see RFs::AddFileSystem
+    @see RFs::FileSystemName
 */
+EFSRV_EXPORT_C TInt RFs::MountFileSystemAndScan(const TDesC& aFileSystemName,TInt aDrive,TBool& aIsMountSuccess) const
 	{
 	OstTraceExt2(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEMANDSCAN1, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
 	OstTraceData(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEMANDSCAN1_EFILESYSTEMNAME, "FileSystemName %S", aFileSystemName.Ptr(), aFileSystemName.Length()<<1);
@@ -553,34 +570,29 @@ The drive is mounted as asynchronous, i.e operations on it don't block the file 
 	return r;
 	}
 
-EFSRV_EXPORT_C TInt RFs::MountFileSystemAndScan(const TDesC& aFileSystemName,const TDesC& aExtensionName,TInt aDrive,TBool& aIsMountSuccess) const
 /**
-Mounts a file system on a drive, and the specified extension and performs a scan on that drive.
 
-The file system must first have been added to the file server,
-using AddFileSystem().
+    Mounts a file system on a drive, along with the specified primary drive extension and performs a scan on that drive by calling RFs::ScanDrive.
 
-Note that the scan is done only if the mount is successful.
+    The file system must first have been added to the file server using AddFileSystem().
+    The extension must first have been added to the file server using AddExtension().
+    Note that the scan is done only if the mount is successful.
+    The drive is mounted as asynchronous, i.e operations on it don't block the file server and other drives.
 
-The operation is asynchronous, i.e other concurrent file server operations can continue.
+    @param aFileSystemName  The name the file system, like "FAT". Note that this is _not_ the name of the plugin (*.fsy).
+                            The file system name is case-insensitive, i.e. "FAT", "fat", "Fat" are equivalent.
+                            The maximum lentgth of the file name is KMaxFSNameLength.
 
-@param aFileSystemName The fullname of the file system, as returned from
-                       a call to FileSystemName().
-@param aExtensionName  The filename of the extension.
-@param aDrive          The drive on which the file system is to be mounted;
-                       this can be one of the values defined by TDriveNumber.
-@param aIsMountSuccess On return, set to: ETrue, if the  if the mount
-                       is successful, set to EFalse otherwise.
+    @param aExtensionName   The name of the primary drive extension. It has the same conventions as the aFileSystemName.
+    
+    @param aDrive           The drive on which the file system is to be mounted; this can be one of the values defined by TDriveNumber.
+    
+    @param aIsMountSuccess  On return, set to: ETrue, if the  if the mount is successful, set to EFalse otherwise.
 
-@return KErrNone if successful, otherwise one of the other system-wide
-        error codes, reflecting the failure of the mount operation. 
+    @return KErrNone if successful, otherwise one of the other system-wide error codes, reflecting the failure of the mount operation. 
 
-@capability DiskAdmin
-
-@see RFs::TDriveNumber
-@see RFs::AddFileSystem
-@see RFs::FileSystemName
 */
+EFSRV_EXPORT_C TInt RFs::MountFileSystemAndScan(const TDesC& aFileSystemName,const TDesC& aExtensionName,TInt aDrive,TBool& aIsMountSuccess) const
 	{
 	OstTraceExt3(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEMANDSCAN2, "sess %x aDrive %d aIsMountSuccess %d", (TUint) Handle(), (TUint) aDrive, (TUint) aIsMountSuccess);
 	OstTraceData(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEMANDSCAN2_EFILESYSTEMNAME, "FileSystemName %S", aFileSystemName.Ptr(), aFileSystemName.Length()<<1);
@@ -592,28 +604,31 @@ The operation is asynchronous, i.e other concurrent file server operations can c
 	return r;
 	}
 
-EFSRV_EXPORT_C TInt RFs::DismountFileSystem(const TDesC& aFileSystemName,TInt aDrive) const
+
 /**
 Dismounts the file system from the specified drive.
+    Note that is not possible to dismount a file system if its has objects opened, like files, directories, formats etc.
 
-@param aFileSystemName The fullname of the file system, as returned from
-                       a call to FileSystemName().
-@param aDrive          The drive from which the file system is to be dismounted.
+    @param aFileSystemName  The name the file system, like "FAT". Note that this is _not_ the name of the plugin (*.fsy).
+                            The file system name is case-insensitive, i.e. "FAT", "fat", "Fat" are equivalent.
+                            The maximum lentgth of the file name is KMaxFSNameLength.
+                            The file system name on the drive can be retrieved by a call to RFs::FileSystemName().
+                            
+    @param aDrive           The drive number from which the file system is to be dismounted.
 
 @return KErrNone, if successful;
         KErrNotFound, if aFileSystemName is not found;
         KErrNotReady, if the drive does not have a file	system mounted on it;
         KErrInUse, if the drive has a resource open	on it;
-        KErrAccessDenied, if there is an attempt to dismount a ROM file system,
-        a substituted drive, or the drive which is the default drive;
+            KErrAccessDenied, if there is an attempt to dismount a ROM file system, a substituted drive, or the drive which is the default drive;
  		KErrArgument, if the specified drive value is outsdide of the valid range.
- 		KErrPermissionDenied, if the client does not have the necessary capabilities 
- 		to dismount the file system. 		
+ 		    KErrPermissionDenied, if the client does not have the necessary capabilities to dismount the file system. 		
 
 @capability DiskAdmin
  		
 @see RFs::FileSystemName 		
 */
+EFSRV_EXPORT_C TInt RFs::DismountFileSystem(const TDesC& aFileSystemName,TInt aDrive) const
 	{
 	OstTraceExt2(TRACE_BORDER, EFSRV_EFSDISMOUNTFILESYSTEM, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
 	OstTraceData(TRACE_BORDER, EFSRV_EFSDISMOUNTFILESYSTEM_EFILESYSTEMNAME, "FileSystemName %S", aFileSystemName.Ptr(), aFileSystemName.Length()<<1);
@@ -634,7 +649,7 @@ Dismounts the file system from the specified drive.
 
     Note that the file system name, returned in the aName descriptor shall be threated as case-insensitive string. I.e. 
     "fileSystem" and "FILESYSTEM" mean absolutely the same. Therefore, case-insensitive string methods (like TDesC::FindF(), TDesC::CompareF())
-    shall be used to deal with the names.
+    shall be used to deal with the file system names.
 
     @return KErrNone, if successful;
             KErrNotFound if aFileSystemName is not found, or the drive does not have a file	system mounted on it;
@@ -694,15 +709,18 @@ EFSRV_EXPORT_C TInt RFs::SupportedFileSystemName(TDes& aName, TInt aDrive, TInt 
 
 
 
-
-EFSRV_EXPORT_C TInt RFs::AddExtension(const TDesC& aFileName)
 /**
-Loads the specified extension.
+    Load file system extension module and add it to the file server. 
+
+    @param aFileName    The name of the extension plugin (usually *.FXT) to install. 
+                        A full path to the module can be specified, otherwise standard rules of loading DLLs apply. 
+
+    @see RFs::AddFileSystem   
 
 @param aFileName The file name of the extension
-
 @return KErrNone, if successful; otherwise one of the other system wide error codes.
 */
+EFSRV_EXPORT_C TInt RFs::AddExtension(const TDesC& aFileName)
 	{
 	OstTrace1(TRACE_BORDER, EFSRV_EFSADDEXTENSION, "sess %x", Handle());
 	OstTraceData(TRACE_BORDER, EFSRV_EFSADDEXTENSION_EEXTENSIONNAME, "ExtensionName %S", aFileName.Ptr(), aFileName.Length()<<1);
@@ -719,15 +737,14 @@ Loads the specified extension.
 
 
 
-
-EFSRV_EXPORT_C TInt RFs::MountExtension(const TDesC& aExtensionName,TInt aDrive)
 /**
 Mounts the the specified extension.
 
 The extension must first have been loaded using AddExtension().
 
-@param aExtensionName  The fullname of the extension, as returned from
-                       a call to ExtensionName().
+    @param aExtensionName   The fullname of the extension, as returned from a call to ExtensionName().
+                            The extension names have the same conventions as file system names i.e. case-insensitive and no longer than KMaxFSNameLength.
+
 @param aDrive          The drive on which the extension is to be mounted;
 
 @return KErrNone if successful;
@@ -736,6 +753,7 @@ The extension must first have been loaded using AddExtension().
 
 @see RFs::ExtensionName
 */
+EFSRV_EXPORT_C TInt RFs::MountExtension(const TDesC& aExtensionName,TInt aDrive)
 	{
 	OstTraceExt2(TRACE_BORDER, EFSRV_EFSMOUNTEXTENSION, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
 	OstTraceData(TRACE_BORDER, EFSRV_EFSMOUNTEXTENSION_EEXTENSIONNAME, "ExtensionName %S", aExtensionName.Ptr(), aExtensionName.Length()<<1);

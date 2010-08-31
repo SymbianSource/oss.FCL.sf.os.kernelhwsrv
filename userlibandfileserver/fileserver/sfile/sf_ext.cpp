@@ -1468,16 +1468,22 @@ TInt TFsMountExtension::DoRequestL(CFsRequest* aRequest)
 	}
 
 TInt TFsMountExtension::Initialise(CFsRequest* aRequest)
-//
-//
-//
 	{
-	TInt r=ValidateDrive(aRequest->Message().Int1(),aRequest);
+    TInt r;
+
+    //-- check extension name length. It should not exceed KMaxFSNameLength (32 characters)
+    r = aRequest->GetDesLength(KMsgPtr0);
+    if(r <=0 || r >KMaxFSNameLength)
+        return KErrArgument;
+    
+    r = ValidateDrive(aRequest->Message().Int1(),aRequest);
 	if(r!=KErrNone)
-		return(r);
+		return r;
+	
 	if(aRequest->Drive()->IsSubsted())
-		return(KErrNotSupported);
-	return(r);
+		return KErrNotSupported;
+	
+    return r;
 	}
 
 
@@ -1486,7 +1492,7 @@ TInt TFsDismountExtension::DoRequestL(CFsRequest* aRequest)
 // Dismount extension
 //
 	{
-	TFullName name;
+	TFSName name;
 	aRequest->ReadL(KMsgPtr0,name);
 	CProxyDriveFactory* pE=GetExtension(name);
 	if (pE==NULL)
@@ -1496,18 +1502,25 @@ TInt TFsDismountExtension::DoRequestL(CFsRequest* aRequest)
 
 
 TInt TFsDismountExtension::Initialise(CFsRequest* aRequest)
-//
-//
-//
 	{
+    TInt r;
+
+    //-- check extension name length. It should not exceed KMaxFSNameLength (32 characters)
+    r = aRequest->GetDesLength(KMsgPtr0);
+    if(r <=0 || r >KMaxFSNameLength)
+        return KErrArgument;
+	
 	if (!KCapFsDismountExtension.CheckPolicy(aRequest->Message(), __PLATSEC_DIAGNOSTIC_STRING("Dismount File Extension")))
 		return KErrPermissionDenied;
-	TInt r=ValidateDrive(aRequest->Message().Int1(),aRequest);
+
+	r = ValidateDrive(aRequest->Message().Int1(),aRequest);
 	if(r!=KErrNone)
-		return(r);
+		return r;
+
 	if(aRequest->Drive()->IsSubsted())
 		return(KErrNotSupported);
-	return(r);
+	
+    return r;
 	}
 
 TInt TFsRemoveExtension::DoRequestL(CFsRequest* aRequest)

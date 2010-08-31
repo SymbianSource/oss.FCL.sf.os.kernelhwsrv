@@ -62,3 +62,6 @@ unpaged
 
 #include "../group/f32caps.mmh"  // Capabilities of File Server process
 #include "../group/f32.mmh"  	// Generic definitions for the whole f32 component
+
+SMPSAFE
+

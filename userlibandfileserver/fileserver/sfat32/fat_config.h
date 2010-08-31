@@ -44,6 +44,7 @@ class TFatConfig
     inline TBool FAT32_UseFSInfoOnMount() const;
     inline TBool FAT32_UseBitSupercache() const;
 
+    inline TUint32 FAT32_SyncScanThresholdMB() const;
 
     inline TUint32 DirCacheSize() const;
     inline TUint32 DirCacheMaxPageSizeLog2() const;
@@ -56,6 +57,7 @@ class TFatConfig
     inline TUint32 DynamicDirCacheSizeMin() const;
     inline TUint32 DynamicDirCacheSizeMax() const;
     inline TUint32 DynamicDirCacheMaxPageSizeLog2() const;
+
 
  protected:
 
@@ -102,6 +104,8 @@ class TFatConfig
     TUint32 iDynamicDirCacheSizeMinKB;      ///< minimum directory cache size, Kbytes
     TUint32 iDynamicDirCacheSizeMaxKB;      ///< maximum directory cache size, Kbytes
     TUint32 iDynamicDirCacheMaxPageSizeLog2;///< Log2(maximum dynamic dir cache page size)
+
+    TUint32 iSyncScanThresholdMB;           ///< FAT32 Asynchronous Scan threshold in MegaBytes
 
     };
 

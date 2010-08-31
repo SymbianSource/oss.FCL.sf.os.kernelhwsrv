@@ -854,9 +854,13 @@ TInt CFatFileCB::BlockMap(SBlockMapInfo& aInfo, TInt64& aStartPos, TInt64 aEndPo
         return KErrNotSupported;
 
     // Fetch the address of cluster 0
-    aInfo.iStartBlockAddress = fatMount.FAT().DataPositionInBytes(KFirstClusterNum);
+	TInt r;
+    TRAP(r, aInfo.iStartBlockAddress = fatMount.FAT().DataPositionInBytesL(KFirstClusterNum));
+	if (r != KErrNone)
+		return r;
 
-    TRAPD(r, CheckPosL(startPos));
+
+	TRAP(r, CheckPosL(startPos));
     if (r != KErrNone)
         return r;
 

@@ -443,10 +443,13 @@ the link object from the start of a list element.
 @see TDblQue
 */
 #ifndef _FOFF
+// provide calculation-based version of _FOFF() for when builtin_offsetof()
+// can't be used
+#define _FOFF_DYNAMIC(c,f)	(((TInt)&(((c *)0x1000)->f))-0x1000)
 #if __GNUC__ < 4
-#define _FOFF(c,f)			(((TInt)&(((c *)0x1000)->f))-0x1000)
+#define _FOFF(c,f)			_FOFF_DYNAMIC(c,f)
 #else
-#define _FOFF(c,f)			__builtin_offsetof(c,f)
+#define _FOFF(c,f)			(__builtin_offsetof(c,f))
 #endif
 #endif
 

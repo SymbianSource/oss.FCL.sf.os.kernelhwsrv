@@ -177,6 +177,17 @@ TUint32 TFatConfig::DynamicDirCacheMaxPageSizeLog2() const
     return iDynamicDirCacheMaxPageSizeLog2;
     }
 
+//-----------------------------------------------------------------------------
+/**
+    @return FAT32 Asynchronous Scan threshold in MegaBytes
+*/
+TUint32 TFatConfig::FAT32_SyncScanThresholdMB() const
+    {
+    ASSERT(iInitialised);
+    return iSyncScanThresholdMB;
+    }
+
+
 
 #endif //FAT_CONFIGURATOR_INL
 

@@ -60,7 +60,15 @@ EXPORT_C TInt NTimer::OneShot(TInt aTime)
 	The expiry handler will be called in either ISR context or in the context
 	of the nanokernel timer thread (DfcThread1).
 
-    Note that NKern::TimerTicks() can be used to convert milliseconds to ticks.
+	Note that NKern::TimerTicks() can be used to convert milliseconds to ticks.
+
+	Be aware that if you are being called back in DFC context then the DFC thread
+	involved (DfcThread1) will be shared with both the kernel and other device
+	drivers.  YOU MUST DO YOUR WORK AND RETURN AS QUICKLY AS POSSIBLE in order to
+	not interfere with the internal workings of the kernel and with other device
+	drivers.  If you need to do anything more complex than signalling a semaphore
+	or similar short term processing then you may want to consider using your own
+	DFC queue.  Failure to follow these rules WILL LEAD TO INSTABILITY OF THE PHONE.
 
 	@param	aTime Timeout in nanokernel ticks
 	@param	aDfc TRUE if DFC callback required, FALSE if ISR callback required.

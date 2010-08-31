@@ -190,10 +190,11 @@ RFsTest& RFsTest::ReadFileSection(const TDesC& aName, TInt64 aPos,TDes8& aBuffer
 	test.Printf(_L("Read File Section %S\n"),&aName);
 	TInt r = TheFs.ReadFileSection(aName,aPos,aBuffer,aLen);
 	TInt len = aBuffer.Length();
-	
 	test_KErrNone(r);
-	if(KFileSizeMaxLargerThan4GBMinusOne == EFalse && aPos >= K4GB) 
-		test(len == 0);
+	if(KFileSizeMaxLargerThan4GBMinusOne == EFalse && aPos >= K4GB)
+		{
+		test_Equal(0, len);
+		}
 	return(*this);
 	}
 	
@@ -367,10 +368,10 @@ RFileTest& RFileTest::Write(const TDesC8& aDes)
 	test.Printf(_L("%S write\n"),&iName);
 	
 	TInt64 seekPos = 0;
-	TInt rr = RFile64::Seek(ESeekCurrent,seekPos);
-	test(rr == KErrNone);
+	TInt r = RFile64::Seek(ESeekCurrent,seekPos);
+	test_KErrNone(r);
 		
-	TInt r = RFile64::Write(aDes);
+	r = RFile64::Write(aDes);
 	if( KErrNone == r)	// this is to ensure that the written data is committed and not cached.
 		r = RFile64::Flush(); 		
 		
@@ -401,8 +402,8 @@ RFileTest& RFileTest::Write(const TDesC8 &aDes, TRequestStatus &aStatus)
 	test.Printf(_L("%S write\n"),&iName);
 	
 	TInt64 seekPos = 0;
-	TInt rr = RFile64::Seek(ESeekCurrent,seekPos);
-	test(rr == KErrNone);
+	TInt r = RFile64::Seek(ESeekCurrent,seekPos);
+	test_KErrNone(r);
 		
 	RFile64::Write(aDes, aStatus);
 	User::WaitForRequest(aStatus);
@@ -415,16 +416,16 @@ RFileTest& RFileTest::Write(const TDesC8 &aDes, TRequestStatus &aStatus)
 		{
 		if((seekPos + aDes.Length()) < K4GB)
 			{
-			test(aStatus.Int() == KErrNone);
+			test_KErrNone(aStatus.Int());
 			}
 		else
 			{
-			test(aStatus.Int() == KErrNotSupported);
+			test_Equal(KErrNotSupported, aStatus.Int());
 			}
 		}
 	else
 		{
-		test(aStatus.Int() == KErrNone);
+		test_KErrNone(aStatus.Int());
 		}
 	return(*this);
 	}
@@ -437,10 +438,10 @@ RFileTest& RFileTest::Write(const TDesC8& aDes, TInt aLength)
 	test.Printf(_L("%S write\n"),&iName);
 	
 	TInt64 seekPos = 0;
-	TInt rr = RFile64::Seek(ESeekCurrent,seekPos);
-	test(rr == KErrNone);
+	TInt r = RFile64::Seek(ESeekCurrent,seekPos);
+	test_KErrNone(r);
 	
-	TInt r = RFile64::Write(aDes, aLength);
+	r = RFile64::Write(aDes, aLength);
 	if( KErrNone == r)	// this is to ensure that the written data is committed and not cached.
 		r = RFile64::Flush(); 		
 	if(KFileSizeMaxLargerThan4GBMinusOne == EFalse)
@@ -469,8 +470,8 @@ RFileTest& RFileTest::Write(const TDesC8& aDes, TInt aLength, TRequestStatus &aS
 	test.Printf(_L("%S write\n"),&iName);
 	
 	TInt64 seekPos = 0;
-	TInt rr = RFile64::Seek(ESeekCurrent,seekPos);
-	test(rr == KErrNone);
+	TInt r = RFile64::Seek(ESeekCurrent,seekPos);
+	test_KErrNone(r);
 	
 	RFile64::Write(aDes,aLength,aStatus);
 	User::WaitForRequest(aStatus);
@@ -483,9 +484,13 @@ RFileTest& RFileTest::Write(const TDesC8& aDes, TInt aLength, TRequestStatus &aS
 	if(KFileSizeMaxLargerThan4GBMinusOne == EFalse)
 		{
 		if((seekPos + aLength) < K4GB)
-			test(aStatus.Int() == KErrNone);
-		else	
-			test(aStatus.Int() == KErrNotSupported);
+			{
+			test_KErrNone(aStatus.Int());
+			}
+		else
+			{
+			test_Equal(KErrNotSupported, aStatus.Int());
+			}
 		}
 	else
 		{
@@ -599,7 +604,14 @@ RFileTest& RFileTest::WriteE(TInt64 aPos, const TDesC8& aDes, TInt aLen)
 	{
 	test.Printf(_L("%S writeE 0x%lx-0x%lx\n"),&iName,aPos,aPos+aLen-1);
 	TInt r = RFile64::Write(aPos,aDes,aLen);
-	test_Value(r, r == (aLen < 0) ? KErrArgument : KErrLocked);
+	if (aLen < 0)
+		{
+		test_Equal(KErrArgument, r);
+		}
+	else
+		{
+		test_Equal(KErrLocked, r);
+		}
 	return(*this);
 	}
 
@@ -617,18 +629,24 @@ RFileTest& RFileTest::Write(TInt64 aPos, const TDesC8& aDes, TInt aLen, TRequest
 		}
 
 	if(aLen < 0)
-		test(aStatus.Int() == KErrArgument);
+		{
+		test_Equal(KErrArgument, aStatus.Int());
+		}
 	else
 		{
 		if(KFileSizeMaxLargerThan4GBMinusOne == EFalse)
 			{
 			if((aPos + aLen) < K4GB)
-				test(aStatus.Int() == KErrNone);
+				{
+				test_KErrNone(aStatus.Int());
+				}
 			else
-				test(aStatus.Int() == KErrNotSupported);
+				{
+				test_Equal(KErrNotSupported, aStatus.Int());
+				}
 			}
 		else
-			test(aStatus.Int() == KErrNone);
+			test_KErrNone(aStatus.Int());
 		}
 	return(*this);	
 	}
@@ -650,13 +668,17 @@ RFileTest& RFileTest::Write(TInt64 aPos, const TDesC8& aDes, TRequestStatus &aSt
 	if(KFileSizeMaxLargerThan4GBMinusOne == EFalse)
 		{
 		if((aPos + aDes.Length()) < K4GB)
-			test(aStatus.Int() == KErrNone);
+			{
+			test_KErrNone(aStatus.Int());
+			}
 		else
-			test(aStatus.Int() == KErrNotSupported);
+			{
+			test_Equal(KErrNotSupported, aStatus.Int());
+			}
 		}
 	else
 		{
-		test(aStatus.Int() == KErrNone);
+		test_KErrNone(aStatus.Int());
 		}
 	return(*this);	
 	}
@@ -675,7 +697,7 @@ RFileTest& RFileTest::WriteU(TUint aPos, const TDesC8& aDes, TRequestStatus &aSt
 		RFile64::Flush(aStatus);
 		User::WaitForRequest(aStatus);	
 		}
-	test(aStatus.Int() == KErrNone);
+	test_KErrNone(aStatus.Int());
 	return(*this);	
 	}
 
@@ -695,9 +717,13 @@ RFileTest& RFileTest::WriteU(TUint aPos, const TDesC8& aDes, TInt aLen, TRequest
 		}
 
 	if(aLen < 0)
-		test(aStatus.Int() == KErrArgument);
+		{
+		test_Equal(KErrArgument, aStatus.Int());
+		}
 	else
-		test(aStatus.Int() == KErrNone);
+		{
+		test_KErrNone(aStatus.Int());
+		}
 	return(*this);	
 	}
 
@@ -724,21 +750,23 @@ RFileTest& RFileTest::Read(TDes8& aDes, TRequestStatus& aStatus)
 	RFile64::Read(aDes, aStatus);
 	User::WaitForRequest(aStatus);
 	TInt len = aDes.Length();
-	TInt rr = RFile64::Size(size);
-	test(rr == KErrNone);
+	TInt r = RFile64::Size(size);
+	test_KErrNone(r);
 	if(KFileSizeMaxLargerThan4GBMinusOne == EFalse)
 		{
 		if(size < K4GB)
-			test(aStatus.Int() == KErrNone);
+			{
+			test_KErrNone(aStatus.Int());
+			}
 		else
 			{
-			test(aStatus.Int() == KErrNone);
-			test(len == 0);	
+			test_KErrNone(aStatus.Int());
+			test_Equal(0, len);
 			}
 		}
 	else
 		{
-		test(aStatus.Int() == KErrNone);
+		test_KErrNone(aStatus.Int());
 		}
 	return(*this);
 	}
@@ -753,21 +781,23 @@ RFileTest& RFileTest::Read(TDes8& aDes,TInt aLen,TRequestStatus& aStatus)
 	RFile64::Read(aDes,aLen,aStatus);
 	User::WaitForRequest(aStatus);
 	TInt len = aDes.Length();
-	TInt rr = RFile64::Size(size);
-	test(rr == KErrNone);
+	TInt r = RFile64::Size(size);
+	test_KErrNone(r);
 	if(KFileSizeMaxLargerThan4GBMinusOne == EFalse)
 		{
 		if(size < K4GB)
-			test(aStatus.Int() == KErrNone);
+			{
+			test_KErrNone(aStatus.Int());
+			}
 		else
 			{
-			test(aStatus.Int() == KErrNone);
-			test(len == 0);	
+			test_KErrNone(aStatus.Int());
+			test_Equal(0, len);
 			}
 		}
 	else
 		{
-		test(aStatus.Int() == KErrNone);
+		test_KErrNone(aStatus.Int());
 		}	
 	return(*this);
 	}
@@ -779,7 +809,14 @@ RFileTest& RFileTest::Read(TDes8 &aDes, TInt aLen)
 	{
 	test.Printf(_L("%S read 0x%08x bytes\n"),&iName,aLen);
 	TInt r = RFile64::Read(aDes,aLen);
-	test_Value(r, r == (aLen < 0) ? KErrArgument : KErrNone);
+	if (aLen < 0)
+		{
+		test_Equal(KErrArgument, r);
+		}
+	else
+		{
+		test_KErrNone(r);
+		}
 	return(*this);
 	}
 	
@@ -791,11 +828,17 @@ RFileTest& RFileTest::Read(TInt64 aPos, TDes8& aDes, TInt aLen)
 	test.Printf(_L("%S read   0x%lx-0x%lx\n"),&iName,aPos,aPos+aLen-1);
 	TInt r = RFile64::Read(aPos,aDes,aLen);
 	TInt len = aDes.Length();
-	test_Value(r, r == (aLen < 0) ? KErrArgument : KErrNone);
-	if(KFileSizeMaxLargerThan4GBMinusOne == EFalse)
+	if (aLen < 0)
+		{
+		test_Equal(KErrArgument, r);
+		}
+	else
+		{
+		test_KErrNone(r);
+		}
+	if(KFileSizeMaxLargerThan4GBMinusOne == EFalse && aPos >= K4GB)
 		{	
-		if(aPos >= K4GB) 
-			test(len == 0);
+		test_Equal(0, len);
 		}
 	return(*this);
 	}
@@ -821,13 +864,16 @@ RFileTest& RFileTest::Read(TInt64 aPos, TDes8& aDes, TInt aLen, TRequestStatus& 
 	User::WaitForRequest(aStatus);
 	TInt len = aDes.Length();
 	if(aLen < 0)
-		test(aStatus.Int() == KErrArgument);
-	else
-		test(aStatus.Int() == KErrNone);
-	if(KFileSizeMaxLargerThan4GBMinusOne == EFalse)
 		{
-		if(aPos >= K4GB) 
-			test(len == 0);		
+		test_Equal(KErrArgument, aStatus.Int());
+		}
+	else
+		{
+		test_KErrNone(aStatus.Int());
+		}
+	if(KFileSizeMaxLargerThan4GBMinusOne == EFalse && aPos >= K4GB)
+		{
+		test_Equal(0, len);	
 		}
 	return(*this);
 	}
@@ -864,7 +910,7 @@ RFileTest& RFileTest::ReadU(TUint aPos, TDes8& aDes,TRequestStatus& aStatus)
 	test.Printf(_L("%S read   0x%lx\n"),&iName,aPos);
 	RFile64::Read(aPos,aDes,aStatus);
 	User::WaitForRequest(aStatus);
-	test(aStatus.Int() == KErrNone);
+	test_KErrNone(aStatus.Int());
 	return(*this);
 	}
 
@@ -876,7 +922,14 @@ RFileTest& RFileTest::ReadU(TUint aPos, TDes8& aDes, TInt aLen)
 	{
 	test.Printf(_L("%S read   0x%lx-0x%lx\n"),&iName,aPos,aPos+aLen-1);
 	TInt r = RFile64::Read(aPos,aDes,aLen);
-	test_Value(r, r == (aLen < 0) ? KErrArgument : KErrNone);
+	if (aLen < 0)
+		{
+		test_Equal(KErrArgument, r);
+		}
+	else
+		{
+		test_KErrNone(r);
+		}
 	return(*this);
 	}
 
@@ -890,9 +943,13 @@ RFileTest& RFileTest::ReadU(TUint aPos, TDes8& aDes, TInt aLen, TRequestStatus& 
 	RFile64::Read(aPos,aDes,aLen,aStatus);
 	User::WaitForRequest(aStatus);
 	if(aLen < 0)
-		test(aStatus.Int() == KErrArgument);
+		{
+		test_Equal(KErrArgument, aStatus.Int());
+		}
 	else
-		test(aStatus.Int() == KErrNone);
+		{
+		test_KErrNone(aStatus.Int());
+		}
 	return(*this);
 	}
 
@@ -905,7 +962,7 @@ RFileTest& RFileTest::Read(TInt64 aPos, TDes8& aDes, TRequestStatus& aStatus)
 	test.Printf(_L("%S read   0x%lx\n"),&iName,aPos);
 	RFile64::Read(aPos,aDes,aStatus);
 	User::WaitForRequest(aStatus);
-	test(aStatus.Int() == KErrNone);
+	test_KErrNone(aStatus.Int());
 	return(*this);
 	}
 	
@@ -978,7 +1035,14 @@ RFileTest& RFileTest::Seek(TSeek aMode, TInt64& aPos)
 	{
 	test.Printf(_L("Seek to pos %LD in %d Mode\n"),aPos, aMode);
 	TInt r = RFile64::Seek(aMode, aPos);
-	test_Value(r, r == (aPos < 0) ? KErrArgument : KErrNone);
+	if (aPos < 0)
+		{
+		test_Equal(KErrArgument, r);
+		}
+	else
+		{
+		test_KErrNone(r);
+		}
 	return(*this);	
 	}
 
@@ -1018,13 +1082,13 @@ void TestOpen2GB()
 	test.Next(_L("2GB File: Open"));
 	TInt r = TheFs.Entry(fileName, entry);
 	test_KErrNone(r);
-	test((TUint) entry.iSize == testSize);
+	test_Equal(testSize, (TUint) entry.iSize);
 
     TestRFile1.Open(fileName, EFileRead);
 	
 	
 	TestRFile1.Size(size);
-	test(size == testSize);
+	test_Equal(testSize, size);
 	
 	TestRFile1.Close();
 	r = TheFs.Delete(fileName);
@@ -1066,12 +1130,12 @@ void TestOpen3GB()
 	test.Next(_L("3GB File: Open"));
 	r = TheFs.Entry(fileName, entry);
 	test_KErrNone(r);
-	test((TUint) entry.iSize == testSize);
+	test_Equal(testSize, (TUint) entry.iSize);
 	
 	TestRFile1.Open(fileName,EFileRead);
 	
 	TestRFile1.Size(size);
-	test(size == testSize);
+	test_Equal(testSize, size);
 	TestRFile1.Close();
 	
 	r = TheFs.Delete(fileName);
@@ -1114,13 +1178,13 @@ void TestOpen4GBMinusOne()
 	r = TheFs.Entry(fileName, entry);
 	test_KErrNone(r);
 	
-	test((TUint) entry.iSize == testSize);
+	test_Equal(testSize, (TUint) entry.iSize);
 	
 	TestRFile1.Open(fileName, EFileRead);
 		
 	TestRFile1.Size(size);
 		
-	test(size == testSize);
+	test_Equal(testSize, size);
 	TestRFile1.Close();
 	
 	r = TheFs.Delete(fileName);
@@ -1167,7 +1231,7 @@ void TestOpen4GB()
 		{
 		TestRFile1.Open(fileName, EFileRead);
 		TestRFile1.Size(size);
-		test(size == testSize);
+		test_Equal(testSize, size);
 		TestRFile1.Close();
 		}
 	
@@ -1207,7 +1271,7 @@ void TestOpen4GB()
 void TestOpenMoreThan2GB()
 	{
 	// constants and literals
-	test.Next(_L("\nTest Files of size more than 2GB\n"));
+	test.Next(_L("Test Files of size more than 2GB\n"));
 	
 	TInt64 			size;
 	TBuf8<KBUFSIZE> readBuf;
@@ -1232,9 +1296,9 @@ void TestOpenMoreThan2GB()
 		}
 		
    	test.Next(_L("Write 10 bytes to the file\n"));
-	TestRFile1.Write(0, writeBuf, 10);	
+	TestRFile1.Write(0, writeBuf, 10);
 	test.Next(_L("Read 10 bytes from position 0\n"));
-	TestRFile1.Read(0, readBuf, 10); 
+	TestRFile1.Read(0, readBuf, 10);
 	test(writeBuf == readBuf);
 	
 	TInt64 s;
@@ -1916,7 +1980,7 @@ void TestRFile64AdoptFromClient()
 
 	// Check the number of open file handles
 	TInt resCount = fs.ResourceCount();
-	test(resCount == 0);
+	test_Equal(0, resCount);
 
 	r = fs.ShareProtected();
 	test_KErrNone(r);
@@ -1976,7 +2040,7 @@ void TestRFile64AdoptFromClient()
 	TInt64 pos = 0;
 	r = file1.Seek(ESeekCurrent, pos);
 	test_KErrNone(r);
-	test(pos == 0);
+	test_Equal(0, pos);
 	// make sure we can still use it
 
 	test.Next(_L("Read the file from position 4GB-10 and compare the data\n"));
@@ -1994,7 +2058,7 @@ void TestRFile64AdoptFromClient()
 		
 	// Check the number of open file handles
 	resCount = fs.ResourceCount();
-	test(resCount == 0);
+	test_Equal(0, resCount);
 
 	r = fs.Delete(KClientFileName);
 	test_KErrNone(r);
@@ -2045,7 +2109,7 @@ void TestRFile64AdoptFromCreator()
 
 	// Check the number of open file handles
 	TInt resCount = fs.ResourceCount();
-	test(resCount == 0);
+	test_Equal(0, resCount);
 
 	r = fs.ShareProtected();
 	test_KErrNone(r);
@@ -2096,7 +2160,7 @@ void TestRFile64AdoptFromCreator()
 	// Check the number of open file handles - 
 	// should be 1 (the one duplicated for the other process)
 	resCount = fs.ResourceCount();
-	test(resCount == 1);
+	test_Equal(1, resCount);
 
 	fs.Close();
 
@@ -2160,7 +2224,7 @@ void TestRFile64AdoptFromServer()
 
 	// Check the number of open file handles
 	TInt resCount = fs.ResourceCount();
-	test(resCount == 0);
+	test_Equal(0, resCount);
 
 	r = fs.ShareProtected();
 	test_KErrNone(r);
@@ -2205,7 +2269,7 @@ void TestRFile64AdoptFromServer()
 
 	TInt ssh;
 	TInt fsh = handsvr.GetFileHandleLargeFile2(ssh, EFileWrite);
-	test (fsh >= 0);
+	test_Value(fsh, fsh >= 0);
 
 	// Closing the handle to the server ensures the server has closed it's
 	// RFs and RFile handles - this provides a means of testing whether we 
@@ -2296,7 +2360,7 @@ void TestOpenAndReadSyncLargeFile()
 	for(i = pos; i< pos + (KBufSize / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf1[i - pos]);
-		test(i == j);
+		test_Equal(i, j);
 		}
 		
 	test.Next(_L("Big file is read synchronously in a thread, with aPos = 2GB-1\n"));
@@ -2309,7 +2373,7 @@ void TestOpenAndReadSyncLargeFile()
 	for(i = pos; i< pos + (KBufSize / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf2[i - pos]);
-		test(i == j);
+		test_Equal(i, j);
 		}
 	
 	
@@ -2317,7 +2381,7 @@ void TestOpenAndReadSyncLargeFile()
 	TBuf8<1> readBuffer;
 	pos = K4GBMinusTwo;
 	TestRFile1.ReadP(pos, readBuffer);
-	test(readBuffer.Length() == 1);
+	test_Equal(1, readBuffer.Length());
 
 	// tests need to be repeated for calling the TUint variant of RFile64::Read()
 	pos = 0;
@@ -2327,7 +2391,7 @@ void TestOpenAndReadSyncLargeFile()
 	for(i = pos; i< pos + (KBufSize / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf1[i - pos]);
-		test(i == j);
+		test_Equal(i, j);
 		}
 		
 	test.Next(_L("Big file is read synchronously in a thread, with aPos = 2GB\n"));
@@ -2340,14 +2404,14 @@ void TestOpenAndReadSyncLargeFile()
 	for(i = pos; i< pos + (KBufSize / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf2[i - pos]);
-		test(i == j);
+		test_Equal(i, j);
 		}
 	
 	
 	test.Next(_L("Big file is read synchronously in a thread, with aPos = 4GB-2\n"));	
 	pos = K4GBMinusTwo;
 	TestRFile1.ReadU(pos, readBuffer);
-	test(readBuffer.Length() == 1);
+	test_Equal(1, readBuffer.Length());
 
 	// tests need to be repeated for calling the current position variant of RFile64::Read()
 	TInt64 seekPos = 0;
@@ -2358,7 +2422,7 @@ void TestOpenAndReadSyncLargeFile()
 	for(i = (TUint)seekPos; i< seekPos + (KBufSize / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf1[i - (TUint)seekPos]);
-		test(i == j);
+		test_Equal(i, j);
 		}
 		
 	test.Next(_L("Big file is read synchronously in a thread, with aPos = 2GB\n"));
@@ -2372,7 +2436,7 @@ void TestOpenAndReadSyncLargeFile()
 	for(i = (TUint)seekPos; i< seekPos + (KBufSize / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf2[i - (TUint)seekPos]);
-		test(i == j);
+		test_Equal(i, j);
 		}
 	
 	
@@ -2380,14 +2444,14 @@ void TestOpenAndReadSyncLargeFile()
 	seekPos = K4GBMinusTwo;
 	TestRFile1.Seek(ESeekStart,seekPos);
 	TestRFile1.Read(readBuffer);
-	test(readBuffer.Length() == 1);
+	test_Equal(1, readBuffer.Length());
 
 	
 	if(KFileSizeMaxLargerThan4GBMinusOne == EFalse)	
 		{
 		TInt64 pos64 = K4GB;
 		TestRFile1.ReadP(pos64, readBuf1);
-		test(readBuf1.Length() == 0);
+		test_Equal(0, readBuf1.Length());
 		}
 	TestRFile1.Close();
 	}
@@ -2438,7 +2502,7 @@ void TestOpenAndReadAsyncLargeFile()
 	for(i = pos; i< pos + (KBufSize / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf[i - pos]);
-		test(i == j);
+		test_Equal(i, j);
 		}	
 	
 	test.Next(_L("Big file is read asynchronously in a thread, with aPos = 2GB-1\n"));
@@ -2451,7 +2515,7 @@ void TestOpenAndReadAsyncLargeFile()
 	for(i = pos; i< pos + (KBufSize / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf[i - pos]);
-		test(i == j);
+		test_Equal(i, j);
 		}
 	
 	test.Next(_L("Big file is read asynchronously in a thread, with aPos = 4GB-1\n"));
@@ -2460,7 +2524,7 @@ void TestOpenAndReadAsyncLargeFile()
 	TRequestStatus status3 = KRequestPending;
 	pos = K4GBMinusTwo;
 	TestRFile1.Read(pos, readBuf1, status3);
-	test(readBuf1.Length() == 1);
+	test_Equal(1, readBuf1.Length());
 			
 	fileSize = K4GBMinusOne;
 	TestRFile1.Size(size);
@@ -2474,7 +2538,7 @@ void TestOpenAndReadAsyncLargeFile()
 	for(i = pos; i< pos + (KBufSize / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf[i - pos]);
-		test(i == j);
+		test_Equal(i, j);
 		}	
 	
 	test.Next(_L("Big file is read asynchronously in a thread, with aPos = 2GB-1\n"));
@@ -2487,7 +2551,7 @@ void TestOpenAndReadAsyncLargeFile()
 	for(i = pos; i< pos + (KBufSize / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf[i - pos]);
-		test(i == j);
+		test_Equal(i, j);
 		}
 	
 	test.Next(_L("Big file is read asynchronously in a thread, with aPos = 4GB-1\n"));
@@ -2495,7 +2559,7 @@ void TestOpenAndReadAsyncLargeFile()
 	status3 = KRequestPending;
 	pos = K4GBMinusTwo;
 	TestRFile1.ReadU(pos, readBuf1, status3);
-	test(readBuf1.Length() == 1);
+	test_Equal(1, readBuf1.Length());
 	
 	// tests need to be repeated for calling the current position variant of RFile64::Read()
 	TInt64 seekPos = 0;
@@ -2506,7 +2570,7 @@ void TestOpenAndReadAsyncLargeFile()
 	for(i = (TUint)seekPos; i< seekPos + (KBufSize / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf[i - (TUint)seekPos]);
-		test(i == j);
+		test_Equal(i, j);
 		}	
 	
 	test.Next(_L("Big file is read asynchronously in a thread, with aPos = 2GB-1\n"));
@@ -2520,7 +2584,7 @@ void TestOpenAndReadAsyncLargeFile()
 	for(i = (TUint)seekPos; i< seekPos + (KBufSize / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf[i - (TUint)seekPos]);
-		test(i == j);
+		test_Equal(i, j);
 		}
 	
 	test.Next(_L("Big file is read asynchronously in a thread, with aPos = 4GB-1\n"));
@@ -2529,7 +2593,7 @@ void TestOpenAndReadAsyncLargeFile()
 	seekPos = K4GBMinusTwo;
 	TestRFile1.Seek(ESeekStart,seekPos);
 	TestRFile1.Read(readBuf1, status3);
-	test(readBuf1.Length() == 1);
+	test_Equal(1, readBuf1.Length());
 	
 
 	// Async read from pos = 4GB
@@ -2539,7 +2603,7 @@ void TestOpenAndReadAsyncLargeFile()
 		TInt64 pos64;
 		pos64 = K4GB;
 		TestRFile1.Read(pos64, readBuf, status5);
-		test(readBuf.Length() == 0);
+		test_Equal(0, readBuf.Length());
 		}
 	// Close the file	
 	TestRFile1.Close();
@@ -2587,26 +2651,26 @@ void TestOpenAndReadSyncLargeFileWithLen()
 	// Sync read from pos = 0 and length = 256
 	pos = 0;
 	TestRFile1.Read(pos, readBuf, 256);
-	test(readBuf.Length() == 256);
+	test_Equal(256, readBuf.Length());
 	
 	test.Next(_L("Compare the data read to the expected data\n"));
 	for(i = (TUint)pos; i< pos + (256 / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf[i - (TUint)pos]);
-		test(i == j);
+		test_Equal(i, j);
 		}
 	
 	test.Next(_L("Big file is read synchronously in a thread, with aPos = 2GB and length = K2KB:"));
 	// Sync read from pos = 2GB and length = K2KB
 	pos = K2GB;
 	TestRFile1.Read(pos, readBuf, K2KB);
-	test(readBuf.Length() == K2KB);
+	test_Equal(K2KB, readBuf.Length());
 	
 	test.Next(_L("Compare the data read to the expected data\n"));
 	for(i = (TUint)pos; i< pos + (K2KB / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf[i - (TUint)pos]);
-		test(i == j);
+		test_Equal(i, j);
 		}
 	
 	
@@ -2614,7 +2678,7 @@ void TestOpenAndReadSyncLargeFileWithLen()
 	// Sync read from pos = 4GB-1 and length = 10
 	pos = K4GBMinusTwo;
 	TestRFile1.Read(pos, readBuf, 10);
-	test(readBuf.Length() == 1); 
+	test_Equal(1, readBuf.Length());
 		
 
 	// Sync read from pos = 4GB and length = KKB
@@ -2623,7 +2687,7 @@ void TestOpenAndReadSyncLargeFileWithLen()
 		{
 		pos = K4GB;
 		TestRFile1.Read(pos, readBuf, KKB);
-		test(readBuf.Length() == 0);
+		test_Equal(0, readBuf.Length());
 		}
 		
 	test.Next(_L("Big file is read synchronously in a thread, with aPos = 0 and length = -1"));
@@ -2637,26 +2701,26 @@ void TestOpenAndReadSyncLargeFileWithLen()
 	// Sync read from pos = 0 and length = 256
 	pos = 0;
 	TestRFile1.ReadU((TUint)pos, readBuf, 256);
-	test(readBuf.Length() == 256);
+	test_Equal(256, readBuf.Length());
 	
 	test.Next(_L("Compare the data read to the expected data\n"));
 	for(i = (TUint)pos; i< pos + (256 / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf[i - (TUint)pos]);
-		test(i == j);
+		test_Equal(i, j);
 		}
 	
 	test.Next(_L("Big file is read synchronously in a thread, with aPos = 2GB and length = K2KB:"));
 	// Sync read from pos = 2GB and length = K2KB
 	pos = K2GB;
 	TestRFile1.ReadU((TUint)pos, readBuf, K2KB);
-	test(readBuf.Length() == K2KB);
+	test_Equal(K2KB, readBuf.Length());
 	
 	test.Next(_L("Compare the data read to the expected data\n"));
 	for(i = (TUint)pos; i< pos + (K2KB / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf[i - (TUint)pos]);
-		test(i == j);
+		test_Equal(i, j);
 		}
 	
 	
@@ -2664,7 +2728,7 @@ void TestOpenAndReadSyncLargeFileWithLen()
 	// Sync read from pos = 4GB-1 and length = 10
 	pos = K4GBMinusTwo;
 	TestRFile1.ReadU((TUint)pos, readBuf, 10);
-	test(readBuf.Length() == 1); 
+	test_Equal(1, readBuf.Length()); 
 		
 	//tests need to repeated for current position variant of RFile64::Read()
 	test.Next(_L("Big file is read synchronously in a thread, with aPos = 0 and length = 256bytes:"));
@@ -2672,13 +2736,13 @@ void TestOpenAndReadSyncLargeFileWithLen()
 	TInt64 seekPos = 0;
 	TestRFile1.Seek(ESeekStart,seekPos);
 	TestRFile1.Read(readBuf, 256);
-	test(readBuf.Length() == 256);
+	test_Equal(256, readBuf.Length());
 	
 	test.Next(_L("Compare the data read to the expected data\n"));
 	for(i = (TUint)seekPos; i< seekPos + (256 / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf[i - (TUint)seekPos]);
-		test(i == j);
+		test_Equal(i, j);
 		}
 	
 	test.Next(_L("Big file is read synchronously in a thread, with aPos = 2GB and length = K2KB:"));
@@ -2686,13 +2750,13 @@ void TestOpenAndReadSyncLargeFileWithLen()
 	seekPos = K2GB;
 	TestRFile1.Seek(ESeekStart,seekPos);
 	TestRFile1.Read(readBuf, K2KB);
-	test(readBuf.Length() == K2KB);
+	test_Equal(K2KB, readBuf.Length());
 	
 	test.Next(_L("Compare the data read to the expected data\n"));
 	for(i = (TUint)seekPos; i< seekPos + (K2KB / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf[i - (TUint)seekPos]);
-		test(i == j);
+		test_Equal(i, j);
 		}
 	
 	
@@ -2701,7 +2765,7 @@ void TestOpenAndReadSyncLargeFileWithLen()
 	seekPos = K4GBMinusTwo;
 	TestRFile1.Seek(ESeekStart,seekPos);
 	TestRFile1.Read(readBuf, 10);
-	test(readBuf.Length() == 1); 
+	test_Equal(1, readBuf.Length()); 
 	
 
 	// Sync read from pos = 4GB and length = KKB
@@ -2710,7 +2774,7 @@ void TestOpenAndReadSyncLargeFileWithLen()
 		{
 		pos = K4GB;
 		TestRFile1.Read(pos, readBuf, KKB);
-		test(readBuf.Length() == 0);
+		test_Equal(0, readBuf.Length());
 		}
 		
 	test.Next(_L("Big file is read synchronously in a thread, with aPos = 0 and length = -1"));
@@ -2724,7 +2788,7 @@ void TestOpenAndReadSyncLargeFileWithLen()
 	// Sync read from pos = 0 and length = 0
 	pos = 0;
 	TestRFile1.Read(pos, readBuf, 0);
-	test(readBuf.Length() == 0);
+	test_Equal(0, readBuf.Length());
 
 	TestRFile1.Close();
 	}
@@ -2770,13 +2834,13 @@ void TestOpenAndReadAsyncLargeFileWithLen()
 	TRequestStatus status1 = KRequestPending;
 	pos = 0;
 	TestRFile1.Read(pos, readBuf, 256, status1);
-	test(readBuf.Length() == 256);
+	test_Equal(256, readBuf.Length());
 	
 	test.Next(_L("Compare the data read to the expected data\n"));
 	for(i = (TUint)pos; i< pos + (256 / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf[i - (TUint)pos]);
-		test(i == j);
+		test_Equal(i, j);
 		}
 		
 	test.Next(_L("Big file is read asynchronously in a thread, with aPos = 2GB and length = KKB bytes\n"));	
@@ -2784,13 +2848,13 @@ void TestOpenAndReadAsyncLargeFileWithLen()
 	TRequestStatus status2 = KRequestPending;
 	pos = K2GB;
 	TestRFile1.Read(pos, readBuf, KKB, status2);
-	test(readBuf.Length() == KKB);
+	test_Equal(KKB, readBuf.Length());
 	
 	test.Next(_L("Compare the data read to the expected data\n"));
 	for(i = (TUint)pos; i< pos + (KKB / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf[i - (TUint)pos]);
-		test(i == j);
+		test_Equal(i, j);
 		}
 	
 	
@@ -2799,7 +2863,7 @@ void TestOpenAndReadAsyncLargeFileWithLen()
 	TRequestStatus status3 = KRequestPending;
 	pos = K4GBMinusTwo;
 	TestRFile1.Read(pos, readBuf, KKB, status3);
-	test(readBuf.Length() == 1); 
+	test_Equal(1, readBuf.Length()); 
 		
 	// tests need to be repeated for TUint variant of RFile64::Read()
 	test.Next(_L("Big file is read asynchronously in a thread, with aPos = 0 and length = 256 bytes\n"));
@@ -2807,13 +2871,13 @@ void TestOpenAndReadAsyncLargeFileWithLen()
 	status1 = KRequestPending;
 	pos = 0;
 	TestRFile1.ReadU((TUint)pos, readBuf, 256, status1);
-	test(readBuf.Length() == 256);
+	test_Equal(256, readBuf.Length());
 	
 	test.Next(_L("Compare the data read to the expected data\n"));
 	for(i = (TUint)pos; i< pos + (256 / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf[i - (TUint)pos]);
-		test(i == j);
+		test_Equal(i, j);
 		}
 		
 	test.Next(_L("Big file is read asynchronously in a thread, with aPos = 2GB and length = KKB bytes\n"));	
@@ -2821,13 +2885,13 @@ void TestOpenAndReadAsyncLargeFileWithLen()
 	status2 = KRequestPending;
 	pos = K2GB;
 	TestRFile1.ReadU((TUint)pos, readBuf, KKB, status2);
-	test(readBuf.Length() == KKB);
+	test_Equal(KKB, readBuf.Length());
 	
 	test.Next(_L("Compare the data read to the expected data\n"));
 	for(i = (TUint)pos; i< pos + (KKB / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf[i - (TUint)pos]);
-		test(i == j);
+		test_Equal(i, j);
 		}
 	
 	
@@ -2836,7 +2900,7 @@ void TestOpenAndReadAsyncLargeFileWithLen()
 	status3 = KRequestPending;
 	pos = K4GBMinusTwo;
 	TestRFile1.ReadU((TUint)pos, readBuf, KKB, status3);
-	test(readBuf.Length() == 1); 
+	test_Equal(1, readBuf.Length()); 
 		
 	// tests need to be repeated for current position variant of RFile64::Read()
 	test.Next(_L("Big file is read asynchronously in a thread, with aPos = 0 and length = 256 bytes\n"));
@@ -2845,13 +2909,13 @@ void TestOpenAndReadAsyncLargeFileWithLen()
 	TInt64 seekPos = 0;
 	TestRFile1.Seek(ESeekStart,seekPos);
 	TestRFile1.Read(readBuf, 256, status1);
-	test(readBuf.Length() == 256);
+	test_Equal(256, readBuf.Length());
 	
 	test.Next(_L("Compare the data read to the expected data\n"));
 	for(i = (TUint)seekPos; i< seekPos + (256 / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf[i - (TUint)seekPos]);
-		test(i == j);
+		test_Equal(i, j);
 		}
 		
 	test.Next(_L("Big file is read asynchronously in a thread, with aPos = 2GB and length = KKB bytes\n"));	
@@ -2860,13 +2924,13 @@ void TestOpenAndReadAsyncLargeFileWithLen()
 	seekPos = K2GB;
 	TestRFile1.Seek(ESeekStart,seekPos);
 	TestRFile1.Read(readBuf, KKB, status2);
-	test(readBuf.Length() == KKB);
+	test_Equal(KKB, readBuf.Length());
 	
 	test.Next(_L("Compare the data read to the expected data\n"));
 	for(i = (TUint)seekPos; i< seekPos + (KKB / 4); i+=4)
 		{
 		TUint j =  * ((TUint*) &readBuf[i - (TUint)seekPos]);
-		test(i == j);
+		test_Equal(i, j);
 		}
 	
 	
@@ -2876,7 +2940,7 @@ void TestOpenAndReadAsyncLargeFileWithLen()
 	seekPos = K4GBMinusTwo;
 	TestRFile1.Seek(ESeekStart,seekPos);
 	TestRFile1.Read(readBuf, KKB, status3);
-	test(readBuf.Length() == 1); 
+	test_Equal(1, readBuf.Length()); 
 	
 		
 	test.Next(_L("Big file is read asynchronously in a thread, with aPos = 4GB and length = 256 bytes\n"));	
@@ -2888,7 +2952,7 @@ void TestOpenAndReadAsyncLargeFileWithLen()
 		TRequestStatus status5 = KRequestPending;
 		pos = K4GB;
 		TestRFile1.Read(pos, readBuf, 256, status5);
-		test(readBuf.Length() == 0);
+		test_Equal(0, readBuf.Length());
 		}
 	
 	test.Next(_L("Big file is read asynchronously in a thread, with aPos = 0 and length = -1 bytes\n"));	
@@ -2976,7 +3040,7 @@ void TestOpenAndWriteSyncLargeFile()
 	TBuf8<1> testReadBuf;
 	TestRFile1.WriteP(K4GBMinusTwo,_L8("1"));
 	TestRFile1.ReadP(K4GBMinusTwo, testReadBuf); 
-	test(testReadBuf.Length() == 1);
+	test_Equal(1, testReadBuf.Length());
 	
 	//tests need to be repeated for TUint variant of RFile64::Write()
 	readBuf100.Zero(); //to ensure that the previous data is removed
@@ -2999,7 +3063,7 @@ void TestOpenAndWriteSyncLargeFile()
 	testReadBuf.Zero();//to ensure that the previous data is removed
 	TestRFile1.WriteU(pos,_L8("1"));
 	TestRFile1.ReadU(pos, testReadBuf); 
-	test(testReadBuf.Length() == 1);
+	test_Equal(1, testReadBuf.Length());
 	
 	//
 	//tests need to be repeated for current position variant of RFile64::Write()
@@ -3012,8 +3076,7 @@ void TestOpenAndWriteSyncLargeFile()
 	TestRFile1.Write(_L8("1"));
 	TestRFile1.Seek(ESeekStart,seekPos);
 	TestRFile1.Read(testReadBuf); 
-	test(testReadBuf.Length() == 1);
-	
+	test_Equal(1, testReadBuf.Length());
 	
 	
 	test.Next(_L("Write a big file synchronously in a thread, with aPos = 4GB and data = 256 bytes\n"));
@@ -3037,7 +3100,7 @@ void TestOpenAndWriteSyncLargeFile()
 		// Validation for boundary condition 4GB
 		TestRFile1.ReadP(K4GB,readBuffer256);
 		TInt rr = readBuffer256.Length();
-		test(rr == KErrNone);
+		test_KErrNone(rr);
 		test(readBuffer256.Length() == 0);
 		}
 	TestRFile1.Close();
@@ -3120,7 +3183,7 @@ void TestOpenAndWriteAsyncLargeFile()
 	TRequestStatus status3 = KRequestPending;	
 	TestRFile1.Write(K4GBMinusTwo,writeBuf,status3); 
 	TestRFile1.ReadP(K4GBMinusTwo,readBuf);
-	test(readBuf.Length() == 1);
+	test_Equal(1, readBuf.Length());
 	
 	//tests need to be repeated for TUint variant of RFile64::Write()
 	test.Next(_L("Write to a big file asynchronously in a thread, with aPos = 0 and data = 256 bytes, File size = 4GB-1\n"));
@@ -3145,7 +3208,7 @@ void TestOpenAndWriteAsyncLargeFile()
 	pos = K4GBMinusTwo;
 	TestRFile1.WriteU(pos,writeBuf,status3); 
 	TestRFile1.ReadU(pos,readBuf);
-	test(readBuf.Length() == 1);
+	test_Equal(1, readBuf.Length());
 	
 	//
 	//tests need to be repeated for current position variant of RFile64::Write()
@@ -3159,7 +3222,7 @@ void TestOpenAndWriteAsyncLargeFile()
 	TestRFile1.Write(writeBuf,status3); 
 	TestRFile1.Seek(ESeekStart,seekPos);
 	TestRFile1.Read(readBuf);
-	test(readBuf.Length() == 1);
+	test_Equal(1, readBuf.Length());
 	
 	
 	if(KFileSizeMaxLargerThan4GBMinusOne == EFalse)
@@ -3177,7 +3240,7 @@ void TestOpenAndWriteAsyncLargeFile()
 		User::After(100000);
 		// Validation for boundary condition 4GB
 		TestRFile1.ReadP(K4GB,readBuf256);
-		test(readBuf256.Length() == 0);
+		test_Equal(0, readBuf256.Length());
 		}
 	TestRFile1.Close();
 	
@@ -3320,9 +3383,9 @@ void TestOpenAndWriteSyncLargeFileWithLen()
 			}
 		TestRFile1.Write(K4GB,writeBuf256,10);
 		TestRFile1.Read(K4GB,readBuf256,10); 
-		test(readBuf256.Length() == 0);
+		test_Equal(0, readBuf256.Length());
 		}
-	test.Next(_L(" Write to a big file synchronously in a thread with aPos = 0 ,  data = 256 bytes and length =0 bytes\n"));	
+	test.Next(_L("Write to a big file synchronously in a thread with aPos = 0 ,  data = 256 bytes and length =0 bytes\n"));	
 	TBuf8<0x100> wrBuf256;
 	TBuf8<0x100> reBuf256;
 	wrBuf256.Zero();
@@ -3333,7 +3396,7 @@ void TestOpenAndWriteSyncLargeFileWithLen()
 		}
 	TestRFile1.Write(0,wrBuf256,0);
 	TestRFile1.Read(0,reBuf256,0);
-	test(reBuf256.Length() == 0);
+	test_Equal(0, reBuf256.Length());
 
 	test.Next(_L("Write to a big file synchronously in a thread with aPos = 0 ,  data = 256 bytes and length = -1\n"));	
 	TBuf8<0x100> wBuf256;
@@ -3497,7 +3560,7 @@ void TestOpenAndWriteAsyncLargeFileWithLen()
 		TRequestStatus status5 = KRequestPending;
 		TestRFile1.Write(K4GBPlusOne,writeBuf256,10,status5);
 		TestRFile1.Read(K4GBPlusOne,readBuf256,10); 
-		test(readBuf256.Length() == 0);
+		test_Equal(0, readBuf256.Length());
 		}
 	
 	test.Next(_L("Write to a big file asynchronously in a thread, with aPos = 0, data = 256 bytes and length = 0 bytes\n"));	
@@ -3512,7 +3575,7 @@ void TestOpenAndWriteAsyncLargeFileWithLen()
 	TRequestStatus status6 = KRequestPending;
 	TestRFile1.Write(0,wrBuf256,0,status6);
 	TestRFile1.Read(0,reBuf256,0); 
-	test(reBuf256.Length() == 0);
+	test_Equal(0, reBuf256.Length());
 
 	test.Next(_L("Write to a big file asynchronously in a thread, with aPos = 0, data = 256 bytes and length = -1bytes \n"));	
 	TBuf8<0x100> wBuf256;
@@ -3571,7 +3634,7 @@ void TestFileLock()
 	TestRFile1.Lock(0, K2GBMinusOne);
 		
 	
-	test.Next(_L(" Attempt to lock the same region again\n"));
+	test.Next(_L("Attempt to lock the same region again\n"));
 	TestRFile1.LockE(0, K2GBMinusOne);
 	
 	test.Next(_L("Extend the Lock with aPos = 0, aLength  = 2GB+10\n"));	
@@ -3765,7 +3828,7 @@ void TestFileSeek()
 	test.Next(_L("Seek mode = ESeekEnd, seek position = 80, call RFile64::Seek() "));
 	seekPos = 80;								
     TestRFile1.Seek(ESeekEnd, seekPos);	
-    test(seekPos == 20);				
+    test_Equal(20, seekPos);				
 
 	test.Next(_L("Set the file size as 512\n"));			
 	TestRFile1.SetSize(512);
@@ -3773,31 +3836,31 @@ void TestFileSeek()
 	test.Next(_L("Seek mode =ESeekStart, assign seek position =513, get the seek position using RFile64::Seek()\n"));			
 	seekPos = 513;
 	TestRFile1.Seek(ESeekStart, seekPos);
-	test(seekPos == 513);
+	test_Equal(513, seekPos);
 
 	test.Next(_L("Seek mode = ESeekEnd, get the seek position using RFile64::Seek()\n"));			
 	TestRFile1.Seek(ESeekEnd, seekPos);
-	test(seekPos == 512);
+	test_Equal(512, seekPos);
 
 	test.Next(_L("Seek position =-530, seek mode = ESeekEnd, Get the seek position using RFile64::Seek()\n"));			
 	seekPos = -530;
 	TestRFile1.Seek(ESeekEnd, seekPos);
-	test(seekPos == 0);
+	test_Equal(0, seekPos);
 
 	test.Next(_L("Seek position =-10, seek mode = ESeekEnd, get the seek position using RFile64::Seek()\n"));	
 	seekPos = -10;
 	TestRFile1.Seek(ESeekEnd, seekPos);
-	test(seekPos == 502);
+	test_Equal(502, seekPos);
 
 	test.Next(_L("Seek position =-10, seek mode = ESeekStart, get the seek position using RFile64::Seek()\n"));	
 	seekPos = -10;
 	TestRFile1.Seek(ESeekStart,seekPos);
-	test(seekPos == -10);
+	test_Equal(-10, seekPos);
 
 	test.Next(_L("Seek position =0, seek mode = ESeekEnd, get the seek position using RFile64::Seek()\n"));	
 	seekPos = 0;
 	TestRFile1.Seek(ESeekEnd,seekPos);
-	test(seekPos == 512);
+	test_Equal(512, seekPos);
 
 	TestRFile1.Close();
 	
@@ -3975,7 +4038,7 @@ void TestSetsize()
 	
 	test.Next(_L("Get the file size\n"));
 	TestRFile1.Size(size);
-	test(size == 131072) ;
+	test_Equal(131072, size);
 	
 	test.Next(_L("Read and compare the data from position = 0\n"));
 	TBuf8<16> testData2;
@@ -4064,7 +4127,7 @@ void TestReadFilesection()
 	test.Next(_L("Open a big file in EFileShareAny | EFileRead mode and read from it using RFs::ReadFileSection() from position 3GB-1, 52byte lengths of data\n"));
 	TestRFile1.Open(fileName,EFileShareAny|EFileRead);
 	TestRFs.ReadFileSection(fileName,0,testDes,52);
-	test(testDes.Length() == 52);
+	test_Equal(52, testDes.Length());
 	TestRFile1.Close();
 	
 	test.Next(_L("Open a big file in EFileShareExclusive | EFileRead mode and read from it using RFs::ReadFileSection( ) from position 3GB-1, 52byte lengths of data\n"));
@@ -4157,7 +4220,7 @@ void TestGetDirectory()
 	test_Value(r, r == KErrEof);
 
 	test.Next(_L("Check the files count in the directory. Number of files in a directory is 4\n"));
-	test(entryArray.Count() == gFilesInDirectory);
+	test_Equal(gFilesInDirectory, entryArray.Count());
 	
 	test.Next(_L("Get the entry list & Check the files are listed in order of file sizes\n"));
 	TInt n;
@@ -4181,7 +4244,7 @@ void TestGetDirectory()
 	test.Next(_L("Read a directory containing large files using CDir & sort by size"));
 	CDir* dirList = NULL;
 	TestRFs.GetDir(dirName, KEntryAttMaskSupported, ESortBySize, dirList);
-	test(dirList->Count() == gFilesInDirectory);
+	test_Equal(gFilesInDirectory, dirList->Count());
 	for (n = 0; n<dirList->Count(); n++)
 		{
 		TEntry entry;
@@ -4248,7 +4311,7 @@ void TestTEntry()
 	for (TInt n = 0; n<anEntryList->Count(); n++)
 		{
 		entry = (*anEntryList)[n];
-		if (entry.iName.MatchF(KFile4GBMinusOne()) == 0)
+		if (entry.iName.MatchF(KFile4GBMinusOne) == 0)
 			{
 			test(entry.FileSize() == K4GBMinusOne);
 			}
@@ -4257,7 +4320,7 @@ void TestTEntry()
 	test.Next(_L("Get the file size, using TEntry::FileSize()\n"));
 	size = entry.FileSize();
 	test(size == K4GBMinusOne);
-	test(entry.iSize == -1);
+	test_Equal(-1, entry.iSize);
 	
 	
 	
@@ -4310,7 +4373,7 @@ void TestReadDirectory()
 	test_Value(r, r == KErrEof);
 	
 	test.Next(_L("Check the count\n"));
-	test(entryArray.Count() == gFilesInDirectory);
+	test_Equal(gFilesInDirectory, entryArray.Count());
 	
 	test.Next(_L("Close using RDir\n"));
 	dir.Close();
@@ -4350,7 +4413,7 @@ void TestSortDirectory()
 	
 	test.Next(_L("Sort with number of entries =0\n"));
 	TestRFs.GetDir(testDir0, KEntryAttMaskSupported, ESortBySize, anEntryList);
-	test(anEntryList->Count() == 0);
+	test_Equal(0, anEntryList->Count());
 	delete anEntryList;
 	anEntryList = NULL;
 	
@@ -4362,32 +4425,32 @@ void TestSortDirectory()
 	TestRFs.GetDir(testDir, KEntryAttMaskSupported, ESortBySize, aDirList);
 	
 	test.Next(_L("Get the entries count\n"));
-	test(aDirList->Count() == gFilesInDirectory);
+	test_Equal(gFilesInDirectory, aDirList->Count());
 	
 	
 	test.Next(_L("Check the files are arranged in increasing file size\n"));
 	for (TInt n = 0; n<aDirList->Count(); n++)
 		{
 		entry = (*aDirList)[n];
-		if (entry.iName.MatchF(KFile2GBMinusOne()) == 0)
+		if (entry.iName.MatchF(KFile2GBMinusOne) == 0)
 			{
 			test(entry.FileSize() == K2GBMinusOne);
-			test(n == 0);
+			test_Equal(0, n);
 			}
 		else if (entry.iName.MatchF(KFile2GB()) == 0)
 			{
 			test(entry.FileSize() == K2GB);
-			test(n == 1);
+			test_Equal(1, n);
 			}
-		else if (entry.iName.MatchF(KFile3GB()) == 0)
+		else if (entry.iName.MatchF(KFile3GB) == 0)
 			{
 			test(entry.FileSize() == K3GB);
-			test(n == 2);
+			test_Equal(2, n);
 			}
-		else if (entry.iName.MatchF(KFile4GBMinusOne()) == 0)
+		else if (entry.iName.MatchF(KFile4GBMinusOne) == 0)
 			{
 			test(entry.FileSize() == K4GBMinusOne);
-			test(n == 3);
+			test_Equal(3, n);
 			}
 		else
 			test(EFalse);
@@ -4423,31 +4486,31 @@ void TestAddLDirectory()
 	
 	test.Next(_L("Get the directory entry,using RFs::GetDir()\n"));
 	TestRFs.GetDir(testDir, KEntryAttMaskSupported, ESortBySize, aDirList);
-	test(aDirList->Count() == gFilesInDirectory);
+	test_Equal(gFilesInDirectory, aDirList->Count());
 
 	test.Next(_L("Compare with entry added\n"));
 	for (TInt n = 0; n<aDirList->Count(); n++)
 		{
 		entry = (*aDirList)[n];
-		if (entry.iName.MatchF(KFile2GBMinusOne()) ==0 )
+		if (entry.iName.MatchF(KFile2GBMinusOne) == 0)
 			{
 			test(entry.FileSize() == K2GBMinusOne);
-			test(n == 0);
+			test_Equal(0, n);
 			}
-		else if (entry.iName.MatchF(KFile2GB) == 0)
+		else if (entry.iName.MatchF(KFile2GB()) == 0)
 			{
 			test(entry.FileSize() == K2GB);
-			test(n == 1);
+			test_Equal(1, n);
 			}
-		else if (entry.iName.MatchF(KFile3GB()) == 0)
+		else if (entry.iName.MatchF(KFile3GB) == 0)
 			{
 			test(entry.FileSize() == K3GB);
-			test(n == 2);
+			test_Equal(2, n);
 			}
-		else if (entry.iName.MatchF(KFile4GBMinusOne()) == 0)
+		else if (entry.iName.MatchF(KFile4GBMinusOne) == 0)
 			{
 			test(entry.FileSize() == K4GBMinusOne);
-			test(n == 3);
+			test_Equal(3, n);
 			}
 		else
 			test(EFalse);
@@ -4776,15 +4839,14 @@ void TestUnLock()
         {	    
 	    test.Next(_L("Lock a section of large file, position =2GB, aLength = 4GB-1\n"));
 	    TestRFile1.Lock(K2GB,K4GBMinusOne);
-
 	
-	test.Next(_L("UnLock a section of large file, position =2GB, aLength = 4GB-1\n"));
-	TestRFile1.UnLock(K2GB,K4GBMinusOne);
+	    test.Next(_L("UnLock a section of large file, position =2GB, aLength = 4GB-1\n"));
+	    TestRFile1.UnLock(K2GB,K4GBMinusOne);
 	
-	test.Next(_L("Write to the File, position = 4GB-100 and length = 99\n"));
-	TestRFile2.Write(K4GBMinus100,writeBuf63,99);
-  	TestRFile2.Read(K4GBMinus100,readBuf63,99);
-   	test(writeBuf63 == readBuf63); // Written data == Read data
+	    test.Next(_L("Write to the File, position = 4GB-100 and length = 99\n"));
+	    TestRFile2.Write(K4GBMinus100,writeBuf63,99);
+	    TestRFile2.Read(K4GBMinus100,readBuf63,99);
+	    test(writeBuf63 == readBuf63); // Written data == Read data
         }
 	
 	TestRFile2.Close();
@@ -5600,7 +5662,7 @@ void TestCopyDirectory()
 	test_KErrNone(r);
 	r = dir.Read(entryArray);
 	test_Value(r, r == KErrEof);
-	test(entryArray.Count() == gFilesInDirectory);
+	test_Equal(gFilesInDirectory, entryArray.Count());
 	dir.Close();
 	
 	// then delete the new directory
@@ -5618,8 +5680,8 @@ void TestCopyDirectory()
 	test.Next(_L("Check observer for number of successful copy and failed copy\n"));
 	// test that 3 small files and 1 large file were copied
 	// (For 8 GB disk, the 4GB file is missing)
-	test(observer->iNotifyEndedSuccesses == gFilesInDirectory);
-	test(observer->iNotifyEndedFailures == 0); 
+	test_Equal(gFilesInDirectory, observer->iNotifyEndedSuccesses);
+	test_Equal(0, observer->iNotifyEndedFailures);
 
 	test.Next(_L("Get the directory entry and find how many files copied\n"));
 	// check SMALL files have been copied
@@ -5628,7 +5690,7 @@ void TestCopyDirectory()
 	r = dir.Read(entryArray);
 	test_Value(r, r == KErrEof);
 
-	test(entryArray.Count() == gFilesInDirectory); 
+	test_Equal(gFilesInDirectory, entryArray.Count());
 	dir.Close();
 	
 	// then delete the new directory
@@ -5732,7 +5794,7 @@ void TestMoveDirectory()
 	TEntryArray entryArray;
 	r = dir.Read(entryArray);
 	test_Value(r, r == KErrEof);
-	test(entryArray.Count() == 4);
+	test_Equal(4, entryArray.Count());
 	dir.Close();
 	
 	// then delete the new directory
@@ -5825,7 +5887,7 @@ TInt testLockPanic(TAny* aPtr)
 	TInt aLen=-1;
 	RFile64 * ptr = (RFile64 *)aPtr;
 	TInt r=ptr->Lock(aPos, aLen);
-	test (KErrNone == r);	
+	test_KErrNone(r);
 	return KErrNone;
 	}
 
@@ -5835,7 +5897,7 @@ TInt testUnLockPanic(TAny* aPtr)
 	TInt aLen=-1;
 	RFile64 * ptr = (RFile64 *)aPtr;
 	TInt r=ptr->UnLock(aPos, aLen);
-	test (KErrNone == r);	
+	test_KErrNone(r);
 	return KErrNone;
 	}
 
@@ -5844,7 +5906,7 @@ TInt testSetSizePanic(TAny* aPtr)
 	TInt aSize=-1;
 	RFile64 * ptr = (RFile64 *)aPtr;
 	TInt r=ptr->SetSize(aSize);
-	test (KErrNone == r);	
+	test_KErrNone(r);
 	return KErrNone;
 	}
 
@@ -5852,11 +5914,11 @@ static void TestRFile64NegLen()
 	{
 	test.Start(_L("Test RFile64::Lock, RFile64::Unlock, RFile64::SetSize and RFile::Write with Negative Length parameter"));
 	
-	test(TheFs.ShareProtected() == KErrNone);
+	test_KErrNone(TheFs.ShareProtected());
 	
 	RFile64 aFile;
 	TInt r = aFile.Create(TheFs, _L("\\testRFile64NegLen.txt"), EFileWrite);
-	test((KErrNone == r) || (KErrAlreadyExists == r));
+	test_Value(r, r == KErrNone || r == KErrAlreadyExists);
 	
 	TRequestStatus status = KRequestPending;
 
@@ -5870,7 +5932,7 @@ static void TestRFile64NegLen()
 	User::WaitForRequest(status);
 	User::SetJustInTime(ETrue);
 	test(t.ExitType() == EExitPanic);
-	test(t.ExitReason() == 17);
+	test_Equal(17, t.ExitReason());
 	t.Close();
 	
 	// Test Unlock with a negative length
@@ -5881,7 +5943,7 @@ static void TestRFile64NegLen()
 	t.Resume();
 	User::WaitForRequest(status);
 	test(t.ExitType() == EExitPanic);
-	test(t.ExitReason() == 18);
+	test_Equal(18, t.ExitReason());
 	t.Close();
 	User::SetJustInTime(ETrue);
 	
@@ -5893,7 +5955,7 @@ static void TestRFile64NegLen()
 	t.Resume();
 	User::WaitForRequest(status);
 	test(t.ExitType() == EExitPanic);
-	test(t.ExitReason() == 20);
+	test_Equal(20, t.ExitReason());
 	t.Close();
 	User::SetJustInTime(ETrue);
 	
@@ -5917,35 +5979,245 @@ static void TestRFile64NegLen()
 	aFile.Write(aPos,gBuf,aLen,status1);
 	aFile.Write(aPos,gBuf,aLen,status2);
 	User::WaitForRequest(status1);
-	test(status1.Int()==KErrArgument);
+	test_Equal(KErrArgument, status1.Int());
 	User::WaitForRequest(status2);
-	test(status2.Int()==KErrArgument);
+	test_Equal(KErrArgument, status2.Int());
 	
 	aFile.Close();
 	r = TheFs.Delete(_L("\\testRFile64NegLen.txt"));
 	test_KErrNone(r);
 	test.End();	
 	}
+
+/*
+ * Flush file to ensure that written data is committed and not cached
+ */
+TInt FlushFile(RFile64& aFile64)
+	{
+	TRequestStatus status;
+	aFile64.Flush(status); 
+	User::WaitForRequest(status);
+	return status.Int();
+	}
+
+/*
+ * Test inline RFile64 Read/Write APIs
+ */
+void TestInlineReadWrite()
+	{
+	test.Start(_L("Test Inline RFile64 Read/Write APIs"));
+	TFileName fileName;
+	fileName.Append(gDriveToTest);
+	fileName.Append(KTestPath);
+	TInt r = TheFs.MkDir(fileName);
+	test_Value(r, r == KErrNone || r == KErrAlreadyExists);
+	
+	fileName.Append(_L("FileInline.txt"));
+	RFile64 file64;
+	r = file64.Replace(TheFs, fileName, EFileWrite);
+	test_KErrNone(r);
+	
+	TBuf8<15> writeBuf(_L8("Inline"));
+	TBuf8<15> readBuf;
+	readBuf.Zero();
+	
+	test.Next(_L("RFile64::Write(const TDesC8& aDes)"));
+	// Expected text in file: Inline
+	r = file64.Write(writeBuf);
+	test_KErrNone(r);
+	// Flush to ensure that the written data is committed and not cached
+	r = FlushFile(file64);
+	test_KErrNone(r);
+	
+	test.Next(_L("RFile64::Read(TInt aPos,TDes8& aDes)"));
+	TInt readPos = 0;
+	r = file64.Read(readPos, readBuf);
+	test_KErrNone(r);
+	test(readBuf == writeBuf);
+	
+	
+	test.Next(_L("RFile64::Write(const TDesC8& aDes,TRequestStatus& aStatus)"));
+	// Expected text in file: InlineInline
+	TRequestStatus status = KRequestPending;	
+	file64.Write(writeBuf, status);
+	User::WaitForRequest(status);
+	test_KErrNone(status.Int());
+	status = KRequestPending;
+	r = FlushFile(file64);
+	test_KErrNone(r);
+	
+	test.Next(_L("Read(TInt aPos,TDes8& aDes,TRequestStatus& aStatus)"));
+	file64.Read(readPos, readBuf, status);
+	User::WaitForRequest(status);
+	test_KErrNone(status.Int());
+	status = KRequestPending;
+	TBuf8<15> expectedBuf(_L8("InlineInline"));
+	test(readBuf == expectedBuf);
+	
+	test.Next(_L("Write(const TDesC8& aDes,TInt aLength)"));
+	// Expected text in file: InlineInlineInl
+	TInt writeLength = 3;
+	r = file64.Write(writeBuf, writeLength);
+	test_KErrNone(r);
+	r = FlushFile(file64);
+	test_KErrNone(r);
+	
+	test.Next(_L("Read(TInt aPos,TDes8& aDes,TInt aLength)"));
+	TInt readLength = 13;
+	r = file64.Read(readPos, readBuf, readLength);
+	test_KErrNone(r);
+	expectedBuf.Append(_L8("I"));
+	test(readBuf == expectedBuf);
+	
+	
+	test.Next(_L("Write(const TDesC8& aDes,TInt aLength,TRequestStatus& aStatus)"));
+	// Expected text in file: InlineInlineIInl
+	file64.Write(writeBuf, writeLength, status);
+	User::WaitForRequest(status);
+	test_KErrNone(status.Int());
+	status = KRequestPending;
+	r = FlushFile(file64);
+	test_KErrNone(r);
+	
+	test.Next(_L("Read(TInt aPos,TDes8& aDes,TInt aLength,TRequestStatus& aStatus)"));
+	readLength = 14;
+	file64.Read(readPos, readBuf, readLength, status);
+	User::WaitForRequest(status);
+	test_KErrNone(status.Int());
+	status = KRequestPending;
+	expectedBuf.Append(_L8("I"));
+	test(readBuf == expectedBuf);
+	
+	test.Next(_L("Write(TInt aPos,const TDesC8& aDes)"));
+	// Expected text in file: InlInlineineIInl
+	TInt writePos = 3;
+	r = file64.Write(writePos, writeBuf);
+	test_KErrNone(r);
+	r = FlushFile(file64);
+	test_KErrNone(r);
+	
+	// RFile64::Read(TInt aPos,TDes8& aDes) (Again)
+	readPos = 1;
+	r = file64.Read(readPos, readBuf);
+	test_KErrNone(r);
+	expectedBuf.Zero();
+	expectedBuf.Append(_L8("nlInlineineIInl"));
+	test(readBuf == expectedBuf);
+	
+	test.Next(_L("Write(TInt aPos,const TDesC8& aDes,TRequestStatus& aStatus)"));
+	// Expected text in file: InlInlineInlinel
+	writePos = 9;
+	file64.Write(writePos, writeBuf, status);
+	User::WaitForRequest(status);
+	test_KErrNone(status.Int());
+	status = KRequestPending;
+	r = FlushFile(file64);
+	test_KErrNone(r);
+	
+	// RFile64::Read(TInt aPos,TDes8& aDes,TRequestStatus& aStatus) (Again)
+	file64.Read(readPos, readBuf, status);
+	User::WaitForRequest(status);
+	test_KErrNone(status.Int());
+	status = KRequestPending;
+	expectedBuf.Zero();
+	expectedBuf.Append(_L8("nlInlineInlinel"));
+	test(readBuf == expectedBuf);
+	
+	test.Next(_L("Write(TInt aPos,const TDesC8& aDes,TInt aLength)"));
+	// Expected text in file: InlInlInlInlinel
+	writePos = 6;
+	r = file64.Write(writePos, writeBuf, writeLength);
+	test_KErrNone(r);
+	r = FlushFile(file64);
+	test_KErrNone(r);
+	
+	// Read(TInt aPos,TDes8& aDes,TInt aLength) (Again)
+	readPos = 5;
+	readLength = 8;
+	r = file64.Read(readPos, readBuf, readLength);
+	test_KErrNone(r);
+	expectedBuf.Zero();
+	expectedBuf.Append(_L8("lInlInli"));
+	test(readBuf == expectedBuf);
+	
+	
+	test.Next(_L("Write(TInt aPos,const TDesC8& aDes,TInt aLength,TRequestStatus& aStatus)"));
+	// Expected text in file: InlInlInlInlinel
+	writePos = 12;
+	file64.Write(writePos, writeBuf, writeLength, status);
+	User::WaitForRequest(status);
+	test_KErrNone(status.Int());
+	status = KRequestPending;
+	r = FlushFile(file64);
+	test_KErrNone(r);
+
+	// RFile64::Read(TInt aPos,TDes8& aDes,TInt aLength,TRequestStatus& aStatus) (Again)
+	readPos = 7;
+	file64.Read(readPos, readBuf, readLength, status);
+	User::WaitForRequest(status);
+	test_KErrNone(status.Int());
+	status = KRequestPending;
+	expectedBuf.Zero();
+	expectedBuf.Append(_L8("nlInlInl"));
+	test(readBuf == expectedBuf);
+	
+	
+	// Test the remaining RFile64::Read APIs with the read position at the end of the file
+	
+	TBuf8<1> readBuf2;
+	readBuf2.Zero();
+	TBuf8<1> expectedBuf2(_L8("l"));
+	
+	test.Next(_L("Read(TDes8& aDes)"));
+	r = file64.Read(readBuf2);
+	test_KErrNone(r);
+	test(readBuf2 == expectedBuf2);
+	
+	test.Next(_L("Read(TDes8& aDes,TRequestStatus& aStatus)"));
+	file64.Read(readBuf2, status);
+	User::WaitForRequest(status);
+	test_KErrNone(status.Int());
+	status = KRequestPending;
+	expectedBuf2.Zero();
+	test(readBuf2 == expectedBuf2);
+	
+	// These tests should give overflow errors
+	test.Next(_L("Read(TDes8& aDes,TInt aLength)"));
+	r = file64.Read(readBuf2, readLength);
+	test_Equal(KErrOverflow, r);
+	
+	test.Next(_L("Read(TDes8& aDes,TInt aLength,TRequestStatus& aStatus)"));
+	file64.Read(readBuf2, readLength, status);
+	User::WaitForRequest(status);
+	test_Equal(KErrOverflow, status.Int());
+
+	
+	file64.Close();
+	r = TheFs.Delete(fileName);
+	test_KErrNone(r);
+	test.End();
+	}
+
 //-------------------------------------------------------------------------------------------------------------------
 
 static TInt PrepareDisk(TInt aDrive)
 	{
     TInt r;
 
-    r = FormatDrive(TheFs, aDrive, ETrue);
+    if (!Is_Win32(TheFs, aDrive))
+    	{
+		r = FormatDrive(TheFs, aDrive, ETrue);
+		test_KErrNone(r);
+    	}
 
 	r = TheFs.Volume(gDriveVolumeInfo, aDrive);
-	if(KErrNone != r)
-		{
-		test.Printf(_L("\nError in getting drive volume information!! Error code is %d"),r);
-		test(EFalse);
-		}
-	test.Printf(_L("\nDrive volume size is %LU\n"), gDriveVolumeInfo.iSize);
+	test_KErrNone(r);
+	test.Printf(_L("Drive volume size is %LU\n"), gDriveVolumeInfo.iSize);
 
 	// don't test if media size is less than 4 GB
 	if (gDriveVolumeInfo.iFree <= K4GB)
 		{
-		test.Printf(_L("\nSkipping test: test requires disk with capacity more than 4 GB"));
+		test.Printf(_L("Skipping T_FILE64BIT: test requires disk with capacity more than 4 GB\n"));
 		return KErrNotSupported;
 		}
 	
@@ -5994,6 +6266,8 @@ void CallTestsL()
 
     PrintDrvInfo(TheFs, gDrive);
 
+    TestInlineReadWrite();
+    
 	r = PrepareDisk(gDrive);
 	if(r == KErrNotSupported)
 		return;

@@ -402,7 +402,7 @@ TUint32 CFatTable::AllocateClusterListL(TUint32 aNumber, TUint32 aNearestCluster
     Notify the media drive about media areas that shall be treated as "deleted" if this feature is supported.
     @param aFreedClusters array with FAT numbers of clusters that shall be marked as "deleted"
 */
-void CFatTable::DoFreedClustersNotify(RClusterArray &aFreedClusters)
+void CFatTable::DoFreedClustersNotifyL(RClusterArray &aFreedClusters)
 {
     ASSERT(iMediaAtt & KMediaAttDeleteNotify);
 
@@ -423,7 +423,7 @@ void CFatTable::DoFreedClustersNotify(RClusterArray &aFreedClusters)
         const TUint currCluster = aFreedClusters[i];
         
         if (deleteLen == 0)
-		    byteAddress = DataPositionInBytes(currCluster); //-- start of the media range
+		    byteAddress = DataPositionInBytesL(currCluster); //-- start of the media range
         
         deleteLen += bytesPerCluster;
 
@@ -438,7 +438,7 @@ void CFatTable::DoFreedClustersNotify(RClusterArray &aFreedClusters)
                 {//-- if DeleteNotify() failed, it means that something terribly wrong happened to the NAND media; 
                  //-- in normal circumstances it can not happen. One of the reasons: totally worn out media.
                 const TBool platSecEnabled = PlatSec::ConfigSetting(PlatSec::EPlatSecEnforcement);
-                __PRINT3(_L("CFatTable::DoFreedClustersNotify() DeleteNotify failure! drv:%d err:%d, PlatSec:%d"),iOwner->DriveNumber(), r, platSecEnabled);
+                __PRINT3(_L("CFatTable::DoFreedClustersNotifyL() DeleteNotify failure! drv:%d err:%d, PlatSec:%d"),iOwner->DriveNumber(), r, platSecEnabled);
 
                 if(platSecEnabled)
                     {
@@ -521,7 +521,7 @@ void CFatTable::FreeClusterListL(TUint32 aCluster)
             cntFreedClusters = 0;
 
             SetFreeClusterHint(lastKnownFreeCluster);
-            DoFreedClustersNotify(deletedClusters);
+            DoFreedClustersNotifyL(deletedClusters);
         }
 
     }
@@ -531,7 +531,7 @@ void CFatTable::FreeClusterListL(TUint32 aCluster)
     SetFreeClusterHint(lastKnownFreeCluster);
     
     if(bFreeClustersNotify)
-        DoFreedClustersNotify(deletedClusters);
+        DoFreedClustersNotifyL(deletedClusters);
 
 	CleanupStack::PopAndDestroy(&deletedClusters);
 	}
@@ -671,14 +671,6 @@ TBool CFatTable::RequestFreeClusters(TUint32 aClustersRequired) const
     return (NumberOfFreeClusters() >= aClustersRequired);
     }
 
-//-----------------------------------------------------------------------------
-/**
-    @return ETrue if the cluster number aClusterNo is valid, i.e. belongs to the FAT table
-*/
-TBool CFatTable::ClusterNumberValid(TUint32 aClusterNo) const 
-    {
-    return (aClusterNo >= KFatFirstSearchCluster) && (aClusterNo < iMaxEntries); 
-    }
     
 
 
@@ -1796,17 +1788,20 @@ void CFatTable::MarkAsBadClusterL(TUint32 aFatIndex)
 
 
 /**
-    Return the location of a Cluster in the data section of the media
+    Return media position in bytes of the cluster start
 
     @param aCluster to find location of
     @return Byte offset of the cluster data 
 */
-TInt64 CAtaFatTable::DataPositionInBytes(TUint32 aCluster) const
+TInt64 CAtaFatTable::DataPositionInBytesL(TUint32 aCluster) const
 	{
+    if(!ClusterNumberValid(aCluster))
+        {
+        __ASSERT_DEBUG(0, Fault(EFatTable_InvalidIndex));
+        User::Leave(KErrCorrupt);
+        }
 
-    __ASSERT_DEBUG(ClusterNumberValid(aCluster), Fault(EFatTable_InvalidIndex));
-
-    const TInt clusterBasePosition=iOwner->ClusterBasePosition();
+    const TUint32 clusterBasePosition=iOwner->ClusterBasePosition();
 	return(((TInt64(aCluster)-KFatFirstSearchCluster) << iOwner->ClusterSizeLog2()) + clusterBasePosition);
 	}
 
@@ -2553,9 +2548,15 @@ TInt FAT32_ScanThread(TAny* apHostObject)
             //-- allow this thread to be preempted by another one that wants to access the media driver.
             //-- without this wait we will have priority inversion, because this (low priority) thread continiously reads data by big chunks 
             //-- and doesn't allow others to access the driver.
-            //-- On the other hand, if the thread's priority is boosted, there is no reason to be polite.
+            //-- On the other hand, if the thread's priority is boosted, there is no reason to be so polite.
             if(!pSelf->IsPriorityBoosted())
-                User::After(K1mSec); //-- User::After() granularity can be much coarser than 1ms
+                {//-- User::After() granularity can be much coarser than 1ms, e.g. 1/64 Sec. This will add up to the scanning time
+                User::After(K1mSec); 
+                }
+            else
+                {//-- use much less coarse granularity to allow this thread to be preempted even if its priority is boosted.
+                User::AfterHighRes(128); 
+                }
 
             //-------------------------------------------
             mediaPos += bytesToRead;

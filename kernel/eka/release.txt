@@ -1,3 +1,28 @@
+Version 2.00.3116
+=================
+(Made by fadhliM 23/08/2010)
+
+1.	vfebvre
+	1.	ou1cimx1#536515 ENV Remove baseapitest from the kernelhwsrv package definition file
+
+2.	stekarls
+	1.	ou1cimx1#359280 Only one active exception object allowed while OOM
+
+3.	jimhofe
+	1.	ou1cimx1#516845 Add definition of _FOFF_DYNAMIC(c,f) as an alternative to _FOFF(c,f) where f cannot be computed at compile time
+	2.	MINOR_CHANGE Removing names from documentation
+
+4.	amironen
+	1.	ou1cimx1#495567 Improve code coverage for SDIO
+
+5.	fagortz
+	1.	ou1cimx1#519356 10.1: Mass Memory size is approx. 2GB, should be approx. 8GB
+	2.	ou1cimx1#521235 LocDrv::RegisterPagingDevice() assumes iblockSize is non-zero
+
+6.	coliward
+	1.	ou1cimx1#519459 EI DfcQue0() and DfcQue1() should display an informational trace when used
+
+
 Version 2.00.3115
 =================
 (Made by fadhliM 16/08/2010)

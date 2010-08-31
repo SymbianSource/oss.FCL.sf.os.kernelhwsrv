@@ -780,9 +780,31 @@ void K::DoFault(const TAny* aCat, TInt aFault)
 /**
 Gets the address of the low priority DFC queue.
 
+Please note that this function is now deprecated.  It is a leftover from the days before Symbian OS v9.3
+when sharing a general purpose DFC queue was acceptable.  With the coming of code and ROM paging this
+practice became undesirable, and with the coming of writeable data paging it has become downright dangerous
+due to the unbounded performance times introduced by paging, which can cause drivers that share this queue
+to block one another.  Therefore, this is to be removed and all drivers must use their own private queue.
+
+Instead of using this function, create your own DFC queue using code something like the following:
+
+TDynamicDfcQue *iDfcQue; // In class definition in header file
+
+// In your driver or extension's constructor:
+
+const TInt KDfcHelperThreadPriority = 27;        // Same as DFC thread 0
+_LIT(KDfcHelperThreadName, "MyDfcHelperThread"); // Name as appropriate for your code
+
+if (Kern::DynamicDfcQCreate(iDfcQue, KDfcHelperThreadPriority, KDfcHelperThreadName) == KErrNone)
+	{
+	// Now you can use iDfcQue wherever you would have called Kern::DfcQue0() and all DFC callbacks
+	// will happen on your private DFC queue
+	}
+
 @return A pointer to the low priority DFC queue.
 
 @pre Call in any context.
+@deprecated
 */
 EXPORT_C TDfcQue* Kern::DfcQue0()
 	{
@@ -799,9 +821,19 @@ This is the one used for the nanokernel timer DFC. In the absence of
 a personality layer this will usually be the highest priority thread
 in the system.
 
+Please note that this function is now deprecated.  It is a leftover from the days before Symbian OS v9.3
+when sharing a general purpose DFC queue was acceptable.  With the coming of code and ROM paging this
+practice became undesirable, and with the coming of writeable data paging it has become downright dangerous
+(DfcQue1 particularly so) due to the unbounded performance times introduced by paging, which can cause
+drivers that share this queue to block one another.  Therefore, this is to be removed and all drivers must
+use their own private queue.
+
+@see Kern::DfcQue0() for an example of creating a private DFC queue.
+
 @return A pointer to the high priority DFC queue.
 
 @pre Call in any context.
+@deprecated
 */
 EXPORT_C TDfcQue* Kern::DfcQue1()
 	{

@@ -265,11 +265,14 @@ t_localtime
 
 t_dircache
 
-#ifdef SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
+#ifndef WINS
+t_file64bit
+#else
+// This test runs too long on a large drive as it fills up the disk
 t_file64bit manual
+#endif
 fhserver64bit       support
 #include "../plugins/version_2/file64bit/group/file64bit_plugin.inf"
-#endif
 
 t_surrogatepair
 

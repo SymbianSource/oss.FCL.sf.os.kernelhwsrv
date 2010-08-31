@@ -1150,3 +1150,20 @@ void CLogon::RunL()
 	CActiveScheduler::Stop();
 	}
 
+
+//---------------------------------------------------------------------------------------------------------------------------------
+/**
+    formats a string to represent a drive section in the estart.txt file by its number. Like "DriveD"
+    @param  aDrvNum         drive number
+    @param  aSectionName    out: formatted string
+*/
+void  F32Properties::GetDriveSection(TInt aDrvNum, TDes8& aSectionName)
+    {
+    ASSERT(aDrvNum >= EDriveA && aDrvNum <= EDriveZ);
+    _LIT8(KLitSectionNameDrive,"Drive%C");
+	aSectionName.Format(KLitSectionNameDrive, 'A' + aDrvNum);
+    }
+
+
+
+

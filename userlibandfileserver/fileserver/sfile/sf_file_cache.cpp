@@ -2192,9 +2192,6 @@ TFileCacheFlags TFileCacheSettings::TFileCacheConfig::ConvertEnumToFlags(const T
 	}
 
 
-	
-_LIT8(KLitSectionNameDrive,"Drive%C");
-
 static const TPtrC8 KCacheFlagEnumStrings[]=
 	{
 	_S8("OFF"),
@@ -2241,7 +2238,7 @@ TInt TFileCacheSettings::ReadPropertiesFile(TInt aDriveNumber)
 	// Get file cache configuration settings for this drive
 	// N.B. Size/length values are specified in Kilobytes, timer values in Milliseconds
 	TBuf8<8> sectionName;
-	sectionName.Format(KLitSectionNameDrive, 'A' + aDriveNumber);
+	F32Properties::GetDriveSection(aDriveNumber, sectionName);
 
 	TInt32 val;
 	//  Read FileCacheSize

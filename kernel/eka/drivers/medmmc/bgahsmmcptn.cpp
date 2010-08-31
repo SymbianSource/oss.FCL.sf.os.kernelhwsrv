@@ -328,8 +328,8 @@ TInt DBB5PartitionInfo::DecodePartitionInfo()
                         // ROM/ROFS partitions have a BB5 checksum header that must be offset for the Symbian OS.
                         const TUint32 KstartOffset = ((KPartitionTypeROM == partitionType) || (KPartitionTypeRofs == partitionType) || (KPartitionTypeEmpty == partitionType)) ? KBB5HeaderSizeInSectors : 0;
                         
-                        iPartitionInfo->iEntry[partitionCount].iPartitionBaseAddr = (Int64) ((partitionTable->iPartitions[index].iStart_sector + KstartOffset) << KDiskSectorShift);
-                        iPartitionInfo->iEntry[partitionCount].iPartitionLen      = (Int64) ((partitionTable->iPartitions[index].iSize - KstartOffset) << KDiskSectorShift);
+                        iPartitionInfo->iEntry[partitionCount].iPartitionBaseAddr = ((Int64) partitionTable->iPartitions[index].iStart_sector + KstartOffset) << KDiskSectorShift;
+                        iPartitionInfo->iEntry[partitionCount].iPartitionLen      = ((Int64) partitionTable->iPartitions[index].iSize - KstartOffset) << KDiskSectorShift;
         
                     	__KTRACE_OPT(KPBUSDRV, Kern::Printf("Registering partition #%d:", partitionCount));
                     	__KTRACE_OPT(KPBUSDRV, Kern::Printf("partitionCount....: %d", partitionCount));

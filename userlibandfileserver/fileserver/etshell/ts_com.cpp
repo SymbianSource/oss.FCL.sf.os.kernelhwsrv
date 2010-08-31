@@ -42,7 +42,6 @@ TBool CShell::iDbgPrint = EFalse;
 //	lint -e40,e30
 const TShellCommand CShell::iCommand[ENoShellCommands]=
 	{
-//	TShellCommand(_L("BLANK"),_L("Help"),_L("-?"),TShellCommand::EDSwitch,ShellFunction::BLANK),
 	TShellCommand(_L("ATTRIB"),_L("Displays or changes file attributes"),_L("[drive:][path][filename] [+R | -R] [+H |-H] [+S | -S] [+A | -A] [/p]\n\n  /p - Pause after each screen of information"), TShellCommand::EPSwitch, ShellFunction::Attrib),
 	TShellCommand(_L("CD"),_L("Change the current directory for a drive"),_L("[path] [/d]\n\n  /d - Change drive"),TShellCommand::EDSwitch,ShellFunction::Cd),
 	TShellCommand(_L("CHKDEPS"),_L("Check the dependencies of an executable or a Dll (ARM only)"),_L("[Filename.EXE] or [Filename.DLL]"),0,ShellFunction::ChkDeps),
@@ -50,7 +49,6 @@ const TShellCommand CShell::iCommand[ENoShellCommands]=
 	TShellCommand(_L("COPY"),_L("Copy one (or more) file(s), overwriting existing one(s)"),_L("source [destination]"),TShellCommand::ESSwitch,ShellFunction::Copy),
 	TShellCommand(_L("DEL"),_L("Delete one file"),_L("[drive:][path][filename]"),TShellCommand::ESSwitch,ShellFunction::Del),
 	TShellCommand(_L("DIR"),_L("Show directory contents"),_L("[drive:][path][filename] [/p][/w]\n\n  /p - Pause after each screen of information\n  /w - Wide format"),TShellCommand::EPSwitch|TShellCommand::EWSwitch|TShellCommand::EASwitch,ShellFunction::Dir),
-//	TShellCommand(_L("EDLIN"),_L("Edit a text file"),_L("[drive:][path][filename] [/p]\n\n  /p - Pause after each screen of information"),TShellCommand::EPSwitch,ShellFunction::Edit),
     TShellCommand(_L("FORMAT"),_L("Format a disk"),ptrFormatHelp,TShellCommand::EQSwitch|TShellCommand::ESSwitch|TShellCommand::EESwitch|TShellCommand::EFSwitch,ShellFunction::Format),
     TShellCommand(_L("GOBBLE"),_L("Create a file"),_L("[filename] size [/e]\n\n /e - create an empty file, without writing any data"),TShellCommand::EESwitch,ShellFunction::Gobble),
 	TShellCommand(_L("HEXDUMP"),_L("Display the contents of a file in hexadecimal"),_L("[drive:][path][filename] [/p]\n\n  /p - Pause after each screen of information\n\n  Hit escape to exit from hexdump "),TShellCommand::EPSwitch,ShellFunction::Hexdump),
@@ -498,14 +496,16 @@ Sets or returns the default path
 	TInt r=CShell::TheFs.CharToDrive(CShell::currentPath[0], drive);
 	if (r!=KErrNone)
 		return(r);
-	if (aPath.Length()==0)
+	
+    if (aPath.Length()==0)
 		{
 		r=CShell::TheFs.Volume(vol, drive);
 		if (r==KErrNone)
-			CShell::TheConsole->Printf(_L("Volume = %S\n"),&vol.iName);
+			CShell::Printf(_L("Volume Label:%S\n"),&vol.iName);
 		return(r);
 		}
-	r=CShell::TheFs.SetVolumeLabel(aPath, drive);
+	
+    r=CShell::TheFs.SetVolumeLabel(aPath, drive);
 	return(r);
 	}
 
@@ -582,21 +582,39 @@ void ShellFunction::AlignTextIntoColumns(RPointerArray<HBufC>& aText)
 
 }
 
-
-void ShellFunction::OutputContentsToConsole(RPointerArray<HBufC>& aText,TUint aSwitches)
-//outputs content of the buffer to console according to settings passed in aSwitches
+/**
+    outputs content of the buffer to console according to settings passed in aSwitches
+    @return ETrue if the user pressed Esc key 
+*/
+TBool ShellFunction::OutputContentsToConsole(RPointerArray<HBufC>& aText,TUint aSwitches)
 	{
 	if ((aText.Count()>0)&&((aSwitches&TShellCommand::EWSwitch)!=0))
 		AlignTextIntoColumns(aText);
 
-	for (TInt i=0;i<aText.Count();i++)
-		{
-		CShell::OutputStringToConsole(((aSwitches&TShellCommand::EPSwitch)!=0),*aText[i]);
-		CShell::OutputStringToConsole(EFalse,_L("\n"));
-		delete aText[i];
+	TKeyCode key=EKeyNull;
+    TInt i;
+
+    for(i=0;i<aText.Count();i++)
+		{                                             
+		key = CShell::WriteBufToConsole(((aSwitches&TShellCommand::EPSwitch)!=0),*aText[i]);
+		if(key == EKeyEscape)
+            break;
+        
+        key = CShell::WriteBufToConsole(EFalse,_L("\n"));
+		if(key == EKeyEscape)
+            break;
+
 		}
-	//empty string array
+    
+    //-- clean up string array
+    for(i=0; i<aText.Count(); i++)
+        {
+        delete aText[i];
+        }
+	
 	aText.Reset();
+
+    return (key == EKeyEscape);
 	}
 
 
@@ -606,9 +624,10 @@ void ShellFunction::OutputDirContentL(CDir* aDirList,RPointerArray<HBufC>& aText
 	TInt count=aDirList->Count();
 	TInt fileCount=0, dirCount=0, printCount=0;
 	TInt64 byteCount=0;
+    TBool bBreak=EFalse;
 
 	//compose an array of strings describing entries in the directory
-	for (TInt j=0;j<count;j++)
+	for (TInt j=0; j<count; j++)
 		{
 		HBufC* buf=NULL;
 		TEntry entry=(*aDirList)[j];
@@ -641,42 +660,76 @@ void ShellFunction::OutputDirContentL(CDir* aDirList,RPointerArray<HBufC>& aText
 			TPtr name=buf->Des();
 			name=entry.iName;
 
-			if (entry.IsDir())
+            const TPtrC desName(entry.iName);
+            const TBool bNameCut = desName.Length() > 26;
+
+            _LIT(KDots, ">.."); //-- will be displayed if the name is longer than 26 characters
+            _LIT(KSpc,  "   ");
+			
+            
+            if (entry.IsDir())
 				{
 				dirCount++;
-				name.Format(_L(" %- 26S   <DIR>         %+02d/%+02d/%- 4d  %02d:%02d:%02d.%06d"),
-											&entry.iName,modTime.Day()+1,modTime.Month()+1,modTime.Year(),modTime.Hour(),modTime.Minute(),modTime.Second(),modTime.MicroSecond());
+				
+                name.Format(_L(" %- 26S%S<DIR>         %+02d/%+02d/%- 4d  %02d:%02d:%02d.%03d"),
+				    &desName,
+                    bNameCut ? &KDots : &KSpc,
+                    modTime.Day()+1,modTime.Month()+1,modTime.Year(),modTime.Hour(),modTime.Minute(),modTime.Second(),modTime.MicroSecond());
+				
+                //name.Format(_L(" %- 26S   <DIR>         %+02d/%+02d/%- 4d  %02d:%02d:%02d.%06d"),
+				//							&entry.iName,modTime.Day()+1,modTime.Month()+1,modTime.Year(),modTime.Hour(),modTime.Minute(),modTime.Second(),modTime.MicroSecond());
 				}
 			else
 				{
 				TInt64 entrySize = entry.FileSize();
 				byteCount+=entrySize;
 				fileCount++;
- 				name.Format(_L(" %- 32S%+ 15Lu   %+02d/%+02d/%- 4d  %02d:%02d:%02d.%06d"),
- 											&entry.iName,entrySize,modTime.Day()+1,modTime.Month()+1,modTime.Year(),modTime.Hour(),modTime.Minute(),modTime.Second(),modTime.MicroSecond());
+
+                name.Format(_L(" %- 26S%S%-11Lu   %+02d/%+02d/%- 4d  %02d:%02d:%02d.%03d"),
+ 				    &desName,
+                    bNameCut ? &KDots : &KSpc,
+                    entrySize,
+                    modTime.Day()+1,modTime.Month()+1,modTime.Year(),modTime.Hour(),modTime.Minute(),modTime.Second(),modTime.MicroSecond());
+ 				
+                //name.Format(_L(" %- 32S%+ 15Lu   %+02d/%+02d/%- 4d  %02d:%02d:%02d.%06d"),
+ 				//							&entry.iName,entrySize,modTime.Day()+1,modTime.Month()+1,modTime.Year(),modTime.Hour(),modTime.Minute(),modTime.Second(),modTime.MicroSecond());
 				}
 			}
 		User::LeaveIfError(aText.Append(buf ));
 		printCount++;
-		//print the contents if a screen size of data is available. This will prevent huge buffer allocation.
-		if(printCount == CShell::TheConsole->ScreenSize().iHeight)
+		
+        //print the contents if a screen size of data is available. This will prevent huge buffer allocation.
+        if(printCount == CShell::TheConsole->ScreenSize().iHeight)
 			{
-			OutputContentsToConsole(aText,aSwitches);
+			bBreak = OutputContentsToConsole(aText,aSwitches);
 			printCount=0;
 			}
-		CleanupStack::Pop();
+		
+        CleanupStack::Pop();
+		
+        if(bBreak)
+            break;    
+        }
+	
+    if(bBreak)
+        return; //-- the user has interrupted the listing
 
-		}
-	OutputContentsToConsole(aText,aSwitches);
+    
+    OutputContentsToConsole(aText,aSwitches);
 
-	//output summary information
-	CShell::OutputStringToConsole(((aSwitches&TShellCommand::EPSwitch)!=0),_L("    %d File%c\n"),fileCount,(fileCount==1)?' ':'s');
-	if (fileCount!=0)
-		{
-		CShell::OutputStringToConsole(((aSwitches&TShellCommand::EPSwitch)!=0),_L("  %lu byte%c\n"),byteCount,(fileCount==1)?' ':'s');
-		}
+	//---------------------------------
+    //-- print out summary information
+	TBuf<100> buf;
+    buf.Format(_L("    %d File%c"), fileCount, (fileCount==1) ? ' ':'s');
+    if(fileCount > 0)
+        {
+        buf.AppendFormat(_L(", %LU bytes"), byteCount);
+        }
 
-	TBuf<50> buf;// allocate string long enough for additional information(number of directories)
+    buf.Append(KNl);
+    
+    CShell::OutputStringToConsole(((aSwitches&TShellCommand::EPSwitch)!=0), buf);
+    
 	buf.Format(_L("    %d Director"),dirCount);
 	if (dirCount==1)
 		buf.AppendFormat(_L("y\n"));
@@ -684,7 +737,9 @@ void ShellFunction::OutputDirContentL(CDir* aDirList,RPointerArray<HBufC>& aText
 		buf.AppendFormat(_L("ies\n"));
 
 	CShell::OutputStringToConsole(((aSwitches&TShellCommand::EPSwitch)!=0),buf);
-	}
+
+    
+    }
 
 TInt ShellFunction::Dir(TDes& aPath,TUint aSwitches)
 //
@@ -709,7 +764,7 @@ TInt ShellFunction::Dir(TDes& aPath,TUint aSwitches)
 	TInt r=dir.Open(TheShell->TheFs,aPath,KEntryAttMaskSupported);
 	if (r!=KErrNone)
 		{
-		CShell::TheConsole->Printf(_L("File or directory not found\n"));
+		CShell::Printf(_L("File or directory not found\n"));
 		return(KErrNone);
 		}
 
@@ -724,7 +779,7 @@ TInt ShellFunction::Dir(TDes& aPath,TUint aSwitches)
 
 	//Sets the new length of path to the position of the last path delimiter +1
 	aPath.SetLength(aPath.LocateReverse(KPathDelimiter)+1);
-	CShell::TheConsole->Printf(_L("Directory of %S\n"),&aPath);
+	CShell::Printf(_L("Directory of %S\n"),&aPath);
 
 	//allocate array to be used as an output buffer
 	RPointerArray<HBufC>* text=new(ELeave) RPointerArray<HBufC>();
@@ -742,13 +797,6 @@ TInt ShellFunction::Dir(TDes& aPath,TUint aSwitches)
 	};
 
 
-TInt ShellFunction::Edit(TDes& /*aPath*/,TUint /*aSwitches*/)
-//
-//	Dummy, used by edlin (now retired)
-//
-	{
-	return(KErrNone);
-	}
 
 
 TInt ShellFunction::Attrib(TDes& aPath,TUint aSwitches)
@@ -1007,14 +1055,14 @@ void FormatDriveAttInfo(const TDriveInfo& aDrvInfo, TDes& aPrintBuf)
         if(aDrvInfo.iDriveAtt & KDriveAttRedirected)    aPrintBuf.Append(_L("KDriveAttRedirected,"));
         if(aDrvInfo.iDriveAtt & KDriveAttSubsted)       aPrintBuf.Append(_L("KDriveAttSubsted,"));
         if(aDrvInfo.iDriveAtt & KDriveAttInternal)      aPrintBuf.Append(_L("KDriveAttInternal,"));
-        if(aDrvInfo.iDriveAtt & KDriveAttRemovable)     aPrintBuf.Append(_L("KDriveAttRemovable"));
+        if(aDrvInfo.iDriveAtt & KDriveAttRemovable)     aPrintBuf.Append(_L("KDriveAttRemovable,"));
 
-        if(aDrvInfo.iDriveAtt & KDriveAttRemote)        aPrintBuf.Append(_L("KDriveAttRemote"));
-        if(aDrvInfo.iDriveAtt & KDriveAttTransaction)   aPrintBuf.Append(_L("KDriveAttTransaction"));
+        if(aDrvInfo.iDriveAtt & KDriveAttRemote)        aPrintBuf.Append(_L("KDriveAttRemote,"));
+        if(aDrvInfo.iDriveAtt & KDriveAttTransaction)   aPrintBuf.Append(_L("KDriveAttTransaction,"));
 
-        if(aDrvInfo.iDriveAtt & KDriveAttPageable)              aPrintBuf.Append(_L("KDriveAttPageable"));
-        if(aDrvInfo.iDriveAtt & KDriveAttLogicallyRemovable)    aPrintBuf.Append(_L("KDriveAttLogicallyRemovable"));
-        if(aDrvInfo.iDriveAtt & KDriveAttHidden)                aPrintBuf.Append(_L("KDriveAttHidden"));
+        if(aDrvInfo.iDriveAtt & KDriveAttPageable)              aPrintBuf.Append(_L("KDriveAttPageable,"));
+        if(aDrvInfo.iDriveAtt & KDriveAttLogicallyRemovable)    aPrintBuf.Append(_L("KDriveAttLogicallyRemovable,"));
+        if(aDrvInfo.iDriveAtt & KDriveAttHidden)                aPrintBuf.Append(_L("KDriveAttHidden,"));
 
         aPrintBuf.Append(_L("\n"));
     }
@@ -1036,12 +1084,12 @@ void FormatMediaAttInfo(const TDriveInfo& aDrvInfo, TDes& aPrintBuf)
         if(aDrvInfo.iMediaAtt & KMediaAttFormattable)       aPrintBuf.Append(_L("KMediaAttFormattable,"));
         if(aDrvInfo.iMediaAtt & KMediaAttWriteProtected)    aPrintBuf.Append(_L("KMediaAttWriteProtected,"));
         if(aDrvInfo.iMediaAtt & KMediaAttLockable)          aPrintBuf.Append(_L("KMediaAttLockable,"));
-        if(aDrvInfo.iMediaAtt & KMediaAttLocked)            aPrintBuf.Append(_L("KMediaAttLocked"));
+        if(aDrvInfo.iMediaAtt & KMediaAttLocked)            aPrintBuf.Append(_L("KMediaAttLocked,"));
 
-        if(aDrvInfo.iMediaAtt & KMediaAttHasPassword)       aPrintBuf.Append(_L("KMediaAttHasPassword"));
-        if(aDrvInfo.iMediaAtt & KMediaAttReadWhileWrite)    aPrintBuf.Append(_L("KMediaAttReadWhileWrite"));
-        if(aDrvInfo.iMediaAtt & KMediaAttDeleteNotify)      aPrintBuf.Append(_L("KMediaAttDeleteNotify"));
-        if(aDrvInfo.iMediaAtt & KMediaAttPageable)          aPrintBuf.Append(_L("KMediaAttPageable"));
+        if(aDrvInfo.iMediaAtt & KMediaAttHasPassword)       aPrintBuf.Append(_L("KMediaAttHasPassword,"));
+        if(aDrvInfo.iMediaAtt & KMediaAttReadWhileWrite)    aPrintBuf.Append(_L("KMediaAttReadWhileWrite,"));
+        if(aDrvInfo.iMediaAtt & KMediaAttDeleteNotify)      aPrintBuf.Append(_L("KMediaAttDeleteNotify,"));
+        if(aDrvInfo.iMediaAtt & KMediaAttPageable)          aPrintBuf.Append(_L("KMediaAttPageable,"));
         
 
         aPrintBuf.Append(_L("\n"));
@@ -1163,8 +1211,8 @@ TInt PrintDrvInfo(RFs& aFs, TInt aDrvNum, TUint aFlags = EAll)
 
             CShell::Printf(_L("Mounted FS:%S\n"), &Buf);
 
-            //-- print out the list of supported file systems if there are more than 1
-            nRes = aFs.SupportedFileSystemName(fsName, aDrvNum, 0+1); //-- try to get 2nd child name
+            //-- print out the list of supported file systems if there are more than 0
+            nRes = aFs.SupportedFileSystemName(fsName, aDrvNum, 0); //-- try to get 1st child name
             if(nRes == KErrNone)
             {
                 Buf.Copy(_L("Supported FS: "));
@@ -2006,52 +2054,60 @@ TInt ShellFunction::Format(TDes& aPath, TUint aSwitches)
     }
 
 //-----------------------------------------------------------------------------------------------------------------------
-
+/**
+    Hex Dump of a file
+*/
 TInt ShellFunction::Hexdump(TDes& aPath,TUint aSwitches)
 	{
 	ShellFunction::StripQuotes(aPath);
 
 	ParsePath(aPath);
-	RFile64 file;
+	
+    RFile64 file;
 	TInt r=file.Open(TheShell->TheFs,aPath,EFileStream);
 	if (r!=KErrNone)
 		return(r);
 
-	TInt offset=0;
+		const TInt KLineLength = 16;
+    TBuf<0x100> buf;
+    TBuf<KLineLength> asciiBuf;
+		TBuf8<KLineLength> line;
+
 	for (;;)
 		{
-		const TInt KLineLength = 16;
-
-		TBuf8<KLineLength> line;
 		r=file.Read(line);
 		if (r != KErrNone || line.Length() == 0)
 			break;
 
-		TBuf<KLineLength*3+2> hexaRep;
-		TBuf<KLineLength> asciiRep;
+		buf.Zero();
+        asciiBuf.Zero();
+		
 		for (TInt i=0; i<KLineLength; i++)
 			{
 			if (i == KLineLength/2)
 				{
-				hexaRep.Append(' ');
-				hexaRep.Append(i<line.Length() ? '|' : ' ');
+				buf.Append(' ');
+				buf.Append(i<line.Length() ? '|' : ' ');
 				}
 
-			hexaRep.Append(' ');
+            buf.Append(' ');
 
 			if (i<line.Length())
 				{
-				hexaRep.AppendNumFixedWidth(line[i], EHex, 2);
-				asciiRep.Append(TChar(line[i]).IsPrint() ? line[i] : '.');
+				buf.AppendNumFixedWidth(line[i], EHex, 2);
+				asciiBuf.Append(TChar(line[i]).IsPrint() ? line[i] : '.');
 				}
 			else
-				hexaRep.AppendFill(' ', 2);
+				buf.AppendFill(' ', 2);
 			}
 
 		_LIT(KPrompt , " Hit escape to quit hexdump or any other key to continue\n");
-		_LIT(KLineFmt, " %+07x0:%S %S\n");
-		TKeyCode key=CShell::OutputStringToConsole(KPrompt ,(aSwitches&TShellCommand::EPSwitch)!=0,KLineFmt, offset++,&hexaRep, &asciiRep);
+		
+        buf.Append(_L(" "));
+        buf.Append(asciiBuf);
+        buf.Append(KNl);
 
+        TKeyCode key= CShell::WriteBufToConsole((aSwitches&TShellCommand::EPSwitch)!=0, buf, KPrompt);
 		if (key==EKeyEscape)
 				break;
 		}
@@ -2155,7 +2211,7 @@ TInt ShellFunction::Gobble(TDes& aPath,TUint aSwitches)
 
 
     if(!(aSwitches&TShellCommand::EESwitch))
-    {//-- fill created file with randomn data
+    {//-- fill created file with random data
 
 	    while(rem)
 	    {
@@ -2378,22 +2434,22 @@ public:
 	TInt DisplayHelp();
 	TInt DisplayMessage(const TFullName& aName);
 	TInt DisplayCmdUnknown();
-	TInt GetAll(const TDes& aName);
-	TInt GetProcesses(const TDes& aName);
-	TInt GetThreads(const TDes& aName);
-	TInt GetChunks(const TDes& aName);
-	TInt GetServers(const TDes& aName);
+	void GetAll(const TDes& aName);
+	void GetProcesses(const TDes& aName);
+	void GetThreads(const TDes& aName);
+	void GetChunks(const TDes& aName);
+	void GetServers(const TDes& aName);
 //	TInt GetSessions(const TDes& aName);
-	TInt GetLibraries(const TDes& aName);
+	void GetLibraries(const TDes& aName);
 //	TInt GetLogicalChannels(const TDes& aName);
-	TInt GetLogicalDevices(const TDes& aName);
-	TInt GetPhysicalDevices(const TDes& aName);
-	TInt GetSemaphores(const TDes& aName);
-	TInt GetMutexes(const TDes& aName);
+	void GetLogicalDevices(const TDes& aName);
+	void GetPhysicalDevices(const TDes& aName);
+	void GetSemaphores(const TDes& aName);
+	void GetMutexes(const TDes& aName);
 private:
 	void DisplayHelpLine(const TDesC& aCommand, const TDesC& aDescription);
-	TInt Prepare(const TFullName& aName);
-	TInt Prepare(const TFullName& aName,TCallBack& aCallBack);
+	TBool Prepare(const TFullName& aName);
+	TBool Prepare(const TFullName& aName,TCallBack& aCallBack);
 	TInt Display(TFullName& aName);
 	TFullName iPrevName;
 	TCallBack iCallBack;
@@ -2435,9 +2491,8 @@ TInt TShowProcInfo::DisplayCmdUnknown()
 	return KErrNone;
 	}
 
-TInt TShowProcInfo::GetAll(const TDes& aName)
+void TShowProcInfo::GetAll(const TDes& aName)
 	{
-
 	GetProcesses(aName);
 	GetThreads(aName);
 	GetChunks(aName);
@@ -2449,24 +2504,27 @@ TInt TShowProcInfo::GetAll(const TDes& aName)
 	GetPhysicalDevices(aName);
 	GetSemaphores(aName);
 	GetMutexes(aName);
-	return KErrNone;
+
 	}
 
-TInt TShowProcInfo::GetProcesses(const TDes& aName)
+void TShowProcInfo::GetProcesses(const TDes& aName)
 	{
 
 	TFindProcess findHb;
 	findHb.Find(aName);
 	TFullName name;
-	Prepare(_L("PROCESSES"));
-	while (findHb.Next(name)==KErrNone)
-		{
+	
+    if(!Prepare(_L("PROCESSES")))
+       return;
+
+	while(findHb.Next(name)==KErrNone)
+	    {
 		Display(name);
 		}
-	return KErrNone;
+
 	}
 
-TInt TShowProcInfo::GetThreads(const TDes& aName)
+void TShowProcInfo::GetThreads(const TDes& aName)
 	{
 	TInt threads=0;
 	TFindThread findHb;
@@ -2476,8 +2534,11 @@ TInt TShowProcInfo::GetThreads(const TDes& aName)
 
 //	Modified by WR, November 1997
 	TCallBack threadCallBack(GetThreadInfo,findPtr);
-	Prepare(_L("THREADS"),threadCallBack);
-	while (findHb.Next(name)==KErrNone)
+	
+    if(!Prepare(_L("THREADS"),threadCallBack))
+        return;
+
+    while (findHb.Next(name)==KErrNone)
 		{
 		Display(name);
 		threads += 1;
@@ -2488,12 +2549,12 @@ TInt TShowProcInfo::GetThreads(const TDes& aName)
 		message.Format(_L("? No threads called %S"), &aName);
 		DisplayMessage(message);
 		}
-	return KErrNone;
-//	End of modification
+	
+    
 	}
 
 
-TInt TShowProcInfo::GetChunks(const TDes& aName)
+void TShowProcInfo::GetChunks(const TDes& aName)
 	{
 
 	TFindChunk findHb;
@@ -2501,7 +2562,10 @@ TInt TShowProcInfo::GetChunks(const TDes& aName)
 	TFullName name;
 	TAny* namePtr=(TAny*)&name;
 	TCallBack chunkCallBack(GetChunkInfo,namePtr);
-	Prepare(_L("CHUNKS & SIZES"),chunkCallBack);
+	
+    if(!Prepare(_L("CHUNKS & SIZES"),chunkCallBack))
+        return;
+
 	TInt totalChunkSize=0;
 	TInt protectedChunks = 0;
 	while (findHb.Next(name)==KErrNone)
@@ -2528,21 +2592,23 @@ TInt TShowProcInfo::GetChunks(const TDes& aName)
 	CShell::OutputStringToConsole(ETrue,_L("  Total Chunk Size = %dk\n"),totalChunkSize);
 	if(protectedChunks)
 		CShell::OutputStringToConsole(ETrue,_L("  %d Protected chunks not counted\n"),protectedChunks);
-	return KErrNone;
+	
+    
 	}
 
-TInt TShowProcInfo::GetServers(const TDes& aName)
+void TShowProcInfo::GetServers(const TDes& aName)
 	{
 
 	TFindServer findHb;
 	findHb.Find(aName);
 	TFullName name;
-	Prepare(_L("SERVERS"));
+	if(!Prepare(_L("SERVERS")))
+        return;
+
 	while (findHb.Next(name)==KErrNone)
 		{
 		Display(name);
 		}
-	return KErrNone;
 	}
 
 /*	TInt TShowProcInfo::GetSessions(const TDes& aName)
@@ -2559,18 +2625,20 @@ TInt TShowProcInfo::GetServers(const TDes& aName)
 	return KErrNone;
 	}
 */
-TInt TShowProcInfo::GetLibraries(const TDes& aName)
+void TShowProcInfo::GetLibraries(const TDes& aName)
 	{
 
 	TFindLibrary findHb;
 	findHb.Find(aName);
 	TFullName name;
-	Prepare(_L("LIBRARIES"));
+	if(!Prepare(_L("LIBRARIES")))
+        return;
+
 	while (findHb.Next(name)==KErrNone)
 		{
 		Display(name);
 		}
-	return KErrNone;
+	
 	}
 /*
 TInt TShowProcInfo::GetLogicalChannels(const TDes& aName)
@@ -2588,59 +2656,68 @@ TInt TShowProcInfo::GetLogicalChannels(const TDes& aName)
 	}
 */
 
-TInt TShowProcInfo::GetLogicalDevices(const TDes& aName)
+void TShowProcInfo::GetLogicalDevices(const TDes& aName)
 	{
 
 	TFindLogicalDevice findHb;
 	findHb.Find(aName);
 	TFullName name;
-	Prepare(_L("LOGICAL DEVICES"));
+
+	if(!Prepare(_L("LOGICAL DEVICES")))
+        return;
+
 	while (findHb.Next(name)==KErrNone)
 		{
 		Display(name);
 		}
-	return KErrNone;
+	
 	}
 
-TInt TShowProcInfo::GetPhysicalDevices(const TDes& aName)
+void TShowProcInfo::GetPhysicalDevices(const TDes& aName)
 	{
 
 	TFindPhysicalDevice findHb;
 	findHb.Find(aName);
 	TFullName name;
-	Prepare(_L("PHYSICAL DEVICES"));
+	
+    if(!Prepare(_L("PHYSICAL DEVICES")))
+        return;
+
 	while (findHb.Next(name)==KErrNone)
 		{
 		Display(name);
 		}
-	return KErrNone;
+	
 	}
 
-TInt TShowProcInfo::GetSemaphores(const TDes& aName)
+void TShowProcInfo::GetSemaphores(const TDes& aName)
 	{
 	TFindSemaphore findHb;
 	findHb.Find(aName);
 	TFullName name;
-	Prepare(_L("SEMAPHORES"));
+	if(!Prepare(_L("SEMAPHORES")))
+        return;
+
 	while (findHb.Next(name)==KErrNone)
 		{
 		Display(name);
 		}
-	return KErrNone;
+	
 	}
 
-TInt TShowProcInfo::GetMutexes(const TDes& aName)
+void TShowProcInfo::GetMutexes(const TDes& aName)
 	{
 
 	TFindMutex findHb;
 	findHb.Find(aName);
 	TFullName name;
-	Prepare(_L("MUTEXES"));
+	if(!Prepare(_L("MUTEXES")))
+        return;
 	while (findHb.Next(name)==KErrNone)
 		{
 		Display(name);
 		}
-	return KErrNone;
+	
 	}
 
 void TShowProcInfo::DisplayHelpLine(const TDesC& aCommand, const TDesC& aDescription)
@@ -2649,23 +2726,32 @@ void TShowProcInfo::DisplayHelpLine(const TDesC& aCommand, const TDesC& aDescrip
 	}
 
 
-TInt TShowProcInfo::Prepare(const TFullName& aName)
+TBool TShowProcInfo::Prepare(const TFullName& aName)
 	{
 
 	iPrevName=_L("");
-	CShell::OutputStringToConsole(ETrue,_L("--%S-->\n"),&aName);
+	TKeyCode key = CShell::OutputStringToConsole(ETrue,_L("--%S-->\n"),&aName);
+    
+    if(key==EKeyEscape)
+        return EFalse;
+
 	useCallBack=EFalse;
-	return KErrNone;
+    return ETrue;
 	}
 
-TInt TShowProcInfo::Prepare(const TFullName& aName,TCallBack& aCallBack)
+TBool  TShowProcInfo::Prepare(const TFullName& aName,TCallBack& aCallBack)
 	{
-
 	iPrevName=_L("");
-	CShell::OutputStringToConsole(ETrue,_L("--%S-->\n"),&aName);
-	useCallBack=ETrue;
+	TKeyCode key = CShell::OutputStringToConsole(ETrue,_L("--%S-->\n"),&aName);
+
+    if(key==EKeyEscape)
+        return EFalse;
+	
+    
+    useCallBack=ETrue;
 	iCallBack=aCallBack;
-	return KErrNone;
+	
+    return ETrue;
 	}
 
 TInt TShowProcInfo::Display(TFullName& aName)
@@ -2698,7 +2784,11 @@ TInt TShowProcInfo::Display(TFullName& aName)
 		while (posA>=0)
 			{
 			TPtrC16 temp_desc=aName.Left(posA);
-			CShell::OutputStringToConsole(ETrue,_L("%+ *S\n"),toTab+temp_desc.Left(posA).Length(),&temp_desc);
+			
+            TKeyCode key = CShell::OutputStringToConsole(ETrue,_L("%+ *S\n"),toTab+temp_desc.Left(posA).Length(),&temp_desc);
+			if (key==EKeyEscape)
+			    break;
+
 			toTab+=3;
 			aName.Delete(0,posA+2);
 			posA=aName.Match(_L("*::*"));
@@ -2729,7 +2819,7 @@ TInt ShellFunction::Ps(TDes& /* aPath */,TUint /* aSwitches */)
 	TBool abort=EFalse;
 	TBool processSelected=EFalse;
 	TBuf<0x16> prompt=_L("ps>");
-	r=showProcInfo.GetProcesses(processPrefix);
+	showProcInfo.GetProcesses(processPrefix);
 	do
 		{
 		TBuf<0x10> command;
@@ -2791,7 +2881,7 @@ TInt ShellFunction::Ps(TDes& /* aPath */,TUint /* aSwitches */)
 						if (findP.Next(findName)==KErrNone)
 							{
 							r=showProcInfo.DisplayMessage(_L("command prefixes more than one process"));
-							r=showProcInfo.GetProcesses(chosenP);
+							showProcInfo.GetProcesses(chosenP);
 							}
 						else
 							{
@@ -2805,42 +2895,42 @@ TInt ShellFunction::Ps(TDes& /* aPath */,TUint /* aSwitches */)
 					break;
 				case 'A':
 					{
-					r=showProcInfo.GetAll(processPrefix);
+					showProcInfo.GetAll(processPrefix);
 					command.Zero();
 					}
 					break;
 				case 'P':
-					r=showProcInfo.GetProcesses(asterisk);
+					showProcInfo.GetProcesses(asterisk);
 					break;
 				case 'T':
-					r=showProcInfo.GetThreads(processPrefix);
+					showProcInfo.GetThreads(processPrefix);
 					break;
 				case 'C':
-					r=showProcInfo.GetChunks(processPrefix);
+					showProcInfo.GetChunks(processPrefix);
 					break;
 				case 'S':
-					r=showProcInfo.GetServers(processPrefix);
+					showProcInfo.GetServers(processPrefix);
 					break;
 /*				case 'I':
 					r=showProcInfo.GetSessions(processPrefix);
 					break;
 */				case 'L':
-					r=showProcInfo.GetLibraries(processPrefix);
+					showProcInfo.GetLibraries(processPrefix);
 					break;
 //				case 'G':
 //					r=showProcInfo.GetLogicalChannels(processPrefix);
 //					break;
 				case 'V':
-					r=showProcInfo.GetLogicalDevices(processPrefix);
+					showProcInfo.GetLogicalDevices(processPrefix);
 					break;
 				case 'D':
-					r=showProcInfo.GetPhysicalDevices(processPrefix);
+					showProcInfo.GetPhysicalDevices(processPrefix);
 					break;
 				case 'E':
-					r=showProcInfo.GetSemaphores(processPrefix);
+					showProcInfo.GetSemaphores(processPrefix);
 					break;
 				case 'M':
-					r=showProcInfo.GetMutexes(processPrefix);
+					showProcInfo.GetMutexes(processPrefix);
 					break;
 				default:
 					{
@@ -3144,7 +3234,6 @@ void ByteSwap(TDes16& aDes)
 		c=*p, *p=p[1], p[1]=c;
 	}
 
-_LIT(KLitPercentS, "%S");
 TInt ShellFunction::Type(TDes& aPath,TUint aSwitches)
 	{
 	ParsePath(aPath);
@@ -3206,8 +3295,8 @@ TInt ShellFunction::Type(TDes& aPath,TUint aSwitches)
 			{
 			nchars=0;
 			TPtrC bufLeft=buf.Left(r+1);
-			key = CShell::OutputStringToConsole((aSwitches&TShellCommand::EPSwitch)!=0,KLitPercentS(), &bufLeft);
-			buf.Set(buf.Mid(r+1));
+            key = CShell::WriteBufToConsole((aSwitches&TShellCommand::EPSwitch)!=0, bufLeft);
+            buf.Set(buf.Mid(r+1));
 	
     		if(key == EKeyEscape) 
                 goto exit;
@@ -3216,8 +3305,9 @@ TInt ShellFunction::Type(TDes& aPath,TUint aSwitches)
 		nchars=buf.Length();
 		if (nchars)
 			{
-            key = CShell::OutputStringToConsole((aSwitches&TShellCommand::EPSwitch)!=0,KLitPercentS(), &buf);
-    		if(key == EKeyEscape) 
+    		key = CShell::WriteBufToConsole((aSwitches&TShellCommand::EPSwitch)!=0, buf);
+
+            if(key == EKeyEscape) 
                 goto exit;
 
             }
@@ -3635,9 +3725,35 @@ TInt ShellFunction::Plugin(TDes& aName,TUint aSwitches)
 
 
 //----------------------------------------------------------------------
+void CShell::Print(const TDesC16& aBuf)
+{
+
+    TheConsole->Write(aBuf);
+
+    if(iDbgPrint)
+    {
+        const TInt bufLen = aBuf.Length();
+        
+        if(bufLen >1 && aBuf[bufLen-1] == '\n' && aBuf[bufLen-2] != '\r')
+            {
+            RDebug::RawPrint(aBuf.Left(bufLen-1));            
+            RDebug::RawPrint(_L8("\r\n"));
+            }
+        else if(bufLen == 1 && aBuf[bufLen-1] == '\n')
+            {
+            RDebug::RawPrint(_L8("\r\n"));
+            }
+        else
+            {
+            RDebug::RawPrint(aBuf);
+            }
+    }
+
+}
+
 void CShell::Printf(TRefByValue<const TDesC16> aFmt, ...)
 {
-	TBuf<256> buf;
+	TBuf<0x200> buf;
 	VA_LIST list;					
 	VA_START(list, aFmt);
 	// coverity[uninit_use_in_call]
@@ -3646,24 +3762,12 @@ void CShell::Printf(TRefByValue<const TDesC16> aFmt, ...)
     if(!buf.Length())
         return;
 
-    TheConsole->Printf(buf);
-
-    if(iDbgPrint)
-    {
-        const TInt bufLen = buf.Length();
-        if(buf[bufLen-1] == '\n')
-        {
-            buf.Insert(bufLen-1, _L("\r"));
-        }
-    
-        RDebug::RawPrint(buf);
-    }
-
+    Print(buf);
 }
 
 void SIPrintf(TRefByValue<const TDesC16> aFmt, ...)
 	{
-	TBuf<256> buf;
+	TBuf<0x200> buf;
 	VA_LIST list;					
 	VA_START(list, aFmt);
 	// coverity[uninit_use_in_call]
@@ -3738,7 +3842,7 @@ TInt ShellFunction::RunExec(TDes& aProg, TUint aSwitches)
 		aProg.Append(_L(".EXE"));
 
 #ifdef _DEBUG
-	SIPrintf(_L("RUNEXEC: command %S, parameters %S, count %d, forever %d, issecs %d, exiterr %d"),
+	CShell::Printf(_L("RUNEXEC: command %S, parameters %S, count %d, forever %d, issecs %d, exiterr %d"),
 		&aProg, &parameters, count, forever, countIsSecs, exitOnErr); 
 #endif
 	TInt i=0;
@@ -3753,7 +3857,7 @@ TInt ShellFunction::RunExec(TDes& aProg, TUint aSwitches)
 		r = newProcess.Create(aProg, parameters);
 		if (r != KErrNone)
 			{
-			SIPrintf(KRunExecFailedProcessCreate, &aProg, r);
+			CShell::Printf(KRunExecFailedProcessCreate, &aProg, r);
 			return (r);						// this is systematic - must return
 			}
 		newProcess.Logon(status);
@@ -3767,7 +3871,7 @@ TInt ShellFunction::RunExec(TDes& aProg, TUint aSwitches)
 		timeCurrent.HomeTime();
 		timeTaken = timeCurrent.MicroSecondsFrom(timeStart);
 		TInt msecs = I64LOW(timeTaken.Int64() / 1000);
-		SIPrintf(KRunExecReportStatusAndTime, msecs, i+1, exitType, retcode, &exitCat);
+		CShell::Printf(KRunExecReportStatusAndTime, msecs, i+1, exitType, retcode, &exitCat);
 
 		if (resetDebugRegs)
 			{
