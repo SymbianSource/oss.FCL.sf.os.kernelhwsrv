@@ -25,6 +25,11 @@
 #include <e32uid.h>
 #include <hal.h>
 
+const TInt KUnit0=0;
+const TInt KUnit1=1;
+const TInt KUnit2=2;
+const TInt KUnit3=3;
+
 #if defined (__WINS__)
 #define PDD_NAME _L("ECDRV.PDD")
 #define LDD_NAME _L("ECOMM.LDD")

@@ -15,7 +15,6 @@
 //
 //
 
-#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include "t_server.h"
@@ -105,7 +104,7 @@ LOCAL_C TInt64 FreeDiskSpace(TInt aDrive)
 	{
 	TVolumeInfo v;
 	TInt r=TheFs.Volume(v,aDrive);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	return(v.iFree);
 	}
 
@@ -116,7 +115,7 @@ LOCAL_C TInt64 DiskSize(TInt aDrive)
 	{
 	TVolumeInfo v;
 	TInt r=TheFs.Volume(v,aDrive);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	return(v.iSize);
 	}
 
@@ -127,7 +126,7 @@ LOCAL_C TInt64 DiskSize(TInt aDrive)
 LOCAL_C TInt MinimumFileSize(TInt aDrive)
 	{
 	TInt r = TheFs.Delete(KTestFile1);
-	test_Value(r, r == KErrNone || r==KErrNotFound);
+	test(r==KErrNone || r==KErrNotFound);
 
 	TInt64 freeSpace = FreeDiskSpace(aDrive);
 
@@ -135,15 +134,15 @@ LOCAL_C TInt MinimumFileSize(TInt aDrive)
 
 
 	r=file.Create(TheFs,KTestFile1,EFileShareAny|EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r = file.Write(TheBuffer,1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file.Close();
 	TInt64 newSpace = FreeDiskSpace(aDrive);
 
 	r = TheFs.Delete(KTestFile1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 
 	TInt64 minFileSize = freeSpace - newSpace;
@@ -217,7 +216,7 @@ LOCAL_C void Initialise()
 	// initialise removable drive descriptor
 	TChar c;
 	TInt r=RFs::DriveToChar(RemovableDrive,c);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	RemovableDriveBuf[0]=(TText)c;
 
 	if( !LffsDrive )
@@ -231,7 +230,7 @@ LOCAL_C void Initialise()
 	// better format the default drive as long as not WINS c drive
 	TInt drive;
 	r= RFs::CharToDrive(gSessionPath[0],drive);
-	test_KErrNone(r);
+	test(r==KErrNone);
 #if defined(__WINS__)
 	if(drive!=EDriveC)
 		Format(drive);
@@ -243,18 +242,18 @@ LOCAL_C void Initialise()
 	TheDiskSize=DiskSize(KDefaultDrive);
 	// and set the default directory
 	r=TheFs.MkDirAll(gSessionPath);
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 
 	r=TheFs.Delete(KFileFiller);
-	test_Value(r, r == KErrNone || r==KErrNotFound);
+	test(r==KErrNone || r==KErrNotFound);
 	r=TheFs.Delete(KTestFile1);
-	test_Value(r, r == KErrNone || r==KErrNotFound);
+	test(r==KErrNone || r==KErrNotFound);
 	r=TheFs.Delete(KTestFile2);
-	test_Value(r, r == KErrNone || r==KErrNotFound);
+	test(r==KErrNone || r==KErrNotFound);
 	r=TheFs.RmDir(KTestDir1);
-	test_Value(r, r == KErrNone || r==KErrNotFound);
+	test(r==KErrNone || r==KErrNotFound);
 	r=TheFs.RmDir(KTestDir2);
-	test_Value(r, r == KErrNone || r==KErrNotFound);
+	test(r==KErrNone || r==KErrNotFound);
 
 	gMinFileSize = MinimumFileSize(drive);
 	}
@@ -272,7 +271,7 @@ LOCAL_C TInt64 FillDisk(RFile& aFile,TInt64 aNewSpace,TInt aDrive)
 		TInt r=aFile.Write(TheBuffer,s);
 		if( !LffsDrive )
 			{
-			test_KErrNone(r);
+			test(r==KErrNone);
 			}
 		else
 			{
@@ -327,7 +326,7 @@ LOCAL_C void WriteToFile(RFile& aFile,TInt aSize)
 
 		if( !LffsDrive )
 			{
-			test_KErrNone(r);
+			test(r==KErrNone);
 			}
 		else
 			{
@@ -354,17 +353,17 @@ LOCAL_C void CleanupForThread(TInt aTask)
 		{
 		case ETaskMkDir:
 			r=TheFs.RmDir(KTestDir1);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			break;
 		case ETaskRmDir: break;
 		case ETaskDelete: break;
 		case ETaskReplace:
 			r=TheFs.Delete(KTestFile2);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			break;
 		case ETaskFileReplace:
 			r=TheFs.Delete(KTestFile1);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			break;
 		case ETaskFileWrite:
 		case ETaskFileWrite4KB:
@@ -397,15 +396,15 @@ LOCAL_C void InitialiseForThread(TInt aTask)
 		case ETaskMkDir:	break;
 		case ETaskRmDir:
 			r=TheFs.MkDir(KTestDir1);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			break;
 		case ETaskDelete:
 			r=file.Create(TheFs,KTestFile1,EFileShareAny|EFileWrite);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			if( !LffsDrive )
 				{
 				r=file.SetSize(KFileSize1);
-				test_KErrNone(r);
+				test(r==KErrNone);
 				}
 			else
 				{
@@ -417,11 +416,11 @@ LOCAL_C void InitialiseForThread(TInt aTask)
 			break;
 		case ETaskReplace:
 			r=file.Create(TheFs,KTestFile1,EFileShareAny|EFileWrite);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			if( !LffsDrive )
 				{
 				r=file.SetSize(KFileSize1);
-				test_KErrNone(r);
+				test(r==KErrNone);
 				}
 			else
 				{
@@ -429,11 +428,11 @@ LOCAL_C void InitialiseForThread(TInt aTask)
 				}
 			file.Close();
 			r=file2.Create(TheFs,KTestFile2,EFileShareAny|EFileWrite);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			if( !LffsDrive )
 				{
 				r=file2.SetSize(KFileSize3);
-				test_KErrNone(r);
+				test(r==KErrNone);
 				}
 			else
 				{
@@ -443,7 +442,7 @@ LOCAL_C void InitialiseForThread(TInt aTask)
 			break;
 		case ETaskFileReplace:
 			r=file.Create(TheFs,KTestFile1,EFileShareAny|EFileWrite);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			if( !LffsDrive )
 				{
 				r=file.SetSize(KFileSize3*2);
@@ -452,7 +451,7 @@ LOCAL_C void InitialiseForThread(TInt aTask)
 				{
 				WriteToFile( file, KFileSize3 );
 				}
-			test_KErrNone(r);
+			test(r==KErrNone);
 			file.Close();
 			break;
 		case ETaskFileWrite:
@@ -460,16 +459,16 @@ LOCAL_C void InitialiseForThread(TInt aTask)
 		case ETaskFileWrite64KB:
 		case ETaskFileSetSize:
 			r=file.Create(TheFs,KTestFile1,EFileShareAny|EFileWrite);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			file.Close();
 			break;
 		case ETaskNoChange1:
 			r=file.Create(TheFs,KTestFile1,EFileShareAny|EFileWrite);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			if( !LffsDrive )
 				{
 				r=file.SetSize(KFileSize1);
-				test_KErrNone(r);
+				test(r==KErrNone);
 				}
 			else
 				{
@@ -479,7 +478,7 @@ LOCAL_C void InitialiseForThread(TInt aTask)
 			break;
 		case ETaskNoChange2:
 			r=file.Create(TheFs,KTestFile1,EFileShareAny|EFileWrite);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			file.Close();
 			break;
 		case ETaskFileCreateLffs:
@@ -498,37 +497,37 @@ LOCAL_C TInt ThreadFunction(TAny* aThreadTask)
 	RTest test(_L("T_DSPACE_ThreadFunction"));
 	RFs fs;
 	TInt r=fs.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=fs.SetSessionPath(gSessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TThreadTask task=*(TThreadTask*)&aThreadTask;
 	RFile file;
 	switch(task)
 		{
 		case ETaskMkDir:
 			r=fs.MkDir(KTestDir1);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			break;
 		case ETaskRmDir:
 			r=fs.RmDir(KTestDir1);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			break;
 		case ETaskDelete:
 			r=fs.Delete(KTestFile1);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			break;
 		case ETaskReplace:
 			r=fs.Replace(KTestFile1,KTestFile2);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			break;
 		case ETaskFileReplace:
 			r=file.Replace(fs,KTestFile1,EFileShareAny|EFileWrite);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			file.Close();
 			break;
 		case ETaskFileWrite:
 			r=file.Open(fs,KTestFile1,EFileShareAny|EFileWrite);
-			test_KErrNone(r);
+			test(r==KErrNone);
 #if defined(__WINS__)
 			WriteToFile( file, gMinFileSize << 4);	// 512 * 16 = 8K
 #else
@@ -538,35 +537,35 @@ LOCAL_C TInt ThreadFunction(TAny* aThreadTask)
 			break;
 		case ETaskFileWrite4KB:
 			r=file.Open(fs,KTestFile1,EFileShareAny|EFileWrite);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			WriteToFile(file,gMinFileSize << 3);	// 512 * 2^3 = 512 * 8 = 4K
 			file.Close();
 			break;
 		case ETaskFileWrite64KB:
 			r=file.Open(fs,KTestFile1,EFileShareAny|EFileWrite);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			WriteToFile(file,gMinFileSize<<7);	// 512 * 2^7 = 512 * 128 = 64K
 			file.Close();
 			break;
 		case ETaskFileSetSize:
 			r=file.Open(fs,KTestFile1,EFileShareAny|EFileWrite);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			r=file.SetSize(KFileSize3);
 			file.Close();
 			break;
 		case ETaskFileCreateLffs:
 			r=file.Create(fs,KTestFile1,EFileShareAny|EFileWrite);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			file.Close();
 			break;
 		case ETaskNoChange1:
 			{
 			r=file.Open(fs,KTestFile1,EFileShareAny|EFileWrite);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			TTime time;
 			time.HomeTime();
 			r=file.SetModified(time);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			file.Close();
 			break;
 			}
@@ -574,7 +573,7 @@ LOCAL_C TInt ThreadFunction(TAny* aThreadTask)
 			{
 			TEntry e;
 			r=fs.Entry(KTestFile1,e);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			break;
 			}
 		case ETaskSpin:
@@ -733,13 +732,13 @@ void TestDiskNotify()
 	// make default directory
 	_LIT(defaultDir,"C:\\F32-TST\\");
 	TInt r=TheFs.MkDirAll(defaultDir);
-	test_Value(r, r == KErrNone||r==KErrAlreadyExists);
+	test(r==KErrNone||r==KErrAlreadyExists);
 	// create the filler file
 	RFile file;
 	TFileName fileName=_L("C:");
 	fileName+=KFileFiller;
 	r=file.Create(TheFs,fileName,EFileShareAny|EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TInt64 free=FreeDiskSpace(EDriveC);
 	// use up 16KB
 	FillDisk(file,free-16384,EDriveC);
@@ -755,11 +754,11 @@ void TestDiskNotify()
 	RFormat f;
 	TInt count;
 	r=f.Open(TheFs,RemovableDriveBuf,EQuickFormat,count);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	while(count)
 		{
 		r=f.Next(count);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		}
 	f.Close();
 	User::After(1000000);
@@ -773,7 +772,7 @@ void TestDiskNotify()
 	fName+=RemovableDriveBuf;
 	fName+=_L("F32-TST\\");
 	r=TheFs.MkDirAll(fName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	// test that a media change notifies clients on all drives
 	test.Next(_L("media change"));
@@ -807,7 +806,7 @@ void TestDiskNotify()
 	test.Next(_L("scandrive"));
 	// first test that scandrive does not find any problems on the removable media
 	r=TheFs.ScanDrive(RemovableDriveBuf);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	// now set up disk space notification
 	freeC=FreeDiskSpace(EDriveC);
 	freeD=FreeDiskSpace(RemovableDrive);
@@ -817,7 +816,7 @@ void TestDiskNotify()
 	TheFs.NotifyDiskSpace(freeD-8192,RemovableDrive,stat2);
 	test(stat1==KRequestPending && stat2==KRequestPending);
 	r=TheFs.ScanDrive(RemovableDriveBuf);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	User::After(1000000);
 	User::WaitForRequest(stat2);
 	test(stat1==KRequestPending && stat2==KErrNone);
@@ -826,11 +825,11 @@ void TestDiskNotify()
 
 	file.Close();
 	r=TheFs.Delete(fileName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	if(gSessionPath[0]!=(TText)'C')
 		{
 		r=TheFs.RmDir(defaultDir);
-		test_Value(r, r == KErrNone||r==KErrInUse);
+		test(r==KErrNone||r==KErrInUse);
 		}
 
 	}
@@ -846,7 +845,7 @@ void TestFunctions()
 	// create the filler file
 	RFile file;
 	TInt r=file.Create(TheFs,KFileFiller,EFileShareAny|EFileWrite|EFileWriteDirectIO);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TInt64 newSpace = FreeDiskSpace(KDefaultDrive)-8192;
 	FillDisk(file,newSpace,KDefaultDrive);
 
@@ -861,7 +860,7 @@ void TestFunctions()
 	test(stat1==KRequestPending);
 	RThread thread;
 	r=thread.Create(_L("thread1"),ThreadFunction,KStackSize,KHeapSize,KHeapSize,(TAny*)task);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	thread.Resume();
 	User::WaitForRequest(stat1);
 	test(stat1==KErrNone);
@@ -886,7 +885,7 @@ void TestFunctions()
 		TheFs.NotifyDiskSpace(threshold,KDefaultDrive,stat1);
 		test(stat1==KRequestPending);
 		r=thread.Create(_L("thread2"),ThreadFunction,KStackSize,KHeapSize,KHeapSize,(TAny*)task);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		TRequestStatus deathStat;
 		thread.Logon( deathStat );
 		thread.Resume();
@@ -912,7 +911,7 @@ void TestFunctions()
 	TheFs.NotifyDiskSpace(threshold,KDefaultDrive,stat1);
 	test(stat1==KRequestPending);
 	r=thread.Create(_L("thread3"),ThreadFunction,KStackSize,KHeapSize,KHeapSize,(TAny*)task);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	thread.Logon( deathStat );
 	thread.Resume();
 
@@ -945,7 +944,7 @@ void TestFunctions()
 	TheFs.NotifyDiskSpace(threshold,KDefaultDrive,stat1);
 	test(stat1==KRequestPending);
 	r=thread.Create(_L("thread4"),ThreadFunction,KStackSize,KHeapSize,KHeapSize,(TAny*)task);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	thread.Logon( deathStat );
 	thread.Resume();
 	User::WaitForRequest(stat1);
@@ -981,7 +980,7 @@ void TestFunctions()
 	    test(stat1==KRequestPending);
 
 	    r=thread.Create(_L("thread5"),ThreadFunction,KStackSize,KHeapSize,KHeapSize,(TAny*)task);
-	    test_KErrNone(r);
+	    test(r==KErrNone);
 	    thread.Logon( deathStat );
 	    thread.Resume();
 
@@ -1005,7 +1004,7 @@ void TestFunctions()
 	    TheFs.NotifyDiskSpace(threshold,KDefaultDrive,stat1);
 	    test(stat1==KRequestPending);
 	    r=thread.Create(_L("thread6"),ThreadFunction,KStackSize,KHeapSize,KHeapSize,(TAny*)task);
-	    test_KErrNone(r);
+	    test(r==KErrNone);
 	    thread.Logon( deathStat );
 	    thread.Resume();
 	    User::WaitForRequest(stat1);
@@ -1034,15 +1033,15 @@ void TestFunctions()
 		TBuf<10> someFile=_L("?:\\abcdef");
 		TChar c;
 		TInt r=RFs::DriveToChar(RemovableDrive,c);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		someFile[0]=(TText)c;
 #endif
 		_LIT(someDir,"C:\\1234\\");
 
 		r=f2.Create(TheFs,someFile,EFileShareAny|EFileWrite);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		r=TheFs.MkDir(someDir);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		TRequestStatus stat2;
 		TInt64 freeC=FreeDiskSpace(EDriveC);
 		TInt64 freeD=FreeDiskSpace(RemovableDrive);
@@ -1052,7 +1051,7 @@ void TestFunctions()
 		// before fix this would result in iTheDrive not being updated in next subsession call
 		// therefore this could would not result in a disk space notification
 		r=f2.SetSize(8192);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		User::After(1000000);
 		User::WaitForRequest(stat2);
 
@@ -1067,14 +1066,14 @@ void TestFunctions()
 		TheFs.NotifyDiskSpaceCancel();
 		test(stat1==KErrCancel);
 		r=TheFs.Delete(someFile);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		r=TheFs.RmDir(someDir);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		}
 
 	file.Close();
 	r=TheFs.Delete(KFileFiller);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	}
 
 
@@ -1090,7 +1089,7 @@ void TestLffsFunctions()
 	// create the filler file
 	RFile file;
 	TInt r=file.Create(TheFs,KFileFiller,EFileShareAny|EFileWrite|EFileWriteDirectIO);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TInt64 newSpace = FreeDiskSpace(KDefaultDrive)-8192;
 	FillDisk(file,newSpace,KDefaultDrive);
 
@@ -1109,7 +1108,7 @@ void TestLffsFunctions()
 	test(stat1==KRequestPending && stat2==KRequestPending);
 	RThread thread;
 	r=thread.Create(_L("thread7"),ThreadFunction,KStackSize,KHeapSize,KHeapSize,(TAny*)task);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TRequestStatus deathStat;
 	thread.Logon( deathStat );
 	thread.Resume();
@@ -1144,7 +1143,7 @@ void TestLffsFunctions()
 	TheFs.NotifyDiskSpace(threshold3,KDefaultDrive,stat3);
 	test(stat1==KRequestPending && stat2==KRequestPending && stat3==KRequestPending);
 	r=thread.Create(_L("thread8"),ThreadFunction,KStackSize,KHeapSize,KHeapSize,(TAny*)task);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	thread.Logon( deathStat );
 	thread.SetPriority( EPriorityLess );
 	thread.Resume();	// start spinning, blocks background thread
@@ -1159,7 +1158,7 @@ void TestLffsFunctions()
 	test( KErrNone==r );
 	// create a  file to force some roll-forward
 	r=file2.Create(TheFs,KTestFile1,EFileShareAny|EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	User::WaitForRequest(stat1);
 	test(stat1==KErrNone);
 	test(stat2==KRequestPending);
@@ -1194,13 +1193,13 @@ void TestLffsFunctions()
 	TheFs.NotifyDiskSpace(threshold3,KDefaultDrive,stat3);
 	test(stat1==KRequestPending && stat2==KRequestPending && stat3==KRequestPending);
 	r=thread.Create(_L("thread9"),ThreadFunction,KStackSize,KHeapSize,KHeapSize,(TAny*)task);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	thread.Logon( deathStat );
 	thread.SetPriority( EPriorityLess );
 	thread.Resume();	// start spinning, blocks background thread
 	// create a  file to force some roll-forward
 	r=file2.Create(TheFs,KTestFile1,EFileShareAny|EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	User::WaitForRequest(stat1);
 	test(stat1==KErrNone);
 	test(stat2==KRequestPending);
@@ -1225,7 +1224,7 @@ void TestLffsFunctions()
 
 	file.Close();
 	r=TheFs.Delete(KFileFiller);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	}
 
 
@@ -1237,13 +1236,13 @@ void TestMultiple()
 	// create the filler file
 	RFile file;
 	TInt r=file.Create(TheFs,KFileFiller,EFileShareAny|EFileWrite|EFileWriteDirectIO);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TInt64 free=FreeDiskSpace(KDefaultDrive);
 	TInt64 freeSpaceLeft = gMinFileSize << 4;	// 512 * 2^4 = 512 * 16 = 8K
 	FillDisk(file,free-freeSpaceLeft,KDefaultDrive);
 	TInt size;
 	r=file.Size(size);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(size>1024);
 	test.Printf(_L("filler file size=0x%x\n"),size);
 
@@ -1266,7 +1265,7 @@ void TestMultiple()
 	test(stat1==KRequestPending&&stat2==KRequestPending&&stat3==KRequestPending);
 	RThread thread;
 	r=thread.Create(_L("thread1"),ThreadFunction,KStackSize,KHeapSize,KHeapSize,(TAny*)task);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TRequestStatus deathStat;
 	thread.Logon( deathStat );
 	thread.Resume();
@@ -1303,7 +1302,7 @@ void TestMultiple()
 		TheFs.NotifyDiskSpace(threshold3,KDefaultDrive,stat3);
 		test(stat1==KRequestPending&&stat2==KRequestPending&&stat3==KRequestPending);
 		r=thread.Create(_L("thread2"),ThreadFunction,KStackSize,KHeapSize,KHeapSize,(TAny*)task);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		thread.Logon( deathStat );
 		thread.Resume();
 		User::After(10000);
@@ -1340,13 +1339,13 @@ void TestMultiple()
 	test.Next(_L("test multiple sessions on same drive"));
 	RFs ses2,ses3;
 	r=ses2.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=ses3.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=ses2.SetSessionPath(gSessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=ses3.SetSessionPath(gSessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	task=ETaskFileReplace;
 	InitialiseForThread(task);
 	free=FreeDiskSpace(KDefaultDrive);
@@ -1359,7 +1358,7 @@ void TestMultiple()
 	ses3.NotifyDiskSpace(threshold3,KDefaultDrive,stat3);
 	test(stat1==KRequestPending&&stat2==KRequestPending&&stat3==KRequestPending);
 	r=thread.Create(_L("thread3"),ThreadFunction,KStackSize,KHeapSize,KHeapSize,(TAny*)task);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	thread.Logon( deathStat );
 	thread.Resume();
 	User::After(1000000);
@@ -1391,7 +1390,7 @@ void TestMultiple()
 		{
 		TInt sessionDrive;
 		r=RFs::CharToDrive(gSessionPath[0],sessionDrive);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		if(sessionDrive!=RemovableDrive)
 			{
 			// first create a file on the removable drive
@@ -1400,9 +1399,9 @@ void TestMultiple()
 			file2name+=_L("F32-TST\\testfile1");
 			TheFs.Delete(file2name);
 			r=file2.Create(TheFs,file2name,EFileShareAny|EFileWrite);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			r=file2.SetSize(KFileSize3);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			// test multiple sessions not notified on disk space change on wrong drive
 			test.Next(_L("test multiple sessions on different drives"));
 			task=ETaskFileReplace;
@@ -1415,7 +1414,7 @@ void TestMultiple()
 			ses2.NotifyDiskSpace(threshold2,RemovableDrive,stat2);
 			test(stat1==KRequestPending&&stat2==KRequestPending);
 			r=thread.Create(_L("thread4"),ThreadFunction,KStackSize,KHeapSize,KHeapSize,(TAny*)task);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			thread.Logon( deathStat );
 			thread.Resume();
 			User::After(1000000);
@@ -1432,7 +1431,7 @@ void TestMultiple()
 			test(stat2==KErrCancel);
 			file2.Close();
 			r=TheFs.Delete(file2name);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			}
 		}
 
@@ -1442,7 +1441,7 @@ void TestMultiple()
 
 	file.Close();
 	r=TheFs.Delete(KFileFiller);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	}
 
@@ -1455,12 +1454,12 @@ void TestLffsMultiple()
 	// create the filler file
 	RFile file;
 	TInt r=file.Create(TheFs,KFileFiller,EFileShareAny|EFileWrite|EFileWriteDirectIO);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TInt64 free=FreeDiskSpace(KDefaultDrive);
 	FillDisk(file,free-8192,KDefaultDrive);
 	TInt size;
 	r=file.Size(size);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("filler file size=0x%x\n"),size);
 
 
@@ -1481,7 +1480,7 @@ void TestLffsMultiple()
 	test(stat1==KRequestPending&&stat2==KRequestPending&&stat3==KRequestPending);
 	RThread thread;
 	r=thread.Create(_L("thread10"),ThreadFunction,KStackSize,KHeapSize,KHeapSize,(TAny*)task);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TRequestStatus deathStat;
 	thread.Logon( deathStat );
 //	test.Printf(_L("Resuming other thread"));
@@ -1512,7 +1511,7 @@ void TestLffsMultiple()
 
 	TInt sessionDrive;
 	r=RFs::CharToDrive(gSessionPath[0],sessionDrive);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	if(sessionDrive!=EDriveC)
 		{
 		// test multiple sessions not notified on disk space change on wrong drive
@@ -1520,13 +1519,13 @@ void TestLffsMultiple()
 
 		RFs ses2,ses3;
 		r=ses2.Connect();
-		test_KErrNone(r);
+		test(r==KErrNone);
 		r=ses3.Connect();
-		test_KErrNone(r);
+		test(r==KErrNone);
 		r=ses2.SetSessionPath(gSessionPath);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		r=ses3.SetSessionPath(gSessionPath);
-		test_KErrNone(r);
+		test(r==KErrNone);
 
 		// first create a file on the C:\ drive
 		RFile file2;
@@ -1537,7 +1536,7 @@ void TestLffsMultiple()
 		file2name+=_L("testfile1");
 		TheFs.Delete(file2name);
 		r=file2.Create(TheFs,file2name,EFileShareAny|EFileWrite);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		WriteToFile( file2, KFileSize3 );
 
 		task=ETaskFileReplace;
@@ -1550,7 +1549,7 @@ void TestLffsMultiple()
 		ses2.NotifyDiskSpace(threshold2,EDriveC,stat2);
 		test(stat1==KRequestPending&&stat2==KRequestPending);
 		r=thread.Create(_L("thread11"),ThreadFunction,KStackSize,KHeapSize,KHeapSize,(TAny*)task);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		thread.Logon( deathStat );
 		thread.Resume();
 		User::After(1000000);
@@ -1568,7 +1567,7 @@ void TestLffsMultiple()
 		test(stat2==KErrCancel);
 		file2.Close();
 		r=TheFs.Delete(file2name);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		ses2.Close();
 		ses3.Close();
 		}
@@ -1577,7 +1576,7 @@ void TestLffsMultiple()
 
 	file.Close();
 	r=TheFs.Delete(KFileFiller);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	}
 
@@ -1590,7 +1589,7 @@ void TestChangeNotification()
 	// create a filler file
 	RFile file;
 	TInt r=file.Create(TheFs,KFileFiller,EFileShareAny|EFileWrite|EFileWriteDirectIO);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TInt64 free=FreeDiskSpace(KDefaultDrive);
 	// use 8KB in filler file
 	FillDisk(file,free-8192,KDefaultDrive);
@@ -1609,7 +1608,7 @@ void TestChangeNotification()
 	test(stat1==KRequestPending&&stat2==KRequestPending&&stat3==KRequestPending);
 	RThread thread;
 	r=thread.Create(_L("thread1"),ThreadFunction,KStackSize,KHeapSize,KHeapSize,(TAny*)task);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TRequestStatus deathStat;
 	thread.Logon( deathStat );
 	thread.Resume();
@@ -1636,13 +1635,13 @@ void TestChangeNotification()
 	test.Next(_L(" test change notification and disk space notification"));
 	RFs session2,session3;
 	r=session2.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=session3.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=session2.SetSessionPath(gSessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=session3.SetSessionPath(gSessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	task=ETaskFileWrite;
 	InitialiseForThread(task);
 	free=FreeDiskSpace(KDefaultDrive);
@@ -1652,7 +1651,7 @@ void TestChangeNotification()
 	session3.NotifyChange(ENotifyAll,stat3,KTestFile1);
 	test(stat1==KRequestPending&&stat2==KRequestPending&&stat3==KRequestPending);
 	r=thread.Create(_L("thread2"),ThreadFunction,KStackSize,KHeapSize,KHeapSize,(TAny*)task);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	thread.Logon( deathStat );
 	thread.Resume();
 	User::After(1000000);
@@ -1693,7 +1692,7 @@ void TestChangeNotification()
 
 	file.Close();
 	r=TheFs.Delete(KFileFiller);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	}
 
@@ -1709,11 +1708,11 @@ _LIT(KPreModifierPluginFileName,"premodifier_plugin");
 _LIT(KPreModifierPluginName,"PreModifierPlugin");
 const TUint KTestFileSize = KKilo * 100;
 
-#define SAFETEST_KErrNone(a)        if(a != KErrNone)\
+#define SAFETEST(a)				if(a != KErrNone)\
                                         {\
                                         TheFs.DismountPlugin(KPreModifierPluginName);\
                                         TheFs.RemovePlugin(KPreModifierPluginName);\
-                                        test_KErrNone(a);\
+                                        test(a == KErrNone);\
                                         }
 
 TInt PluginTestThreadFunction(TAny*)
@@ -1723,19 +1722,19 @@ TInt PluginTestThreadFunction(TAny*)
     fs.Connect();
     
     TInt r = fs.SetSessionPath(gSessionPath);
-    test_KErrNone(r);
+    test(r == KErrNone);
     
     RFile file;
     r = file.Create(fs, KTestFile1, EFileShareAny|EFileWrite);
-    test_KErrNone(r);
+    test(r == KErrNone);
     r = file.SetSize(KTestFileSize);
-    test_KErrNone(r);
+    test(r == KErrNone);
     file.Close();
       
     User::After(5000000); // wait for 5 seconds, to ensure first notification received.
     
     r = fs.Delete(KTestFile1);
-    test_KErrNone(r);
+    test(r == KErrNone);
     
     fs.Close();
     return KErrNone;
@@ -1747,17 +1746,17 @@ void TestDiskSpaceNotifyWithPlugin()
       
     TInt drive;
     TInt r = RFs::CharToDrive(gSessionPath[0],drive);
-    SAFETEST_KErrNone(r);
+    SAFETEST(r);
     Format(drive);
     
     r = TheFs.MkDirAll(gSessionPath);
-    SAFETEST_KErrNone(r);
+    SAFETEST(r);
      
     r = TheFs.AddPlugin(KPreModifierPluginFileName);
-    SAFETEST_KErrNone(r);
+    SAFETEST(r);
 
     r = TheFs.MountPlugin(KPreModifierPluginName);
-    SAFETEST_KErrNone(r);
+    SAFETEST(r);
     
     TInt64 free = FreeDiskSpace(drive);
     TInt64 threshold = free - KTestFileSize + 1;
@@ -1769,26 +1768,26 @@ void TestDiskSpaceNotifyWithPlugin()
     
     RThread thread;
     r = thread.Create(_L("PluginTestThread"), PluginTestThreadFunction, KStackSize, KHeapSize, KHeapSize, NULL);
-    SAFETEST_KErrNone(r);
+    SAFETEST(r);
     thread.Logon(statusDeath);
     thread.Resume();
     
     User::WaitForRequest(status);
-    SAFETEST_KErrNone(status.Int());
+    SAFETEST(status.Int());
     
     TheFs.NotifyDiskSpace(threshold, drive, status);
     User::WaitForRequest(status);
-    SAFETEST_KErrNone(status.Int());
+    SAFETEST(status.Int());
     
     User::WaitForRequest(statusDeath);
-    SAFETEST_KErrNone(statusDeath.Int());
+    SAFETEST(statusDeath.Int());
     thread.Close();
     
     r = TheFs.DismountPlugin(KPreModifierPluginName);
-    SAFETEST_KErrNone(r);
+    SAFETEST(r);
 
     r = TheFs.RemovePlugin(KPreModifierPluginName);
-    SAFETEST_KErrNone(r);
+    SAFETEST(r);
 
     Format(drive);
     }
@@ -1831,7 +1830,7 @@ GLDEF_C void CallTestsL()
 		}
 	//Test uses C drive as secondary drive so test can't be tested on that drive
 	r = TheFs.CharToDrive(gSessionPath[0], driveNumber);
-	test_KErrNone(r);
+	test(r == KErrNone);
 	if(driveNumber == EDriveC)
 		{
 		test.Printf(_L("Test uses C drive as secondary drive so test can't be test on C drive, test will exit"));

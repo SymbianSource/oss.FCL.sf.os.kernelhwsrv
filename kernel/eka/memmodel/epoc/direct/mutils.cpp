@@ -474,32 +474,6 @@ EXPORT_C TInt Epoc::FreePhysicalRam(TInt aNumPages, TPhysAddr* aPageList)
 
 
 /**
-Free a RAM zone which was previously allocated by one of these methods:
-Epoc::AllocPhysicalRam(), Epoc::ZoneAllocPhysicalRam() or 
-TRamDefragRequest::ClaimRamZone().
-
-All of the pages in the RAM zone must be allocated and only via one of the methods 
-listed above, otherwise a system panic will occur.
-
-@param	aZoneId			The ID of the RAM zone to free.
-@return	KErrNone 		If the operation was successful.
-		KErrArgument 	If a RAM zone with ID aZoneId was not found.
-
-@pre Calling thread must be in a critical section.
-@pre Interrupts must be enabled.
-@pre Kernel must be unlocked.
-@pre No fast mutex can be held.
-@pre Call in a thread context.
-@pre Can be used in a device driver.
-*/
-EXPORT_C TInt Epoc::FreeRamZone(TUint aZoneId)
-	{
-	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL,"Epoc::FreeRamZone");
-	return KErrNotSupported;
-	}
-
-
-/**
 	@pre	Call in a thread context.
 	@pre	Interrupts must be enabled.
 	@pre	Kernel must be unlocked.

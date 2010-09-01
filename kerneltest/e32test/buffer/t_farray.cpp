@@ -157,30 +157,6 @@ LOCAL_C void testFix(CArrayFix<TBuf<0x10> >& aFix)
 			}
 		test(&aFix[index3-1]==--ptr);
 		}
-	
-	//Test ExpandL
-	//Expand array in slot 1
-	TBuf16<0x10> exp;
-	exp=_L("abc AbC");
-	aFix.InsertL(0,exp);
-	aFix.InsertL(1,exp);
-	aFix.InsertL(2,exp);
-	exp=aFix.ExpandL(1);
-	test(aFix[0]==_L("abc AbC"));
-	test(aFix[1]==_L(""));
-	test(aFix[2]==_L("abc AbC"));
-	test(aFix[3]==_L("abc AbC"));
-	
-	//Test ResizeL and InsertReplL
-	//Resize the array to containing 20 records,
-	//copying a record into any new slots.
-	TBuf<0x10> res(_L("bbbbb"));
-	aFix.Reset();
-	aFix.ResizeL(20,res);
-	for(TInt i=0;i<20;i++)
-	    {
-        test(aFix[1]==_L("bbbbb"));
-	    }
 	}
 
 LOCAL_C void test1(CArrayFix<TText>& aFix)
@@ -366,13 +342,6 @@ GLDEF_C TInt E32Main()
 	CArrayFixFlat<TInt>* pFixFlatInt=new CArrayFixFlat<TInt>(KTestGranularity);
 	test3(*pFixFlatInt);
 	delete pFixFlatInt;
-	
-	CArrayFixFlat<TUid>* pFixFlatTUid=new CArrayFixFlat<TUid>(KTestGranularity);
-	if (pFixFlatTUid==NULL)
-		{
-	    test.Panic(_L("Allocating array of TUid"));
-		}
-	delete pFixFlatTUid; 
 
 	test.Next(_L("class CArrayPtrFlat of CBase"));
 	

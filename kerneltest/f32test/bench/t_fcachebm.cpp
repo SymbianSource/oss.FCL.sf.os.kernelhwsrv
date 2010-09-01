@@ -68,6 +68,7 @@ TBuf16<25> gBaseFile;
 TBuf16<25> gFileA;
 TBuf16<25> gFileB;
 TBuf16<25> gStreamFile;
+TInt64 gMediaSize;
 
 HBufC8* gBuf = NULL;
 TPtr8 gBufReadPtr(NULL, 0);	
@@ -1454,6 +1455,8 @@ GLDEF_C void CallTestsL()
 	FailIfError(r);
 	r = TheFs.Volume(volInfo, drive);
 	FailIfError(r);
+	
+	gMediaSize = volInfo.iSize;
 	
 	FormatFat(gSessionPath[0]-'A');
 	TheFs.MkDirAll(gSessionPath);

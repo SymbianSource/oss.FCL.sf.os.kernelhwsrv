@@ -1804,11 +1804,9 @@ void DMMCStack::SchedDisengage()
 	if( sessP->iCardP != NULL && sessP->iCardP->iUsingSessionP == sessP )
 		sessP->iCardP->iUsingSessionP = NULL;
 
-	// Some sessions may attach to more than once card, so need to iterate 
+	// iAutoUnlockSession may attach to more than once card, so need to iterate 
 	// through all cards and clear their session pointers if they match sessP
-	if (sessP == &iAutoUnlockSession || 
-		sessP->iSessionID == ECIMLockUnlock || 
-		sessP->iSessionID == ECIMInitStackAfterUnlock)
+	if (sessP == &iAutoUnlockSession)
 		{
 		for (TUint i = 0; i < iMaxCardsInStack; i++)
 			{
@@ -1944,11 +1942,6 @@ inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedCompletionPass()
 
 			if(doCallback)
 				{
-				// Restore the callers card pointer as some state machines 
-				// (e.g. ECIMLockUnlock, ECIMInitStackAfterUnlock) can change it
-				sessP->RestoreCard();
-
-
 				// call media driver completion routine or StackSessionCBST().
 				sessP->iCallBack.CallBack();
 				}
@@ -6070,8 +6063,6 @@ inline TMMCErr DMMCStack::CIMEraseSM()
 			return KMMCErrNotSupported;
 		    }
 
-		DoAddressCard(s.iCardP->iIndex-1);
-
 		s.iState |= KMMCSessStateInProgress;
 		m.SetTraps( KMMCErrInitContext );
 
@@ -6417,9 +6408,6 @@ inline TMMCErr DMMCStack::CIMAutoUnlockSM()
 			{
 			EStBegin=0,
 			EStNextIndex,
-			EStSendStatus,
-			EStGetStatus,
-			EStUnlock,
 			EStInitStackAfterUnlock,
 			EStIssuedLockUnlock,
 			EStDone,
@@ -6482,32 +6470,12 @@ inline TMMCErr DMMCStack::CIMAutoUnlockSM()
 		//
 		// Upon completion, test the next card before performing further initialisation.
 		//
-		
-		DoAddressCard(iAutoUnlockIndex); 	// Address the card
-		TMMCard* cd = iCardArray->CardP(iAutoUnlockIndex);
-		s.SetCard(cd);
 
-	SMF_STATE(EStSendStatus)
-		        
-		s.FillCommandDesc(ECmdSendStatus, 0);
-		                        
-		SMF_INVOKES(ExecCommandSMST,EStGetStatus)
-		                        
-	SMF_STATE(EStGetStatus)
-		                        
-		const TMMCStatus st = s.LastStatus();
-		if((st & KMMCStatCardIsLocked) == 0)
-			{
-			SMF_GOTOS(EStNextIndex);
-		    }
-		                        
-	SMF_STATE(EStUnlock)
-		                        
-		const TMapping *mp = NULL;
-		mp = iSocket->iPasswordStore->FindMappingInStore(iCardArray->CardP(iAutoUnlockIndex)->CID());
-
-		OstTrace1( TRACE_INTERNALS, DMMCSTACK_CIMAUTOUNLOCKSM4, "Attempting to unlock card %d", iCardArray->CardP(iAutoUnlockIndex)->Number() );
+		TMMCard &cd = *(iCardArray->CardP(iAutoUnlockIndex++));
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_CIMAUTOUNLOCKSM4, "Attempting to unlock card %d", cd.Number() );
 		
+		s.SetCard(&cd);
+
 		const TInt kPWD_LEN = mp->iPWD.Length();
 		iPSLBuf[0] = 0;				// LOCK_UNLOCK = 0; unlock
 		iPSLBuf[1] = static_cast<TUint8>(kPWD_LEN);
@@ -6782,21 +6750,6 @@ TBusWidth DMMCStack::BusWidthEncoding(TInt aBusWidth) const
 		}
 	OstTraceFunctionExitExt( DMMCSTACK_BUSWIDTHENCODING_EXIT, this, ( TUint )&( busWidth ) );
 	return busWidth;
-	}
-
-void DMMCStack::DoAddressCard(TInt aCardNumber)
-	{
-	MAddressCard* addressCardInterface = NULL;
-	GetInterface(KInterfaceAddressCard, (MInterface*&) addressCardInterface);
-	if (addressCardInterface)
-		addressCardInterface->AddressCard(aCardNumber);
-	else
-		{
-		// if the interface isn't supported on a multiplexed bus, then panic if the card number > 0 - 
-		// one cause of this panic is if the PSL 's implementation of GetInterface() does not call the 
-		// base class's implementation of GetInterface()
-		__ASSERT_ALWAYS((!iMultiplexedBus) || (aCardNumber <= 0), DMMCSocket::Panic(DMMCSocket::EMMCAddressCardNotSupported));
-		}
 	}
 
 /**

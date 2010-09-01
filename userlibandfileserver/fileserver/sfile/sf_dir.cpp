@@ -17,10 +17,6 @@
 
 #include "sf_std.h"
 
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "sf_dirTraces.h"
-#endif
-
 LOCAL_C CDirCB* GetDirFromHandle(TInt aHandle,CSessionFs* aSession)
 //
 // Get the dir control block from its handle.
@@ -56,18 +52,19 @@ void fsDirReadPacked(TEntry* pE,TEntry* pEnd,volatile TInt& aLen,CDirCB& aDir)
 		{
 		TEntry e;
 
-		OstTrace1(TRACE_FILESYSTEM, FSYS_ECDIRCBREADL2, "fsDirReadPacked this %x", &aDir);
+		TRACE1(UTF::EBorder, UTraceModuleFileSys::ECDirCBReadL, EF32TraceUidFileSys, &aDir);
 		aDir.ReadL(e);
-		OstTraceExt5(TRACE_FILESYSTEM, FSYS_ECDIRCBREADL2RET, "fsDirReadPacked r %d att %x modified %x:%x  size %d", (TUint) KErrNone, (TUint) e.iAtt, (TUint) I64HIGH(e.iModified.Int64()), (TUint) I64LOW(e.iModified.Int64()), (TUint) e.iSize);
+		TRACE5(UTF::EBorder, UTraceModuleFileSys::ECDirCBReadLRet, EF32TraceUidFileSys, 
+			KErrNone, e.iAtt, I64LOW(e.iModified.Int64()), I64HIGH(e.iModified.Int64()), e.iSize);
 		TInt len=EntrySize(e, EFalse);
 		TInt rLen=EntrySize(e, ETrue);
 		TEntry* pX=PtrAdd(pE,rLen);
 		if (pX>pEnd)
 			{
 
-			OstTrace1(TRACE_FILESYSTEM, FSYS_ECDIRCBSTORELONGENTRYNAMEL, "fsDirReadPacked this %x", &aDir);
+			TRACE1(UTF::EBorder, UTraceModuleFileSys::ECDirCBStoreLongEntryNameL, EF32TraceUidFileSys, &aDir);
 			aDir.StoreLongEntryNameL(e.iName);
-			OstTrace1(TRACE_FILESYSTEM, FSYS_ECDIRCBSTORELONGENTRYNAMELRET, "fsDirReadPacked r %d", KErrNone);
+			TRACE1(UTF::EBorder, UTraceModuleFileSys::ECDirCBStoreLongEntryNameLRet, EF32TraceUidFileSys, KErrNone);
 
 			aDir.SetPending(ETrue);
 			break;
@@ -116,8 +113,7 @@ TInt TFsDirOpen::DoRequestL(CFsRequest* aRequest)
 	CFsPlugin* plugin = NULL;
 	//Get the next plugin which is mounted on this drive (IsMounted called in NextPlugin)
 	//Do not check whether we're registered for current operation (in case not registered for EFsDirOpen)
-	FsPluginManager::ReadLockChain();                                      //!Check operation
-	while(FsPluginManager::NextPlugin(plugin,(CFsMessageRequest*)aRequest,(TBool)EFalse)==KErrNone && plugin)
+	while(FsPluginManager::NextPlugin(plugin,(CFsMessageRequest*)aRequest,(TBool)ETrue,(TBool)EFalse)==KErrNone && plugin)
 		{
 		if(plugin->IsRegistered(EFsDirReadOne) ||
 			plugin->IsRegistered(EFsDirReadPacked) ||
@@ -130,7 +126,6 @@ TInt TFsDirOpen::DoRequestL(CFsRequest* aRequest)
 			break;
 			}
 		}
-	FsPluginManager::UnlockChain();
 	
 	TPtrC8 pH((TUint8*)&h,sizeof(TInt));
 	TRAP(r,aRequest->WriteL(KMsgPtr3,pH))
@@ -168,10 +163,10 @@ TInt TFsDirReadOne::DoRequestL(CFsRequest* aRequest)
 		return(r);
 	TEntry e;
 
-	OstTrace1(TRACE_FILESYSTEM, FSYS_ECDIRCBREADL1, "this %x", &dir);
+	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECDirCBReadL, EF32TraceUidFileSys, &dir);
 	TRAP(r,dir->ReadL(e))
-	OstTraceExt5(TRACE_FILESYSTEM, FSYS_ECDIRCBREADL1RET, "r %d att %x modified %x:%x  size %d", (TUint) KErrNone, (TUint) e.iAtt, (TUint) I64HIGH(e.iModified.Int64()), (TUint) I64LOW(e.iModified.Int64()), (TUint) e.iSize);
-		
+	TRACE5(UTF::EBorder, UTraceModuleFileSys::ECDirCBReadLRet, EF32TraceUidFileSys, 
+		KErrNone, e.iAtt, I64LOW(e.iModified.Int64()), I64HIGH(e.iModified.Int64()), e.iSize);
 
 
 	if (r==KErrNone)

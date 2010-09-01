@@ -136,6 +136,8 @@ _LIT(KDevLdd3,"enet.ldd");
 _LIT(KDevLdd3Name,"Ethernet");
 _LIT(KDevLdd4,"esoundsc.ldd");
 _LIT(KDevLdd4Name,"SoundSc");
+_LIT(KDevLdd5,"eusbc.ldd");
+_LIT(KDevLdd5Name, "Usbc");
 
 //Thread data for each thread
 struct	TThreadData

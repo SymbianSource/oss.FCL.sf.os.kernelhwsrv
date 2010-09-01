@@ -75,7 +75,6 @@
 #include <e32kpan.h>
 #include <e32property.h>
 #include <e32rom.h>
-#include <u32hal.h>
 #include "d_memorytest.h"
 #include "d_demandpaging.h"
 #include "d_gobble.h"
@@ -109,14 +108,6 @@ TUint8* SharedBuffer = NULL;
 // A descriptor whose header is in paged memory (actually just a pointer to a zero word)
 TDesC8* PagedHeaderDes = NULL;
 
-// An area of paged rom if rom paging is supported, or zero
-TUint8* RomPagedBuffer = NULL;
-TInt RomPagedBufferSize = 0;
-
-// An area of paged code if code paging is supported, or zero
-TUint8* CodePagedBuffer = NULL;
-TInt CodePagedBufferSize = 0;
-
 // A data paged chunk used as a buffer, if data paging is supported
 _LIT(KChunkName, "t_demandpaging chunk");
 RChunk DataPagedChunk;
@@ -128,13 +119,7 @@ TUint8 ReadByte(volatile TUint8* aPtr)
 	return *aPtr;
 	}
 
-TUint8 WriteByte(volatile TUint8* aPtr)
-	{
-	return *aPtr = 1;
-	}
-
 #define READ(a) ReadByte((volatile TUint8*)(a))
-#define WRITE(a) WriteByte((volatile TUint8*)(a))
 
 void ThrashPaging(TUint aBytes)
 	{
@@ -450,13 +435,12 @@ enum TIpcObjectPaged
 	EDesContentPaged
 	};
 
-enum TThreadOutcome
+enum TRealtimeOutcome
 	{
 	ENoError,
 	EBadDescriptor,
 	EServerTerminated,
-	ERealtimePanic,
-	EAbortPanic
+	ERealtimePanic
 	};
 
 class RTestSession : public RSessionBase
@@ -642,7 +626,7 @@ TInt IpcTestClientFunc(TAny* aArg)
 	return r;
 	}
 
-void TestThreadOutcome(RThread aThread, TThreadOutcome aOutcome)
+void TestRealtimeOutcome(RThread aThread, TRealtimeOutcome aOutcome)
 	{
 	switch(aOutcome)
 		{
@@ -667,12 +651,6 @@ void TestThreadOutcome(RThread aThread, TThreadOutcome aOutcome)
 			test_Equal(EIllegalFunctionForRealtimeThread, aThread.ExitReason());
 			break;
 
-		case EAbortPanic:
-			test_Equal(EExitPanic, aThread.ExitType());
-			// category for paging errors tested elsewhere
-			test_Equal(KErrAbort, aThread.ExitReason());
-			break;
-
 		default:
 			test(EFalse);
 		}
@@ -683,9 +661,8 @@ void TestPagedIpc(TIpcDir aIpcDir,
 				  TIpcObjectPaged aServerPaged,
 				  User::TRealtimeState aClientState,
 				  User::TRealtimeState aServerState,
-				  TThreadOutcome aClientOutcome,
-				  TThreadOutcome aServerOutcome,
-				  TPagingErrorContext aSimulatedError = EPagingErrorContextNone)
+				  TRealtimeOutcome aClientOutcome,
+				  TRealtimeOutcome aServerOutcome)
 	{
 	test.Printf(_L("TestPagedIpc %d %d %d %d %d %d %d\n"), aIpcDir, aClientPaged, aServerPaged,
 				aClientState, aServerState, aClientOutcome, aServerOutcome);
@@ -711,11 +688,6 @@ void TestPagedIpc(TIpcDir aIpcDir,
 	name = clientThread.Name();
 	test.Printf(_L("  client: %S\n"), &name);
 	clientThread.Logon(clientStatus);
-
-	// set up simulated failure if specifed
-	if (aSimulatedError != EPagingErrorContextNone)
-		test_KErrNone(UserSvr::HalFunction(EHalGroupVM, EVMHalDebugSetFail, (TAny*)aSimulatedError, 0));
-	
 	clientThread.Resume();
 
 	User::WaitForRequest(serverStatus);
@@ -724,13 +696,9 @@ void TestPagedIpc(TIpcDir aIpcDir,
 
 	User::WaitForRequest(clientStatus);
 	test.Printf(_L("  client exit type is %d %d\n"), clientThread.ExitType(), clientThread.ExitReason());
-	
-	// cancel any simulated failure
-	if (aSimulatedError != EPagingErrorContextNone)
-		test_KErrNone(UserSvr::HalFunction(EHalGroupVM, EVMHalDebugSetFail, (TAny*)EPagingErrorContextNone, 0));
 
-	TestThreadOutcome(serverThread, aServerOutcome);
-	TestThreadOutcome(clientThread, aClientOutcome);
+	TestRealtimeOutcome(serverThread, aServerOutcome);
+	TestRealtimeOutcome(clientThread, aClientOutcome);
 	
 	CLOSE_AND_WAIT(serverThread);
 	CLOSE_AND_WAIT(clientThread);
@@ -749,7 +717,7 @@ TInt TestThreadFunction(TAny* aType)
 	return KErrNone;
 	}
 
-TInt RunTestThread(User::TRealtimeState aType, TThreadOutcome aOutcome)
+TInt RunTestThread(User::TRealtimeState aType, TRealtimeOutcome aOutcome)
 	{
 	RThread thread;
 	TInt r=thread.Create(KNullDesC, &TestThreadFunction, 0x1000, NULL, (TAny*)aType);
@@ -761,7 +729,7 @@ TInt RunTestThread(User::TRealtimeState aType, TThreadOutcome aOutcome)
 		return s.Int();
 	thread.Resume();
 	User::WaitForRequest(s);
-	TestThreadOutcome(thread, aOutcome);
+	TestRealtimeOutcome(thread, aOutcome);
 	CLOSE_AND_WAIT(thread);
 	return KErrNone;
 	}
@@ -841,141 +809,6 @@ void TestRealtimeState()
 
 	// retore size of live list
 	test(KErrNone==DPTest::SetCacheSize(0,0));
-	}
-
-enum TPageFaultType
-	{
-	EPageFaultRomRead,
-	EPageFaultCodeRead,
-	EPageFaultDataRead,
-	EPageFaultDataWrite,
-	};
-
-
-TInt TestPagingErrorThreadFunction(TAny* aArg)
-	{
-	TUint8* ptr = (TUint8*)((TUint)aArg & ~1);
-	TBool write = ((TUint)aArg & 1) != 0;
-
-	if (write)
-		{
-		WRITE(ptr);
-		return DPTest::FlushCache();
-		}
-	else
-		{
-		READ(ptr);
-		return KErrNone;
-		}
-	}
-
-void TestPagingError(TPageFaultType aPageFaultType,
-					 TPagingErrorContext aSimulatedError,
-					 TExitType aExpectedExitType,
-					 const TDesC& aExpectedExitCategory,
-					 TInt aExpectedExitReason)
-	{
-	test.Printf(_L("TestPagingError %d %d %d \"%S\" %d\n"), aPageFaultType, aSimulatedError,
-				aExpectedExitType, &aExpectedExitCategory, aExpectedExitReason);
-	
-	TUint8* ptr;
-	TBool write;
-
-	switch(aPageFaultType)
-		{
-		case EPageFaultRomRead:   ptr = RomPagedBuffer;  write = EFalse; break;
-		case EPageFaultCodeRead:  ptr = CodePagedBuffer; write = EFalse; break;
-		case EPageFaultDataRead:  ptr = DataPagedBuffer; write = EFalse; break;
-		case EPageFaultDataWrite: ptr = DataPagedBuffer; write = ETrue;  break;
-		default: test(EFalse); return;
-		}
-
-	if (ptr == NULL) return;  // specified type of paging is not enabled
-
-	if (write)
-		READ(ptr);  // ensure data to be written is paged in
-	else
-		test_KErrNone(DPTest::FlushCache());  // ensure data to be read is paged out
-
-	// set up simulated failure
-	test_KErrNone(UserSvr::HalFunction(EHalGroupVM, EVMHalDebugSetFail, (TAny*)aSimulatedError, 0));
-	
-	RThread thread;
-	TAny* arg = (TAny*)((TUint)ptr | (write ? 1 : 0));
-	test_KErrNone(thread.Create(KNullDesC, &TestPagingErrorThreadFunction, 0x1000, NULL, arg));
-	TRequestStatus s;
-	thread.Logon(s);
-	test_Equal(KRequestPending, s.Int());
-	thread.Resume();
-	User::WaitForRequest(s);
-
-	// cancel any simulated failure
-	test_KErrNone(UserSvr::HalFunction(EHalGroupVM, EVMHalDebugSetFail, (TAny*)EPagingErrorContextNone, 0));
-
-	TExitCategoryName exitCategory = thread.ExitCategory();
-	test.Printf(_L("  thread exit type is %d \"%S\" %d\n"),
-				thread.ExitType(), &exitCategory, thread.ExitReason());
-	
-	test_Equal(aExpectedExitType, thread.ExitType());
-	if (aExpectedExitType == EExitPanic)
-		test_Equal(0, aExpectedExitCategory.Compare(exitCategory));	
-	test_Equal(aExpectedExitReason, thread.ExitReason());	
-	
-	CLOSE_AND_WAIT(thread);
-	}
-
-void CreateDataPagedChunk()
-	{
-	TChunkCreateInfo createInfo;
-	createInfo.SetNormal(KMinBufferSize, KMinBufferSize);
-	createInfo.SetPaging(TChunkCreateInfo::EPaged);
-	createInfo.SetOwner(EOwnerProcess);
-	createInfo.SetGlobal(KChunkName);
-	test_KErrNone(DataPagedChunk.Create(createInfo));
-	test(DataPagedChunk.IsPaged()); // this is only ever called if data paging is supported
-	DataPagedBuffer = (TUint8*)DataPagedChunk.Base();
-	}
-
-void TestPagingErrors()
-	{
-	// test what happens when the paging system encounters errors such as failure when accessing
-	// media or decompressing paged data
-
-	//              page fault type:     simulated error:                   exit type:  exit category:          exit reason:
-	TestPagingError(EPageFaultRomRead,   EPagingErrorContextNone,           EExitKill,  KNullDesC,              KErrNone);
-	TestPagingError(EPageFaultRomRead,   EPagingErrorContextRomRead,        EExitPanic, _L("PAGED-ROM-READ"),   KErrAbort);
-	TestPagingError(EPageFaultRomRead,   EPagingErrorContextRomDecompress,  EExitPanic, _L("PAGED-ROM-COMP"),   KErrAbort);
-	
-	TestPagingError(EPageFaultCodeRead,  EPagingErrorContextNone,           EExitKill,  KNullDesC,              KErrNone);
-	TestPagingError(EPageFaultCodeRead,  EPagingErrorContextCodeRead,       EExitPanic, _L("PAGED-CODE-READ"),  KErrAbort);
-	TestPagingError(EPageFaultCodeRead,  EPagingErrorContextCodeDecompress, EExitPanic, _L("PAGED-CODE-COMP"),  KErrAbort);
-
-	if (DataPagedBuffer)
-		{
-		// Note WDP write faults are only reported on the next read
-		WRITE(DataPagedBuffer);  // ensure page is not blank and will be read from swap
-		
-		//              page fault type:     simulated error:               exit type:  exit category:          exit reason:
-		TestPagingError(EPageFaultDataRead,  EPagingErrorContextNone,       EExitKill,  KNullDesC,              KErrNone);
-		TestPagingError(EPageFaultDataRead,  EPagingErrorContextDataRead,   EExitPanic, _L("PAGED-DATA-READ"),  KErrAbort);
-		TestPagingError(EPageFaultDataWrite, EPagingErrorContextDataWrite,  EExitKill,  KNullDesC,              KErrNone);
-		TestPagingError(EPageFaultDataRead,  EPagingErrorContextNone,       EExitPanic, _L("PAGED-DATA-WRITE"), KErrAbort);
-
-		// this will now always panic when we try to access the first page so destroy and re-create it
-		DataPagedChunk.Close();
-		CreateDataPagedChunk();
-		}
-
-	// test attribution of errors during IPC
-	TPagingErrorContext error;
-	if (RomPagedBuffer)
-		error = EPagingErrorContextRomRead;
-	else if (CodePagedBuffer)
-		error = EPagingErrorContextCodeRead;
-	else
-		error = EPagingErrorContextDataRead;
-	//           ipc dir:     client paged:     server paged:  client state:            server state:            client outcome:  server outcome:
-	TestPagedIpc(EServerRead, EDesContentPaged, ENothingPaged, User::ERealtimeStateOff, User::ERealtimeStateOff, EAbortPanic,     EBadDescriptor,  error);
 	}
 
 void TestLock()
@@ -1454,45 +1287,50 @@ TInt E32Main()
 	test.Start(_L("Initialisation"));
 	
 	if (DPTest::Attributes() & DPTest::ERomPaging)
-		{
 		test.Printf(_L("Rom paging supported\n"));
-		TRomHeader* romHeader = (TRomHeader*)UserSvr::RomHeaderAddress();
-		test(romHeader->iPageableRomStart);
-		// todo: for some reason the first part of page of paged rom doesn't seem to get paged out
-		// when we flush the paging cache, hence RomPagedBuffer starts some way into this
-		RomPagedBuffer = (TUint8*)romHeader + romHeader->iPageableRomStart + 64 * PageSize; 
-		RomPagedBufferSize = romHeader->iPageableRomSize - 64 * PageSize;
-		test(RomPagedBufferSize > 0);
-		}
-	
 	if (DPTest::Attributes() & DPTest::ECodePaging)
-		{
 		test.Printf(_L("Code paging supported\n"));
-		test_KErrNone(PagedLibrary.Load(KTCodePagingDll4));		
-		TGetAddressOfDataFunction func = (TGetAddressOfDataFunction)PagedLibrary.Lookup(KGetAddressOfDataFunctionOrdinal);
-		CodePagedBuffer = (TUint8*)func(CodePagedBufferSize);
-		test_NotNull(CodePagedBuffer);
-		test(CodePagedBufferSize > KMinBufferSize);
-		}
-	
 	if (DPTest::Attributes() & DPTest::EDataPaging)
 		{
 		test.Printf(_L("Data paging supported\n"));
 		DataPagingSupported = ETrue;
-		CreateDataPagedChunk();
+		TChunkCreateInfo createInfo;
+		createInfo.SetNormal(KMinBufferSize, KMinBufferSize);
+		createInfo.SetPaging(TChunkCreateInfo::EPaged);
+		createInfo.SetOwner(EOwnerProcess);
+		createInfo.SetGlobal(KChunkName);
+		test_KErrNone(DataPagedChunk.Create(createInfo));
+		test(DataPagedChunk.IsPaged()); // this is only ever called if data paging is supported
+		DataPagedBuffer = (TUint8*)DataPagedChunk.Base();
 		}
 
 	if (DPTest::Attributes() & DPTest::ERomPaging)
 		{
 		// Use paged part of rom for testing
-		LargeBuffer = RomPagedBuffer;
-		LargeBufferSize = RomPagedBufferSize;
+		TRomHeader* romHeader = (TRomHeader*)UserSvr::RomHeaderAddress();
+		test(romHeader->iPageableRomStart);
+		// todo: for some reason the first part of page of paged rom doesn't seem to get paged out
+		// when we flush the paging cache, hence LargeBuffer starts some way into this
+		LargeBuffer = (TUint8*)romHeader + romHeader->iPageableRomStart + 64 * PageSize; 
+		LargeBufferSize = romHeader->iPageableRomSize - 64 * PageSize;
+		test(LargeBufferSize > 0);
+		// Find a zero word in rom to set PagedHeaderDes to
+		TUint* ptr = (TUint*)LargeBuffer;
+		TUint* end = (TUint*)(LargeBuffer + LargeBufferSize);
+		while (*ptr && ptr < end)
+			++ptr;
+		test(*ptr == 0);
+		test.Printf(_L("Found zero word at %08x\n"), ptr);
+		PagedHeaderDes = (TDesC8*)ptr;
 		}
 	else if (DPTest::Attributes() & DPTest::ECodePaging)
 		{
 		// Use code paged DLL for testing
-		LargeBuffer = CodePagedBuffer;
-		LargeBufferSize = CodePagedBufferSize;
+		test_KErrNone(PagedLibrary.Load(KTCodePagingDll4));		
+		TGetAddressOfDataFunction func = (TGetAddressOfDataFunction)PagedLibrary.Lookup(KGetAddressOfDataFunctionOrdinal);
+		LargeBuffer = (TUint8*)func(LargeBufferSize);
+		test_NotNull(LargeBuffer);
+		PagedHeaderDes = (TDesC8*)LargeBuffer + 4;
 		}
 	else if (DPTest::Attributes() & DPTest::EDataPaging)
 		{
@@ -1506,16 +1344,7 @@ TInt E32Main()
 		test.End();
 		return 0;
 		}
-	
-	// Find a paged zero word to set PagedHeaderDes to
-	TUint* ptr = (TUint*)LargeBuffer;
-	TUint* end = (TUint*)(LargeBuffer + LargeBufferSize);
-	while (*ptr && ptr < end)
-		++ptr;
-	test(*ptr == 0);
-	test.Printf(_L("Found zero word at %08x\n"), ptr);
-	PagedHeaderDes = (TDesC8*)ptr;
-
+		
 	test.Next(_L("Test HAL interface"));
 	TestHAL();
 	
@@ -1561,15 +1390,6 @@ TInt E32Main()
 
 	test.Next(_L("Test no kernel faults when copying data from unpaged rom with mutex held"));
 	TestReadHoldingMutex();
-	
-#ifdef _DEBUG
-	// test hook in kernel not present in release mode
-	if ((MemModelAttributes() & EMemModelTypeMask) == EMemModelTypeFlexible)
-		{
-		test.Next(_L("Test unrecoverable errors while paging"));
-		TestPagingErrors();
-		}
-#endif
 
 	test.Next(_L("Close test driver"));
 	Ldd.DestroyPlatHwChunk();
@@ -1578,14 +1398,11 @@ TInt E32Main()
 	test.Next(_L("Test setting publish and subscribe properties from paged area"));
 	TestPublishAndSubscribe();
 
-#ifndef _DEBUG
-	// no point benchmarking in debug mode
 	if (DPTest::Attributes() & DPTest::ERomPaging)
 		{
 		test.Next(_L("Rom Paging Benchmark"));
 		RomPagingBenchmark();
 		}
-#endif
 
 	PagedLibrary.Close();
 	gobbler.Close();

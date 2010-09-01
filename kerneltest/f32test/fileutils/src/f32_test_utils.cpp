@@ -36,196 +36,6 @@ using namespace F32_Test_Utils;
 static CConsoleBase* pConsole = NULL;   //-- pointer to the text console for printing out data
 static TBool  bPrintOutEnabled = ETrue; //-- global flag, if EFalse, all printing out is disabled
 
-
-
-//-------------------------------------------------------------------------------------------------------------------
-
-/**
-    Prints out a hex dump of a descriptor contents
-    @param  aBuf data descriptor to dump
-*/
-void  F32_Test_Utils::HexDump(const TDesC8& aBuf)
-{
-    HexDump(aBuf.Ptr(), aBuf.Size());
-}
-
-//-------------------------------------------------------------------------------------------------------------------
-/**
-    Prints out a hex dump of a buffer
-    @param  apBuf   pointer to the data to dump
-    @param  aBufLen buffer length
-*/
-void  F32_Test_Utils::HexDump(const TAny* apBuf, TUint aBufLen)
-{
-    DoPrintf(_L("~ F32_Test_Utils::HexDump() size:%u\n"), aBufLen);
-  
-    ASSERT(apBuf);
-    
-    if(!aBufLen)
-        return;
-
-    const TUint colDmpWidth = 16;
-    const TUint8* pBuf = (const TUint8*)apBuf;
-    TBuf<256> buf1;
-    TBuf<64>  buf2;
-
-    TUint dumpPos;
-    
-    for(dumpPos=0; dumpPos < aBufLen-1; )
-    {
-        buf1.Format(_L("%06X: "), dumpPos);
-        buf2.Zero();
-
-        for(TUint i=0; i<colDmpWidth; ++i)
-        {
-            buf1.AppendFormat(_L("%02x "), pBuf[dumpPos+i]);
-        
-            const TChar ch = pBuf[dumpPos+i];
-            if(ch.IsPrint())
-                buf2.Append(ch);
-            else    
-                buf2.Append(_L("."));
-            
-
-            if(++dumpPos >= aBufLen)
-            {    
-                while(++i < colDmpWidth)
-                {
-                    buf1.Append(_L("   "));
-                    buf2.Append(_L(" "));
-                }
-
-                break;
-            }
-        }
-
-        buf1.Append(buf2);
-        DoPrintf(buf1);
-    
-    }
-
-    DoPrintf(_L("\n"));
-
-}
-
-
-//-------------------------------------------------------------------------------------------------------------------
-/**
-    Compare 2 buffers and print out the difference if there is any.
-    Buffer sizes must be the same and non-0
-
-    @param  aBuf1   buffer 1 descriptor
-    @param  aBuf2   buffer 2 descriptor
-    
-    @return ETrue if buffers are the same, EFalse otherwise
-*/
-TBool F32_Test_Utils::CompareBuffers(const TDesC8& aBuf1, const TDesC8& aBuf2)
-{
-    return CompareBuffers(aBuf1.Ptr(), aBuf1.Size(), aBuf2.Ptr(), aBuf2.Size());
-}
-
-//-------------------------------------------------------------------------------------------------------------------
-/**
-    Compare 2 buffers and print out the difference if there is any.
-    Buffer sizes must be the same and non-0
-
-    @param  apBuf1   pointer to the buffer 1 
-    @param  aBuf1Len buffer1 length
-    @param  apBuf2   pointer to the buffer 2 
-    @param  aBuf2Len buffer2 length
-
-    @return ETrue if buffers are the same, EFalse otherwise
-*/
-TBool F32_Test_Utils::CompareBuffers(const TAny* apBuf1, TUint aBuf1Len, const TAny* apBuf2, TUint aBuf2Len)
-{
-    ASSERT(apBuf1 && apBuf2);
-    
-    if(aBuf1Len != aBuf2Len)
-    {
-        DoPrintf(_L("~ F32_Test_Utils::CompareBuffers() different sizes! %u:%u\n"), aBuf1Len, aBuf2Len);
-        ASSERT(0);
-        return EFalse;
-    }
-
-    if(!aBuf1Len)
-    {//-- empty buffers to compare
-        return ETrue;
-    }
-
-
-    const TUint8* pBuf1 = (const TUint8*)apBuf1;
-    const TUint8* pBuf2 = (const TUint8*)apBuf2;   
-        
-    if(!Mem::Compare(pBuf1, aBuf1Len, pBuf2, aBuf2Len))
-        return ETrue; //-- buffers are the same. 
-
-
-    //-- the buffers' contents are different
-    TUint diffpos;
-    TBuf<256> buf1;
-    TBuf<100> buf2;
-
-    const TUint colDmpWidth = 16;
-    TBool bBannerPrinted = EFalse;
-
-    //-- dump chunks of the buffer with differences only
-    for(diffpos=0; diffpos<aBuf1Len-1; )
-    {
-        if(pBuf1[diffpos] == pBuf2[diffpos])
-            {
-            ++diffpos;
-            continue;
-            }
-
-        if(!bBannerPrinted)
-        {
-            bBannerPrinted = ETrue;
-            DoPrintf(_L("~ F32_Test_Utils::CompareBuffers() buffers' contents are different starting at pos:%u (0x%x). Hexdump:\n"), diffpos, diffpos);
-
-        }
-
-        //-- difference found, dump chunks of the buffer with differences only
-        TUint dumpPos = (diffpos >> 4) << 4; //-- round down to 16
-
-        buf1.Format(_L("%06X: "), dumpPos);
-        buf2.Format(_L("|"));
-        
-        for(TUint i=0; i<colDmpWidth; ++i)
-        {
-            buf1.AppendFormat(_L("%02x"), pBuf1[dumpPos+i]);
-            buf2.AppendFormat(_L("%02x"), pBuf2[dumpPos+i]);
-
-            if(i < colDmpWidth-1)
-            {
-                buf1.Append(_L(" "));
-                buf2.Append(_L(" "));
-            }
-
-        
-            if(++diffpos >= aBuf1Len)
-            {//-- pad the dump with spaces
-                while(++i < colDmpWidth)
-                {
-                    buf1.Append(_L("   "));
-                    buf2.Append(_L("   "));
-                }
-            
-                break;
-            }
-
-        }
-
-        buf1.Append(buf2);
-        DoPrintf(buf1);
-    }
-    
-    DoPrintf(_L("\n"));
-
-    return EFalse;
-}
-
-
-//-------------------------------------------------------------------------------------------------------------------
 /**
     Set the console where the ouput will go.
     @param  apConsole pointer to the console. if NULL, the print out will be debug port only.
@@ -438,7 +248,6 @@ _LIT(KFsName_LFFS,  "lffs");
 _LIT(KFsName_Win32, "Win32");
 _LIT(KFsName_ExFAT, "ExFat");
 _LIT(KFsName_AutoMonuter, "automounter");
-_LIT(KFsName_HVFS, "HVFS");
 
 /**  @return ETrue if "Automounter" FS is mounted on this drive */
 TBool F32_Test_Utils::Is_Automounter(RFs &aFs, TInt aDrive)
@@ -464,7 +273,7 @@ TBool F32_Test_Utils::Is_Lffs(RFs &aFs, TInt aDrive)
 
 }
    
-/** @return ETrue if "Win32" FS is mounted on this drive (i.e this is emulator's drive C:) */
+/** @return ETrue if "Win32" FS is mounted on this drive (i.e this is emulator's drive c:) */
 TBool F32_Test_Utils::Is_Win32(RFs &aFs, TInt aDrive)   
 {
 	ASSERT(aDrive >= EDriveA && aDrive <= EDriveZ);
@@ -473,29 +282,6 @@ TBool F32_Test_Utils::Is_Win32(RFs &aFs, TInt aDrive)
     __ASSERT_ALWAYS((r==KErrNone) && (f.Length()>0), User::Invariant());
 
     return (f.CompareF(KFsName_Win32) == 0 );
-}
-
-/** @return ETrue if "HVFS" is mounted on this drive (i.e PlatSim's drive C:) */
-TBool F32_Test_Utils::Is_HVFS(RFs &aFs, TInt aDrive)
-{
-	ASSERT(aDrive >= EDriveA && aDrive <= EDriveZ);
-    TFSName f;
-	TInt r = aFs.FileSystemName(f, aDrive);
-    __ASSERT_ALWAYS((r==KErrNone) && (f.Length()>0), User::Invariant());
-
-    return (f.CompareF(KFsName_HVFS) == 0);
-}
-
-/** @return ETrue if "HVFS" or "Win32" FS is mounted on this drive
- * 			(i.e drive C: of PlatSim or the emulator) */
-TBool F32_Test_Utils::Is_SimulatedSystemDrive(RFs &aFs, TInt aDrive)
-{
-	ASSERT(aDrive >= EDriveA && aDrive <= EDriveZ);
-    TFSName f;
-	TInt r = aFs.FileSystemName(f, aDrive);
-    __ASSERT_ALWAYS((r==KErrNone) && (f.Length()>0), User::Invariant());
-
-    return (f.CompareF(KFsName_HVFS) == 0 || f.CompareF(KFsName_Win32) == 0);
 }
 
 /** @return ETrue if the filesystem if FAT (fat12/16/32) */

@@ -420,6 +420,7 @@ LOCAL_C void RunTests(void)
 
 	TInt count;
 
+	TInt fourBppMode = -1;
 
 	for (count = 0; count < totalModes; count++)
 		{
@@ -454,6 +455,9 @@ LOCAL_C void RunTests(void)
 		HALArg = count;
 		ret = HAL::Get(HAL::EDisplayBitsPerPixel, HALArg);
 		test (KErrNone == ret);
+
+		if (HALArg == 4)
+			fourBppMode = count;
 
 		}
 
@@ -1031,6 +1035,8 @@ LOCAL_C void RunTestsAdditionalScreens(TInt screen)
 
 	TInt count;
 
+	TInt fourBppMode = -1;
+
 	for (count = 0; count < totalModes; count++)
 		{
 
@@ -1064,6 +1070,9 @@ LOCAL_C void RunTestsAdditionalScreens(TInt screen)
 		HALArg = count;
 		ret = HAL::Get(screen, HAL::EDisplayBitsPerPixel, HALArg);
 		test (KErrNone == ret);
+
+		if (HALArg == 4)
+			fourBppMode = count;
 
 		}
 

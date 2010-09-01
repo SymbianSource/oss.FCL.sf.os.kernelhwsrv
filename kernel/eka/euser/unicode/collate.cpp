@@ -26,6 +26,44 @@
 // 16 instead of 8, in case all supplementary characters
 static const TInt KKeyedStringBufferSize = 16;
 
+
+inline TText16 GetHighSurrogate(TUint aChar)
+/**
+Retrieve the high surrogate of a supplementary character.
+
+@param aChar The 32-bit code point value of a Unicode character.
+
+@return High surrogate of aChar, if aChar is a supplementary character; 
+        aChar itself, if aChar is not a supplementary character.
+*/
+	{
+	return STATIC_CAST(TText16, 0xD7C0 + (aChar >> 10));
+	}
+
+inline TText16 GetLowSurrogate(TUint aChar)
+/**
+Retrieve the low surrogate of a supplementary character.
+
+@param aChar The 32-bit code point value of a Unicode character.
+
+@return Low surrogate of aChar, if aChar is a supplementary character; 
+        zero, if aChar is not a supplementary character.
+*/
+	{
+	return STATIC_CAST(TText16, 0xDC00 | (aChar & 0x3FF));
+	}
+
+inline TUint JoinSurrogate(TText16 aHighSurrogate, TText16 aLowSurrogate)
+/**
+Combine a high surrogate and a low surrogate into a supplementary character.
+
+@return The 32-bit code point value of the generated Unicode supplementary
+        character.
+*/
+	{
+	return ((aHighSurrogate - 0xD7F7) << 10) + aLowSurrogate;
+	}
+
 // Creates a one or two collation keys sequence corresponding to the input character.
 // Returns the number of keys output.
 static TInt CreateDefaultCollationKeySequence(TInt aChar, TCollationKey* aBuffer)
@@ -62,22 +100,22 @@ static TInt FindCollationKeyIndex(TInt aChar, const TCollationKeyTable& aTable)
 			break;
 			}
 		TInt c = *p >> 16;
-		if (TChar::IsHighSurrogate( (TText16)c ))
+		if (IsHighSurrogate( (TText16)c ))
 			{
-			if ((p < end) && (TChar::IsLowSurrogate( (TText16)((*(p+1))>>16) )))
+			if ((p < end) && (IsLowSurrogate( (TText16)((*(p+1))>>16) )))
 				{
 				currentCharLength = 2;
-				c = TChar::JoinSurrogate( (TText16)(*p>>16), (TText16)((*(p+1))>>16) );
+				c = JoinSurrogate( (TText16)(*p>>16), (TText16)((*(p+1))>>16) );
 				}
 			}
-		else if (TChar::IsLowSurrogate( (TText16)c ))
+		else if (IsLowSurrogate( (TText16)c ))
 			{
-			if ((p > start) && (TChar::IsHighSurrogate( (TText16)((*(p-1))>>16) )))
+			if ((p > start) && (IsHighSurrogate( (TText16)((*(p-1))>>16) )))
 				{
 				p--;
 				pivot = pivot - 1;
 				currentCharLength = 2;
-				c = TChar::JoinSurrogate( (TText16)(*p>>16), (TText16)((*(p+1))>>16) );
+				c = JoinSurrogate( (TText16)(*p>>16), (TText16)((*(p+1))>>16) );
 				}
 			}
 		else
@@ -620,8 +658,8 @@ void TCollationValueIterator::GetKeyFromTable(const TCollationKeyTable* aTable)
 			}
 		else 
 			{
-			text[textLen++] = TChar::GetHighSurrogate(cur_char);
-			text[textLen++] = TChar::GetLowSurrogate(cur_char);
+			text[textLen++] = GetHighSurrogate(cur_char);
+			text[textLen++] = GetLowSurrogate(cur_char);
 			}
 		TBool possible_prefix = ETrue;
 		for(TInt i = 1; (i < KKeyedStringBufferSize) && possible_prefix; i++)
@@ -638,8 +676,8 @@ void TCollationValueIterator::GetKeyFromTable(const TCollationKeyTable* aTable)
 				}
 			else
 				{
-				text[textLen++] = TChar::GetHighSurrogate(c);
-				text[textLen++] = TChar::GetLowSurrogate(c);
+				text[textLen++] = GetHighSurrogate(c);
+				text[textLen++] = GetLowSurrogate(c);
 				}
 			TInt cur_index = -1;
             ::GetStringKey(aTable, text, textLen, cur_index, possible_prefix);

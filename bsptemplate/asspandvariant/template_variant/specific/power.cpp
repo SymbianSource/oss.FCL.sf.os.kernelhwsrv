@@ -133,12 +133,6 @@ void DTemplatePowerController::PowerDown(TTimeK aWakeupST)
 		// bring it back from that state. Therefore we stop tracking wakeup events as the Power Manager will
 		// complete any pending notifications anyway. When the driver delivers its notification, we just ignore
 		// it.
-
-		if(wakeupRTC)
-			{
-			//Handle this if needed
-			}
-
 		iWakeupEventsOn = EFalse;		// tracking of wakeup events is now done in hardware
 		}
 	else

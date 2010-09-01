@@ -21,7 +21,7 @@
 files=
 
 #ifdef PAGED_ROM
-data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\gentestpaged.txt			Test\test_paged.cpp
+data=gentestpaged.txt			Test\test_paged.cpp
 #endif
 
 #include <rom\##VARIANT##\kernel.iby>
@@ -46,9 +46,9 @@ data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_ldrtst.exe			sys\bin\t_ldrtst
 // USB Config file
 data=##BASEPATH##e32test\usb\t_usb_device\configs\h4if0a3.xml       test\h4if0a3.xml
 
-data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\usbstress_autoexec.bat                                 \autoexec.bat
+data=usbstress_autoexec.bat                                 \autoexec.bat
 data=EPOCROOT##epoc32\rom\##VARIANT##\autoexec.bat				\alltests.bat
 
 #ifdef PAGED_ROM
-data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\gentestnonpaged.txt			Test\test_unpaged.cpp	unpaged
+data=gentestnonpaged.txt			Test\test_unpaged.cpp	unpaged
 #endif

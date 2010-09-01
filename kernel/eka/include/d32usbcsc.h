@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -383,7 +383,7 @@ public:
         EControlGetOtgDescriptor,
         EControlGetOtgFeatures, 
 		EControlRealizeInterface,
-		EControlStartNextInAlternateSetting
+		EControlStartNextInAlternateSetting	
 		};
 
 
@@ -399,26 +399,13 @@ public:
 
 #ifndef __KERNEL_MODE__
 
-
 	/** Opens a channel.
 
 		@param aUnit This should be 0 (zero).
-		@param aShare if this channel can be used in another process.
 
 		@return KErrNone if successful.
 	*/
-	inline TInt Open(TInt aUnit, TBool aShare=ETrue);
-
-	/** Opens a channel which has created.
-
-		@param aMsg client-server message contain the handle of this channel.
-		@param aPos index of message slot that contain handle.
-		@param aType ownership type of the handle.
-
-		@return KErrNone if successful.
-	*/
-
-	inline TInt Open(RMessagePtr2 aMsg, TInt aIndex, TOwnerType aType=EOwnerProcess);
+	inline TInt Open(TInt aUnit);
 
 	inline TVersion VersionRequired() const;
 
@@ -1308,17 +1295,8 @@ public:
 	@return KErrNone on success otherwise a system wide error code, if an error has occurred.
 	*/
 	IMPORT_C TInt GetDataTransferChunk(RChunk*& aChunk);
-	/**
-	Call this function to reset alternate setting related data to initial state,
-	this API should be called when device state goes to undefined.
-	*/
-	IMPORT_C void ResetAltSetting();
-
-	
 
 private:
- 	/** @internalTechnology */
-	TInt Empty(TUint aBufferOffset);
 	/** @internalTechnology */
 	TInt Drain(TUint aBuffer);
 	/** @internalTechnology */ 
@@ -1508,8 +1486,6 @@ public:
 	@returns the endpoint number opened by this object.
 	*/
 	inline TInt GetEndpointNumber();
-
-	inline TInt BufferNumber();
 
 private:
 	/** @internalTechnology */

@@ -48,6 +48,9 @@ TCommCaps theCaps1Buf;
 TCommCapsV01& theCaps1=theCaps1Buf();
 TBool MediaChangeTestingEnabled;
 
+const TInt KWriteSize=250;
+const TInt KXonNumReads=0x10;
+const TInt KXonReadSize=0x400;	// Must be bigger than comm buffer high water==0x300
 
 class TResult
 	{
@@ -72,7 +75,6 @@ public:
 	const TText* iName;
 	};
 
-/*
 const TSpeedAndName KSpeeds[]=
 	{
 	{KCapsBps50,EBps50,_S("50")}, 
@@ -81,7 +83,8 @@ const TSpeedAndName KSpeeds[]=
 	{KCapsBps19200,EBps19200,_S("19200")},
 	{KCapsBps57600,EBps57600,_S("57600")},
 	{KCapsBps115200,EBps115200,_S("115200")},
-	};*/
+	};
+
 class TFrameAndName
 	{
 public:
@@ -90,7 +93,7 @@ public:
 	TParity iParity;
 	const TText* iName;
 	};
-/*
+
 const TFrameAndName KFrameTypes[]=
 	{
 	{EData8,EStop1,EParityNone,_S("8,N,1")},
@@ -108,7 +111,7 @@ const TFrameAndName KFrameTypes[]=
 	{EData7,EStop1,EParityNone,_S("7,N,1")},
 	{EData7,EStop1,EParityEven,_S("7,E,1")},
 	{EData7,EStop1,EParityOdd,_S("7,O,1")},
-	};*/
+	};
 
 class THandShakeAndName
 	{

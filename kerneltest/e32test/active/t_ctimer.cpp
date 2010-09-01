@@ -28,7 +28,6 @@
 // and check for panic.
 // - Call absolute timer's At function without adding it to the active scheduler and 
 // check for panic.
-// - Call 1s inactivity timer
 // - Check if heap has been corrupted by the tests.
 // Platforms/Drives/Compatibility:
 // All.
@@ -78,15 +77,6 @@ private:
 	static TInt iTotalCount;
 	};
 
-// for inactivity test
-class myInactTimer : public CTimer
-	{
-public:
-	myInactTimer(const TInt aPriority):CTimer(aPriority){;}
-	void RunL(void);	
-	void Start(void);
-	};
-
 TInt myTimer::iTotalCount;
 TInt myTimer::iNum;
 
@@ -114,23 +104,6 @@ void myTimer::Start(void)
 //
 	{
 
-	ConstructL();
-	CActiveScheduler::Add(this);
-	}
-
-void myInactTimer::RunL(void)
-//
-// Timer has completed
-//
-	{
-	CActiveScheduler::Stop();
-	}
-
-void myInactTimer::Start(void)
-//
-// Start a timer going.
-//
-	{
 	ConstructL();
 	CActiveScheduler::Add(this);
 	}
@@ -224,22 +197,12 @@ void TestCTimer::Test1()
 	CActiveScheduler::Start();
 	test(A[0]==ID1 && pTimer1->iStatus==KErrNone);
 //
-	test.Next(_L("Inactivity 1s"));
-	User::ResetInactivityTime();
-	myInactTimer* pInactTimer=new myInactTimer(0);
-	pInactTimer->Start();
-	test.Printf(_L("inactivity..."));
-	pInactTimer->Inactivity(1);
-	CActiveScheduler::Start();
-	test.Printf(_L("...back"));
-	test(pInactTimer->iStatus==KErrNone);
-//
+
 	test.Next(_L("Destroy objects"));
 	delete pTimer1;
 	delete pTimer2;
 	delete pTimer3;
 	delete pRepeater;
-	delete pInactTimer;
 //
 	test.End();
 	}

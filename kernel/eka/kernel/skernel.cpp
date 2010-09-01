@@ -53,7 +53,7 @@ DSemaphore::~DSemaphore()
 // Enter and return with system unlocked.
 TInt DSemaphore::Create(DObject* aOwner, const TDesC* aName, TInt aInitialCount, TBool aVisible)
 	{
-	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("DSemaphore::Create owner %O, name %S, init count=%d, visible=%d",aOwner,aName,aInitialCount,aVisible));
+	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("DSemaphore::Create owner %O, name %lS, init count=%d, visible=%d",aOwner,aName,aInitialCount,aVisible));
 	if (aInitialCount<0)
 		return KErrArgument;
 	SetOwner(aOwner);
@@ -74,9 +74,6 @@ TInt DSemaphore::Create(DObject* aOwner, const TDesC* aName, TInt aInitialCount,
 
 // Wait for semaphore with timeout
 // Enter with system locked, return with system unlocked.
-// If aNTicks==0, wait forever
-// If aNTicks==-1, poll (don't block)
-// If aNTicks>0, timeout is aNTicks nanokernel ticks
 TInt DSemaphore::Wait(TInt aNTicks)
 	{
 	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("Semaphore %O Wait %d Timeout %d",this,iCount,aNTicks));
@@ -87,23 +84,14 @@ TInt DSemaphore::Wait(TInt aNTicks)
 		r=KErrGeneral;
 	else if (--iCount<0)
 		{
-		if (aNTicks >= 0)
-			{
-			DThread* pC=TheCurrentThread;
-			pC->iMState=DThread::EWaitSemaphore;
-			pC->iWaitObj=this;
-			iWaitQ.Add(pC);
-			BTRACE_KS(BTrace::ESemaphoreBlock, this);
-			r=NKern::Block(aNTicks,NKern::ERelease,SYSTEM_LOCK);
-			__ASSERT_DEBUG(pC->iMState==DThread::EReady,K::Fault(K::ESemWaitBadState));
-			COND_BTRACE_KS(r==KErrNone, BTrace::ESemaphoreAcquire, this);
-			}
-		else
-			{
-			++iCount;
-			NKern::UnlockSystem();
-			r = KErrTimedOut;	// couldn't acquire semaphore immediately, so fail
-			}
+		DThread* pC=TheCurrentThread;
+		pC->iMState=DThread::EWaitSemaphore;
+		pC->iWaitObj=this;
+		iWaitQ.Add(pC);
+		BTRACE_KS(BTrace::ESemaphoreBlock, this);
+		r=NKern::Block(aNTicks,NKern::ERelease,SYSTEM_LOCK);
+		__ASSERT_DEBUG(pC->iMState==DThread::EReady,K::Fault(K::ESemWaitBadState));
+		COND_BTRACE_KS(r==KErrNone, BTrace::ESemaphoreAcquire, this);
 		return r;
 		}
 #ifdef BTRACE_SYMBIAN_KERNEL_SYNC
@@ -318,7 +306,7 @@ DMutex::~DMutex()
 // Enter and return with system unlocked.
 TInt DMutex::Create(DObject* aOwner, const TDesC* aName, TBool aVisible, TUint aOrder)
 	{
-	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("DMutex::Create owner %O, name %S, visible=%d, order=%02x",aOwner,aName,aVisible,aOrder));
+	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("DMutex::Create owner %O, name %lS, visible=%d, order=%02x",aOwner,aName,aVisible,aOrder));
 	iOrder = (TUint8)aOrder;
 	SetOwner(aOwner);
 	TInt r=KErrNone;
@@ -338,14 +326,10 @@ TInt DMutex::Create(DObject* aOwner, const TDesC* aName, TBool aVisible, TUint a
 extern const SNThreadHandlers EpocThreadHandlers;
 #endif
 
-// Wait for mutex with timeout
-// Enter with system locked, return with system unlocked.
-// If aNTicks==0, wait forever
-// If aNTicks==-1, poll (don't block)
-// If aNTicks>0, timeout is aNTicks nanokernel ticks
-TInt DMutex::Wait(TInt aNTicks)
+// Enter and return with system locked.
+TInt DMutex::Wait()
 	{
-	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("Mutex %O Wait(%d) hold %O hldc=%d wtc=%d",this,aNTicks,iCleanup.iThread,iHoldCount,iWaitCount));
+	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("Mutex %O Wait hold %O hldc=%d wtc=%d",this,iCleanup.iThread,iHoldCount,iWaitCount));
 	__ASSERT_SYSTEM_LOCK;
 	__ASSERT_DEBUG(NCurrentThread()->iHandlers==&EpocThreadHandlers, K::Fault(K::EMutexWaitNotDThread));
 	DThread* pC=TheCurrentThread;
@@ -369,8 +353,6 @@ TInt DMutex::Wait(TInt aNTicks)
 			BTRACE_KS(BTrace::EMutexAcquire, this);
 			return KErrNone;
 			}
-		if (aNTicks<0)
-			return KErrTimedOut;	// poll mode - can't get mutex immediately so fail
 		K::PINestLevel=0;
 		pC->iMState=DThread::EWaitMutex;
 		pC->iWaitObj=this;
@@ -393,7 +375,7 @@ TInt DMutex::Wait(TInt aNTicks)
 		// return value is set at the point where the thread is released from its wait
 		// condition). However we can still detect this situation since the thread will
 		// have been placed into the EReady state when the mutex was reset.
-		TInt r=NKern::Block(aNTicks, NKern::ERelease|NKern::EClaim|NKern::EObstruct, SYSTEM_LOCK);
+		TInt r=NKern::Block(0,NKern::ERelease|NKern::EClaim,SYSTEM_LOCK);
 		if (r==KErrNone && pC->iMState==DThread::EReady)
 			r = KErrGeneral;	// mutex has been reset
 		if (r!=KErrNone)		// if we get an error here...
@@ -672,7 +654,7 @@ DCondVar::~DCondVar()
 // Enter and return with system unlocked.
 TInt DCondVar::Create(DObject* aOwner, const TDesC* aName, TBool aVisible)
 	{
-	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("DCondVar::Create owner %O, name %S, visible=%d",aOwner,aName,aVisible));
+	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("DCondVar::Create owner %O, name %lS, visible=%d",aOwner,aName,aVisible));
 	SetOwner(aOwner);
 	TInt r=KErrNone;
 	if (aName && aName->Length())
@@ -843,9 +825,6 @@ TInt DCondVar::Wait(DMutex* aMutex, TInt aTimeout)
 				m.iCleanup.ChangePriority(p);
 			}
 		TInt tmout = pC->iMState==DThread::EWaitCondVar ? aTimeout : 0;
-		TUint mode = NKern::ERelease|NKern::EClaim;
-		if (pC->iMState == DThread::EWaitMutex)
-			mode |= NKern::EObstruct;
 		BTRACE_KS2(BTrace::ECondVarBlock, this, &m);
 
 		// The following possibilities exist here:
@@ -862,7 +841,7 @@ TInt DCondVar::Wait(DMutex* aMutex, TInt aTimeout)
 		//		s=KErrNone, thread state EReady
 		// 6.	Thread killed while waiting for mutex or condition variable
 		//		Function doesn't return since exit handler runs instead.
-		TInt s = NKern::Block(tmout, mode, SYSTEM_LOCK);
+		TInt s = NKern::Block(tmout, NKern::ERelease|NKern::EClaim, SYSTEM_LOCK);
 		if (s==KErrNone && pC->iMState==DThread::EReady)
 			s = KErrGeneral;
 		if (s!=KErrNone && s!=KErrTimedOut)	// if we get an error here...
@@ -1098,12 +1077,12 @@ TInt ExecHandler::CondVarCreate(const TDesC8* aName, TOwnerType aType)
 		{
 		Kern::KUDesGet(n,*aName);
 		pN=&n;
-		__KTRACE_OPT(KSEMAPHORE,Kern::Printf("Exec::CondVarCreate %S", pN));
 		}
 	else if (aType==EOwnerThread)
 		pO=TheCurrentThread;
 	else
 		pO=TheCurrentThread->iOwningProcess;
+	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("Exec::CondVarCreate %lS", aName));
 	NKern::ThreadEnterCS();
 	TInt r=KErrNoMemory;
 	DCondVar* pV = new DCondVar;

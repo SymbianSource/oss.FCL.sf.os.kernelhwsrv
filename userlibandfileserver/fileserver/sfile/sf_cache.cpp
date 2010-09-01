@@ -612,8 +612,8 @@ TInt TDirectoryCacheHeader::PopulateFromDrive(const TDesC8& aPathName)
 
 	iCache = (TFileCacheRecord**)User::ReAlloc(pIndexes,sizeof(TFileCacheRecord*)*currentIndex);
 	if(!iCache)
-	    return KErrNoMemory;
-	
+		return KErrNoMemory;
+		
 	iNotPresent = EFalse;
 	iRecordCount = currentIndex;
 	if (currentIndex>1)

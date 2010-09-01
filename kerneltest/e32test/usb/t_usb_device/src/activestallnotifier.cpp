@@ -1,4 +1,4 @@
-// Copyright (c) 2000-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2000-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -18,10 +18,6 @@
 //
 
 #include "general.h"									// CActiveControl, CActiveRW
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "activestallnotifierTraces.h"
-#endif
 #include "activestallnotifier.h"
 
 extern RTest test;
@@ -60,10 +56,6 @@ void CActiveStallNotifier::ConstructL()
 CActiveStallNotifier::~CActiveStallNotifier()
 	{
 	TUSB_VERBOSE_PRINT("CActiveStallNotifier::~CActiveStallNotifier()");
-	if(gVerbose)
-	    {
-	    OstTrace0(TRACE_VERBOSE, CACTIVESTALLNOTIFIER_DCACTIVESTALLNOTIFIER, "CActiveStallNotifier::~CActiveStallNotifier()");
-	    }
 	Cancel();												// base class
 	}
 
@@ -71,10 +63,6 @@ CActiveStallNotifier::~CActiveStallNotifier()
 void CActiveStallNotifier::DoCancel()
 	{
 	TUSB_VERBOSE_PRINT("CActiveStallNotifier::DoCancel()");
-	if(gVerbose)
-	    {
-	    OstTrace0(TRACE_VERBOSE, CACTIVESTALLNOTIFIER_DOCANCEL, "CActiveStallNotifier::DoCancel()");
-	    }
 	iPort->EndpointStatusNotifyCancel();
 	}
 
@@ -85,10 +73,6 @@ void CActiveStallNotifier::RunL()
 	// In a real world program, the user could take here appropriate action (cancel a
 	// transfer request or whatever).
 	TUSB_VERBOSE_PRINT1("StallNotifier: Endpointstate 0x%x\n", iEndpointState);
-	if(gVerbose)
-	    {
-	    OstTrace1(TRACE_VERBOSE, CACTIVESTALLNOTIFIER_RUNL, "StallNotifier: Endpointstate 0x%x\n", iEndpointState);
-	    }
 	Activate();
 	}
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -21,10 +21,6 @@
 #include "testdebug.h"
 #include "modelleddevices.h"
 #include "TestPolicy.h"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "PBASE-T_USBDI-1232Traces.h"
-#endif
 
 namespace NUnitTesting_USBDI
 	{
@@ -50,7 +46,7 @@ namespace NUnitTesting_USBDI
 
 	void CUT_PBASE_T_USBDI_1232::ConstructL()
 		{
-		OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_CUT_PBASE_T_USBDI_1232, "====> Constructor entry priority = %d", RThread().Priority());
+		RDebug::Printf("====> Constructor entry priority = %d", RThread().Priority());
 
 		// Collect existing thread priority (to reinstate later)
 		iPriority = RThread().Priority();
@@ -61,8 +57,9 @@ namespace NUnitTesting_USBDI
 
 	CUT_PBASE_T_USBDI_1232::~CUT_PBASE_T_USBDI_1232()
 		{
+		LOG_FUNC
 
-		OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232, "====> Destructor entry priority = %d", RThread().Priority());
+		RDebug::Printf("====> Destructor entry priority = %d", RThread().Priority());
 
 		// Reinstate original priority
 
@@ -92,14 +89,15 @@ namespace NUnitTesting_USBDI
 
 	void CUT_PBASE_T_USBDI_1232::ExecuteHostTestCaseL()
 		{
+		LOG_FUNC
 
-		OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP01, "====> ExecuteHostTestCaseL entry priority = %d",
+		RDebug::Printf("====> ExecuteHostTestCaseL entry priority = %d",
 				RThread().Priority());
 
 		// Bump thread priority for this test only
 
 		RThread().SetPriority(EPriorityAbsoluteHigh);
-		OstTraceExt2(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP02, "Thread priority raised %d->%d", iPriority, RThread().Priority());
+		RDebug::Printf("Thread priority raised %d->%d", iPriority, RThread().Priority());
 
 		iCaseStep = EInProcess;
 		iActorFDF = CActorFDF::NewL(*this);
@@ -116,6 +114,7 @@ namespace NUnitTesting_USBDI
 
 	void CUT_PBASE_T_USBDI_1232::ExecuteDeviceTestCaseL()
 		{
+		LOG_FUNC
 
 		// Construct the device for the test case
 		iTestDevice->OpenL(TestCaseId());
@@ -128,8 +127,9 @@ namespace NUnitTesting_USBDI
 
 	void CUT_PBASE_T_USBDI_1232::HostDoCancel()
 		{
+		LOG_FUNC
 
-		OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP03, "====> HostDoCancel entry priority = %d", RThread().Priority());
+		RDebug::Printf("====> HostDoCancel entry priority = %d", RThread().Priority());
 
 		// Cancel the timeout timer
 		CancelTimeout();
@@ -137,6 +137,7 @@ namespace NUnitTesting_USBDI
 
 	void CUT_PBASE_T_USBDI_1232::DeviceDoCancel()
 		{
+		LOG_FUNC
 
 		// Cancel the device	
 		iTestDevice->CancelSubscriptionToReports();
@@ -144,8 +145,9 @@ namespace NUnitTesting_USBDI
 
 	void CUT_PBASE_T_USBDI_1232::DeviceInsertedL(TUint aDeviceHandle)
 		{
+		LOG_FUNC
 
-		OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP04, "====> DeviceInsertedL entry priority = %d", RThread().Priority());
+		RDebug::Printf("====> DeviceInsertedL entry priority = %d", RThread().Priority());
 
 		Cancel(); // Cancel the timer
 		TInt err(KErrNone);
@@ -177,7 +179,7 @@ namespace NUnitTesting_USBDI
 				TUint32 token1(0);
 				TUint32 token2(0);
 
-				OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP05, "Obtaining token for interface 0");
+				RDebug::Printf("Obtaining token for interface 0");
 				err = testDevice.Device().GetTokenForInterface(0, token1);
 				if (err != KErrNone)
 					{
@@ -186,8 +188,8 @@ namespace NUnitTesting_USBDI
 							err);
 					return TestFailed(err);
 					}
-				OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP06, "Token 1 (%d) retrieved", token1);
-				OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP07, "Opening interface 0");
+				RDebug::Printf("Token 1 (%d) retrieved", token1);
+				RDebug::Printf("Opening interface 0");
 				err = iUsbInterface0.Open(token1); // Alternate interface setting 0
 				if (err != KErrNone)
 					{
@@ -195,9 +197,9 @@ namespace NUnitTesting_USBDI
 							"<Error %d> Interface 0 could not be opened", err);
 					return TestFailed(err);
 					}
-				OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP08, "Interface 0 opened");
+				RDebug::Printf("Interface 0 opened");
 
-				OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP09, "Obtaining token for interface 1");
+				RDebug::Printf("Obtaining token for interface 1");
 				err = testDevice.Device().GetTokenForInterface(1, token2);
 				if (err != KErrNone)
 					{
@@ -206,7 +208,7 @@ namespace NUnitTesting_USBDI
 							err);
 					return TestFailed(err);
 					}
-				OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP10, "Opening interface 1");
+				RDebug::Printf("Opening interface 1");
 				err = iUsbInterface1.Open(token2); // Alternate interface setting 0
 				if (err != KErrNone)
 					{
@@ -214,15 +216,15 @@ namespace NUnitTesting_USBDI
 							"<Error %d> Interface 1 could not be opened", err);
 					return TestFailed(err);
 					}
-				OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP11, "Interface 1 opened");
+				RDebug::Printf("Interface 1 opened");
 
 				// device go to suspend
 				// Suspend interface 0
-				OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP12, "Suspending interface 0");
+				RDebug::Printf("Suspending interface 0");
 				iInterface0Watcher->SuspendAndWatch();
 
 				// Suspend interface 1
-				OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP13, "Suspending interface 1");
+				RDebug::Printf("Suspending interface 1");
 				iInterface1Watcher->SuspendAndWatch();
 
 				iCaseStep = ESuspendWhenResuming;
@@ -243,14 +245,15 @@ namespace NUnitTesting_USBDI
 
 	TInt CUT_PBASE_T_USBDI_1232::Interface0ResumedL(TAny* aPtr)
 		{
+		LOG_CFUNC
 
-		OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP14, "====> Interface0ResumedL entry priority = %d", RThread().Priority());
+		RDebug::Printf("====> Interface0ResumedL entry priority = %d", RThread().Priority());
 
-		OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP15, " -Interface 0 resumed");
+		RDebug::Printf(" -Interface 0 resumed");
 		CUT_PBASE_T_USBDI_1232* self =
 				reinterpret_cast<CUT_PBASE_T_USBDI_1232*>(aPtr);
 		TInt completionCode = self->iInterface0Watcher->CompletionCode();
-		OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP16, " -watcher 0 iStatus=%d",completionCode);
+		RDebug::Printf(" -watcher 0 iStatus=%d",completionCode);
 
 		switch (self->iCaseStep)
 			{	
@@ -259,12 +262,12 @@ namespace NUnitTesting_USBDI
 				{
 				if (completionCode == KErrNone)
 					{
-					OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP17, "Device resume successed,test passed!");
+					RDebug::Printf("Device resume successed,test passed!");
 					self->SendEp0Request(); // stop client site
 					}
 				else
 					{
-					OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP18, "Device resume failed, err = %d ",completionCode);
+					RDebug::Printf("Device resume failed, err = %d ",completionCode);
 					self->iCaseStep = EFailed;
 					self->SendEp0Request();
 					}
@@ -283,18 +286,20 @@ namespace NUnitTesting_USBDI
 
 	TInt CUT_PBASE_T_USBDI_1232::Interface1ResumedL(TAny* aPtr)
 		{
+		LOG_CFUNC
 
-		OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP19, "====> Interface1ResumedL entry priority = %d", RThread().Priority());
+		RDebug::Printf("====> Interface1ResumedL entry priority = %d", RThread().Priority());
 
-		OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP20, "Interface 1 resumed");
+		RDebug::Printf("Interface 1 resumed");
 		CUT_PBASE_T_USBDI_1232* self =
 				reinterpret_cast<CUT_PBASE_T_USBDI_1232*>(aPtr);
-		OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP21, "watcher 1 iStatus=%d", self->iInterface1Watcher->CompletionCode());
+		RDebug::Printf("watcher 1 iStatus=%d", self->iInterface1Watcher->CompletionCode());
 		return KErrNone;
 		}
 
 	void CUT_PBASE_T_USBDI_1232::DeviceRemovedL(TUint aDeviceHandle)
 		{
+		LOG_FUNC
 
 		// The test device should not be removed until the test case has passed
 		// so this test case has not completed, and state this event as an error
@@ -304,6 +309,7 @@ namespace NUnitTesting_USBDI
 
 	void CUT_PBASE_T_USBDI_1232::BusErrorL(TInt aError)
 		{
+		LOG_FUNC
 
 		// This test case handles no failiures on the bus
 
@@ -314,17 +320,18 @@ namespace NUnitTesting_USBDI
 			RUsbDevice::TDeviceState aPreviousState,
 			RUsbDevice::TDeviceState aNewState, TInt aCompletionCode)
 		{
+		LOG_FUNC
 		Cancel();
 
 		// test RInterface , the  RUsbDevice notification logic not used . 
-		OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP22, " -Device State change from err=%d",aCompletionCode);
+		RDebug::Printf(" -Device State change from err=%d",aCompletionCode);
 
 		switch (iCaseStep)
 			{
 			case ESuspendWhenResuming:
 				if (aNewState == RUsbDevice::EDeviceSuspended)
 					{
-					OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP23, "====> device has suspended!");
+					RDebug::Printf("====> device has suspended!");
                     
 					SuspendWhenResuming();					
 					}
@@ -333,7 +340,7 @@ namespace NUnitTesting_USBDI
 				if (aPreviousState == RUsbDevice::EDeviceSuspended&&aNewState
 						== RUsbDevice::EDeviceSuspended)
 					{
-					OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP24, "====> device suspended again,suspend while resuming succeed!");
+					RDebug::Printf("====> device suspended again,suspend while resuming succeed!");
 					iCaseStep = EPassed;
 					iUsbInterface0.CancelPermitSuspend();
 					}
@@ -352,7 +359,8 @@ namespace NUnitTesting_USBDI
 
 	void CUT_PBASE_T_USBDI_1232::Ep0TransferCompleteL(TInt aCompletionCode)
 		{
-		OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP25, "Ep0TransferCompleteL with aCompletionCode = %d",
+		LOG_FUNC
+		RDebug::Printf("Ep0TransferCompleteL with aCompletionCode = %d",
 				aCompletionCode);
 		switch (iCaseStep)
 			{
@@ -370,8 +378,9 @@ namespace NUnitTesting_USBDI
 
 	void CUT_PBASE_T_USBDI_1232::HostRunL()
 		{
+		LOG_FUNC
 
-		OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP26, "====> HostRunL entry priority = %d", RThread().Priority());
+		RDebug::Printf("====> HostRunL entry priority = %d", RThread().Priority());
 
 		// Obtain the completion code
 		TInt completionCode(iStatus.Int());
@@ -379,12 +388,12 @@ namespace NUnitTesting_USBDI
 		if (completionCode == KErrNone)
 			{
 			// Action timeout
-			OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP27, "<Error> Action timeout");
+			RDebug::Printf("<Error> Action timeout");
 			TestFailed(KErrTimedOut);
 			}
 		else
 			{
-			OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP28, "<Error %d> Timeout timer could not complete",
+			RDebug::Printf("<Error %d> Timeout timer could not complete",
 					completionCode);
 			TestFailed(completionCode);
 			}
@@ -392,6 +401,7 @@ namespace NUnitTesting_USBDI
 
 	void CUT_PBASE_T_USBDI_1232::DeviceRunL()
 		{
+		LOG_FUNC
 
 		// Disconnect the device
 
@@ -404,21 +414,21 @@ namespace NUnitTesting_USBDI
 
 	void CUT_PBASE_T_USBDI_1232::SuspendWhenResuming()
 		{
-		OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP29, "====> SuspendWhenResuming entry priority = %d",
+		RDebug::Printf("====> SuspendWhenResuming entry priority = %d",
 				RThread().Priority());
 
 		// Cancel suspend-in-progress
-		OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP30, "Cancel Suspend interface 0");
+		RDebug::Printf("Cancel Suspend interface 0");
 				
 		iUsbInterface0.CancelPermitSuspend();
 		
 		// how to prove, see log? 
 		// Suspend interface 0
-		OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP31, "Suspending interface 0");
+		RDebug::Printf("Suspending interface 0");
 		iInterface0Watcher->SuspendAndWatch();			
 
 		// Suspend interface 1
-		OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_1232_DCUT_PBASE_T_USBDI_1232_DUP32, "Suspending interface 1");
+		RDebug::Printf("Suspending interface 1");
 		iInterface1Watcher->SuspendAndWatch();
 
 		iCaseStep = EValidSuspendWhenResuming;

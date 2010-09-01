@@ -1762,12 +1762,14 @@ void TestTQueIter<T>::Test5()
 	Item item1,item2;
 	TDblQue<Item> que;
 	T* iter;
+	Item* a;
 
 	que.AddFirst(item2);
 	que.AddFirst(item1);
 	test.Start(_L("Constructor"));
 	iter=new T(que);
 	test.Next(_L("Iterators"));
+	a=*iter;
 	test(((*iter)++)==&item1);
 	test(((*iter)--)==&item2);
 	test(((*iter)++)==&item1);

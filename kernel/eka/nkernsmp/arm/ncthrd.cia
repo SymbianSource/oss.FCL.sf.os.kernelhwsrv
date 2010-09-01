@@ -966,7 +966,6 @@ __NAKED__ TInt NThreadWaitState::UnBlockT(TUint /*aType*/, TAny* /*aWaitObj*/, T
 	asm("ldr	r1, [r6, #%a0]" : : "i" (_FOFF(NThreadBase,iPauseCount)-_FOFF(NThreadBase,iWaitState)));
 	asm("sub	r0, r6, #%a0" : : "i" _FOFF(NThreadBase,iWaitState));	// r0 = Thread()
 	asm("movs	r1, r1, lsl #16 ");				// check if iPauseCount=iSuspendCount=0
-	asm("andeq	r1, r4, #%a0" : : "i" ((TInt)EWtStObstructed));
 	asm("bleq	ReadyT__12NSchedulableUi ");	// if so, make thread ready
 	asm("0:		");
 	asm("mov	r0, #0 ");

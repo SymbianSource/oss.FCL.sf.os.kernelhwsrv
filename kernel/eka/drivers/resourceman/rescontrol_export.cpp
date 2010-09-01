@@ -12,7 +12,7 @@
 //
 // Description:
 // e32\drivers\resourceman\rescontrol_export.cpp
-//
+// 
 //
 
 #include <drivers/resourcecontrol.h>
@@ -55,7 +55,7 @@ EXPORT_C TInt DPowerResourceController::PostBootLevel(TUint aResId, TInt aLevel)
 	if(!pRC)
 		return KErrNotFound;
 	pRC->Lock();
-    CHECK_CONTEXT(thread);
+    CHECK_CONTEXT(thread)
 	//Accept the postboot level only if issued before controller is fully initialised.
 	if(pRC->iInitialised == EResConStartupCompleted)
 		{
@@ -66,15 +66,15 @@ EXPORT_C TInt DPowerResourceController::PostBootLevel(TUint aResId, TInt aLevel)
 #ifndef PRM_ENABLE_EXTENDED_VERSION
     // coverity[deref_ptr]
     // aResId is checked to be more than the array entries before dereferencing pRC->iStaticResourceArray
-	if((!aResId) || (aResId > (TUint)pRC->iStaticResourceArray.Count()) || (!pRC->iStaticResourceArray[aResId-1]))
+	if((!aResId) || (aResId > pRC->iStaticResourceArrayEntries) || (!pRC->iStaticResourceArray[aResId-1]))
 		{
 		pRC->UnLock();
 		LOCK_AND_CRITICAL_SECTION_COUNT_CHECK(thread)
 		return KErrNotFound;
 		}
 #else
-	if(!aResId || ((aResId & KIdMaskResourceWithDependencies) && ((aResId & ID_INDEX_BIT_MASK) > (TUint)pRC->iStaticResDependencyArray.Count())) 
-				|| (!(aResId & KIdMaskResourceWithDependencies) && ((aResId > (TUint)pRC->iStaticResourceArray.Count())
+	if(!aResId || ((aResId & KIdMaskResourceWithDependencies) && ((aResId & ID_INDEX_BIT_MASK) > pRC->iStaticResDependencyCount)) 
+				|| (!(aResId & KIdMaskResourceWithDependencies) && ((aResId > pRC->iStaticResourceArrayEntries)
 				|| (!pRC->iStaticResourceArray[aResId-1]))))
 		{
 		pRC->UnLock();
@@ -90,7 +90,7 @@ EXPORT_C TInt DPowerResourceController::PostBootLevel(TUint aResId, TInt aLevel)
 		}
 	else
 #endif
-    if((TUint)pRC->iStaticResourceArray.Count() > aResId - 1)
+    if(pRC->iStaticResourceArray) 
 		{
 		DStaticPowerResource* pR=pRC->iStaticResourceArray[--aResId];
 		pR->iPostBootLevel=aLevel;
@@ -107,9 +107,7 @@ EXPORT_C TInt DPowerResourceController::PostBootLevel(TUint aResId, TInt aLevel)
 	Kernel extensions or variants can call this API to register the static resources before resource controller
 	is fully initialised.
 	@Param aClientId             ID of the client that is requesting resource registration
-	@Param aStaticResourceArray  Static resources to register with RC.
-	                             Note, that in the special case, when aResCount equals to one, this parameter is treated as a pointer to the
-	                             DStaticPowerResource (DStaticPowerResource*). Otherwise - is the pointer to array of such pointers (DStaticPowerResource*).
+	@Param aStaticResourceArray  Static resources to register with RC. 
 	@Param aResCount             Number of static resources to register with RC. This equals the size of the passed array.
 	@return KErrNone, if operation is success
 	        KErrAccessDenied if clientId could not be found in the current list of registered clients or if this
@@ -129,7 +127,7 @@ EXPORT_C TInt DPowerResourceController::RegisterArrayOfStaticResources(TUint aCl
 
 	if(!aStaticResourceArray || (aResCount == 0))
 		return KErrArgument;
-	CHECK_CONTEXT(thread);
+    CHECK_CONTEXT(thread)
 	//Accept the registration of static resource only if issued before controller is fully initialised.
 	if(pRC->iInitialised == EResConStartupCompleted)
 		{
@@ -141,10 +139,10 @@ EXPORT_C TInt DPowerResourceController::RegisterArrayOfStaticResources(TUint aCl
 		return KErrNotSupported;
 		}
 #ifdef PRM_ENABLE_EXTENDED_VERSION
-	// if aResCount equals to 1 aStaticResourceArray contains not an array, but simply a pointer to the resource.
 	if(aResCount == 1)
 		{
-		if(((DStaticPowerResource*)aStaticResourceArray)->iResourceId & (KIdMaskResourceWithDependencies | KIdMaskDynamic))
+		if((((DStaticPowerResource*)aStaticResourceArray)->iResourceId & KIdMaskResourceWithDependencies) ||
+										(((DStaticPowerResource*)aStaticResourceArray)->iResourceId & KIdMaskDynamic))
 			{
 			return KErrNotSupported;
 			}
@@ -153,60 +151,56 @@ EXPORT_C TInt DPowerResourceController::RegisterArrayOfStaticResources(TUint aCl
 		{
 		for(TUint rescount = 0; rescount < aResCount; rescount++)
 			{
-			if(aStaticResourceArray[rescount] &&
-			  (aStaticResourceArray[rescount]->iResourceId & (KIdMaskResourceWithDependencies | KIdMaskDynamic)))
+			if(aStaticResourceArray[rescount] && ((aStaticResourceArray[rescount]->iResourceId & KIdMaskResourceWithDependencies) || 
+				                          (aStaticResourceArray[rescount]->iResourceId & KIdMaskDynamic)))
 				{
 				return KErrNotSupported;
 				}
 			}
 		}
 #endif
-	SPowerResourceClient* pC = pRC->iClientList[(TUint16)(aClientId & ID_INDEX_BIT_MASK)];
-	if(!pC)
-		{
-		__KTRACE_OPT(KRESMANAGER, Kern::Printf("Client ID not Found"));
-		return KErrAccessDenied;
+	SPowerResourceClient* pC = pRC->iClientList[(TUint16)(aClientId & ID_INDEX_BIT_MASK)];								
+	if(!pC)																										
+		{																										
+		__KTRACE_OPT(KRESMANAGER, Kern::Printf("Client ID not Found"));											
+		return KErrAccessDenied;																		
+		}																										
+	if(pC->iClientId != aClientId)				
+		{																										
+		__KTRACE_OPT(KRESMANAGER, Kern::Printf("Client ID instance count does not match"));						
+		return KErrAccessDenied;																		
+		}																										
+	if(pC->iClientId & CLIENT_THREAD_RELATIVE_BIT_MASK)															
+		{																										
+		if(pC->iThreadId != thread.iId)																				
+			{																									
+			__KTRACE_OPT(KRESMANAGER, Kern::Printf("Client not called from thread context(Thread Relative)"));	
+			return KErrAccessDenied;																	
+			}																									
 		}
-	if(pC->iClientId != aClientId)
+ 
+    TInt r = Kern::SafeReAlloc((TAny*&)pRC->iStaticResourceArray, pRC->iStaticResourceArrayEntries*sizeof(DStaticPowerResource*), 
+		                                         (pRC->iStaticResourceArrayEntries + aResCount)*sizeof(DStaticPowerResource*));
+    if(r != KErrNone)
 		{
-		__KTRACE_OPT(KRESMANAGER, Kern::Printf("Client ID instance count does not match"));
-		return KErrAccessDenied;
+        return r;
 		}
-	if(pC->iClientId & CLIENT_THREAD_RELATIVE_BIT_MASK)
-		{
-		if(pC->iThreadId != thread.iId)
-			{
-			__KTRACE_OPT(KRESMANAGER, Kern::Printf("Client not called from thread context(Thread Relative)"));
-			return KErrAccessDenied;
-			}
-		}
-
-    TInt r = KErrNone;
 	if(aResCount == 1)
 		{
-		// if aResCount equals to one, threat the pointer as a pointer to resource
-		r = pRC->iStaticResourceArray.Append((DStaticPowerResource*)aStaticResourceArray);
-		// increment count of valid resources
-		if(r == KErrNone && aStaticResourceArray)
+		pRC->iStaticResourceArray[pRC->iStaticResourceArrayEntries++] = (DStaticPowerResource*)aStaticResourceArray;
+		if((DStaticPowerResource*)aStaticResourceArray)
 			pRC->iStaticResourceCount++;
 		}
 	else
 		{
 		for(TUint count = 0; count < aResCount; count++)
 			{
-			r = pRC->iStaticResourceArray.Append(aStaticResourceArray[count]);
-			if(r != KErrNone)
-				{
-				__KTRACE_OPT(KRESMANAGER, Kern::Printf("Could not add new static resources, r = %d", r));
-				break;
-				}
-			// increment count of valid resources
+			pRC->iStaticResourceArray[pRC->iStaticResourceArrayEntries++] = aStaticResourceArray[count];
 			if(aStaticResourceArray[count])
 				pRC->iStaticResourceCount++;
 			}
 		}
-
-	return r;
+    return KErrNone;
 	}
 
 /**
@@ -235,10 +229,6 @@ EXPORT_C TInt DPowerResourceController::RegisterStaticResource(TUint aClientId, 
 	This function initialises the controller. 
 	@return KErrNone, if operation is success or one of the system wide errors.
 	*/
-RPointerArray <DStaticPowerResource> *StaticResourceArrayPtr;
-#ifdef PRM_ENABLE_EXTENDED_VERSION
-RPointerArray <DStaticPowerResourceD> *StaticResourceDependencyArrayPtr;
-#endif
 EXPORT_C TInt DPowerResourceController::InitController()
 	{
     __KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::InitController()"));
@@ -262,31 +252,13 @@ EXPORT_C TInt DPowerResourceController::InitController()
 	if(!pRC->iMsgQDependency)
 		return KErrNoMemory;
 #endif
-	// This method can be called in two situations - before the constructor of DPowerResourceController was called 
-	// for the second time (placement new in the extension psl entry macro) e.g. as a result of the call to InitResources() 
-	// from the variant::Init3() method) or after that.
-
-	// In order not to make any assumption on number of constructor invocations, a copy (binary) of the iStaticResourceArray object 
-	// is created below, so that it could be used to later restore the original iStaticResoureceArray object if the constructor
-	// was called after this method. The reason for that is, that in this destructor calls the default RPointerArrayBase()
-	// which resets the array, i.e. it looses the information, but allocated area and pointers still exist in the memory. 
-	// It is then valid to restore the object directly (which will copy all members, including iSize and iEntries pointers). 
-	// This temporary object will be deleted in DPowerResourceController::InitResources() at the last stage of initialization.
-	// (see also comments in DPowerResourceController::DPowerResourceController()) 
-
-	StaticResourceArrayPtr = new RPointerArray <DStaticPowerResource>;
-	if(!StaticResourceArrayPtr)
-		return KErrNoMemory;
-
-	r = pRC->DoRegisterStaticResources(pRC->iStaticResourceArray);
-	if(r != KErrNone)
+	// Call PSL to create all static resources and populate the iStaticResourceArray with pointers to resources and
+	// update static resource count
+    r=pRC->DoRegisterStaticResources(pRC->iStaticResourceArray, pRC->iStaticResourceArrayEntries);
+    if(r!=KErrNone)
 		return r;
-
-	// make a copy (see above comment)
-	*StaticResourceArrayPtr = pRC->iStaticResourceArray; 
-
-	// Get the actual number of static resource registered count
-	for(TInt resCnt = 0; resCnt < pRC->iStaticResourceArray.Count(); resCnt++)
+	//Get the actual number of static resource registered count
+	for(TInt resCnt = 0; resCnt < pRC->iStaticResourceArrayEntries; resCnt++)
 		{
 		if(pRC->iStaticResourceArray[resCnt])
 			pRC->iStaticResourceCount++;
@@ -297,7 +269,7 @@ EXPORT_C TInt DPowerResourceController::InitController()
 	DStaticPowerResource* pR = NULL;
 	TPowerResourceInfoBuf01 resInfo;
 	TPowerResourceInfoV01 *pResInfo;
-	for(TInt resCount = 0; resCount < pRC->iStaticResourceArray.Count(); resCount++)
+	for(TInt resCount = 0; resCount < pRC->iStaticResourceArrayEntries; resCount++)
 		{
 		pR = pRC->iStaticResourceArray[resCount];
 		if(!pR)
@@ -309,25 +281,16 @@ EXPORT_C TInt DPowerResourceController::InitController()
 #endif
 
 #ifdef PRM_ENABLE_EXTENDED_VERSION
-	StaticResourceDependencyArrayPtr = new RPointerArray <DStaticPowerResourceD>;
-	if(!StaticResourceDependencyArrayPtr)
-		return KErrNoMemory;
-
-	// Call PSL to register static resources with dependency if any exists
-	r = pRC->DoRegisterStaticResourcesDependency(pRC->iStaticResDependencyArray);
-
+	//Call PSL to register static resources with dependency if any exists
+	r = pRC->DoRegisterStaticResourcesDependency(pRC->iStaticResDependencyArray, pRC->iStaticResDependencyCount);
 	if(r != KErrNone)
 		return r;
-
-	// make a copy (see above comments for StaticResourceArrayPtr)
-	*StaticResourceDependencyArrayPtr = pRC->iStaticResDependencyArray;
-
-	if(pRC->iStaticResDependencyArray.Count())
+	if(pRC->iStaticResDependencyCount)
 		{
 		DStaticPowerResourceD* pRD = NULL;
 		TUint count;
 		//Assign resource index in resource id
-		for(count = 0; count < (TUint)pRC->iStaticResDependencyArray.Count(); count++)
+		for(count = 0; count < pRC->iStaticResDependencyCount; count++)
 			{
 			pRD = pRC->iStaticResDependencyArray[count];
 			if(!pRD)
@@ -335,7 +298,7 @@ EXPORT_C TInt DPowerResourceController::InitController()
 			pRD->iResourceId |= ((count + 1) & ID_INDEX_BIT_MASK);
 			}
 		//Check for dependency closed loops
-		for(count = 0; count < (TUint)pRC->iStaticResDependencyArray.Count(); count++)
+		for(count = 0; count < pRC->iStaticResDependencyCount; count++)
 			{
 			pRD = pRC->iStaticResDependencyArray[count];
 			if(!(pRD->iResourceId & KIdMaskStaticWithDependencies))
@@ -346,7 +309,7 @@ EXPORT_C TInt DPowerResourceController::InitController()
 			pRC->CheckForDependencyLoop(pRD, pRD->iResourceId, pRD->iResourceId);
 			}
 #ifdef PRM_INSTRUMENTATION_MACRO
-		for(count = 0; count < (TUint)pRC->iStaticResDependencyArray.Count(); count++)
+		for(count = 0; count < pRC->iStaticResDependencyCount; count++)
 			{
 			pR = pRC->iStaticResDependencyArray[count];
 			pR->GetInfo((TDes8*)resInfo.Ptr());

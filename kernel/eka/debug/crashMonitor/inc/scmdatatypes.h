@@ -22,7 +22,7 @@
 #ifndef __SCMDATATYPES_H_INCLUDED__
 #define __SCMDATATYPES_H_INCLUDED__
 
-
+#include <rm_debug_api.h>
 #include <e32rom.h>
 
 #include <scmbytestreamutil.h>
@@ -44,88 +44,6 @@ namespace Debug
 	/** SCM Data Types Build Number */
 	static const TInt KSCMDataTypesBuildNumber = 0;
 
-	/**
-	  Specifies the type of a code segment.
-	  @see TCodeSegListEntry
-	  */
-	enum TCodeSegType
-	    {
-	    EUnknownCodeSegType = 0, /**< Signifies an unknown code segment type. */
-	    EExeCodeSegType = 1,     /**< Signifies a code segment belonging to an executable. */
-	    EDllCodeSegType = 2      /**< Signifies a code segment belonging to a library. */
-	    };
-	
-	
-	/**
-	  Used for storing the contents of a 32 bit register
-	  */
-	typedef TUint32 TRegisterValue32;
-	
-	/**
-	  Structure containing information about the state of the registers when a
-	  hardware exception occurred
-	  */
-	class TRmdArmExcInfo
-	    {
-	public:
-	    /** Enumeration detailing the types of exception which may occur. */
-	    enum TExceptionType
-	        {
-	        /** Enumerator signifying that a prefetch abort error has occurred. */
-	        EPrefetchAbort = 0,
-	        /** Enumerator signifying that a data abort error has occurred. */
-	        EDataAbort = 1,
-	        /** Enumerator signifying that an undefined instruction error has occurred. */
-	        EUndef =2
-	        };
-
-	    /** Value of CPSR. */
-	    TRegisterValue32 iCpsr;
-	    /** Type of exception which has occurred. */
-	    TExceptionType iExcCode;
-	    /** Value of R13 supervisor mode banked register. */
-	    TRegisterValue32 iR13Svc;
-	    /** Value of user mode register R4. */
-	    TRegisterValue32 iR4;
-	    /** Value of user mode register R5. */
-	    TRegisterValue32 iR5;
-	    /** Value of user mode register R6. */
-	    TRegisterValue32 iR6;
-	    /** Value of user mode register R7. */
-	    TRegisterValue32 iR7;
-	    /** Value of user mode register R8. */
-	    TRegisterValue32 iR8;
-	    /** Value of user mode register R9. */
-	    TRegisterValue32 iR9;
-	    /** Value of user mode register R10. */
-	    TRegisterValue32 iR10;
-	    /** Value of user mode register R11. */
-	    TRegisterValue32 iR11;
-	    /** Value of R14 supervisor mode banked register. */
-	    TRegisterValue32 iR14Svc;
-	    /** Address which caused exception (System Control Coprocessor Fault Address Register) */
-	    TRegisterValue32 iFaultAddress;
-	    /** Value of System Control Coprocessor Fault Status Register. */
-	    TRegisterValue32 iFaultStatus;
-	    /** Value of SPSR supervisor mode banked register. */
-	    TRegisterValue32 iSpsrSvc;
-	    /** Value of user mode register R13. */
-	    TRegisterValue32 iR13;
-	    /** Value of user mode register R14. */
-	    TRegisterValue32 iR14;
-	    /** Value of user mode register R0. */
-	    TRegisterValue32 iR0;
-	    /** Value of user mode register R1. */
-	    TRegisterValue32 iR1;
-	    /** Value of user mode register R2. */
-	    TRegisterValue32 iR2;
-	    /** Value of user mode register R3. */
-	    TRegisterValue32 iR3;
-	    /** Value of user mode register R12. */
-	    TRegisterValue32 iR12;
-	    /** Value of user mode register R15, points to instruction which caused exception. */
-	    TRegisterValue32 iR15;
-	    };
 	/**
 	 * This enum defines the type of struct we are dealing with when we
 	 * are serialising/deserialising

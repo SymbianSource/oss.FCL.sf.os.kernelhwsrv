@@ -1,4 +1,4 @@
-// Copyright (c) 2003-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2003-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -51,10 +51,6 @@
 #include <d32otgdi.h>
 
 #include "t_usblib.h"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "t_usbapiTraces.h"
-#endif
 
 
 // --- Local Top Level Variables
@@ -114,10 +110,6 @@ static TEndpointState QueryEndpointState(TEndpointNumber aEndpoint)
 				(ep_state == EEndpointStateNotStalled) ? _S("Not stalled") :
 				((ep_state == EEndpointStateStalled) ? _S("Stalled") :
 				 _S("Unknown...")));
-	OstTraceExt2(TRACE_NORMAL, QUERYENDPOINTSTATE_QUERYENDPOINTSTATE, "Endpoint %d state: %s\n", aEndpoint,
-				(ep_state == EEndpointStateNotStalled) ? _L("Not stalled") :
-				((ep_state == EEndpointStateStalled) ? _L("Stalled") :
-				 _L("Unknown...")));
 	return ep_state;
 	}
 
@@ -250,7 +242,6 @@ static void OpenChannel()
 	if (gSupportsOtg)
 		{
 		test.Printf(_L("Running on OTG device: loading OTG driver\n"));
-		OstTrace0(TRACE_NORMAL, OPENCHANNEL_OPENCHANNEL, "Running on OTG device: loading OTG driver\n");
 		test.Next(_L("Load OTG LDD"));
 		r = User::LoadLogicalDevice(KOtgdiLddFilename);
 		test((r == KErrNone) || (r == KErrAlreadyExists));
@@ -301,8 +292,6 @@ static void TestResourceAllocationV1()
 	TBool res = gPort.QueryEndpointResourceUse(EEndpoint1, EUsbcEndpointResourceDMA);
 	test.Printf(_L("DMA on endpoint 1 %s\n"),
 				res ? _S("now allocated") : _S("not allocated"));
-	OstTraceExt1(TRACE_NORMAL, TESTRESOURCEALLOCATIONV1_TESTRESOURCEALLOCATIONV1, "DMA on endpoint 1 %s\n",
-				res ? _L("now allocated") : _L("not allocated"));
 	if (dma == KErrNone)
 		// Only if DMA resource was successfully allocated should we expect truth here:
 		test(res);
@@ -314,8 +303,6 @@ static void TestResourceAllocationV1()
 	res = gPort.QueryEndpointResourceUse(EEndpoint1, EUsbcEndpointResourceDoubleBuffering);
 	test.Printf(_L("Double Buffering on endpoint 1 %s\n"),
 				res ? _S("now allocated") : _S("not allocated"));
-	OstTraceExt1(TRACE_NORMAL, TESTRESOURCEALLOCATIONV1_TESTRESOURCEALLOCATIONV1_DUP01, "Double Buffering on endpoint 1 %s\n",
-				res ? _L("now allocated") : _L("not allocated"));
 	if (db == KErrNone)
 		// Only if DB resource was successfully allocated should we expect truth here:
 		test(res);
@@ -332,8 +319,6 @@ static void TestResourceAllocationV1()
 	res = gPort.QueryEndpointResourceUse(EEndpoint1, EUsbcEndpointResourceDoubleBuffering);
 	test.Printf(_L("Double Buffering on endpoint 1 %s\n"),
 				res ? _S("still allocated") : _S("not (longer) allocated"));
-	OstTraceExt1(TRACE_NORMAL, TESTRESOURCEALLOCATIONV1_TESTRESOURCEALLOCATIONV1_DUP02, "Double Buffering on endpoint 1 %s\n",
-				res ? _L("still allocated") : _L("not (longer) allocated"));
 
 	test.Next(_L("Deallocate DMA resource"));
 	r = gPort.DeAllocateEndpointResource(EEndpoint1, EUsbcEndpointResourceDMA);
@@ -345,8 +330,6 @@ static void TestResourceAllocationV1()
 	res = gPort.QueryEndpointResourceUse(EEndpoint1, EUsbcEndpointResourceDMA);
 	test.Printf(_L("DMA on endpoint 1 %s\n"),
 				res ? _S("still allocated") : _S("not (longer) allocated"));
-	OstTraceExt1(TRACE_NORMAL, TESTRESOURCEALLOCATIONV1_TESTRESOURCEALLOCATIONV1_DUP03, "DMA on endpoint 1 %s\n",
-				res ? _L("still allocated") : _L("not (longer) allocated"));
 
 	test.End();
 	}
@@ -368,43 +351,25 @@ static void SetupInterface()
 	gSupportResouceAllocationV2 = (d_caps().iFeatureWord1 & KUsbDevCapsFeatureWord1_EndpointResourceAllocV2);
 	
 	test.Printf(_L("### USB device capabilities:\n"));
-	OstTrace0(TRACE_NORMAL, SETUPINTERFACE_SETUPINTERFACE, "### USB device capabilities:\n");
 	test.Printf(_L("Number of endpoints:                        %d\n"), n);
-	OstTrace1(TRACE_NORMAL, SETUPINTERFACE_SETUPINTERFACE_DUP01, "Number of endpoints:                        %d\n", n);
 	test.Printf(_L("Supports Software-Connect:                  %s\n"),
 				d_caps().iConnect ? _S("yes") : _S("no"));
-	OstTraceExt1(TRACE_NORMAL, SETUPINTERFACE_SETUPINTERFACE_DUP02, "Supports Software-Connect:                  %s\n",
-				d_caps().iConnect ? _L("yes") : _L("no"));
 	test.Printf(_L("Device is Self-Powered:                     %s\n"),
 				d_caps().iSelfPowered ? _S("yes") : _S("no"));
-	OstTraceExt1(TRACE_NORMAL, SETUPINTERFACE_SETUPINTERFACE_DUP03, "Device is Self-Powered:                     %s\n",
-				d_caps().iSelfPowered ? _L("yes") : _L("no"));
 	test.Printf(_L("Supports Remote-Wakeup:                     %s\n"),
 				d_caps().iRemoteWakeup ? _S("yes") : _S("no"));
-	OstTraceExt1(TRACE_NORMAL, SETUPINTERFACE_SETUPINTERFACE_DUP04, "Supports Remote-Wakeup:                     %s\n",
-				d_caps().iRemoteWakeup ? _L("yes") : _L("no"));
 	test.Printf(_L("Supports High-speed:                        %s\n"),
 				gSupportsHighSpeed ? _S("yes") : _S("no"));
-	OstTraceExt1(TRACE_NORMAL, SETUPINTERFACE_SETUPINTERFACE_DUP05, "Supports High-speed:                        %s\n",
-				gSupportsHighSpeed ? _L("yes") : _L("no"));
 	test.Printf(_L("Supports OTG:                               %s\n"),
 				gSupportsOtg ? _S("yes") : _S("no"));
-	OstTraceExt1(TRACE_NORMAL, SETUPINTERFACE_SETUPINTERFACE_DUP06, "Supports OTG:                               %s\n",
-				gSupportsOtg ? _L("yes") : _L("no"));
 	test.Printf(_L("Supports unpowered cable detection:         %s\n"),
 				(d_caps().iFeatureWord1 & KUsbDevCapsFeatureWord1_CableDetectWithoutPower) ?
 				_S("yes") : _S("no"));
-	OstTraceExt1(TRACE_NORMAL, SETUPINTERFACE_SETUPINTERFACE_DUP07, "Supports unpowered cable detection:         %s\n",
-				(d_caps().iFeatureWord1 & KUsbDevCapsFeatureWord1_CableDetectWithoutPower) ?
-				_L("yes") : _L("no"));
 	test.Printf(_L("Supports endpoint resource alloc scheme V2: %s\n"),
 				gSupportResouceAllocationV2 ? _S("yes") : _S("no"));
-	OstTraceExt1(TRACE_NORMAL, SETUPINTERFACE_SETUPINTERFACE_DUP08, "Supports endpoint resource alloc scheme V2: %s\n",
-				gSupportResouceAllocationV2 ? _L("yes") : _L("no"));
 
 	test(n >= 2);
 	test.Printf(_L("(Device has sufficient endpoints.)\n"));
-	OstTrace0(TRACE_NORMAL, SETUPINTERFACE_SETUPINTERFACE_DUP09, "(Device has sufficient endpoints.)\n");
 
 	// Endpoint caps
 	test.Next(_L("Query USB endpoint caps"));
@@ -414,18 +379,14 @@ static void SetupInterface()
 	test(r == KErrNone);
 
 	test.Printf(_L("### USB device endpoint capabilities:\n"));
-	OstTrace0(TRACE_NORMAL, SETUPINTERFACE_SETUPINTERFACE_DUP10, "### USB device endpoint capabilities:\n");
 	for (TInt i = 0; i < n; i++)
 		{
 		const TUsbcEndpointCaps* caps = &data[i].iCaps;
 		test.Printf(_L("Endpoint: SizeMask = 0x%08x TypeDirMask = 0x%08x\n"),
 					caps->iSizes, caps->iTypesAndDir);
-		OstTraceExt2(TRACE_NORMAL, SETUPINTERFACE_SETUPINTERFACE_DUP11, "Endpoint: SizeMask = 0x%08x TypeDirMask = 0x%08x\n",
-					caps->iSizes, caps->iTypesAndDir);
 		if (caps->iHighBandwidth)
 			{
 			test.Printf(_L("  (high-speed, high bandwidth endpoint)\n"));
-			OstTrace0(TRACE_NORMAL, SETUPINTERFACE_SETUPINTERFACE_DUP12, "  (high-speed, high bandwidth endpoint)\n");
 			// Must be HS Int or Iso ep
 			test(gSupportsHighSpeed);
 			test(caps->iTypesAndDir & (KUsbEpTypeIsochronous | KUsbEpTypeInterrupt));
@@ -509,7 +470,6 @@ static void SetupInterface()
 	if (gSupportsOtg && (r == KErrNotReady))
 		{
 		test.Printf(_L("OTG device but not connected to Host, stopping subtest here.\n"));
-		OstTrace0(TRACE_NORMAL, SETUPINTERFACE_SETUPINTERFACE_DUP13, "OTG device but not connected to Host, stopping subtest here.\n");
 		test.End();
 		return;
 		}
@@ -522,10 +482,8 @@ static void SetupInterface()
 	test(r == KErrNone);
  	// Suspend thread to let things get stable on the bus.
 	test.Printf(_L("Waiting a short moment..."));
-	OstTrace0(TRACE_NORMAL, SETUPINTERFACE_SETUPINTERFACE_DUP14, "Waiting a short moment...");
 	User::After(2000000);
 	test.Printf(_L(" done.\n"));
-	OstTrace0(TRACE_NORMAL, SETUPINTERFACE_SETUPINTERFACE_DUP15, " done.\n");
 
 	// Check the speed of the physical connection (if any).
 	gUsingHighSpeed = gPort.CurrentlyUsingHighSpeed();
@@ -533,12 +491,10 @@ static void SetupInterface()
 		{
 		test(gSupportsHighSpeed);							// sane?
 		test.Printf(_L("---> USB High-speed Testing\n"));
-		OstTrace0(TRACE_NORMAL, SETUPINTERFACE_SETUPINTERFACE_DUP16, "---> USB High-speed Testing\n");
 		}
 	else
 		{
 		test.Printf(_L("---> USB Full-speed Testing\n"));
-		OstTrace0(TRACE_NORMAL, SETUPINTERFACE_SETUPINTERFACE_DUP17, "---> USB Full-speed Testing\n");
 		}
 
 	// By pulling down the interface/connection and bringing them up again we
@@ -565,10 +521,8 @@ static void SetupInterface()
 
  	// Suspend thread before connecting again.
 	test.Printf(_L("Waiting a short moment..."));
-	OstTrace0(TRACE_NORMAL, SETUPINTERFACE_SETUPINTERFACE_DUP18, "Waiting a short moment...");
 	User::After(1000000);
 	test.Printf(_L(" done.\n"));
-	OstTrace0(TRACE_NORMAL, SETUPINTERFACE_SETUPINTERFACE_DUP19, " done.\n");
 
 	test.Next(_L("Powering up UDC (2)"));
 	r = gPort.PowerUpUdc();
@@ -583,7 +537,6 @@ static void SetupInterface()
 	if (gSupportsOtg && (r == KErrNotReady))
 		{
 		test.Printf(_L("OTG device but not connected to Host, stopping subtest here.\n"));
-		OstTrace0(TRACE_NORMAL, SETUPINTERFACE_SETUPINTERFACE_DUP20, "OTG device but not connected to Host, stopping subtest here.\n");
 		test.End();
 		return;
 		}
@@ -600,14 +553,10 @@ static void SetupInterface()
 			TBool res = gPort.QueryEndpointResourceUse(EEndpoint1, EUsbcEndpointResourceDoubleBuffering);
 			test.Printf(_L("Double Buffering on endpoint 1 %s\n"),
 						res ? _S("now allocated") : _S("not allocated"));
-			OstTraceExt1(TRACE_NORMAL, SETUPINTERFACE_SETUPINTERFACE_DUP21, "Double Buffering on endpoint 1 %s\n",
-						res ? _L("now allocated") : _L("not allocated"));
 
 			res = gPort.QueryEndpointResourceUse(EEndpoint1, EUsbcEndpointResourceDMA);
 			test.Printf(_L("DMA on endpoint 1 %s\n"),
 						res ? _S("still allocated") : _S("not allocated"));										
-			OstTraceExt1(TRACE_NORMAL, SETUPINTERFACE_SETUPINTERFACE_DUP22, "DMA on endpoint 1 %s\n",
-						res ? _L("still allocated") : _L("not allocated"));										
 		}
 		
 	test.End();
@@ -670,7 +619,6 @@ static void	TestDeviceQualifierDescriptor()
 	if (!gSupportsHighSpeed)
 		{
 		test.Printf(_L("*** Not supported - skipping Device_Qualifier descriptor tests\n"));
-		OstTrace0(TRACE_NORMAL, TESTDEVICEQUALIFIERDESCRIPTOR_TESTDEVICEQUALIFIERDESCRIPTOR, "*** Not supported - skipping Device_Qualifier descriptor tests\n");
 		test.End();
 		return;
 		}
@@ -752,7 +700,6 @@ static void	TestOtherSpeedConfigurationDescriptor()
 	if (!gSupportsHighSpeed)
 		{
 		test.Printf(_L("*** Not supported - skipping Other_Speed_Configuration desc tests\n"));
-		OstTrace0(TRACE_NORMAL, TESTOTHERSPEEDCONFIGURATIONDESCRIPTOR_TESTOTHERSPEEDCONFIGURATIONDESCRIPTOR, "*** Not supported - skipping Other_Speed_Configuration desc tests\n");
 		test.End();
 		return;
 		}
@@ -890,7 +837,6 @@ static void TestAlternateInterfaceManipulation()
 	if (!SupportsAlternateInterfaces())
 		{
 		test.Printf(_L("*** Not supported - skipping alternate interface settings tests\n"));
-		OstTrace0(TRACE_NORMAL, TESTALTERNATEINTERFACEMANIPULATION_TESTALTERNATEINTERFACEMANIPULATION, "*** Not supported - skipping alternate interface settings tests\n");
 		test.End();
 		return;
 		}
@@ -936,7 +882,6 @@ static void TestAlternateInterfaceManipulation()
 			ifc().iEndpointData[ep_found].iInterval = 0x01;	// 2^(bInterval-1)ms, bInterval must be [1..16]
 			ifc().iEndpointData[ep_found].iInterval_Hs = 0x01; // same as for FS
 			test.Printf(_L("ISO  IN  size = %4d (ep %d)\n"), mps, ep_found + 1);
-			OstTraceExt2(TRACE_NORMAL, TESTALTERNATEINTERFACEMANIPULATION_TESTALTERNATEINTERFACEMANIPULATION_DUP01, "ISO  IN  size = %4d (ep %d)\n", mps, ep_found + 1);
 			foundIsoIN = ETrue;
 			if (++ep_found == 3)
 				break;
@@ -951,7 +896,6 @@ static void TestAlternateInterfaceManipulation()
 			ifc().iEndpointData[ep_found].iSize = mps;
 			ifc().iEndpointData[ep_found].iInterval = 0x01;	// 2^(bInterval-1)ms, bInterval must be [1..16]
 			test.Printf(_L("ISO  OUT size = %4d (ep %d)\n"), mps, ep_found + 1);
-			OstTraceExt2(TRACE_NORMAL, TESTALTERNATEINTERFACEMANIPULATION_TESTALTERNATEINTERFACEMANIPULATION_DUP02, "ISO  OUT size = %4d (ep %d)\n", mps, ep_found + 1);
 			foundIsoOUT = ETrue;
 			if (++ep_found == 3)
 				break;
@@ -968,7 +912,6 @@ static void TestAlternateInterfaceManipulation()
 			ifc().iEndpointData[ep_found].iInterval_Hs = 4;	// interval = 2^(bInterval-1)ms = 8ms
 			ifc().iEndpointData[ep_found].iExtra    = 2;	// 2 extra bytes for Audio Class EP descriptor
 			test.Printf(_L("INT  IN  size = %4d (ep %d)\n"), mps, ep_found + 1);
-			OstTraceExt2(TRACE_NORMAL, TESTALTERNATEINTERFACEMANIPULATION_TESTALTERNATEINTERFACEMANIPULATION_DUP03, "INT  IN  size = %4d (ep %d)\n", mps, ep_found + 1);
 			foundIntIN = ETrue;
 			INT_IN_ep = ep_found + 1;
 			if (++ep_found == 3)
@@ -989,7 +932,6 @@ static void TestAlternateInterfaceManipulation()
 			if (gUsingHighSpeed)
 				{
 				test.Printf(_L("Checking if correct Bulk packet size is reported in HS case\n"));
-				OstTrace0(TRACE_NORMAL, TESTALTERNATEINTERFACEMANIPULATION_TESTALTERNATEINTERFACEMANIPULATION_DUP04, "Checking if correct Bulk packet size is reported in HS case\n");
 				test(mps == KUsbEpSize512);					// sane?
 				}
 			// The PSL should in any case also offer the 'legacy' FS size:
@@ -997,19 +939,15 @@ static void TestAlternateInterfaceManipulation()
 			ifc().iEndpointData[ep_found].iSize = mps;
 			test.Printf(_L("BULK %s size = %4d (ep %d)\n"),
 						dir == KUsbEpDirIn ? _S("IN ") : _S("OUT"), mps, ep_found + 1);
-			OstTraceExt3(TRACE_NORMAL, TESTALTERNATEINTERFACEMANIPULATION_TESTALTERNATEINTERFACEMANIPULATION_DUP05, "BULK %S size = %4d (ep %d)\n",
-						dir == KUsbEpDirIn ? _L("IN ") : _L("OUT"), mps, ep_found + 1);
 			if (++ep_found == 5)
 				break;
 			}
 		}
 
 	test.Printf(_L("Total: %d endpoints found for the alt. ifc setting\n"), ep_found);
-	OstTrace1(TRACE_NORMAL, TESTALTERNATEINTERFACEMANIPULATION_TESTALTERNATEINTERFACEMANIPULATION_DUP06, "Total: %d endpoints found for the alt. ifc setting\n", ep_found);
 	if (ep_found < 3)
 		{
 		test.Printf(_L("(3 endpoints are at least required. Skipping test...)\n"));
-		OstTrace0(TRACE_NORMAL, TESTALTERNATEINTERFACEMANIPULATION_TESTALTERNATEINTERFACEMANIPULATION_DUP07, "(3 endpoints are at least required. Skipping test...)\n");
 		test.End();
 		return;
 		}
@@ -1017,15 +955,12 @@ static void TestAlternateInterfaceManipulation()
 	if (!foundIsoIN && !foundIsoOUT)
 		{
 		test.Printf(_L("(No Isochronous endpoints found)\n"));
-		OstTrace0(TRACE_NORMAL, TESTALTERNATEINTERFACEMANIPULATION_TESTALTERNATEINTERFACEMANIPULATION_DUP08, "(No Isochronous endpoints found)\n");
 		}
 
 	if (!foundIntIN)
 		{
 		test.Printf(_L("(No Interrupt endpoint found)\n"));
-		OstTrace0(TRACE_NORMAL, TESTALTERNATEINTERFACEMANIPULATION_TESTALTERNATEINTERFACEMANIPULATION_DUP09, "(No Interrupt endpoint found)\n");
 		test.Printf(_L("Adjusting endpoint size for later test\n"));
-		OstTrace0(TRACE_NORMAL, TESTALTERNATEINTERFACEMANIPULATION_TESTALTERNATEINTERFACEMANIPULATION_DUP10, "Adjusting endpoint size for later test\n");
 		// We want to make sure that at least one descriptor has the 2 extra bytes.
 		// It doesn't matter that this ep could be a Bulk one, or that the 2 Iso ep's might be missing -
 		// we just want to test some functionality and we're not going to use this interface in earnest.
@@ -1129,7 +1064,6 @@ static void TestEndpointDescriptor()
 	const TUint16 ep_size = EpSize(descriptor[KEpDesc_PacketSizeOffset],
 								   descriptor[KEpDesc_PacketSizeOffset+1]);
 	test.Printf(_L(" Size: %d\n"), ep_size);
-	OstTrace1(TRACE_NORMAL, TESTENDPOINTDESCRIPTOR_TESTENDPOINTDESCRIPTOR, " Size: %d\n", ep_size);
 	if (gUsingHighSpeed)
 		{
 		// HS Bulk ep can only have one possible packet size.
@@ -1152,7 +1086,6 @@ static void TestExtendedEndpointDescriptor()
 	if (!SupportsAlternateInterfaces())
 		{
 		test.Printf(_L("*** Not supported - skipping Extended Endpoint descriptor tests\n"));
-		OstTrace0(TRACE_NORMAL, TESTEXTENDEDENDPOINTDESCRIPTOR_TESTEXTENDEDENDPOINTDESCRIPTOR, "*** Not supported - skipping Extended Endpoint descriptor tests\n");
 		test.End();
 		return;
 		}
@@ -1220,7 +1153,6 @@ static void TestStandardStringDescriptors()
 	TInt r = gPort.GetStringDescriptorLangId(rd_langid_orig);
 	test(r == KErrNone);
 	test.Printf(_L("Original LANGID code: 0x%04X\n"), rd_langid_orig);
-	OstTrace1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS, "Original LANGID code: 0x%04X\n", rd_langid_orig);
 
 	test.Next(_L("SetStringDescriptorLangId()"));
 	TUint16 wr_langid = 0x0809;								// English (UK) Language ID
@@ -1234,7 +1166,6 @@ static void TestStandardStringDescriptors()
 	r = gPort.GetStringDescriptorLangId(rd_langid);
 	test(r == KErrNone);
 	test.Printf(_L("New LANGID code: 0x%04X\n"), rd_langid);
-	OstTrace1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP01, "New LANGID code: 0x%04X\n", rd_langid);
 
 	test.Next(_L("Compare LANGID codes"));
 	test(rd_langid == wr_langid);
@@ -1258,13 +1189,11 @@ static void TestStandardStringDescriptors()
 	if (r == KErrNone)
 		{
 		test.Printf(_L("Original Manufacturer string: \"%lS\"\n"), &rd_str_orig);
-		OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP02, "Original Manufacturer string: \"%lS\"\n", rd_str_orig);
 		restore_string = ETrue;
 		}
 	else
 		{
 		test.Printf(_L("No Manufacturer string set\n"));
-		OstTrace0(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP03, "No Manufacturer string set\n");
 		restore_string = EFalse;
 		}
 
@@ -1279,7 +1208,6 @@ static void TestStandardStringDescriptors()
 	r = gPort.GetManufacturerStringDescriptor(rd_str);
 	test(r == KErrNone);
 	test.Printf(_L("New Manufacturer string: \"%lS\"\n"), &rd_str);
-	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP04, "New Manufacturer string: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Manufacturer strings"));
 	r = rd_str.Compare(wr_str);
@@ -1297,7 +1225,6 @@ static void TestStandardStringDescriptors()
 	r = gPort.GetManufacturerStringDescriptor(rd_str);
 	test(r == KErrNone);
 	test.Printf(_L("New Manufacturer string: \"%lS\"\n"), &rd_str);
-	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP05, "New Manufacturer string: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Manufacturer strings"));
 	r = rd_str.Compare(wr_str);
@@ -1331,7 +1258,6 @@ static void TestStandardStringDescriptors()
 	if (r == KErrNone)
 		{
 		test.Printf(_L("Old Product string: \"%lS\"\n"), &rd_str_orig);
-		OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP06, "Old Product string: \"%lS\"\n", rd_str_orig);
 		restore_string = ETrue;
 		}
 	else
@@ -1349,7 +1275,6 @@ static void TestStandardStringDescriptors()
 	r = gPort.GetProductStringDescriptor(rd_str);
 	test(r == KErrNone);
 	test.Printf(_L("New Product string: \"%lS\"\n"), &rd_str);
-	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP07, "New Product string: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Product strings"));
 	r = rd_str.Compare(wr_str);
@@ -1367,7 +1292,6 @@ static void TestStandardStringDescriptors()
 	r = gPort.GetProductStringDescriptor(rd_str);
 	test(r == KErrNone);
 	test.Printf(_L("New Product string: \"%lS\"\n"), &rd_str);
-	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP08, "New Product string: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Product strings"));
 	r = rd_str.Compare(wr_str);
@@ -1401,7 +1325,6 @@ static void TestStandardStringDescriptors()
 	if (r == KErrNone)
 		{
 		test.Printf(_L("Old Serial Number: \"%lS\"\n"), &rd_str_orig);
-		OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP09, "Old Serial Number: \"%lS\"\n", rd_str_orig);
 		restore_string = ETrue;
 		}
 	else
@@ -1419,7 +1342,6 @@ static void TestStandardStringDescriptors()
 	r = gPort.GetSerialNumberStringDescriptor(rd_str);
 	test(r == KErrNone);
 	test.Printf(_L("New Serial Number: \"%lS\"\n"), &rd_str);
-	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP10, "New Serial Number: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Serial Number strings"));
 	r = rd_str.Compare(wr_str);
@@ -1437,7 +1359,6 @@ static void TestStandardStringDescriptors()
 	r = gPort.GetSerialNumberStringDescriptor(rd_str);
 	test(r == KErrNone);
 	test.Printf(_L("New Serial Number: \"%lS\"\n"), &rd_str);
-	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP11, "New Serial Number: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Serial Number strings"));
 	r = rd_str.Compare(wr_str);
@@ -1471,7 +1392,6 @@ static void TestStandardStringDescriptors()
 	if (r == KErrNone)
 		{
 		test.Printf(_L("Old Configuration string: \"%lS\"\n"), &rd_str_orig);
-		OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP12, "Old Configuration string: \"%lS\"\n", rd_str_orig);
 		restore_string = ETrue;
 		}
 	else
@@ -1489,7 +1409,6 @@ static void TestStandardStringDescriptors()
 	r = gPort.GetConfigurationStringDescriptor(rd_str);
 	test(r == KErrNone);
 	test.Printf(_L("New Configuration string: \"%lS\"\n"), &rd_str);
-	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP13, "New Configuration string: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Configuration strings"));
 	r = rd_str.Compare(wr_str);
@@ -1507,7 +1426,6 @@ static void TestStandardStringDescriptors()
 	r = gPort.GetConfigurationStringDescriptor(rd_str);
 	test(r == KErrNone);
 	test.Printf(_L("New Configuration string: \"%lS\"\n"), &rd_str);
-	OstTraceExt1(TRACE_NORMAL, TESTSTANDARDSTRINGDESCRIPTORS_TESTSTANDARDSTRINGDESCRIPTORS_DUP14, "New Configuration string: \"%lS\"\n", rd_str);
 
 	test.Next(_L("Compare Configuration strings"));
 	r = rd_str.Compare(wr_str);
@@ -1571,7 +1489,6 @@ static void TestArbitraryStringDescriptors()
 	r = gPort.GetStringDescriptor(stridx1, rd_str);
 	test(r == KErrNone);
 	test.Printf(_L("New test string @ idx %d: \"%lS\"\n"), stridx1, &rd_str);
-	OstTraceExt2(TRACE_NORMAL, TESTARBITRARYSTRINGDESCRIPTORS_TESTARBITRARYSTRINGDESCRIPTORS, "New test string @ idx %d: \"%lS\"\n", stridx1, rd_str);
 
 	test.Next(_L("Compare test strings 1"));
 	r = rd_str.Compare(wr_str);
@@ -1610,7 +1527,6 @@ static void TestArbitraryStringDescriptors()
 	r = gPort.GetStringDescriptor(stridx2, rd_str);
 	test(r == KErrNone);
 	test.Printf(_L("New test string @ idx %d: \"%lS\"\n"), stridx2, &rd_str);
-	OstTraceExt2(TRACE_NORMAL, TESTARBITRARYSTRINGDESCRIPTORS_TESTARBITRARYSTRINGDESCRIPTORS_DUP01, "New test string @ idx %d: \"%lS\"\n", stridx2, rd_str);
 
 	test.Next(_L("Compare test strings 2"));
 	r = rd_str.Compare(wr_str);
@@ -1634,7 +1550,6 @@ static void TestArbitraryStringDescriptors()
 	r = gPort.GetStringDescriptor(stridx3, rd_str);
 	test(r == KErrNone);
 	test.Printf(_L("New test string @ idx %d: \"%lS\"\n"), stridx3, &rd_str);
-	OstTraceExt2(TRACE_NORMAL, TESTARBITRARYSTRINGDESCRIPTORS_TESTARBITRARYSTRINGDESCRIPTORS_DUP02, "New test string @ idx %d: \"%lS\"\n", stridx3, rd_str);
 
 	test.Next(_L("Compare test strings 3"));
 	r = rd_str.Compare(wr_str);
@@ -1753,14 +1668,11 @@ static void TestOtgExtensions()
 		TBool a_AltHnpSupport = (features & KUsbOtgAttr_A_AltHnpSupport) ? ETrue : EFalse;
 		test.Printf(_L("### OTG Features:\nB_HnpEnable(%d)\nA_HnpSupport(%d)\nA_Alt_HnpSupport(%d)\n"),
 					b_HnpEnable, a_HnpSupport, a_AltHnpSupport);
-		OstTraceExt3(TRACE_NORMAL, TESTOTGEXTENSIONS_TESTOTGEXTENSIONS, "### OTG Features:\nB_HnpEnable(%d)\nA_HnpSupport(%d)\nA_Alt_HnpSupport(%d)\n",
-					b_HnpEnable, a_HnpSupport, a_AltHnpSupport);
 		}
 	else
 		{
 		test(r == KErrNotSupported);
 		test.Printf(_L("GetOtgFeatures() not supported\n"));
-		OstTrace0(TRACE_NORMAL, TESTOTGEXTENSIONS_TESTOTGEXTENSIONS_DUP01, "GetOtgFeatures() not supported\n");
 		}
 
 	test.End();
@@ -1812,12 +1724,10 @@ static void TestEndpoint0MaxPacketSizes()
 			if (good)
 				{
 				test.Printf(_L("Ep0 supports %d bytes MaxPacketSize\n"), mpsize);
-				OstTrace1(TRACE_NORMAL, TESTENDPOINT0MAXPACKETSIZES_TESTENDPOINT0MAXPACKETSIZES, "Ep0 supports %d bytes MaxPacketSize\n", mpsize);
 				}
 			else
 				{
 				test.Printf(_L("Bad Ep0 size: 0x%08x, failure will occur\n"), bit);
-				OstTrace1(TRACE_NORMAL, TESTENDPOINT0MAXPACKETSIZES_TESTENDPOINT0MAXPACKETSIZES_DUP01, "Bad Ep0 size: 0x%08x, failure will occur\n", bit);
 				r = KErrGeneral;
 				}
 			}
@@ -1861,7 +1771,6 @@ static void TestAlternateDeviceStatusNotify()
 		{
 		TUint setting = (deviceState & ~KUsbAlternateSetting);
 		test.Printf(_L("Alternate setting change to setting %d - unexpected"), setting);
-		OstTrace1(TRACE_NORMAL, TESTALTERNATEDEVICESTATUSNOTIFY_TESTALTERNATEDEVICESTATUSNOTIFY, "Alternate setting change to setting %d - unexpected", setting);
 		test(EFalse);
 		}
 	else
@@ -1870,40 +1779,31 @@ static void TestAlternateDeviceStatusNotify()
 			{
 		case EUsbcDeviceStateUndefined:
 			test.Printf(_L("TestAlternateDeviceStatusNotify: Undefined state\n"));
-			OstTrace0(TRACE_NORMAL, TESTALTERNATEDEVICESTATUSNOTIFY_TESTALTERNATEDEVICESTATUSNOTIFY_DUP01, "TestAlternateDeviceStatusNotify: Undefined state\n");
 			break;
 		case EUsbcDeviceStateAttached:
 			test.Printf(_L("TestAlternateDeviceStatusNotify: Attached state\n"));
-			OstTrace0(TRACE_NORMAL, TESTALTERNATEDEVICESTATUSNOTIFY_TESTALTERNATEDEVICESTATUSNOTIFY_DUP02, "TestAlternateDeviceStatusNotify: Attached state\n");
 			break;
 		case EUsbcDeviceStatePowered:
 			test.Printf(_L("TestAlternateDeviceStatusNotify: Powered state\n"));
-			OstTrace0(TRACE_NORMAL, TESTALTERNATEDEVICESTATUSNOTIFY_TESTALTERNATEDEVICESTATUSNOTIFY_DUP03, "TestAlternateDeviceStatusNotify: Powered state\n");
 			break;
 		case EUsbcDeviceStateDefault:
 			test.Printf(_L("TestAlternateDeviceStatusNotify: Default state\n"));
-			OstTrace0(TRACE_NORMAL, TESTALTERNATEDEVICESTATUSNOTIFY_TESTALTERNATEDEVICESTATUSNOTIFY_DUP04, "TestAlternateDeviceStatusNotify: Default state\n");
 			break;
 		case EUsbcDeviceStateAddress:
 			test.Printf(_L("TestAlternateDeviceStatusNotify: Address state\n"));
-			OstTrace0(TRACE_NORMAL, TESTALTERNATEDEVICESTATUSNOTIFY_TESTALTERNATEDEVICESTATUSNOTIFY_DUP05, "TestAlternateDeviceStatusNotify: Address state\n");
 			break;
 		case EUsbcDeviceStateConfigured:
 			test.Printf(_L("TestAlternateDeviceStatusNotify: Configured state\n"));
-			OstTrace0(TRACE_NORMAL, TESTALTERNATEDEVICESTATUSNOTIFY_TESTALTERNATEDEVICESTATUSNOTIFY_DUP06, "TestAlternateDeviceStatusNotify: Configured state\n");
 			break;
 		case EUsbcDeviceStateSuspended:
 			test.Printf(_L("TestAlternateDeviceStatusNotify: Suspended state\n"));
-			OstTrace0(TRACE_NORMAL, TESTALTERNATEDEVICESTATUSNOTIFY_TESTALTERNATEDEVICESTATUSNOTIFY_DUP07, "TestAlternateDeviceStatusNotify: Suspended state\n");
 			break;
 		case EUsbcNoState:
 			test.Printf(_L("TestAlternateDeviceStatusNotify: State buffering error\n"));
-			OstTrace0(TRACE_NORMAL, TESTALTERNATEDEVICESTATUSNOTIFY_TESTALTERNATEDEVICESTATUSNOTIFY_DUP08, "TestAlternateDeviceStatusNotify: State buffering error\n");
 			test(EFalse);
 			break;
 		default:
 			test.Printf(_L("TestAlternateDeviceStatusNotify: Unknown state\n"));
-			OstTrace0(TRACE_NORMAL, TESTALTERNATEDEVICESTATUSNOTIFY_TESTALTERNATEDEVICESTATUSNOTIFY_DUP09, "TestAlternateDeviceStatusNotify: Unknown state\n");
 			test(EFalse);
 			}
 		}
@@ -1934,12 +1834,10 @@ static void TestEndpointStatusNotify()
 		if ((epStateBitmap & (1 << i)) == EEndpointStateNotStalled)
 			{
 			test.Printf(_L("EndpointStatusNotify: Ep %d NOT STALLED\n"), i);
-			OstTrace1(TRACE_NORMAL, TESTENDPOINTSTATUSNOTIFY_TESTENDPOINTSTATUSNOTIFY, "EndpointStatusNotify: Ep %d NOT STALLED\n", i);
 			}
 		else
 			{
 			test.Printf(_L("EndpointStatusNotify: Ep %d STALLED\n"), i);
-			OstTrace1(TRACE_NORMAL, TESTENDPOINTSTATUSNOTIFY_TESTENDPOINTSTATUSNOTIFY_DUP01, "EndpointStatusNotify: Ep %d STALLED\n", i);
 			}
 		}
 
@@ -1968,9 +1866,7 @@ static void TestEndpointStallStatus()
 	if( EUsbcDeviceStateUndefined==devstate )
 		{
 		test.Printf( _L("Device not connected, state EUsbcDeviceStateUndefined.\n")  );
-		OstTrace0(TRACE_NORMAL, TESTENDPOINTSTALLSTATUS_TESTENDPOINTSTALLSTATUS, "Device not connected, state EUsbcDeviceStateUndefined.\n");
 		test.Printf( _L("Skipping endpoint stall status tests.\n") );
-		OstTrace0(TRACE_NORMAL, TESTENDPOINTSTALLSTATUS_TESTENDPOINTSTALLSTATUS_DUP01, "Skipping endpoint stall status tests.\n");
 		test.End();
 		return;
 		}
@@ -1979,7 +1875,6 @@ static void TestEndpointStallStatus()
 	if (!SupportsEndpointStall())
 		{
 		test.Printf(_L("*** Not supported - skipping endpoint stall status tests\n"));
-		OstTrace0(TRACE_NORMAL, TESTENDPOINTSTALLSTATUS_TESTENDPOINTSTALLSTATUS_DUP02, "*** Not supported - skipping endpoint stall status tests\n");
 		test.End();
 		return;
 		}
@@ -2065,7 +1960,6 @@ static TInt RunTests(void* /*aArg*/)
 			{
 			step = KEpilogue;
 			test.Printf(_L("*** Test platform does not support USB - skipping all tests\n"));
-			OstTrace0(TRACE_NORMAL, RUNTESTS_RUNTESTS, "*** Test platform does not support USB - skipping all tests\n");
 			}
 		return ETrue;
 	case KMain:
@@ -2091,7 +1985,6 @@ static TInt RunTests(void* /*aArg*/)
 		return ETrue;
 	case KEpilogue:
 		test.Printf(_L("USBAPI tests were run %.0f time(s)\n"), loops);
-		OstTraceExt1(TRACE_NORMAL, RUNTESTS_RUNTESTS_DUP01, "USBAPI tests were run %.0f time(s)\n", loops);
 		// outermost test end
 		test.End();
 		CActiveScheduler::Stop();

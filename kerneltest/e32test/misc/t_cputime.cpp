@@ -228,47 +228,22 @@ void TestThreadCpuTime()
 	test(s==KRequestPending);
 
 	TTimeIntervalMicroSeconds time, time2;
-	TInt64 us;
-
-	// Test cpu time is initially zero
+	
+	// Test time is initially zero
 	FailIfError(thread.GetCpuTime(time));
 	test(time == 0);
 
-	// Test cpu time is not increased while thread is waiting on semaphore
+	// Test not increased while waiting on semaphore
 	thread.Resume();
 	User::After(KShortWait);
-	FailIfError(thread.GetCpuTime(time2));
-	us = time2.Int64();
-	test.Printf(_L("Time %dus\n"), us);
-	test(us < KTolerance); // wait should happen in less than 1ms
+	FailIfError(thread.GetCpuTime(time));
+	test(time < KTolerance); // wait happens in less than 0.5ms
 
-	// Test cpu time increases when thread allowed to run
-	// We want to allow 2% tolerance for the thread's CPU time, as there could be
-	// something else running on the system during that time which would result lower CPU time than the
-	// actual KShortPeriod or KLongPeriod wait time.
-	// Also User::After(t) might return within the range of <t, t + 1000000/64 + 2*NanoKarnelTickPeriod>.
-	// Given all that - we expect that the the cpu time should be within the range of:
-	// <t - 0.02*t, t + 15625 + 2*NanoKernelTickPeriod>
-	// or <0.98*t, t + 15625 + 2*NanoKernelTickPeriod>
-	TInt user_after_tolerance = 0;
-	HAL::Get(HAL::ENanoTickPeriod, user_after_tolerance);
-	user_after_tolerance += user_after_tolerance + 15625;
-
+	// Test increases when thread allowed to run
 	(threadParam.iSem).Signal();
 	User::After(KShortWait);
 	FailIfError(thread.GetCpuTime(time));
-	us = time.Int64() - time2.Int64();
-	test.Printf(_L("Time %dus\n"), us);
-	test(100*us >= 98*KShortWait); // left limit
-	test(us - KShortWait <= user_after_tolerance); // right limit
-
-	FailIfError(thread.GetCpuTime(time));
-	User::After(KLongWait);
-	FailIfError(thread.GetCpuTime(time2));
-	us = time2.Int64() - time.Int64();
-	test.Printf(_L("Time %dus\n"), us);
-	test(100*us >= 98*KLongWait); // left limit
-	test(us - KLongWait <= user_after_tolerance); // right limit
+	test(time > (KShortWait - KTolerance));
 
 	// Test not increased while suspended
 	thread.Suspend();
@@ -277,7 +252,7 @@ void TestThreadCpuTime()
 	FailIfError(thread.GetCpuTime(time2));
 	test(time == time2);
 	thread.Resume();
-
+	
 	// Test not increased while dead
 	thread.Kill(KErrNone);
 	User::WaitForRequest(s);	// wait on undertaker since that completes in supervisor thread

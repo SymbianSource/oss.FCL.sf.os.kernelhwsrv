@@ -72,11 +72,10 @@ void CScanDrive::ConstructL(CFatMountCB* aMount)
     ASSERT(aMount);
 
     //--- setting up 
-	iMount			 = aMount;
-	iGenericError	 = ENoErrors;
-	iDirError		 = ENoDirError;
-	iHangingClusters = 0;
-	iMaxClusters	 = iMount->UsableClusters()+KFatFirstSearchCluster; //-- UsableClusters() doesn't count first 2 unused clusers
+    iMount=aMount;
+    iGenericError = ENoErrors;
+    iDirError     = ENoDirError;  
+    iMaxClusters  = iMount->UsableClusters()+KFatFirstSearchCluster; //-- UsableClusters() doesn't count first 2 unused clusers
     //------------------------------
 	
     //-- create bit vectors that will represent FAT on media and reconstructed by ScanDrive. Each bit in the vector represents 1 FAT cluster.
@@ -110,7 +109,7 @@ void CScanDrive::DoParseFatL()
         const TUint32 nFatEntry = ReadFatL(i);
        
         //-- each '1' bit represents a used cluster 
-        if(nFatEntry != KSpareCluster)
+        if(nFatEntry != KSpareCluster) 
             iMediaFatBits.SetBit(i);
 	    }
     }
@@ -126,7 +125,7 @@ void CScanDrive::DoParseFat32Buf(const TPtrC8& aBuf, TUint32& aCurrFatEntry)
     ASSERT((aBuf.Size() & (sizeof(TFat32Entry)-1)) == 0);
     
     const TInt KNumEntries = aBuf.Size() >> KFat32EntrySzLog2;
-    const TFat32Entry* const pFatEntry = (const TFat32Entry*)(aBuf.Ptr());
+    const TFat32Entry* const pFatEntry = (const TFat32Entry*)(aBuf.Ptr()); 
 
     for(TInt i=0; i<KNumEntries; ++i)
         {
@@ -162,11 +161,11 @@ void CScanDrive::DoParseFat32L()
 
     iMediaFatBits.Fill(0);
 
-    RBuf8 fatParseBuf;
-    CleanupClosePushL(fatParseBuf);
+    RBuf8 buf;
+    CleanupClosePushL(buf);
 
     //-- allocate memory for FAT parse buffer
-    fatParseBuf.CreateMaxL(KFatBufSz);
+    buf.CreateMaxL(KFatBufSz);
 
     //-- read FAT directly from the media into the large buffer and parse it
     TUint32 rem = KFatSize;
@@ -176,10 +175,10 @@ void CScanDrive::DoParseFat32L()
     while(rem)
         {
         const TUint32 bytesToRead=Min(rem, KFatBufSz);
-        TPtrC8 ptrData(fatParseBuf.Ptr(), bytesToRead);
+        TPtrC8 ptrData(buf.Ptr(), bytesToRead);
 
         //-- read portion of the FAT into buffer
-        User::LeaveIfError(iMount->LocalDrive()->Read(mediaPos, bytesToRead, fatParseBuf)); 
+        User::LeaveIfError(iMount->LocalDrive()->Read(mediaPos, bytesToRead, buf)); 
 
         //-- parse the buffer and populate bit vector
         DoParseFat32Buf(ptrData, currFatEntry);
@@ -188,8 +187,8 @@ void CScanDrive::DoParseFat32L()
         rem -= bytesToRead;
         }
 
-    fatParseBuf.Close();
-    CleanupStack::PopAndDestroy(&fatParseBuf); 
+    buf.Close();
+    CleanupStack::PopAndDestroy(&buf); 
     }
 
 
@@ -242,7 +241,7 @@ CScanDrive::TGenericError CScanDrive::ProblemsDiscovered() const
 }
 
 /**
-    Sets the flag indicating that there are errors in filesystem structure
+    Sets the flag indicating than there are errors in filesystem structure
     See ProblemsDiscovered()
 
     @param  aError a code describing the error
@@ -300,6 +299,7 @@ void CScanDrive::StartL(TScanDriveMode aMode)
         }
 
 	PrintErrors();
+
 
     timeEnd.UniversalTime(); //-- take end time
     const TInt elapsedTime = (TInt)( (timeEnd.MicroSecondsFrom(timeStart)).Int64() / K1mSec);
@@ -478,7 +478,7 @@ void CScanDrive::CheckDirStructureL()
 	{
 	CheckDirL(iMount->RootIndicator());
 	// Due to recursive nature of CheckDirL when a depth of
-	// KMaxScanDepth is reached, clusters are stored in a list
+	// KMaxScanDepth is reached clusters are stored in a list
 	// and passed into CheckDirL afresh
 
 	for(TUint i=0;i<KMaxArrayDepth && iClusterListArray[i]!=NULL;++i)
@@ -518,7 +518,7 @@ void CScanDrive::CheckDirL(TUint32 aCluster)
 
 	TEntryPos entryPos(aCluster,0);
 	TInt dirEntries=0;
-	for(;;)
+	FOREVER
 		{
 		TFatDirEntry entry;
 		ReadDirEntryL(entryPos,entry);
@@ -660,11 +660,11 @@ void CScanDrive::RecordClusterChainL(TUint32 aCluster, TUint aSizeInBytes)
 		{
         if(IsClusterUsedL(aCluster))
 			{//-- this cluster already seems to belong to some other object; crosslinked cluster chain. Can't fix it.
-            __PRINT1(_L("CScanDrive::RecordClusterChainL #1 %d"),aCluster); 
+                __PRINT1(_L("CScanDrive::RecordClusterChainL #1 %d"),aCluster); 
             
             if(CheckDiskMode())
-                {//-- in check disk mode this is an FS error; Indicate error and abort further scanning
-                __PRINT(_L("CScanDrive::RecordClusterChainL #1.1"));
+                {//-- in check disk mode this is a FS error; Indicate error and abort furter scanning
+                __PRINT(_L("CScanDrive::RecordClusterChainL #1.1")); 
                 IndicateErrorsFound(EClusterAlreadyInUse);
                 User::Leave(KErrCorrupt);
                 }
@@ -687,26 +687,16 @@ void CScanDrive::RecordClusterChainL(TUint32 aCluster, TUint aSizeInBytes)
         if(clusterCount==1)
 			{//-- we have reached the end of the cluster chain
 			if(!iMount->IsEndOfClusterCh(ReadFatL(aCluster)))
-				{
-				// According to the directory entry, we have reached the end of the cluster chain,
-				// whereas in the media FAT, it is not.
-				// This is a rugged FAT artefact; hanging cluster chain:
-				// 	A cluster chain which is longer in the FAT table than is recorded in the corresponding directory entry 
-				// 	or not terminated by an EOC entry in FAT.
-				// This is caused by:
-				//  - File truncation failing.
-				//	- OR file expanding failing during flushing to the media FAT.
+				{//-- seems to be a rugged FAT artefact; File truncation/extension had failed before and now file length is less than
+                 //-- the corresponding cluster chain shall be. It will be truncated to the size recorded in file DOS entry.
+				iTruncationCluster = aCluster;								
                 
                 if(CheckDiskMode())
-                    {//-- in check disk mode this is an FS error; Indicate error and abort further scanning
-                    __PRINT1(_L("CScanDrive::RecordClusterChainL #2 Hanging cluster=%d"),aCluster);
+                    {//-- in check disk mode this is a FS error; Indicate error and abort furter scanning
+                    __PRINT1(_L("CScanDrive::RecordClusterChainL #2 %d"),aCluster); 
                     IndicateErrorsFound(EInvalidEntrySize);
                     User::Leave(KErrCorrupt);
                     }
-				
-				// The chain will be truncated to the size recorded in the file's DOS entry and
-				// the remaining lost cluster chain will be fixed later in CompareAndFixFatsL().
-				FixHangingClusterChainL(aCluster);
                 }
 
             //__PRINT1(_L("#--: %d -> EOC"), aCluster); 
@@ -773,8 +763,8 @@ TBool CScanDrive::MoveToVFatEndL(TEntryPos& aPos,TFatDirEntry& aEntry,TInt& aDir
         if(!IsValidVFatEntry(aEntry,toFollow))
 			return(EFalse);
 		}
-	// A sequence of VFat entries must end with a Dos entry to be valid.
-	return(IsDosEntry(aEntry));
+	
+    return(IsDosEntry(aEntry));
 	}
 
 //----------------------------------------------------------------------------------------------------
@@ -855,7 +845,7 @@ TBool CScanDrive::AddMatchingEntryL(const TEntryPos& aEntryPos)
 
 //----------------------------------------------------------------------------------------------------
 /**
-    Scan for differences in the new and old FAT table writing them to media if discovered
+    Scan for differnces in the new and old FAT table writing them to media if discovered
     It is supposed to be called in 'ScanDrive' mode only
 
     @leave System wide error codes
@@ -895,10 +885,9 @@ void CScanDrive::CompareAndFixFatsL()
                     continue;
                     }
          
-                //-- Here we found a lost cluster. Its FAT entry will be replaced with KSpareCluster.
-                //-- In the case of multiple lost clusters FAT table will be flushed on media sector basis.
-                //-- It is much faster than flushing FAT after every write and will guarantee
-                //-- that FAT won't be corrupted if the media driver provides atomic sector write. 
+                //-- here we found a lost cluster. Its FAT entry will be replaced with KSpareCluster. In the case of multiple lost clusters FAT table will
+                //-- be flushed on media sector basis. It is much faster than flushing FAT after every write and will
+                //-- guarantee that FAT won't be corrupted if the media driver provides atomic sector write. 
                 if(nClustersFixed == 0)
                     {//-- this is the first lost cluster entry we found
                     
@@ -913,7 +902,7 @@ void CScanDrive::CompareAndFixFatsL()
                     const TUint32 fatSec = iMount->FAT().PosInBytes(i) >> KSectorSzLog2; 
 
                     if(fatSec != dirtyFatSector)
-                        {//-- we are going to write to a different media sector
+                        {//-- we are going to write to a differrent media sector
                         iMount->FAT().FlushL();
                         iMount->FAT().WriteL(i, KSpareCluster); //-- fix lost cluster
                         dirtyFatSector = fatSec;
@@ -939,11 +928,18 @@ void CScanDrive::CompareAndFixFatsL()
     
     //------
 
-	
-	// Add the number of hanging clusters fixed by ScanDrive
-	nClustersFixed += iHangingClusters;
+    if(iTruncationCluster != 0)
+        {
+	    iMount->FAT().WriteFatEntryEofL(iTruncationCluster); 
+		iMount->FAT().FlushL();
+		
+        //-- indicate that there are some problems in FAT. and we probably wrote something there.
+        IndicateErrorsFound(EScanDriveDirError); //-- indicate that we have found errors
+
+        ++nClustersFixed;
+        }
     
-    __PRINT3(_L("CScanDrive::WriteNewFatsL() fixed clusters=%d,hanging clusters=%d,bad clusters=%d"),nClustersFixed,iHangingClusters,nBadClusters);
+    __PRINT2(_L("CScanDrive::WriteNewFatsL() fixed:%d, bad:%d"), nClustersFixed, nBadClusters);
     }
 
 //----------------------------------------------------------------------------------------------------
@@ -1019,28 +1015,6 @@ void CScanDrive::FixMatchingEntryL()
 
 //----------------------------------------------------------------------------------------------------
 /**
-	Fix a hanging cluster chain.
-	Writes EOF to the corresponding FAT entry, making this cluster chain length correspond to the 
-	real file size recorded in the directory entry.
-	The remainder of the chain will be cleaned up later in CompareAndFixFatsL().
-	
-	@leave	System wide error code
-*/
-void CScanDrive::FixHangingClusterChainL(TUint32 aFatEofIndex)
-	{
-	__PRINT1(_L("CScanDrive::FixHangingClusterL() Hanging cluster=%d"), aFatEofIndex);
-	
-	iMount->FAT().WriteFatEntryEofL(aFatEofIndex);
-	iMount->FAT().FlushL();
-	iHangingClusters++;
-	
-	// Indicate that we have found an error
-	IndicateErrorsFound(EScanDriveDirError);
-	}
-
-
-//----------------------------------------------------------------------------------------------------
-/**
     Move past specified number of entries
 
     @param aEntryPos Start position to move from, updated as move takes place
@@ -1113,26 +1087,35 @@ void CScanDrive::CompareFatsL(TBool aStopOnFirstErrorFound)
 		if(BoolXOR(bRealFatEntry, bNewFatEntry))
 		    {//-- mismatch between FAT on the media and the FAT bitmap restored by walking directory structure
 
-			if(bRealFatEntry)
-				{//-- FAT[i] on the media is marked as occupied, but restored FAT bitmap shows that it is free
-				if(iMount->IsBadCluster(ReadFatL(i)))
-					continue; //-- this is a BAD cluster it can't be occupied by the FS object, OK.
+			    if(bRealFatEntry)
+                {//-- FAT[i] on the media is marked as occupied, but retored FAT bitmap shows that it is free
+                    if(iMount->IsBadCluster(ReadFatL(i)))
+                        continue; //-- this is a BAD cluster it can't be occupied by the FS object, OK.
 
-				__PRINT2(_L("FAT[%d] = %d\n"), i, ReadFatL(i));
-				
-				//-- this is a Rugged FAT artefact; a lost cluster
-				__PRINT1(_L("Lost cluster=%d\n"),i);
-				
-				IndicateErrorsFound(EBadClusterValue);
-				}
-			else
-				{//-- FAT[i] on the media is marked as free, but restored FAT bitmap shows that it is occupied by some object
-				IndicateErrorsFound(EClusterAlreadyInUse);
-				__PRINT1(_L("Unflushed cluster = %d\n"),i);
-				}
+                    __PRINT2(_L("FAT[%d] = %d\n"), i, ReadFatL(i));        
+                    __PRINT1(_L("iTruncationCluster = %d\n"), iTruncationCluster);        
+                    
+                    //-- this is a lost cluster
+                    if(!IsEofF(ReadFatL(i)) && (i==iTruncationCluster))
+                        {//-- seems to be a Rugged FAT ertefact
+                        __PRINT1(_L("Hanging cluster = %d\n"),i);        
+                        }
+                    else
+                        {
+                        __PRINT1(_L("Lost cluster=%d\n"),i);
+                        }
+                    
+                    
+                    IndicateErrorsFound(EBadClusterValue);
+                }
+                else
+                {//-- FAT[i] on the media is marked as free, but retored FAT bitmap shows that it is occupied by some object
+                    IndicateErrorsFound(EClusterAlreadyInUse);
+                    __PRINT1(_L("Unflushed cluster = %d\n"),i);
+                }
 
-		 if(aStopOnFirstErrorFound)
-			 break; //-- not asked to check for errors further
+             if(aStopOnFirstErrorFound)
+                 break; //-- not asked to check for errors further
 
             }
 		
@@ -1204,13 +1187,13 @@ void CScanDrive::MoveToNextEntryL(TEntryPos& aPos)
 	}	
 
 /**
-    Read a cluster from the Media Fat if scan run in a separate thread read from scan Fat table
+    Read a cluster from the Media Fat if scan run in a seperate thread read from scan fat table
     otherwise read from mount owned Fat table
 
     @param aClusterNum Cluster to read
     @return Value of cluster read from Fat
 */
-TUint32 CScanDrive::ReadFatL(TUint aClusterNum)
+TUint32 CScanDrive::ReadFatL(TUint aClusterNum) 
 	{
 	if(aClusterNum < KFatFirstSearchCluster || aClusterNum >= MaxClusters())
         {

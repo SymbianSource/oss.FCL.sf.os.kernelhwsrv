@@ -448,11 +448,6 @@ __NAKED__ void TScheduler::Remove(NThreadBase* /*aThread*/)
 //
 	{
 	asm("unready: ");
-	
-	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(TScheduler,iMadeUnReadyCounter)); 	// Update Made UnReady count here, 
-	asm("add r2, r2, #1"); 								// ie equiv of 'iMadeUnReadyCounter++;'.
-	asm("str r2, [r0, #%a0]" : : "i" _FOFF(TScheduler,iMadeUnReadyCounter));
-
 #ifdef _DEBUG
 	asm("ldr r2, [r1, #%a0]" : : "i" _FOFF(NThread,iHeldFastMutex));
 	asm("mov r12, #0xd8000003 ");
@@ -614,12 +609,7 @@ __NAKED__ void NThreadBase::DoReady()
 	{
 	asm("ldr r1, __TheScheduler ");
 	asm("ldrb r2, [r0, #%a0]" : : "i" _FOFF(NThread,iPriority));	// r2=priority of aThread
-
 	asm("DoReadyInner: ");
-	asm("ldr r3, [r1, #%a0]" : : "i" _FOFF(TScheduler,iMadeReadyCounter)); 	// Update Made Ready count here, 
-	asm("add r3, r3, #1"); 							// ie equiv of 'iMadeReadyCounter++;'.
-	asm("str r3, [r1, #%a0]" : : "i" _FOFF(TScheduler,iMadeReadyCounter));
-
 	asm("mov r3, #%a0" : : "i" (NThread::EReady));
 	asm("strb r3, [r0, #%a0]" : : "i" _FOFF(NThread,iNState));
 	asm("ldmia r1!, {r3,r12} ");			// r3=present mask low, r12=present mask high, r1=&iQueue[0]
@@ -1659,11 +1649,6 @@ __NAKED__ void TScheduler::Reschedule()
 
 	asm("round_robin: ");					// get here if thread's timeslice has expired and there is another
 											// thread ready at the same priority
-	
-	asm("ldr r6, [r0, #%a0]" : : "i" _FOFF(TScheduler,iTimeSliceExpireCounter)); 	// Update Time Slice Expire count here, 
-	asm("add r6,r6, #1"); 								// ie equiv of 'iTimeSliceExpireCounter++;'.
-	asm("str r6, [r0, #%a0]" : : "i" _FOFF(TScheduler,iTimeSliceExpireCounter));
-
 	asm("cmp r7, #0 ");						// does this thread hold a fast mutex?
 	asm("bne rr_holds_fast_mutex ");
 	asm("ldr lr, [r2, #%a0]" : : "i" _FOFF(NThread,iTimeslice));

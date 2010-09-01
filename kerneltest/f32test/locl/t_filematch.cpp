@@ -114,8 +114,7 @@ void CheckMatch(const TDesC& aFileName)
 	r = dir.Open(TheFs, name, KEntryAttNormal);
 	test_KErrNone(r);
 	TEntry entry;
-	r = dir.Read(entry);
-	test_KErrNone(r);
+	test(dir.Read(entry) == KErrNone);
 	dir.Close();
 	}
 
@@ -129,8 +128,7 @@ void CheckNonMatch(const TDesC& aFileName)
 	r = dir.Open(TheFs, name, KEntryAttNormal);
 	test_KErrNone(r);
 	TEntry entry;
-	r = dir.Read(entry);
-	test_Equal(KErrEof, r);
+	test(dir.Read(entry) == KErrEof);
 	dir.Close();
 	}
 
@@ -186,11 +184,11 @@ void CallTestsL(void)
     F32_Test_Utils::SetConsole(test.Console()); 
     
     TInt nRes=TheFs.CharToDrive(gDriveToTest, gDriveNum);
-    test_KErrNone(nRes);
+    test(nRes==KErrNone);
     
     PrintDrvInfo(TheFs, gDriveNum);
 
-    if(Is_SimulatedSystemDrive(TheFs, gDriveNum) || Is_Fat(TheFs, gDriveNum) || Is_Lffs(TheFs, gDriveNum))
+    if(Is_Win32(TheFs, gDriveNum) || Is_Fat(TheFs, gDriveNum) || Is_Lffs(TheFs, gDriveNum))
         {
 	    TestFilenameMatches();
         }

@@ -16,9 +16,7 @@
 #include "sf_std.h"
 #include "sf_file_cache.h"
 #include "cl_std.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "sf_fileTraces.h"
-#endif
+
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)
 
 TInt OutputTraceInfo(CFsRequest* aRequest,TCorruptNameRec* aNameRec)
@@ -1509,9 +1507,11 @@ TInt TFsFileFlush::DoRequestL(CFsRequest* aRequest)
 	r=share->CheckMount();
 	if (r!=KErrNone)
 		return(r);
-	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBFLUSHDATAL1, "this %x", &share->File());
+
+	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECFileCBFlushDataL, EF32TraceUidFileSys, &share->File());
 	TRAP(r,share->File().FlushDataL());
-	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBFLUSHDATAL1RET, "r %d", r);
+	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECFileCBFlushDataLRet, EF32TraceUidFileSys, r);
+
 	return(r);
 	}
 
@@ -1679,9 +1679,11 @@ TInt TFsFileSetAtt::DoRequestL(CFsRequest* aRequest)
     TUint setAttMask=(TUint)(aRequest->Message().Int0());
 	TUint clearAttMask=(TUint)aRequest->Message().Int1();
 	ValidateAtts(setAttMask,clearAttMask);
-	OstTraceExt3(TRACE_FILESYSTEM, FSYS_ECFILECBSETENTRYL1, "this %x aSetAttMask %x aClearAttMask %x", (TUint) &share->File(), (TUint) setAttMask, (TUint) clearAttMask);
+
+	TRACE5(UTF::EBorder, UTraceModuleFileSys::ECFileCBSetEntryL, EF32TraceUidFileSys, &share->File(), 0, 0, setAttMask,clearAttMask);
 	TRAP(r,share->File().SetEntryL(share->File().Modified(),setAttMask,clearAttMask))
-	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBSETENTRYL1RET, "r %d", r);
+	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECFileCBSetEntryLRet, EF32TraceUidFileSys, r);
+
 	return(r);
 	}
 
@@ -1743,9 +1745,11 @@ TInt TFsFileSetModified::DoRequestL(CFsRequest* aRequest)
 	TTime time;
 	TPtr8 t((TUint8*)&time,sizeof(TTime));
 	aRequest->ReadL(KMsgPtr0,t);
-	OstTraceExt3(TRACE_FILESYSTEM, FSYS_ECFILECBSETENTRYL2, "this %x aSetAttMask %x aClearAttMask %x", (TUint) &share->File(), (TUint) KEntryAttModified, (TUint) 0);
+
+	TRACE5(UTF::EBorder, UTraceModuleFileSys::ECFileCBSetEntryL, EF32TraceUidFileSys, &share->File(), 0, 0, KEntryAttModified,0);
 	TRAP(r,share->File().SetEntryL(time,KEntryAttModified,0))
-	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBSETENTRYL2RET, "r %d", r);
+	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECFileCBSetEntryLRet, EF32TraceUidFileSys, r);
+
 	return(r);
 	}
 
@@ -1790,9 +1794,10 @@ TInt TFsFileSet::DoRequestL(CFsRequest* aRequest)
 	TUint clearAttMask=(TUint)aRequest->Message().Int2();
 	ValidateAtts(setAttMask,clearAttMask);//	Validate attributes
 
-	OstTraceExt3(TRACE_FILESYSTEM, FSYS_ECFILECBSETENTRYL3, "this %x aSetAttMask %x aClearAttMask %x", (TUint) &share->File(), (TUint) setAttMask, (TUint) clearAttMask);
+	TRACE5(UTF::EBorder, UTraceModuleFileSys::ECFileCBSetEntryL, EF32TraceUidFileSys, &share->File(), 0, 0, setAttMask,clearAttMask);
 	TRAP(r,share->File().SetEntryL(time,setAttMask|KEntryAttModified,clearAttMask))
-	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBSETENTRYL3RET, "r %d", r);
+	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECFileCBSetEntryLRet, EF32TraceUidFileSys, r);
+
 	return(r);
 	}
 
@@ -1837,13 +1842,26 @@ TInt TFsFileChangeMode::DoRequestL(CFsRequest* aRequest)
 		// check if an attempt is made to change the share mode to EFileShareExclusive
 		// while the file has multiple readers
 	if (newMode == EFileShareExclusive && (currentMode & KFileShareMask) != EFileShareExclusive)
-		{
-		// Check that this is the file's only fileshare/client
-		TDblQue<CFileShare>& aShareList = (&share->File())->FileShareList();
-		if (!(aShareList.IsFirst(share) && aShareList.IsLast(share)))
-			return KErrAccessDenied;
+		{ 
+		// Check no other CFileCB is reading the file.
+		FileShares->Lock();
+		TInt count=FileShares->Count();
+		TBool found=EFalse;
+		while(count--)
+			{
+			CFileShare* fileShare=(CFileShare*)(*FileShares)[count];
+			if (&fileShare->File()==&share->File())
+				{
+				if (found)
+					{
+					FileShares->Unlock();
+					return(KErrAccessDenied);
+					}
+				found=ETrue;
+				}
+			}
+		FileShares->Unlock();
 		}
-	
 	share->iMode&=~KFileShareMask;
 	share->iMode|=newMode;
 	share->File().SetShare(newMode);
@@ -1894,10 +1912,12 @@ TInt TFsFileRename::DoRequestL(CFsRequest* aRequest)
 
 	TPtrC filePath = aRequest->Dest().FullName().Mid(2);
 	CFileCB& file = share->File();
-	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBRENAMEL, "this %x", (TUint) &file);
-	OstTraceData(TRACE_FILESYSTEM, FSYS_ECFILECBRENAMELYS_EFILENAME, "FileName %S", filePath.Ptr(), filePath.Length()<<1);
+
+	TRACEMULT2(UTF::EBorder, UTraceModuleFileSys::ECFileCBRenameL, EF32TraceUidFileSys, 
+		(TUint) &file, filePath);
 	TRAP(r,file.RenameL(filePath));
-	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBRENAMELRET, "r %d", r);
+	TRACERETMULT1(UTF::EBorder, UTraceModuleFileSys::ECFileCBRenameLRet, EF32TraceUidFileSys, r);
+
 	// Re-write the file's folded name & re-calculate the hash
 	if (r == KErrNone)
 		{
@@ -2342,11 +2362,10 @@ EXPORT_C CFileCB::~CFileCB()
 		FileCache()->Close();
 	if (iBody && iBody->iDeleteOnClose)
 		{
-		OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBDELETEL2, "drive %d", DriveNumber());
-		OstTraceData(TRACE_FILESYSTEM, FSYS_ECMOUNTCBDELETEL2_EFILENAME, "FileName %S", FileName().Ptr(), FileName().Length()<<1);
+		TRACEMULT2(UTF::EBorder, UTraceModuleFileSys::ECMountCBDeleteL, EF32TraceUidFileSys, DriveNumber(), FileName());
 		TInt r;
 		TRAP(r, iMount->DeleteL(FileName()));
-		OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBDELETEL2RET, "r %d", r);
+		TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBDeleteLRet, EF32TraceUidFileSys, r);
 		}
 
 	if(iMount)
@@ -2444,18 +2463,14 @@ void CFileCB::RemoveLocks(CFileShare* aFileShare)
 
 
 void CFileCB::PromoteShare(CFileShare* aShare)
-/**
-	Manages share promotion and checks the EFileSequential file mode
-	after the share has been added to the FileShares container.
-	
-	It assumes the share has already been validated using ValidateShare().
-	
-	The count of promoted shares (ie - non-EFileShareReadersOrWriters) is incremented
-	to allow the share mode to be demoted when the last promoted share is closed.
-	
-	Similarly, the count of non-EFileSequential file modes is incremented to allow
-	the file mode to be enabled when the last non-EFileSequential share is closed.
- */
+//
+// Manages share promotion after the share has been added to the FilsShares container.
+//
+//  - Assumes the share has already been validated using ValidateShare()
+//
+//  - The count of promoted shares (ie - non-EFileShareReadersOrWriters) is incremented
+//	  to allow the share mode to be demoted when the last promoted share is closed.
+//
 	{
 	TShare reqShare = (TShare)(aShare->iMode & KFileShareMask);
 	if(reqShare != EFileShareReadersOrWriters)
@@ -2463,48 +2478,29 @@ void CFileCB::PromoteShare(CFileShare* aShare)
 		iBody->iPromotedShares++;
 		iShare = reqShare;
 		}
-	
-	// If the file mode is not EFileSequential, then disable the 'Sequential' flag
-	if(!(aShare->iMode & EFileSequential))
-		{
-		iBody->iNonSequentialFileModes++;
-		SetSequentialMode(EFalse);
-		__PRINT(_L("CFileCB::PromoteShare - FileSequential mode is off"));
-		}
 	}
 
 
 void CFileCB::DemoteShare(CFileShare* aShare)
-/**
-	Manages share demotion and checks the EFileSequential file mode
-	after the share has been removed from the FileShares container.
-	
-	If the share being removed is not EFileShareReadersOrWriters, then the current
-	share mode may require demotion back to EFileShareReadersOrWriters.
-	This is determined by the iPromotedShares count, incremented in PromoteShare().
-	
-	Similarly, if the share being removed is non-EFileSequential,
-	then the EFileSequential flag may need to be enabled,
-	which is determined by the iNonSequentialFileModes count.
- */
+//
+// Manages share demotion after the share has been removed from the FileShares container.
+//
+//  - If the share being removed is not EFileShareReadersOrWriters, then the current
+//	  share mode may require demotion back to EFileShareReadersOrWriters.
+//
+//	- This is determined by the iPromotedShares count, incremented in PromoteShare()
+//
 	{
-	if((aShare->iMode & KFileShareMask) != EFileShareReadersOrWriters
-		&& --iBody->iPromotedShares == 0)
+	if((aShare->iMode & KFileShareMask) != EFileShareReadersOrWriters)
 		{
-		// Don't worry if the file has never been opened as EFileShareReadersOrWriters
-		//  - in this case the CFileCB object is about to be closed anyway.
-		iShare = EFileShareReadersOrWriters;
+		if(--iBody->iPromotedShares == 0)
+			{
+			// Don't worry if the file has never been opened as EFileShareReadersOrWriters
+			//  - in this case the CFileCB object is about to be closed anyway.
+			iShare = EFileShareReadersOrWriters;
+			}
 		}
-	__ASSERT_DEBUG(iBody->iPromotedShares>=0, Fault(EFileShareBadPromoteCount));
-	
-	if(!(aShare->iMode & EFileSequential) && --iBody->iNonSequentialFileModes == 0)
-		{
-		// As above, if the file has never been opened as EFileSequential,
-		// it implies that the CFileCB object is about to be closed anyway.
-		SetSequentialMode(ETrue);
-		__PRINT(_L("CFileCB::PromoteShare - FileSequential mode is enabled"));
-		}
-	__ASSERT_DEBUG(iBody->iNonSequentialFileModes>=0, Fault(EFileShareBadPromoteCount));
+	__ASSERT_DEBUG(iBody->iPromotedShares>=0,Fault(EFileShareBadPromoteCount));
 	}
 
 
@@ -2739,8 +2735,7 @@ void CFileCB::SetCachedSize64(TInt64 aSize)
 
 /**
 Constructor.
-Locks the mount resource to which the shared file resides
-and adds the share to the file's FileShare List.
+Locks the mount resource to which the shared file resides.
 
 @param aFileCB File to be shared.
 */
@@ -2748,14 +2743,12 @@ CFileShare::CFileShare(CFileCB* aFileCB)
 	: iFile(aFileCB)
 	{
 	AddResource(iFile->Mount());
-	iFile->AddShare(*this);
 	}
 
 /**
 Destructor.
 
 Frees mount resource to which the shared file resides,
-removes the share from the file's FileShare List,
 removes share status from the shared file and finally closes
 the file.
 */
@@ -2765,7 +2758,6 @@ CFileShare::~CFileShare()
 	__ASSERT_DEBUG(iCurrentRequest == NULL, Fault(ERequestQueueNotEmpty));
 
 	RemoveResource(iFile->Mount());
-	iShareLink.Deque();
 	iFile->RemoveLocks(this);
 	iFile->DemoteShare(this);
 	iFile->CancelAsyncReadRequest(this, NULL);
@@ -2964,25 +2956,32 @@ TInt TFsFileReadCancel::DoRequestL(CFsRequest* aRequest)
 void CFileCB::ReadL(TInt64 aPos,TInt& aLength,TDes8* aDes,const RMessagePtr2& aMessage, TInt aOffset)
 	{
 	TRACETHREADID(aMessage);
-	OstTraceExt5(TRACE_FILESYSTEM, FSYS_ECFILECBREADLA, "this %x clientThreadId %x aPos %x:%x aLength %d", (TUint) this, (TUint) threadId, (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), (TUint) aLength);
+	TRACE7(UTF::EBorder, UTraceModuleFileSys::ECFileCBReadL, EF32TraceUidFileSys, 
+		this, I64LOW(aPos), I64HIGH(aPos), aLength, aDes, threadId, aOffset);
+
 	iBody->iExtendedFileInterface->ReadL(aPos,aLength,aDes,aMessage,aOffset);
 
-	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBREADLRET, "r %d", KErrNone);
+	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECFileCBReadLRet, EF32TraceUidFileSys, KErrNone);
 	}
 
 void CFileCB::WriteL(TInt64 aPos,TInt& aLength,const TDesC8* aDes,const RMessagePtr2& aMessage, TInt aOffset)
 	{
 	TRACETHREADID(aMessage);
-	OstTraceExt5(TRACE_FILESYSTEM, FSYS_ECFILECBWRITEL, "this %x clientThreadId %x aPos %x:%x aLength %d", (TUint) this, (TUint) threadId, (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), (TUint) aLength);
+	TRACE7(UTF::EBorder, UTraceModuleFileSys::ECFileCBWriteL, EF32TraceUidFileSys, 
+		this, I64LOW(aPos), I64HIGH(aPos), aLength, aDes, threadId, aOffset);
+
 	iBody->iExtendedFileInterface->WriteL(aPos,aLength,aDes,aMessage,aOffset);
-	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBWRITELRET, "r %d", KErrNone);
+
+	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECFileCBWriteLRet, EF32TraceUidFileSys, KErrNone);
 	}
 
 void CFileCB::SetSizeL(TInt64 aSize)
 	{
-	OstTraceExt3(TRACE_FILESYSTEM, FSYS_ECFILECBSETSIZEL, "this %x aSize %x:%x", (TUint) this, (TUint) I64HIGH(aSize), (TUint) I64LOW(aSize));
+	TRACE3(UTF::EBorder, UTraceModuleFileSys::ECFileCBSetSizeL, EF32TraceUidFileSys, this, I64LOW(aSize), I64HIGH(aSize));
+
 	iBody->iExtendedFileInterface->SetSizeL(aSize);
-	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBSETSIZELRET, "r %d", KErrNone);
+
+	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECFileCBSetSizeLRet, EF32TraceUidFileSys, KErrNone);
 	}
 
 TBool CFileCB::ExtendedFileInterfaceSupported()
@@ -3028,16 +3027,18 @@ TBool CFileCB::DeleteOnClose() const
 
 TInt CFileCB::GetInterfaceTraced(TInt aInterfaceId, TAny*& aInterface, TAny* aInput)
 	{
-	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILECBGETINTERFACE, "aInterfaceId %d aInput %x", (TUint) aInterfaceId, (TUint) aInput);
+	TRACE2(UTF::EBorder, UTraceModuleFileSys::ECFileCBGetInterface, EF32TraceUidFileSys, aInterfaceId, aInput);
+
 	TInt r = GetInterface(aInterfaceId, aInterface, aInput);
-	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILECBGETINTERFACERET, "r %d aInterface %x", (TUint) r, (TUint) aInterface);
+
+	TRACERET2(UTF::EBorder, UTraceModuleFileSys::ECFileCBGetInterfaceRet, EF32TraceUidFileSys, r, aInterface);
+
 	return r;
 	}
 
 CFileBody::CFileBody(CFileCB* aFileCB, CFileCB::MExtendedFileInterface* aExtendedFileInterface)
   : iFileCB(aFileCB),
 	iExtendedFileInterface(aExtendedFileInterface ? aExtendedFileInterface : this),
-	iShareList(_FOFF(CFileShare,iShareLink)),
 	iSizeHigh(0)
 	{
 	iFairSchedulingLen = TFileCacheSettings::FairSchedulingLen(iFileCB->DriveNumber());
@@ -3111,9 +3112,11 @@ TInt TFsFileClamp::DoRequestL(CFsRequest* aRequest)
 		r=share->CheckMount();
 		if (r!=KErrNone)
 			return(r);
-		OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBFLUSHDATAL2, "this %x", &share->File());
+
+		TRACE1(UTF::EBorder, UTraceModuleFileSys::ECFileCBFlushDataL, EF32TraceUidFileSys, &share->File());
 		TRAP(r,share->File().FlushDataL());
-		OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBFLUSHDATAL2RET, "r %d", r);
+		TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECFileCBFlushDataLRet, EF32TraceUidFileSys, r);
+
 		if(r!=KErrNone)
 			return(r);
 		}
@@ -3587,45 +3590,6 @@ TInt CFileCB::CheckLock64(CFileShare* aFileShare,TInt64 aPos,TInt64 aLength)
 	}
 
 
-//---------------------------------------------------------------------------------------------------------------------
-/**
-Gets the 'Sequential' mode of the file.
-
-@return	ETrue, if the file is in 'Sequential' mode
-*/
-EXPORT_C TBool CFileCB::IsSequentialMode() const
-	{
-	return iBody->iSequential;
-	}
-
-/**
-Sets the 'Sequential' mode of the file.
- */
-void CFileCB::SetSequentialMode(TBool aSequential)
-	{
-	iBody->iSequential = aSequential;
-	}
-
-//---------------------------------------------------------------------------------------------------------------------
-/**
-Gets the list containing the shares associated with the file.
-
-@return	The FileShare List
-*/
-TDblQue<CFileShare>& CFileCB::FileShareList() const
-	{
-	return iBody->iShareList;
-	}
-
-/**
-Adds the share to the end of the FileShare List.
-*/
-void CFileCB::AddShare(CFileShare& aFileShare)
-	{
-	iBody->iShareList.AddLast(aFileShare);
-	}
-
-
 //#####################################################################################################################
 //#  TFileShareLock class implementation
 //#####################################################################################################################
@@ -3674,12 +3638,13 @@ TBool TFileShareLock::MatchByPos(TUint64 aPosLow, TUint64 aPosHigh) const
 
 
 
+
 EXPORT_C TBool CFileCB::DirectIOMode(const RMessagePtr2& aMessage)
 	{
 	CFsMessageRequest* msgRequest = CFsMessageRequest::RequestFromMessage(aMessage);
 
 	TInt func = msgRequest->Operation()->Function();
-	ASSERT(func == EFsFileRead || func == EFsFileWrite || func == EFsFileWriteDirty || func == EFsReadFileSection);
+	ASSERT(func == EFsFileRead || func == EFsFileWrite || func == EFsFileWriteDirty  || func == EFsReadFileSection);
 
 	CFileShare* share;
 	CFileCB* file;

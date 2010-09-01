@@ -18,7 +18,6 @@ targettype      exe
 
 // Need simulated PSL to support this test
 macro RESOURCE_MANAGER_SIMULATED_PSL
-macro _DUMP_TRACKERS
 macro PRM_ENABLE_EXTENDED_VERSION
 
 sourcepath      ../resmanus
@@ -28,7 +27,7 @@ OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 
 library 	euser.lib hal.lib
 
-capability		PowerMgmt 
+capability		PowerMgmt
 
 vendorid 0x70000001
 SMPSAFE

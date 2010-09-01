@@ -302,7 +302,7 @@ EXPORT_C TInt AppendFormat(char* aOut, const char* aFmt, VA_LIST aList)
 #define NEXT_FMT(c,p) if (((c)=*(p)++)==0) return outLen;
 
 	TInt outLen = 0;
-	while(outLen>=0)
+	FOREVER
 		{
 		char c;
 		NEXT_FMT(c,aFmt);

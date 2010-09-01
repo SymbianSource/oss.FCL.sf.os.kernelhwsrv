@@ -109,8 +109,8 @@ source			kblockmap.cpp ramalloc.cpp defragbase.cpp
 #ifdef MARM
 userinclude		../memmodel/epoc/flexible/mmu/arm
 sourcepath		../memmodel/epoc/flexible/arm
-source			xinit.cpp xipc.cpp xipc.cia 
-source			xkernel.cpp xkernel.cia xsched.cpp xsched.cia
+source			xinit.cpp xipc.cia xkernel.cpp xkernel.cia
+source			xsched.cpp xsched.cia
 sourcepath		../memmodel/epoc/flexible/mmu/arm
 source			xmmu.cpp xmmu.cia
 #endif //MARM

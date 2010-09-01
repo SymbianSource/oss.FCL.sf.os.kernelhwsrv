@@ -218,8 +218,8 @@ Set or reset "VolumeClean" (ClnShutBitmask) flag.
 void CFatMountCB::SetVolumeCleanL(TBool aClean) 
     {
 
-	//-- The volume can't be set clean if there are disk access objects opened on it. This precondition must be checked before calling this function
-    if(aClean && Locked())
+	//-- The volume can't be set clean if there are objects opened on it. This precondition must be checked before calling this function
+    if(aClean && LockStatus()!=0)
         {
         __PRINT1(_L("#- CFatMountCB::SetVolumeCleanL drive:%d isn't free!"),DriveNumber());
         ASSERT(0);
@@ -892,12 +892,8 @@ TInt CFatMountCB::MountControl(TInt aLevel, TInt aOption, TAny* aParam)
     if(aLevel == EMountVolParamQuery)
         {
         ASSERT(ConsistentState()); //-- volume state shall be consistent, otherwise its parameters do not make sense
-
-		// Ram Drives calculate their total / free space based on querying HAL parameters
-		// in ::VolumeL(). To make all interfaces return consistent results, we need to force
-		// a fallback to that for RAM drives.
-		if (iRamDrive)
-			return (KErrNotSupported);
+		if(iRamDrive)
+			return KErrNotSupported; //-- it requires knowledge of free space on the volume
 
         switch(aOption)
             {
@@ -935,7 +931,12 @@ TInt CFatMountCB::MountControl(TInt aLevel, TInt aOption, TAny* aParam)
             case ESQ_MountedVolumeSize:
                 {
                 TUint64* pVal = (TUint64*)aParam; 
-                *pVal = VolumeSizeInBytes();
+                *pVal = iSize; //-- physical drive size
+
+                //-- take into account space occupied by FAT table, etc.
+                *pVal -= ClusterBasePosition(); 
+                *pVal=(*pVal >> ClusterSizeLog2()) << ClusterSizeLog2();  //-- round down to cluster size
+
                 __PRINT1(_L("MountControl() MountedVolumeSize:%LU"), *pVal);
                 return KErrNone;
                 }
@@ -1067,7 +1068,7 @@ void CFatMountCB::ReadSection64L(const TDesC& aName, TInt64 aPos, TAny* aTrg, TI
 			//  Read the remaining length or the entire cluster block whichever is smaller
 			TInt readLength = (TInt)Min((TInt64)(aLength-readTotal),(clusterListLen<<ClusterSizeLog2())-pos);
 			__ASSERT_DEBUG(readLength>0,Fault(EReadFileSectionFailed));
-			TInt64 dataAddress=(FAT().DataPositionInBytes(cluster))+pos;
+			TInt64 dataAddress=(FAT().DataPositionInBytesL(cluster))+pos;
 			iRawDisk->ReadL(dataAddress,readLength,aTrg,aMessage,readTotal, 0);
 			readTotal += readLength;
 

@@ -22,7 +22,6 @@
 // 
 //
 
-#define __E32TEST_EXTENSION__
 #include <e32test.h>
 #include <f32file.h>
 
@@ -50,7 +49,7 @@ GLDEF_C TInt E32Main()
 	
 	Err=FileServer.Connect();
 	
-	test_KErrNone(Err);
+	test(Err==KErrNone);
     
     // RTest.Next is called from function "TestFind()".
     // RTest.Start is called here to start the test.
@@ -67,7 +66,7 @@ GLDEF_C TInt E32Main()
 		         _L("z:\\sys\\bin\\"),
 		         _L("nonexistingfile.txt"));
 	
-	test_Value(Err, Err == KErrPermissionDenied);
+	test(Err==KErrPermissionDenied);
 	
 	// Test: Find existing file in existing /sys folder
 	//
@@ -80,7 +79,7 @@ GLDEF_C TInt E32Main()
 		         _L("z:\\sys\\bin\\"),
 		         _L("t_findcaptestfile.txt"));
 	
-	test_Value(Err, Err == KErrPermissionDenied);
+	test(Err==KErrPermissionDenied);
 	
 	// Test: Find non existing file in existing / non existing /sys folder
 	//
@@ -93,7 +92,7 @@ GLDEF_C TInt E32Main()
 		         _L("c:\\sys\\"),
 		         _L("nonexisting.txt"));
 	
-	test_Value(Err, Err == KErrPermissionDenied);
+	test(Err==KErrPermissionDenied);
 	
 	// Test: Find existing file in /sys folder without specifying the path
 	//
@@ -106,7 +105,7 @@ GLDEF_C TInt E32Main()
 		         _L("\\sys\\bin\\"),
 		         _L("t_findcaptestfile.txt"));
 	
-	test_Value(Err, Err == KErrPermissionDenied);
+	test(Err==KErrPermissionDenied);
 	
 	// Test: Find non existing file in /sys folder without specifying the path
 	//
@@ -119,7 +118,7 @@ GLDEF_C TInt E32Main()
 		         _L("\\sys\\"),
 		         _L("nonexisting.txt"));
 	
-	test_Value(Err, Err == KErrPermissionDenied);
+	test(Err==KErrPermissionDenied);
 	
 	FileServer.Close();
 	

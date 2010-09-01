@@ -32,6 +32,8 @@ TScheduler TheScheduler;
 TSubScheduler TheSubSchedulers[KMaxCpus];
 extern "C" {
 TSubScheduler* SubSchedulerLookupTable[256];
+
+SVariantInterfaceBlock* VIB;
 }
 
 #ifdef __USE_BTRACE_LOCK__

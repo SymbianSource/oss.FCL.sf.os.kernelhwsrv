@@ -18,6 +18,8 @@
 
 #include "t_dll.h"
 
+const TInt KHeapSize=0x2000;
+
 class TlsData
 	{
 public:

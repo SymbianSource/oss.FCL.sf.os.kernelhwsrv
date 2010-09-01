@@ -128,6 +128,7 @@
 #include <f32dbg.h>
 #include <e32def.h>
 #include <e32def_private.h>
+#include "freeram.h"
 
 LOCAL_D RTest test(_L("T_SHAREDIO"));
 
@@ -349,6 +350,8 @@ void CreateWithOOMCheck(TInt aSize, TBool aPhysicalAddress)
 	{
 	TInt failResult=KErrGeneral;
 
+	TInt freeRam = FreeRam(); //This will also add a delay
+
 	for(TInt failCount=1; failCount<1000; failCount++)
 		{
 		test.Printf(_L("alloc fail count = %d\n"),failCount);
@@ -366,8 +369,10 @@ void CreateWithOOMCheck(TInt aSize, TBool aPhysicalAddress)
 
 		test(failResult==KErrNoMemory);
 		__KHEAP_MARKEND;
-		}
 
+		test(freeRam == FreeRam());  //This will also add a delay
+		}
+	User::__DbgSetAllocFail(ETrue,RAllocator::ENone,0);
 	__KHEAP_RESET;
 
 	test.Next(_L("Destroy buffer"));
@@ -376,7 +381,7 @@ void CreateWithOOMCheck(TInt aSize, TBool aPhysicalAddress)
 	else
 		ldd.DestroyBuffer();
 	
-	__KHEAP_MARKEND;
+	test(freeRam == FreeRam());  //This will also add a delay
 	}
 
 GLDEF_C TInt E32Main()

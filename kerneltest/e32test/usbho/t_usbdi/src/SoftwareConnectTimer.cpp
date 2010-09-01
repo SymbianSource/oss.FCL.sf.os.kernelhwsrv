@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -17,10 +17,6 @@
 //
 
 #include "softwareconnecttimer.h"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "SoftwareConnectTimerTraces.h"
-#endif
 
 namespace NUnitTesting_USBDI
 	{
@@ -29,12 +25,10 @@ const TInt KOneSecond(1000000);
 	
 CSoftwareConnectTimer* CSoftwareConnectTimer::NewL(RUsbTestDevice& aTestDevice)
 	{
-	OstTraceFunctionEntry1( CSOFTWARECONNECTTIMER_NEWL_ENTRY, ( TUint )&( aTestDevice ) );
 	CSoftwareConnectTimer* self = new (ELeave) CSoftwareConnectTimer(aTestDevice);
 	CleanupStack::PushL(self);
 	self->ConstructL();
 	CleanupStack::Pop(self);
-	OstTraceFunctionExit1( CSOFTWARECONNECTTIMER_NEWL_EXIT, ( TUint )( self ) );
 	return self;
 	}
 	
@@ -44,54 +38,48 @@ CSoftwareConnectTimer::CSoftwareConnectTimer(RUsbTestDevice& aTestDevice)
 	iTestDevice(aTestDevice),
 	iConnectType(EUnknown)
 	{
-	OstTraceFunctionEntryExt( CSOFTWARECONNECTTIMER_CSOFTWARECONNECTTIMER_ENTRY, this );
 	CActiveScheduler::Add(this);
-	OstTraceFunctionExit1( CSOFTWARECONNECTTIMER_CSOFTWARECONNECTTIMER_EXIT, this );
 	}
 	
 	
 CSoftwareConnectTimer::~CSoftwareConnectTimer()
 	{
-	OstTraceFunctionEntry1( CSOFTWARECONNECTTIMER_CSOFTWARECONNECTTIMER_ENTRY_DUP01, this );
-	OstTraceFunctionExit1( CSOFTWARECONNECTTIMER_CSOFTWARECONNECTTIMER_EXIT_DUP01, this );
+	LOG_FUNC
 	}
 	
 	
 void CSoftwareConnectTimer::SoftwareConnect(TInt aInterval)
 	{
-	OstTraceFunctionEntryExt( CSOFTWARECONNECTTIMER_SOFTWARECONNECT_ENTRY, this );
+	LOG_FUNC
 	iConnectType = EConnect;
 	After(aInterval*KOneSecond);
-	OstTraceFunctionExit1( CSOFTWARECONNECTTIMER_SOFTWARECONNECT_EXIT, this );
 	}
 	
 
 void CSoftwareConnectTimer::SoftwareDisconnect(TInt aInterval)
 	{
-	OstTraceFunctionEntryExt( CSOFTWARECONNECTTIMER_SOFTWAREDISCONNECT_ENTRY, this );
+	LOG_FUNC
 	iConnectType = EDisconnect;
 	After(aInterval*KOneSecond);
-	OstTraceFunctionExit1( CSOFTWARECONNECTTIMER_SOFTWAREDISCONNECT_EXIT, this );
 	}
 	
 	
 void CSoftwareConnectTimer::SoftwareReConnect(TInt aInterval)
 	{
-	OstTraceFunctionEntryExt( CSOFTWARECONNECTTIMER_SOFTWARERECONNECT_ENTRY, this );
+	LOG_FUNC
 	iTestDevice.SoftwareDisconnect();
 	SoftwareConnect(aInterval);
-	OstTraceFunctionExit1( CSOFTWARECONNECTTIMER_SOFTWARERECONNECT_EXIT, this );
 	}
 
 
 void CSoftwareConnectTimer::RunL()
 	{
-	OstTraceFunctionEntry1( CSOFTWARECONNECTTIMER_RUNL_ENTRY, this );
+	LOG_FUNC
 	TInt completionCode(iStatus.Int());
 	
 	if(completionCode != KErrNone)
 		{
-		OstTrace1(TRACE_NORMAL, CSOFTWARECONNECTTIMER_RUNL, "<Error %d> software connect/disconnect timer error",completionCode);
+		RDebug::Printf("<Error %d> software connect/disconnect timer error",completionCode);
 		iTestDevice.ReportError(completionCode);
 		}
 	else
@@ -107,14 +95,13 @@ void CSoftwareConnectTimer::RunL()
 				break;
 				
 			case EUnknown:
-				OstTrace0(TRACE_NORMAL, CSOFTWARECONNECTTIMER_RUNL_DUP01, "<Error> Unknown state for software connect timer");
+				RDebug::Printf("<Error> Unknown state for software connect timer");
 				break;
 			
 			default:
 				break;
 			}			
 		}	
-	OstTraceFunctionExit1( CSOFTWARECONNECTTIMER_RUNL_EXIT, this );
 	}
 
 

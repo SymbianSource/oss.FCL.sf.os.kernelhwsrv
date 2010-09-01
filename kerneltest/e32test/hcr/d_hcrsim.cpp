@@ -742,62 +742,38 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			}
 		case RHcrSimTestChannel::EHcrGetDataArray:
 			{
-			//args[0] - &aId
-			//args[1] - aMaxLen
-			//args[2] - aValue
-			//args[3] - &aLen
-			
 			// Get list of pointers
 			TAny* args[4];
 			TEST_MEMGET(a1, args, sizeof(args));
 			TUint maxlen = (TUint) args[1];
-			
 			// Retrieve structures from client
 			TSettingId id;
 			TEST_MEMGET(args[0], &id, sizeof(TSettingId));
 			// Allocate temporary memory
 			TUint16 len;
 			TUint8* value;
-			
 			TEST_ENTERCS();
-			//Analyse user input. Some test cases can pass either aMaxLen == 0,
-			//aValue == NULL or both
-			if(args[2] != 0 && args[1] != 0)
-			    {
-			    value = (TUint8*) Kern::Alloc(maxlen);
-			    if(!value) return KErrNoMemory;
-			    }
-			//aValue == NULL, just pass NULL to HCR PIL
-			else if(args[2] == 0)
-			    value = NULL;
-			//aMaxLen = 0, allocate 4 bytes memory 
-			else if(args[1] == 0)
-			    {
-			    value = (TUint8*) Kern::Alloc(4);
-			    if(!value) return KErrNoMemory;
-			    }
-			//aVallue == NULL && aMaxLen == 0
-			else
-			    value = NULL;
+			value = (TUint8*) Kern::Alloc(maxlen * sizeof(TUint8));
 			TEST_LEAVECS();
-			
-			
-			// Actual API call
-			r = GetData(id, (TUint16) maxlen,
-			        value, len);
-			// Send value back to client
-			if(value && maxlen)
-			    {
-			    TEST_MEMPUT(args[2], value, maxlen * sizeof(TUint8));
-			    TEST_MEMPUT(args[3], &len, sizeof(TUint16));
-			    }
-			
-			if(value)
-			    {
-			    TEST_ENTERCS();
-			    Kern::Free(value);
-			    TEST_LEAVECS();
-			    }
+			if (value == NULL)
+				{
+				r = KErrNoMemory;
+				}
+			else
+				{
+				// Actual API call
+				r = GetData(id, (TUint16) maxlen,
+							value, len);
+				// Send value back to client
+				if (!r)
+					{
+					TEST_MEMPUT(args[2], value, maxlen * sizeof(TUint8));
+					TEST_MEMPUT(args[3], &len, sizeof(TUint16));
+					}
+				TEST_ENTERCS();
+				Kern::Free(value);
+				TEST_LEAVECS();
+				}
 			break;
 			}
 		case RHcrSimTestChannel::EHcrGetDataDes:
@@ -861,74 +837,43 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			break;
 			}
 		case RHcrSimTestChannel::EHcrGetArrayInt:
-		    {
-		    //args[0] - &aId
-		    //args[1] - aMaxLen
-		    //args[2] - aValue
-		    //args[3] - &aLen
-
-		    // Get list of pointers
-		    TAny* args[4];
-		    TEST_MEMGET(a1, args, sizeof(args));
-		    TUint maxlen = (TUint) args[1];
-		    // Retrieve structures from client
-		    TSettingId id;
-		    TEST_MEMGET(args[0], &id, sizeof(TSettingId));
-		    // Allocate temporary memory
-		    TUint16 len;
-		    TInt32* value;
-
-		    TEST_ENTERCS();
-		    //Analyse user input. Some test cases can pass either aMaxLen == 0,
-		    //aValue == NULL or both
-		    if(args[2] != 0 && args[1] != 0)
-		        {
-                value = (TInt32*) Kern::Alloc(maxlen*sizeof(TInt32));
-                if(!value) return KErrNoMemory;
-		        }
-		    //aValue == NULL, just pass NULL to HCR PIL
-		    else if(args[2] == 0)
-		        value = NULL;
-		    //aMaxLen = 0, allocate 4 bytes memory 
-		    else if(args[1] == 0)
-		        {
-                value = (TInt32*) Kern::Alloc(maxlen*sizeof(TInt32));
-                if(!value) return KErrNoMemory;
-		        }
-		    //aVallue == NULL && aMaxLen == 0
-		    else
-		        value = NULL;
-		    TEST_LEAVECS();
-
-
-		    // Actual API call
-		    r = GetArray(id, (TUint16) maxlen,
-		            value, len);
-
-		    // Send value back to client
-		    //aMaxLen > 0 && aValue != NULL
-		    if (args[1] && args[2])
-		        {
-		    TEST_MEMPUT(args[2], value, maxlen);
-		    TEST_MEMPUT(args[3], &len, sizeof(TUint16));
-		        }
-
-		    if(value)
-		        {
-		    TEST_ENTERCS();
-		    Kern::Free(value);
-		    TEST_LEAVECS();
-		        }
-
-		        break;
+			{
+			// Get list of pointers
+			TAny* args[4];
+			TEST_MEMGET(a1, args, sizeof(args));
+			TUint maxlen = (TUint) args[1];
+			// Retrieve structures from client
+			TSettingId id;
+			TEST_MEMGET(args[0], &id, sizeof(TSettingId));
+			// Allocate temporary memory
+			TUint16 len;
+			TInt32* value;
+			TEST_ENTERCS();
+			value = (TInt32*) Kern::Alloc(maxlen);
+			TEST_LEAVECS();
+			if (value == NULL)
+				{
+				r = KErrNoMemory;
+				}
+			else
+				{
+				// Actual API call
+				r = GetArray(id, (TUint16) maxlen,
+							value, len);
+				// Send value back to client
+				if (!r)
+					{
+					TEST_MEMPUT(args[2], value, maxlen);
+					TEST_MEMPUT(args[3], &len, sizeof(TUint16));
+					}
+				TEST_ENTERCS();
+				Kern::Free(value);
+				TEST_LEAVECS();
+				}
+			break;
 			}
 		case RHcrSimTestChannel::EHcrGetArrayUInt:
-		    {
-		    //args[0] - &aId
-		    //args[1] - aMaxLen
-		    //args[2] - aValue
-		    //args[3] - &aLen
-		    
+			{
 			// Get list of pointers
 			TAny* args[4];
 			TEST_MEMGET(a1, args, sizeof(args));
@@ -939,63 +884,35 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			// Allocate temporary memory
 			TUint16 len;
 			TUint32* value;
-			
 			TEST_ENTERCS();
-			//Analyse user input. Some test cases can pass either aMaxLen == 0,
-			//aValue == NULL or both
-			if(args[2] != 0 && args[1] != 0)
-			    {
-			    value = (TUint32*) Kern::Alloc(maxlen*sizeof(TUint32));
-			    if(!value) return KErrNoMemory;
-			    }
-			//aValue == NULL, just pass NULL to HCR PIL
-			else if(args[2] == 0)
-			    value = NULL;
-			//aMaxLen = 0, allocate 4 bytes memory 
-			else if(args[1] == 0)
-			    {
-			    value = (TUint32*) Kern::Alloc(maxlen*sizeof(TUint32));
-			    if(!value) return KErrNoMemory;
-			    }
-			//aVallue == NULL && aMaxLen == 0
-			else
-			    value = NULL;
+			value = (TUint32*) Kern::Alloc(maxlen);
 			TEST_LEAVECS();
-			
-
-			// Actual API call
-			r = GetArray(id, (TUint16) maxlen,
-			        value, len);
-			// Send value back to client
-			
-			//aMaxLine != 0 && aValue != NULL
-			if (args[1] && args[2])
-			    {
-			    TEST_MEMPUT(args[2], value, maxlen);
-			    TEST_MEMPUT(args[3], &len, sizeof(TUint16));
-			    }
-			
-			if(value)
-			    {
-			    TEST_ENTERCS();
-			    Kern::Free(value);
-			    TEST_LEAVECS();
-			    }
-
+			if (value == NULL)
+				{
+				r = KErrNoMemory;
+				}
+			else
+				{
+				// Actual API call
+				r = GetArray(id, (TUint16) maxlen,
+							value, len);
+				// Send value back to client
+				if (!r)
+					{
+					TEST_MEMPUT(args[2], value, maxlen);
+					TEST_MEMPUT(args[3], &len, sizeof(TUint16));
+					}
+				TEST_ENTERCS();
+				Kern::Free(value);
+				TEST_LEAVECS();
+				}
 			break;
 			}
-		    
 		case RHcrSimTestChannel::EHcrGetStringArray:
 			{
 			// Get list of pointers
 			TAny* args[4];
 			TEST_MEMGET(a1, args, sizeof(args));
-			
-			//args[0] - &aId
-			//args[1] - aMaxLen
-			//args[2] - aValue
-			//args[3] - &aLen
-			
 			TUint maxlen = (TUint) args[1];
 			// Retrieve structures from client
 			TSettingId id;
@@ -1003,49 +920,28 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			// Allocate temporary memory
 			TUint16 len;
 			TText8* value;
-
 			TEST_ENTERCS();
-			
-			//Analyse user input. Some test cases can pass either aMaxLen == 0,
-			//aValue == NULL or both
-			if(args[2] != 0 && args[1] != 0)
-			    {
-			    value = (TText8*) Kern::Alloc(maxlen*sizeof(TText8));
-			    if(!value) return KErrNoMemory;
-			    }
-			//aValue == NULL, just pass NULL to HCR PIL
-			else if(args[2] == 0)
-			    value = NULL;
-			//aMaxLen = 0, allocate 4 bytes memory 
-			else if(args[1] == 0)
-			    {
-			    value = (TText8*) Kern::Alloc(maxlen*sizeof(TText8));
-			    if(!value) return KErrNoMemory;
-			    }
-			//aVallue == NULL && aMaxLen == 0
-			else
-			    value = NULL;
+			value = (TText8*) Kern::Alloc(maxlen * sizeof(TText8));
 			TEST_LEAVECS();
-
-
-			// Actual API call
-			r = GetString(id, (TUint16) maxlen,
-			        value, len);
-			// Send value back to client
-			//aMaxLen != 0 && aValue != NULL
-			if (args[1] && args[2])
-			    {
-			    TEST_MEMPUT(args[2], value, maxlen * sizeof(TText8));
-			    TEST_MEMPUT(args[3], &len, sizeof(TUint16));
-			    }
-
-			if(value)
-			    {
-			    TEST_ENTERCS();
-			    Kern::Free(value);
-			    TEST_LEAVECS();
-			    }
-			
+			if (value == NULL)
+				{
+				r = KErrNoMemory;
+				}
+			else
+				{
+				// Actual API call
+				r = GetString(id, (TUint16) maxlen,
+							value, len);
+				// Send value back to client
+				if (!r)
+					{
+					TEST_MEMPUT(args[2], value, maxlen * sizeof(TText8));
+					TEST_MEMPUT(args[3], &len, sizeof(TUint16));
+					}
+				TEST_ENTERCS();
+				Kern::Free(value);
+				TEST_LEAVECS();
+				}
 			break;
 			}
 		case RHcrSimTestChannel::EHcrGetStringDes:

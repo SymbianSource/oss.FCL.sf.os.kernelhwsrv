@@ -72,12 +72,12 @@ GLREF_C TReal32 __subsf3(TReal32 a1,TReal32 a2);
 GLREF_C TReal32 __mulsf3(TReal32 a1,TReal32 a2);
 GLREF_C TReal32 __divsf3(TReal32 a1,TReal32 a2);
 GLREF_C TReal32 __truncdfsf2(TReal64 a1);
-GLDEF_D const TReal32 minDenormalTReal32=1.4E-45f;
 #endif
 
 GLDEF_D TReal32 NaNTReal32;
 GLDEF_D TReal32 posInfTReal32;
 GLDEF_D TReal32 negInfTReal32;
+GLDEF_D const TReal32 minDenormalTReal32=1.4E-45f;
 GLDEF_D TReal NaNTReal;
 GLDEF_D TReal posInfTReal;
 GLDEF_D TReal negInfTReal;

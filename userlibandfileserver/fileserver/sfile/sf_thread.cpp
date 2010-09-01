@@ -925,34 +925,24 @@ TUint CDisconnectThread::StartL()
 	}
 
 
-CPluginThread::CPluginThread(CFsPlugin& aPlugin, RLibrary aLibrary)
-  : iPlugin(aPlugin), iLib(aLibrary)
+CPluginThread::CPluginThread(CFsPlugin& aPlugin)
+  : iPlugin(aPlugin)
 	{
 	/** @prototype */
 	iOperationLock.Close();
 	iPlugin.Open();
-	
-    /* 
-    Duplicate the handle to the DLL which created the plugin to prevent 
-    TFsRemovePlugin::DoRequestL() from unmapping the DLL's code segment before
-    this thread's destructor has been called as the destructor closes the plugin 
-    which results in a call to the plugin's derived destructor contained in the DLL (!)
-    */ 
-    TInt r = iLib.Duplicate(iThread, EOwnerProcess);
-    __ASSERT_ALWAYS(r==KErrNone, Fault(EFsThreadConstructor));
 	}
 
 CPluginThread::~CPluginThread()
     {
     iPlugin.Close();
-	iLib.Close();
     }
 
 
-CPluginThread* CPluginThread::NewL(CFsPlugin& aPlugin, RLibrary aLibrary)
+CPluginThread* CPluginThread::NewL(CFsPlugin& aPlugin)
 	{
 	__PRINT(_L("CPluginThread::NewL()"));
-	CPluginThread* pT=new(ELeave) CPluginThread(aPlugin, aLibrary);
+	CPluginThread* pT=new(ELeave) CPluginThread(aPlugin);
 	TInt r=pT->Initialise();
 
 	/** @prototype */

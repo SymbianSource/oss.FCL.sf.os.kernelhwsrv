@@ -39,12 +39,7 @@ GLDEF_C TInt E32Main()
 	if (heap1==NULL)
 		return KErrNoMemory;
 
-	// Need this horrible construct because RVCT4 complains that the return is
-	// unreachable code.  Without it, though, other code analysers will complain
-	// that there is a missing return value!	
-	volatile TInt forever = 1;
-	
-	while(forever)
+	FOREVER
 		{
 		TUint8* ptr=(TUint8*)heap1->Alloc(heapsize);	// fail, compress, fail
 		User::After(1000);	// quite soon

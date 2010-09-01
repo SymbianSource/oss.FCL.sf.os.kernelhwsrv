@@ -50,11 +50,11 @@ GLDEF_C void Format(TInt aDrive)
 	RFormat format;
 	TInt count;
 	TInt r=format.Open(TheFs,driveBuf,EQuickFormat,count);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	while(count)
 		{
 		TInt r=format.Next(count);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		}
 	format.Close();
 	}
@@ -65,7 +65,7 @@ void MakeDir(const TDesC& aDirName)
 //
 	{
 	TInt r=TheFs.MkDirAll(aDirName);
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	}
 
 
@@ -94,11 +94,11 @@ void CreateTestDirectory(const TDesC& aSessionPath)
 	TParsePtrC path(aSessionPath);
 	test(path.DrivePresent()==EFalse);
 	TInt r=TheFs.SetSessionPath(aSessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.SessionPath(gSessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.MkDirAll(gSessionPath);
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	}
 
 TInt CurrentDrive(TChar aDriveChar)
@@ -108,7 +108,7 @@ TInt CurrentDrive(TChar aDriveChar)
 	{
 	TInt driveNum;
 	TInt r = TheFs.CharToDrive(aDriveChar,driveNum);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	gDriveToTest = gSessionPath[0] = (TText)aDriveChar;
 	return(driveNum);
 	}
@@ -120,7 +120,7 @@ TInt CurrentDrive()
 	{
 	TInt driveNum;
 	TInt r = TheFs.CharToDrive(gSessionPath[0],driveNum);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	return(driveNum);
 	}
 
@@ -131,20 +131,20 @@ void MakeFile(const TDesC& aFileName,const TUidType& aUidType,const TDesC8& aFil
 	{
 	RFile file;
 	TInt r=file.Replace(TheFs,aFileName,0);
-	test_Value(r, r == KErrNone || r==KErrPathNotFound);
+	test(r==KErrNone || r==KErrPathNotFound);
 	if (r==KErrPathNotFound)
 		{
 		r=TheFs.MkDirAll(aFileName);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		r=file.Replace(TheFs,aFileName,0);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		}
 	TCheckedUid checkedUid(aUidType);
 	TPtrC8 uidData((TUint8*)&checkedUid,sizeof(TCheckedUid));
 	r=file.Write(uidData);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=file.Write(aFileContents);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file.Close();
 	}
 
@@ -160,16 +160,16 @@ void MakeFile(const TDesC& aFileName,const TDesC8& aFileContents)
 		test.Printf(_L("ERROR: r=%d"),r);
 		test(EFalse);
 		}
-	test_Value(r, r == KErrNone || r==KErrPathNotFound);
+	test(r==KErrNone || r==KErrPathNotFound);
 	if (r==KErrPathNotFound)
 		{
 		r=TheFs.MkDirAll(aFileName);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		r=file.Replace(TheFs,aFileName,0);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		}
 	r=file.Write(aFileContents);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file.Close();
 	}
 
@@ -180,17 +180,17 @@ void MakeFile(const TDesC& aFileName,TInt anAttributes)
 	{
 	RFile file;
 	TInt r=file.Replace(TheFs,aFileName,0);
-	test_Value(r, r == KErrNone || r==KErrPathNotFound);
+	test(r==KErrNone || r==KErrPathNotFound);
 	if (r==KErrPathNotFound)
 		{
 		r=TheFs.MkDirAll(aFileName);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		r=file.Replace(TheFs,aFileName,0);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		}
 	file.Close();
 	r=TheFs.SetAtt(aFileName,anAttributes,0);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	}
 
 void MakeFile(const TDesC& aFileName)
@@ -210,7 +210,7 @@ void QuickFormat()
 void ReadBootSector(TFatBootSector& aBootSector)
 	{
     TInt r = ReadBootSector(TheFs, CurrentDrive(), KBootSectorNum<<KDefaultSectorLog2, aBootSector);
-    test_KErrNone(r);
+    test(r==KErrNone);
 
     if(!aBootSector.IsValid())
         {
@@ -558,9 +558,9 @@ void RmDir(const TDesC& aDirName)
 	TFileName filename_dir = aDirName;
 	TInt r = 0;
 	r = TheFs.SetAtt(filename_dir, 0, KEntryAttReadOnly);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=gFileMan->RmDir(filename_dir);
-	test_Value(r, r == KErrNone || r==KErrNotFound || r==KErrPathNotFound || r==KErrInUse);
+	test(r==KErrNone || r==KErrNotFound || r==KErrPathNotFound || r==KErrInUse);
 	}
 
 // Cleanup test variables
@@ -788,7 +788,7 @@ void LogTestFailureData(TTCType tcType, TFileName failedOn,
 	logFileName.Append(KExtension);
 
 	TInt r = file.Create(TheFs, logFileName, EFileRead|EFileWrite);
-	test_Value(r, r == KErrNone || r == KErrAlreadyExists);
+	test(r == KErrNone || r == KErrAlreadyExists);
 
 	if (r == KErrNone)
 		{
@@ -799,10 +799,10 @@ void LogTestFailureData(TTCType tcType, TFileName failedOn,
 	if (r == KErrAlreadyExists)
 		{
 		r = file.Open(TheFs, logFileName, EFileRead|EFileWrite);
-		test_KErrNone(r);
+		test(r == KErrNone);
 		TInt start = 0;
 		r=file.Seek(ESeekEnd,start);
-		test_KErrNone(r);
+		test(r == KErrNone);
 		}
 	
 	tempBuf.SetLength(0);

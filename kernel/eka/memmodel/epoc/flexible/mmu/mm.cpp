@@ -785,30 +785,6 @@ DMemoryMapping* MM::FindMappingInThread(DMemModelThread* aThread, TLinAddr aAddr
 	}
 
 
-DMemoryMapping* MM::FindMappingInProcess(DMemModelProcess* aProcess, TLinAddr aAddr, TUint aSize, 
-										 TUint& aOffsetInMapping, TUint& aInstanceCount)
-	{
-	if(aAddr>=KGlobalMemoryBase)
-		{
-		// Address in global region, so look it up in kernel's address space...
-		return MM::FindMappingInAddressSpace(KKernelOsAsid, aAddr, aSize, aOffsetInMapping, aInstanceCount);
-		}
-
-	// Address in thread's process address space so open a reference to its os asid
-	// so that it remains valid for FindMappingInAddressSpace() call.
-	TInt osAsid = aProcess->TryOpenOsAsid();
-	if (osAsid < 0)
-		{// The process no longer owns an address space so can't have any mappings.
-		return NULL;
-		}
-
-	DMemoryMapping* r = MM::FindMappingInAddressSpace(osAsid, aAddr, aSize, aOffsetInMapping, aInstanceCount);
-
-	aProcess->CloseOsAsid();
-	return r;
-	}
-
-
 DMemoryMapping* MM::FindMappingInAddressSpace(	TUint aOsAsid, TLinAddr aAddr, TUint aSize, 
 												TUint& aOffsetInMapping, TUint& aInstanceCount)
 	{
@@ -1141,3 +1117,5 @@ TMappingAttributes2 MM::LegacyMappingAttributes(TMemoryAttributes aAttributes, T
 		attr&EMemoryAttributeUseECC
 		);
 	}
+
+

@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -24,10 +24,6 @@
 #include "testcaseroot.h"
 #include "testcasewd.h"
 #include "testcase0677.h"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "testcase0677Traces.h"
-#endif
 
 #define _REPEATS (oOpenIterations*3)
 
@@ -40,10 +36,7 @@ const TTestCaseFactoryReceipt<CTestCase0677> CTestCase0677::iFactoryReceipt(KTes
 
 CTestCase0677* CTestCase0677::NewL(TBool aHost)
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0677_NEWL);
-	    }
+	LOG_FUNC
 	CTestCase0677* self = new (ELeave) CTestCase0677(aHost);
 	CleanupStack::PushL(self);
 	self->ConstructL();
@@ -55,10 +48,7 @@ CTestCase0677* CTestCase0677::NewL(TBool aHost)
 CTestCase0677::CTestCase0677(TBool aHost)
 :	CTestCaseRoot(KTestCaseId, aHost)
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0677_CTESTCASE0677);
-	    }
+	LOG_FUNC
 		
 	} 
 
@@ -68,10 +58,7 @@ CTestCase0677::CTestCase0677(TBool aHost)
 */
 void CTestCase0677::ConstructL()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0677_CONSTRUCTL);
-	    }
+	LOG_FUNC
 	iWDTimer = CTestCaseWatchdog::NewL();
 	iRepeats = OPEN_REPEATS;
 		
@@ -81,10 +68,7 @@ void CTestCase0677::ConstructL()
 
 CTestCase0677::~CTestCase0677()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0677_DCTESTCASE0677);
-	    }
+	LOG_FUNC
 
 	Cancel();
 	delete iWDTimer;
@@ -94,10 +78,7 @@ CTestCase0677::~CTestCase0677()
 
 void CTestCase0677::ExecuteTestCaseL()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0677_EXECUTETESTCASEL);
-	    }
+	LOG_FUNC
 	iCaseStep = EPreconditions;
 	
 	iRepeats = KOperationRetriesMax;	// VBus event rise retries
@@ -110,10 +91,7 @@ void CTestCase0677::ExecuteTestCaseL()
 	
 void CTestCase0677::DoCancel()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0677_DOCANCEL);
-	    }
+	LOG_FUNC
 
 	// cancel our timer
 	iTimer.Cancel();
@@ -122,10 +100,7 @@ void CTestCase0677::DoCancel()
 
 void CTestCase0677::CancelKB(CTestCaseRoot *pThis)
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0677_CANCELKB);
-	    }
+	LOG_FUNC
 	CTestCase0677 * p = REINTERPRET_CAST(CTestCase0677 *,pThis);
 	// cancel any pending call, and then complete our active obj with a cancel value
 	p->iConsole->ReadCancel();
@@ -135,10 +110,7 @@ void CTestCase0677::CancelKB(CTestCaseRoot *pThis)
 
 void CTestCase0677::CancelNotify(CTestCaseRoot *pThis)
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0677_CANCELNOTIFY);
-	    }
+	LOG_FUNC
 	CTestCase0677 * p = REINTERPRET_CAST(CTestCase0677 *,pThis);
 	// cancel any pending call, and then complete our active obj with a timeout value
 	switch (p->iCancelWhat)
@@ -164,23 +136,15 @@ void CTestCase0677::CancelNotify(CTestCaseRoot *pThis)
 void CTestCase0677::DescribePreconditions()
 	{
 	test.Printf(_L("Using OET, connect oscilloscope chan.A to VBus\n"));
-	OstTrace0(TRACE_NORMAL, CTESTCASE0677_DESCRIBEPRECONDITIONS, "Using OET, connect oscilloscope chan.A to VBus\n");
 	test.Printf(_L("Connect oscilloscope chan.B to D+\n"));
-	OstTrace0(TRACE_NORMAL, CTESTCASE0677_DESCRIBEPRECONDITIONS_DUP01, "Connect oscilloscope chan.B to D+\n");
 	test.Printf(_L("Trigger once, 200mV, 100ms \n"));
-	OstTrace0(TRACE_NORMAL, CTESTCASE0677_DESCRIBEPRECONDITIONS_DUP02, "Trigger once, 200mV, 100ms \n");
 	test.Printf(_L("Prepare to observe VBus, D+ pulse.\n\n"));
-	OstTrace0(TRACE_NORMAL, CTESTCASE0677_DESCRIBEPRECONDITIONS_DUP03, "Prepare to observe VBus, D+ pulse.\n\n");
 	}
 
 
 void CTestCase0677::ContinueAfter(TTimeIntervalMicroSeconds32 aMicroSecs, TCaseSteps aStep)
 	{
 	LOG_VERBOSE2(_L("Wait %dms before drop VBus"), (TInt)(aMicroSecs.Int()/1000));
-	if(gVerboseOutput)
-	    {
-	    OstTrace1(TRACE_VERBOSE, CTESTCASE0677_CONTINUEAFTER, "Wait %dms before drop VBus", (TInt)(aMicroSecs.Int()/1000));;
-	    }
 	iTimer.After(iStatus, aMicroSecs);
 	iCaseStep = aStep;
 	SetActive();
@@ -190,10 +154,7 @@ void CTestCase0677::ContinueAfter(TTimeIntervalMicroSeconds32 aMicroSecs, TCaseS
 // handle event completion	
 void CTestCase0677::RunStepL()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0677_RUNSTEPL);
-	    }
+	LOG_FUNC
 	// Obtain the completion code for this CActive obj.
 	TInt completionCode(iStatus.Int()); 
 	TBuf<MAX_DSTRLEN> aDescription;
@@ -212,9 +173,7 @@ void CTestCase0677::RunStepL()
 				}
 			// prompt to insert connector
 			test.Printf(KAttachOETAsBDevice);
-			OstTrace0(TRACE_NORMAL, CTESTCASE0677_RUNSTEPL_DUP01, KAttachOETAsBDevice);
 			test.Printf(KPressAnyKeyToContinue);
-			OstTrace0(TRACE_NORMAL, CTESTCASE0677_RUNSTEPL_DUP02, KPressAnyKeyToContinue);
 			RequestCharacter();			
 			break;
 			
@@ -240,9 +199,7 @@ void CTestCase0677::RunStepL()
 			if (otgIdPinPresent())
 				{
 				test.Printf(KRemoveAConnectorPrompt);
-				OstTrace0(TRACE_NORMAL, CTESTCASE0677_RUNSTEPL_DUP03, KRemoveAConnectorPrompt);
 				test.Printf(KPressAnyKeyToContinue);
-				OstTrace0(TRACE_NORMAL, CTESTCASE0677_RUNSTEPL_DUP04, KPressAnyKeyToContinue);
 				RequestCharacter();
 
 				iCaseStep = EDetectBPlug;
@@ -259,7 +216,6 @@ void CTestCase0677::RunStepL()
 			iWDTimer->Cancel();
 
 			test.Printf(KMsgWaitingForSRPInitiated);
-			OstTrace0(TRACE_NORMAL, CTESTCASE0677_RUNSTEPL_DUP05, KMsgWaitingForSRPInitiated);
 			otgQueueOtgEventRequest( iOTGEvent, iStatus );
 
 			// turn on VBus (B-SRP)
@@ -284,7 +240,6 @@ void CTestCase0677::RunStepL()
 				}
 			OtgEventString(iOTGEvent, aDescription);
 			test.Printf(_L("Received event %d '%S' status(%d)\n"), iOTGEvent, &aDescription, completionCode);
-			OstTraceExt3(TRACE_NORMAL, CTESTCASE0677_RUNSTEPL_DUP06, "Received event %d '%S' status(%d)\n", iOTGEvent, aDescription, completionCode);
 			if (RUsbOtgDriver::EEventSrpInitiated == iOTGEvent)
 				{
 				// calc interval
@@ -293,22 +248,16 @@ void CTestCase0677::RunStepL()
 				aNowTime.HomeTime();
 				aIntvlMicro = aNowTime.MicroSecondsFrom(iTimeSRPStart);
 				LOG_VERBOSE2(_L("SRP active after %d ms\n"), (TInt)(aIntvlMicro.Int64()/1000));
-				if(gVerboseOutput)
-				    {
-				    OstTrace1(TRACE_VERBOSE, CTESTCASE0677_RUNSTEPL_DUP07, "SRP active after %d ms\n", (TInt)(aIntvlMicro.Int64()/1000));;
-				    }
 				iCancelWhat = ECancelMessageNotify;
 				otgQueueOtgMessageRequest( iOTGMessage, iStatus );
 				iCaseStep = EWaitForSRPTimeout;
 				test.Printf(KMsgWaitingForSRPTimeout);
-				OstTrace0(TRACE_NORMAL, CTESTCASE0677_RUNSTEPL_DUP08, KMsgWaitingForSRPTimeout);
 				SetActive();
 				}
 			else
 				{
 				iCaseStep = EWaitForSRPInitiated;
 				test.Printf(KMsgWaitingForSRPInitiated);
-				OstTrace0(TRACE_NORMAL, CTESTCASE0677_RUNSTEPL_DUP09, KMsgWaitingForSRPInitiated);
 				iStatus = KRequestPending;
 				otgQueueOtgEventRequest( iOTGEvent, iStatus );
 				SetActive();
@@ -323,7 +272,6 @@ void CTestCase0677::RunStepL()
 				}
 			OtgMessageString(iOTGMessage, aDescription);
 			test.Printf(_L("Received message %d '%S' status(%d)\n"), iOTGMessage, &aDescription, completionCode);
-			OstTraceExt3(TRACE_NORMAL, CTESTCASE0677_RUNSTEPL_DUP10, "Received message %d '%S' status(%d)\n", iOTGMessage, aDescription, completionCode);
 			if (RUsbOtgDriver::EMessageSrpTimeout == iOTGMessage)
 				{
 				iWDTimer->Cancel();		//	Only cancel WD Timer here, when timed portion of test is over
@@ -333,10 +281,6 @@ void CTestCase0677::RunStepL()
 				aNowTime.HomeTime();
 				aIntvlMicro = aNowTime.MicroSecondsFrom(iTimeSRPStart);
 				LOG_VERBOSE2(_L("SRP times out after %d ms\n"), (TInt)(aIntvlMicro.Int64()/1000));
-				if(gVerboseOutput)
-				    {
-				    OstTrace1(TRACE_VERBOSE, CTESTCASE0677_RUNSTEPL_DUP11, "SRP times out after %d ms\n", (TInt)(aIntvlMicro.Int64()/1000));;
-				    }
 				// the correct value is 32 seconds, not 4.9 seconds as per the spec.
 
 				iCaseStep = EIssueSRPObservedPrompt;
@@ -346,7 +290,6 @@ void CTestCase0677::RunStepL()
 				{
 				iCaseStep = EWaitForSRPTimeout;
 				test.Printf(KMsgWaitingForSRPTimeout);
-				OstTrace0(TRACE_NORMAL, CTESTCASE0677_RUNSTEPL_DUP12, KMsgWaitingForSRPTimeout);
 				iStatus = KRequestPending;
 				otgQueueOtgMessageRequest( iOTGMessage, iStatus );
 				SetActive();
@@ -356,9 +299,7 @@ void CTestCase0677::RunStepL()
 		case EIssueSRPObservedPrompt:
 			{
 			test.Printf(_L("\nPress Y to verify that SRP was observed\n"));
-			OstTrace0(TRACE_NORMAL, CTESTCASE0677_RUNSTEPL_DUP13, "\nPress Y to verify that SRP was observed\n");
 			test.Printf(_L("or any other key to fail test.\n"));
-			OstTrace0(TRACE_NORMAL, CTESTCASE0677_RUNSTEPL_DUP14, "or any other key to fail test.\n");
 			RequestCharacter();
 			iCaseStep = ECheckSRPObservedUserInput;
 			break;
@@ -391,7 +332,6 @@ void CTestCase0677::RunStepL()
 			
 		default:
 			test.Printf(_L("<Error> unknown test step\n"));
-			OstTrace0(TRACE_NORMAL, CTESTCASE0677_RUNSTEPL_DUP15, "<Error> unknown test step\n");
 			Cancel();
 			return (TestFailed(KErrCorrupt, _L("<Error> unknown test step")));
 		}

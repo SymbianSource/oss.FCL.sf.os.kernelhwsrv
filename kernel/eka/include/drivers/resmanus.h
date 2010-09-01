@@ -270,7 +270,7 @@ class DChannelResManUs : public DLogicalChannel
 	TInt ExtractResourceInfo(const TPowerResourceInfoV01* aPwrResInfo, TResourceInfoBuf& aInfo);
 #ifdef _DUMP_TRACKERS
 	TInt DumpResource(const TPowerResourceInfoV01* aResource);
-	void DumpTracker(TTrackingControl* aTracker);
+	TInt DumpTracker(TTrackingControl* aTracker);
 #endif
 #ifdef RESOURCE_MANAGER_SIMULATED_PSL
 	void CheckForCandidateAsyncResource(TPowerResourceInfoV01* aResource);

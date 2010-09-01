@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -20,10 +20,6 @@
 #include "testdebug.h"
 #include "TestCaseController.h"
 #include "TestCaseFactory.h"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "TestEngineTraces.h"
-#endif
 
 // Console application options
 
@@ -47,12 +43,10 @@ _LIT(KTestStringPreamble,"PBASE-T_USBDI-");
 	
 CTestEngine* CTestEngine::NewL()
 	{
-	OstTraceFunctionEntry0( CTESTENGINE_NEWL_ENTRY );
 	CTestEngine* self = new (ELeave) CTestEngine;
 	CleanupStack::PushL(self);
 	self->ConstructL();
 	CleanupStack::Pop(self);
-	OstTraceFunctionExit1( CTESTENGINE_NEWL_EXIT, ( TUint )( self ) );
 	return self;
 	}
 
@@ -62,15 +56,12 @@ CTestEngine::CTestEngine()
 :	CActive(EPriorityUserInput),
 	iTestCaseIndex(0), iRepeat(0), iNumRepeats(KDefaultNumRepeats)
 	{
-	OstTraceFunctionEntry1( CTESTENGINE_CTESTENGINE_ENTRY, this );
-	OstTraceFunctionExit1( CTESTENGINE_CTESTENGINE_EXIT, this );
 	}
 
 
 
 CTestEngine::~CTestEngine()
 	{
-	OstTraceFunctionEntry1( CTESTENGINE_CTESTENGINE_ENTRY_DUP01, this );
 	// Cancel reading user console input
 	Cancel();
 	
@@ -83,25 +74,21 @@ CTestEngine::~CTestEngine()
 	// Finish test and release resources
 	gtest.End();
 	gtest.Close();
-	OstTraceFunctionExit1( CTESTENGINE_CTESTENGINE_EXIT_DUP01, this );
 	}
 	
 	
 	
 void CTestEngine::ConstructL()
 	{
-	OstTraceFunctionEntry1( CTESTENGINE_CONSTRUCTL_ENTRY, this );
+	LOG_FUNC
 	CActiveScheduler::Add(this);
 
 	// Display information (construction text and OS build version number
 	gtest.Title();
 	gtest.Start(_L("Test Engine Initiation"));
 	gtest.Printf(_L(">>\n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_CONSTRUCTL, ">>\n");
 	gtest.Printf(_L(">>   T E S T   R U N \n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_CONSTRUCTL_DUP01, ">>   T E S T   R U N \n");
 	gtest.Printf(_L(">>\n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_CONSTRUCTL_DUP02, ">>\n");
 
 	// Process the command line option for role
 	TInt cmdLineLength(User::CommandLineLength());
@@ -112,7 +99,6 @@ void CTestEngine::ConstructL()
 	
 	// be careful, command line length is limited(248 characters)	
 	gtest.Printf(_L("***cmdLine = %lS\n"), cmdLine);
-	OstTraceExt1(TRACE_NORMAL, CTESTENGINE_CONSTRUCTL_DUP03, "***cmdLine = %lS\n", *cmdLine);
 		
 	TLex args(*cmdLine);
 	args.SkipSpace();
@@ -137,14 +123,12 @@ void CTestEngine::ConstructL()
 		else
 			{
 			gtest.Printf(_L("Test configuration: could not find option -role\n"));
-			OstTrace0(TRACE_NORMAL, CTESTENGINE_CONSTRUCTL_DUP04, "Test configuration: could not find option -role\n");
 			gtest(EFalse);
 			}
 		}
 	else
 		{
 		gtest.Printf(_L("Test configuration option not found: %S\n"),&KArgRole);
-		OstTraceExt1(TRACE_NORMAL, CTESTENGINE_CONSTRUCTL_DUP05, "Test configuration option not found: %S\n",KArgRole);
 		gtest(EFalse);
 		}
 		
@@ -177,7 +161,6 @@ void CTestEngine::ConstructL()
 				}									
 							
 			gtest.Printf(_L("Test case specified: %S\n"),tc);
-			OstTraceExt1(TRACE_NORMAL, CTESTENGINE_CONSTRUCTL_DUP06, "Test case specified: %S\n",*tc);
 			
 						
 			iTestCasesIdentities.Append(tc);
@@ -188,7 +171,6 @@ void CTestEngine::ConstructL()
 	else
 		{
 		gtest.Printf(_L("Test configuration option not found: %S\n"),&KArgTestCases);
-		OstTraceExt1(TRACE_NORMAL, CTESTENGINE_CONSTRUCTL_DUP07, "Test configuration option not found: %S\n",KArgTestCases());
 		gtest(EFalse);		
 		}
 				
@@ -205,39 +187,32 @@ void CTestEngine::ConstructL()
 		if(ret)
 			{
 			gtest.Printf(_L("Test configuration option not found: %S\n"),&KArgTestRepeats);
-			OstTraceExt1(TRACE_NORMAL, CTESTENGINE_CONSTRUCTL_DUP08, "Test configuration option not found: %S\n",KArgTestRepeats());
 			gtest.Printf(_L("DEFAULT to number of repeats = %d\n"),KDefaultNumRepeats);
-			OstTrace1(TRACE_NORMAL, CTESTENGINE_CONSTRUCTL_DUP09, "DEFAULT to number of repeats = %d\n",KDefaultNumRepeats);
 			iNumRepeats = KDefaultNumRepeats;
 			}
 		gtest.Printf(_L("Test repeats specified: %d cycles\n"),iNumRepeats);
-		OstTrace1(TRACE_NORMAL, CTESTENGINE_CONSTRUCTL_DUP10, "Test repeats specified: %d cycles\n",iNumRepeats);
 		}
 	else
 		{
 		gtest.Printf(_L("Test configuration option not found: %S\n"),&KArgTestRepeats);
-		OstTraceExt1(TRACE_NORMAL, CTESTENGINE_CONSTRUCTL_DUP11, "Test configuration option not found: %S\n",KArgTestRepeats());
 		gtest.Printf(_L("DEFAULT to number of repeats = %d\n"),KDefaultNumRepeats);
-		OstTrace1(TRACE_NORMAL, CTESTENGINE_CONSTRUCTL_DUP12, "DEFAULT to number of repeats = %d\n",KDefaultNumRepeats);
 		iNumRepeats = KDefaultNumRepeats;
 		}
 		
 	// Create the test case controller
 	gtest.Printf(_L("Creating the test controller\n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_CONSTRUCTL_DUP13, "Creating the test controller\n");
 	iTestCaseController = CTestCaseController::NewL(*this,hostFlag);
 
 	CleanupStack::PopAndDestroy(cmdLine);
 
 	gtest.Console()->Read(iStatus);
 	SetActive();	
-	OstTraceFunctionExit1( CTESTENGINE_CONSTRUCTL_EXIT, this );
 	}
 	
 
 TInt CTestEngine::NextTestCaseId(TDes& aTestCaseId)
 	{
-	OstTraceFunctionEntryExt( CTESTENGINE_NEXTTESTCASEID_ENTRY, this );
+	LOG_FUNC
 	if(iTestCaseIndex < iTestCasesIdentities.Count())
 		{
 		aTestCaseId = *iTestCasesIdentities[iTestCaseIndex++];
@@ -249,41 +224,34 @@ TInt CTestEngine::NextTestCaseId(TDes& aTestCaseId)
 				iTestCaseIndex = 0; //prepare to start again
 				}
 			}
-		OstTraceFunctionExitExt( CTESTENGINE_NEXTTESTCASEID_EXIT, this, KErrNone );
 		return KErrNone;
 		}
 	else
 		{
-		OstTraceFunctionExitExt( CTESTENGINE_NEXTTESTCASEID_EXIT_DUP01, this, KErrNotFound );
 		return KErrNotFound;
 		}
 	}
 
 RPointerArray<HBufC>& CTestEngine::TestCasesIdentities()
 	{
-	OstTraceFunctionEntry1( CTESTENGINE_TESTCASESIDENTITIES_ENTRY, this );
-	OstTraceFunctionExitExt( CTESTENGINE_TESTCASESIDENTITIES_EXIT, this, ( TUint )&( iTestCasesIdentities ) );
 	return iTestCasesIdentities;
 	}
 
 TUint CTestEngine::NumRepeats()
 	{
-	OstTraceFunctionEntry1( CTESTENGINE_NUMREPEATS_ENTRY, this );
-	OstTraceFunctionExitExt( CTESTENGINE_NUMREPEATS_EXIT, this, iNumRepeats );
 	return iNumRepeats;
 	}
 
 void CTestEngine::DoCancel()
 	{
-	OstTraceFunctionEntry1( CTESTENGINE_DOCANCEL_ENTRY, this );
+	LOG_FUNC
 	gtest.Console()->ReadCancel();	
-	OstTraceFunctionExit1( CTESTENGINE_DOCANCEL_EXIT, this );
 	}
 	
 
 void CTestEngine::RunL()
 	{
-	OstTraceFunctionEntry1( CTESTENGINE_RUNL_ENTRY, this );
+	LOG_FUNC
 	TInt completionCode(iStatus.Int());
 	
 	if(completionCode == KErrNone)
@@ -296,30 +264,24 @@ void CTestEngine::RunL()
 			{
 			iTestCaseController->Cancel();
 			gtest.Printf(_L("Test module terminating\n"));
-			OstTrace0(TRACE_NORMAL, CTESTENGINE_RUNL, "Test module terminating\n");
-			OstTrace0(TRACE_NORMAL, CTESTENGINE_RUNL_DUP01, "CActiveScheduler::Stop CTestEngine::RunL");
+			RDebug::Printf("CActiveScheduler::Stop CTestEngine::RunL");
 			CActiveScheduler::Stop();
 			}
 		else
 			{
 			gtest.Printf(_L("%d key pressed"),keyCode);
-			OstTrace1(TRACE_NORMAL, CTESTENGINE_RUNL_DUP02, "%d key pressed",keyCode);
 			}
 		}
 	else
 		{
 		gtest.Printf(_L("Manual key error %d\n"),completionCode);
-		OstTrace1(TRACE_NORMAL, CTESTENGINE_RUNL_DUP03, "Manual key error %d\n",completionCode);
 		SetActive();
 		}
-	OstTraceFunctionExit1( CTESTENGINE_RUNL_EXIT, this );
 	}
 	
 	
 TInt CTestEngine::RunError(TInt aError)
 	{
-	OstTraceFunctionEntryExt( CTESTENGINE_RUNERROR_ENTRY, this );
-	OstTraceFunctionExitExt( CTESTENGINE_RUNERROR_EXIT, this, KErrNone );
 	return KErrNone;
 	}
 

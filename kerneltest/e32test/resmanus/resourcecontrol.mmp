@@ -30,7 +30,6 @@ USERINCLUDE	../../../kernel/eka/include/drivers
 #endif
 
 macro RESOURCE_MANAGER_SIMULATED_PSL
-macro _DUMP_TRACKERS
 macro BTRACE_RESMANUS
 macro PRM_US_INSTRUMENTATION_MACRO
 

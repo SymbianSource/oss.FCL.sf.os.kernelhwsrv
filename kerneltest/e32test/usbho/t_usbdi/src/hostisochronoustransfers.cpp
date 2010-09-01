@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -17,10 +17,6 @@
 //
 
 #include "hosttransfers.h"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "hostisochronoustransfersTraces.h"
-#endif
 #include <e32debug.h>
 #include <e32test.h>
 
@@ -35,24 +31,21 @@ CIsochTransfer::CIsochTransfer(RUsbPipe& aPipe,RUsbInterface& aInterface,TUint16
 	iTransferDescriptor(aMaxPacketSize,aMaxNumPackets),
 	iMaxPacketSize(aMaxPacketSize)
 	{
-	OstTraceFunctionEntryExt( CISOCHTRANSFER_CISOCHTRANSFER_ENTRY, this );
-	OstTraceExt2(TRACE_NORMAL, CISOCHTRANSFER_CISOCHTRANSFER, "aMaxPacketSize = %d, aMaxNumPackets = %d",aMaxPacketSize, aMaxNumPackets);
-	OstTraceFunctionExit1( CISOCHTRANSFER_CISOCHTRANSFER_EXIT, this );
+	RDebug::Printf("aMaxPacketSize = %d, aMaxNumPackets = %d",aMaxPacketSize, aMaxNumPackets);
 	}
 	
 CIsochTransfer::~CIsochTransfer()
 	{
-	OstTraceFunctionEntry1( CISOCHTRANSFER_CISOCHTRANSFER_ENTRY_DUP01, this );
+	LOG_FUNC
 	
 	// Cancel the transfer
 
 	Cancel();
-	OstTraceFunctionExit1( CISOCHTRANSFER_CISOCHTRANSFER_EXIT_DUP01, this );
 	}	
 	
 TBool CIsochTransfer::DataPolled(TUint aPacketsToBeRead, RBuf8& aDataPolled) 
 	{
-	OstTraceFunctionEntryExt( CISOCHTRANSFER_DATAPOLLED_ENTRY, this );
+	LOG_FUNC
 	TInt numOfPacketsReturned = 0;	
 	
 	TInt firstPacketIndex = 0;
@@ -64,27 +57,26 @@ TBool CIsochTransfer::DataPolled(TUint aPacketsToBeRead, RBuf8& aDataPolled)
 		
 	do {						
 		TPtrC8 ptrRet = iTransferDescriptor.Packets(firstPacketIndex, packetsToBeRead, numOfPacketsReturned); 
-		OstTrace1(TRACE_NORMAL, CISOCHTRANSFER_DATAPOLLED, "numOfPacketsReturned = %d", numOfPacketsReturned);
-		OstTrace1(TRACE_NORMAL, CISOCHTRANSFER_DATAPOLLED_DUP01, "ptrRet.Length() = %d", ptrRet.Length());
+		RDebug::Printf("numOfPacketsReturned = %d", numOfPacketsReturned);
+		RDebug::Printf("ptrRet.Length() = %d", ptrRet.Length());
 		firstPacketIndex = numOfPacketsReturned;
 		totalPacketsRead += numOfPacketsReturned;
 		packetsToBeRead = packetsToBeRead - numOfPacketsReturned;
-		OstTrace1(TRACE_NORMAL, CISOCHTRANSFER_DATAPOLLED_DUP02, "totalPacketsRead = %d", totalPacketsRead);	
-		OstTrace1(TRACE_NORMAL, CISOCHTRANSFER_DATAPOLLED_DUP03, "packetsToBeRead = %d", packetsToBeRead);	
+		RDebug::Printf("totalPacketsRead = %d", totalPacketsRead);	
+		RDebug::Printf("packetsToBeRead = %d", packetsToBeRead);	
 		aDataPolled.Append(ptrRet);		
 		}	while(totalPacketsRead != aPacketsToBeRead); 	
 		
-	OstTraceFunctionExitExt( CISOCHTRANSFER_DATAPOLLED_EXIT, this, ETrue );
 	return ETrue; 
 	}
 	
 	
 TInt CIsochTransfer::TransferInL(TInt aPacketsExpected)
 	{
-	OstTraceFunctionEntryExt( CISOCHTRANSFER_TRANSFERINL_ENTRY, this );
+	LOG_FUNC
 	
 	// Activate the asynchronous transfer 	
-	OstTrace0(TRACE_NORMAL, CISOCHTRANSFER_TRANSFERINL, "Activating isoch. in transfer");
+	RDebug::Printf("Activating isoch. in transfer");
 	
 	iTransferDescriptor.Reset();
 	TPacketLengths fullLengths = iTransferDescriptor.Lengths();
@@ -94,38 +86,36 @@ TInt CIsochTransfer::TransferInL(TInt aPacketsExpected)
 		fullLengths[packet] = iMaxPacketSize;
 		}	
 
-	OstTrace1(TRACE_NORMAL, CISOCHTRANSFER_TRANSFERINL_DUP01, "fullLengths.MaxNumPackets() == %d",fullLengths.MaxNumPackets());
+	RDebug::Printf("fullLengths.MaxNumPackets() == %d",fullLengths.MaxNumPackets());
 	iTransferDescriptor.ReceivePackets(aPacketsExpected);
 		
 	Pipe().Transfer(iTransferDescriptor,iStatus);
 	SetActive();
-	OstTraceFunctionExitExt( CISOCHTRANSFER_TRANSFERINL_EXIT, this, KErrNone );
 	return KErrNone;																
 	}
 		
 TInt CIsochTransfer::RegisterTransferDescriptor()
 	{
-	OstTraceFunctionEntry1( CISOCHTRANSFER_REGISTERTRANSFERDESCRIPTOR_ENTRY, this );
+	LOG_FUNC
 	
 	// Register the transfer descriptor with the interface	
 	TInt err(Interface().RegisterTransferDescriptor(iTransferDescriptor));
 	if(err != KErrNone)
 		{
-		OstTrace1(TRACE_NORMAL, CISOCHTRANSFER_REGISTERTRANSFERDESCRIPTOR, "<Error %d> Unable to register transfer descriptor",err);
+		RDebug::Printf("<Error %d> Unable to register transfer descriptor",err);
 		}
-	OstTraceFunctionExitExt( CISOCHTRANSFER_REGISTERTRANSFERDESCRIPTOR_EXIT, this, err );
 	return err;	
 	}
 	
 TInt CIsochTransfer::PrepareTransfer(const TDesC8& aIsochData)
 	{
-OstTraceFunctionEntryExt( CISOCHTRANSFER_PREPARETRANSFER_ENTRY, this );
+	LOG_FUNC
 
 	//	
 	iTransferDescriptor.Reset();
 	TPacketLengths fullLengths = iTransferDescriptor.Lengths();
 
-	OstTrace1(TRACE_NORMAL, CISOCHTRANSFER_PREPARETRANSFER, "fullLengths.MaxNumPackets() == %d",fullLengths.MaxNumPackets());
+	RDebug::Printf("fullLengths.MaxNumPackets() == %d",fullLengths.MaxNumPackets());
 	
 	//	
 	TInt bytesRemaining(aIsochData.Size());
@@ -133,7 +123,7 @@ OstTraceFunctionEntryExt( CISOCHTRANSFER_PREPARETRANSFER_ENTRY, this );
 	TInt startOffset(0);
 	TInt startPacket(0); 
 	
-	OstTrace1(TRACE_NORMAL, CISOCHTRANSFER_PREPARETRANSFER_DUP01, "Audio data is %d bytes",bytesRemaining);
+	RDebug::Printf("Audio data is %d bytes",bytesRemaining);
 	
 	// Keep saving the isoch data to transfer in each packet buffer supplied 
 	// by the transfer descriptor
@@ -146,7 +136,7 @@ OstTraceFunctionEntryExt( CISOCHTRANSFER_PREPARETRANSFER_ENTRY, this );
 		
 		if(dataToWrite == 0)
 			{
-			OstTrace0(TRACE_NORMAL, CISOCHTRANSFER_PREPARETRANSFER_DUP02, "<Warning> dropping the rest of the isoch data");
+			RDebug::Printf("<Warning> dropping the rest of the isoch data");
 			break;
 			}
 		
@@ -167,18 +157,15 @@ OstTraceFunctionEntryExt( CISOCHTRANSFER_PREPARETRANSFER_ENTRY, this );
 		startOffset += maxPacket * iMaxPacketSize;
 		startPacket += maxPacket;
 		}	
-	OstTraceFunctionExitExt( CISOCHTRANSFER_PREPARETRANSFER_EXIT, this, KErrNone );
 	return KErrNone;
 	}
 
 TInt CIsochTransfer::TransferOut()
 	{	
-	OstTraceFunctionEntry1( CISOCHTRANSFER_TRANSFEROUT_ENTRY, this );
 	// Transfer the iscohronous data	
-	OstTrace0(TRACE_NORMAL, CISOCHTRANSFER_TRANSFEROUT, "Activating isochronous out transfer");
+	RDebug::Printf("Activating isochronous out transfer");
 	Pipe().Transfer(iTransferDescriptor,iStatus);
 	SetActive();
-	OstTraceFunctionExitExt( CISOCHTRANSFER_TRANSFEROUT_EXIT, this, KErrNone );
 	return KErrNone;
 	}
 	

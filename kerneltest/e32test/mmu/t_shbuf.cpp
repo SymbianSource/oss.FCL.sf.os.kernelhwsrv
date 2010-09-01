@@ -39,8 +39,6 @@ const TInt BufferSize[] = {128, 853, 4096, 5051, 131072, 1, 0}; // Last element 
 
 const TInt* PtrBufSize;
 
-static TInt ThreadCounter = 0;
-
 RShBufTestChannel Ldd;
 
 _LIT(KTestSlave, "SLAVE");
@@ -624,14 +622,12 @@ void AllocateUserMax(RShPool& aPool)
 		{
 		RShBuf buf;
 		r = buf.Alloc(aPool);
-		RDebug::Printf("alloc buf %d returned %d", bufarray.Count(), r);
 		if (r==KErrNoMemory && KTestPoolSizeInBufs>bufarray.Count())
 			{
 			// try again after a delay, to allow for background resource allocation
 			
 			User::After(1000000);
 			r = buf.Alloc(aPool);
-			RDebug::Printf("re-alloc buf %d returned %d", bufarray.Count(), r);
 			}
 		if (!r)
 			{
@@ -649,7 +645,6 @@ void AllocateUserMax(RShPool& aPool)
 		{
 		bufarray[--n].Close();
 		}
-	RDebug::Printf("closed bufs");
 
 	User::After(500000);
 
@@ -658,13 +653,11 @@ void AllocateUserMax(RShPool& aPool)
 	while (n<bufarray.Count())
 		{
 		r = bufarray[n].Alloc(aPool);
-		RDebug::Printf("alloc buf %d returned %d", n, r);
 		if (r==KErrNoMemory)
 			{
 			// try again after a delay, to allow for background resource allocation
 			User::After(1000000);
 			r = bufarray[n].Alloc(aPool);
-			RDebug::Printf("re-alloc buf %d returned %d", n, r);
 			}
 		test_Assert(r == KErrNone, test.Printf(_L("n=%d r=%d\n"), n, r));
 		if(aligned)
@@ -674,14 +667,12 @@ void AllocateUserMax(RShPool& aPool)
 
 	RShBuf extrabuf;
 	r = extrabuf.Alloc(aPool);
-	RDebug::Printf("alloc extra buf returned %d", r);
 	test_Equal(KErrNoMemory, r);
 
 	while (n)
 		{
 		bufarray[--n].Close();
 		}
-	RDebug::Printf("closed bufs");
 
 	bufarray.Close();
 	}
@@ -1881,9 +1872,9 @@ TInt ThreadLowSpacePanic(TAny* aArg)
  */
 void RequestLowSpacePanic(RShPool& aPool, TUint aThreshold1, TUint aThreshold2, TTestLowSpaceType aType, TInt aLine)
 	{
-	TBuf<40> threadname;
-	threadname.Format(_L("ThreadLowSpacePanic%d"), ++ThreadCounter);
-	test.Printf(_L("RequestLowSpacePanic@%d(%S)\n"), aLine, &threadname);
+	static TInt count = 0;
+	count++;
+	test.Printf(_L("RequestLowSpacePanic@%d(%d)\n"), aLine, count);
 	TBool jit = User::JustInTime();
 	User::SetJustInTime(EFalse);
 	TInt expectedpaniccode = KErrNone;	// Initialised to silence compiler warnings
@@ -1906,6 +1897,8 @@ void RequestLowSpacePanic(RShPool& aPool, TUint aThreshold1, TUint aThreshold2, 
 	RThread threadpanic;
 	TRequestStatus threadpanicrs;
 	TInt r;
+	TBuf<30> threadname;
+	threadname.Format(_L("ThreadLowSpacePanic%d"), count);
 	r = threadpanic.Create(threadname, ThreadLowSpacePanic, KDefaultStackSize, KMinHeapSize, 1 << 20, (TAny*) &targs);
 	test_KErrNone(r);
 	threadpanic.Logon(threadpanicrs);
@@ -1932,10 +1925,7 @@ void NotificationRequests(RShPool& aPool)
 	test_KErrNone(r);
 	RThread thread;
 	TRequestStatus threadrs;
-	TBuf<40> threadname;
-	threadname.Format(_L("ThreadNotifications%d"), ++ThreadCounter);
-	test.Printf(_L("Create %S\n"), &threadname);
-	r = thread.Create(threadname, ThreadNotifications, KDefaultStackSize, KMinHeapSize, 1 << 20, (TAny*) &aPool);
+	r = thread.Create(_L("ThreadNotifications"), ThreadNotifications, KDefaultStackSize, KMinHeapSize, 1 << 20, (TAny*) &aPool);
 	test_KErrNone(r);
 	thread.SetPriority(EPriorityMore);
 	thread.Logon(threadrs);
@@ -2087,13 +2077,9 @@ void CancelNotificationRequests(RShPool& aPool)
 	RSemaphore sem;
 	r = sem.CreateGlobal(KTestLowSpaceSemaphore, 0);
 	test_KErrNone(r);
-
-	TBuf<40> threadname;
-	threadname.Format(_L("ThreadCancelNotifications%d"), ++ThreadCounter);
-	test.Printf(_L("Create %S\n"), &threadname);
 	RThread thread;
 	TRequestStatus threadrs;
-	r = thread.Create(threadname, ThreadNotifications, KDefaultStackSize, KMinHeapSize, 1 << 20, (TAny*) &aPool);
+	r = thread.Create(_L("ThreadCancelNotifications"), ThreadNotifications, KDefaultStackSize, KMinHeapSize, 1 << 20, (TAny*) &aPool);
 	test_KErrNone(r);
 	thread.SetPriority(EPriorityLess);
 	thread.Logon(threadrs);

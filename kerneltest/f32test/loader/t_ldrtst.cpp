@@ -338,7 +338,7 @@ void LoaderTest::DumpModuleInfo(const SDllInfo& aInfo, TInt aExeNum)
 		}
 	TCodeSegCreateInfo info;
 	TInt r=iDev.GetCodeSegInfo(h, info);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TFileName fn;
 	fn.Copy(info.iFileName);
 	test.Printf(_L("DCodeSeg@%08x Data=%08x+%x,%x File %S,attr=0x%x\n"),h,info.iDataRunAddress,info.iDataSize,info.iBssSize,&fn,info.iAttr);
@@ -418,23 +418,21 @@ void LoaderTest::DumpModuleInfo(const SDllInfo& aInfo, TInt aExeNum)
 	test(expected == isCodePaged);
 #endif
 	if ((flags & KModuleFlagXIP) && mmtype!=EMemModelTypeEmul)
-		{
-		test_Value(aInfo.iEntryPointAddress, IsRomAddress(aInfo.iEntryPointAddress));
-		}
+		test(IsRomAddress(aInfo.iEntryPointAddress));
 	else
 		{
-		test_Value(aInfo.iEntryPointAddress, IsRamCodeAddress(aInfo.iEntryPointAddress));
+		test(IsRamCodeAddress(aInfo.iEntryPointAddress));
 		if(mmtype==EMemModelTypeFlexible)
 			{
 			// can't make assumtions about current processes address space
 			}
 		else if (mmtype==EMemModelTypeMultiple)
 			{
-			test_Value(aInfo.iEntryPointAddress, !AddressReadable(aInfo.iEntryPointAddress));
+			test(!AddressReadable(aInfo.iEntryPointAddress));
 			}
 		else
 			{
-			test_Value(aInfo.iEntryPointAddress, AddressReadable(aInfo.iEntryPointAddress));
+			test(AddressReadable(aInfo.iEntryPointAddress));
 			}
 		}
 
@@ -475,20 +473,20 @@ void LoaderTest::CheckModuleList(TInt aRoot, const TModuleList& aList)
 				{
 				if (!(GetModuleFlags(deps[j])&KModuleFlagExe))
 					{
-					test_Value(aList.iInfo[i].iDllNum, aList.iInfo[i].iDllNum==deps[j]);
+					test(aList.iInfo[i].iDllNum==deps[j]);
 					++i;
 					}
 				++j;
 				}
 			else if (j==ndeps)
 				{
-				test_Value(aList.iInfo[i].iDllNum, aList.iInfo[i].iDllNum==aRoot);
+				test(aList.iInfo[i].iDllNum==aRoot);
 				++i;
 				++j;
 				}
 			else
 				{
-				test_Value(aList.iInfo[i].iDllNum, aList.iInfo[i].iDllNum<0);
+				test(aList.iInfo[i].iDllNum<0);
 				++i;
 				}
 			}
@@ -510,17 +508,13 @@ void LoaderTest::CheckModuleList(TInt aRoot, const TModuleList& aList)
 		{
 		if (i<nd)
 			{
-			test_Value(aList.iInfo[i].iDllNum, aList.iInfo[i].iDllNum>=0);
+			test(aList.iInfo[i].iDllNum>=0);
 			ml.Remove(aList.iInfo[i].iDllNum);
 			}
 		else if (i==nd && !root_included)
-			{
-			test_Value(aList.iInfo[i].iDllNum, aList.iInfo[i].iDllNum == aRoot);
-			}
+			test(aList.iInfo[i].iDllNum==aRoot);
 		else
-			{
-			test_Value(aList.iInfo[i].iDllNum, aList.iInfo[i].iDllNum<0);
-			}
+			test(aList.iInfo[i].iDllNum<0);
 		}
 	test(ml.iCount==0);
 	}
@@ -542,11 +536,11 @@ void LoaderTest::Init()
 	{
 	test.Next(_L("Load device driver"));
 	TInt r=User::LoadLogicalDevice(_L("D_LDRTST"));
-	test_Value(r, r==KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	r=iDev.Open();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=iFs.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	TBuf<256> cmdline;
 	User::CommandLine(cmdline);
@@ -605,14 +599,14 @@ void LoaderTest::TestOneByOne()
 		r=LoadExe(x, 0, p, tt);
 		test.Printf(_L("LoadExe(%d)->%d\n"),x,r);
 		test.Printf(_L("BENCHMARK: LoadExe(%d)->%dms\n"),x,tt);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		RLoaderTest lt;
 		r=lt.Connect(x);
 		test.Printf(_L("Connect(%d)->%d\n"),x,r);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		TModuleList exe_info;
 		r=lt.GetExeDepList(exe_info.iInfo);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		exe_info.SetCount();
 		DumpModuleList(exe_info, x);
 		CheckModuleList(x, exe_info);
@@ -681,7 +675,7 @@ void LoaderTest::TestOneByOne()
 				test(r==y);
 				r=lt.CloseDll(h);
 				test.Printf(_L("CloseDll(%d)->%d\n"),h,r);
-				test_KErrNone(r);
+				test(r==KErrNone);
 				test(lt.GetCDList(dll_d_info.iInfo)==KErrNone);
 				dll_d_info.SetCount();
 				dll_d_info.Display(_L("Destruct:  "));
@@ -750,10 +744,10 @@ void LoaderTest::TestMultipleExeInstances()
 		r=LoadExe(x, 0, p1, tt);
 		test.Printf(_L("LoadExe1(%d)->%d\n"),x,r);
 		test.Printf(_L("BENCHMARK: LoadExe1(%d)->%dms\n"),x,tt);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		r=lt1.Connect(x, 0);
 		test.Printf(_L("Connect1(%d)->%d\n"),x,r);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		TInt s=DetermineLoadExe2Result(x);
 		r=LoadExe(x, 1, p2, tt);
 		test.Printf(_L("LoadExe2(%d)->%d (%d)\n"),x,r,s);
@@ -765,13 +759,13 @@ void LoaderTest::TestMultipleExeInstances()
 			{
 			r=lt2.Connect(x, 1);
 			test.Printf(_L("Connect2(%d)->%d\n"),x,r);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			r=lt1.GetExeDepList(exe_info1.iInfo);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			exe_info1.SetCount();
 			DumpModuleList(exe_info1, x);
 			r=lt2.GetExeDepList(exe_info2.iInfo);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			exe_info2.SetCount();
 			DumpModuleList(exe_info2, x);
 
@@ -858,7 +852,7 @@ void LoaderTest::TestMultipleExeInstances()
 
 						r=lt2.CloseDll(h2);
 						test.Printf(_L("CloseDll2(%d)->%d\n"),h2,r);
-						test_KErrNone(r);
+						test(r==KErrNone);
 						test(lt2.GetCDList(dll_d_info2.iInfo)==KErrNone);
 						dll_d_info2.SetCount();
 						dll_d_info2.Display(_L("Destruct2:  "));
@@ -869,7 +863,7 @@ void LoaderTest::TestMultipleExeInstances()
 
 					r=lt1.CloseDll(h1);
 					test.Printf(_L("CloseDll1(%d)->%d\n"),h1,r);
-					test_KErrNone(r);
+					test(r==KErrNone);
 					test(lt1.GetCDList(dll_d_info1.iInfo)==KErrNone);
 					dll_d_info1.SetCount();
 					dll_d_info1.Display(_L("Destruct1:  "));
@@ -1016,20 +1010,22 @@ void LoaderTest::TestOOM()
 			{
 			r=LoadExe(x, 0, p, tt);
 			test.Printf(_L("LoadExe(%d)->%d\n"),x,r);
-			test_Value(r, r==KErrNone || (loom.iState!=TLoopOOM::ERFsError && r==KErrNoMemory) || 
+			test(r==KErrNone || (loom.iState!=TLoopOOM::ERFsError && r==KErrNoMemory) || 
 				(loom.iState==TLoopOOM::ERFsError && r==KRFsError));
-			if (r != KErrNone)
-				continue;
-			r = lt.Connect(x);
-			test_KErrNone(r);
-			lt.Exit();
-			p.Close();
+			if (r==KErrNone)
+				{
+				TInt s=lt.Connect(x);
+				test.Printf(_L("Connect(%d)->%d\n"),x,s);
+				test(s==KErrNone);
+				lt.Exit();
+				p.Close();
+				}
 			}
 		SetLoaderFail(0,0);
 		r=LoadExe(x, 0, p, tt);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		r=lt.Connect(x);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		const TInt* tests=TC_DllOOM;
 		TInt ntests=*tests++;
 		TModuleList list;
@@ -1049,13 +1045,14 @@ void LoaderTest::TestOOM()
 				r=Min(h,0);
 				test.Printf(_L("%d:LoadDll(%d)->%d\n"),x,m,h);
 				
-				test_Value(r, r==KErrNone || r==KErrNotSupported || r==KErrNoMemory || 
+				test(r==KErrNone || r==KErrNotSupported || KErrNoMemory || 
 					(loom.iState==TLoopOOM::ERFsError && r==KRFsError) );
-				if (r!=KErrNone)
-					continue;
-
-				r=lt.CloseDll(h);
-				test_KErrNone(r);
+					
+				if (r==KErrNone)
+					{
+					TInt s=lt.CloseDll(h);
+					test(s==KErrNone);
+					}
 				}
 			}
 		lt.Exit();
@@ -1123,7 +1120,7 @@ void TestCorruptedFiles()
 		TUint32 tt;
 		r=LoadExe(x, 0, p, tt);
 		test.Printf(_L("LoadCorruptExe(%d)->%d\n"),x,r);
-		test_Value(r,r==KErrCorrupt);
+		test(r==KErrCorrupt);
 		}
 	}
 
@@ -1156,7 +1153,7 @@ static void GetSpecialDrives()
 	hashDir[0] = (TUint8) RFs::GetSystemDriveChar();
 
 	TInt r = Fs.MkDirAll(hashDir);
-	test_Value(r, r == KErrNone || r == KErrAlreadyExists);
+	test(r == KErrNone || r == KErrAlreadyExists);
 
 	for (TInt d = 0; d <= (TInt)sizeof(SpecialDriveList); ++d)
 		{
@@ -1193,7 +1190,7 @@ static void GetSpecialDrives()
 		fn.Append(_L(":\\sys\\bin\\"));
 		r = Fs.MkDirAll(fn);
 		test.Printf(_L("MkDirAll %S returns %d\n"), &fn, r);
-		test_Value(r, r == KErrNone || r == KErrAlreadyExists);
+		test(r == KErrNone || r == KErrAlreadyExists);
 		}
 	}
 
@@ -1282,17 +1279,17 @@ static void CopyExecutablesL(TBool aCorruptMode=EFalse)
 		const TParsePtrC sppc(fnSrc);
 		TBuf<MAX_PATH> sName;
 		r = MapEmulatedFileName(sName, sppc.NameAndExt());
-		test_KErrNone(r);
+		test(r == KErrNone);
 
 		TBuf<MAX_PATH> dName;
 		r = MapEmulatedFileName(dName, fnDest);
-		test_KErrNone(r);
+		test(r == KErrNone);
 
 		BOOL b = Emulator::CopyFile((LPCTSTR)sName.PtrZ(),(LPCTSTR)dName.PtrZ(),FALSE);
 		test(b);
 #else
 		r = fm->Copy(fnSrc, fnDest);
-		test_KErrNone(r);
+		test(r == KErrNone);
 #endif
 
 		r = Fs.SetAtt(fnDest, 0, KEntryAttReadOnly);
@@ -1442,7 +1439,7 @@ static void DeleteExecutables(TBool aCorruptMode=EFalse)
 
 		r = Fs.Delete(fnDest);
 		test.Printf(_L("DeleteExecutables:fnDest=%S,del=%d\n"), &fnDest, r);
-		test_KErrNone(r);
+		test(r == KErrNone);
 
 		// only need to delete hash files for binaries copied to removable media,
 		// but simpler to delete and test for KErrNotFound
@@ -1450,7 +1447,7 @@ static void DeleteExecutables(TBool aCorruptMode=EFalse)
 		GetHashFileName(fnDest, fnHash);
 		r = Fs.Delete(fnHash);
 		test.Printf(_L("DeleteExecutables,h=%S,hdel=%d\n"), &fnHash, r);
-		test_Value(r, r == KErrPathNotFound || r == KErrNotFound || r == KErrNone);
+		test(r == KErrPathNotFound || r == KErrNotFound || r == KErrNone);
 
 		if (aCorruptMode)
 			++numCorruptFiles;
@@ -1486,7 +1483,7 @@ GLDEF_C TInt E32Main()
 	test.Printf(_L("CopyExecutablesL()\n"));
 	CTrapCleanup* cleanup=CTrapCleanup::New();
 	TRAPD(r, CopyExecutablesL());
-	test_KErrNone(r);
+	test(r == KErrNone);
 	delete cleanup;
 
 	if (tm&1)

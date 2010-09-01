@@ -15,7 +15,6 @@
 // 
 //
 
-#define	__E32TEST_EXTENSION__
 #include <hal.h>
 #include <f32file.h>
 #include <e32test.h>
@@ -33,10 +32,10 @@ LOCAL_C void FormatFat()
 	RFormat format;
 	TFileName sessionPath;
 	TInt r=TheFs.SessionPath(sessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TInt count;
 	r=format.Open(TheFs,sessionPath,EHighDensity,count);
-	test_KErrNone(r);
+	test(r==KErrNone);
 //	test(count==100);
 //	TRequestStatus status;
 //	TPckgBuf<TInt> step;
@@ -68,14 +67,14 @@ LOCAL_C void Test1()
 	test.Printf(_L("FileSize = 0x%x\n"),size);
 	RFile file;
 	TInt r=file.Replace(TheFs,_L("\\F32-TST\\GOBBLE.DAT"),EFileRead);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=file.SetSize(size);
-	test_Value(r, r == KErrNone || r==KErrDiskFull);
+	test(r==KErrNone || r==KErrDiskFull);
 	if (r==KErrDiskFull)
 		{
 		TFileName sessionPath;
 		r=TheFs.SessionPath(sessionPath);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		test.Printf(_L("Error %S diskfull\n"),&sessionPath);
 // Reintroduce when we can detect that the test is being run manually
 //		test.Getch();
@@ -126,7 +125,7 @@ LOCAL_C void TestRAMDriveLimit()
 			bfDir.Append(KTstDir);
 			test.Printf(_L("creating directory \"%S\".\n"), &bfDir);
 			r = TheFs.MkDir(bfDir);
-			test_KErrNone(r);
+			test(r == KErrNone);
 
 			TBuf<3 + 3 + 8 + 1 + 3> bfFlNm(bfDir);
 			TInt ctr = 0;						// create files until KErrDiskFull
@@ -141,11 +140,11 @@ LOCAL_C void TestRAMDriveLimit()
 
 				RFile f;
 				r = f.Create(TheFs, bfFlNm, EFileShareExclusive | EFileStream | EFileWrite);
-				test_Value(r, r == KErrNone || r == KErrDiskFull);
+				test(r == KErrNone || r == KErrDiskFull);
 				if (r == KErrNone)
 					{
 					r = f.SetSize(KFileSize);
-					test_Value(r, r == KErrNone || r == KErrDiskFull);
+					test(r == KErrNone || r == KErrDiskFull);
 					}
 				f.Close();
 
@@ -185,7 +184,7 @@ GLDEF_C void CallTestsL()
 
 	TDriveInfo driveInfo;
 	TInt r=TheFs.Drive(driveInfo);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	if (driveInfo.iType==EMediaNotPresent)
 		{
 		test.Printf(_L("ERROR: MEDIA NOT PRESENT\n"));
@@ -196,9 +195,9 @@ GLDEF_C void CallTestsL()
 
 	TFileName sessionPath;
 	r=TheFs.SessionPath(sessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.MkDirAll(sessionPath);
-	test_Value(r, r == KErrCorrupt || r==KErrAlreadyExists || r==KErrNone);
+	test(r==KErrCorrupt || r==KErrAlreadyExists || r==KErrNone);
 	if (r==KErrCorrupt)
 		FormatFat();
 	if (r==KErrAlreadyExists)
@@ -206,13 +205,13 @@ GLDEF_C void CallTestsL()
 		test.Next(_L("Remove test directory"));
 		CFileMan* fman=CFileMan::NewL(TheFs);
 		TInt ret=fman->RmDir(sessionPath);
-		test_KErrNone(ret);
+		test(ret==KErrNone);
 		delete fman;
 		}
 	if (r!=KErrNone)
 		{
 		r=TheFs.MkDirAll(sessionPath);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		}
 
 	Test1();

@@ -448,7 +448,7 @@ protected:
 	//Overloaded function - checks all types of TInterceptAtts
 	TBool IsRegistered(TInt aMessage);
 	TBool IsRegistered(TInt aMessage, TInterceptAtts aInterceptAtts);
-	TBool OriginatedFromPlugin(CFsRequest& aMessage);
+	TBool IsPluginThread(CFsRequest& aMessage);
 	TBool IsMounted(TInt aDrive);
 
 private:

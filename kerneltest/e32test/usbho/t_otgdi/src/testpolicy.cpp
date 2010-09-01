@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -26,10 +26,6 @@
 #include "testcaseroot.h"
 #include "testpolicy.h"
 #include "testcasefactory.h"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "testpolicyTraces.h"
-#endif
 
 
 
@@ -53,10 +49,7 @@ CBasicTestPolicy::CBasicTestPolicy()
 		
 void CBasicTestPolicy::ConstructL()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CBASICTESTPOLICY_CONSTRUCTL);
-	    }
+	LOG_FUNC
 
 	}
 	
@@ -77,10 +70,7 @@ CBasicTestPolicy::~CBasicTestPolicy()
  */
 void CBasicTestPolicy::RunTestCaseL(const TDesC& aTestCaseId, TRequestStatus* aNotifierStatus)
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CBASICTESTPOLICY_RUNTESTCASEL);
-	    }
+	LOG_FUNC
 	iNotifierStatus = aNotifierStatus;
 	// delete previous test run
 	if (iTestCase)
@@ -132,10 +122,7 @@ void CBasicTestPolicy::SignalTestComplete(TInt aCompletionCode)
 	
 void CBasicTestPolicy::RunL()
 	{ 
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CBASICTESTPOLICY_RUNL);
-	    }
+	LOG_FUNC
 	
 	}
 

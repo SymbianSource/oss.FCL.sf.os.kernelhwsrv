@@ -558,11 +558,6 @@ TInt DRomMemoryManager::ReadPages(DMemoryObject* aMemory, TUint aIndex, TUint aC
 								KPageSize >> readUnitShift, DPagingDevice::EDriveRomPaging);
 			__NK_ASSERT_DEBUG(r!=KErrNoMemory); // not allowed to allocated memory, therefore can't fail with KErrNoMemory
 			END_PAGING_BENCHMARK(EPagingBmReadMedia);
-			if (r != KErrNone)
-				{
-				__KTRACE_OPT(KPANIC, Kern::Printf("DRomMemoryManager::ReadPage: error reading media at %08x + %x: %d", dataOffset, KPageSize, r));
-				}
-			r = ThePager.EmbedErrorContext(EPagingErrorContextRomRead, r);
 			}
 		else
 			{
@@ -589,9 +584,6 @@ TInt DRomMemoryManager::ReadPages(DMemoryObject* aMemory, TUint aIndex, TUint aC
 				r = iDevice->Read(&message, buffer, readStart, readSize, DPagingDevice::EDriveRomPaging);
 				__NK_ASSERT_DEBUG(r!=KErrNoMemory); // not allowed to allocated memory, therefore can't fail with KErrNoMemory
 				END_PAGING_BENCHMARK(EPagingBmReadMedia);
-				if(r!=KErrNone)
-					__KTRACE_OPT(KPANIC, Kern::Printf("DRomMemoryManager::ReadPage: error reading media at %08x + %x: %d", dataOffset, dataSize, r));
-				r = ThePager.EmbedErrorContext(EPagingErrorContextRomRead, r);
 				if(r==KErrNone)
 					{
 					// Decompress data, remembering that the data to decompress may be offset from 
@@ -600,13 +592,16 @@ TInt DRomMemoryManager::ReadPages(DMemoryObject* aMemory, TUint aIndex, TUint aC
 					const TLinAddr data = buffer + dataOffset - (readStart << readUnitShift);
 					__ASSERT_COMPILE(SRomPageInfo::ENoCompression==0); // decompress assumes this
 					r = Decompress(romPageInfo->iCompressionType, linAddr, KPageSize, data, dataSize);
-					if (r >= 0)
-						r = (r == KPageSize) ? KErrNone : KErrCorrupt;
-					if (r != KErrNone)
-						__KTRACE_OPT(KPANIC, Kern::Printf("DRomMemoryManager::ReadPage: error decompressing page at %08x + %x: %d", dataOffset, dataSize, r));
-					__NK_ASSERT_DEBUG(r == KErrNone);
-					r = ThePager.EmbedErrorContext(EPagingErrorContextRomDecompress, r);
+					if(r >= 0)
+						{
+						if (r != KPageSize)
+							__KTRACE_OPT(KPANIC, Kern::Printf("DRomMemoryManager::ReadPage: error decompressing page at %08x + %x: %d", dataOffset, dataSize, r));
+						__NK_ASSERT_ALWAYS(r == KPageSize);
+						r = KErrNone;
+						}
 					}
+				else
+					__KTRACE_OPT(KPANIC, Kern::Printf("DRomMemoryManager::ReadPage: error reading media at %08x + %x: %d", dataOffset, dataSize, r));
 				}
 			}
 		END_PAGING_BENCHMARK(EPagingBmReadRomPage);
@@ -616,7 +611,7 @@ TInt DRomMemoryManager::ReadPages(DMemoryObject* aMemory, TUint aIndex, TUint aC
 		}
 
 	aRequest->UnmapPages(true);
-	
+
 	return r;
 	}
 

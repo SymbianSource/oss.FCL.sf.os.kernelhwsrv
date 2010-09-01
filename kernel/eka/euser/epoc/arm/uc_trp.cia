@@ -22,8 +22,8 @@
 #include "uc_std.h"
 
 //  With -fvtable-thunks
-//const TInt KVTableTrapOffset=8;
-//const TInt KVTableLeaveOffset=16;
+const TInt KVTableTrapOffset=8;
+const TInt KVTableLeaveOffset=16;
 
 //  Without -fvtable-thunks
 //  const TInt KVTableTrapOffset=12;

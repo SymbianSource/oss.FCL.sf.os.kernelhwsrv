@@ -16,9 +16,7 @@
 //
 
 #include "cl_std.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "cl_fileTraces.h"
-#endif
+
 static _LIT_SECURITY_POLICY_S1(KFileServerPolicy,KFileServerUidValue,ECapabilityTCB);
 
 EFSRV_EXPORT_C TInt RFile::Adopt(RFs& aFs, TInt aHandle)
@@ -36,23 +34,26 @@ Adopts an already open file.
 */
 	{
 
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILEADOPT, "sess %x subs %x", (TUint) aFs.Handle(), (TUint) aHandle);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFileAdopt, MODULEUID, aFs.Handle(), aHandle);
+
 	// duplicate the sub-session handle; don't panic if it's invalid.
 	RFile file;
 	TInt r = file.CreateSubSession(aFs, EFsFileDuplicate, TIpcArgs(aHandle, EFalse));
 	if (r == KErrArgument)
 		{
-		OstTrace1(TRACE_BORDER, EFSRV_EFILEADOPTRETURN1, "r %d", KErrBadHandle);
+		TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptReturn, MODULEUID, KErrBadHandle);
 		return KErrBadHandle;
 		}
 	else if (r != KErrNone)
 		{
-		OstTrace1(TRACE_BORDER, EFSRV_EFILEADOPTRETURN2, "r %d", r);
+		TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptReturn, MODULEUID, r);
 		return r;
 		}
 	// adopt the duplicated handle
 	r = CreateAutoCloseSubSession(aFs, EFsFileAdopt, TIpcArgs(file.SubSessionHandle(), KFileAdopt32));
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILEADOPTRETURN3, "r %d sess %x subs %x", (TUint) r, (TUint) Session().Handle(), (TUint) SubSessionHandle());
+
+	TRACERET3(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptReturn, MODULEUID, r, Session().Handle(), SubSessionHandle());
+
 	return r;
 	}
 
@@ -76,16 +77,19 @@ is closed so will the RFs session.
         error codes.
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILEADOPTFROMSERVER, "sess %x subs %x", (TUint) aFsHandle, (TUint) aFileHandle);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptFromServer, MODULEUID, aFsHandle, aFileHandle);
+
 	RFs fs;
 	TInt r = fs.SetReturnedHandle(aFsHandle, KFileServerPolicy);
 	if (r != KErrNone)
 		{
-		OstTrace1(TRACE_BORDER, EFSRV_EFILEADOPTFROMSERVERRETURN1, "r %d", r);
+		TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptFromServerReturn, MODULEUID, r);
 		return r;
 		}
 	r = CreateAutoCloseSubSession(fs, EFsFileAdopt, TIpcArgs(aFileHandle, KFileAdopt32));
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILEADOPTFROMSERVERRETURN2, "r %d sess %x subs %x", (TUint) r, (TUint) Session().Handle(), (TUint) SubSessionHandle());
+
+	TRACERET3(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptFromServerReturn, MODULEUID, r, Session().Handle(), SubSessionHandle());
+
 	return r;
 	}
 
@@ -126,7 +130,7 @@ is closed so will the RFs session.
 	else
 		r = KErrArgument;
 
-#ifdef OST_TRACE_COMPILER_IN_USE
+#ifdef SYMBIAN_FTRACE_ENABLE
 	TInt handle = NULL;
 	if (aFsHandleIndex == 0)
 		handle = aMsg.Int0();
@@ -136,12 +140,12 @@ is closed so will the RFs session.
 		handle = aMsg.Int2();
 	else if (aFsHandleIndex == 3)
 		handle = aMsg.Int3();
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILEADOPTFROMCLIENT, "sess %x subs %x aFsHandleIndex %d aFileHandleIndex %d ", (TUint) handle, (TUint) fileHandle, (TUint) aFsHandleIndex, (TUint) aFileHandleIndex);
+	TRACE4(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptFromClient, MODULEUID, handle, fileHandle, aFsHandleIndex, aFileHandleIndex);
 #endif
 
 	if (r != KErrNone)
 		{
-		OstTrace1(TRACE_BORDER, EFSRV_EFILEADOPTFROMCLIENTRETURN1, "r %d", r);
+		TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptFromClientReturn, MODULEUID, r);
 		return r;
 		}
 
@@ -151,12 +155,14 @@ is closed so will the RFs session.
 	r = fs.Open(aMsg, aFsHandleIndex, KFileServerPolicy);
 	if (r != KErrNone)
 		{
-		OstTrace1(TRACE_BORDER, EFSRV_EFILEADOPTFROMCLIENTRETURN2, "r %d", r);
+		TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptFromClientReturn, MODULEUID, r);
 		return r;
 		}
 
 	r = CreateAutoCloseSubSession(fs, EFsFileAdopt, TIpcArgs(fileHandle, KFileAdopt32));
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILEADOPTFROMCLIENTRETURN3, "r %d sess %x subs %x", (TUint) r, (TUint) Session().Handle(), (TUint) SubSessionHandle());
+
+	TRACERET3(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptFromClientReturn, MODULEUID, r, Session().Handle(), SubSessionHandle());
+
 	return r;
 	}
 
@@ -187,10 +193,11 @@ is closed so will the RFs session.
 
 	TInt r = User::GetTIntParameter(aFileHandleIndex,  fileHandle);
 
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILEADOPTFROMCREATOR, "subs %x aFsHandleIndex %d aFileHandleIndex %d", (TUint) fileHandle, (TUint) aFsHandleIndex, (TUint) aFileHandleIndex);
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptFromCreator, MODULEUID, fileHandle, aFsHandleIndex, aFileHandleIndex);
+
 	if (r != KErrNone)
 		{
-		OstTrace1(TRACE_BORDER, EFSRV_EFILEADOPTFROMCREATORRETURN1, "r %d", r);
+		TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptFromCreatorReturn, MODULEUID, r);
 		return r;
 		}
 
@@ -201,12 +208,14 @@ is closed so will the RFs session.
 	r = fs.Open(aFsHandleIndex, KFileServerPolicy);
 	if (r != KErrNone)
 		{
-		OstTrace1(TRACE_BORDER, EFSRV_EFILEADOPTFROMCREATORRETURN2, "r %d", r);
+		TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptFromCreatorReturn, MODULEUID, r);
 		return r;
 		}
 
 	r = CreateAutoCloseSubSession(fs, EFsFileAdopt, TIpcArgs(fileHandle, KFileAdopt32));
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILEADOPTFROMCREATORRETURN3, "r %d sess %x subs %x", (TUint) r, (TUint) Session().Handle(), (TUint) SubSessionHandle());
+
+	TRACERET3(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptFromCreatorReturn, MODULEUID, r, Session().Handle(), SubSessionHandle());
+
 	return r;
 	}
 
@@ -228,7 +237,8 @@ means that only the creating thread can use the handle.
 */
 EFSRV_EXPORT_C TInt RFile::Duplicate(const RFile& aFile, TOwnerType aType)
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILEDUPLICATE, "sess %x subs %x aType %d", (TUint) aFile.Session().Handle(), (TUint) aFile.SubSessionHandle(), (TUint) aType);
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFileDuplicate, MODULEUID, aFile.Session().Handle(), aFile.SubSessionHandle(), aType);
+
 	RFs fs;
 	fs.SetHandle(aFile.Session().Handle());
 
@@ -237,7 +247,7 @@ EFSRV_EXPORT_C TInt RFile::Duplicate(const RFile& aFile, TOwnerType aType)
 	TInt r = fs.Duplicate(RThread(), aType);
 	if (r != KErrNone)
 		{
-		OstTrace1(TRACE_BORDER, EFSRV_EFILEDUPLICATERETURN1, "r %d", r);
+		TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileDuplicateReturn, MODULEUID, r);
 		return r;
 		}
 	
@@ -246,14 +256,15 @@ EFSRV_EXPORT_C TInt RFile::Duplicate(const RFile& aFile, TOwnerType aType)
 	r = aFile.DuplicateHandle(dupSubSessionHandle);
 	if (r != KErrNone)
 		{
-		OstTrace1(TRACE_BORDER, EFSRV_EFILEDUPLICATERETURN2, "r %d", r);
+		TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileDuplicateReturn, MODULEUID, r);
 		return r;
 		}
 
 	// adopt the duplicated sub-session handle
 	r = CreateAutoCloseSubSession(fs, EFsFileAdopt, TIpcArgs(dupSubSessionHandle, KFileDuplicate));
 
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILEDUPLICATERETURN3, "r %d sess %x subs %x", (TUint) r, (TUint) Session().Handle(), (TUint) SubSessionHandle());
+	TRACERET3(UTF::EBorder, UTraceModuleEfsrv::EFileDuplicateReturn, MODULEUID, r, Session().Handle(), SubSessionHandle());
+
 	return r;
 	}
 
@@ -310,10 +321,11 @@ call AdoptFromClient() to open a new RFile object which refers to the same file 
 */
 EFSRV_EXPORT_C TInt RFile::TransferToServer(TIpcArgs& aIpcArgs, TInt aFsHandleIndex, TInt aFileHandleIndex) const
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILETRANSFERTOSERVER, "sess %x subs %x aFsHandleIndex %d aFileHandleIndex %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aFsHandleIndex, (TUint) aFileHandleIndex);
+	TRACE4(UTF::EBorder, UTraceModuleEfsrv::EFileTransferToServer, MODULEUID, Session().Handle(), SubSessionHandle(), aFsHandleIndex, aFileHandleIndex);
+
 	if ((aFsHandleIndex < 0) || (aFsHandleIndex > (KMaxMessageArguments-2)))
 		{
-		OstTrace1(TRACE_BORDER, EFSRV_EFILETRANSFERTOSERVERRETURN1, "r %d",  (TUint) KErrArgument);
+		TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFileTransferToServerReturn, MODULEUID,  (TUint) KErrArgument);
 		return KErrArgument;
 		}
 
@@ -324,7 +336,8 @@ EFSRV_EXPORT_C TInt RFile::TransferToServer(TIpcArgs& aIpcArgs, TInt aFsHandleIn
 		aIpcArgs.Set(aFsHandleIndex, Session());
 		aIpcArgs.Set(aFileHandleIndex, dupSubSessionHandle);
 		}
-	OstTrace1(TRACE_BORDER, EFSRV_EFILETRANSFERTOSERVERRETURN2, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileTransferToServerReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -355,10 +368,11 @@ Note that if an error occurs then the message is not completed.
 */
 EFSRV_EXPORT_C TInt RFile::TransferToClient(const RMessage2& aMsg, TInt aFileHandleIndex) const
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILETRANSFERTOCLIENT, "sess %x subs %x aFileHandleIndex %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aFileHandleIndex);
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFileTransferToClient, MODULEUID, Session().Handle(), SubSessionHandle(), aFileHandleIndex);
+
 	if (TUint(aFileHandleIndex) >= TUint(KMaxMessageArguments))
 		{
-		OstTrace1(TRACE_BORDER, EFSRV_EFILETRANSFERTOCLIENTRETURN1, "r %d",  (TUint) KErrArgument);
+		TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFileTransferToClientReturn, MODULEUID,  (TUint) KErrArgument);
 		return KErrArgument;
 		}
 
@@ -369,13 +383,14 @@ EFSRV_EXPORT_C TInt RFile::TransferToClient(const RMessage2& aMsg, TInt aFileHan
 
 	if (r != KErrNone)
 		{
-		OstTrace1(TRACE_BORDER, EFSRV_EFILETRANSFERTOCLIENTRETURN2, "r %d", r);
+		TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileTransferToClientReturn, MODULEUID, r);
 		return r;
 		}
 
 	aMsg.Complete(Session());
 	
-	OstTrace1(TRACE_BORDER, EFSRV_EFILETRANSFERTOCLIENTRETURN3, "r %d", r);
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFileTransferToClientReturn, MODULEUID, r);
+
 	return r;
 	}
 
@@ -408,7 +423,8 @@ object which refers to the same file as this.
 // NB slot 0 is reserved for the command line
 EFSRV_EXPORT_C TInt RFile::TransferToProcess(RProcess& aProcess, TInt aFsHandleIndex, TInt aFileHandleIndex) const
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILETRANSFERTOPROCESS, "sess %x subs %x aFsHandleIndex %d aFileHandleIndex %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aFsHandleIndex, (TUint) aFileHandleIndex);
+	TRACE4(UTF::EBorder, UTraceModuleEfsrv::EFileTransferToProcess, MODULEUID, Session().Handle(), SubSessionHandle(), aFsHandleIndex, aFileHandleIndex);
+
 	TInt dupSubSessionHandle;
 	TInt r = DuplicateHandle(dupSubSessionHandle);
 
@@ -417,7 +433,9 @@ EFSRV_EXPORT_C TInt RFile::TransferToProcess(RProcess& aProcess, TInt aFsHandleI
 	
 	if (r == KErrNone)
 		r = aProcess.SetParameter(aFileHandleIndex, dupSubSessionHandle);
-	OstTrace1(TRACE_BORDER, EFSRV_EFILETRANSFERTOPROCESSRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileTransferToProcessReturn, MODULEUID, r);
+
 	return r;
 	}
 
@@ -437,10 +455,12 @@ passed from one process to another using the RFile::AdoptXXX() methods.
 
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILEGETNAME, "sess %x subs %x", (TUint) Session().Handle(), (TUint) SubSessionHandle());
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFileName, MODULEUID, Session().Handle(), SubSessionHandle());
+
 	TInt r = SendReceive(EFsFileName, TIpcArgs(&aName));
-	OstTraceData(TRACE_BORDER, EFSRV_EFILEGETNAME_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
-	OstTrace1(TRACE_BORDER, EFSRV_EFILEGETNAMERETURN, "r %d", r);
+
+	TRACERETMULT2(UTF::EBorder, UTraceModuleEfsrv::EFileNameReturn, MODULEUID, r, aName);
+
 	return r;
 	}
 
@@ -460,10 +480,12 @@ RFile::AdoptXXX() methods.
 
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILEFULLNAME, "sess %x subs %x", (TUint) Session().Handle(), (TUint) SubSessionHandle());
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFileFullName, MODULEUID, Session().Handle(), SubSessionHandle());
+
 	TInt r = SendReceive(EFsFileFullName, TIpcArgs(&aName));
-	OstTraceData(TRACE_BORDER, EFSRV_EFILEFULLNAME_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
-	OstTrace1(TRACE_BORDER, EFSRV_EFILEFULLNAMERETURN, "r %d", r);
+
+	TRACERETMULT2(UTF::EBorder, UTraceModuleEfsrv::EFileFullNameReturn, MODULEUID, r, aName);
+
 	return r;
 	}
 
@@ -518,11 +540,13 @@ Notes:
 
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILEOPEN, "sess %x mode %x", (TUint) aFs.Handle(), (TUint) aMode);
-	OstTraceData(TRACE_BORDER, EFSRV_EFILEOPEN_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
+	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFileOpen, MODULEUID, aFs.Handle(), aMode, aName);
+
 	aMode &= ~EFileBigFile;
 	TInt r = CreateSubSession(aFs,EFsFileOpen,TIpcArgs(&aName,aMode));
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILEOPENRETURN, "r %d subs %x", (TUint) r, (TUint) SubSessionHandle());
+
+	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EFileOpenReturn, MODULEUID, r, SubSessionHandle());
+
 	return r;
 	}
 
@@ -540,11 +564,22 @@ before closing. If Flush() completes successfully, Close() is essentially a
 no-operation.
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILECLOSE, "sess %x subs %x", (TUint) Session().Handle(), (TUint) SubSessionHandle());
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFileClose, MODULEUID, Session().Handle(), SubSessionHandle());
 	
+#if defined (SYMBIAN_FTRACE_ENABLE) && defined(__DLL__)
+	// Need to close the handle to the trace LDD if this is an auto-close subsession
+	// as these close their parent session by calling RHandleBase::Close(), i.e. they
+	// bypass RFs::Close() which would normally be responsible for closing the LDD
+	TInt h = Session().Handle() ^ CObjectIx::ENoClose;
+	if ( h != NULL && (!(h & CObjectIx::ENoClose)) ) 
+		{
+		RFTRACE_CLOSE;
+		}
+#endif
+
 	CloseSubSession(EFsFileSubClose);
 
-	OstTrace0(TRACE_BORDER, EFSRV_EFILECLOSERETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFileCloseReturn, MODULEUID);
 	}
 
 
@@ -588,10 +623,13 @@ Notes:
 */
 	{
 	aMode &= ~EFileBigFile;
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILECREATE, "sess %x mode %x", (TUint) aFs.Handle(), (TUint) aMode);
-	OstTraceData(TRACE_BORDER, EFSRV_EFILECREATE_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
+
+	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFileCreate, MODULEUID, aFs.Handle(), aMode, aName);
+
 	TInt r = CreateSubSession(aFs,EFsFileCreate,TIpcArgs(&aName,aMode));
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILECREATERETURN, "r %d subs %x", (TUint) r, (TUint) SubSessionHandle());
+
+	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EFileCreateReturn, MODULEUID, r, SubSessionHandle());
+
 	return r;
 	}
 
@@ -642,11 +680,10 @@ Notes:
 
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILEREPLACE, "sess %x mode %x", (TUint) aFs.Handle(), (TUint) aMode);
-	OstTraceData(TRACE_BORDER, EFSRV_EFILEREPLACE_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
+	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFileReplace, MODULEUID, aFs.Handle(), aMode, aName);
 	aMode &= ~EFileBigFile;
 	TInt r = CreateSubSession(aFs,EFsFileReplace,TIpcArgs(&aName,aMode));
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILEREPLACERETURN, "r %d subs %x", (TUint) r, (TUint) SubSessionHandle());
+	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EFileReplaceReturn, MODULEUID, r, SubSessionHandle());
 	return r;
 	}
 
@@ -680,13 +717,10 @@ Notes:
 					  SID then AllFiles capability is required.
 */
 	{
-   	OstTraceExt2(TRACE_BORDER, EFSRV_EFILETEMP, "sess %x aMode %x", (TUint) aFs.Handle(), (TUint) aMode);
-	OstTraceData(TRACE_BORDER, EFSRV_EFILETEMP_EDIRNAME, "Dir %S", aPath.Ptr(), aPath.Length()<<1);
+   	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFileTemp, MODULEUID, aFs.Handle(), aPath, aMode);
 	aMode &= ~EFileBigFile;
 	TInt r = CreateSubSession(aFs,EFsFileTemp,TIpcArgs(&aPath,aMode,&aName));
-	OstTraceData(TRACE_BORDER, EFSRV_EFILETEMP_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILETEMPRETURN, "r %d subs %x", (TUint) r, (TUint) SubSessionHandle());
-	
+	TRACERETMULT3(UTF::EBorder, UTraceModuleEfsrv::EFileTempReturn, MODULEUID, r, SubSessionHandle(), aName);
 	return r;
 	}
 
@@ -714,9 +748,12 @@ when the descriptor length, as returned by TDesC8::Length(), is zero.
 @see TDesC8::Length
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILEREAD1, "sess %x subs %x desmaxlen %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aDes.MaxLength());
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFileRead1, MODULEUID, Session().Handle(), SubSessionHandle(), aDes.MaxLength());
+
 	TInt r = SendReceive(EFsFileRead,TIpcArgs(&aDes,aDes.MaxLength(),I64LOW(KCurrentPosition64)));
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILEREAD1RETURN, "r %d len %d", (TUint) r, (TUint) aDes.Length());
+
+	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EFileRead1Return, MODULEUID, r, aDes.Length());
+
 	return r;
 	}
 
@@ -750,10 +787,11 @@ when the descriptor length, as returned by TDesC8::Length(), is zero.
 @see TDesC8::Length       
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILEREAD2, "sess %x subs %x maxdeslen %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aDes.MaxLength());
+	TRACE4(UTF::EBorder, UTraceModuleEfsrv::EFileRead2, MODULEUID, Session().Handle(), SubSessionHandle(), aDes.MaxLength(), &aStatus);
+
     RSubSessionBase::SendReceive(EFsFileRead,TIpcArgs(&aDes,aDes.MaxLength(),I64LOW(KCurrentPosition64)),aStatus);
 
-	OstTrace0(TRACE_BORDER, EFSRV_EFILEREAD2RETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFileRead2Return, MODULEUID);
 	}
 
 
@@ -788,7 +826,8 @@ file is reached or if an error occurs.
         codes.
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILEREAD5, "sess %x subs %x aLength %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aLength);
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFileRead1, MODULEUID, Session().Handle(), SubSessionHandle(), aLength);
+
 	if (aLength==0)
 		{
 		aDes.Zero();
@@ -799,7 +838,9 @@ file is reached or if an error occurs.
 		return(KErrOverflow);
 		}
 	TInt r = SendReceive(EFsFileRead,TIpcArgs(&aDes,aLength,I64LOW(KCurrentPosition64)));
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILEREAD5RETURN, "r %d len %d", (TUint) r, (TUint) aDes.Length());
+
+	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EFileRead1Return, MODULEUID, r, aDes.Length());
+
 	return r;
 	}
 
@@ -839,7 +880,8 @@ the end of file is reached or if an error has occurred.
                otherwise one of the other system-wide error codes.
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILEREAD6, "sess %x subs %x aLength %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aLength);
+	TRACE4(UTF::EBorder, UTraceModuleEfsrv::EFileRead2, MODULEUID, Session().Handle(), SubSessionHandle(), aLength, &aStatus);
+
 	if (aLength==0)
 		{
 		aDes.Zero();
@@ -855,7 +897,8 @@ the end of file is reached or if an error has occurred.
 		}
 		
 	RSubSessionBase::SendReceive(EFsFileRead,TIpcArgs(&aDes,aLength,I64LOW(KCurrentPosition64)),aStatus);
-	OstTrace0(TRACE_BORDER, EFSRV_EFILEREAD6RETURN, "");
+
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFileRead2Return, MODULEUID);
 	}
 
 
@@ -889,11 +932,14 @@ when the descriptor length, as returned by TDesC8::Length(), is zero.
 @panic FSCLIENT 19 if aPos is negative.        
 */
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILEREAD3, "sess %x subs %x aPos %x maxdeslen %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aPos, (TUint) aDes.MaxLength());
+	TRACE5(UTF::EBorder, UTraceModuleEfsrv::EFileRead3, MODULEUID, Session().Handle(), SubSessionHandle(), aPos, 0, aDes.MaxLength());
+
 	__ASSERT_ALWAYS(aPos>=0,Panic(EPosNegative));
 
 	TInt r = SendReceive(EFsFileRead,TIpcArgs(&aDes,aDes.MaxLength(),aPos));
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILEREAD3RETURN, "r %d len %d", (TUint) r, (TUint) aDes.Length());
+
+	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EFileRead3Return, MODULEUID, r, aDes.Length());
+
 	return r;
 	}
 
@@ -933,11 +979,12 @@ when the descriptor length, as returned by TDesC8::Length(), is zero.
 @panic FSCLIENT 19 if aPos is negative.        
 */
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILEREAD4, "sess %x subs %x aPos %x maxdeslen %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aPos, (TUint) aDes.MaxLength());
+	TRACE6(UTF::EBorder, UTraceModuleEfsrv::EFileRead4, MODULEUID, Session().Handle(), SubSessionHandle(), aPos, 0, aDes.MaxLength(), &aStatus);
+
 	__ASSERT_ALWAYS(aPos>=0,Panic(EPosNegative));
 	RSubSessionBase::SendReceive(EFsFileRead,TIpcArgs(&aDes,aDes.MaxLength(),aPos),aStatus);
 
-	OstTrace0(TRACE_BORDER, EFSRV_EFILEREAD4RETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFileRead4Return, MODULEUID);
 	}
 
 
@@ -979,7 +1026,8 @@ the end of file is reached or if an error has occurred.
 @panic FSCLIENT 19 if aPos is negative.        
 */
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILEREAD7, "sess %x subs %x aPos %x aLength %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aPos, (TUint) aLength);
+	TRACE5(UTF::EBorder, UTraceModuleEfsrv::EFileRead3, MODULEUID, Session().Handle(), SubSessionHandle(), aPos, 0, aLength);
+
 	__ASSERT_ALWAYS(aPos>=0,Panic(EPosNegative));
 	if (aLength==0)
 		{
@@ -992,7 +1040,9 @@ the end of file is reached or if an error has occurred.
 		}
 		
 	TInt r = SendReceive(EFsFileRead,TIpcArgs(&aDes,aLength,aPos));
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILEREAD7RETURN, "r %d len %d", (TUint) r, (TUint) aDes.Length());
+
+	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EFileRead3Return, MODULEUID, r, aDes.Length());
+
 	return r;
 	}
 
@@ -1041,7 +1091,8 @@ the end of file is reached or if an error has occurred.
 @panic FSCLIENT 19 if aPos is negative.                       
 */
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILEREAD9, "sess %x subs %x aPos %x maxlen %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aPos, (TUint) aLength);
+	TRACE6(UTF::EBorder, UTraceModuleEfsrv::EFileRead4, MODULEUID, Session().Handle(), SubSessionHandle(), aPos, 0, aLength, &aStatus);
+
 	__ASSERT_ALWAYS(aPos>=0,Panic(EPosNegative));
 	if (aLength==0)
 		{
@@ -1058,7 +1109,8 @@ the end of file is reached or if an error has occurred.
 		}
 		
 	RSubSessionBase::SendReceive(EFsFileRead,TIpcArgs(&aDes,aLength,aPos),aStatus);
-	OstTrace0(TRACE_BORDER, EFSRV_EFILEREAD9RETURN, "");
+
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFileRead4Return, MODULEUID);
 	}
 
 
@@ -1110,9 +1162,9 @@ NB Attempting to extend the file to 2 GByte or greater will fail with KErrTooBig
         codes.
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILEWRITE1, "sess %x subs %x deslen %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aDes.Length());
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFileWrite1, MODULEUID, Session().Handle(), SubSessionHandle(), aDes.Length());
 	TInt r = SendReceive(EFsFileWrite,TIpcArgs(&aDes,aDes.Length(),I64LOW(KCurrentPosition64)));
-	OstTrace1(TRACE_BORDER, EFSRV_EFILEWRITE1RETURN, "r %d", r);
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileWrite1Return, MODULEUID, r);
 	return r;
 	}
 
@@ -1137,9 +1189,10 @@ NB Attempting to extend the file to 2 GByte or greater will fail with KErrTooBig
                otherwise one of the other system-wide error codes.
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILEWRITE2, "sess %x subs %x deslen %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aDes.Length());
+	TRACE4(UTF::EBorder, UTraceModuleEfsrv::EFileWrite2, MODULEUID, Session().Handle(), SubSessionHandle(), aDes.Length(), &aStatus);
+
 	RSubSessionBase::SendReceive(EFsFileWrite,TIpcArgs(&aDes,aDes.Length(),I64LOW(KCurrentPosition64)),aStatus);
-	OstTrace0(TRACE_BORDER, EFSRV_EFILEWRITE2RETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFileWrite2Return, MODULEUID);
 	}
 
 
@@ -1166,10 +1219,12 @@ NB Attempting to extend the file to 2 GByte or greater will fail with KErrTooBig
        of the descriptor aDes.  
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILEWRITE5, "sess %x subs %x aLength %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aLength);
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFileWrite1, MODULEUID, Session().Handle(), SubSessionHandle(), aLength);
+
 	__ASSERT_DEBUG(aDes.Length()>=aLength,Panic(EBadLength));
 	TInt r = SendReceive(EFsFileWrite,TIpcArgs(&aDes,aLength,I64LOW(KCurrentPosition64)));
-	OstTrace1(TRACE_BORDER, EFSRV_EFILEWRITE5RETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileWrite1Return, MODULEUID, r);
 	return r;
 	}
 
@@ -1202,10 +1257,11 @@ NB Attempting to extend the file to 2 GByte or greater will fail with KErrTooBig
 
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILEWRITE9, "sess %x subs %x aLength %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aLength);
+	TRACE4(UTF::EBorder, UTraceModuleEfsrv::EFileWrite2, MODULEUID, Session().Handle(), SubSessionHandle(), aLength, &aStatus);
 		
 	RSubSessionBase::SendReceive(EFsFileWrite,TIpcArgs(&aDes,aLength,I64LOW(KCurrentPosition64)),aStatus);
-	OstTrace0(TRACE_BORDER, EFSRV_EFILEWRITE9RETURN, "");
+
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFileWrite2Return, MODULEUID);
 	}
 
 
@@ -1235,10 +1291,12 @@ NB Attempting to extend the file to 2 GByte or greater will fail with KErrTooBig
 @panic FSCLIENT 19 if aPos is negative.                       
 */
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILEWRITE3, "sess %x subs %x aPos %x len %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aPos, (TUint) aDes.Length());
+	TRACE5(UTF::EBorder, UTraceModuleEfsrv::EFileWrite3, MODULEUID, Session().Handle(), SubSessionHandle(), aPos, 0, aDes.Length());
+
 	__ASSERT_ALWAYS(aPos>=0,Panic(EPosNegative));
 	TInt r = SendReceive(EFsFileWrite,TIpcArgs(&aDes,aDes.Length(),aPos));
-	OstTrace1(TRACE_BORDER, EFSRV_EFILEWRITE3RETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileWrite3Return, MODULEUID, r);
 	return r;
 	}
 
@@ -1273,10 +1331,11 @@ NB Attempting to extend the file to 2 GByte or greater will fail with KErrTooBig
 @panic FSCLIENT 19 if aPos is negative.                       
 */
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILEWRITE4, "sess %x subs %x aPos %x deslen %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aPos, (TUint) aDes.Length());
+	TRACE6(UTF::EBorder, UTraceModuleEfsrv::EFileWrite4, MODULEUID, Session().Handle(), SubSessionHandle(), aPos, 0, aDes.Length(), &aStatus);
+
 	__ASSERT_ALWAYS(aPos>=0,Panic(EPosNegative));
 	RSubSessionBase::SendReceive(EFsFileWrite,TIpcArgs(&aDes,aDes.Length(),aPos),aStatus);
-	OstTrace0(TRACE_BORDER, EFSRV_EFILEWRITE4RETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFileWrite4Return, MODULEUID);
 	}
 
 
@@ -1306,10 +1365,12 @@ NB Attempting to extend the file to 2 GByte or greater will fail with KErrTooBig
 @panic FSCLIENT 19 if aPos is negative.                       
 */
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILEWRITE6, "sess %x subs %x aPos %x aLength %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aPos, (TUint) aLength);
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFileWrite1, MODULEUID, Session().Handle(), SubSessionHandle(), aLength);
+
 	__ASSERT_ALWAYS(aPos>=0,Panic(EPosNegative));
 	TInt r = SendReceive(EFsFileWrite,TIpcArgs(&aDes,aLength,aPos));
-	OstTrace1(TRACE_BORDER, EFSRV_EFILEWRITE6RETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileWrite1Return, MODULEUID, r);
 	return r;
 	}
 
@@ -1347,10 +1408,11 @@ NB Attempting to extend the file to 2 GByte or greater will fail with KErrTooBig
 @panic FSCLIENT 19 if aPos is negative.                       
 */
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILEWRITE10, "sess %x subs %x aPos %x aLength %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aPos, (TUint) aLength);
+	TRACE6(UTF::EBorder, UTraceModuleEfsrv::EFileWrite2, MODULEUID, Session().Handle(), SubSessionHandle(), aPos, 0, aLength, &aStatus);
+
 	__ASSERT_ALWAYS(aPos>=0,Panic(EPosNegative));
 	RSubSessionBase::SendReceive(EFsFileWrite,TIpcArgs(&aDes,aLength,aPos),aStatus);
-	OstTrace0(TRACE_BORDER, EFSRV_EFILEWRITE10RETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFileWrite2Return, MODULEUID);
 	}
 
 
@@ -1384,10 +1446,13 @@ this prevents the file from being extended by other programs.
 
 */
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILELOCK, "RFile::Lock() sess %x subs %x aPos %x aLength %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aPos, (TUint) aLength);
+	TRACE5(UTF::EBorder, UTraceModuleEfsrv::EFileLock, MODULEUID, Session().Handle(), SubSessionHandle(), aPos, 0, aLength);
+
 	__ASSERT_ALWAYS(aPos>=0,Panic(EPosNegative));
+
 	TInt r = SendReceive(EFsFileLock,TIpcArgs(aPos,aLength));
-	OstTrace1(TRACE_BORDER, EFSRV_EFILELOCKRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileLockReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -1415,10 +1480,12 @@ the specified range of bytes to unlock is not locked, an error is returned.
 @panic FSCLIENT 19 if aPos is negative. 
 */
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILEUNLOCK, "RFile::UnLock() sess %x subs %x aPos %x aLength %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aPos, (TUint) aLength);
+	TRACE5(UTF::EBorder, UTraceModuleEfsrv::EFileUnLock, MODULEUID, Session().Handle(), SubSessionHandle(), aPos, 0, aLength);
+
 	__ASSERT_ALWAYS(aPos>=0,Panic(EPosNegative));
 	TInt r = SendReceive(EFsFileUnLock,TIpcArgs(aPos,aLength));
-	OstTrace1(TRACE_BORDER, EFSRV_EFILEUNLOCKRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileUnLockReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -1462,13 +1529,15 @@ If the seek mode is ESeekAddress, an error is returned if:
         codes.
 */
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILESEEK1, "sess %x subs %x aMode %x aPos %x", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aMode, (TUint) aPos);
+	TRACE5(UTF::EBorder, UTraceModuleEfsrv::EFileSeek, MODULEUID, Session().Handle(), SubSessionHandle(), aMode, aPos, 0);
+
 	TInt64 newPos = aPos;
 	TPckg<TInt64>  pkNewPos(newPos);
 	TInt r = SendReceive(EFsFileSeek|KIpcArgSlot2Desc,TIpcArgs(aPos,aMode,&pkNewPos));
 	if(KErrNone == r)
 		aPos = I64LOW(newPos);
-	OstTrace1(TRACE_BORDER, EFSRV_EFILESEEK1RETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileSeekReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -1490,9 +1559,11 @@ is effectively a no-operation.
         codes.
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILEFLUSH1, "sess %x subs %x status %x", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) NULL);
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFileFlush, MODULEUID, Session().Handle(), SubSessionHandle(), NULL);
+
 	TInt r = RSubSessionBase::SendReceive(EFsFileFlush);
-	OstTrace1(TRACE_BORDER, EFSRV_EFILEFLUSH1RETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileFlushReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -1514,9 +1585,11 @@ is effectively a no-operation.
                otherwise one of the other system-wide error codes.
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILEFLUSH2, "sess %x subs %x status %x", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) &aStatus);
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFileFlush, MODULEUID, Session().Handle(), SubSessionHandle(), &aStatus);
+
 	RSubSessionBase::SendReceive(EFsFileFlush, aStatus);
-	OstTrace0(TRACE_BORDER, EFSRV_EFILEFLUSH2RETURN, "");
+
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFileFlushReturn, MODULEUID);
 	}
 
 
@@ -1532,7 +1605,8 @@ Gets the current file size.
         codes.
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILESIZE, "sess %x subs %x", (TUint) Session().Handle(), (TUint) SubSessionHandle());
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFileSize, MODULEUID, Session().Handle(), SubSessionHandle());
+
 	TInt64 size = aSize;
 	TPckg<TInt64> pkSize(size);
 	TInt r = SendReceive(EFsFileSize|KIpcArgSlot0Desc,TIpcArgs(&pkSize));
@@ -1543,7 +1617,8 @@ Gets the current file size.
 	if (size > KMaxTInt)
 		return (KErrTooBig);
 #endif
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILESIZERETURN, "r %d aSize %d", (TUint) r, (TUint) aSize);
+
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFileSizeReturn, MODULEUID, r, aSize);
 	return r;
 	}
 
@@ -1575,9 +1650,11 @@ Note:
 
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILESETSIZE1, "sess %x subs %x aSize %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aSize);
+	TRACE4(UTF::EBorder, UTraceModuleEfsrv::EFileSetSize, MODULEUID, Session().Handle(), SubSessionHandle(), aSize, 0);
+
 	TInt r = SendReceive(EFsFileSetSize,TIpcArgs(aSize));
-	OstTrace1(TRACE_BORDER, EFSRV_EFILESETSIZE1RETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileSetSizeReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -1598,11 +1675,13 @@ Gets the file's attributes.
 @see KEntryAttNormal        
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILEATT, "sess %x subs %x", (TUint) Session().Handle(), (TUint) SubSessionHandle());
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFileAtt, MODULEUID, Session().Handle(), SubSessionHandle());
+
 	TPtr8 a((TUint8*)&aVal,sizeof(TUint));
 	
 	TInt r = SendReceive(EFsFileAtt,TIpcArgs(&a));
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILEATTRETURN, "r %d aVal %x", (TUint) r, (TUint) aVal);
+
+	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EFileAttReturn, MODULEUID, r, aVal);
 	return r;
 	}
 
@@ -1639,11 +1718,13 @@ Notes:
 @panic FSCLIENT 21 if the same attribute bit is set in both bitmasks.
 */
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILESETATT, "sess %x subs %x aSetAttMask %x aClearAttMask %x", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aSetAttMask, (TUint) aClearAttMask);
+	TRACE4(UTF::EBorder, UTraceModuleEfsrv::EFileSetAtt, MODULEUID, Session().Handle(), SubSessionHandle(), aSetAttMask, aClearAttMask);
+
 	__ASSERT_ALWAYS((aSetAttMask&aClearAttMask)==0,Panic(EAttributesIllegal));
 
 	TInt r = SendReceive(EFsFileSetAtt,TIpcArgs(aSetAttMask,aClearAttMask));
-	OstTrace1(TRACE_BORDER, EFSRV_EFILESETATTRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileSetAttReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -1660,10 +1741,12 @@ Gets local date and time the file was last modified, in universal time.
         codes.
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILEMODIFIED, "sess %x subs %x", (TUint) Session().Handle(), (TUint) SubSessionHandle());
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFileModified, MODULEUID, Session().Handle(), SubSessionHandle());
+
 	TPtr8 t((TUint8*)&aTime,sizeof(TTime));
 	TInt r = SendReceive(EFsFileModified,TIpcArgs(&t));
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILEMODIFIEDRETURN, "r %d aTime %x:%x ", (TUint) r, (TUint) I64HIGH(aTime.Int64()), (TUint) I64LOW(aTime.Int64()));
+
+	TRACERET3(UTF::EBorder, UTraceModuleEfsrv::EFileModifiedReturn, MODULEUID, r, I64LOW(aTime.Int64()), I64HIGH(aTime.Int64()));
 	return r;
 	}
 
@@ -1687,10 +1770,12 @@ Notes:
         codes.
 */
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILESETMODIFIED, "sess %x subs %x aTime %x:%x ", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) I64HIGH(aTime.Int64()), (TUint) I64LOW(aTime.Int64()));
+	TRACE4(UTF::EBorder, UTraceModuleEfsrv::EFileSetModified, MODULEUID, Session().Handle(), SubSessionHandle(), I64LOW(aTime.Int64()), I64HIGH(aTime.Int64()));
+
 	TPtrC8 t((TUint8*)&aTime,sizeof(TTime));
 	TInt r = SendReceive(EFsFileSetModified,TIpcArgs(&t));
-	OstTrace1(TRACE_BORDER, EFSRV_EFILESETMODIFIEDRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileSetModifiedReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -1721,12 +1806,14 @@ attributes have no effect.
 @see RFile::SetAtt
 */
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILESETA, "sess %x subs %x aSetAttMask %x aClearAttMask %x", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aMask, (TUint) aVal);
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILESETB, "aTime %x:%x ", (TUint) I64HIGH(aTime.Int64()), (TUint) I64LOW(aTime.Int64()));
+	TRACE6(UTF::EBorder, UTraceModuleEfsrv::EFileSet, MODULEUID, 
+		Session().Handle(), SubSessionHandle(), I64LOW(aTime.Int64()), I64HIGH(aTime.Int64()), aMask, aVal);
+
 	__ASSERT_ALWAYS((aVal&aMask)==0,Panic(EAttributesIllegal));
 	TPtrC8 t((TUint8*)&aTime,sizeof(TTime));
 	TInt r = SendReceive(EFsFileSet,TIpcArgs(&t,aMask,aVal));
-	OstTrace1(TRACE_BORDER, EFSRV_EFILESETRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileSetReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -1755,11 +1842,13 @@ This allows or disallows read-only access without having to close and re-open th
 
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILECHANGEMODE, "sess %x subs %x aNewMode %x", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aNewMode);
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFileChangeMode, MODULEUID, Session().Handle(), SubSessionHandle(), aNewMode);
+
 	if (aNewMode!=EFileShareExclusive && aNewMode!=EFileShareReadersOnly)
 		return(KErrArgument);
 	TInt r = SendReceive(EFsFileChangeMode,TIpcArgs(aNewMode));
-	OstTrace1(TRACE_BORDER, EFSRV_EFILECHANGEMODERETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileChangeModeReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -1805,10 +1894,11 @@ as provided.
 
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILERENAME, "sess %x subs %x", (TUint) Session().Handle(), (TUint) SubSessionHandle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFILERENAME_ENEWNAME, "NewName %S", aNewName.Ptr(), aNewName.Length()<<1);
+	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFileRename, MODULEUID, Session().Handle(), SubSessionHandle(), aNewName);
+
 	TInt r = SendReceive(EFsFileRename,TIpcArgs(&aNewName));
-	OstTrace1(TRACE_BORDER, EFSRV_EFILERENAMERETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileRenameReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -1831,11 +1921,13 @@ Gets information about the drive on which this file resides.
 @see RFs::Drive
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILEDRIVE, "sess %x subs %x", (TUint) Session().Handle(), (TUint) SubSessionHandle());
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFileDrive, MODULEUID, Session().Handle(), SubSessionHandle());
+
 	TPckg<TInt> pki(aDriveNumber);
 	TPckg<TDriveInfo> pkdi(aDriveInfo);
 	TInt r = SendReceive(EFsFileDrive,TIpcArgs(&pki,&pkdi));
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILEDRIVERETURN, "r %d driveAtt %x mediaAtt %x type %x", (TUint) r, (TUint) aDriveInfo.iDriveAtt, (TUint) aDriveInfo.iMediaAtt, (TUint) aDriveInfo.iType);
+
+	TRACERET4(UTF::EBorder, UTraceModuleEfsrv::EFileDriveReturn, MODULEUID, r, aDriveInfo.iDriveAtt, aDriveInfo.iMediaAtt, aDriveInfo.iType);
 	return r;
 	}
 
@@ -1852,10 +1944,12 @@ Instructs the File Server that the file is not to be modified on storage media.
 @see RFs::Unclamp
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILECLAMP, "sess %x subs %x", (TUint) Session().Handle(), (TUint) SubSessionHandle());
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFileClamp, MODULEUID, Session().Handle(), SubSessionHandle());
+
 	TPckg<RFileClamp> pkHandle(aHandle);
 	TInt r = SendReceive(EFsFileClamp,TIpcArgs(& pkHandle));
-	OstTrace1(TRACE_BORDER, EFSRV_EFILECLAMPRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileClampReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -1885,8 +1979,9 @@ Note:
 */
 EFSRV_EXPORT_C TInt RFile::BlockMap(SBlockMapInfo& aInfo, TInt64& aStartPos, TInt64 aEndPos, TInt aBlockMapUsage) const
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILEBLOCKMAPA, "sess %x subs %x", (TUint) Session().Handle(), (TUint) SubSessionHandle());
-	OstTraceExt5(TRACE_BORDER, EFSRV_EFILEBLOCKMAPB, "RFile::BlockMap() aStartPos %x:%x aEndPos %x:%x aBlockMapusage %d", (TUint) I64HIGH(aStartPos), (TUint) I64LOW(aStartPos), (TUint) I64HIGH(aEndPos), (TUint) I64LOW(aEndPos), (TUint) aBlockMapUsage);
+	TRACE7(UTF::EBorder, UTraceModuleEfsrv::EFileBlockMap, MODULEUID, 
+		Session().Handle(), SubSessionHandle(), I64LOW(aStartPos), I64HIGH(aEndPos), I64LOW(aEndPos), I64HIGH(aEndPos), aBlockMapUsage);
+
 	SBlockMapArgs args;
 	args.iStartPos = aStartPos;
 	args.iEndPos = aEndPos;
@@ -1895,7 +1990,8 @@ EFSRV_EXPORT_C TInt RFile::BlockMap(SBlockMapInfo& aInfo, TInt64& aStartPos, TIn
  	TInt r = SendReceive(EFsBlockMap, TIpcArgs(&pkInfo, &pkArgs, aBlockMapUsage));
 	if(r==KErrNone)
 		aStartPos = args.iStartPos;
-	OstTrace1(TRACE_BORDER, EFSRV_EFILEBLOCKMAPRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileBlockMapReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -1948,12 +2044,11 @@ Notes:
 */
 EFSRV_EXPORT_C TInt RFile64::Open(RFs& aFs,const TDesC& aName,TUint aFileMode)
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILE64OPEN, "sess %x mode %x", (TUint) aFs.Handle(), (TUint) aFileMode);
-	OstTraceData(TRACE_BORDER, EFSRV_EFILE64OPEN_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
+	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFileOpen, MODULEUID, aFs.Handle(), aFileMode, aName);
 	
 	TInt r = CreateSubSession(aFs,EFsFileOpen,TIpcArgs(&aName,aFileMode|EFileBigFile));
 	
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILE64OPENRETURN, "r %d subs %x", (TUint) r, (TUint) SubSessionHandle());
+	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EFileOpenReturn, MODULEUID, r, SubSessionHandle());
 	return r;
 	}
 
@@ -1998,10 +2093,11 @@ Notes:
 */
 EFSRV_EXPORT_C TInt RFile64::Create(RFs& aFs,const TDesC& aName,TUint aFileMode)
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILE64CREATE, "sess %x mode %x", (TUint) aFs.Handle(), (TUint) aFileMode);
-	OstTraceData(TRACE_BORDER, EFSRV_EFILE64CREATE_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
+	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFileCreate, MODULEUID, aFs.Handle(), aFileMode, aName);
+
 	TInt r = CreateSubSession(aFs,EFsFileCreate,TIpcArgs(&aName,aFileMode|EFileBigFile));
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILE64CREATERETURN, "r %d subs %x", (TUint) r, (TUint) SubSessionHandle());
+
+	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EFileCreateReturn, MODULEUID, r, SubSessionHandle());
 	return r;
 	}
 
@@ -2052,10 +2148,11 @@ Notes:
 */
 EFSRV_EXPORT_C TInt RFile64::Replace(RFs& aFs,const TDesC& aName,TUint aFileMode)
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILE64REPLACE, "sess %x mode %x", (TUint) aFs.Handle(), (TUint) aFileMode);
-	OstTraceData(TRACE_BORDER, EFSRV_EFILE64REPLACE_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
+	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFileReplace, MODULEUID, aFs.Handle(), aFileMode, aName);
+
 	TInt r = CreateSubSession(aFs,EFsFileReplace,TIpcArgs(&aName,aFileMode|EFileBigFile));
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILE64REPLACERETURN, "r %d subs %x", (TUint) r, (TUint) SubSessionHandle());
+
+	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EFileReplaceReturn, MODULEUID, r, SubSessionHandle());
 	return r;
 	}
 
@@ -2092,12 +2189,9 @@ Notes:
 */
 EFSRV_EXPORT_C TInt RFile64::Temp(RFs& aFs,const TDesC& aPath,TFileName& aName,TUint aFileMode)
 	{
-   	OstTraceExt2(TRACE_BORDER, EFSRV_EFILE64TEMP, "sess %x aMode %x", (TUint) aFs.Handle(), (TUint) aFileMode);
-	OstTraceData(TRACE_BORDER, EFSRV_EFILE64TEMP_EDIRNAME, "Dir %S", aPath.Ptr(), aPath.Length()<<1);
+   	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFileTemp, MODULEUID, aFs.Handle(), aPath, aFileMode);
 	TInt r = CreateSubSession(aFs,EFsFileTemp,TIpcArgs(&aPath,aFileMode|EFileBigFile,&aName));
-	OstTraceData(TRACE_BORDER, EFSRV_EFILE64TEMP_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILE64TEMPRETURN, "r %d subs %x", (TUint) r, (TUint) SubSessionHandle());
-	
+	TRACERETMULT3(UTF::EBorder, UTraceModuleEfsrv::EFileTempReturn, MODULEUID, r, SubSessionHandle(), aName);
 	return r;
 	}
 
@@ -2149,7 +2243,7 @@ EFSRV_EXPORT_C TInt RFile64::AdoptFromClient(const RMessage2& aMsg, TInt aFsHand
 	else
 		r = KErrArgument;
 
-#ifdef OST_TRACE_COMPILER_IN_USE
+#ifdef SYMBIAN_FTRACE_ENABLE
 	TInt handle = NULL;
 	if (aFsHandleIndex == 0)
 		handle = aMsg.Int0();
@@ -2159,27 +2253,31 @@ EFSRV_EXPORT_C TInt RFile64::AdoptFromClient(const RMessage2& aMsg, TInt aFsHand
 		handle = aMsg.Int2();
 	else if (aFsHandleIndex == 3)
 		handle = aMsg.Int3();
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILE64ADOPTFROMCLIENT, "sess %x subs %x aFsHandleIndex %d aFileHandleIndex %d ", (TUint) handle, (TUint) fileHandle, (TUint) aFsHandleIndex, (TUint) aFileHandleIndex);
+	TRACE4(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptFromClient, MODULEUID, handle, fileHandle, aFsHandleIndex, aFileHandleIndex);
 #endif
+
 	if (r != KErrNone)
 		{
-		OstTrace1(TRACE_BORDER, EFSRV_EFILE64ADOPTFROMCLIENTRETURN1, "r %d", r);
+		TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptFromClientReturn, MODULEUID, r);
 		return r;
 		}
+
 	// Duplicates the file server (RFs) session handle identified by an 
 	// existing handle contained in the message slot at index aFsHandleIndex
 	RFs fs;
 	r = fs.Open(aMsg, aFsHandleIndex, KFileServerPolicy);
 	if (r != KErrNone)
 		{
-		OstTrace1(TRACE_BORDER, EFSRV_EFILE64ADOPTFROMCLIENTRETURN2, "r %d", r);
+		TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptFromClientReturn, MODULEUID, r);
 		return r;
 		}
 
 	//return CreateAutoCloseSubSession(fs, EFsFileAdopt, TIpcArgs(fileHandle));
 	// Slot 1: Indicate Large File Supportis required.
 	r = CreateAutoCloseSubSession(fs, EFsFileAdopt, TIpcArgs(fileHandle, KFileAdopt64));
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILE64ADOPTFROMCLIENTRETURN3, "r %d sess %x subs %x", (TUint) r, (TUint) Session().Handle(), (TUint) SubSessionHandle());
+
+	TRACERET3(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptFromClientReturn, MODULEUID, r, Session().Handle(), SubSessionHandle());
+
 	return r;
 	}
 
@@ -2213,19 +2311,22 @@ is closed so will the RFs session.
 */
 EFSRV_EXPORT_C TInt RFile64::AdoptFromServer(TInt aFsHandle, TInt aFileHandle)
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILE64ADOPTFROMSERVER, "sess %x subs %x", (TUint) aFsHandle, (TUint) aFileHandle);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptFromServer, MODULEUID, aFsHandle, aFileHandle);
+
 	RFs fs;
 	TInt r = fs.SetReturnedHandle(aFsHandle, KFileServerPolicy);
 	if (r != KErrNone)
 		{
-		OstTrace1(TRACE_BORDER, EFSRV_EFILE64ADOPTFROMSERVERRETURN1, "r %d", r);
+		TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptFromServerReturn, MODULEUID, r);
 		return r;
 		}
 
 	//return(CreateAutoCloseSubSession(fs, EFsFileAdopt, TIpcArgs(aFileHandle)));
 	// Slot 1: Indicate Large File Supportis required.
 	r = CreateAutoCloseSubSession(fs, EFsFileAdopt, TIpcArgs(aFileHandle, KFileAdopt64));
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILE64ADOPTFROMSERVERRETURN2, "r %d sess %x subs %x", (TUint) r, (TUint) Session().Handle(), (TUint) SubSessionHandle());
+
+	TRACERET3(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptFromServerReturn, MODULEUID, r, Session().Handle(), SubSessionHandle());
+
 	return r;
 	}
 
@@ -2267,10 +2368,11 @@ EFSRV_EXPORT_C TInt RFile64::AdoptFromCreator(TInt aFsHandleIndex, TInt aFileHan
 	TInt fileHandle;
 	TInt r = User::GetTIntParameter(aFileHandleIndex,  fileHandle);
 
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILE64ADOPTFROMCREATOR, "subs %x aFsHandleIndex %d aFileHandleIndex %d", (TUint) fileHandle, (TUint) aFsHandleIndex, (TUint) aFileHandleIndex);
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptFromCreator, MODULEUID, fileHandle, aFsHandleIndex, aFileHandleIndex);
+
 	if (r != KErrNone)
 		{
-		OstTrace1(TRACE_BORDER, EFSRV_EFILE64ADOPTFROMCREATORRETURN1, "r %d", r);
+		TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptFromCreatorReturn, MODULEUID, r);
 		return r;
 		}
 
@@ -2281,14 +2383,16 @@ EFSRV_EXPORT_C TInt RFile64::AdoptFromCreator(TInt aFsHandleIndex, TInt aFileHan
 	r = fs.Open(aFsHandleIndex, KFileServerPolicy);
 	if (r != KErrNone)
 		{
-		OstTrace1(TRACE_BORDER, EFSRV_EFILE64ADOPTFROMCREATORRETURN2, "r %d", r);
+		TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptFromCreatorReturn, MODULEUID, r);
 		return r;
 		}
 
 	//return(CreateAutoCloseSubSession(fs, EFsFileAdopt, TIpcArgs(fileHandle)));
 	// Slot 1: Indicate Large File Supportis required.
 	r = CreateAutoCloseSubSession(fs, EFsFileAdopt, TIpcArgs(fileHandle, KFileAdopt64));
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILE64ADOPTFROMCREATORRETURN3, "r %d sess %x subs %x", (TUint) r, (TUint) Session().Handle(), (TUint) SubSessionHandle());
+
+	TRACERET3(UTF::EBorder, UTraceModuleEfsrv::EFileAdoptFromCreatorReturn, MODULEUID, r, Session().Handle(), SubSessionHandle());
+
 	return r;
 	}
 
@@ -2327,7 +2431,8 @@ when the descriptor length, as returned by TDesC8::Length(), is zero.
 */
 EFSRV_EXPORT_C TInt RFile64::Read(TInt64 aPos, TDes8& aDes) const
 	{
-	OstTraceExt5(TRACE_BORDER, EFSRV_EFILE64READ8, "RFile::Read() sess %x subs %x aPos %x:%x maxdeslen %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), (TUint) aDes.MaxLength());
+	TRACE5(UTF::EBorder, UTraceModuleEfsrv::EFileRead3, MODULEUID, Session().Handle(), SubSessionHandle(), I64LOW(aPos), I64HIGH(aPos), aDes.MaxLength());
+
 	__ASSERT_ALWAYS(aPos>=0,Panic(EPosNegative));
 
 	TInt r;
@@ -2340,7 +2445,9 @@ EFSRV_EXPORT_C TInt RFile64::Read(TInt64 aPos, TDes8& aDes) const
 		TPckgC<TInt64> pkPos(aPos);
  		r = SendReceive(EFsFileRead|KIpcArgSlot2Desc,TIpcArgs(&aDes,aDes.MaxLength(),&pkPos));
 		}
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILE64READ8RETURN, "r %d len %d", (TUint) r, (TUint) aDes.Length());
+
+	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EFileRead3Return, MODULEUID, r, aDes.Length());
+
 	return r;
 	}
 
@@ -2384,7 +2491,8 @@ when the descriptor length, as returned by TDesC8::Length(), is zero.
 */
 EFSRV_EXPORT_C void RFile64::Read(TInt64 aPos, TDes8& aDes, TRequestStatus& aStatus) const
 	{
-	OstTraceExt5(TRACE_BORDER, EFSRV_EFILE64READ10, "RFile::Read() sess %x subs %x aPos %x:%x maxlen %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), (TUint) aDes.MaxLength());
+	TRACE6(UTF::EBorder, UTraceModuleEfsrv::EFileRead4, MODULEUID, Session().Handle(), SubSessionHandle(), I64LOW(aPos), I64HIGH(aPos), aDes.MaxLength(), &aStatus);
+
 	__ASSERT_ALWAYS(aPos>=0,Panic(EPosNegative));
 	if (!(I64HIGH(aPos+1)))
 		{
@@ -2395,7 +2503,8 @@ EFSRV_EXPORT_C void RFile64::Read(TInt64 aPos, TDes8& aDes, TRequestStatus& aSta
 		TPckgC<TInt64> pkPos(aPos);
 		RSubSessionBase::SendReceive(EFsFileRead|KIpcArgSlot2Desc,TIpcArgs(&aDes,aDes.MaxLength(),&pkPos),aStatus);
 		}
-	OstTrace0(TRACE_BORDER, EFSRV_EFILE64READ10RETURN, "");
+
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFileRead4Return, MODULEUID);
 	}
 
 
@@ -2441,7 +2550,8 @@ the end of file is reached or if an error has occurred.
 */    	
 EFSRV_EXPORT_C TInt RFile64::Read(TInt64 aPos, TDes8& aDes, TInt aLength) const
 	{
-	OstTraceExt5(TRACE_BORDER, EFSRV_EFILE64READ15, "RFile::Read() sess %x subs %x aPos %x:%x aLength %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), (TUint) aLength);
+	TRACE5(UTF::EBorder, UTraceModuleEfsrv::EFileRead3, MODULEUID, Session().Handle(), SubSessionHandle(), I64LOW(aPos), I64HIGH(aPos), aLength);
+
 	__ASSERT_ALWAYS(aPos>=0,Panic(EPosNegative));
 	if (aLength==0)
 		{
@@ -2463,7 +2573,9 @@ EFSRV_EXPORT_C TInt RFile64::Read(TInt64 aPos, TDes8& aDes, TInt aLength) const
 		TPckgC<TInt64> pkPos(aPos);
 		r = SendReceive(EFsFileRead|KIpcArgSlot2Desc,TIpcArgs(&aDes,aLength,&pkPos));
 		}
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILE64READ15RETURN, "r %d len %d", (TUint) r, (TUint) aDes.Length());
+
+	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EFileRead3Return, MODULEUID, r, aDes.Length());
+
 	return r;
 	}
 
@@ -2516,7 +2628,8 @@ the end of file is reached or if an error has occurred.
 */
 EFSRV_EXPORT_C void RFile64::Read(TInt64 aPos, TDes8& aDes, TInt aLength,TRequestStatus& aStatus) const
 	{
-	OstTraceExt5(TRACE_BORDER, EFSRV_EFILE64READ11, "RFile::Read() sess %x subs %x aPos %x:%x aLength %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), (TUint) aLength);
+	TRACE6(UTF::EBorder, UTraceModuleEfsrv::EFileRead4, MODULEUID, Session().Handle(), SubSessionHandle(), I64LOW(aPos), I64HIGH(aPos), aLength, &aStatus);
+
 	__ASSERT_ALWAYS(aPos>=0,Panic(EPosNegative));
 	if (aLength==0)
 		{
@@ -2541,7 +2654,8 @@ EFSRV_EXPORT_C void RFile64::Read(TInt64 aPos, TDes8& aDes, TInt aLength,TReques
 		TPckgC<TInt64> pkPos(aPos);
 		RSubSessionBase::SendReceive(EFsFileRead|KIpcArgSlot2Desc,TIpcArgs(&aDes,aLength,&pkPos),aStatus);
 		}
-	OstTrace0(TRACE_BORDER, EFSRV_EFILE64READ11RETURN, "");
+
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFileRead4Return, MODULEUID);
 	}
 
 
@@ -2573,7 +2687,8 @@ This allows to specify the write position beyond 2GB-1.
 */
 EFSRV_EXPORT_C TInt RFile64::Write(TInt64 aPos, const TDesC8& aDes)
 	{
-	OstTraceExt5(TRACE_BORDER, EFSRV_EFILE64WRITE13, "RFile::Write() sess %x subs %x aPos %x:%x deslen %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), (TUint) aDes.Length());
+	TRACE5(UTF::EBorder, UTraceModuleEfsrv::EFileWrite3, MODULEUID, Session().Handle(), SubSessionHandle(), I64LOW(aPos), I64HIGH(aPos), aDes.Length());
+
 	__ASSERT_ALWAYS(aPos>=0,Panic(EPosNegative));
 
 	TInt r;
@@ -2586,7 +2701,8 @@ EFSRV_EXPORT_C TInt RFile64::Write(TInt64 aPos, const TDesC8& aDes)
 		TPckgC<TInt64> pkPos(aPos);
 		r = SendReceive(EFsFileWrite|KIpcArgSlot2Desc,TIpcArgs(&aDes,aDes.Length(),&pkPos));
 		}
-	OstTrace1(TRACE_BORDER, EFSRV_EFILE64WRITE13RETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileWrite3Return, MODULEUID, r);
 	return r;
 	}
 
@@ -2624,7 +2740,8 @@ This allows to specify the write position beyond 2GB-1.
 */
 EFSRV_EXPORT_C void RFile64::Write(TInt64 aPos, const TDesC8& aDes,TRequestStatus& aStatus)
 	{
-	OstTraceExt5(TRACE_BORDER, EFSRV_EFILE64WRITE15, "RFile::Write() sess %x subs %x pos %x:%x len %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), (TUint) aDes.Length());
+	TRACE4(UTF::EBorder, UTraceModuleEfsrv::EFileWrite4, MODULEUID, Session().Handle(), SubSessionHandle(), aDes.Length(), &aStatus);
+
 	__ASSERT_ALWAYS(aPos>=0,Panic(EPosNegative));
 	
 	if (!(I64HIGH(aPos+1)))
@@ -2636,7 +2753,8 @@ EFSRV_EXPORT_C void RFile64::Write(TInt64 aPos, const TDesC8& aDes,TRequestStatu
 		TPckgC<TInt64> pkPos(aPos);
 		RSubSessionBase::SendReceive(EFsFileWrite|KIpcArgSlot2Desc,TIpcArgs(&aDes,aDes.Length(),&pkPos),aStatus);
 		}
-	OstTrace0(TRACE_BORDER, EFSRV_EFILE64WRITE15RETURN, "");
+
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFileWrite4Return, MODULEUID);
 	}
 
 
@@ -2668,7 +2786,8 @@ This allows to specify the write position beyond 2GB-1.
 */
 EFSRV_EXPORT_C TInt RFile64::Write(TInt64 aPos, const TDesC8& aDes,TInt aLength)
 	{
-	OstTraceExt5(TRACE_BORDER, EFSRV_EFILE64WRITE7, "RFile::Write() sess %x subs %x aPos %x:%x aLength %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), (TUint) aLength);
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFileWrite1, MODULEUID, Session().Handle(), SubSessionHandle(), aLength);
+
 	__ASSERT_ALWAYS(aPos>=0,Panic(EPosNegative));
 	
 	TInt r;
@@ -2681,7 +2800,8 @@ EFSRV_EXPORT_C TInt RFile64::Write(TInt64 aPos, const TDesC8& aDes,TInt aLength)
 		TPckgC<TInt64> pkPos(aPos);
 		r = SendReceive(EFsFileWrite|KIpcArgSlot2Desc,TIpcArgs(&aDes,aLength,&pkPos));
 		}
-	OstTrace1(TRACE_BORDER, EFSRV_EFILE64WRITE7RETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileWrite1Return, MODULEUID, r);
 	return r;
 	}
 
@@ -2721,7 +2841,8 @@ This allows to specify the write position beyond 2GB-1.
 */
 EFSRV_EXPORT_C void RFile64::Write(TInt64 aPos, const TDesC8& aDes,TInt aLength,TRequestStatus& aStatus)
 	{
-	OstTraceExt5(TRACE_BORDER, EFSRV_EFILE64WRITE11, "RFile::Write() sess %x subs %x aPos %x:%x aLength %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), (TUint) aLength);
+	TRACE6(UTF::EBorder, UTraceModuleEfsrv::EFileWrite2, MODULEUID, Session().Handle(), SubSessionHandle(), I64LOW(aPos), I64HIGH(aPos), aLength, &aStatus);
+
 	__ASSERT_ALWAYS(aPos>=0,Panic(EPosNegative));
 	
 	if (!(I64HIGH(aPos+1)))
@@ -2733,7 +2854,8 @@ EFSRV_EXPORT_C void RFile64::Write(TInt64 aPos, const TDesC8& aDes,TInt aLength,
 		TPckgC<TInt64> pkPos(aPos);
 		RSubSessionBase::SendReceive(EFsFileWrite|KIpcArgSlot2Desc,TIpcArgs(&aDes,aLength,&pkPos),aStatus);
 		}
-	OstTrace0(TRACE_BORDER, EFSRV_EFILE64WRITE11RETURN, "");
+
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFileWrite2Return, MODULEUID);
 	}
 
 
@@ -2780,11 +2902,13 @@ If the seek mode is ESeekAddress, an error is returned if:
 */
 EFSRV_EXPORT_C TInt RFile64::Seek(TSeek aMode, TInt64& aPos) const
 	{
-	OstTraceExt5(TRACE_BORDER, EFSRV_EFILE64SEEK2, "RFile::Seek() sess %x subs %x aMode %x aPos %x:%x", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aMode, (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos));
+	TRACE5(UTF::EBorder, UTraceModuleEfsrv::EFileSeek, MODULEUID, Session().Handle(), SubSessionHandle(), aMode, aPos, 0);
+
 	TPckgC<TInt64> pkOffset(aPos);
 	TPckg<TInt64> pkNewPos(aPos);
  	TInt r = SendReceive(EFsFileSeek|KIpcArgSlot0Desc|KIpcArgSlot2Desc,TIpcArgs(&pkOffset,aMode,&pkNewPos));
-	OstTrace1(TRACE_BORDER, EFSRV_EFILE64SEEK2RETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileSeekReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -2806,10 +2930,12 @@ This allows to query file sizes, which are greater than 2GB-1
 */
 EFSRV_EXPORT_C TInt RFile64::Size(TInt64& aSize) const
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILE64SIZE2, "sess %x subs %x", (TUint) Session().Handle(), (TUint) SubSessionHandle());
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFileSize2, MODULEUID, Session().Handle(), SubSessionHandle());
+
 	TPckg<TInt64> pkSize(aSize);
 	TInt r = SendReceive(EFsFileSize|KIpcArgSlot0Desc,TIpcArgs(&pkSize));
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFILE64SIZE2RETURN, "r %d aSize %x:%x", (TUint) r, (TUint) I64HIGH(aSize), (TUint) I64LOW(aSize));
+
+	TRACERET3(UTF::EBorder, UTraceModuleEfsrv::EFileSize2Return, MODULEUID, r, I64LOW(aSize), I64HIGH(aSize));
 	return r;
 	}
 
@@ -2845,10 +2971,12 @@ Note:
 */
 EFSRV_EXPORT_C TInt RFile64::SetSize(TInt64 aSize)
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILE64SETSIZE2, "sess %x subs %x aSize %x:%x", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) I64HIGH(aSize), (TUint) I64LOW(aSize));
+	TRACE4(UTF::EBorder, UTraceModuleEfsrv::EFileSetSize, MODULEUID, Session().Handle(), SubSessionHandle(), I64LOW(aSize), I64HIGH(aSize));
+
 	TPckgC<TInt64> pkSize(aSize);
 	TInt r = SendReceive(EFsFileSetSize|KIpcArgSlot0Desc, TIpcArgs(&pkSize));
-	OstTrace1(TRACE_BORDER, EFSRV_EFILE64SETSIZE2RETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileSetSizeReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -2885,7 +3013,8 @@ This allows to to lock positions in file beyond 2GB-1.
 */
 EFSRV_EXPORT_C TInt RFile64::Lock(TInt64 aPos, TInt64 aLength) const
 	{
-	OstTraceExt5(TRACE_BORDER, EFSRV_EFILE64LOCK, "RFile::Lock() sess %x subs %x aPos %x:%x aLength %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), (TUint) aLength);
+	TRACE5(UTF::EBorder, UTraceModuleEfsrv::EFileLock, MODULEUID, Session().Handle(), SubSessionHandle(), I64LOW(aPos), I64HIGH(aPos), aLength);
+
 	__ASSERT_ALWAYS(aPos>=0,Panic(EPosNegative));
 	TPckgC<TInt64> pkPos(aPos);
 	TPckgC<TInt64> pkLength(aLength);
@@ -2900,7 +3029,7 @@ EFSRV_EXPORT_C TInt RFile64::Lock(TInt64 aPos, TInt64 aLength) const
 		r = SendReceive(EFsFileLock|KIpcArgSlot0Desc,TIpcArgs(&pkPos, I64LOW(aLength)));
 	else 
 		r = SendReceive(EFsFileLock|KIpcArgSlot0Desc|KIpcArgSlot1Desc,TIpcArgs(&pkPos, &pkLength));
-	OstTrace1(TRACE_BORDER, EFSRV_EFILE64LOCKRETURN, "r %d", r);
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileLockReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -2931,7 +3060,8 @@ This allows to to unlock positions in file beyond 2GB-1.
 */
 EFSRV_EXPORT_C TInt RFile64::UnLock(TInt64 aPos, TInt64 aLength) const
 	{
-	OstTraceExt5(TRACE_BORDER, EFSRV_EFILE64UNLOCK, "RFile::UnLock() sess %x subs %x aPos %x:%x aLength %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), (TUint) aLength);
+	TRACE5(UTF::EBorder, UTraceModuleEfsrv::EFileUnLock, MODULEUID, Session().Handle(), SubSessionHandle(), I64LOW(aPos), I64HIGH(aPos), aLength);
+
 	__ASSERT_ALWAYS(aPos>=0,Panic(EPosNegative));
 	
 	TPckgC<TInt64> pkPos(aPos);
@@ -2948,7 +3078,7 @@ EFSRV_EXPORT_C TInt RFile64::UnLock(TInt64 aPos, TInt64 aLength) const
 	else 
 		r = SendReceive(EFsFileUnLock|KIpcArgSlot0Desc|KIpcArgSlot1Desc,TIpcArgs(&pkPos, &pkLength));
 	
-	OstTrace1(TRACE_BORDER, EFSRV_EFILE64UNLOCKRETURN, "r %d", r);
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileUnLockReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -2992,7 +3122,8 @@ when the descriptor length, as returned by TDesC8::Length(), is zero.
 */
 EFSRV_EXPORT_C TInt RFile64::Read(TUint aPos,TDes8& aDes) const
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILE64READ14, "sess %x subs %x aPos %x maxlen %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aPos, (TUint) aDes.MaxLength());
+	TRACE5(UTF::EBorder, UTraceModuleEfsrv::EFileRead3, MODULEUID, Session().Handle(), SubSessionHandle(), aPos, 0, aDes.MaxLength());
+
 	TInt r;
 	if(!(aPos + 1))
 		{
@@ -3004,7 +3135,9 @@ EFSRV_EXPORT_C TInt RFile64::Read(TUint aPos,TDes8& aDes) const
 		TPckgC<TInt64> pkPos(pos);
  		r = SendReceive(EFsFileRead|KIpcArgSlot2Desc,TIpcArgs(&aDes,aDes.MaxLength(),&pkPos));
 		}
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILE64READ14RETURN, "r %d len %d", (TUint) r, (TUint) aDes.Length());
+
+	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EFileRead3Return, MODULEUID, r, aDes.Length());
+
 	return r;
 	}
 
@@ -3053,7 +3186,8 @@ when the descriptor length, as returned by TDesC8::Length(), is zero.
 */
 EFSRV_EXPORT_C void RFile64::Read(TUint aPos,TDes8& aDes,TRequestStatus& aStatus) const
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILE64READ12, "sess %x subs %x aPos %x maxlen %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aPos, (TUint) aDes.MaxLength());
+	TRACE6(UTF::EBorder, UTraceModuleEfsrv::EFileRead4, MODULEUID, Session().Handle(), SubSessionHandle(), aPos, 0, aDes.MaxLength(), &aStatus);
+
 	if(!(aPos + 1))
 		{
 		RSubSessionBase::SendReceive(EFsFileRead,TIpcArgs(&aDes,aDes.MaxLength(),aPos),aStatus);
@@ -3064,7 +3198,8 @@ EFSRV_EXPORT_C void RFile64::Read(TUint aPos,TDes8& aDes,TRequestStatus& aStatus
 		TPckgC<TInt64> pkPos(pos);
 		RSubSessionBase::SendReceive(EFsFileRead|KIpcArgSlot2Desc,TIpcArgs(&aDes,aDes.MaxLength(),&pkPos),aStatus);
 		}
-	OstTrace0(TRACE_BORDER, EFSRV_EFILE64READ12RETURN, "");
+
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFileRead4Return, MODULEUID);
 	}
 
 
@@ -3116,7 +3251,8 @@ the end of file is reached or if an error has occurred.
 */    
 EFSRV_EXPORT_C TInt RFile64::Read(TUint aPos,TDes8& aDes,TInt aLength) const
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILE64READ16, "sess %x subs %x aPos %x aLength %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aPos, (TUint) aLength);
+	TRACE5(UTF::EBorder, UTraceModuleEfsrv::EFileRead3, MODULEUID, Session().Handle(), SubSessionHandle(), aPos, 0, aLength);
+
 	if (aLength==0)
 		{
 		aDes.Zero();
@@ -3138,7 +3274,9 @@ EFSRV_EXPORT_C TInt RFile64::Read(TUint aPos,TDes8& aDes,TInt aLength) const
 		TPckgC<TInt64> pkPos(pos);
 		r = SendReceive(EFsFileRead|KIpcArgSlot2Desc,TIpcArgs(&aDes,aLength,&pkPos));
 		}
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFILE64READ16RETURN, "r %d len %d", (TUint) r, (TUint) aDes.Length());
+
+	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EFileRead3Return, MODULEUID, r, aDes.Length());
+
 	return r;
 	}
 
@@ -3197,7 +3335,8 @@ the end of file is reached or if an error has occurred.
 */
 EFSRV_EXPORT_C void RFile64::Read(TUint aPos,TDes8& aDes,TInt aLength,TRequestStatus& aStatus) const
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILE64READ13, "sess %x subs %x aPos %x aLength %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aPos, (TUint) aLength);
+	TRACE6(UTF::EBorder, UTraceModuleEfsrv::EFileRead4, MODULEUID, Session().Handle(), SubSessionHandle(), aPos, 0, aLength, &aStatus);
+
 	if (aLength==0)
 		{
 		aDes.Zero();
@@ -3222,7 +3361,8 @@ EFSRV_EXPORT_C void RFile64::Read(TUint aPos,TDes8& aDes,TInt aLength,TRequestSt
 		TPckgC<TInt64> pkPos(pos);
 		RSubSessionBase::SendReceive(EFsFileRead|KIpcArgSlot2Desc,TIpcArgs(&aDes,aLength,&pkPos),aStatus);
 		}
-	OstTrace0(TRACE_BORDER, EFSRV_EFILE64READ13RETURN, "");
+
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFileRead4Return, MODULEUID);
 	}
 
 
@@ -3260,7 +3400,8 @@ compile-time errors for any user code that uses TUint parameter for RFile64::Rea
 */
 EFSRV_EXPORT_C TInt RFile64::Write(TUint aPos,const TDesC8& aDes)
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILE64WRITE14, "sess %x subs %x aPos %x len %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aPos, (TUint) aDes.Length());
+	TRACE5(UTF::EBorder, UTraceModuleEfsrv::EFileWrite3, MODULEUID, Session().Handle(), SubSessionHandle(), aPos, 0, aDes.Length());
+
 	TInt r;
 	if(!(aPos + 1))
 		{
@@ -3272,7 +3413,8 @@ EFSRV_EXPORT_C TInt RFile64::Write(TUint aPos,const TDesC8& aDes)
 		TPckgC<TInt64> pkPos(pos);
 		r = SendReceive(EFsFileWrite|KIpcArgSlot2Desc,TIpcArgs(&aDes,aDes.Length(),&pkPos));
 		}
-	OstTrace1(TRACE_BORDER, EFSRV_EFILE64WRITE14RETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileWrite3Return, MODULEUID, r);
 	return r;
 	}
 
@@ -3316,7 +3458,8 @@ compile-time errors for any user code that uses TUint parameter for RFile64::Rea
 */
 EFSRV_EXPORT_C void RFile64::Write(TUint aPos,const TDesC8& aDes,TRequestStatus& aStatus)
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILE64WRITE16, "sess %x subs %x pos %x len %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aPos, (TUint) aDes.Length());
+	TRACE6(UTF::EBorder, UTraceModuleEfsrv::EFileWrite4, MODULEUID, Session().Handle(), SubSessionHandle(), aPos, 0, aDes.Length(), &aStatus);
+
 	if(!(aPos + 1))
 		{
 		RSubSessionBase::SendReceive(EFsFileWrite,TIpcArgs(&aDes,aDes.Length(),aPos),aStatus);
@@ -3327,7 +3470,7 @@ EFSRV_EXPORT_C void RFile64::Write(TUint aPos,const TDesC8& aDes,TRequestStatus&
 		TPckgC<TInt64> pkPos(pos);
 		RSubSessionBase::SendReceive(EFsFileWrite|KIpcArgSlot2Desc,TIpcArgs(&aDes,aDes.Length(),&pkPos),aStatus);
 		}
-	OstTrace0(TRACE_BORDER, EFSRV_EFILE64WRITE16RETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFileWrite4Return, MODULEUID);
 	}
 
 
@@ -3365,7 +3508,8 @@ compile-time errors for any user code that uses TUint parameter for RFile64::Rea
 */
 EFSRV_EXPORT_C TInt RFile64::Write(TUint aPos,const TDesC8& aDes,TInt aLength)
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILE64WRITE8, "sess %x subs %x aPos %x aLength %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aPos, (TUint) aLength);
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFileWrite1, MODULEUID, Session().Handle(), SubSessionHandle(), aLength);
+
 	TInt r;
 	if(!(aPos + 1))
 		{
@@ -3377,7 +3521,8 @@ EFSRV_EXPORT_C TInt RFile64::Write(TUint aPos,const TDesC8& aDes,TInt aLength)
 		TPckgC<TInt64> pkPos(pos);
 		r = SendReceive(EFsFileWrite|KIpcArgSlot2Desc,TIpcArgs(&aDes,aLength,&pkPos));
 		}
-	OstTrace1(TRACE_BORDER, EFSRV_EFILE64WRITE8RETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFileWrite1Return, MODULEUID, r);
 	return r;
 	}
 
@@ -3424,7 +3569,8 @@ compile-time errors for any user code that uses TUint parameter for RFile64::Rea
 */
 EFSRV_EXPORT_C void RFile64::Write(TUint aPos,const TDesC8& aDes,TInt aLength,TRequestStatus& aStatus)
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFILE64WRITE12, "sess %x subs %x aPos %x len %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aPos, (TUint) aLength);
+	TRACE6(UTF::EBorder, UTraceModuleEfsrv::EFileWrite2, MODULEUID, Session().Handle(), SubSessionHandle(), aPos, 0, aLength, &aStatus);
+
 	if(!(aPos + 1))
 		{
 		RSubSessionBase::SendReceive(EFsFileWrite,TIpcArgs(&aDes,aLength,aPos),aStatus);
@@ -3435,7 +3581,7 @@ EFSRV_EXPORT_C void RFile64::Write(TUint aPos,const TDesC8& aDes,TInt aLength,TR
 		TPckgC<TInt64> pkPos(pos);
 		RSubSessionBase::SendReceive(EFsFileWrite|KIpcArgSlot2Desc,TIpcArgs(&aDes,aLength,&pkPos),aStatus);
 		}
-	OstTrace0(TRACE_BORDER, EFSRV_EFILE64WRITE12RETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFileWrite2Return, MODULEUID);
 	}
 #else
 EFSRV_EXPORT_C TInt RFile64::Open(RFs& /*aFs*/,const TDesC& /*aName*/,TUint /*aFileMode*/)

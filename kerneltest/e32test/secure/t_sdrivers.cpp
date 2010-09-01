@@ -367,7 +367,7 @@ void TestGetCaps()
 
 	// get another thread to try and call device GetCaps with descriptor in kernel memory...
 	test.Next(_L("Check GetCaps with bad descriptor 2"));
-	r = thread.Create(_L("TestGetCapsThread2"),TestGetCapsThread,KDefaultStackSize,0x2000,0x2000,(TAny*)kernelPtr);
+	r = thread.Create(_L("TestGetCapsThread"),TestGetCapsThread,KDefaultStackSize,0x2000,0x2000,(TAny*)kernelPtr);
 	test_KErrNone(r);
 	thread.Logon(ls);
 	thread.Rendezvous(rs);
@@ -472,9 +472,9 @@ GLDEF_C TInt E32Main()
 	TRequestStatus timerStat;
 	timer.After(timerStat,20*1000000);
 	User::WaitForRequest(timerStat,keyStat);
+	TInt key = 0;
 	if(keyStat!=KRequestPending)
-		(void)test.Console()->KeyCode();
-
+		key = test.Console()->KeyCode();
 	timer.Cancel();
 	test.Console()->ReadCancel();
 	User::WaitForAnyRequest();

@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -26,10 +26,6 @@
 #include <e32Test.h>	// RTest headder
 #include "testcaseroot.h"
 #include "TestCasewd.h"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "testcasewdTraces.h"
-#endif
 
 
 
@@ -75,10 +71,7 @@ void CTestCaseWatchdog::ConstructL()
 void CTestCaseWatchdog::RunL()
 // Timer request has completed, so notify the timer's owner that we timed out
     {
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASEWATCHDOG_RUNL);
-	    }
+	LOG_FUNC
 	__ASSERT_ALWAYS(iCancelFriendFunc, User::Panic(KMsgWatchdogPanicd, EPanicWatchdogError));
 	__ASSERT_ALWAYS(iThisPointer, User::Panic(KMsgWatchdogPanicd, EPanicWatchdogError));
 	(*iCancelFriendFunc)(iThisPointer);
@@ -92,10 +85,6 @@ void CTestCaseWatchdog::IssueRequest(TInt aWatchdogIntervalMS,
 		WDCancellerMethod cancelMethod)
 	{
 	LOG_VERBOSE2(_L("Watchdogging this step for %d ms\n"), aWatchdogIntervalMS);
-	if(gVerboseOutput)
-	    {
-	    OstTrace1(TRACE_VERBOSE, CTESTCASEWATCHDOG_ISSUEREQUEST, "Watchdogging this step for %d ms\n", aWatchdogIntervalMS);
-	    }
 	if (IsValid())
 		{
 		Cancel();
@@ -119,7 +108,6 @@ TBool CTestCaseWatchdog::IsValid()
 		{
 		
 		test.Printf(_L("CTestCaseWatchdog obj not properly constructed!\n"));
-		OstTrace0(TRACE_NORMAL, CTESTCASEWATCHDOG_ISVALID, "CTestCaseWatchdog obj not properly constructed!\n");
 		return(EFalse);
 		}
 	return(ETrue);	

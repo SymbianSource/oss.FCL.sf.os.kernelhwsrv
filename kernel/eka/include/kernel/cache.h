@@ -126,39 +126,9 @@ public:
 	On SMP platforms, it only maintains internal cache of the CPU that executes the call.
 	Cache memory common to the all cores (like external cache controllers) are also synchronised.
 	@pre Interrupts must be disabled.
-	@deprecated in TB 10.1 Use Cache::CpuRetires and Cache::KernelRetires
 	*/
 	IMPORT_C static void AtomicSyncMemory();
 
-	/**
-	Synchronises cache(s) of the current CPU with the next memory level (which may also be cache)
-	prior to power off or reboot. Caches in other CPUs and those that are shared among them are not affected.
-
-	Shut down or reboot sequence should ensure that the context of cache memories is copied down to the main
-	memory prior CPU/cache power off. In order to achieve this goal, the following should be obeyed:
-	 - On SMP H/W, any CPU that is about to shut down or reboot should call this method. The very last
-	   running CPU should call both this method and Cache::KernelRetires method.
-	 - On non-SMP H/W. CPU that is about to shut down or reboot should call this method. Call to
-	   Cache::KernelRetires is not required.
-
-	Both Cache::CpuRetires and Cache::KernelRetires assume that Kernel may not be in stable state (as reboot may
-	be caused by crash), so no attampt will be made to acquire spin lock or call any other Kernel interface.
-
-	@see Cache::KernelRetires
-	@pre Interrupts must be disabled.
-	@pre Kernel may not be in stable state.
-	*/
-	IMPORT_C static void CpuRetires();
-
-	/*
-	Synchronises cache(s) that are shared among CPUs with the main memory prior to power off or reboot.
-	@see Cache::CpuRetires
-	@pre Interrupts must be disabled.
-	@pre Kernel may not be in stable state.
-	@pre All CPUs other than the current CPU are powered down or their reboot sequence is completed.
-	*/
-	IMPORT_C static void KernelRetires();
-	
 	/**
 	Synchronises cache(s) prior to a DMA write (memory to HW DMA transfer) operation.
 

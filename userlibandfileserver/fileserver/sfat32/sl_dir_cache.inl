@@ -194,7 +194,7 @@ Check if the cache has reached its limited page number.
 TBool CDynamicDirCache::CacheIsFull() const
 	{
 	// active page, locked page and unlocked page
-	return (iLockedQCount + iUnlockedQCount >= iMaxSizeInPages);
+	return (iLockedQCount + iUnlockedQCount + 1 >= iMaxSizeInPages);
 	}
 
 /**

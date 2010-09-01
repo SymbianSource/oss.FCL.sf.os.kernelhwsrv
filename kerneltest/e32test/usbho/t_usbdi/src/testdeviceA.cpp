@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -19,12 +19,6 @@
 #include "modelleddevices.h"
 #include "testinterfacebase.h"
 #include "testinterfacesettingbase.h"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "testdeviceATraces.h"
-#endif
-
-
 
 
 namespace NUnitTesting_USBDI
@@ -32,26 +26,23 @@ namespace NUnitTesting_USBDI
 	
 RUsbDeviceA::RUsbDeviceA()
 	{
-	OstTraceFunctionEntry1( RUSBDEVICEA_RUSBDEVICEA_ENTRY, this );
-	OstTraceFunctionExit1( RUSBDEVICEA_RUSBDEVICEA_EXIT, this );
+	LOG_FUNC
 	}
 	
 RUsbDeviceA::RUsbDeviceA(CBaseTestCase* aTestCase):RUsbDeviceVendor(aTestCase)
 	{
-	OstTraceFunctionEntryExt( RUSBDEVICEA_RUSBDEVICEA_ENTRY_DUP01, this );
-	OstTraceFunctionExit1( RUSBDEVICEA_RUSBDEVICEA_EXIT_DUP01, this );
+	LOG_FUNC
 	}
 	
 RUsbDeviceA::~RUsbDeviceA()
 	{
-	OstTraceFunctionEntry1( RUSBDEVICEA_RUSBDEVICEA_ENTRY_DUP02, this );
-	OstTraceFunctionExit1( RUSBDEVICEA_RUSBDEVICEA_EXIT_DUP02, this );
+	LOG_FUNC	
 	}
 	
 
 void RUsbDeviceA::OpenL(const TDesC16& aSerialNumber)
 	{
-	OstTraceFunctionEntryExt( RUSBDEVICEA_OPENL_ENTRY, this );
+	LOG_FUNC
 	
 	RUsbDeviceVendor::OpenL(aSerialNumber);
 	
@@ -98,14 +89,12 @@ void RUsbDeviceA::OpenL(const TDesC16& aSerialNumber)
 	
 	AddInterface(interface1);
 	CleanupStack::Pop(interface1);
-	OstTraceFunctionExit1( RUSBDEVICEA_OPENL_EXIT, this );
 	}
 
 	
 void RUsbDeviceA::OnStateChangeL(TUsbcDeviceState aNewState)
 	{
-	OstTraceFunctionEntryExt( RUSBDEVICEA_ONSTATECHANGEL_ENTRY, this );
-	OstTraceFunctionExit1( RUSBDEVICEA_ONSTATECHANGEL_EXIT, this );
+	LOG_FUNC
 	}	
 	
 	

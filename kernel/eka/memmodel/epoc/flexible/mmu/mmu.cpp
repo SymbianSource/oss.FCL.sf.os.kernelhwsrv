@@ -1096,18 +1096,6 @@ void Mmu::FreePhysicalRam(TPhysAddr aPhysAddr, TUint aCount)
 	}
 
 
-TInt Mmu::FreeRamZone(TUint aZoneId)
-	{
-	TPhysAddr zoneBase;
-	TUint zonePages;
-	TInt r = iRamPageAllocator->GetZoneAddress(aZoneId, zoneBase, zonePages);
-	if (r != KErrNone)
-		return r;
-	FreePhysicalRam(zoneBase, zonePages);
-	return KErrNone;
-	}
-
-
 TInt Mmu::ClaimPhysicalRam(TPhysAddr aPhysAddr, TUint aCount, TRamAllocFlags aFlags)
 	{
 	__KTRACE_OPT(KMMU,Kern::Printf("Mmu::ClaimPhysicalRam(0x%08x,0x%x,0x%08x)",aPhysAddr,aCount,aFlags));

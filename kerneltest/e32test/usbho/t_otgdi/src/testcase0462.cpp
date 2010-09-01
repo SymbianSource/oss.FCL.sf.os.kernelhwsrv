@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -24,10 +24,6 @@
 #include "testcaseroot.h"
 #include "testcasewd.h"
 #include "testcase0462.h"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "testcase0462Traces.h"
-#endif
 
 
 
@@ -38,10 +34,7 @@ const TTestCaseFactoryReceipt<CTestCase0462> CTestCase0462::iFactoryReceipt(KTes
 
 CTestCase0462* CTestCase0462::NewL(TBool aHost)
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0462_NEWL);
-	    }
+	LOG_FUNC
 	CTestCase0462* self = new (ELeave) CTestCase0462(aHost);
 	CleanupStack::PushL(self);
 	self->ConstructL();
@@ -53,10 +46,7 @@ CTestCase0462* CTestCase0462::NewL(TBool aHost)
 CTestCase0462::CTestCase0462(TBool aHost)
 :	CTestCaseRoot(KTestCaseId, aHost)
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0462_CTESTCASE0462);
-	    }
+	LOG_FUNC
 		
 	} 
 
@@ -66,10 +56,7 @@ CTestCase0462::CTestCase0462(TBool aHost)
 */
 void CTestCase0462::ConstructL()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0462_CONSTRUCTL);
-	    }
+	LOG_FUNC
 	iRepeats = KOperationRetriesMax;
 	iWDTimer = CTestCaseWatchdog::NewL();
 	
@@ -79,10 +66,7 @@ void CTestCase0462::ConstructL()
 
 CTestCase0462::~CTestCase0462()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0462_DCTESTCASE0462);
-	    }
+	LOG_FUNC
 
 	Cancel();
 	delete iWDTimer;
@@ -91,10 +75,7 @@ CTestCase0462::~CTestCase0462()
 
 void CTestCase0462::ExecuteTestCaseL()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0462_EXECUTETESTCASEL);
-	    }
+	LOG_FUNC
 	iCaseStep = ELoadLdd;
 	
 	CActiveScheduler::Add(this);
@@ -106,16 +87,12 @@ void CTestCase0462::ExecuteTestCaseL()
 void CTestCase0462::DescribePreconditions()
 	{
 	test.Printf(_L("Insert 'A' connector beforehand.\n"));
-	OstTrace0(TRACE_NORMAL, CTESTCASE0462_DESCRIBEPRECONDITIONS, "Insert 'A' connector beforehand.\n");
 	}
 
 	
 void CTestCase0462::DoCancel()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0462_DOCANCEL);
-	    }
+	LOG_FUNC
 
 	// cancel our timer
 	iTimer.Cancel();
@@ -134,10 +111,7 @@ void CTestCase0462::CancelKB(CTestCaseRoot *pThis)
 // handle event completion	
 void CTestCase0462::RunStepL()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0462_RUNSTEPL);
-	    }
+	LOG_FUNC
 	// Obtain the completion code for this CActive obj.
 	TInt completionCode(iStatus.Int()); 
 	// NOTE: Look at its iStatus.iFlags. 
@@ -158,9 +132,7 @@ void CTestCase0462::RunStepL()
 				}
 			// prompt to insert connector
 			test.Printf(KInsertAConnectorPrompt);
-			OstTrace0(TRACE_NORMAL, CTESTCASE0462_RUNSTEPL_DUP01, KInsertAConnectorPrompt);
 			test.Printf(KPressAnyKeyToContinue);
-			OstTrace0(TRACE_NORMAL, CTESTCASE0462_RUNSTEPL_DUP02, KPressAnyKeyToContinue);
 			RequestCharacter();			
 			break;
 			
@@ -179,7 +151,6 @@ void CTestCase0462::RunStepL()
 		case ERegisterForEvents:
 			// prompt to remove connector
 			test.Printf(KRemoveAConnectorPrompt);		
-			OstTrace0(TRACE_NORMAL, CTESTCASE0462_RUNSTEPL_DUP03, KRemoveAConnectorPrompt);		
 			if (iDequeAttempts > 3)
 				{
 				return (TestFailed(KErrCorrupt, _L("<Error> too many irrelevant/incorrect events")));
@@ -214,7 +185,6 @@ void CTestCase0462::RunStepL()
 		case EGetAndCancelEvent:
 			OtgEventString(iOTGEvent, aDescription);
 			test.Printf(_L("Received event %d '%S' status(%d)"), iOTGEvent, &aDescription, completionCode);
-			OstTraceExt3(TRACE_NORMAL, CTESTCASE0462_RUNSTEPL_DUP04, "Received event %d '%S' status(%d)", iOTGEvent, aDescription, completionCode);
 			if (RUsbOtgDriver::EEventAPlugRemoved == iOTGEvent)
 				{
 				otgQueueOtgEventRequest( iOTGEvent, iStatus);
@@ -244,11 +214,9 @@ void CTestCase0462::RunStepL()
 		case EInsertA: // 6. remove 'A'
 			iConsole->ReadCancel();
 			test.Printf(KInsertAConnectorPrompt);
-			OstTrace0(TRACE_NORMAL, CTESTCASE0462_RUNSTEPL_DUP05, KInsertAConnectorPrompt);
 
 			iCaseStep = ERemoveA;
 			test.Printf(KPressAnyKeyToContinue);
-			OstTrace0(TRACE_NORMAL, CTESTCASE0462_RUNSTEPL_DUP06, KPressAnyKeyToContinue);
 			RequestCharacter();			
 			break;
 			
@@ -256,13 +224,11 @@ void CTestCase0462::RunStepL()
 		case ERemoveA:
 			iConsole->ReadCancel();
 			test.Printf(KRemoveAConnectorPrompt);
-			OstTrace0(TRACE_NORMAL, CTESTCASE0462_RUNSTEPL_DUP07, KRemoveAConnectorPrompt);
 			if (iRepeats-- >0)
 				iCaseStep = EInsertA;
 			else
 				iCaseStep = ETallyEvents;
 			test.Printf(KPressAnyKeyToContinue);
-			OstTrace0(TRACE_NORMAL, CTESTCASE0462_RUNSTEPL_DUP08, KPressAnyKeyToContinue);
 			RequestCharacter();
 			break;
 			
@@ -285,7 +251,6 @@ void CTestCase0462::RunStepL()
 
 		default:
 			test.Printf(_L("<Error> unknown test step"));
-			OstTrace0(TRACE_NORMAL, CTESTCASE0462_RUNSTEPL_DUP09, "<Error> unknown test step");
 			Cancel();
 			return (TestFailed(KErrCorrupt, _L("<Error> unknown test step")));
 

@@ -141,7 +141,7 @@ TInt DPcCardSocket::Create(const TDesC* aName)
 //
 	{
 
-	__KTRACE_OPT(KPBUS1,Kern::Printf(">Skt(%d):Create(%S)",iSocketNumber,aName));
+	__KTRACE_OPT(KPBUS1,Kern::Printf(">Skt(%d):Create(%lS)",iSocketNumber,aName));
 
 	TInt r=DPBusSocket::Create(aName);
 	if (r!=KErrNone)

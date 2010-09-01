@@ -100,7 +100,6 @@ extern void DumpMemory(const char* msg, const void* data, int length);
 #define TEST_OOM(p)	TEST_RESULT(p, "Out of memory");
 
 #define RANGE_CHECK(l,x,h)	((l)<=(x) && (x)<=(h))
-#define RANGE_LQ(x,h)	((x)<=(h))
 
 #ifdef __SMP__
 #define	for_each_cpu(cpu)	\

@@ -195,10 +195,10 @@ EXPORT_C TInt CFsObject::Open()
 	return KErrNone;
 	}
 //------------------------------------	
-EXPORT_C CFileSystem::CFileSystem(void)
+CFileSystem::CFileSystem(void)
 	{
 	}
-EXPORT_C CFileSystem::~CFileSystem(void)
+CFileSystem::~CFileSystem(void)
 	{
 	}
 	
@@ -295,7 +295,7 @@ CFsDispatchObject::CFsDispatchObject()
 CFsDispatchObject::~CFsDispatchObject()
 	{
 	}
-EXPORT_C int CFsDispatchObject::IsCorrectThread(void)
+int CFsDispatchObject::IsCorrectThread(void)
 	{
 	return ETrue;
 	}
@@ -309,12 +309,12 @@ EXPORT_C void CMountCB::IsFileInRom(const TDesC& /*aFileName*/,TUint8*& aFileSta
 	aFileStart=NULL;
 	}
 
-EXPORT_C int CLocDrvMountCB::CreateLocalDrive(class TBusLocalDrive &) 
+int CLocDrvMountCB::CreateLocalDrive(class TBusLocalDrive &) 
 
 	{
 	return KErrNone;
 	}
-EXPORT_C void CLocDrvMountCB::DismountedLocalDrive(void) 
+void CLocDrvMountCB::DismountedLocalDrive(void) 
 	{
 	}
 	
@@ -325,12 +325,12 @@ EXPORT_C void WriteToDisk(const TDesC& /*aFileName*/, const TDesC8& /*aBuf*/)
 // Implement the GetInterface methods here as these are usually 
 // exported by EFILE, but these unit tests don't link to it.
 
-EXPORT_C TInt CMountCB::GetInterface(TInt /*aInterfaceId*/, TAny*& /*aInterface*/, TAny* /*aInput*/)
+TInt CMountCB::GetInterface(TInt /*aInterfaceId*/, TAny*& /*aInterface*/, TAny* /*aInput*/)
 	{
 	return KErrNotSupported;
 	}
 
-EXPORT_C TInt CFileSystem::GetInterface(TInt /*aInterfaceId*/, TAny*& /*aInterface*/, TAny* /*aInput*/)
+TInt CFileSystem::GetInterface(TInt /*aInterfaceId*/, TAny*& /*aInterface*/, TAny* /*aInput*/)
 	{
 	return KErrNotSupported;
 	}

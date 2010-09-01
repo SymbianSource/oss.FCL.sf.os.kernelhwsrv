@@ -338,10 +338,10 @@ __NAKED__ void __X86VectorIrq()
 	asm("shr eax, 24 ");
 	asm("mov esi, [eax*4+%0]" : : "i" (&SubSchedulerLookupTable));
 	asm("mov edi, esp ");								// edi points to saved stuff
-	asm("inc dword ptr [esi+%0]" : : "i" _FOFF(TSubScheduler, iSSX.iIrqCount));	// increment i_IrqCount
-	asm("inc dword ptr [esi+%0]" : : "i" _FOFF(TSubScheduler, iSSX.iIrqNestCount));	// nest count starts at -1, iExtras[13]
+	asm("inc dword ptr [esi+36+%0]" : : "i" _FOFF(TSubScheduler, iExtras));	// increment i_IrqCount
+	asm("inc dword ptr [esi+52+%0]" : : "i" _FOFF(TSubScheduler, iExtras));	// nest count starts at -1, iExtras[13]
 	asm("jnz short nested_irq_entry ");
-	asm("mov esp, [esi+%0]" : : "i" _FOFF(TSubScheduler, iSSX.iIrqStackTop));			// iExtras[14] = irq stack top
+	asm("mov esp, [esi+56+%0]" : : "i" _FOFF(TSubScheduler, iExtras));			// iExtras[14] = irq stack top
 	asm("push edi ");
 	asm("nested_irq_entry: ");
 	asm("mov edx, [esi+%0]" : : "i" _FOFF(TSubScheduler, iCpuMask));
@@ -393,7 +393,7 @@ __NAKED__ void __X86VectorIrq()
 	// Postamble. Interrupts disabled here.
 	asm("postamble: ");
 	asm("cli ");
-	asm("dec dword ptr [esi+%0]" : : "i" _FOFF(TSubScheduler, iSSX.iIrqNestCount));
+	asm("dec dword ptr [esi+52+%0]" : : "i" _FOFF(TSubScheduler, iExtras));
 	asm("jns short nested_irq_exit ");
 
 	// Check for deferred/transferred IRQs
@@ -401,11 +401,11 @@ __NAKED__ void __X86VectorIrq()
 	asm("je short no_event_handlers ");
 
 	// increment i_IrqNestCount again since we are going to run more ISRs
-	asm("inc dword ptr [esi+%0]" : : "i" _FOFF(TSubScheduler, iSSX.iIrqNestCount));
+	asm("inc dword ptr [esi+52+%0]" : : "i" _FOFF(TSubScheduler, iExtras));
 	asm("push esi ");
 	asm("call %a0" : : "i" (run_event_handlers));
 	asm("add esp, 4 ");
-	asm("dec dword ptr [esi+%0]" : : "i" _FOFF(TSubScheduler, iSSX.iIrqNestCount));
+	asm("dec dword ptr [esi+52+%0]" : : "i" _FOFF(TSubScheduler, iExtras));
 
 	asm("no_event_handlers: ");
 	asm("pop eax ");
@@ -517,7 +517,7 @@ GLDEF_C __NAKED__ void __X86VectorExc()
 	asm("ring0_exception: ");
 	asm("mov [ebp], eax ");
 
-	asm("cmp dword ptr [esi+%0], -1 " : : "i" _FOFF(TSubScheduler, iSSX.iIrqNestCount));
+	asm("cmp dword ptr [esi+52+%0], -1 " : : "i" _FOFF(TSubScheduler, iExtras));
 	asm("jnz short fatal_exception_irq ");
 	asm("cmp dword ptr [esi+%0], 0 " : : "i" _FOFF(TSubScheduler, iKernLockCount));
 	asm("jnz short fatal_exception_locked ");
@@ -602,10 +602,10 @@ extern "C" __NAKED__ void __X86Vector02()
 	asm("mov esi, ds:[%0]" : : "i" (X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
 	asm("shr esi, 24 ");
 	asm("mov esi, [esi*4+%0]" : : "i" (&SubSchedulerLookupTable));			// esi -> subscheduler
-	asm("mov ebp, [esi+%0]" : : "i" _FOFF(TSubScheduler, iSSX.iCrashState));
+	asm("mov ebp, [esi+44+%0]" : : "i" _FOFF(TSubScheduler, iExtras));
 	asm("cmp ebp, 16 ");
 	asm("jae nmihook ");
-	asm("mov ebp, [esi+%0]" : : "i" _FOFF(TSubScheduler, iSSX.iTss));		// points to SCpuData
+	asm("mov ebp, [esi+60+%0]" : : "i" _FOFF(TSubScheduler, iExtras));		// points to SCpuData
 	asm("mov edi, %0" : : "i" (addressof_TheScheduler)); 
 	asm("lea ebp, [ebp+%0]" : : "i" _FOFF(SCpuData, iRegs));
 	asm("mov [ebp+%0], eax" : : "i" _FOFF(SFullX86RegSet, iEax));
@@ -627,7 +627,7 @@ extern "C" __NAKED__ void __X86Vector02()
 	asm("mov [ebp+%0], eax" : : "i" _FOFF(SFullX86RegSet, iFs));
 	asm("mov ax, gs ");
 	asm("mov [ebp+%0], eax" : : "i" _FOFF(SFullX86RegSet, iGs));
-	asm("lea ebx, [esi+%0]" : : "i" _FOFF(TSubScheduler, iSSX.iIrqNestCount));		// points to i_IrqNestCount
+	asm("lea ebx, [esi+52+%0]" : : "i" _FOFF(TSubScheduler, iExtras));		// points to i_IrqNestCount
 	asm("mov eax, 0x80000000 ");
 	asm("lock xchg eax, [ebx] ");
 	asm("mov [ebp+%0], eax" : : "i" _FOFF(SFullX86RegSet, iIrqNestCount));
@@ -641,7 +641,7 @@ extern "C" __NAKED__ void __X86Vector02()
 	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet, iEsp));
 	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet, iSs));
 	asm("got_regs: ");
-	asm("mov dword ptr [esi+%0], 2" : : "i" _FOFF(TSubScheduler, iSSX.iCrashState));	// flag that this CPU is done
+	asm("mov dword ptr [esi+44+%0], 2" : : "i" _FOFF(TSubScheduler, iExtras));	// flag that this CPU is done
 	asm("nmi_halt: ");
 	asm("cli ");
 	asm("xor eax, eax ");
@@ -794,10 +794,10 @@ EXPORT_C __NAKED__ TLinAddr X86::IrqReturnAddress()
 	{
 	asm("mov eax, ds:[%0]" : : "i" (X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
 	asm("shr eax, 24 ");
-	asm("mov eax, [eax*4+%0]" : : "i" (&SubSchedulerLookupTable));				// esi -> subscheduler
-	asm("mov eax, [eax+%0]" : : "i" _FOFF(TSubScheduler, iSSX.iIrqStackTop));	// eax = i_IrqStackTop
-	asm("mov eax, [eax-4] ");													// saved supervisor stack pointer
-	asm("mov eax, [eax+%0]" : : "i" _FOFF(SThreadExcStack, iEip));				// saved return address from original interrupt
+	asm("mov eax, [eax*4+%0]" : : "i" (&SubSchedulerLookupTable));			// esi -> subscheduler
+	asm("mov eax, [eax+56+%0]" : : "i" _FOFF(TSubScheduler, iExtras));		// eax = i_IrqStackTop
+	asm("mov eax, [eax-4] ");												// saved supervisor stack pointer
+	asm("mov eax, [eax+%0]" : : "i" _FOFF(SThreadExcStack, iEip));			// saved return address from original interrupt
 	asm("ret ");
 	}
 
@@ -863,7 +863,7 @@ extern "C" __NAKED__ void send_generic_ipis(TUint32)
 	asm("shr eax, 1 ");
 	asm("jnc short sgi1 ");
 	asm("sgi2: ");
-	asm("mov ecx, [esi+%0]" : : "i" _FOFF(TSubScheduler, iSSX.iAPICID));
+	asm("mov ecx, [esi+48+%0]" : : "i" _FOFF(TSubScheduler, iExtras));	// ss.i_APICID
 	asm("mov ds:[%0], ecx" : : "i" (X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ICRH));
 	asm("mov ds:[%0], edx" : : "i" (X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ICRL));
 	asm("sgi1: ");

@@ -157,31 +157,14 @@ LOCAL_C void testAlloc(TInt aSize)
 		pBitMapAllocator->Free(i);
 	test(pBitMapAllocator->Avail()==pBitMapAllocator->Size());
 //
-	test.Next(_L("AllocFrom"));
-	i=0;
-	for (;i<available;i++)
-		{
-		TInt j=pBitMapAllocator->AllocFrom(i);
-		test(j==i);
-		}
-	test(pBitMapAllocator->Avail()==0);
-
-	test.Next(_L("Try AllocFrom for already allocated pos")); //should return KErrNoMemory
-	TInt j=pBitMapAllocator->AllocFrom(i-1);
-	test(j==KErrNoMemory);
-
-	test.Next(_L("Free (again)"));
-	for (i=0;i<available;i++)
-		{
-		pBitMapAllocator->Free(i);
-		}
-	test(pBitMapAllocator->Avail()==pBitMapAllocator->Size());
-//
-
 	test.Next(_L("AllocAt"));
 	pBitMapAllocator->AllocAt(aSize-1);
 	test(pBitMapAllocator->Avail()==pBitMapAllocator->Size()-1);
-
+//
+//	test.Next(_L("AllocAt an already allocated cell"));	// this test should cause a Panic.
+//	pBitMapAllocator->AllocAt(aSize-1);
+//	test(pBitMapAllocator->Avail()==pBitMapAllocator->Size()-1);
+//
 	test.Next(_L("Free (again)"));
 	pBitMapAllocator->Free(aSize-1);
 	test(pBitMapAllocator->Avail()==pBitMapAllocator->Size());

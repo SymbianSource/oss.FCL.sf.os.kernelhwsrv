@@ -15,7 +15,6 @@
 // 
 //
 
-#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include <e32svr.h>
@@ -165,7 +164,7 @@ void TestMediaCardNotificationWhenNotRegisteredForIt()
 	{
 	RFs fs;
 	TInt r = fs.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	CFsNotify* notify = NULL;
 	TRAP(r,notify= CFsNotify::NewL(fs,KMinNotificationBufferSize));
@@ -178,11 +177,11 @@ void TestMediaCardNotificationWhenNotRegisteredForIt()
 	filename.Append(_L("media.change1"));
 	
 	r = notify->AddNotification((TUint)TFsNotification::ECreate,path,filename);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	TRequestStatus status;
 	r = notify->RequestNotifications(status);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	test.Printf(_L("*****************************************************************\n"));
 	test.Printf(_L("Waiting 10 seconds.\n"));
@@ -192,7 +191,7 @@ void TestMediaCardNotificationWhenNotRegisteredForIt()
 	test.Printf(_L("*****************************************************************\n"));
 	RTimer timer1;
 	r = timer1.CreateLocal();
-	test_KErrNone(r);
+	test(r == KErrNone);
 	TRequestStatus timeout;
 	TTimeIntervalMicroSeconds32 time = 10000000;
 	timer1.After(timeout,time);
@@ -210,9 +209,9 @@ void TestMediaCardNotificationWhenNotRegisteredForIt()
 	drive.Append(_L(":"));
 	TPtrC drivePtr;
 	r = notification->Path(drivePtr);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r = drivePtr.Compare(drive);
-	test_Value(r, r == 0);
+	test(r==0);
 	
 	test.Printf(_L("*****************************************************************\n"));
 	test.Printf(_L("Waiting 10 seconds.\n"));
@@ -227,7 +226,7 @@ void TestMediaCardNotificationWhenNotRegisteredForIt()
 		notify->RequestNotifications(status);
 		RTimer timer2;
 		r = timer2.CreateLocal();
-		test_KErrNone(r);
+		test(r == KErrNone);
 		TRequestStatus timeout2;
 		timer2.After(timeout2,time);
 		User::WaitForRequest(timeout2,status);
@@ -250,7 +249,7 @@ TInt TestClientRemovalL()
 	{
 	RFs fs;
 	TInt r = fs.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	CFsNotify* notify1 = NULL;
 	CFsNotify* notify2 = NULL;
@@ -261,7 +260,7 @@ TInt TestClientRemovalL()
 		{
 		delete notify1;
 		delete notify2;
-		test_KErrNone(r);
+		test(r==KErrNone);
 		}
 	
 	TBuf<40> path;
@@ -276,15 +275,15 @@ TInt TestClientRemovalL()
 	fullname.Append(filename);
 	
 	r = notify1->AddNotification((TUint)TFsNotification::ECreate,path,filename);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r = notify2->AddNotification((TUint)TFsNotification::ECreate,path,filename);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	delete notify1; //Delete notify1 and ensure we still get notification on notify2
 	
 	TRequestStatus status;
 	r = notify2->RequestNotifications(status);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	RFile file;
 	file.Replace(fs,fullname,EFileWrite); //Replace produces Create notification
@@ -292,7 +291,7 @@ TInt TestClientRemovalL()
 	
 	RTimer tim;
 	r = tim.CreateLocal();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	TRequestStatus timStatus;
 	TTimeIntervalMicroSeconds32 time = 10000000; //10 seconds
@@ -302,7 +301,7 @@ TInt TestClientRemovalL()
 	test(status!=KRequestPending);
 	
 	r = fs.Delete(fullname);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	delete notify2;
 	tim.Close();
@@ -325,7 +324,7 @@ TInt TestRootDriveNotifications()
 	CFsNotify* notify = NULL;
 	
 	TRAPD(r,notify = CFsNotify::NewL(fs,KMinNotificationBufferSize););
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(notify!=NULL);
 	
 	TBuf<40> path;
@@ -336,18 +335,18 @@ TInt TestRootDriveNotifications()
 	filename.Append(_L("*"));
 	
 	r = notify->AddNotification((TUint)TFsNotification::ECreate,path,filename);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	TRequestStatus status;
 	r = notify->RequestNotifications(status);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	RFile file;
 	TBuf<40> filePath;
 	filePath.Append((TChar)gDriveToTest);
 	filePath.Append(_L(":\\file.root"));
 	r = file.Replace(fs,filePath,EFileRead);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file.Close();
 	
 	TRequestStatus s2;
@@ -1327,7 +1326,7 @@ TInt MultipleNotificationTFDoer(TAny* aAny)
 		    
 		    CFileMan* cfman = NULL;
 		    TRAP(r, cfman = CFileMan::NewL(fs);)
-		    test_KErrNone(r);
+		    test(r == KErrNone);
             test(cfman != NULL);
             TBuf<40> unmonitored_path;
             unmonitored_path.Append(gDriveToTest);
@@ -1397,13 +1396,13 @@ TInt TestProcessCapabilities(const TDesC& aProcessName)
 	TUidType uid;
 	TPtrC command((TText*)&gDriveToTest,1);
 	TInt r = process.Create(aProcessName,command,uid);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	process.Resume();
 	TRequestStatus s1;
 	TRequestStatus s2;
 	RTimer tim;
 	r = tim.CreateLocal();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TTimeIntervalMicroSeconds32 delay = 5000000; //5 seconds
 	tim.After(s1,delay);
 	process.Logon(s2);
@@ -1959,9 +1958,9 @@ TInt TestTwoNotificationsL()
 	RThread doer;
 	
 	TInt r = watcher.Create(_L("TestTwoNotificationsWatcherThread"),MultipleNotificationsTFWatcher,KDefaultStackSize,KMinHeapSize,KMaxHeapSize,&package);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r = doer.Create(_L("TestTwoNotificationsDoerThread"),TwoNotificationsTFDoer,KDefaultStackSize,KMinHeapSize,KMaxHeapSize,&package);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Next(_L("TestTwoNotifications - Resume Watcher"));
 	watcher.Resume();
 	test.Next(_L("TestTwoNotifications - Wait for Watcher to be ready"));
@@ -2623,9 +2622,9 @@ TInt TestCancelNotificationL()
 	RThread doer;
 
 	TInt r = watcher.Create(_L("TestCancelNotification-WatcherThread"),TestCancelNotificationWatcher,KDefaultStackSize*2,KMinHeapSize,KMaxHeapSize,&package);
-	test_KErrNone(r);
+	test(r == KErrNone);
 	r = doer.Create(_L("TestCancelNotification-DoerThread"),SimpleSingleNotificationTFDoer,KDefaultStackSize*2,KMinHeapSize,KMaxHeapSize,&package);
-	test_KErrNone(r);
+	test(r == KErrNone);
 	test.Printf(_L("TestCancelNotificationL - Watcher.Resume()"));
 	watcher.Resume();
 	test.Printf(_L("TestCancelNotificationL - Waiting on package.iBarrier.Wait()"));
@@ -2646,7 +2645,7 @@ TInt TestCancelNotificationL()
 	
 	RTimer tim;
 	r = tim.CreateLocal();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	TRequestStatus timStatus;
 	TTimeIntervalMicroSeconds32 time = 10000000; //10 seconds
@@ -2730,7 +2729,7 @@ TInt TestSessionCloseTF(TAny* aTestCase)
 			
 			RDebug::Printf("TestSessionCloseTF - Case 2 - Add Notification\n");
 			r = notify->AddNotification((TUint)TFsNotification::ECreate,path,filename);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			
 			RDebug::Printf("TestSessionCloseTF - Case 2 - Fs.Close\n");
 			fs.Close();
@@ -2780,7 +2779,7 @@ void TestSessionClose(TInt aTestCase)
 	User::WaitForRequest(status);
 	test.Printf(_L("Kern-Exec 0 is EXPECTED\n"));
 	TInt err = thread.ExitReason();
-	test_KErrNone(err);
+	test(err == KErrNone);
 	TExitType et = thread.ExitType();
 	test(et == EExitPanic);
 	CLOSE_AND_WAIT(thread);
@@ -2860,7 +2859,7 @@ TInt TestOverflowWatcher1TF(TAny* aAny)
 	//Except the first one will still be in the buffer
 	// (as we've not called RequestNotification yet) so we'll only actually get 5.
 	TRAPD(r, notify = CFsNotify::NewL(fs,(80*7)-4));
-	test_KErrNone(r);
+	test(r == KErrNone);
 	User::LeaveIfNull(notify);
 	notify->AddNotification(TFsNotification::EFileChange,path,filename);
 	notify->RequestNotifications(status);
@@ -2942,7 +2941,7 @@ TInt TestOverflowL()
 	test.Next(_L("TestOverflow"));
 	RFs fs;
 	TInt r = fs.Connect();
-	test_KErrNone(r);
+	test(r == KErrNone);
 	_LIT(KFileName,"over.flow");
 	SThreadPackage doerPkg;
 	doerPkg.iFileName = KFileName;
@@ -2984,7 +2983,7 @@ TInt TestOverflowL()
 	
 	RTimer tim;
 	r = tim.CreateLocal();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TRequestStatus timStatus;
 	
 	test.Next(_L("TestOverflow - Wait for watcher1 thread death"));
@@ -3061,7 +3060,7 @@ TInt HandlePostOverflow(SThreadPackage& aPackage, CFsNotify* aNotify)
     {
     TRequestStatus status;
     TInt r = aNotify->RequestNotifications(status);
-    test_KErrNone(r);
+    test(r == KErrNone);
     //Signal that overflow has been found (W4)
     aPackage.iBarrier.Signal();
     
@@ -3087,7 +3086,7 @@ TInt HandlePostOverflow(SThreadPackage& aPackage, CFsNotify* aNotify)
         if(notification == NULL)
             {
             r = aNotify->RequestNotifications(status);
-            test_KErrNone(r);
+            test(r == KErrNone);
             User::WaitForRequest(status);
             notification = aNotify->NextNotification();
             }
@@ -3128,7 +3127,7 @@ TInt TestPostOverflowWatcher1TF(TAny* aAny)
     //Except the first one will still be in the buffer
     // (as we've not called RequestNotification yet) so we'll only actually get 5.
     TRAPD(r, notify = CFsNotify::NewL(fs,(80*7)-4));
-    test_KErrNone(r);
+    test(r == KErrNone);
     User::LeaveIfNull(notify);
     notify->AddNotification(TFsNotification::EFileChange,path,filename);
     notify->RequestNotifications(status);
@@ -3197,7 +3196,7 @@ TInt TestPostOverflowNotifications()
     test.Next(_L("TestPostOverflowNotifications"));
     RFs fs;
     TInt r = fs.Connect();
-    test_KErrNone(r);
+    test(r == KErrNone);
     _LIT(KFileName,"post.over");
     SThreadPackage doerPkg;
     doerPkg.iFileName = KFileName;
@@ -3252,21 +3251,21 @@ TInt TestPostOverflowNotifications()
     path.Append(watcher1Pkg.iFileName);
     RFile file;
     r = file.Open(fs,path,EFileWrite);
-    test_KErrNone(r);
+    test(r==KErrNone);
     
     r = file.SetSize(1);
-    test_KErrNone(r);
+    test(r==KErrNone);
     r = file.SetSize(2);
-    test_KErrNone(r);
+    test(r==KErrNone);
     r = file.SetSize(3);
-    test_KErrNone(r);
+    test(r==KErrNone);
     file.Close();
     
     watcher1Pkg.iBarrier.Signal(); // Signal post operations complete (Sx)
     
     RTimer tim;
     r = tim.CreateLocal();
-    test_KErrNone(r);
+    test(r==KErrNone);
     TRequestStatus timStatus;
     
     test.Next(_L("TestOverflow - Wait for watcher1 thread death"));
@@ -3308,11 +3307,11 @@ void TestNonDriveFilters()
 	test.Next(_L("TestNonDriveFilters"));
 	RFs fs;
 	TInt r = fs.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	TDriveList drives;
 	r = fs.DriveList(drives);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	CFsNotify* notify = NULL;
 	TRAP(r,notify= CFsNotify::NewL(fs,KMinNotificationBufferSize));
@@ -3321,11 +3320,11 @@ void TestNonDriveFilters()
 	testfile.Append(_L("test.file"));
 	
 	r = notify->AddNotification((TUint)TFsNotification::ECreate,_L(""),testfile);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	TRequestStatus status;
 	r = notify->RequestNotifications(status);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	TBuf<40> path;
 	path.Append((TChar)gDriveToTest);
@@ -3337,9 +3336,9 @@ void TestNonDriveFilters()
 	
 	RFile file;
 	r = fs.MkDirAll(path);
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	r = file.Replace(fs,fullname,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file.Close();
 	
 	fs.Delete(fullname);
@@ -3363,14 +3362,14 @@ void TestNonDriveFilters()
 		}
 	
 	r = fs.MkDirAll(fullname);
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	r = file.Replace(fs,fullname,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file.Close();
 	
 	RTimer timer1;
 	r = timer1.CreateLocal();
-	test_KErrNone(r);
+	test(r == KErrNone);
 	TRequestStatus timeout;
 	TTimeIntervalMicroSeconds32 time = 10000000;    //10 seconds
 	timer1.After(timeout,time);
@@ -3383,7 +3382,7 @@ void TestNonDriveFilters()
 	test(notification != NULL);
 	TPtrC _path;
 	r = notification->Path(_path);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TChar driveletter = _path[0];
 	driveletter.UpperCase();
 	test(driveletter ==  (TChar)gDriveToTest);
@@ -3392,11 +3391,11 @@ void TestNonDriveFilters()
 		{
 		TRequestStatus status2;
 		r = notify->RequestNotifications(status2);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		
 		RTimer timer2;
 		r = timer2.CreateLocal();
-		test_KErrNone(r);
+		test(r == KErrNone);
 		TRequestStatus timeout2;
 		TTimeIntervalMicroSeconds32 time2 = 10000000;    //10 seconds
 		timer2.After(timeout2,time2);
@@ -3409,7 +3408,7 @@ void TestNonDriveFilters()
 		}
 	test(notification != NULL);
 	r = notification->Path(_path);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	driveletter = _path[0];
 	driveletter.UpperCase();
 	test(driveletter == (TChar)'C');	
@@ -3424,7 +3423,7 @@ void NegativeTestDirStar()
 	{
 	RFs fs;
 	TInt r = fs.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	CFsNotify* notify = NULL;
 	TRAP(r,notify= CFsNotify::NewL(fs,KMinNotificationBufferSize));
@@ -3433,14 +3432,14 @@ void NegativeTestDirStar()
 	path.Append((TChar)gDriveToTest);
 	path.Append(_L(":\\F32-TST\\T_NOTIFIER\\"));
 	r = fs.MkDirAll(path);
-	test_Value(r, r == KErrNone || r == KErrAlreadyExists);
+	test(r == KErrNone || r == KErrAlreadyExists);
 	
 	r = notify->AddNotification((TUint)TFsNotification::ECreate,path,_L(""));
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	TRequestStatus status;
 	r = notify->RequestNotifications(status);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	TBuf<40> filename;
 	filename.Append((TChar)gDriveToTest);
@@ -3448,12 +3447,12 @@ void NegativeTestDirStar()
 	
 	RFile file;
 	r = file.Replace(fs,filename,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file.Close();
 	
 	RTimer timer1;
 	r = timer1.CreateLocal();
-	test_KErrNone(r);
+	test(r == KErrNone);
 	TRequestStatus timeout;
 	TTimeIntervalMicroSeconds32 time = 2000000;    //2 seconds
 	timer1.After(timeout,time);
@@ -3480,7 +3479,7 @@ void NegativeTests()
 	RFs fs;
 	CFsNotify* notify = NULL;
 	TInt r = fs.Connect();
-	test_KErrNone(r);
+	test(r == KErrNone);
 	TRAP(r,notify = CFsNotify::NewL(fs,0));
 	test(notify != NULL);
 	delete notify;
@@ -3495,7 +3494,7 @@ void NegativeTests()
 
 	test.Printf(_L("NegativeTests() C\n"));
 	TRAP(r,notify = CFsNotify::NewL(fs,KMaxTInt));
-	test_Value(r, r == KErrArgument);
+	test(r==KErrArgument);
 	test(notify==NULL);
 	
 	//3
@@ -3506,34 +3505,34 @@ void NegativeTests()
 	TBuf<20> filename;
 	filename.Append(_L("file.txt"));
 	TRAP(r,notify = CFsNotify::NewL(fs,KMinNotificationBufferSize));
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(notify!=NULL);
 	r = notify->AddNotification(0,path,filename);
-	test_Value(r, r == KErrArgument);
+	test(r == KErrArgument);
 	
 	test.Printf(_L("NegativeTests() E\n"));
 	r = notify->AddNotification((TUint)0x8000,path,filename); //invalid value
-	test_Value(r, r == KErrArgument);
+	test(r == KErrArgument);
 	
 	test.Printf(_L("NegativeTests() F\n"));
 	TBuf<40> invalidPath;
 	invalidPath.Append(_L("1:\\*"));
 	r = notify->AddNotification((TUint)TFsNotification::ECreate,invalidPath,filename);
-	test_Value(r, r == KErrNotFound || r == KErrPathNotFound);
+	test(r == KErrNotFound || r == KErrPathNotFound);
 	
 	//4
 	test.Printf(_L("NegativeTests() G\n"));
 	TRequestStatus wrongStatus;
 	wrongStatus = KRequestPending;
 	r = notify->RequestNotifications(wrongStatus);
-	test_Value(r, r == KErrInUse);
+	test(r == KErrInUse);
 	
 	test.Printf(_L("NegativeTests() H\n"));
 	TRequestStatus status;
 	r = notify->RequestNotifications(status);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r = notify->CancelNotifications(wrongStatus);
-	test_Value(r, r == KErrInUse);
+	test(r == KErrInUse);
 	
 	delete notify;
 	notify = NULL;
@@ -3594,7 +3593,7 @@ void MyRPlugin::DoCancel(TUint aReqMask) const
 TInt TestNotificationsWithFServPlugins()
 	{
 	TInt r = TheFs.AddPlugin(KNotifyPluginFileName);
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	r = TheFs.MountPlugin(KNotifyPluginName,(TUint)gDriveToTest.GetUpperCase() - 65);
 	if (r == KErrNotSupported)
 		{
@@ -3654,12 +3653,12 @@ void CallTestsL()
 	__UHEAP_MARK;
 	r = TestNewDeleteCFsNotify(1);
 	__UHEAP_MARKEND;
-	test_KErrNone(r);	
+	test(r==KErrNone);	
 	//Creates and Deletes 50 CFsNotifys
 	__UHEAP_MARK;
 	r = TestNewDeleteCFsNotify(50);
 	__UHEAP_MARKEND;
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("------- End of User Heap Tests ---------------------------------------\n"));
 	//
 	// 2.	Add notification for creating a file
@@ -3669,7 +3668,7 @@ void CallTestsL()
 	__UHEAP_MARK;
 	r = SimpleCreateTestL();
 	__UHEAP_MARKEND;
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("------- End of CFsNotify Creation and Delete Tests -------------------\n"));
 	//
 	// 3.	Add notification at the root of a drive
@@ -3695,7 +3694,7 @@ void CallTestsL()
 	__UHEAP_MARK;
 	r = TestTwoDoersL();
 	__UHEAP_MARKEND;
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("------- End of TwoDoers Test -----------------------------------------\n"));
 	//
 	// 6.	Create 2 file server sessions
@@ -3706,7 +3705,7 @@ void CallTestsL()
 	__UHEAP_MARK;
 	r = TestTwoWatchersL();
 	__UHEAP_MARKEND;
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("------- End of TwoWatchers Test --------------------------------------\n"));
 	//
 	// 7.	Create 2 file server sessions and 2 clients
@@ -3717,7 +3716,7 @@ void CallTestsL()
 	__UHEAP_MARK;
 	r = TestTwoWatchersTwoDoersL();
 	__UHEAP_MARKEND;
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("------- End of TwoWatchersTwoDoers Test ------------------------------\n"));
 	//
 	// 8.	Add notification for a specific file creation
@@ -3728,7 +3727,7 @@ void CallTestsL()
 	__UHEAP_MARK;
 	r =  TestCancelNotificationL();
 	__UHEAP_MARKEND;
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("------- End of CancelNotification Test -------------------------------\n"));
 	//
 	// 9.	Create 2 file server sessions
@@ -3741,7 +3740,7 @@ void CallTestsL()
 	__UHEAP_MARK;
 	r = TestClientRemovalL();
 	__UHEAP_MARKEND;
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("------- End of TestClientRemoval Test --------------------------------\n"));
 	//
 	// 10.	Create a CFsNotify object
@@ -3778,7 +3777,7 @@ void CallTestsL()
 	test.Next(_L("EFileCreate Tests"));
 	_LIT(KFilename3,"file.create");
 	r = TestMultipleNotificationsL(_L(""),KFilename3,5,5,t_notification::EFileCreate,TFsNotification::ECreate,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("------- End of EFileCreate Tests -------------------------------------\n"));
 	//
 	// RFs::MkDir
@@ -3789,7 +3788,7 @@ void CallTestsL()
 	test.Next(_L("EFsMkDir Test"));
 	_LIT(KDirName1,"dirCreate\\");
 	r = TestMultipleNotificationsL(KDirName1,_L(""),1,1,t_notification::EFsMkDir,TFsNotification::ECreate,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("------- End of EFsMkDir Test -----------------------------------------\n"));
 	//
 	// RFile::Replace
@@ -3799,7 +3798,7 @@ void CallTestsL()
 	PrintLine();
 	test.Next(_L("EFileReplace Test"));
 	r = TestMultipleNotificationsL(_L(""),KFilename3,1,1,t_notification::EFileReplace,TFsNotification::ECreate,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("------- End of EFileReplace Test -------------------------------------\n"));
 	//
 	// 4.  Add notification for a specific file creation
@@ -3810,7 +3809,7 @@ void CallTestsL()
 	__UHEAP_MARK;
 	r =  TestAddRemoveNotificationL();
 	__UHEAP_MARKEND;
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("------- End of Add and Remove Notification Test ----------------------\n"));
 	//
 	// Wildcard Create Tests
@@ -3824,29 +3823,29 @@ void CallTestsL()
 	// Wildcard Name
 	_LIT(KWildcardName1,"*");
 	r = TestMultipleNotificationsL(_L(""),KWildcardName1,1,1,t_notification::EFileCreate,TFsNotification::ECreate,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r = TestMultipleNotificationsL(KWildcardName1,KWildcardName1,1,1,t_notification::EFileCreate_subs,TFsNotification::ECreate,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r = TestMultipleNotificationsL(KWildcardName1,KWildcardName1,1,1,t_notification::EFileCreate_subs_nowatch,TFsNotification::ECreate,KMinNotificationBufferSize,(TBool)ETrue,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	//
 	// Wildcard including Subdirectories
 	_LIT(KWildcardName2,"*\\");
 	r = TestMultipleNotificationsL(KWildcardName2,KWildcardName1,1,1,t_notification::EFileCreate,TFsNotification::ECreate,KMinNotificationBufferSize,(TBool)ETrue,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r = TestMultipleNotificationsL(KWildcardName2,KWildcardName1,1,1,t_notification::EFileCreate_subs_nowatch,TFsNotification::ECreate,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	_LIT(KDirName2,"SubDir\\");
 	_LIT(KWildcardName3,"?");
 	r = TestMultipleNotificationsL(KDirName2,KWildcardName3,1,1,t_notification::EFileCreate_subs_nowatch,TFsNotification::ECreate,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	//
 	// Wildcard Type
 	_LIT(KWildcardName4,"*.*");
 	r = TestMultipleNotificationsL(_L(""),KWildcardName4,1,1,t_notification::EFileCreate_txt_nowatch,TFsNotification::ECreate,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r = TestMultipleNotificationsL(_L(""),KWildcardName4,1,1,t_notification::EFileCreate_subs_nowatch,TFsNotification::ECreate,KMinNotificationBufferSize,(TBool)ETrue,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	//
 	// 6.  Add notification for file creation for a specific type
 	//     Create file with that type
@@ -3854,7 +3853,7 @@ void CallTestsL()
 	//
 	_LIT(KWildcardName5,"*.txt");
 	r = TestMultipleNotificationsL(_L(""),KWildcardName5,1,1,t_notification::EFileCreate_txt,TFsNotification::ECreate,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("------- End of Wildcard Create Tests ---------------------------------\n"));
 	
 	
@@ -3876,11 +3875,11 @@ void CallTestsL()
 	test.Next(_L("Attribute Tests"));
 	_LIT(KFilename4,"file.setatts");
 	r = TestMultipleNotificationsL(_L(""),KFilename4,1,1,t_notification::EFileSetAtt,TFsNotification::EAttribute,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r = TestMultipleNotificationsL(_L(""),KFilename4,1,1,t_notification::EFileSet,TFsNotification::EAttribute,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r = TestMultipleNotificationsL(_L(""),KFilename4,1,1,t_notification::EFsSetEntry,TFsNotification::EAttribute,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	//
 	// Wildcard Attribute Test including subdirectories
 	// 2.  Add notification for file attribute change using wildcard name
@@ -3888,7 +3887,7 @@ void CallTestsL()
 	//     Change attributes of some files
 	//
 	r = TestMultipleNotificationsL(KWildcardName2,_L("*"),3,3,t_notification::EFileSetAtt_subs,TFsNotification::EAttribute,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("------- End of Attribute Tests ---------------------------------------\n"));
 	
 	
@@ -3910,25 +3909,25 @@ void CallTestsL()
 	test.Next(_L("Rename Tests"));
 	_LIT(KFilename5,"file.rename");
 	r = TestMultipleNotificationsL(_L(""),KFilename5,1,1,t_notification::EFsReplace,TFsNotification::ERename,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r = TestMultipleNotificationsL(_L(""),KFilename5,1,1,t_notification::EFsRename,TFsNotification::ERename,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r = TestMultipleNotificationsL(_L(""),KFilename5,1,1,t_notification::EFileRename,TFsNotification::ERename,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	//
 	// 2.  Add notification for a specific directory rename
 	//     Rename that directory
 	//
 	_LIT(KDirName3,"dirRename\\");
 	r = TestMultipleNotificationsL(KDirName3,_L(""),1,1,t_notification::EFsRename_dir,TFsNotification::ERename,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	//
 	// 3.  Add notification for file rename using wildcard name
 	//     Create file that match the notification
 	//     Repeatedly rename the file
 	//
 	r = TestMultipleNotificationsL(_L(""),KWildcardName1,3,3,t_notification::EFileRename_wild,TFsNotification::ERename,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("------- End of Rename Tests ------------------------------------------\n"));
 	
 	
@@ -3950,7 +3949,7 @@ void CallTestsL()
 	test.Next(_L("EFsDelete Test"));
 	_LIT(KFilename6,"file.delete");
 	r = TestMultipleNotificationsL(_L(""),KFilename6,1,1,t_notification::EFsDelete,TFsNotification::EDelete,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);	
+	test(r==KErrNone);	
 	//
 	// RFs::RmDir
 	// 2.  Add notification for a specific directory delete
@@ -3960,7 +3959,7 @@ void CallTestsL()
 	test.Next(_L("EFsRmDir Tests"));
 	_LIT(KDirName4,"dirRemove\\");
 	r = TestMultipleNotificationsL(KDirName4,_L(""),1,1,t_notification::EFsRmDir,TFsNotification::EDelete,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
     //
     // This test should not receive any notifications because a non-empty directory cannot be removed
     // 3.  Add notification for specific directory delete
@@ -3969,7 +3968,7 @@ void CallTestsL()
     //
     _LIT(KDirName5,"dirRmNonEmp\\");
     r = TestMultipleNotificationsL(KDirName5,_L(""),1,1,t_notification::EFsRmDir_nonEmpty,TFsNotification::EDelete,KMinNotificationBufferSize,(TBool)ETrue,__LINE__);
-    test_KErrNone(r);	
+    test(r==KErrNone);	
     //
     // Wildcard Name ("*")
     // 4.  Add notification for directory delete using wildcard name
@@ -3977,7 +3976,7 @@ void CallTestsL()
 	//	   Delete that directory
     //
     r = TestMultipleNotificationsL(KWildcardName1,_L(""),1,1,t_notification::EFsRmDir_wild,TFsNotification::EDelete,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-    test_KErrNone(r);	
+    test(r==KErrNone);	
     //
     // Wildcard Type ("*.txt")
     // Creates files with different types and should only receive notifications from "*.txt" file deletions
@@ -3986,7 +3985,7 @@ void CallTestsL()
     //     Delete those files
     //
     r = TestMultipleNotificationsL(_L(""),KWildcardName4,3,3,t_notification::EFsDelete,TFsNotification::EDelete,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-    test_KErrNone(r);
+    test(r==KErrNone);
     test.Printf(_L("------- End of Delete Tests ------------------------------------------\n"));
 	
 	
@@ -4014,7 +4013,7 @@ void CallTestsL()
 	__UHEAP_MARK;
 	r = TestMultipleNotificationsL(_L(""),KFilename7,7,7,t_notification::EFileWrite,TFsNotification::EFileChange,3*KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
 	__UHEAP_MARKEND;
-	test_KErrNone(r);
+	test(r==KErrNone);
 	//
 	// 2.  Add notification for a specific file change
 	//     Write to the specified file a number of times without changing its size
@@ -4023,7 +4022,7 @@ void CallTestsL()
 	//     aMaxNotifications = 1 + aIterations
 	//
 	r = TestMultipleNotificationsL(_L(""),KFilename7,3,4,t_notification::EFileWrite_samesize,TFsNotification::EFileChange,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("------- End of EFileWrite Tests --------------------------------------\n"));
 	//
 	// 3.  Add notification for a specific file change
@@ -4035,7 +4034,7 @@ void CallTestsL()
 	__UHEAP_MARK;
 	r = TestMultipleNotificationsL(_L(""),KFilename8,4,4,t_notification::EFileWrite_async,TFsNotification::EFileChange,2*KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
 	__UHEAP_MARKEND;
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("------- End of EFileWrite_async Tests --------------------------------\n"));	
 	//
 	// File Set Size
@@ -4049,7 +4048,7 @@ void CallTestsL()
 	test.Next(_L("EFileSetSize Tests"));
 	_LIT(KFilename9,"file.setsize");
 	r = TestMultipleNotificationsL(_L(""),KFilename9,5,9,t_notification::EFileSetSize,TFsNotification::EFileChange,3*KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("------- End of EFileSetSize Tests ------------------------------------\n"));
 
 
@@ -4059,7 +4058,7 @@ void CallTestsL()
 	_LIT(KFilenameCFMan,"cf1le.man");
 	TUint notificationTypes = (TUint)TFsNotification::ECreate|TFsNotification::EFileChange|TFsNotification::EAttribute|TFsNotification::EDelete|TFsNotification::ERename;
 	r = TestMultipleNotificationsL(_L(""),KFilenameCFMan,1,5,t_notification::ECFileManMove,notificationTypes,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("------- End of CFileMan Tests -------------------------------------\n"));
 	
 	
@@ -4082,16 +4081,16 @@ void CallTestsL()
 	test.Next(_L("Mount Tests"));
 	TFullName filesystemName;
 	r = TheFs.FileSystemName(filesystemName,globalDriveNum);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r = TestMultipleNotificationsL(filesystemName,1,1,t_notification::EDismount,TFsNotification::EMediaChange,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	//
 	// RFs::MountFileSystem
 	// 2.  Add notification for media change
 	//     Mount the file system
 	//
 	r = TestMultipleNotificationsL(filesystemName,1,1,t_notification::EMount,TFsNotification::EMediaChange,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	//
 	// Repeatedly mount and dismount the file system
 	// 3.  Add notification for media change
@@ -4101,7 +4100,7 @@ void CallTestsL()
 	//     aMaxNotifications = 2*aIterations
 	//
 	r = TestMultipleNotificationsL(filesystemName,5,10,t_notification::EMountDismount,TFsNotification::EMediaChange,3*KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	//
 	// RFs::MountFileSystemAndScan
 	// 4.  Add notification for media change
@@ -4112,14 +4111,14 @@ void CallTestsL()
 	//
 //#ifndef __WINS__
 //    r = TestMultipleNotificationsL(filesystemName,1,2,t_notification::EMountScan,TFsNotification::EMediaChange,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-//    test_KErrNone(r);
+//    test(r==KErrNone);
 //#endif
 	test.Printf(_L("------- End of Mount Tests -------------------------------------------\n"));
 	TDriveInfo drvInfo;
 	TInt driveNum;
 	TheFs.CharToDrive(gDriveToTest,driveNum);
 	r = TheFs.Drive(drvInfo,driveNum);
-	test_KErrNone(r);
+	test (r == KErrNone);
 	TPtrC driveDes((TText*)&gDriveToTest,1);
 	//
 	// Manual Tests - Will only run on removable drives
@@ -4133,13 +4132,13 @@ void CallTestsL()
 		PrintLine();
 		test.Next(_L("Media Card Removal/Insertion Tests"));
 		r = TestMultipleNotificationsL(driveDes,1,1,t_notification::EMediaCardRemoval,TFsNotification::EMediaChange,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		//
 		// 6. Add notification for media change
 		//    Insert media card manually
 		//
 		r = TestMultipleNotificationsL(driveDes,1,1,t_notification::EMediaCardInsertion,TFsNotification::EMediaChange,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		test.Printf(_L("------- End of Media Card Removal/Insertion Tests --------------------\n"));
 		//
 		// We should receive an EMediaChange notification even though we did not register for it
@@ -4162,7 +4161,7 @@ void CallTestsL()
         PrintLine();
         test.Next(_L("RRawDisk::Write Tests"));
         r = TestMultipleNotificationsL(driveDes,1,1,t_notification::ERawDiskWrite,TFsNotification::EMediaChange,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-        test_KErrNone(r);
+        test(r==KErrNone);
         test.Printf(_L("------- End of RRawDisk::Write Test ------------------------------  \n"));
         }	
 	
@@ -4187,13 +4186,13 @@ void CallTestsL()
 	PrintLine();
 	test.Next(_L("DriveName Test"));
 	r = TestMultipleNotificationsL(driveDes,1,2,t_notification::ESetDriveName,TFsNotification::EDriveName,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	//
 	// 2.  Add notification for a specific drive name change
 	//     Repeatedly rename the drive
 	//
 	r = TestMultipleNotificationsL(driveDes,3,6,t_notification::ESetDriveName,TFsNotification::EDriveName,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("------- End of DriveName Test ----------------------------------------\n"));
 	
 	
@@ -4219,13 +4218,13 @@ void CallTestsL()
 	//     Change the volume name
 	//
 	r = TestMultipleNotificationsL(driveDes,1,2,t_notification::ESetVolumeLabel,TFsNotification::EVolumeName,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	//
 	// 2.  Add notification for a specific volume name change
 	//     Repeatedly rename the volume
 	//
 	r = TestMultipleNotificationsL(driveDes,3,6,t_notification::ESetVolumeLabel,TFsNotification::EVolumeName,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("------- End of VolumeName Test ---------------------------------------\n"));
 #endif
 		
@@ -4251,7 +4250,7 @@ void CallTestsL()
 	//
 	_LIT(KFilename10,"file.allops");
 	r = TestMultipleNotificationsL(_L(""),KFilename10,4,8,t_notification::EAllOps1,(TUint)TFsNotification::EAllOps,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	//
 	// 2.	Add notification for all operations
 	//		Create a file
@@ -4262,7 +4261,7 @@ void CallTestsL()
 	// 		aMaxNotification = 2 + aIterations (See File Write Tests)
 	//
 	r = TestMultipleNotificationsL(_L(""),KFilename10,4,6,t_notification::EAllOps2,(TUint)TFsNotification::EAllOps,2*KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	//
 	// 3.	Add notification for all operations
 	//		Create a file
@@ -4274,7 +4273,7 @@ void CallTestsL()
 	//     aMaxNotifications = 1 + 2*aIterations
 	//
 	r = TestMultipleNotificationsL(_L(""),KFilename10,4,9,t_notification::EAllOps3,(TUint)TFsNotification::EAllOps,KMinNotificationBufferSize*2,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	//
 	// 4.	Add notification for all operations
 	//		Create a file
@@ -4285,7 +4284,7 @@ void CallTestsL()
 	// 		aMaxNotification = 3
 	//
 	r = TestMultipleNotificationsL(_L(""),KFilename10,1,3,t_notification::EAllOps4,(TUint)TFsNotification::EAllOps,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	//
 	// 5.	Add notification for all operations
 	//		Create a file
@@ -4295,7 +4294,7 @@ void CallTestsL()
 	// 		aMaxNotification = 2
 	//
 	r = TestMultipleNotificationsL(_L(""),KFilename10,1,2,t_notification::EAllOps5,(TUint)TFsNotification::EAllOps,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	//
 	// 6.	Add notification for all operations
 	//		Change drive name
@@ -4307,7 +4306,7 @@ void CallTestsL()
 	//
 #ifndef __WINS__
 	r = TestMultipleNotificationsL(driveDes,1,2,t_notification::EAllOps6,(TUint)TFsNotification::EAllOps,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 #endif
 	test.Printf(_L("------- End of AllOps Tests ------------------------------------------\n"));
 	
@@ -4332,7 +4331,7 @@ void CallTestsL()
 	//
 	_LIT(KFilename11,"file.mulfil");
 	r = TestMultipleNotificationsL(_L(""),KFilename11,3,6,t_notification::EAllOps1,TFsNotification::ECreate | TFsNotification::EDelete,2*KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	//
 	// TFsNotification::EDelete | TFsNotification::ECreate | TFsNotification::EFileChange
 	// 2.	Add notification for create, file change and delete for a specific file
@@ -4345,7 +4344,7 @@ void CallTestsL()
 	//     aMaxNotifications = 1 + 2*aIterations
 	//
 	r = TestMultipleNotificationsL(_L(""),KFilename11,4,9,t_notification::EAllOps3,TFsNotification::EDelete | TFsNotification::ECreate | TFsNotification::EFileChange,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	//
 	// TFsNotification::EAttribute | TFsNotification::EDelete | TFsNotification::ECreate
 	// 3.	Add notification for create, attribute change and delete for a specific file
@@ -4357,7 +4356,7 @@ void CallTestsL()
 	// 		aMaxNotification = 3
 	//
 	r = TestMultipleNotificationsL(_L(""),KFilename11,1,3,t_notification::EAllOps4,TFsNotification::EAttribute | TFsNotification::EDelete | TFsNotification::ECreate,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	//
 	// TFsNotification::ERename | TFsNotification::ECreate
 	// 4.	Add notification for create and rename for a specific file
@@ -4368,7 +4367,7 @@ void CallTestsL()
 	// 		aMaxNotification = 2
 	//
 	r = TestMultipleNotificationsL(_L(""),KFilename11,1,2,t_notification::EAllOps5,TFsNotification::ERename | TFsNotification::ECreate,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	//
 	// TFsNotification::EVolumeName | TFsNotification::EDriveName
 	// 5.	Add notification for drive and volume name change for a specific drive
@@ -4381,7 +4380,7 @@ void CallTestsL()
 	//
 #ifndef __WINS__
 	r = TestMultipleNotificationsL(driveDes,1,2,t_notification::EAllOps6,TFsNotification::EVolumeName | TFsNotification::EDriveName,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-	test_KErrNone(r);
+	test(r==KErrNone);
 #endif
 	test.Printf(_L("------- End of Multiple-Filter Tests ---------------------------------\n"));
 	
@@ -4401,12 +4400,12 @@ void CallTestsL()
 	//
 	PrintLine();
 	r = TestOverflowL();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	//For DEF140387
 	PrintLine();
 	r= TestPostOverflowNotifications();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("------- End of Overflow Test -----------------------------------------\n"));
 	
 	
@@ -4455,7 +4454,7 @@ void CallTestsL()
 	//=============================================================================
 	PrintLine();
 	r = TestNotificationsWithFServPlugins();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("------- End of Plugin Tests ------------------------------------------\n"));
 		
 	
@@ -4482,7 +4481,7 @@ void CallTestsL()
 		PrintLine();
 		test.Next(_L("Format Tests"));
 		r = TestMultipleNotificationsL(driveDes,1,1,t_notification::EFormat,TFsNotification::EMediaChange,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		test.Printf(_L("------- End of Format Tests ------------------------------------------\n"));
 		}
 	
@@ -4504,15 +4503,15 @@ void CallTestsL()
 	PrintLine();
 	test.Next(_L("Test T_NOTIFIER_NOCAPS.EXE"));
 	r = TestProcessCapabilities(_L("T_NOTIFIER_NOCAPS.EXE"));
-	test_Value(r, r == KErrPermissionDenied); //Failure on emulator -> Did you forget to do a wintest?
+	test(r == KErrPermissionDenied); //Failure on emulator -> Did you forget to do a wintest?
 	
 	test.Next(_L("Test T_NOTIFIER_ALLFILES.EXE"));
 	r = TestProcessCapabilities(_L("T_NOTIFIER_ALLFILES.EXE"));
-	test_KErrNone(r);
+	test(r == KErrNone);
 	
 	test.Next(_L("Test T_NOTIFIER_BELONGS.EXE"));
 	r = TestProcessCapabilities(_L("T_NOTIFIER_BELONGS.EXE"));
-	test_KErrNone(r);
+	test(r == KErrNone);
 	test.Printf(_L("------- End of Data-Caging Tests -------------------------------------\n"));
 	
 	

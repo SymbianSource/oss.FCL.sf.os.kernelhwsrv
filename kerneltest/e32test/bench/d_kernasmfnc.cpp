@@ -262,7 +262,7 @@ DEFINE_BENCHMARK(TPriList_First,
 
 DEFINE_BENCHMARK(TPriList_HighestPri,
 				 TPriListLink link(15); PriList.Add(&link),
-				 PriList.HighestPriority(),
+				 PriList.First(),
 				 PriList.Remove(&link));
 
 DEFINE_BENCHMARK(TPriList_ChangePri,

@@ -18,7 +18,6 @@
 //
 
 
-#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include <e32std.h>
@@ -57,11 +56,11 @@ GLDEF_C void CleanupL()
 	{
 	CFileMan* fMan=CFileMan::NewL(TheFs);
 	TInt r=fMan->RmDir(_L("\\Resource\\"));
-	test_Value(r, r == KErrNone || r==KErrPathNotFound);
+	test(r==KErrNone || r==KErrPathNotFound);
 	r=fMan->RmDir(_L("\\Sys\\"));
-	test_Value(r, r == KErrNone || r==KErrPathNotFound);
+	test(r==KErrNone || r==KErrPathNotFound);
 	r=fMan->RmDir(_L("\\Private\\"));
-	test_Value(r, r == KErrNone || r==KErrPathNotFound);
+	test(r==KErrNone || r==KErrPathNotFound);
 	delete fMan;
 	}
 
@@ -71,12 +70,12 @@ GLDEF_C void TestSetup()
 //
 	{
 	TInt r=TheFs.MkDir(_L("\\Resource\\"));
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.MkDir(_L("\\Sys\\"));
-	test_KErrNone(r);
+	test(r==KErrNone);
 	RFile f;
 	r=f.Create(TheFs,_L("\\Resource\\resourcefile.txt"),EFileWrite);
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	f.Close();
 	}	
 
@@ -87,7 +86,7 @@ GLDEF_C void CallTestsL(/*TChar aDriveLetter*/)
 	{
 	TBuf<30> tmp;
 	TInt r= TheFs.SessionPath(tmp);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	RDebug::Print(_L("sessp=%S"),&tmp);
 	CleanupL();
 	TestSetup();

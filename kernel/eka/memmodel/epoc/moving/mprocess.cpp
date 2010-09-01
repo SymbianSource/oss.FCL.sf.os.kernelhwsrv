@@ -899,7 +899,7 @@ retry:
 		goto retry;
 #endif
 	
-	return (r < 0) ? r : K::ParseDesHeader(aSrc, header, aDest);
+	return K::ParseDesHeader(aSrc, header, aDest);
 	}
 
 DMemModelChunk* ChunkFromAddress(DThread* aThread, const TAny* aAddress)

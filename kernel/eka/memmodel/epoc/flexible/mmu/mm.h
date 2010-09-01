@@ -28,7 +28,6 @@
 class DMemoryObject;
 class DMemoryMapping;
 class DMemModelThread;
-class DMemModelProcess;
 class DPhysicalPinMapping;
 
 /**
@@ -161,7 +160,7 @@ enum TMemoryCreateFlags
 	/**
 	Memory object contents are to be demand paged. 
 	*/
-	EMemoryCreateDemandPaged			= 1U<<31
+	EMemoryCreateDemandPaged			= 1<<31
 	};
 
 
@@ -312,7 +311,7 @@ enum TMappingCreateFlags
 	specified address.
 	@internalTechnology
 	*/
-	EMappingCreateFixedVirtual	= 1U<<31
+	EMappingCreateFixedVirtual	= 1<<31
 	};
 
 
@@ -884,26 +883,6 @@ public:
 	Find and open the mapping that maps a virtual address in the address space of the specified
 	process.
 
-	The caller must close the mapping when it has finished using it.
-
-	@param aProcess The process whose address space is to be searched.
-	@param aAddr The virtual address for which the mapping is to be found.
-	@param aSize The size, in bytes, of the region at aAddr.
-	@param aOffsetInMapping A reference which is set to the offset, in bytes, into the
-							mapping of the start address.
-	@param aInstanceCount	The instance count of the found mapping.
-
-	@return The mapping, or NULL if no mapping was found.
-
-	@pre Calling thread must be in a critical section.
-	*/
-	static DMemoryMapping* FindMappingInProcess(DMemModelProcess* aProcess, TLinAddr aAddr, TUint aSize, 
-												TUint& aOffsetInMapping, TUint& aInstanceCount);
-
-	/**
-	Find and open the mapping that maps a virtual address in the address space of the specified
-	process.
-
 	The caller must close the mapping when it has finished using it.  The caller must ensure that
 	the process can't be destroyed while calling this method.
 
@@ -1067,18 +1046,6 @@ public:
 	static void VirtualFreeCommon(TLinAddr aLinAddr, TUint aSize);
 	static TInt VirtualAlloc(TInt aOsAsid, TLinAddr& aLinAddr, TUint aSize, TBool aDemandPaged);
 	static void VirtualFree(TInt aOsAsid, TLinAddr aLinAddr, TUint aSize);
-
-#ifdef _DEBUG
-	/**
-	Force a region of paged memory to be paged out.
-
-	If the memory is not paged this call has no effect.
-
-	@return KErrNone, or KErrBadDescriptor if a single mapping containing the region could not be
-	        found.
-	*/
-	static TInt FlushRegion(DMemModelProcess*, TLinAddr aStartAddress, TUint aSize);
-#endif
 
 	/**
 	Enumeration of panic values for category "MemModel".

@@ -1199,7 +1199,7 @@ void TDfcX::ThreadActivity()
 	TInt ncpus = NKern::NumberOfCpus();
 	TInt ocpu = NKern::CurrentCpu();
 	NThread* pC = NKern::CurrentThread();
-	volatile TUint32* pX = (volatile TUint32*)&pC->iRunCount.i32[1];	// HACK!
+	volatile TUint32* pX = (volatile TUint32*)&pC->iRunCount32[1];	// HACK!
 	TInt cpu = ocpu;
 	TInt i;
 	if ((iS->iMode & TDfcStress::EMode_SelfMigrate) && !pC->iEvents.IsEmpty())
@@ -1429,19 +1429,19 @@ void TDfcX::CreateDfcOrTimer()
 	{
 //	volatile TUint32* xc = 0;
 	NThreadBase* t = iS->iDfcQ[0]->iThread;
-	volatile TUint32* xc = &t->iRunCount.i32[1];	// HACK!
+	volatile TUint32* xc = &t->iRunCount32[1];	// HACK!
 	if (!(iFlags & EFlag_Timer))
 		{
 		TDfc* d = 0;
 		if (!(iFlags & EFlag_IDFC))
 			{
 			d = new TDfc(&TDfcX::DfcFn, this, iDfcQ, 1);
-			xc = (volatile TUint32*)&iDfcQ->iThread->iRunCount.i32[1];
+			xc = (volatile TUint32*)&iDfcQ->iThread->iRunCount32[1];
 			}
 		else if (iFlags & EFlag_Tied)
 			{
 			d = new TDfc(iXTied, &TDfcX::IDfcFn, this);
-			xc = (volatile TUint32*)&iXTied->iRunCount.i32[1];
+			xc = (volatile TUint32*)&iXTied->iRunCount32[1];
 			}
 		else
 			d = new TDfc(&TDfcX::IDfcFn, this);
@@ -1454,12 +1454,12 @@ void TDfcX::CreateDfcOrTimer()
 		if (iFlags & EFlag_DFC)
 			{
 			tmr = new NTimer(&TDfcX::TimerDfcFn, this, iDfcQ, 1);
-			xc = (volatile TUint32*)&iDfcQ->iThread->iRunCount.i32[1];
+			xc = (volatile TUint32*)&iDfcQ->iThread->iRunCount32[1];
 			}
 		else if (iFlags & EFlag_Tied)
 			{
 			tmr = new NTimer(iXTied, &TDfcX::TimerIsrFn, this);
-			xc = (volatile TUint32*)&iXTied->iRunCount.i32[1];
+			xc = (volatile TUint32*)&iXTied->iRunCount32[1];
 			}
 		else
 			tmr = new NTimer(&TDfcX::TimerIsrFn, this);

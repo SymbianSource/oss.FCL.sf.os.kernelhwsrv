@@ -15,7 +15,6 @@
 // 
 //
 
-#define	__E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include <e32math.h>
@@ -84,12 +83,12 @@ LOCAL_C TInt DeleteFileEx(TBuf<128>& aBaseName,TInt aX)
 	TBuf<128> fileName=aBaseName;
 	fileName.AppendNum(aX);
 	TInt r=TheFs.Delete(fileName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 //	r=TheFs.CheckDisk(fileName);
 //	if (r!=KErrNone && r!=KErrNotSupported)
 //		{
 //		test.Printf(_L("ERROR:: CheckDisk returned %d\n"),r);
-//		test_KErrNone(r);
+//		test(r==KErrNone);
 //		}
 	test.Printf(_L("Deleted File %d\n"),aX);
 	return(KErrNone);
@@ -104,7 +103,7 @@ LOCAL_C void WriteCluster(RFile& aFile,TInt aCluster)
 	testBuf.SetLength(testBuf.MaxSize());
 	Mem::Fill(bufPtr,testBuf.MaxSize(),aCluster);
 	TInt r=aFile.Write(testBuf);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	}
 
 LOCAL_C void SeekToCluster(RFile& aFile,TInt aCluster)
@@ -114,7 +113,7 @@ LOCAL_C void SeekToCluster(RFile& aFile,TInt aCluster)
 	{
 	TBuf8<508> seekBuf(508);
 	TInt r=aFile.Read(aCluster*testBuf.MaxSize(),seekBuf);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(seekBuf[0]==(TUint8)aCluster && seekBuf[507]==(TUint8)aCluster);
 	}
 
@@ -125,10 +124,10 @@ LOCAL_C void SeekToCluster(RFile& aFile,TInt aCluster1,TInt aCluster2)
 	{
 	TBuf8<508> seekBuf(508);
 	TInt r=aFile.Read(aCluster1*testBuf.MaxSize(),seekBuf);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(seekBuf[0]==(TUint8)aCluster1 && seekBuf[507]==(TUint8)aCluster1);
 	r=aFile.Read(aCluster2*testBuf.MaxSize(),seekBuf);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(seekBuf[0]==(TUint8)aCluster2 && seekBuf[507]==(TUint8)aCluster2);
 	}
 
@@ -159,9 +158,9 @@ LOCAL_C void Test1()
 	RFile f1,f2;
 
 	TInt r=f1.Replace(TheFs,_L("BIGFILE1.TST"),EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=f2.Replace(TheFs,_L("BIGFILE2.TST"),EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	TInt maxListLength=4;
 	TInt i=0,k=0;
@@ -206,9 +205,9 @@ LOCAL_C void Test1()
 	f1.Close();
 	f2.Close();
 	r=TheFs.Delete(_L("BIGFile1.tst"));
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.Delete(_L("BIGFile2.tst"));
-	test_KErrNone(r);
+	test(r==KErrNone);
 	CheckDisk();
 	}
 
@@ -221,9 +220,9 @@ LOCAL_C void Test2()
 	RFile f1,f2;
 
 	TInt r=f1.Replace(TheFs,_L("BIGFILE1.TST"),EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=f2.Replace(TheFs,_L("BIGFILE2.TST"),EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	WriteCluster(f1,0);
 	WriteCluster(f1,1);
@@ -240,9 +239,9 @@ LOCAL_C void Test2()
 	f1.Close();
 	f2.Close();
 	r=TheFs.Delete(_L("BIGFile1.tst"));
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.Delete(_L("BIGFile2.tst"));
-	test_KErrNone(r);
+	test(r==KErrNone);
 	CheckDisk();
 	}
 
@@ -257,10 +256,10 @@ LOCAL_C void Test3()
 	TheSeed=917824;
 	TInt i=0,j=0;
 	TInt r=f1.Replace(TheFs,_L("BIGFILE1.TST"),EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	r=f1.SetSize(65534);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	for(i=0;i<=15;i++)
 		WriteCluster(f1,i);
@@ -274,7 +273,7 @@ LOCAL_C void Test3()
 
 	test.Next(_L("Increase Size"));
 	r=f1.SetSize(1048577);
-	test_Value(r, r == KErrNone || r==KErrDiskFull);
+	test(r==KErrNone || r==KErrDiskFull);
 	if (r==KErrDiskFull)
 		{
 		test.Printf(_L("File too big\n"));
@@ -292,7 +291,7 @@ LOCAL_C void Test3()
 
 	TInt newPos=8192;
 	r=f1.Seek(ESeekStart,newPos);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	test.Next(_L("Write more data"));
 	for(i=16;i<83;i++)
@@ -308,7 +307,7 @@ LOCAL_C void Test3()
 
 	test.Next(_L("Reduce file size"));
 	r=f1.SetSize(135000);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	test.Next(_L("Test data still present"));
 	for (j=0;j<200;j++)
@@ -341,7 +340,7 @@ TFileReader::TFileReader(RFile* aFile)
 	{
 
 	TInt r=iFile.Read(0,iData);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	}
 
 void TFileReader::Next(TUint8& aVal,TInt& aLength)
@@ -353,7 +352,7 @@ void TFileReader::Next(TUint8& aVal,TInt& aLength)
 	if (iPos==iData.Length())
 		{
 		TInt r=iFile.Read(iData);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		iPos=0;
 		if (iData.Length()==0)
 			{
@@ -477,13 +476,13 @@ LOCAL_C void Test4()
 	HBufC8* dataBuf=HBufC8::NewL(KMaxBufferLength);
 
 	TInt r=f[0].Replace(TheFs,_L("TEST1.DAT"),EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=f[1].Replace(TheFs,_L("TEST2.DAT"),EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=f[2].Replace(TheFs,_L("TEST3.DAT"),EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=f[3].Replace(TheFs,_L("TEST4.DAT"),EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	TInt size=0;
 	TInt iteration=0;
@@ -508,7 +507,7 @@ LOCAL_C void Test4()
 			TInt s=len*mult[fileNum];
 			TInt filePos=pos*mult[fileNum];
 			r=f[fileNum].Seek(ESeekStart,filePos);
-			test_KErrNone(r);
+			test(r==KErrNone);
 
 			while(s>0)
 				{
@@ -517,7 +516,7 @@ LOCAL_C void Test4()
 				r=f[fileNum].Write(*dataBuf);
 				if (r==KErrDiskFull)
 					goto End;
-				test_KErrNone(r);
+				test(r==KErrNone);
 				s-=l;
 				}
 			
@@ -538,7 +537,7 @@ LOCAL_C void Test4()
 				{
 				TInt fileNum=(order+i)%KMaxFiles;
 				r=f[fileNum].SetSize(size*mult[fileNum]);
-				test_KErrNone(r);
+				test(r==KErrNone);
 				}
 			CheckFileContents(&f[0]);
 			}
@@ -557,10 +556,10 @@ LOCAL_C void MultipleFiles(TInt numberOfFiles,TInt anInitialSize)
 	{
 	test.Start(_L("Test multiple file creation, deletion and resize operations"));
 	TInt r=TheFs.MkDirAll(_L("\\F32-TST\\BIGDIRECTORY\\"));
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	TFileName sessionPath;
 	r=TheFs.SessionPath(sessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	TInt index=0;
 	TBuf<128> fileName=_L("\\F32-TST\\BIGDIRECTORY\\FILE");
@@ -571,7 +570,7 @@ LOCAL_C void MultipleFiles(TInt numberOfFiles,TInt anInitialSize)
 		if (r!=KErrNone)
 			break;
 
-		test_KErrNone(r);
+		test(r==KErrNone);
 		
 #if defined(__WINS__)
 		if (index==32 && sessionPath[0]=='C')
@@ -602,7 +601,7 @@ LOCAL_C void MultipleFiles(TInt numberOfFiles,TInt anInitialSize)
 		baseName=fileName;
 		baseName.AppendNum(index);
 		r=file.Open(TheFs,baseName,EFileRead|EFileWrite);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		test.Printf(_L("Resized %S from %d to %d\n"),&baseName,anInitialSize,anInitialSize*2);		
 		r=file.SetSize(2*anInitialSize);
 		test((r==KErrNone)||(r==KErrDiskFull));

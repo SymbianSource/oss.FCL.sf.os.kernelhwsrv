@@ -114,7 +114,7 @@ public:
 		@see HALData::TCPU
 		*/
 		ECPU,
-		
+		  
 		
 		/**
 		A revision number for the CPU architecture.
@@ -1097,13 +1097,11 @@ public:
 		Serial number of this board
 		*/
 		ESerialNumber,
-		
-		
+				
 		/**
 		Interrupt used by sampling profiler - applicable for SMP only. Each CPU_i is interrupted by interrupt number ECpuProfilingInterrupt + i
 		*/
 		ECpuProfilingDefaultInterruptBase,
-
 
 		/**
 		Number of processors present on the device. Returns 1 on unicore. This number is constant and does not take account of power management

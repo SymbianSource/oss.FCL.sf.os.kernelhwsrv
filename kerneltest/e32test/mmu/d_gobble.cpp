@@ -167,7 +167,7 @@ void DGobbler::FreeMultiPage(TPhysAddr aMultiPage)
 TUint32 DGobbler::AllocMultiPage(TUint32 aSize)
 	{
 	TUint32 sz = 1u << __e32_find_ms1_32(aSize);	// round size down to power of 2
-	while (sz >= iPageSize)
+	while (sz > iPageSize)
 		{
 		TPhysAddr pa;
 		TInt r = Epoc::AllocPhysicalRam(sz, pa);

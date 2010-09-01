@@ -697,7 +697,7 @@ TInt DSharedChunkChannel::Request(TInt aFunction, TAny* a1, TAny* a2)
 				TInt addr = kernAddr+i1;
 #ifdef _DEBUG
 				TInt debugMask = Kern::CurrentThread().iDebugMask;
-				Kern::CurrentThread().iDebugMask = debugMask&~(1U<<KPANIC);
+				Kern::CurrentThread().iDebugMask = debugMask&~(1<<KPANIC);
 #endif
 				XTRAP(r, XT_DEFAULT, 
 					if(aFunction==RSharedChunkLdd::ECheckMemory)

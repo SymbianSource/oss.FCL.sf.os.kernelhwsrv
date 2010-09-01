@@ -126,7 +126,7 @@ TInt ThreadFunc(TAny* aThreadInfo)
 	SThreadPagedInfo& info = *(SThreadPagedInfo*)aThreadInfo;
 	RHeap& heap = User::Heap();
 	RChunk chunk;
-	chunk.SetHandle(((TestHybridHeap&) heap).ChunkHandle());
+	chunk.SetHandle(heap.ChunkHandle());
 	info.iHeapPaged = chunk.IsPaged();
 	gStackPtr = (TUint8*)&chunk;
 	RDebug::Printf("&chunk %x",&chunk);

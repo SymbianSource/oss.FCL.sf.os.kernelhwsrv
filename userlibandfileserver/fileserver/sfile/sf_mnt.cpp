@@ -15,10 +15,6 @@
 
 #include "sf_std.h"
 
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "sf_mntTraces.h"
-#endif
-
 
 
 
@@ -373,11 +369,12 @@ TInt CMountCB::Spare1(TInt aVal, TAny* aPtr1, TAny* aPtr2)
 
 TInt CMountCB::GetInterfaceTraced(TInt aInterfaceId, TAny*& aInterface, TAny* aInput)
 	{
-	OstTraceExt3(TRACE_FILESYSTEM, FSYS_ECMOUNTCBGETINTERFACE, "drive %d aInterfaceId %d aInput %x", (TUint) DriveNumber(), (TUint) aInterfaceId, (TUint) aInput);
+	TRACE3(UTF::EBorder, UTraceModuleFileSys::ECMountCBGetInterface, EF32TraceUidFileSys, 
+		DriveNumber(), aInterfaceId, aInput);
 
 	TInt r = GetInterface(aInterfaceId, aInterface, aInput);
 
-	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECMOUNTCBGETINTERFACERET, "r %d aInterface %x", (TUint) r, (TUint) aInterface);
+	TRACERET2(UTF::EBorder, UTraceModuleFileSys::ECMountCBGetInterfaceRet, EF32TraceUidFileSys, r, aInterface);
 
 	return r;
 	}

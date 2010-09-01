@@ -27,7 +27,6 @@
 #include "sf_memory_client.h"
 #include "sl_cache.h"
 #include <e32hashtab.h>
-#include <f32dbg.h>
 
 //---------------------------------------------------------------------------------------------------------------------------------
 class 	CDynamicDirCache;
@@ -133,11 +132,9 @@ public:
 	
 	TUint32 PageSizeInSegs() const;
 
-#if defined(_DEBUG) || defined(_DEBUG_RELEASE)
     // Debugging functions
 	void Dump();
-	void Info(TDirCacheInfo* aInfo) const;
-#endif //#if defined(_DEBUG) || defined(_DEBUG_RELEASE)
+	void Info() const;
 
 protected:
 	CDynamicDirCache(TDriveInterface& aDrive, TUint32 aMinSizeInBytes, TUint32 aMaxSizeInBytes, TUint32 aPageSizeInBytesLog2, TUint32 aWrGranularityLog2);
@@ -148,7 +145,7 @@ protected:
 
 	TDynamicDirCachePage* FindPageByPos(TInt64 aPos);
 	TDynamicDirCachePage* UpdateActivePageL(TInt64 aPos);
-	TDynamicDirCachePage* AllocateAndLockNewPage(/*TInt64 aStartMedPos*/);
+	TDynamicDirCachePage* AllocateAndLockNewPage(TInt64 aStartMedPos);
 	TUint8* LockPage(TDynamicDirCachePage* aPage);
 	TInt 	UnlockPage(TDynamicDirCachePage* aPage);
 	TInt 	DecommitPage(TDynamicDirCachePage* aPage);
@@ -162,6 +159,7 @@ protected:
 	TInt LookupTblAdd(TDynamicDirCachePage* aPage);
 	TDynamicDirCachePage* LookupTblFind(TInt64 aPos);
 	TInt ResetPagePos(TDynamicDirCachePage* aPage);
+	void MakePageLastLocked(TDynamicDirCachePage* aPage);
 	void DoMakePageMRU(TInt64 aPos);
 	void DoInvalidateCache(void);
 	
@@ -179,9 +177,6 @@ private:
 	TDriveInterface&    iDrive;        		///< reference to the driver for media access
 	TUint32             iCacheDisabled : 1; ///< if not 0 the cache is disabled totally and all reads and writes go via TDriveInterface directly
 
-	TDynamicDirCachePage* iLastVisitedPage; ///< a pointer to the last visited page, we always keep it locked
-                                            ///<  to avoid excessive lock/unlock activities when we are scanning
-                                            ///<  a page on the UnlockedQueue
 	
 	// data structures for LRU page list	
 	TCachePageList 	iLockedQ;				///< the locked queue that manages all locked pages, limited by minimum page number

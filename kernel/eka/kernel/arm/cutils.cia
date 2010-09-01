@@ -143,7 +143,6 @@ __NAKED__ void DebugOutputChar(TUint)
 	asm("adr	r2, __UartBase ");
 	asm("ldr	r1, [r1] ");
 	asm("ldr	r1, [r1, #%a0]" : : "i" _FOFF(TSuperPage,iDebugPort));
-	asm("and	r1, r1, #255 ");
 	asm("cmp	r1, #0 ");
 	asm("ldrne	r2, [r2, #4] ");
 	asm("ldreq	r2, [r2, #0] ");
@@ -353,7 +352,7 @@ __NAKED__ void A::StartCrashDebugger(const TAny*, TInt)
 	__JUMP(ne,lr);						// if debugger entry point invalid, return
 #ifdef __SMP__
 	GET_RWNO_TID(,r0);
-	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iRegs));	// pass in address of stored registers
+	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_Regs));	// pass in address of stored registers
 #else
 	asm("ldr r0, __TheScheduler ");
 	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(TScheduler,i_Regs));	// pass in address of stored registers

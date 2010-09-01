@@ -76,6 +76,47 @@
 #include "CompareImp.h"
 #include "u32std.h"
 
+static inline TBool IsSupplementary(TUint aChar)
+/**
+@param aChar The 32-bit code point value of a Unicode character.
+
+@return True, if aChar is supplementary character; false, otherwise.
+*/
+        {
+        return (aChar > 0xFFFF);
+        }
+
+static inline TText16 GetHighSurrogate(TUint aChar)
+/**
+Retrieve the high surrogate of a supplementary character.
+
+@param aChar The 32-bit code point value of a Unicode character.
+
+@return High surrogate of aChar, if aChar is a supplementary character;
+        aChar itself, if aChar is not a supplementary character.
+
+@see TChar::GetLowSurrogate
+*/
+        {
+        return STATIC_CAST(TText16, 0xD7C0 + (aChar >> 10));
+        }
+
+static inline TText16 GetLowSurrogate(TUint aChar)
+/**
+Retrieve the low surrogate of a supplementary character.
+
+@param aChar The 32-bit code point value of a Unicode character.
+
+@return Low surrogate of aChar, if aChar is a supplementary character;
+        zero, if aChar is not a supplementary character.
+
+@see TChar::GetHighSurrogate
+*/
+        {
+        return STATIC_CAST(TText16, 0xDC00 | (aChar & 0x3FF));
+        }
+
+
 ///***************** copied from locale euser source code ***********************
 static const TCollationMethod TheCollationMethod[] =
 	{
@@ -1596,15 +1637,15 @@ void FillStringL(TDes16& aStr, const TDesC8& aUnicodeData)
         TUint32 code;
         User::LeaveIfError(lex.Val(code, EHex));
         lex.Assign(lex.NextToken());
-        if (!TChar::IsSupplementary(code))
+        if (!IsSupplementary(code))
         	{
         	aStr[1+len] = (TUint16)code;
         	}
         else
         	{
-        	aStr[1+len] = TChar::GetHighSurrogate(code);
+        	aStr[1+len] = GetHighSurrogate(code);
         	++len;
-        	aStr[1+len] = TChar::GetLowSurrogate(code);
+        	aStr[1+len] = GetLowSurrogate(code);
         	}
         }
     __ASSERT_ALWAYS(len > 0, User::Invariant());
@@ -1667,14 +1708,14 @@ void FindMatchSectionFoldedTestComplexL()
             {
             continue;
             }
-        if (!TChar::IsSupplementary(chCode))
+        if (!IsSupplementary(chCode))
         	{
         	candidate[KChPos] = (TUint16)chCode;
         	}
         else
         	{
-            candidate[KChPos] = TChar::GetHighSurrogate(chCode);
-            candidate[KChPos+1] = TChar::GetLowSurrogate(chCode);
+            candidate[KChPos] = GetHighSurrogate(chCode);
+            candidate[KChPos+1] = GetLowSurrogate(chCode);
         	}
         //"Character decomposition mapping" is the 5th field, starting from 0.
         TPtrC8 decomp(GetUnicodeDataField(stmt, 5));
@@ -1721,16 +1762,16 @@ void MatchStringFoldedTestL()
             {
             continue;
             }
-        if (!TChar::IsSupplementary(chCode))
+        if (!IsSupplementary(chCode))
         	{
         	candidate[KChPos] = (TUint16)chCode;
         	candidate.SetLength(2);
         	}
         else
         	{
-            candidate[KChPos] = TChar::GetHighSurrogate(chCode);
+            candidate[KChPos] = GetHighSurrogate(chCode);
             candidate.SetLength(3);
-            candidate[KChPos+1] = TChar::GetLowSurrogate(chCode);
+            candidate[KChPos+1] = GetLowSurrogate(chCode);
         	}
         //"Character decomposition mapping" is the 5th field, starting from 0.
         TPtrC8 decomp(GetUnicodeDataField(stmt, 5));
@@ -2513,10 +2554,7 @@ GLDEF_C TInt E32Main()
 	test.Next(_L("MatchSurrogate"));
 	for (ii=0;ii<KTestsSurrogate;++ii)
 		{
-		TInt r=TPtrC16(TestsSurrogate[ii].iLeft).Match2(TPtrC16(TestsSurrogate[ii].iRight));
-		RDebug::Printf("    ii=%d, expect=%d, result=%d", ii, TestsSurrogate[ii].iResult, r);
-		test (r==TestsSurrogate[ii].iResult);
-		r=TPtrC16(TestsSurrogate[ii].iLeft).MatchF(TPtrC16(TestsSurrogate[ii].iRight));
+		TInt r=TPtrC16(TestsSurrogate[ii].iLeft).MatchF(TPtrC16(TestsSurrogate[ii].iRight));
 		test (r==TestsSurrogate[ii].iResult);
 		}
 	
@@ -2524,10 +2562,6 @@ GLDEF_C TInt E32Main()
 	_LIT( KQuestion, "?" );
 	_LIT( KDC00, "\xdc00" );
 	_LIT( KDFFF, "\xdfff" );
-	test( KErrCorruptSurrogateFound == TPtrC16( KD800() ).Match2( TPtrC16( KQuestion() ) ) );
-	test( KErrCorruptSurrogateFound == TPtrC16( KD800() ).Match2( TPtrC16( KD800() ) ) );
-	test( KErrCorruptSurrogateFound == TPtrC16( KDC00() ).Match2( TPtrC16( KQuestion() ) ) );
-	test( KErrCorruptSurrogateFound == TPtrC16( KDFFF() ).Match2( TPtrC16( KQuestion() ) ) );
 
     test( KErrNotFound == TPtrC16( KD800() ).MatchF( TPtrC16( KQuestion() ) ) );
     test( 0 == TPtrC16( KD800() ).MatchF( TPtrC16( KD800() ) ) );

@@ -21,7 +21,6 @@
 //
 
 
-#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include <f32dbg.h>
@@ -171,7 +170,7 @@ LOCAL_C void DeletePasswordFile()
 		r = TheFs.Delete(mediaPWrdFile);
 		} while (r == KErrInUse);
 
-	test_Value(r, r == KErrNone || r == KErrNotFound);
+	test(r == KErrNone || r == KErrNotFound);
 	}
 
 
@@ -654,7 +653,7 @@ LOCAL_C void TestWriteToDisk()
 	User::After(1 * 1000 * 1000);				// wait to finish writing
 	
 	r = TheFs.Delete(mediaPWrdFile);
-	test_Value(r, r == KErrNone || r == KErrNotFound);
+	test(r == KErrNone || r == KErrNotFound);
 	test(TBusLocalDrive::WritePasswordData(noMappings) == KErrNone);
 
 	// check contents of password file correspond to last written buffer.
@@ -817,7 +816,7 @@ GLDEF_C TInt E32Main()
 	mediaPWrdFile[0] = (TUint8) RFs::GetSystemDriveChar();
 	TParsePtrC ppc(mediaPWrdFile);
 	TInt r = TheFs.MkDir(ppc.DriveAndPath());
-	test_Value(r, r == KErrNone || r == KErrAlreadyExists);
+	test(r == KErrNone || r == KErrAlreadyExists);
 
 	// The media driver for the protected area of the SD card uses mount
 	// info. This is also used for password unlocking by the MMC media driver.

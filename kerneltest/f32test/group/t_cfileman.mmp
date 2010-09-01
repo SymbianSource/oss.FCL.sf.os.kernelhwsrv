@@ -24,7 +24,6 @@ SOURCE	       t_cfileman.cpp
 SOURCEPATH     ../server
 SOURCE	       t_main.cpp
 SOURCEPATH     ../fileutils/src
-SOURCE         f32_test_utils.cpp
 SOURCE         t_chlffs.cpp
 
 USERINCLUDE    ../server

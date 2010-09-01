@@ -1,4 +1,4 @@
-// Copyright (c) 1998-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -26,9 +26,9 @@ BASEUSERDEFAULT
 
 PRJ_TESTEXPORTS
 
-../../../userlibandfileserver/fileserver/shostmassstorage/client/rusbhostmslogicalunit.h        OS_LAYER_PLATFORM_EXPORT_PATH(rusbhostmslogicalunit.h)
+../../../userlibandfileserver/fileserver/shostmassstorage/client/rusbhostmslogicalunit.h        /epoc32/include/
 
-../../../userlibandfileserver/fileserver/inc/runtests.h                         OS_LAYER_PLATFORM_EXPORT_PATH(runtests.h)
+../../../userlibandfileserver/fileserver/inc/runtests.h                         /epoc32/include/
 
 PRJ_TESTMMPFILES
 ../../e32test/mediaext/t_nfe
@@ -156,7 +156,7 @@ gnumakefile romstuff.mke  support
 //t_scndr1    manual //-- obsolte; replaced by t_scn32dr1
 //t_scndr2    manual //-- obsolte; replaced by t_scn32dr2
 //T_MMC     manual
-t_pwstr
+t_pwstr manual
 
 
 t_fsys
@@ -252,7 +252,7 @@ t_rawext support
 
 t_swapfsys manual
 #include "../filesystem/fat/group/fatfs.inf"
-#include "../filesystem/automounter/automounter.inf"
+#include "../filesystem/automounter/bld.inf"
 
 
 #include "perf_test.inf"
@@ -263,13 +263,13 @@ t_plugin_v2beta.mmp
 
 t_localtime 
 
-t_dircache
-
 #ifdef SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
 t_file64bit manual
 fhserver64bit       support
 #include "../plugins/version_2/file64bit/group/file64bit_plugin.inf"
 #endif
+
+t_ftrace
 
 t_surrogatepair
 

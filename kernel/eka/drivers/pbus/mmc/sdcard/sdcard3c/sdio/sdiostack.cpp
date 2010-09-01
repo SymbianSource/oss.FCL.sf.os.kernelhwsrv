@@ -2823,6 +2823,3 @@ EXPORT_C void DSDIOStack::Dummy1() {}
 EXPORT_C void DSDIOStack::Dummy2() {}
 EXPORT_C void DSDIOStack::Dummy3() {}
 EXPORT_C void DSDIOStack::Dummy4() {}
-#if defined(__WINS__) || defined (__X86__)
-EXPORT_C void Dummy1() {}
-#endif

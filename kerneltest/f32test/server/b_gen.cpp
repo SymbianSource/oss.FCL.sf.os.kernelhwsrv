@@ -13,7 +13,6 @@
 // Description:
 //
 
-#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include <e32math.h>
@@ -33,6 +32,8 @@ RTest test(_L("B_GEN"));
 #define MINIMUM_DATE (315532800L)
 #define DateTests   10
 
+// GLREF_D P_DEVICE p_file;
+// GLREF_D P_DEVICE p_wind,p_screen,p_cons;
 
 TBuf<0x100> gNameBuf;
 TBuf<0x100> gNameOut;
@@ -51,7 +52,30 @@ static TVolumeInfo volInfo;
 static TFileName pathBuf;
 
 
+const TInt NameErr=KErrBadName;
+const TInt DirErr=KErrPathNotFound;
+const TInt AccessErr=KErrAccessDenied;
+const TInt LockedErr=KErrInUse;
+const TInt ExistsErr=KErrAlreadyExists;
+const TInt NotExistsErr=KErrNotFound;
+const TInt EofErr=KErrEof;
+const TInt DeviceErr=KErrNotReady;
+//LOCAL_D TInt NoFileSystemErr=KErrNotReady;
+//LOCAL_D TInt NotSupportedErr=KErrNotSupported;
+const TInt ReadOnlyErr=KErrAccessDenied;
 
+const TInt P_FASTREAM=EFileStream;
+const TInt P_FAEXEC=0;
+const TInt P_FAMOD=KEntryAttArchive;
+const TInt P_FAREAD=KEntryAttReadOnly;
+//LOCAL_D TInt P_FAHIDDEN=KEntryAttHidden;
+//LOCAL_D TInt P_FASYSTEM=KEntryAttSystem;
+//static TInt P_FAVOLUME=KEntryAttVolume;
+const TInt P_FADIR=KEntryAttDir;
+const TInt P_FRANDOM=0;
+const TInt P_FABS=ESeekStart;
+
+const TInt P_FUPDATE=EFileWrite;
 
 
 static void doError(const TDesC &aMess, TInt anErr, TInt line)
@@ -137,7 +161,7 @@ static void testDir(const TDesC& aDirName)
 	TChar drive(aDirName[0]);
 	TInt driveNo;
 	c=RFs::CharToDrive(drive,driveNo);
-	test_KErrNone(c);
+	test(c==KErrNone);
 	if ((c=TheFs.Volume(volInfo,driveNo))!=KErrNone)
 		Error(_L("Device info 1000"),c);
     }
@@ -176,7 +200,7 @@ static void testDeviceInfo(const TDesC& aDeviceName,TInt anErr)
 	if (aDeviceName.Length())
 		{
 		c=RFs::CharToDrive(aDeviceName[0],drive);
-		test_KErrNone(c);
+		test(c==KErrNone);
 		}		
 	if ((c=TheFs.Volume(volInfo,drive))!=anErr)
 		Error(_L("Device info"),c);
@@ -203,14 +227,14 @@ static void testFileInfo(const TDesC& aFileName,TInt anErr)
 		{
 		if (aFileName.Length()>=2 && aFileName[0]=='Z' && aFileName[1]==':')
 			{
-			if ((gFileEntry.iAtt&(KEntryAttReadOnly|EFileStream)) != (TUint32)(KEntryAttReadOnly|EFileStream) && gFileEntry.iAtt!=KEntryAttDir)
+			if ((gFileEntry.iAtt&(P_FAREAD|P_FAEXEC|P_FASTREAM)) != (TUint32)(P_FAREAD|P_FAEXEC|P_FASTREAM) && gFileEntry.iAtt!=KEntryAttDir)
 				Error(_L("Info status check Z:\\"),0);
 			}
 		else
 			{
 			if (gFileEntry.iAtt&KEntryAttDir)
 				return; // Found directory entry
-			if (gFileEntry.iAtt!=(TUint32)(EFileStream|KEntryAttArchive))
+			if (gFileEntry.iAtt!=(TUint32)(P_FASTREAM|P_FAMOD))
 				Error(_L("Info status check"),0);
 			if (gFileEntry.iSize!=0L)
 				Error(_L("Info size check"),0);
@@ -230,7 +254,7 @@ static void testRenameFromRoot(const TDesC& aRName,const TDesC& aDName)
 	if ((c=gFile.Open(TheFs,aDName,EFileStream))!=KErrNone)
 		Error(_L("Open 92"),c);
 	gFile.Close();
-	if ((c=TheFs.Delete(aRName))!=KErrNotFound)
+	if ((c=TheFs.Delete(aRName))!=NotExistsErr)
 		Error(_L("Delete 92"),c);
 	}
 
@@ -249,7 +273,7 @@ static void testRenameToRoot(const TDesC& pName,const TDesC& rName)
 	if ((c=gFile.Open(TheFs,rName,EFileStream))!=KErrNone)
 		Error(_L("Open 91"),c);
 	gFile.Close();
-	if ((c=TheFs.Delete(pName))!=KErrNotFound)
+	if ((c=TheFs.Delete(pName))!=NotExistsErr)
 		Error(_L("Delete 91"),c);
 	}
 
@@ -284,11 +308,11 @@ void TestINC103141() // PDEF104017
 	dirname.Append(KPathDelimiter);
 	MakeDir(dirname);
 	TInt err = TheFs.Rename(KDir1, KDir2);
-	test_KErrNone(err);
+	test(err == KErrNone);
 	err = TheFs.RmDir(dirname);
-	test_KErrNone(err);
+	test(err == KErrNone);
 	err = TheFs.RmDir(KDir1);
-	test_KErrNone(err);
+	test(err == KErrNone);
 	}
 	
 static void testRename()
@@ -303,7 +327,7 @@ static void testRename()
 	test.Printf(_L("Test TheFs.Rename\n"));
 
 	test.Printf(_L("Test rename into root\n"));
-	if ((c=gFile.Replace(TheFs,_L("\\TESTPAT1.DAT"),EFileStream|EFileWrite))!=KErrNone)
+	if ((c=gFile.Replace(TheFs,_L("\\TESTPAT1.DAT"),EFileStream|P_FUPDATE))!=KErrNone)
 		Error(_L("Create testpat1"),c);
 	gDataBuf.Fill('X',512);
 	if ((c=gFile.Write(gDataBuf,512))!=KErrNone)
@@ -340,28 +364,28 @@ static void testRename()
 		Error(_L("Delete 80"),c);
 
 	test.Printf(_L("Test rename with wild cards\n"));
-	if ((c=TheFs.Rename(_L("*.*"),_L("FRED")))!=KErrBadName)
+	if ((c=TheFs.Rename(_L("*.*"),_L("FRED")))!=NameErr)
 		Error(_L("Rename 100"),c);
-	if ((c=TheFs.Rename(_L("?"),_L("FRED")))!=KErrBadName)
+	if ((c=TheFs.Rename(_L("?"),_L("FRED")))!=NameErr)
 		Error(_L("Rename 101"),c);
-	if ((c=TheFs.Rename(_L(""),_L("FRED")))!=KErrBadName) // KErrBadName)
+	if ((c=TheFs.Rename(_L(""),_L("FRED")))!=KErrBadName) // NameErr)
 		Error(_L("Rename 101.11"),c);
-	if ((c=TheFs.Rename(_L("."),_L("FRED")))!=KErrBadName)
+	if ((c=TheFs.Rename(_L("."),_L("FRED")))!=NameErr)
 		Error(_L("Rename 101.12"),c);
-	if ((c=TheFs.Rename(_L("NOEXIST"),_L("*")))!=KErrBadName)
+	if ((c=TheFs.Rename(_L("NOEXIST"),_L("*")))!=NameErr)
 		Error(_L("Rename 101.1"),c);
 	if ((c=gFile.Create(TheFs,_L("FILE1"),EFileStream))!=KErrNone)
 		Error(_L("Create 101.2"),c);
 	gFile.Close();
-	if ((c=TheFs.Rename(_L("FILE1"),_L("AAA?")))!=KErrBadName)
+	if ((c=TheFs.Rename(_L("FILE1"),_L("AAA?")))!=NameErr)
 		Error(_L("Rename 101.3"),c);
-	if ((c=TheFs.Rename(_L("FILE1"),_L("")))!=KErrBadName) // KErrBadName)
+	if ((c=TheFs.Rename(_L("FILE1"),_L("")))!=KErrBadName) // NameErr)
 		Error(_L("Rename 101.41"),c);
-	if ((c=TheFs.Rename(_L(""),_L("")))!=KErrBadName) // KErrBadName)
+	if ((c=TheFs.Rename(_L(""),_L("")))!=KErrBadName) // NameErr)
 		Error(_L("Rename 101.42"),c);
 	if ((c=TheFs.Delete(_L("FILE1")))!=KErrNone)
 		Error(_L("Delete 101.5"),c);
-	if ((c=TheFs.Rename(_L("\\"),_L("FRED")))!=KErrBadName)
+	if ((c=TheFs.Rename(_L("\\"),_L("FRED")))!=NameErr)
 		Error(_L("Rename 101.6"),c);
 
 	test.Printf(_L("Test rename of directories\n"));
@@ -371,7 +395,7 @@ static void testRename()
 		Error(_L("Rename 103.1"),c);
 	if ((c=TheFs.Rename(_L("\\A2345678.123"),_L("\\DIR2")))!=KErrNone)
 		Error(_L("Rename 103.2"),c);
-	if ((c=TheFs.Rename(_L("\\DIR2"),_L("\\A234567.1234")))!=KErrNone) // ****** KErrBadName) Long filenames are supported
+	if ((c=TheFs.Rename(_L("\\DIR2"),_L("\\A234567.1234")))!=KErrNone) // ****** NameErr) Long filenames are supported
 		Error(_L("Rename 103.3"),c);
 	if ((c=TheFs.Rename(_L("\\A234567.1234"),_L("\\DIR2")))!=KErrNone)
 		Error(_L("Rename 103.3"),c);
@@ -381,18 +405,18 @@ static void testRename()
 	test.Printf(_L("Test rename of open files\n"));
 	if ((c=gFile.Create(TheFs,_L("\\DIR1\\FILE1"),EFileStreamText))!=KErrNone)
 		Error(_L("Create 105"),c);
-	if ((c=TheFs.Rename(_L("\\DIR1\\FILE1"),_L("\\DIR1\\FILE1")))!=KErrInUse)
+	if ((c=TheFs.Rename(_L("\\DIR1\\FILE1"),_L("\\DIR1\\FILE1")))!=LockedErr)
 		Error(_L("Rename 106"),c);
-	if ((c=TheFs.Rename(_L("\\DIR1\\FILE1"),_L("\\DIR2\\FILE1")))!=KErrInUse)
+	if ((c=TheFs.Rename(_L("\\DIR1\\FILE1"),_L("\\DIR2\\FILE1")))!=LockedErr)
 		Error(_L("Rename 106.1"),c);
-	if ((c=gFile2.Open(TheFs,_L("\\DIR2\\FILE1"),EFileStream))!=KErrNotFound)
+	if ((c=gFile2.Open(TheFs,_L("\\DIR2\\FILE1"),EFileStream))!=NotExistsErr)
 		Error(_L("Create 105"),c);
 	gFile.Close();
 
 	test.Printf(_L("Test rename to same name\n"));
-	if ((c=TheFs.Rename(_L("\\DIR1\\FILE1"),_L("\\DIR1\\FILE1")))!=KErrNone) // !=KErrAlreadyExists)
+	if ((c=TheFs.Rename(_L("\\DIR1\\FILE1"),_L("\\DIR1\\FILE1")))!=KErrNone) // !=ExistsErr)
 		Error(_L("Rename 105.1"),c);
-	if ((c=TheFs.Rename(_L("\\DIR1"),_L("\\DIR1")))!=KErrNone) // !=KErrAlreadyExists)
+	if ((c=TheFs.Rename(_L("\\DIR1"),_L("\\DIR1")))!=KErrNone) // !=ExistsErr)
 		Error(_L("Rename 105.2"),c);
 
 	test.Printf(_L("Test rename of read-only files\n"));     // IS ALLOWED //
@@ -401,15 +425,15 @@ static void testRename()
 	if ((c=TheFs.Entry(_L("\\DIR1\\FILE1"),gFileEntry))!=KErrNone)
 		Error(_L("File info 106.1"),c);
 	test.Printf(_L("STATUS=%04x\n"),gFileEntry.iAtt);
-	if (gFileEntry.iAtt!=(TUint32)(KEntryAttReadOnly|EFileStream|KEntryAttArchive))
+	if (gFileEntry.iAtt!=(TUint32)(P_FAREAD|P_FASTREAM|P_FAMOD))
 		Error(_L("Status check 106.2"),0);
 	if ((c=TheFs.Entry(_L("\\DIR1"),gFileEntry))!=KErrNone)
 		Error(_L("File info 106.3"),c);
 	test.Printf(_L("STATUS=%04x\n"),gFileEntry.iAtt);
-	if (gFileEntry.iAtt!=(TUint32)(EFileStream|KEntryAttDir))
+	if (gFileEntry.iAtt!=(TUint32)(P_FASTREAM|P_FADIR))
 		Error(_L("Status check 106.4"),0);
 
-	if ((c=TheFs.Rename(_L("\\DIR1\\FILE1"),_L("\\DIR1\\FILE1")))!=KErrNone) // !=KErrAlreadyExists)
+	if ((c=TheFs.Rename(_L("\\DIR1\\FILE1"),_L("\\DIR1\\FILE1")))!=KErrNone) // !=ExistsErr)
 		Error(_L("Rename 107"),c);
 	if ((c=TheFs.Rename(_L("\\DIR1\\FILE1"),_L("\\DIR1\\FILE2")))!=KErrNone)
 		Error(_L("Rename 108"),c);
@@ -431,9 +455,9 @@ static void testRename()
 	gFile.Close();
 
 	test.Printf(_L("Test rename of directories across directories\n"));
-	if ((c=TheFs.Rename(_L("\\DIR1"),_L("\\DIR2\\DIR1")))!=KErrNone) // ******** KErrAccessDenied)
+	if ((c=TheFs.Rename(_L("\\DIR1"),_L("\\DIR2\\DIR1")))!=KErrNone) // ******** AccessErr)
 		Error(_L("Rename 114"),c);
-	if ((c=TheFs.Rename(_L("\\DIR1"),_L("\\")))!=KErrBadName)
+	if ((c=TheFs.Rename(_L("\\DIR1"),_L("\\")))!=NameErr)
 		Error(_L("Rename 114.1"),c);
 
 	if ((c=TheFs.Delete(_L("\\DIR2\\FILE1")))!=KErrNone)
@@ -459,11 +483,11 @@ static void testDelete()
 		Error(_L("Make dir 500"),c);
 	if ((c=gFile.Create(TheFs,_L("\\TESTDIR\\NAME.EXT"),EFileStream))!=KErrNone)
 		Error(_L("Create"),c);
-	if ((c=TheFs.Delete(_L("\\TESTDIR\\")))!=KErrBadName) // ******* KErrAccessDenied)
+	if ((c=TheFs.Delete(_L("\\TESTDIR\\")))!=KErrBadName) // ******* AccessErr)
 		Error(_L("Delete 501"),c);
 
 	test.Printf(_L("Test delete open file\n"));
-	if ((c=TheFs.Delete(_L("\\TESTDIR\\NAME.EXT")))!=KErrInUse)
+	if ((c=TheFs.Delete(_L("\\TESTDIR\\NAME.EXT")))!=LockedErr)
 		Error(_L("Delete 502"),c);
 	gFile.Close();
 	if ((c=TheFs.Delete(_L("\\TESTDIR\\NAME.EXT")))!=KErrNone)
@@ -593,7 +617,7 @@ static void TestMakeDirLine(const TDesC& aDirName,TInt res, TInt line)
 		{
         TParse parse;
         c=TheFs.Parse(aDirName,parse);
-        test_KErrNone(c);
+        test(c==KErrNone);
         buf=parse.Path();
         buf.Append(_L("*"));
         if (buf.Length()<=64)
@@ -602,7 +626,7 @@ static void TestMakeDirLine(const TDesC& aDirName,TInt res, TInt line)
             if ((c=gDir.Open(TheFs,buf,KEntryAttMaskSupported))!=KErrNone)
                 Error2(_L("Directory open 1"),c, line);
             gDataBuf[0]=0;
-            if ((c=gDir.Read(gFileEntry))!=KErrEof)
+            if ((c=gDir.Read(gFileEntry))!=EofErr)
             	{
                 test.Printf(_L("buf=\"%S\"\n"),&gFileEntry.iName);
                 Error2(_L("Directory read"),c, line);
@@ -689,16 +713,16 @@ void CallTestsL()
     F32_Test_Utils::SetConsole(test.Console());
 
     TInt nRes=TheFs.CharToDrive(gDriveToTest, gDriveNum);
-    test_KErrNone(nRes);
+    test(nRes==KErrNone);
     
     PrintDrvInfo(TheFs, gDriveNum);
 
-    //-- quick format the drive, if it isn't drive C: of the emulator or PlatSim
-    if(!Is_SimulatedSystemDrive(TheFs, gDriveNum))
-    	{
+    //-- quick format the drive, if it isn't the emulator's C:  
+    if(!Is_Win32(TheFs, gDriveNum))
+    {
         nRes = FormatDrive(TheFs, gDriveNum, ETrue); 
-        test_KErrNone(nRes);
-    	}
+        test(nRes==KErrNone);
+    }
 
     //-----------------------------------
 	TInt c;
@@ -726,15 +750,15 @@ void CallTestsL()
 	testDir(_L("Z:\\*.*"));
 
 	test.Printf(_L("Test names containing '\\'\n"));
-	if ((c=gFile.Create(TheFs,_L("Q\\ZZZ"),EFileWrite))!=KErrBadName)
+	if ((c=gFile.Create(TheFs,_L("Q\\ZZZ"),EFileWrite))!=NameErr)
 		Error(_L("Create 1"),c);
 
 	test.Printf(_L("Test create in non-exist directory\n"));
-	if ((c=gFile.Create(TheFs,_L("\\Q1DDX\\ZZZ"),EFileWrite))!=KErrPathNotFound)
+	if ((c=gFile.Create(TheFs,_L("\\Q1DDX\\ZZZ"),EFileWrite))!=DirErr)
 		Error(_L("Create 2"),c);
 
 	test.Printf(_L("Test filenames starting with '.'\n"));
-	if ((c=gFile.Create(TheFs,_L("\\.ZZZ"),EFileWrite))!=KErrNone) // ****** KErrBadName)
+	if ((c=gFile.Create(TheFs,_L("\\.ZZZ"),EFileWrite))!=KErrNone) // ****** NameErr)
 		Error(_L("Create 3"),c);
 	gFile.Close();
 	if ((c=TheFs.Delete(_L("\\.ZZZ")))!=KErrNone)
@@ -802,18 +826,18 @@ void CallTestsL()
 	testDelete();
 	testRename();
 	test.Printf(_L("Test get file info\n"));
-//	testFileInfo(_L("*.*"),KErrBadName); ********** Allowed (?)
-	testFileInfo(_L(""),KErrNone); // KErrBadName);
-	testFileInfo(_L("\\"),KErrBadName);
-	testFileInfo(_L("."),KErrBadName);
-	testFileInfo(_L(".."),KErrBadName);
-	testFileInfo(_L("a.1234"),KErrNotFound); // ********* KErrBadName);
-	testFileInfo(_L("a23456789"),KErrNotFound); // ********* KErrBadName);
-	testFileInfo(_L(".a"),KErrNotFound); // ********** KErrBadName);
-	testFileInfo(_L("?"),KErrBadName);
-	testFileInfo(_L("NOEXIST"),KErrNotFound);
-	testFileInfo(_L("\\NODIR\\NAME"),KErrPathNotFound);
-	testFileInfo(_L("L:\\NAME"),KErrNotReady);
+//	testFileInfo(_L("*.*"),NameErr); ********** Allowed (?)
+	testFileInfo(_L(""),KErrNone); // NameErr);
+	testFileInfo(_L("\\"),NameErr);
+	testFileInfo(_L("."),NameErr);
+	testFileInfo(_L(".."),NameErr);
+	testFileInfo(_L("a.1234"),KErrNotFound); // ********* NameErr);
+	testFileInfo(_L("a23456789"),KErrNotFound); // ********* NameErr);
+	testFileInfo(_L(".a"),KErrNotFound); // ********** NameErr);
+	testFileInfo(_L("?"),NameErr);
+	testFileInfo(_L("NOEXIST"),NotExistsErr);
+	testFileInfo(_L("\\NODIR\\NAME"),DirErr);
+	testFileInfo(_L("L:\\NAME"),DeviceErr);
 	gNameBuf.SetLength(0);
 	if ((c=gFile.Temp(TheFs,gNameBuf,gNameOut,EFileStream))!=KErrNone)
 		Error(_L("Open 1.1"),c);
@@ -825,7 +849,7 @@ void CallTestsL()
 
 	test.Printf(_L("Test get device info\n"));
 	testDeviceInfo(_L(""),FALSE);           // NULL is current device //
-	testDeviceInfo(_L("L:"),KErrNotReady);
+	testDeviceInfo(_L("L:"),DeviceErr);
 	testDeviceInfo(_L("Z:"),FALSE);
 	testDeviceInfo(fBuf,FALSE);
 	
@@ -848,88 +872,88 @@ void CallTestsL()
 //	testNodeInfo(_L("...::"),0,E_GEN_FSYS);
 
 //	testFileInfo(_L("Z:SYS$WSRV.IMG"),FALSE);
-//	testFileInfo(_L("Z:\\SYS$WSRV.IMG"),KErrBadName);    // \ not allowed  - no path //
+//	testFileInfo(_L("Z:\\SYS$WSRV.IMG"),NameErr);    // \ not allowed  - no path //
 //	testFileInfo(_L("Z:*"),FALSE);               // Z: allows *'s ! //
-//	testFileInfo(_L("Z:SYS$WSRV."),KErrNotFound);
+//	testFileInfo(_L("Z:SYS$WSRV."),NotExistsErr);
 //	testFileInfo(_L("XXX::"),NoFileSystemErr);
 	if(PlatSec::ConfigSetting(PlatSec::EPlatSecEnforceSysBin))
 		testFileInfo(_L("Z:\\Sys\\Bin\\ESHELL.EXE"),FALSE);    // we now have paths //
 	else
 		testFileInfo(_L("Z:\\System\\Bin\\ESHELL.EXE"),FALSE);    // we now have paths //
 //	testFileInfo(_L("Z:*"),KErrPathNotFound); // session path gets inserted ,FALSE);
-//	testFileInfo(_L("Z:SYS$WSRV."),KErrNotFound);
+//	testFileInfo(_L("Z:SYS$WSRV."),NotExistsErr);
 //	testFileInfo(_L("H:"),KErrBadName); // ************** NoFileSystemErr);
 
 	test.Printf(_L("Test weird filenames\n"));
 // Test SPACES // 
 
-	testFileName(_L("A B"),KErrNone); // ******* KErrBadName);
-	testFileName(_L(" AB"),KErrNone); // ******* KErrBadName);
-	testFileName(_L(" AB      "),KErrNone); // ******* KErrBadName);
+	testFileName(_L("A B"),KErrNone); // ******* NameErr);
+	testFileName(_L(" AB"),KErrNone); // ******* NameErr);
+	testFileName(_L(" AB      "),KErrNone); // ******* NameErr);
 	testFileName(_L("    AB"),KErrNone);
 	testFileName(_L(" AB  . cdef"),KErrNone);
 	testFileName(_L(" AB  .  cdef  "),KErrNone);
-	testFileName(_L("A2345678 "),KErrNone); // ******* KErrBadName);
-	testFileName(_L("A2345678.XY "),KErrNone); // ******* KErrBadName);
-	testFileName(_L("A2345678.XYZ "),KErrNone); // ******* KErrBadName);
-	testFileName(_L("A2345678 XYZ"),KErrNone); // ******* KErrBadName);
-	testFileName(_L(" "),KErrBadName);
-	testFileName(_L("\\A B\\NAME"),KErrPathNotFound); // ******* KErrBadName);
-	testFileName(_L("\\ \\NAME"),KErrBadName);
-	testFileName(_L("\\asdf\\qer\\   \\asdf\\NAME"),KErrBadName);
-	testFileName(_L("     "),KErrBadName);
-	testFileName(_L("C:\\asdf\\     "),KErrBadName);
+	testFileName(_L("A2345678 "),KErrNone); // ******* NameErr);
+	testFileName(_L("A2345678.XY "),KErrNone); // ******* NameErr);
+	testFileName(_L("A2345678.XYZ "),KErrNone); // ******* NameErr);
+	testFileName(_L("A2345678 XYZ"),KErrNone); // ******* NameErr);
+	testFileName(_L(" "),NameErr);
+	testFileName(_L("\\A B\\NAME"),KErrPathNotFound); // ******* NameErr);
+	testFileName(_L("\\ \\NAME"),NameErr);
+	testFileName(_L("\\asdf\\qer\\   \\asdf\\NAME"),NameErr);
+	testFileName(_L("     "),NameErr);
+	testFileName(_L("C:\\asdf\\     "),NameErr);
 // Test short names //
-	testFileName(_L(""),KErrBadName);
-	testFileName(_L("\\"),KErrBadName);
+	testFileName(_L(""),NameErr);
+	testFileName(_L("\\"),NameErr);
 	testFileName(_L("1"),FALSE);
-	testFileName(_L(".1"),KErrNone); // ******* KErrBadName);
-	testFileName(_L(".1"),KErrNone); // ******* KErrBadName);
-	testFileName(_L("\\.1"),KErrNone); // ******* KErrBadName);
+	testFileName(_L(".1"),KErrNone); // ******* NameErr);
+	testFileName(_L(".1"),KErrNone); // ******* NameErr);
+	testFileName(_L("\\.1"),KErrNone); // ******* NameErr);
 	testFileName(_L("1.1"),FALSE);
 // Test long names //
 	testFileName(_L("12345678.123"),FALSE);
-	testFileName(_L("123456789.123"),KErrNone); // ******* KErrBadName);
-	testFileName(_L("12345678.1234"),KErrNone); // ******* KErrBadName);
-	testFileName(_L("1.1234"),KErrNone); // ******* KErrBadName);
-	testFileName(_L("123456789"),KErrNone); // ******* KErrBadName);
+	testFileName(_L("123456789.123"),KErrNone); // ******* NameErr);
+	testFileName(_L("12345678.1234"),KErrNone); // ******* NameErr);
+	testFileName(_L("1.1234"),KErrNone); // ******* NameErr);
+	testFileName(_L("123456789"),KErrNone); // ******* NameErr);
 	gDataBuf.SetLength(256);
 	gDataBuf.Fill('A',255);
-	testFileName(gDataBuf,KErrBadName);
+	testFileName(gDataBuf,NameErr);
 	gDataBuf.SetLength(257);
 	gDataBuf.Fill('B',256);
-	testFileName(gDataBuf,KErrBadName);
+	testFileName(gDataBuf,NameErr);
 	gDataBuf.SetLength(258);
 	gDataBuf.Fill('C',257);
-	testFileName(gDataBuf,KErrBadName);
+	testFileName(gDataBuf,NameErr);
 	gDataBuf.SetLength(4096);
 	gDataBuf.Fill('D',4095);
-	testFileName(gDataBuf,KErrBadName);
+	testFileName(gDataBuf,NameErr);
 // Test DOTS //
 	testFileName(_L("A.X"),FALSE);
-	testFileName(_L("A..X"),KErrNone); // ******* KErrBadName);
-	testFileName(_L("A.........X"),KErrNone); // ******* KErrBadName);
+	testFileName(_L("A..X"),KErrNone); // ******* NameErr);
+	testFileName(_L("A.........X"),KErrNone); // ******* NameErr);
 	testFileName(_L("A."),FALSE);
-	testFileName(_L(".X"),KErrNone); // ******* KErrBadName);
-	testFileName(_L("."),KErrBadName);
-	testFileName(_L(".."),KErrBadName);
-//	testFileName(_L("..."),KErrNone); // KErrBadName); // !!! ********* NT error KErrAccessDenied (?)
-	testFileName(_L("\\a.x\\NAME"),KErrPathNotFound); // KErrPathNotFound == KErrPathNotFound
-	testFileName(_L("\\a..x\\NAME"),KErrPathNotFound); // ******** KErrBadName);
-	testFileName(_L("\\.\\NAME"),KErrBadName);
-	testFileName(_L("\\..\\NAME"),KErrBadName);
-//	testFileName(_L("\\...\\NAME"),KErrPathNotFound); // ******** KErrBadName); // !! NT treats ... as .. ??
+	testFileName(_L(".X"),KErrNone); // ******* NameErr);
+	testFileName(_L("."),NameErr);
+	testFileName(_L(".."),NameErr);
+//	testFileName(_L("..."),KErrNone); // NameErr); // !!! ********* NT error KErrAccessDenied (?)
+	testFileName(_L("\\a.x\\NAME"),DirErr); // DirErr == KErrPathNotFound
+	testFileName(_L("\\a..x\\NAME"),DirErr); // ******** NameErr);
+	testFileName(_L("\\.\\NAME"),NameErr);
+	testFileName(_L("\\..\\NAME"),NameErr);
+//	testFileName(_L("\\...\\NAME"),KErrPathNotFound); // ******** NameErr); // !! NT treats ... as .. ??
 // Test WILD CARDS //
-	testFileName(_L("*.*"),KErrBadName);
-	testFileName(_L("*"),KErrBadName);
-	testFileName(_L("\\*"),KErrBadName);
-	testFileName(_L("?"),KErrBadName);
-	testFileName(_L("\\?"),KErrBadName);
-	testFileName(_L("\\A?B\\NAME"),KErrBadName);
-	testFileName(_L("\\A*B\\NAME"),KErrBadName);
-	testFileName(_L("\\*\\NAME"),KErrBadName);
-	testFileName(_L("\\********.***\\NAME"),KErrBadName);
-	testFileName(_L("A?X"),KErrBadName);
+	testFileName(_L("*.*"),NameErr);
+	testFileName(_L("*"),NameErr);
+	testFileName(_L("\\*"),NameErr);
+	testFileName(_L("?"),NameErr);
+	testFileName(_L("\\?"),NameErr);
+	testFileName(_L("\\A?B\\NAME"),NameErr);
+	testFileName(_L("\\A*B\\NAME"),NameErr);
+	testFileName(_L("\\*\\NAME"),NameErr);
+	testFileName(_L("\\********.***\\NAME"),NameErr);
+	testFileName(_L("A?X"),NameErr);
 
 	test.Printf(_L("Test set volume name\n"));
 // New behaviour: SetVolumeName accepts any string < 12 chars
@@ -994,64 +1018,64 @@ void CallTestsL()
 
 // Test path 
 	testMakeDir(_L("\\A2345678.A23\\NAME"),FALSE);
-	testMakeDir(_L("\\A23456789.A23\\NAME"),KErrNone); // ******** KErrBadName);
-	testMakeDir(_L("\\A2345678.A234\\NAME"),KErrNone); // ******** KErrBadName);
-	testMakeDir(_L("\\A.1234\\NAME"),KErrNone); // ********* KErrBadName);
+	testMakeDir(_L("\\A23456789.A23\\NAME"),KErrNone); // ******** NameErr);
+	testMakeDir(_L("\\A2345678.A234\\NAME"),KErrNone); // ******** NameErr);
+	testMakeDir(_L("\\A.1234\\NAME"),KErrNone); // ********* NameErr);
 	testMakeDir(_L("\\A2345678\\NAME"),FALSE);
-	testMakeDir(_L("\\A23456789\\NAME"),KErrNone); // ******** KErrBadName);
+	testMakeDir(_L("\\A23456789\\NAME"),KErrNone); // ******** NameErr);
 	testMakeDir(_L("\\A.X\\NAME"),FALSE);
-	testMakeDir(_L("\\A..X\\NAME"),KErrNone); // ******** KErrBadName);
-	testMakeDir(_L("\\A.\\NAME"),KErrBadName);
-	testMakeDir(_L("\\.X\\NAME"),KErrNone); // ******** KErrBadName);
-	testMakeDir(_L("\\.\\NAME"),KErrBadName);
-	testMakeDir(_L("\\..\\NAME"),KErrBadName);
-	testMakeDir(_L("\\\\NAME"),KErrBadName);
-	testMakeDir(_L("\\\\"),KErrBadName);
-	testMakeDir(_L("\\A\\A2\\A23\\a2345678\\a2345678.\\a2345678.1\\a2345678.123"),KErrBadName);
-	testMakeDir(_L("\\A\\A2\\A23\\a2345678\\a2345678.\\a2345678.1\\a2345678..123"),KErrBadName); // ******* KErrBadName);
-	testMakeDir(_L("\\A\\A2\\A23\\a2345678\\a2345678.\\a2345678.1\\a2345678.1234"),KErrBadName); // ******* KErrBadName);
+	testMakeDir(_L("\\A..X\\NAME"),KErrNone); // ******** NameErr);
+	testMakeDir(_L("\\A.\\NAME"),NameErr);
+	testMakeDir(_L("\\.X\\NAME"),KErrNone); // ******** NameErr);
+	testMakeDir(_L("\\.\\NAME"),NameErr);
+	testMakeDir(_L("\\..\\NAME"),NameErr);
+	testMakeDir(_L("\\\\NAME"),NameErr);
+	testMakeDir(_L("\\\\"),NameErr);
+	testMakeDir(_L("\\A\\A2\\A23\\a2345678\\a2345678.\\a2345678.1\\a2345678.123"),NameErr);
+	testMakeDir(_L("\\A\\A2\\A23\\a2345678\\a2345678.\\a2345678.1\\a2345678..123"),NameErr); // ******* NameErr);
+	testMakeDir(_L("\\A\\A2\\A23\\a2345678\\a2345678.\\a2345678.1\\a2345678.1234"),NameErr); // ******* NameErr);
 	gDataBuf.SetLength(256);
 	gDataBuf.Fill('V',255);
-	testMakeDir(gDataBuf,KErrBadName);
+	testMakeDir(gDataBuf,NameErr);
 	gDataBuf.SetLength(257);
 	gDataBuf.Fill('W',256);
-	testMakeDir(gDataBuf,KErrBadName);
+	testMakeDir(gDataBuf,NameErr);
 	gDataBuf.SetLength(258);
 	gDataBuf.Fill('X',257);
-	testMakeDir(gDataBuf,KErrBadName);
+	testMakeDir(gDataBuf,NameErr);
 	gDataBuf.SetLength(259);
 	gDataBuf.Fill('Y',258);
-	testMakeDir(gDataBuf,KErrBadName);
+	testMakeDir(gDataBuf,NameErr);
 	gDataBuf.SetLength(4096);
 	gDataBuf.Fill('Z',4095);
-	testMakeDir(gDataBuf,KErrBadName);
+	testMakeDir(gDataBuf,NameErr);
 
 // Test names 
-	testMakeDir(_L("A..X"),KErrAlreadyExists); // ******* KErrBadName);
+	testMakeDir(_L("A..X"),KErrAlreadyExists); // ******* NameErr);
 	testMakeDir(_L("\\A\\"),FALSE);
 	testMakeDir(_L("\\12345678.123\\"),FALSE);
-	testMakeDir(_L("\\.\\"),KErrBadName);
-	testMakeDir(_L("\\..\\"),KErrBadName);
+	testMakeDir(_L("\\.\\"),NameErr);
+	testMakeDir(_L("\\..\\"),NameErr);
 	testMakeDir(_L("\\X\\"),FALSE);
-	testMakeDir(_L("\\12345678.1234\\"),KErrNone); // ******* KErrBadName);
-	testMakeDir(_L("\\123456789\\"),KErrNone); // ******** KErrBadName);
+	testMakeDir(_L("\\12345678.1234\\"),KErrNone); // ******* NameErr);
+	testMakeDir(_L("\\123456789\\"),KErrNone); // ******** NameErr);
 // Test max levels
 	testMakeDir(_L("\\A\\B\\C\\D\\E\\F\\G\\H\\I\\J\\K\\L\\M\\N\\O\\P\\Q\\R\\S\\T\\U\\V\\W\\X\\Y\\Z"),FALSE);
 	testMakeDir(_L("\\00000000.000\\11111111.111\\22222222.222\\33333333.333\\45678901.3"),FALSE);
 	testMakeDir(_L("\\00000000.000\\11111111.111\\22222222.222\\33333333.333\\45678901.34"),FALSE);
 	testMakeDir(_L("\\00000000.000\\11111111.111\\22222222.222\\33333333.333\\45678901.345"),FALSE);
 	testMakeDir(_L("\\00000000.000\\11111111.111\\22222222.222\\33333333.333\\45678901.3\\xxxxxxxx.xxx"),FALSE);
-	testMakeDir(_L("\\00000000.000\\11111111.111\\22222222.222\\33333333.333\\45678901.34\\xxxxxxxx.xxx"),KErrNone); // ******* KErrBadName);
-	testMakeDir(_L("\\00000000.000\\11111111.111\\22222222.222\\33333333.333\\45678901.345\\xxxxxxxx.xxx"),KErrNone); // ******* KErrBadName);
+	testMakeDir(_L("\\00000000.000\\11111111.111\\22222222.222\\33333333.333\\45678901.34\\xxxxxxxx.xxx"),KErrNone); // ******* NameErr);
+	testMakeDir(_L("\\00000000.000\\11111111.111\\22222222.222\\33333333.333\\45678901.345\\xxxxxxxx.xxx"),KErrNone); // ******* NameErr);
 	testMakeDir(_L("\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\23"),FALSE);
 	testMakeDir(_L("\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\23456789.123"),FALSE);
 	testMakeDir(_L("\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\23\\5"),FALSE);
 	testMakeDir(_L("\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\23\\56789012.456"),FALSE);
-	testMakeDir(_L("\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\234\\6"),KErrNone); // ******** KErrBadName);
-	testMakeDir(_L("Z:\\ROMDIR\\"),KErrAccessDenied); //
+	testMakeDir(_L("\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\2\\4\\6\\8\\0\\234\\6"),KErrNone); // ******** NameErr);
+	testMakeDir(_L("Z:\\ROMDIR\\"),KErrAccessDenied); // *********** NotSupportedErr);
 	test.Printf(_L("Test setEof to same length\n"));
 	gNameBuf.SetLength(0);
-	if ((c=gFile.Temp(TheFs,gNameBuf,gNameOut,EFileStream|EFileWrite))!=KErrNone)
+	if ((c=gFile.Temp(TheFs,gNameBuf,gNameOut,EFileStream|P_FUPDATE))!=KErrNone)
 		Error(_L("Open 50"),c);
 	gFile.Close();
 	testSetEof(gNameOut,0L,FALSE);  // should be no change //
@@ -1075,29 +1099,29 @@ void CallTestsL()
 	test.Printf(_L("Test read of zero bytes\n"));
 	gNameBuf.SetLength(0);
 
-	if ((c=gFile.Temp(TheFs,gNameBuf,gNameOut,EFileStream|EFileWrite))!=KErrNone)
+	if ((c=gFile.Temp(TheFs,gNameBuf,gNameOut,EFileStream|P_FUPDATE))!=KErrNone)
 		Error(_L("Open 60"),c);
-	if ((c=gFile.Read(gDataBuf,0))!=KErrNone) // ******** KErrEof)
+	if ((c=gFile.Read(gDataBuf,0))!=KErrNone) // ******** EofErr)
 		Error(_L("Read 61"),c);
-	if ((c=gFile.Read(gDataBuf,0))!=KErrNone) // ******** KErrEof)
+	if ((c=gFile.Read(gDataBuf,0))!=KErrNone) // ******** EofErr)
 		Error(_L("Read 62"),c);
 	if ((c=gFile.Write(gDataBuf,0))!=KErrNone)
 		Error(_L("Write 63"),c);
-	if ((c=gFile.Read(gDataBuf,0))!=KErrNone) // ******** KErrEof)
+	if ((c=gFile.Read(gDataBuf,0))!=KErrNone) // ******** EofErr)
 		Error(_L("Read 64"),c);
 	gFile.Close();
-	if ((c=gFile.Open(TheFs,gNameOut,EFileStream|EFileWrite))!=KErrNone)
+	if ((c=gFile.Open(TheFs,gNameOut,EFileStream|P_FUPDATE|P_FRANDOM))!=KErrNone)
 		Error(_L("Open 70"),c);
-	if ((c=gFile.Read(gDataBuf,0))!=KErrNone) // ******** KErrEof)
+	if ((c=gFile.Read(gDataBuf,0))!=KErrNone) // ******** EofErr)
 		Error(_L("Read 71"),c);
 	gDataBuf.SetLength(1);
 	gDataBuf[0]=0xf0;
 	if ((c=gFile.Write(gDataBuf,1))!=KErrNone)
 		Error(_L("Write 72"),c);
-	if ((c=gFile.Read(gDataBuf,0))!=KErrNone) // ********* KErrEof)
+	if ((c=gFile.Read(gDataBuf,0))!=KErrNone) // ********* EofErr)
 		Error(_L("Read 73"),c);
 	pos=0L;
-	if ((c=gFile.Seek((TSeek)ESeekStart,pos))!=KErrNone)
+	if ((c=gFile.Seek((TSeek)P_FABS,pos))!=KErrNone)
 		Error(_L("Seek 74"),c);
 	gDataBuf.SetLength(1);
 	gDataBuf[0]=0x83;
@@ -1112,9 +1136,9 @@ void CallTestsL()
 		Error(_L("Read 77"),c);
 	if (gDataBuf[0]!=0xf0)
 		Error(_L("buffer 1 check"),0);
-	if ((c=gFile.Read(gDataBuf,0))!=KErrNone) // ******** KErrEof)
+	if ((c=gFile.Read(gDataBuf,0))!=KErrNone) // ******** EofErr)
 		Error(_L("Read 78"),c);
-	if ((c=gFile.Read(gDataBuf,16384))!=KErrNone) // ******* KErrEof)
+	if ((c=gFile.Read(gDataBuf,16384))!=KErrNone) // ******* EofErr)
 		Error(_L("Read 79"),c);
 	gFile.Close();
 	if ((c=TheFs.Delete(gNameOut))!=KErrNone)
@@ -1122,7 +1146,7 @@ void CallTestsL()
 
     test.Printf(_L("Test write of zero bytes\n"));
     gNameBuf.SetLength(0);
-    if ((c=gFile.Temp(TheFs,gNameBuf,gNameOut,EFileStream|EFileWrite))!=KErrNone)
+    if ((c=gFile.Temp(TheFs,gNameBuf,gNameOut,EFileStream|P_FUPDATE))!=KErrNone)
         Error(_L("Open 50"),c);
     gFile.Close();
 //	********** Error(_L("Close"),c); close has no return value
@@ -1142,45 +1166,45 @@ void CallTestsL()
 
 	test.Printf(_L("Test ReadOnly files\n"));
 	gNameBuf.SetLength(0);
-	if ((c=gFile.Create(TheFs,_L("TEST1.TMP"),EFileStream|EFileWrite))!=KErrNone)
+	if ((c=gFile.Create(TheFs,_L("TEST1.TMP"),EFileStream|P_FUPDATE))!=KErrNone)
 		Error(_L("Create 40"),c);
 	gFile.Close();
-	if ((c=gFile.Temp(TheFs,gNameBuf,gNameOut,EFileStream|EFileWrite))!=KErrNone)
+	if ((c=gFile.Temp(TheFs,gNameBuf,gNameOut,EFileStream|P_FUPDATE))!=KErrNone)
 		Error(_L("Open 40"),c);
 	mask=0;
 	attrib=KEntryAttReadOnly;                       // Remove writable //
-	if ((c=TheFs.SetAtt(gNameOut,attrib,mask))!=KErrInUse)
+	if ((c=TheFs.SetAtt(gNameOut,attrib,mask))!=LockedErr)
 		Error(_L("TheFs.SetAtt not locked"),c);
 	gFile.Close();
 	if ((c=TheFs.SetAtt(gNameOut,attrib,mask))!=KErrNone)
 		Error(_L("Att 41"),c);
-	if ((c=gFile.Open(TheFs,gNameOut,EFileStream|EFileWrite))!=KErrAccessDenied)
+	if ((c=gFile.Open(TheFs,gNameOut,EFileStream|P_FUPDATE))!=AccessErr)
 		Error(_L("Open 41"),c);
 	if ((c=gFile.Open(TheFs,gNameOut,EFileStream))!=KErrNone)
 		Error(_L("Open 42"),c);
-	if ((c=gFileErr.Open(TheFs,gNameOut,EFileStream))!=KErrInUse)
+	if ((c=gFileErr.Open(TheFs,gNameOut,EFileStream))!=LockedErr)
 		Error(_L("Open 43"),c);
-	if ((c=TheFs.Rename(_L("TEST1.TMP"),gNameOut))!=KErrAlreadyExists)
+	if ((c=TheFs.Rename(_L("TEST1.TMP"),gNameOut))!=ExistsErr)
 		Error(_L("Rename 43.1"),c);
-	if ((c=gFileErr.Create(TheFs,gNameOut,EFileStream))!=KErrAlreadyExists) // KErrInUse)
+	if ((c=gFileErr.Create(TheFs,gNameOut,EFileStream))!=ExistsErr) // LockedErr)
 		Error(_L("Open 44"),c);
-	if ((c=gFileErr.Replace(TheFs,gNameOut,EFileStream))!=KErrInUse)
+	if ((c=gFileErr.Replace(TheFs,gNameOut,EFileStream))!=LockedErr)
 		Error(_L("Open 45"),c);
 	gFile.Close();
-	if ((c=gFile.Create(TheFs,gNameOut,EFileStream))!=KErrAlreadyExists)
+	if ((c=gFile.Create(TheFs,gNameOut,EFileStream))!=ExistsErr)
 		Error(_L("Create 46"),c);
-	if ((c=gFile.Replace(TheFs,gNameOut,EFileStream))!=KErrAccessDenied)
+	if ((c=gFile.Replace(TheFs,gNameOut,EFileStream))!=AccessErr)
 		Error(_L("Replace 47"),c);
 	if ((c=gFile.Create(TheFs,_L("FILE1.TMP"),EFileStream))!=KErrNone)
 		Error(_L("Create 48"),c);
-	if ((c=TheFs.Rename(_L("FILE1.TMP"),_L("FILE2.TMP")))!=KErrInUse)
+	if ((c=TheFs.Rename(_L("FILE1.TMP"),_L("FILE2.TMP")))!=LockedErr)
 		Error(_L("Rename 49"),c);
 	gFile.Close();
 	if ((c=TheFs.Rename(_L("FILE1.TMP"),_L("FILE2.TMP")))!=KErrNone)
 		Error(_L("Rename 50"),c);
-	if ((c=TheFs.Rename(_L("FILE2.TMP"),gNameOut))!=KErrAlreadyExists)
+	if ((c=TheFs.Rename(_L("FILE2.TMP"),gNameOut))!=ExistsErr)
 		Error(_L("Rename 51"),c);
-	if ((c=TheFs.Delete(gNameOut))!=KErrAccessDenied)
+	if ((c=TheFs.Delete(gNameOut))!=AccessErr)
 		Error(_L("Delete"),c);
 	mask=KEntryAttReadOnly;
 	attrib=0;
@@ -1200,13 +1224,13 @@ void CallTestsL()
 	if ((c=gFile.Open(TheFs,_L("B_GEN.001"),EFileStream))!=KErrNone)
 		Error(_L("Open 30"),c);
 	pos=1L;
-	if ((c=gFile.SetSize(pos))!=KErrAccessDenied)
+	if ((c=gFile.SetSize(pos))!=ReadOnlyErr)
 		Error(_L("Set EOF 30"),c);
 	if ((c=TheFs.Entry(_L("B_GEN.001"),gFileEntry))!=KErrNone)
 		Error(_L("File info 30"),c);
 	if (gFileEntry.iSize!=0L)
 		Error(_L("Size check 30"),0);
-	if ((c=gFile.Write(gDataBuf,1))!=KErrAccessDenied)
+	if ((c=gFile.Write(gDataBuf,1))!=ReadOnlyErr)
 		Error(_L("Write 30"),c);
 	if ((c=TheFs.Entry(_L("B_GEN.001"),gFileEntry))!=KErrNone)
 		Error(_L("File info 31"),c);
@@ -1223,55 +1247,28 @@ void CallTestsL()
 
 	test.Printf(_L("Test dir entries are written out\n"));
 	gNameBuf.SetLength(0);
-	
-    if ((c=gFile.Temp(TheFs,gNameBuf,gNameOut,EFileStream))!=KErrNone)
+	if ((c=gFile.Temp(TheFs,gNameBuf,gNameOut,EFileStream|P_FRANDOM))!=KErrNone)
 		Error(_L("Open 20"),c); 
-	
 	if ((c=TheFs.Entry(gNameOut,gFileEntry))!=KErrNone)
 		Error(_L("File info 0"),c);
-	
-    if ((gFileEntry.iAtt & KEntryAttArchive)==0)
+	if ((gFileEntry.iAtt & P_FAMOD)==0)
 		Error(_L("Status 20"),0);
-	
 	test.Printf(_L("Size=%u\n"),gFileEntry.iSize);
-	
 	if (gFileEntry.iSize!=0L)
 		Error(_L("Size check 0"),0);
-	
 	saveTime=gFileEntry.iModified;
 	test.Printf(_L("Wait 3 seconds...\n"));
 	User::After(3000000L);
 	gDataBuf.SetLength(1);
-	
 	if ((c=gFile.Write(gDataBuf,1))!=KErrNone)
 		Error(_L("Write 1"),c);
-	
-         /* === pay attention to the code below if the "not updating file timestamp on Flush" mode is enabled (at least on FAT)
-         //-- the timestamp in the "real" entry on the media (RFs::Entry()) and what we get by RFile::Modified()
-         //-- can differ even after flushing file. The timestamp will be updated only on _closing_ the file.
-         //-- This behaviour can be an optimisation to reduce number of media writes due to updating file timestamps.
-         gFile.Close();
-         nRes = gFile.Open(TheFs, gNameOut, EFileWrite);
-         test_KErrNone(nRes);
-         //-- restore the expected position in the file
-         TInt pos1 = 0;
-         nRes = gFile.Seek(ESeekEnd, pos1);
-         test_KErrNone(nRes);
-         //------------------------------------ 
-         */
-
-
 	if ((c=TheFs.Entry(gNameOut,gFileEntry))!=KErrNone)
 		Error(_L("File info 1"),c);
-	
 	test.Printf(_L("Size=%u\n"),gFileEntry.iSize);
 	if (gFileEntry.iSize!=1L)
 		Error(_L("Size check 1"),0);
-	
 	if (gFileEntry.iModified==saveTime)
 		Error(_L("Time update"),0);
-
-
 	gDataBuf.SetLength(16384);
 	if ((c=gFile.Write(gDataBuf,16384))!=KErrNone)
 		Error(_L("Write 2"),c);
@@ -1281,7 +1278,7 @@ void CallTestsL()
 	if (gFileEntry.iSize!=16385L)
 		Error(_L("Size check 2"),0);
 	pos=0L;
-	if ((c=gFile.Seek((TSeek)ESeekStart,pos))!=KErrNone)
+	if ((c=gFile.Seek((TSeek)P_FABS,pos))!=KErrNone)
 		Error(_L("Seek 0"),c);
 	if ((c=gFile.Write(gDataBuf,1))!=KErrNone)
 		Error(_L("Write 3"),c);
@@ -1291,7 +1288,7 @@ void CallTestsL()
 	if (gFileEntry.iSize!=16385L)
 		Error(_L("Size check 3"),0);
 	pos=0L;
-	if ((c=gFile.Seek((TSeek)ESeekStart,pos))!=KErrNone)
+	if ((c=gFile.Seek((TSeek)P_FABS,pos))!=KErrNone)
 		Error(_L("Seek 1"),c);
 	if ((c=gFile.Write(gDataBuf,16384))!=KErrNone)
 		Error(_L("Write 4"),c);
@@ -1333,46 +1330,46 @@ void CallTestsL()
 		Error(_L("File info 8"),c);
 	if (gFileEntry.iSize!=0L)
 		Error(_L("Size check 7"),0);
-	mask=KEntryAttArchive;
+	mask=P_FAMOD;
 	attrib=0;
 	if ((c=TheFs.SetAtt(gNameOut,attrib,mask))!=KErrNone)
 		Error(_L("Att 20"),c);
 
 //
-	if ((c=gFile.Open(TheFs,gNameOut,EFileStream|EFileWrite))!=KErrNone)
+	if ((c=gFile.Open(TheFs,gNameOut,EFileStream|P_FUPDATE|P_FRANDOM))!=KErrNone)
 		Error(_L("Open 21"),c);
 	if ((c=TheFs.Entry(gNameOut,gFileEntry))!=KErrNone)
 		Error(_L("File info 9"),c);
-	if (gFileEntry.iAtt & KEntryAttArchive)
+	if (gFileEntry.iAtt & P_FAMOD)
 		Error(_L("Status 21"),0);
 	if ((c=gFile.Write(gDataBuf,0))!=KErrNone)
 		Error(_L("Write 21"),c);
 	if ((c=TheFs.Entry(gNameOut,gFileEntry))!=KErrNone)
 		Error(_L("File info 9"),c);
-	if ((gFileEntry.iAtt & KEntryAttArchive))       // write 0 should not modify //
+	if ((gFileEntry.iAtt & P_FAMOD))       // write 0 should not modify //
 		Error(_L("Status 22"),0);
 	gFile.Close();
-	mask=KEntryAttArchive;
+	mask=P_FAMOD;
 	attrib=0;
 	if ((c=TheFs.SetAtt(gNameOut,attrib,mask))!=KErrNone)
 		Error(_L("Att 20"),c);
-	if ((c=gFile.Open(TheFs,gNameOut,EFileStream|EFileWrite))!=KErrNone)
+	if ((c=gFile.Open(TheFs,gNameOut,EFileStream|P_FUPDATE|P_FRANDOM))!=KErrNone)
 		Error(_L("Open 22"),c);
 	if ((c=TheFs.Entry(gNameOut,gFileEntry))!=KErrNone)
 		Error(_L("File info 9"),c);
-	if (gFileEntry.iAtt & KEntryAttArchive)
+	if (gFileEntry.iAtt & P_FAMOD)
 		Error(_L("Status 23"),0);
 	pos=0L;
 	if ((c=gFile.SetSize(pos))!=KErrNone)        // no change //
 		Error(_L("Set EOF 21"),c);
 	if ((c=TheFs.Entry(gNameOut,gFileEntry))!=KErrNone)
 		Error(_L("File info 9"),c);
-	if ((gFileEntry.iAtt & KEntryAttArchive))
+	if ((gFileEntry.iAtt & P_FAMOD))
 		Error(_L("Status 24"),0);
 	gFile.Close();
 	if ((c=TheFs.Entry(gNameOut,gFileEntry))!=KErrNone)
 		Error(_L("File info 0"),c);
-	if ((c=gFile.Open(TheFs,gNameOut,EFileStream|EFileWrite))!=KErrNone)
+	if ((c=gFile.Open(TheFs,gNameOut,EFileStream|P_FUPDATE|P_FRANDOM))!=KErrNone)
 		Error(_L("Open 23"),c);
 	saveTime=gFileEntry.iModified;
 	test.Printf(_L("Wait 3 seconds...\n"));
@@ -1386,7 +1383,7 @@ void CallTestsL()
 		Error(_L("File info 61"),c);
 	if (gFileEntry.iModified!=saveTime)
 		Error(_L("Close new time"),0);
-	if ((c=gFile.Open(TheFs,gNameOut,EFileStream|EFileWrite))!=KErrNone)
+	if ((c=gFile.Open(TheFs,gNameOut,EFileStream|P_FUPDATE|P_FRANDOM))!=KErrNone)
 		Error(_L("Open 24"),c);
 	if ((c=gFile.Write(gDataBuf,1))!=KErrNone)
 		Error(_L("Write 60"),c);
@@ -1415,7 +1412,7 @@ void CallTestsL()
 	if ((c=gFile.Open(TheFs,gNameOut,EFileStream))!=KErrNone)
 		Error(_L("Open 10"),c); // Temp file is created as writable. 
 	TTime fileTime(0);
-	if ((c=gFile.SetModified(fileTime))!=KErrAccessDenied) // KErrInUse)
+	if ((c=gFile.SetModified(fileTime))!=AccessErr) // LockedErr)
 		Error(_L("Set file date 10"),c);
 	gFile.Close();
 
@@ -1451,15 +1448,15 @@ void CallTestsL()
 	gNameOut.SetLength(0);
 	if ((c=gFile.Temp(TheFs,gNameBuf,gNameOut,EFileStream))!=KErrNone)
 		Error(_L("Open 1"),c);
-	if ((c=gFormat.Open(TheFs,fBuf,EFullFormat,count))!=KErrInUse)
+	if ((c=gFormat.Open(TheFs,fBuf,EFullFormat,count))!=LockedErr)
 		Error(_L("Format lock check 1"),c);
-	if ((c=gFormat.Open(TheFs,fBuf,EQuickFormat,count))!=KErrInUse)
+	if ((c=gFormat.Open(TheFs,fBuf,EQuickFormat,count))!=LockedErr)
 		Error(_L("Format lock check 2"),c);
 	gFile.Close();
 
 	if ((c=gFormat.Open(TheFs,fBuf,EFullFormat,count))!=KErrNone)
 		{
-		if (c==KErrInUse || c==KErrAccessDenied)
+		if (c==LockedErr || c==AccessErr)
 			{
 			test.Printf(_L("Format: locked, no test\n"));
 			}

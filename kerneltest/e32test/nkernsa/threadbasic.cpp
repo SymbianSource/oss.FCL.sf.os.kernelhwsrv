@@ -413,7 +413,7 @@ void DoTimesliceTest2(TInt aCpu, TInt aSpin1, TInt aSpin2, TInt aSpin3, TBool aU
 				}
 			}
 		}
-	TEST_RESULT(RANGE_LQ(pointA, delta), "pointA");
+	TEST_RESULT(RANGE_CHECK(0, pointA, delta), "pointA");
 	if (aCpu != this_cpu)
 		{
 		TEST_RESULT(RANGE_CHECK(TUint32(aSpin1), pointB, TUint32(aSpin1)+delta), "pointB");
@@ -1246,7 +1246,6 @@ void ThreadGroupTest1(TInt aCount, TBool aJoin, TBool aMigrate, TBool aReJoin)
 	NThreadGroup* group = aJoin ? &TG1 : 0;
 	SNThreadGroupCreateInfo ginfo;
 	ginfo.iCpuAffinity = 0xffffffff;
-	ginfo.iDestructionDfc = 0;	//FIXME
 	TInt r = KErrNone;
 	if (group)
 		r = NKern::GroupCreate(group, ginfo);

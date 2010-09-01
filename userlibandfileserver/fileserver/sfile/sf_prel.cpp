@@ -242,15 +242,10 @@ TInt FindHitListFile(RFs aFs)
 void CreateCorruptFileNamesList()
 	{
 	RFs fs;
-	
-    TInt r = fs.Connect();
+	fs.Connect();
+	TInt r=FindHitListFile(fs);
 	if(r!=KErrNone)
 		return;
-	
-    r=FindHitListFile(fs);
-	if(r!=KErrNone)
-		return;
-	
 	RFile f;
 	r=f.Open(fs,*gCorruptFileNamesListFile,EFileShareExclusive|EFileStreamText|EFileRead);
 	if(r!=KErrNone)

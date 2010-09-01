@@ -13,7 +13,6 @@
 // Description:
 //
 
-#define	__E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include "t_server.h"
@@ -58,11 +57,11 @@ LOCAL_C void BuildTestDir()
 
 	TInt r;
 	r=TheFs.SetAtt(_L("\\F32-TST\\SCANTEST\\Left\\Dir3\\Dir4\\Hidden"), KEntryAttHidden, 0);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.SetAtt(_L("\\F32-TST\\SCANTEST\\Left\\Dir3\\Dir4\\Hidden\\HiddenFile"), KEntryAttHidden, 0);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.SetAtt(_L("\\F32-TST\\SCANTEST\\Left\\Dir3\\Dir4\\Hidden\\System"), KEntryAttSystem, 0);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	}
 
 LOCAL_C void Test1()
@@ -237,12 +236,12 @@ LOCAL_C void Test3()
 	TheFs.SetAllocFailure(gAllocFailOff);
 	TFileName sessionPath;
 	TInt r=TheFs.SessionPath(sessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.SetSessionPath(_L("N:\\"));
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TAutoClose<RFs> fs;
 	r=fs.iObj.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	CDirScan* scanner=CDirScan::NewL(fs.iObj);
 	TParse dirName;
 	TheFs.Parse(sessionPath,dirName);
@@ -265,7 +264,7 @@ LOCAL_C void Test3()
 		}
 	delete scanner;
 	r=TheFs.SetSessionPath(sessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TheFs.SetAllocFailure(gAllocFailOn);
 	}
 
@@ -388,7 +387,7 @@ LOCAL_C void Test5()
 	TPtrC romPath(_L("Z:\\"));
 	TParse dirName;
 	TInt r=TheFs.Parse(romPath,dirName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	scanner->SetScanDataL(dirName.FullName(),KEntryAttDir,ESortByName);
 	CDir* entryList;
 	FOREVER

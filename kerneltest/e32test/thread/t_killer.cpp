@@ -94,14 +94,14 @@ public:
 
 // CTestServer functions
 
-EXPORT_C CTestServer::CTestServer(TInt aPriority) 
+CTestServer::CTestServer(TInt aPriority) 
 //
 // Constructor - sets name
 //
 	: CServer2(aPriority)
 	{}
 
-EXPORT_C  CSession2* CTestServer::NewSessionL(const TVersion& aVersion, const RMessage2 &) const
+CSession2* CTestServer::NewSessionL(const TVersion& aVersion, const RMessage2 &) const
 //
 // Virtual fn - checks version supported and creates a CTestSession
 //
@@ -213,7 +213,7 @@ void CTestSession::TestPtrComplete(const RMessage2& aMessage)
 			messagePtrs[count2].Complete(10-count2*2);
 	}
 
-EXPORT_C  void CTestSession::ServiceL(const RMessage2& aMessage)
+void CTestSession::ServiceL(const RMessage2& aMessage)
 //
 // Virtual message-handler
 //

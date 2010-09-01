@@ -18,5 +18,4 @@ EXPORTS
 	Expire__15TEndpointBuffer @ 17 NONAME R3UNUSED ; TEndpointBuffer::Expire(void)
 	TakeBuffer__15TEndpointBufferRPvRUiRiR14TRequestStatusUi @ 18 NONAME ; TEndpointBuffer::TakeBuffer(void *&, unsigned int &, int &, TRequestStatus &, unsigned int)
 	Expire__15TEndpointBufferPv @ 19 NONAME R3UNUSED ; TEndpointBuffer::Expire(void *)
-	ResetAltSetting__16RDevUsbcScClient @ 20 NONAME R3UNUSED ; RDevUsbcScClient::ResetAltSetting(void)
 

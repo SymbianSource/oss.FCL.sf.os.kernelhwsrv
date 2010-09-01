@@ -17,9 +17,13 @@
 
 #include "cl_std.h"
 #include <f32fsys.h>
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "cl_cliTraces.h"
-#endif
+
+
+
+
+
+
+
 EFSRV_EXPORT_C TBool RFs::IsValidDrive(TInt aDrive)
 /**
 Tests whether the specified drive number is valid.
@@ -93,7 +97,7 @@ case the current drive is taken and converted.
 
 	if (aDrive==KDefaultDrive)
 		{
-		OstTrace1(TRACE_BORDER, EFSRV_EFSDRIVETOCHAR, "aDrive %d", aDrive);
+		TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsDriveToChar, MODULEUID, aDrive);
 		RFs fs;
 		TFileName path;
 		TInt r=fs.Connect();
@@ -104,7 +108,7 @@ case the current drive is taken and converted.
 		if (r!=KErrNone)
 			return(r);
 		aChar=path[0];
-		OstTraceExt2(TRACE_BORDER, EFSRV_EFSDRIVETOCHARRETURN, "r %d aChar %x", (TUint) KErrNone, (TUint) aChar);
+		TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsDriveToCharReturn, MODULEUID, KErrNone, aChar);
 		return(KErrNone);
 		}
 	if (!IsValidDrive(aDrive))
@@ -125,12 +129,14 @@ Tests whether the specified address is in ROM.
 @return True, if the address is in ROM; false, if not.
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSISROMADDRESS, "aPtr %x", aPtr);
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsIsRomAddress, MODULEUID, aPtr);
+
 	TBool res;
 	TInt r=User::IsRomAddress(res,aPtr); // Only returns error on WINS
 	if (r!=KErrNone)
 		res=EFalse;
-	OstTrace1(TRACE_BORDER, EFSRV_EFSISROMADDRESSRETURN, "r %d", res);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsIsRomAddressReturn, MODULEUID, res);
 	return(res);
 	}
 
@@ -160,18 +166,19 @@ It the system drive is not set previously (see RFs::SetSystemDrive) EDriveC is r
  */
 EFSRV_EXPORT_C TDriveNumber RFs::GetSystemDrive()
     {
-	OstTrace0(TRACE_BORDER, EFSRV_EFSGETSYSTEMDRIVE, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFsGetSystemDrive, MODULEUID);
     TInt drive;
 	TInt err = RProperty::Get(TSecureId(KFileServerUidValue), KSystemDriveKey, drive);
     if(err==KErrNone)
         {
         if((drive>=EDriveA) && (drive<=EDriveZ))
             {
-			OstTrace1(TRACE_BORDER, EFSRV_EFSGETSYSTEMDRIVERETURN1, "r %d", drive);
+			TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsGetSystemDriveReturn, MODULEUID, drive);
             return static_cast<TDriveNumber>(drive);
             }
         }
-	OstTrace1(TRACE_BORDER, EFSRV_EFSGETSYSTEMDRIVERETURN2, "r %d", EDriveC);
+
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsGetSystemDriveReturn, MODULEUID, EDriveC);
     return EDriveC;
 	}
     
@@ -186,9 +193,11 @@ This is a wrapper around GetSystemDrive() function. It returns the character cor
 */
 EFSRV_EXPORT_C TChar RFs::GetSystemDriveChar()
 	{
-	OstTrace0(TRACE_BORDER, EFSRV_EFSGETSYSTEMDRIVECHAR, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFsGetSystemDriveChar, MODULEUID);
+
 	TInt r = 'A' + GetSystemDrive();
-	OstTrace1(TRACE_BORDER, EFSRV_EFSGETSYSTEMDRIVECHARRETURN, "RFs::GetSystemDriveChar() r %x", (char) r);
+
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsGetSystemDriveCharReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -208,9 +217,10 @@ Prohibited drive attributes: KDriveAttRom,KDriveAttRedirected,KDriveAttSubsted,K
 */
 EFSRV_EXPORT_C TInt RFs::SetSystemDrive(TDriveNumber aSystemDrive)
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSSETSYSTEMDRIVE, "sess %x aSystemDrive %d", (TUint) Handle(), (TUint) aSystemDrive);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsSetSystemDrive, MODULEUID, Handle(), aSystemDrive);
     TInt r = SendReceive(EFsSetSystemDrive, TIpcArgs(aSystemDrive));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSSETSYSTEMDRIVERETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsSetSystemDriveReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -237,10 +247,11 @@ To end the file server session, use Close().
         error codes.
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSCONNECT, "aMessageSlots %d", aMessageSlots);
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsConnect, MODULEUID, aMessageSlots);
 	_LIT(KFileServerName,"!FileServer");
 	TInt r = CreateSession(KFileServerName,Version(),aMessageSlots);
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSCONNECTRETURN, "r %d sess %x", (TUint) r, (TUint) Handle());
+
+	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EFsConnectReturn, MODULEUID, r, Handle());
 	return r;
 	}
 
@@ -264,9 +275,10 @@ where 13579BDF is the identity of the process.
         error codes.
 */
 	{	
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSSETSESSIONTOPRIVATE, "sess %x  aDrive %d", (TUint) Handle(), (TUint) aDrive);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsSetSessionToPrivate, MODULEUID, Handle(), aDrive);
 	TInt r = SendReceive(EFsSessionToPrivate,TIpcArgs(aDrive));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSSETSESSIONTOPRIVATERETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsSetSessionToPrivateReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -282,10 +294,10 @@ where 13579BDF is the identity of the process.
 @param aPath On successful return, contains the private path for a process.
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSPRIVATEPATH, "sess %x", Handle());
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsPrivatePath, MODULEUID, Handle());
 	TInt r = SendReceive(EFsPrivatePath,TIpcArgs(&aPath));
-	OstTraceData(TRACE_BORDER, EFSRV_EFSPRIVATEPATH_EDIRNAME, "Dir %S", aPath.Ptr(), aPath.Length()<<1);
-	OstTrace1(TRACE_BORDER, EFSRV_EFSPRIVATEPATHRETURN, "r %d", r);
+
+	TRACERETMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsPrivatePathReturn, MODULEUID, r, aPath);
 	return r;
 	}
 
@@ -306,9 +318,10 @@ where 13579BDF is the identity of the process.
         error codes.
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSCREATEPRIVATEPATH, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsCreatePrivatePath, MODULEUID, Handle(), aDrive);
 	TInt r = SendReceive(EFsCreatePrivatePath,TIpcArgs(aDrive));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSCREATEPRIVATEPATHRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsCreatePrivatePathReturn, MODULEUID, r);
 	return r;
 	}	
 
@@ -322,9 +335,11 @@ Gets the client side version number.
 @return The client side version number.
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSVERSION, "sess %x", Handle());
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsVersion, MODULEUID, Handle());
+
 	TVersion r = TVersion(KF32MajorVersionNumber,KF32MinorVersionNumber,KF32BuildVersionNumber);
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFSVERSIONRETURN, "iMajor %d iMinor %d iBuild %d", (TUint) r.iMajor, (TUint) r.iMinor, (TUint) r.iBuild);
+
+	TRACERET3(UTF::EBorder, UTraceModuleEfsrv::EFsVersionReturn, MODULEUID, r.iMajor, r.iMinor, r.iBuild);
 	return r;
 	}
 
@@ -349,8 +364,7 @@ on a drive.
 @see RFs::MountFileSystem        
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSADDFILESYSTEM, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSADDFILESYSTEM_EFILENAME, "FileName %S", aFileName.Ptr(), aFileName.Length()<<1);
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsAddFileSystem, MODULEUID, Handle(), aFileName);
 	RLoader loader;
 	TInt r = loader.Connect();
 	if (r==KErrNone)
@@ -358,7 +372,8 @@ on a drive.
 		r = loader.SendReceive(ELoadFileSystem, TIpcArgs(0, &aFileName, 0));
 		loader.Close();
 		}
-	OstTrace1(TRACE_BORDER, EFSRV_EFSADDFILESYSTEMRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsAddFileSystemReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -380,10 +395,10 @@ Removes the specified file system.
 
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSREMOVEFILESYSTEM, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSREMOVEFILESYSTEM_EFILESYSTEMNAME, "FileSystemName %S", aFileSystemName.Ptr(), aFileSystemName.Length()<<1);
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsRemoveFileSystem, MODULEUID, Handle(), aFileSystemName);
 	TInt r = SendReceive(EFsRemoveFileSystem,TIpcArgs(&aFileSystemName));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSREMOVEFILESYSTEMRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsRemoveFileSystemReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -408,10 +423,10 @@ The drive is mounted as asynchronous, i.e operations on it don't block the file 
 @see RFs::FileSystemName
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEM1, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEM1_EFILESYSTEMNAME, "FileSystemName %S", aFileSystemName.Ptr(), aFileSystemName.Length()<<1);
+	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFsMountFileSystem1, MODULEUID, Handle(), aFileSystemName, aDrive);
 	TInt r = SendReceive(EFsMountFileSystem,TIpcArgs(&aFileSystemName,aDrive,NULL,EFalse));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEM1RETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsMountFileSystem1Return, MODULEUID, r);
 	return r;
 	}
 
@@ -439,14 +454,16 @@ internal RAM or ROFS drive.
 
 @return KErrNone if successful, otherwise one of the other system-wide error codes.
 @capability DiskAdmin
+
 @see RFs::AddFileSystem
 @see RFs::FileSystemName
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEM2, "sess %x aDrive %d aIsSync %d", (TUint) Handle(), (TUint) aDrive, (TUint) aIsSync);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEM2_EFILESYSTEMNAME, "FileSystemName %S", aFileSystemName.Ptr(), aFileSystemName.Length()<<1);
+	TRACEMULT4(UTF::EBorder, UTraceModuleEfsrv::EFsMountFileSystem2, MODULEUID, Handle(), aFileSystemName, aDrive, aIsSync);
+
 	TInt r = SendReceive(EFsMountFileSystem,TIpcArgs(&aFileSystemName,aDrive,NULL,aIsSync));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEM2RETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsMountFileSystem2Return, MODULEUID, r);
 	return r;
 	}
 
@@ -472,11 +489,11 @@ The drive is mounted as asynchronous, i.e operations on it don't block the file 
 @see RFs::FileSystemName
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEM3, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEM3_EEXTENSIONNAME, "ExtensionName %S", aExtensionName.Ptr(), aExtensionName.Length()<<1);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEM3_EFILESYSTEMNAME, "FileSystemName %S", aFileSystemName.Ptr(), aFileSystemName.Length()<<1);
+	TRACEMULT4(UTF::EBorder, UTraceModuleEfsrv::EFsMountFileSystem3, MODULEUID, Handle(), aFileSystemName, aExtensionName, aDrive);
+
 	TInt r = SendReceive(EFsMountFileSystem,TIpcArgs(&aFileSystemName,aDrive,&aExtensionName,EFalse));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEM3RETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsMountFileSystem3Return, MODULEUID, r);
 	return r;
 	}
 
@@ -511,11 +528,10 @@ internal RAM or ROFS drive.
 @see RFs::FileSystemName
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEM4, "sess %x aDrive %d aIsSync %d", (TUint) Handle(), (TUint) aDrive, (TUint) aIsSync);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEM4_EFILESYSTEMNAME, "FileSystemName %S", aFileSystemName.Ptr(), aFileSystemName.Length()<<1);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEM4_EEXTENSIONNAME, "ExtensionName %S", aExtensionName.Ptr(), aExtensionName.Length()<<1);
+	TRACEMULT5(UTF::EBorder, UTraceModuleEfsrv::EFsMountFileSystem4, MODULEUID, Handle(), aFileSystemName, aExtensionName, aDrive, aIsSync);
 	TInt r = SendReceive(EFsMountFileSystem,TIpcArgs(&aFileSystemName,aDrive,&aExtensionName,aIsSync));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEM4RETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsMountFileSystem4Return, MODULEUID, r);
 	return r;
 	}
 
@@ -544,12 +560,12 @@ The drive is mounted as asynchronous, i.e operations on it don't block the file 
 @see RFs::FileSystemName
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEMANDSCAN1, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEMANDSCAN1_EFILESYSTEMNAME, "FileSystemName %S", aFileSystemName.Ptr(), aFileSystemName.Length()<<1);
+	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFsMountFileSystemAndScan1, MODULEUID, Handle(), aFileSystemName, aDrive);
 	aIsMountSuccess=EFalse;
 	TPckg<TInt> pckg(aIsMountSuccess);
 	TInt r = SendReceive(EFsMountFileSystemScan,TIpcArgs(&aFileSystemName,aDrive,NULL,&pckg));
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEMANDSCAN1RETURN, "r %d aIsMountSuccess %d", (TUint) r, (TUint) aIsMountSuccess);
+
+	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EFsMountFileSystemAndScan1Return, MODULEUID, r, aIsMountSuccess);
 	return r;
 	}
 
@@ -582,13 +598,14 @@ The operation is asynchronous, i.e other concurrent file server operations can c
 @see RFs::FileSystemName
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEMANDSCAN2, "sess %x aDrive %d aIsMountSuccess %d", (TUint) Handle(), (TUint) aDrive, (TUint) aIsMountSuccess);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEMANDSCAN2_EFILESYSTEMNAME, "FileSystemName %S", aFileSystemName.Ptr(), aFileSystemName.Length()<<1);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEMANDSCAN2_EEXTENSIONNAME, "ExtensionName %S", aExtensionName.Ptr(), aExtensionName.Length()<<1);
+	TRACEMULT5(UTF::EBorder, UTraceModuleEfsrv::EFsMountFileSystemAndScan2, MODULEUID, 
+		Handle(), aFileSystemName, aExtensionName, aDrive, aIsMountSuccess);
+
 	aIsMountSuccess=EFalse;
 	TPckg<TInt> pckg(aIsMountSuccess);
 	TInt r = SendReceive(EFsMountFileSystemScan,TIpcArgs(&aFileSystemName,aDrive,&aExtensionName,&pckg));
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSMOUNTFILESYSTEMANDSCAN2RETURN, "r %d aIsMountSuccess %d", (TUint) r, (TUint) aIsMountSuccess);
+
+	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EFsMountFileSystemAndScan2Return, MODULEUID, r, aIsMountSuccess);
 	return r;
 	}
 
@@ -615,10 +632,10 @@ Dismounts the file system from the specified drive.
 @see RFs::FileSystemName 		
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSDISMOUNTFILESYSTEM, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSDISMOUNTFILESYSTEM_EFILESYSTEMNAME, "FileSystemName %S", aFileSystemName.Ptr(), aFileSystemName.Length()<<1);
+	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFsDismountFileSystem, MODULEUID, Handle(), aFileSystemName, aDrive);
 	TInt r = SendReceive(EFsDismountFileSystem,TIpcArgs(&aFileSystemName,aDrive));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSDISMOUNTFILESYSTEMRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsDismountFileSystemReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -644,11 +661,12 @@ Dismounts the file system from the specified drive.
 */
 EFSRV_EXPORT_C TInt RFs::FileSystemName(TDes& aName,TInt aDrive) const
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSFILESYSTEMNAME, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsFileSystemName, MODULEUID, Handle(), aDrive);
+
 	//-- ipc argument "-1" here is to indicate legacy FileSystemName() API
     TInt r = SendReceive(EFsFileSystemName,TIpcArgs(&aName, aDrive, -1)); 
-	OstTraceData(TRACE_BORDER, EFSRV_EFSFILESYSTEMNAME_EFILESYSTEMNAME, "FileSystemName %S", aName.Ptr(), aName.Length()<<1);
-	OstTrace1(TRACE_BORDER, EFSRV_EFSFILESYSTEMNAMERETURN, "r %d", r);
+
+	TRACERETMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsFileSystemNameReturn, MODULEUID, r, aName);
 	return r;
 	}
 
@@ -683,11 +701,12 @@ EFSRV_EXPORT_C TInt RFs::SupportedFileSystemName(TDes& aName, TInt aDrive, TInt 
     {
 	if(aFsEnumerator < 0)
         return KErrArgument; //-- see RFs::FileSystemName(). "-1" is a reserved value
-    OstTraceExt2(TRACE_BORDER, EFSRV_EFSSUPPORTEDFILESYSTEMNAME, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
+
+    TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsFileSystemName, MODULEUID, Handle(), aDrive);
     
     TInt r = SendReceive(EFsFileSystemName,TIpcArgs(&aName, aDrive, aFsEnumerator));
-	OstTraceData(TRACE_BORDER, EFSRV_EFSFILESYSTEMNAME_ESUPPORTEDFILESYSTEMNAME, "SupportedFileSystemName %S", aName.Ptr(), aName.Length()<<1);
-	OstTrace1(TRACE_BORDER, EFSRV_EFSSUPPORTEDFILESYSTEMNAMERETURN, "r %d", r);
+
+	TRACERETMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsFileSystemNameReturn, MODULEUID, r, aName);
 	return r;
     }
 
@@ -704,8 +723,7 @@ Loads the specified extension.
 @return KErrNone, if successful; otherwise one of the other system wide error codes.
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSADDEXTENSION, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSADDEXTENSION_EEXTENSIONNAME, "ExtensionName %S", aFileName.Ptr(), aFileName.Length()<<1);
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsAddExtension, MODULEUID, Handle(), aFileName);
 	RLoader loader;
 	TInt r = loader.Connect();
 	if (r==KErrNone)
@@ -713,7 +731,8 @@ Loads the specified extension.
 		r = loader.SendReceive(ELoadFSExtension, TIpcArgs(0, &aFileName, 0));
 		loader.Close();
 		}
-	OstTrace1(TRACE_BORDER, EFSRV_EFSADDEXTENSIONRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsAddExtensionReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -737,10 +756,10 @@ The extension must first have been loaded using AddExtension().
 @see RFs::ExtensionName
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSMOUNTEXTENSION, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSMOUNTEXTENSION_EEXTENSIONNAME, "ExtensionName %S", aExtensionName.Ptr(), aExtensionName.Length()<<1);
+	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFsMountExtension, MODULEUID, Handle(), aExtensionName, aDrive);
 	TInt r = SendReceive(EFsMountExtension,TIpcArgs(&aExtensionName,aDrive));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSMOUNTEXTENSIONRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsMountExtensionReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -761,10 +780,10 @@ Dismounts the specified extension.
 */
 EFSRV_EXPORT_C TInt RFs::DismountExtension(const TDesC& aExtensionName,TInt aDrive)
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSDISMOUNTEXTENSION, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSDISMOUNTEXTENSION_EEXTENSIONNAME, "ExtensionName %S", aExtensionName.Ptr(), aExtensionName.Length()<<1);
+	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFsDismountExtension, MODULEUID, Handle(), aExtensionName, aDrive);
 	TInt r = SendReceive(EFsDismountExtension,TIpcArgs(&aExtensionName,aDrive));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSDISMOUNTEXTENSIONRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsDismountExtensionReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -781,10 +800,10 @@ Removes the specified extension.
         otrherwise one of the other system-wide error codes.
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSREMOVEEXTENSION, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSREMOVEEXTENSION_EEXTENSIONNAME, "ExtensionName %S", aExtensionName.Ptr(), aExtensionName.Length()<<1);
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsRemoveExtension, MODULEUID, Handle(), aExtensionName);
 	TInt r = SendReceive(EFsRemoveExtension,TIpcArgs(&aExtensionName));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSREMOVEEXTENSIONRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsRemoveExtensionReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -804,10 +823,10 @@ in the extension hierarchy.
         KErrNotFound if the extension name is not found;
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFSEXTENSIONNAME, "sess %x aDrive %d aPos %x", (TUint) Handle(), (TUint) aDrive, (TUint) aPos);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSEXTENSIONNAME_EEXTENSIONNAME, "ExtensionName %S", aExtensionName.Ptr(), aExtensionName.Length()<<1);
+	TRACEMULT4(UTF::EBorder, UTraceModuleEfsrv::EFsExtensionName, MODULEUID, Handle(), aExtensionName, aDrive, aPos);
 	TInt r = SendReceive(EFsExtensionName,TIpcArgs(&aExtensionName,aDrive,aPos));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSEXTENSIONNAMERETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsExtensionNameReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -831,9 +850,10 @@ Forces a remount of the specified drive.
         the other system wide error codes.
 */
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFSREMOUNTDRIVE, "sess %x aDrive %d aMountInfo %x aFlags %x", (TUint) Handle(), aDrive, (TUint) aMountInfo, (TUint) aFlags);
+	TRACE4(UTF::EBorder, UTraceModuleEfsrv::EFsRemountDrive, MODULEUID, Handle(), aDrive, aMountInfo, aFlags);
 	TInt r = SendReceive(EFsRemountDrive,TIpcArgs(aDrive,aMountInfo,aFlags));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSREMOUNTDRIVERETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsRemountDriveReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -879,7 +899,7 @@ Call NotifyChangeCancel() to explicitly cancel a notification request.
 
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFSNOTIFYCHANGE1, "sess %x aType %x status %x", (TUint) Handle(), (TUint) aType, (TUint) &aStat);
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFsNotifyChange1, MODULEUID, Handle(), aType, &aStat);
 	aStat=KRequestPending;
 	// for backward compatibility
 	TNotifyType type = (aType == 0 ? ENotifyEntry : aType);
@@ -887,7 +907,7 @@ Call NotifyChangeCancel() to explicitly cancel a notification request.
 	//This call is to synchronise with the file server when this functions stack varibles can go out of scope
 	SendReceive(EFsSynchroniseDriveThread, TIpcArgs(-1));		
 
-	OstTrace0(TRACE_BORDER, EFSRV_EFSNOTIFYCHANGE1RETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFsNotifyChange1Return, MODULEUID);
 	}
 
 
@@ -946,8 +966,7 @@ Call NotifyChangeCancel() to explicitly cancel a notification request.
 
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFSNOTIFYCHANGE2, "sess %x aType %x status %x", (TUint) Handle(), (TUint) aType, (TUint) &aStat);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSNOTIFYCHANGE2_EDIRNAME, "Dir %S", aPathName.Ptr(), aPathName.Length()<<1);
+	TRACEMULT4(UTF::EBorder, UTraceModuleEfsrv::EFsNotifyChange2, MODULEUID, Handle(), (TUint) aType, (TUint) &aStat, aPathName);
 	aStat=KRequestPending;
 	// for backward compatibility
 	TNotifyType type = (aType == 0 ? ENotifyEntry : aType);
@@ -955,7 +974,7 @@ Call NotifyChangeCancel() to explicitly cancel a notification request.
 	//This call is to synchronise with the file server when this functions stack varibles can go out of scope
 	SendReceive(EFsSynchroniseDriveThread, TIpcArgs(-1));
 
-	OstTrace0(TRACE_BORDER, EFSRV_EFSNOTIFYCHANGE2RETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFsNotifyChange2Return, MODULEUID);
 	}
 
 
@@ -972,10 +991,10 @@ Note that this is a synchronous function.
 
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSNOTIFYCHANGECANCEL1, "sess %x", Handle());
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsNotifyChangeCancel1, MODULEUID, Handle());
 	RSessionBase::SendReceive(EFsNotifyChangeCancel);
 
-	OstTrace0(TRACE_BORDER, EFSRV_EFSNOTIFYCHANGECANCEL1RETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFsNotifyChangeCancel1Return, MODULEUID);
 	}
 
 
@@ -996,11 +1015,11 @@ Note that this is an asynchronous function.
 
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSNOTIFYCHANGECANCEL2, "sess %x status %x", (TUint) Handle(), (TUint) &aStat);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsNotifyChangeCancel2, MODULEUID, Handle(), &aStat);
 	if (aStat==KRequestPending)			//	May be better to ASSERT this?
 		SendReceive(EFsNotifyChangeCancelEx,TIpcArgs(&aStat));
 
-	OstTrace0(TRACE_BORDER, EFSRV_EFSNOTIFYCHANGECANCEL2RETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFsNotifyChangeCancel2Return, MODULEUID);
 	}
 
 
@@ -1051,8 +1070,8 @@ drives using remote file systems.
 @see TDriveNumber
 */
 	{
-	OstTraceExt5(TRACE_BORDER, EFSRV_EFSNOTIFYDISKSPACE, "sess %x aThreshold %x:%x aDrive %d status %x", (TUint) Handle(), (TUint) I64HIGH(aThreshold), (TUint) I64LOW(aThreshold), (TUint) aDrive, (TUint) &aStat);
-		
+	TRACE5(UTF::EBorder, UTraceModuleEfsrv::EFsNotifyDiskSpace, MODULEUID, 
+		Handle(), I64LOW(aThreshold),I64HIGH(aThreshold), aDrive,(TUint) &aStat);
 	aStat=KRequestPending;
 	TPtrC8 tBuf((TUint8*)&aThreshold,sizeof(TInt64));
 	RSessionBase::SendReceive(EFsNotifyDiskSpace,TIpcArgs(&tBuf,aDrive,&aStat), aStat);
@@ -1062,7 +1081,7 @@ drives using remote file systems.
 	SendReceive(EFsSynchroniseDriveThread, TIpcArgs(aDrive));
 
 
-	OstTrace0(TRACE_BORDER, EFSRV_EFSNOTIFYDISKSPACERETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFsNotifyDiskSpaceReturn, MODULEUID);
 	}
 
 
@@ -1079,12 +1098,12 @@ The outstanding request completes with KErrCancel.
 			 notification request.
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSNOTIFYDISKSPACECANCEL1, "sess %x status %x", (TUint) Handle(), (TUint) &aStat);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsNotifyDiskSpaceCancel1, MODULEUID, Handle(), &aStat);
 	
 	if(aStat==KRequestPending)
 		SendReceive(EFsNotifyDiskSpaceCancel,TIpcArgs(&aStat));
 
-	OstTrace0(TRACE_BORDER, EFSRV_EFSNOTIFYDISKSPACECANCEL1RETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFsNotifyDiskSpaceCancel1Return, MODULEUID);
 	}
 
 
@@ -1098,10 +1117,10 @@ notification.
 Outstanding requests complete with KErrCancel.
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSNOTIFYDISKSPACECANCEL2, "sess %x", Handle());
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsNotifyDiskSpaceCancel2, MODULEUID, Handle());
 	SendReceive(EFsNotifyDiskSpaceCancel,TIpcArgs(NULL));
 
-	OstTrace0(TRACE_BORDER, EFSRV_EFSNOTIFYDISKSPACECANCEL2RETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFsNotifyDiskSpaceCancel2Return, MODULEUID);
 	}
 
 
@@ -1127,9 +1146,10 @@ are available to be used by SetSubst() or for redirecting.
 @return KErrNone, successful, otherwise one of the other system-wide error codes.
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSDRIVELIST1, "sess %x", Handle());
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsDriveList1, MODULEUID, Handle());
 	TInt r = SendReceive(EFsDriveList,TIpcArgs(&aList, KDriveAttExclude|KDriveAttRemote|KDriveAttHidden));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSDRIVELIST1RETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsDriveList1Return, MODULEUID, r);
 	return r;
 	}
 
@@ -1160,9 +1180,10 @@ are available to be used by SetSubst() or for redirecting.
 		KErrArgument, If aFlags contains an invalid attribute combination.
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSDRIVELIST2, "sess %x aFlags %x", (TUint) Handle(), (TUint) aFlags);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsDriveList2, MODULEUID, Handle(), aFlags);
 	TInt r = SendReceive(EFsDriveList,TIpcArgs(&aList,aFlags));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSDRIVELIST2RETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsDriveList2Return, MODULEUID, r);
 	return r;
 	}
 
@@ -1192,10 +1213,12 @@ volume can, by mounting different media, reformatting etc.
 @see RFs::Volume
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSDRIVE, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsDrive, MODULEUID, Handle(), aDrive);
+
 	TPckg<TDriveInfo> m(anInfo);
 	TInt r = SendReceive(EFsDrive,TIpcArgs(&m,aDrive));
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFSDRIVERETURN, "r %d driveAtt %x mediaAtt %x type %x", r, (TUint) anInfo.iDriveAtt, (TUint) anInfo.iMediaAtt, (TUint) anInfo.iType);
+
+	TRACERET4(UTF::EBorder, UTraceModuleEfsrv::EFsDriveReturn, MODULEUID, r, anInfo.iDriveAtt, anInfo.iMediaAtt, anInfo.iType);
 	return r;
 	}
 
@@ -1227,11 +1250,13 @@ reformatting etc. A volume may not even be present if the media is removable.
 @see RFs::Drive
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSVOLUME1, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsVolume1, MODULEUID, Handle(), aDrive);
 	TPckg<TVolumeInfo> v(aVol);
     TInt r = SendReceive(EFsVolume,TIpcArgs(&v,aDrive,NULL));
-	OstTraceExt5(TRACE_BORDER, EFSRV_EFSVOLUME1RETURNA, "r %d iSize %x:%x iFree %x:%x", (TUint) r, (TUint) I64HIGH(aVol.iSize), (TUint) I64LOW(aVol.iSize), (TUint) I64HIGH(aVol.iFree), (TUint) I64LOW(aVol.iFree));
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSVOLUME1RETURNB, "iUniqueID %x iFileCacheFlags %x", (TUint) aVol.iUniqueID, (TUint) aVol.iFileCacheFlags);
+
+	TRACE7(UTF::EBorder, UTraceModuleEfsrv::EFsVolume1Return, MODULEUID, 
+		r, aVol.iUniqueID, I64LOW(aVol.iSize), I64HIGH(aVol.iSize),
+		I64LOW(aVol.iFree), I64HIGH(aVol.iFree), aVol.iFileCacheFlags);
 	return r;
 	}
 
@@ -1254,12 +1279,12 @@ activity finishes, which can be useful in some situations.
 */
 EFSRV_EXPORT_C void RFs::Volume(TVolumeInfo& aVol,TInt aDrive, TRequestStatus& aStat) const
     {
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFSVOLUME2, "sess %x aDrive %d status %x", (TUint) Handle(), (TUint) aDrive, (TUint) &aStat);
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFsVolume2, MODULEUID, Handle(), aDrive, &aStat);
 	TPckg<TVolumeInfo> v(aVol);
     aStat=KRequestPending;
     RSessionBase::SendReceive(EFsVolume,TIpcArgs(&v,aDrive,&aStat), aStat);
 
-	OstTrace0(TRACE_BORDER, EFSRV_EFSVOLUME2RETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFsVolume2Return, MODULEUID);
     }
 
 
@@ -1289,11 +1314,12 @@ labels
 @see RFs::Volume
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSSETVOLUMELABEL, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
-		
-	OstTraceData(TRACE_BORDER, EFSRV_EFSSETVOLUMELABEL_EVOLUMENAME, "VolumeName %S", aName.Ptr(), aName.Length()<<1);
+	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFsSetVolumeLabel, MODULEUID, 
+		Handle(), aName, aDrive);
+
 	TInt r = SendReceive(EFsSetVolume,TIpcArgs(&aName,aDrive));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSSETVOLUMELABELRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsSetVolumeLabelReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -1324,10 +1350,10 @@ provided by TDriveInfo::iDriveAtt.
 @see RFs::Drive
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSSUBST, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSSUBST_EDIRNAME, "Dir %S", aPath.Ptr(), aPath.Length()<<1);
+	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFsSubst, MODULEUID, Handle(), aPath, aDrive);
 	TInt r = SendReceive(EFsSubst,TIpcArgs(&aPath,aDrive));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSSUBSTRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsSubstReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -1376,10 +1402,10 @@ substitution is set.
 @capability Dependent If aPath is /Resource then Tcb capability is required.
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSSETSUBST, "sess %x aPath %d", (TUint) Handle(), (TUint) aDrive);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSSETSUBST_EDIRNAME, "Dir %S", aPath.Ptr(), aPath.Length()<<1);
+	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFsSetSubst, MODULEUID, Handle(), aPath, aDrive);
 	TInt r = SendReceive(EFsSetSubst,TIpcArgs(&aPath,aDrive));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSSETSUBSTRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsSetSubstReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -1407,11 +1433,10 @@ system.
 
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSREALNAME, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSREALNAME_EFILENAME1, "FileName %S", aName.Ptr(), aName.Length()<<1);
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsRealName, MODULEUID, Handle(), aName);
 	TInt r = SendReceive(EFsRealName,TIpcArgs(&aName,&aResult));
-	OstTraceData(TRACE_BORDER, EFSRV_EFSREALNAME_EFILENAME2, "FileName %S", aResult.Ptr(), aResult.Length()<<1);
-	OstTrace1(TRACE_BORDER, EFSRV_EFSREALNAMERETURN, "r %d", r);
+
+	TRACERETMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsRealNameReturn, MODULEUID, r, aResult);
 	return r;
 	}
 
@@ -1435,10 +1460,10 @@ Only local drive is allowed. Substed drive number will return KErrNotSupported.
 */
 EFSRV_EXPORT_C TInt RFs::GetMediaSerialNumber(TMediaSerialNumber& aSerialNum, TInt aDrive)
     {
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSGETMEDIASERIALNUMBER, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsGetMediaSerialNumber, MODULEUID, Handle(), aDrive);
     TInt r = SendReceive(EFsGetMediaSerialNumber, TIpcArgs(&aSerialNum, aDrive));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSGETMEDIASERIALNUMBERRETURN, "r %d", r);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSGETMEDIASERIALNUMBER_ESERIALNUMBER, "SerialNum %x", aSerialNum.Ptr(), aSerialNum.Length());
+
+	TRACERETMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsGetMediaSerialNumberReturn, MODULEUID, r, aSerialNum);
 	return r;
     }
 
@@ -1460,10 +1485,10 @@ changed by this function.
         system-wide error codes.
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSSESSIONPATH, "sess %x", Handle());
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsSessionPath, MODULEUID, Handle());
 	TInt r = SendReceive(EFsSessionPath,TIpcArgs(&aPath));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSSESSIONPATHRETURN, "r %d", r);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSSESSIONPATH_EDIRNAME, "Dir %S", aPath.Ptr(), aPath.Length()<<1);
+
+	TRACERETMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsSessionPathReturn, MODULEUID, r, aPath);
 	return r;
 	}
 
@@ -1501,10 +1526,10 @@ deleted, removed or unmounted while the path is set.
 
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSSETSESSIONPATH, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSSETSESSIONPATH_EDIRNAME, "Dir %S", aPath.Ptr(), aPath.Length()<<1);
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsSetSessionPath, MODULEUID, Handle(), aPath);
 	TInt r = SendReceive(EFsSetSessionPath,TIpcArgs(&aPath));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSSETSESSIONPATHRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsSetSessionPathReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -1578,10 +1603,10 @@ See MkDirAll(), which may also create intermediate directories.
 */
 EFSRV_EXPORT_C TInt RFs::MkDir(const TDesC& aPath)
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSMKDIR, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSMKDIR_EDIRNAME, "Dir %S", aPath.Ptr(), aPath.Length()<<1);
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsMkDir, MODULEUID, Handle(), aPath);
 	TInt r = SendReceive(EFsMkDir,TIpcArgs(&aPath,NULL));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSMKDIRRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsMkDirReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -1628,10 +1653,10 @@ See MkDir(), which creates only a single new directory.
 */
 EFSRV_EXPORT_C TInt RFs::MkDirAll(const TDesC& aPath)
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSMKDIRALL, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSMKDIRALL_EDIRNAME, "Dir %S", aPath.Ptr(), aPath.Length()<<1);
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsMkDirAll, MODULEUID, Handle(), aPath);
 	TInt r = SendReceive(EFsMkDir,TIpcArgs(&aPath,TRUE));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSMKDIRALLRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsMkDirAllReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -1682,10 +1707,10 @@ non-empty directory and all of its contents.
 @see CFileMan
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSRMDIR, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSRMDIR_EDIRNAME, "Dir %S", aPath.Ptr(), aPath.Length()<<1);
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsRmDir, MODULEUID, Handle(), aPath);
 	TInt r = SendReceive(EFsRmDir,TIpcArgs(&aPath));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSRMDIRRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsRmDirReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -1800,8 +1825,9 @@ Notes:
 @see TEntryKey
 */
 	{
-	OstTraceExt5(TRACE_BORDER, EFSRV_EFSGETDIR1, "sess %x aUidType0 %x aUidType1 %x aUidType2 %x aKey %x", (TUint) Handle(), (TUint) aUidType[0].iUid, (TUint) aUidType[1].iUid, (TUint) aUidType[2].iUid, (TUint) aKey);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSGETDIR1_EDIRNAME, "Dir %S", aName.Ptr(), aName.Length()<<1);
+	TRACEMULT6(UTF::EBorder, UTraceModuleEfsrv::EFsGetDir1, MODULEUID, 
+		Handle(), aName, aUidType[0].iUid, aUidType[1].iUid, aUidType[2].iUid, aKey);
+
 	RDir d;
 	TRAPD(r,GetDirL(aName,aUidType,aKey,aFileList,d))
 	d.Close();
@@ -1810,7 +1836,8 @@ Notes:
 		delete aFileList;
 		aFileList=NULL;
 		}
-	OstTrace1(TRACE_BORDER, EFSRV_EFSGETDIR1RETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsGetDir1Return, MODULEUID, r);
 	return r;
 	}
 
@@ -1856,8 +1883,8 @@ Notes:
 @see TEntryKey
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFSGETDIR2, "sess %x anAttMask %x aKey %x", (TUint) Handle(), (TUint) anAttMask, (TUint) aKey);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSGETDIR2_EDIRNAME, "Dir %S", aName.Ptr(), aName.Length()<<1);
+	TRACEMULT4(UTF::EBorder, UTraceModuleEfsrv::EFsGetDir2, MODULEUID, Handle(), aName, anAttMask, aKey);
+
 	RDir d;
 	if ((aKey&0xff)==ESortByUid)
 		anAttMask|=KEntryAttAllowUid;
@@ -1868,7 +1895,8 @@ Notes:
 		delete aFileList;
 		aFileList=NULL;
 		}
-	OstTrace1(TRACE_BORDER, EFSRV_EFSGETDIR2RETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsGetDir2Return, MODULEUID, r);
 	return r;
 	}
 
@@ -1921,8 +1949,8 @@ Notes:
 @see TEntryKey
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFSGETDIR3, "sess %x anAttMask %x aKey %x", (TUint) Handle(), (TUint) anAttMask, (TUint) aKey);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSGETDIR3_EDIRNAME, "Dir %S", aName.Ptr(), aName.Length()<<1);
+	TRACEMULT4(UTF::EBorder, UTraceModuleEfsrv::EFsGetDir3, MODULEUID, Handle(), aName, anAttMask, aKey);
+
 	RDir d;
 	if (aKey&ESortByUid)
 		anAttMask|=KEntryAttAllowUid;
@@ -1935,7 +1963,8 @@ Notes:
 		delete aDirList;
 		aDirList=NULL;
 		}
-	OstTrace1(TRACE_BORDER, EFSRV_EFSGETDIR3RETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsGetDir3Return, MODULEUID, r);
 	return r;
 	}
 
@@ -1982,13 +2011,13 @@ illegal path components in either of the paths specified.
         system-wide error codes.
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSPARSE1, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSPARSE1_EFILEPATH, "FilePath %S", aName.Ptr(), aName.Length()<<1);
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsParse1, MODULEUID, Handle(), aName);
 	TFileName session_path;
 	TInt r = SessionPath(session_path);
 	if (r==KErrNone)
 		r = aParse.Set(aName, NULL, &session_path);
-	OstTrace1(TRACE_BORDER, EFSRV_EFSPARSE1RETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsParse1Return, MODULEUID, r);
 	return r;
 	}
 
@@ -2037,14 +2066,13 @@ illegal path components in any of the paths specified.
         system-wide error codes.
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSPARSE2, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSPARSE2_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSPARSE2_ERELATED, "Related %S", aRelated.Ptr(), aRelated.Length()<<1);
+	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFsParse2, MODULEUID, Handle(), aName, aRelated);
 	TFileName session_path;
 	TInt r = SessionPath(session_path);
 	if (r==KErrNone)
 		r = aParse.Set(aName, &aRelated, &session_path);
-	OstTrace1(TRACE_BORDER, EFSRV_EFSPARSE2RETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsParse2Return, MODULEUID, r);
 	return r;
 	}
 
@@ -2077,10 +2105,10 @@ See class CFileMan for information on deleting multiple files.
 @see CFileMan        
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSDELETE, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSDELETE_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsDelete, MODULEUID, Handle(), aName);
 	TInt r = SendReceive(EFsDelete,TIpcArgs(&aName));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSDELETERETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsDeleteReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -2139,15 +2167,15 @@ See class CFileMan for information on renaming multiple files.
 @see CFileMan        
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSRENAME, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSRENAME_EOLDNAME, "OldName %S", anOldName.Ptr(), anOldName.Length()<<1);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSRENAME_ENEWNAME, "NewName %S", aNewName.Ptr(), aNewName.Length()<<1);
+	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFsRename, MODULEUID, Handle(), anOldName, aNewName);
+
 	TInt r;
 	if (anOldName.Length() <= 0 || aNewName.Length() <= 0 )
 		r = KErrBadName;
 	else
 		r = SendReceive(EFsRename,TIpcArgs(&anOldName,&aNewName));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSRENAMERETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsRenameReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -2198,11 +2226,10 @@ Both files must be on the same drive.
 
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSREPLACE, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSREPLACE_EOLDNAME, "OldName %S", anOldName.Ptr(), anOldName.Length()<<1);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSREPLACE_ENEWNAME, "NewName %S", aNewName.Ptr(), aNewName.Length()<<1);
+	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFsReplace, MODULEUID, Handle(), anOldName, aNewName);
 	TInt r = SendReceive(EFsReplace,TIpcArgs(&anOldName,&aNewName));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSREPLACERETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsReplaceReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -2229,13 +2256,14 @@ Gets a file's attributes.
 @see KEntryAttNormal
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSATT, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSATT_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsAtt, MODULEUID, Handle(), aName);
+
 	TEntry e;
 	TInt r=Entry(aName,e);
 	if (r==KErrNone)
 		aVal=e.iAtt;
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSATTRETURN, "r %d aVal %x", (TUint) r, (TUint) aVal);
+
+	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EFsAttReturn, MODULEUID, r, aVal);
 	return r;
 	}
 
@@ -2275,10 +2303,12 @@ attributes have no effect.
 
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFSSETATT, "sess %x aSetAttMask %x aClearAttMask %x", (TUint) Handle(), (TUint) aSetAttMask, (TUint) aClearAttMask);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSSETATT_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
+	TRACEMULT4(UTF::EBorder, UTraceModuleEfsrv::EFsSetAtt, MODULEUID, 
+		Handle(), aName, aSetAttMask, aClearAttMask);
+
  	TInt r = SetEntry(aName,TTime(0),aSetAttMask,aClearAttMask);
-	OstTrace1(TRACE_BORDER, EFSRV_EFSSETATTRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsSetAttReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -2306,13 +2336,14 @@ time of the file or directory's creation.
 
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSMODIFIED, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSMODIFIED_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsModified, MODULEUID, Handle(), aName);
+
 	TEntry e;
 	TInt r=Entry(aName,e);
 	if (r==KErrNone)
 		aTime=e.iModified;
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFSMODIFIEDRETURN, "r %d aTime %x:%x ", (TUint) r, (TUint) I64HIGH(aTime.Int64()), (TUint) I64LOW(aTime.Int64()));
+
+	TRACERET3(UTF::EBorder, UTraceModuleEfsrv::EFsModifiedReturn, MODULEUID, r, I64LOW(aTime.Int64()), I64HIGH(aTime.Int64()));
 	return r;
 	}
 
@@ -2339,10 +2370,11 @@ were modified, in UTC.
 
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFSSETMODIFIED, "sess %x aTime %x:%x ", (TUint) Handle(), (TUint) I64HIGH(aTime.Int64()), (TUint) I64LOW(aTime.Int64()) );
-	OstTraceData(TRACE_BORDER, EFSRV_EFSSETMODIFIED_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
+	TRACEMULT4(UTF::EBorder, UTraceModuleEfsrv::EFsSetModified, MODULEUID, Handle(), aName, I64LOW(aTime.Int64()), I64HIGH(aTime.Int64()) );
+
 	TInt r = SetEntry(aName,aTime,KEntryAttModified,0);
-	OstTrace1(TRACE_BORDER, EFSRV_EFSSETMODIFIEDRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsSetModifiedReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -2371,11 +2403,14 @@ This information includes UID information.
 					  readable with AllFiles capability or if <n> matches the process' SID.
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSENTRY, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSENTRY_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsEntry, MODULEUID, Handle(), aName);
 	TPckg<TEntry> e(anEntry);
 	TInt r = SendReceive(EFsEntry,TIpcArgs(&aName,&e));
-	OstTraceExt5(TRACE_BORDER, EFSRV_EFSENTRYRETURN, "r %d att %x modified %x:%x  size %d", (TUint) r, (TUint) anEntry.iAtt, (TUint) I64HIGH(anEntry.iModified.Int64()), (TUint) I64LOW(anEntry.iModified.Int64()), (TUint) anEntry.iSize);
+
+	TRACE5(UTF::EBorder, UTraceModuleEfsrv::EFsEntryReturn, MODULEUID, 
+		r, anEntry.iAtt, 
+		I64LOW(anEntry.iModified.Int64()), I64HIGH(anEntry.iModified.Int64()), 
+		anEntry.iSize);
 	return r;
 	}
 
@@ -2415,12 +2450,16 @@ attributes have no effect.
 @see KEntryAttVolume
 */
 	{
-	OstTraceExt5(TRACE_BORDER, EFSRV_EFSSETENTRY, "sess %x aTime %x:%x  aSetAttMask %x aClearAttMask %x", (TUint) Handle(), (TUint) I64HIGH(aTime.Int64()), (TUint) I64LOW(aTime.Int64()), (TUint) aSetAttMask, (TUint) aClearAttMask);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSSETENTRY_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
+	TRACEMULT6(UTF::EBorder, UTraceModuleEfsrv::EFsSetEntry, MODULEUID, 
+		Handle(), aName, 
+		I64LOW(aTime.Int64()), I64HIGH(aTime.Int64()), 
+		aSetAttMask, aClearAttMask);
+
 	__ASSERT_ALWAYS((aSetAttMask&aClearAttMask)==0,Panic(EAttributesIllegal));
 	TPtrC8 timeBuf((TUint8*)&aTime,sizeof(TTime));
 	TInt r = SendReceive(EFsSetEntry,TIpcArgs(&aName,&timeBuf,aSetAttMask,aClearAttMask));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSSETENTRYRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsSetEntryReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -2457,14 +2496,15 @@ the validity of the data it returns.
 */
 EFSRV_EXPORT_C TInt RFs::ReadFileSection(const TDesC& aName,TInt64 aPos,TDes8& aDes,TInt aLength) const
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFSREADFILESECTION, "sess %x aPos %x:%x aLength %d", (TUint) Handle(), (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), aLength);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSREADFILESECTION_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
+	TRACEMULT5(UTF::EBorder, UTraceModuleEfsrv::EFsReadFileSection, MODULEUID, 
+		Handle(), aName, I64LOW(aPos), I64HIGH(aPos), aLength);
+
 	__ASSERT_ALWAYS(aPos>=0,Panic(EPosNegative));
 	
 #ifndef SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
 	if(aPos > KMaxTInt)
 		{
-		OstTrace1(TRACE_BORDER, EFSRV_EFSREADFILESECTIONRETURN1, "r %d", KErrTooBig);
+		TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsReadFileSectionReturn, MODULEUID, KErrTooBig);
 		return KErrTooBig;
 		}
 	if((aPos + aLength) > KMaxTInt)
@@ -2477,7 +2517,7 @@ EFSRV_EXPORT_C TInt RFs::ReadFileSection(const TDesC& aName,TInt64 aPos,TDes8& a
 	else
 		{
 		aDes.Zero();
-		OstTrace1(TRACE_BORDER, EFSRV_EFSREADFILESECTIONRETURN2, "r %d", KErrNone);
+		TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsReadFileSectionReturn, MODULEUID, KErrNone);
 		return(KErrNone);
 		}
 		
@@ -2493,17 +2533,19 @@ EFSRV_EXPORT_C TInt RFs::ReadFileSection(const TDesC& aName,TInt64 aPos,TDes8& a
 		TPckgC<TInt64> pkPos(aPos);
 		r = SendReceive(EFsReadFileSection|KIpcArgSlot2Desc,TIpcArgs(&aDes,&aName,&pkPos,aLength));
 		}
-	OstTrace1(TRACE_BORDER, EFSRV_EFSREADFILESECTIONRETURN3, "r %d", r);
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsReadFileSectionReturn, MODULEUID, r);
 	return r;
 	}
 /**
 Maintained for BC
+
 @internalTechnology
 */
 EFSRV_EXPORT_C TInt RFs::ReadFileSection_RESERVED(const TDesC& aName,TInt aPos,TDes8& aDes,TInt aLength) const
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFSREADFILESECTION_RESERVED, "sess %x aPos %x aLength %d", (TUint) Handle(), (TUint) aPos, aLength);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSREADFILESECTION_RESERVED_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
+	TRACEMULT5(UTF::EBorder, UTraceModuleEfsrv::EFsReadFileSection, MODULEUID, 
+		Handle(), aName, aPos, 0, aLength);
+
 	__ASSERT_ALWAYS(aPos>=0,Panic(EPosNegative));
 	
 	if (aLength)	//	Number of characters to read
@@ -2513,14 +2555,15 @@ EFSRV_EXPORT_C TInt RFs::ReadFileSection_RESERVED(const TDesC& aName,TInt aPos,T
 	else
 		{
 		aDes.Zero();
-		OstTrace1(TRACE_BORDER, EFSRV_EFSREADFILESECTION_RESERVED_RETURN1, "r %d", KErrNone);
+		TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsReadFileSectionReturn, MODULEUID, KErrNone);
 		return(KErrNone);
 		}
 		
 	__ASSERT_ALWAYS(aDes.MaxLength()>=aLength,Panic(EBadLength));
 		
 	TInt r = SendReceive(EFsReadFileSection,TIpcArgs(&aDes,&aName,aPos,aLength));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSREADFILESECTION_RESERVED_RETURN2, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsReadFileSectionReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -2535,11 +2578,11 @@ Typically, this function is called immediately after a client is connected
 to the file server, and before any resources are opened.
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSRESOURCECOUNTMARKSTART, "sess %x", Handle());
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsResourceCountMarkStart, MODULEUID, Handle());
 	
 	RSessionBase::SendReceive(EFsResourceCountMarkStart);
 
-	OstTrace0(TRACE_BORDER, EFSRV_EFSRESOURCECOUNTMARKSTARTRETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFsResourceCountMarkStartReturn, MODULEUID);
 	}
 
 
@@ -2554,10 +2597,11 @@ before closing a session with the file server.
        count checking is not equal to the number of resources closed.
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSRESOURCECOUNTMARKEND, "sess %x", Handle());
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsResourceCountMarkEnd, MODULEUID, Handle());
+
 	RSessionBase::SendReceive(EFsResourceCountMarkEnd);
 
-	OstTrace0(TRACE_BORDER, EFSRV_EFSRESOURCECOUNTMARKENDRETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFsResourceCountMarkEndReturn, MODULEUID);
 	}
 
 
@@ -2574,12 +2618,14 @@ to a disk is opened.
 @return The number of resources currently open.
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSRESOURCECOUNT, "sess %x", Handle());
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsResourceCount, MODULEUID, Handle());
+
 	TInt count;
 	TPckg<TInt> pckg(count);
 	SendReceive(EFsResourceCount,TIpcArgs(&pckg));
 	TInt r = *(TInt*)pckg.Ptr();
-	OstTrace1(TRACE_BORDER, EFSRV_EFSRESOURCECOUNTRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsResourceCountReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -2618,10 +2664,10 @@ Error codes returned by the FAT version of CheckDisk include:
 */
 EFSRV_EXPORT_C TInt RFs::CheckDisk(const TDesC& aDrive) const
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSCHECKDISK, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSCHECKDISK_EDIRNAME, "Dir %S", aDrive.Ptr(), aDrive.Length()<<1);
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsCheckDisk, MODULEUID, Handle(), aDrive);
 	TInt r = SendReceive(EFsCheckDisk,TIpcArgs(&aDrive));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSCHECKDISKRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsCheckDiskReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -2668,10 +2714,10 @@ Running ScanDrive on removable media or media that has FAT file system not in
 Therefore, do not treat ScanDrive on removable media as a generic "disk repair utility".
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSSCANDRIVE, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSSCANDRIVE_EDIRNAME, "Dir %S", aDrive.Ptr(), aDrive.Length()<<1);
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsScanDrive, MODULEUID, Handle(), aDrive);
 	TInt r = SendReceive(EFsScanDrive,TIpcArgs(&aDrive));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSSCANDRIVERETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsScanDriveReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -2700,11 +2746,10 @@ characters for the extension.
 					  have the relevant SID capability AllFiles is required
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSGETSHORTNAME, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSGETSHORTNAME_ELONGNAME, "LongName %S", aLongName.Ptr(), aLongName.Length()<<1);
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsGetShortName, MODULEUID, Handle(), aLongName);
 	TInt r = SendReceive(EFsGetShortName,TIpcArgs(&aLongName,&aShortName));
-	OstTraceData(TRACE_BORDER, EFSRV_EFSGETSHORTNAME_ESHORTNAME, "ShortName %S", aShortName.Ptr(), aShortName.Length()<<1);
-	OstTrace1(TRACE_BORDER, EFSRV_EFSGETSHORTNAMERETURN, "r %d", r);
+
+	TRACERETMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsGetShortNameReturn, MODULEUID, r, aShortName);
 	return r;
 	}
 
@@ -2733,11 +2778,10 @@ limit of 256 characters for the entire path.
 
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSGETLONGNAME, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSGETLONGNAME_ESHORTNAME, "ShortName %S", aShortName.Ptr(), aShortName.Length()<<1);
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsGetLongName, MODULEUID, Handle(), aShortName);
 	TInt r = SendReceive(EFsGetLongName,TIpcArgs(&aShortName,&aLongName));
-	OstTraceData(TRACE_BORDER, EFSRV_EFSGETLONGNAME_ELONGNAME, "LongName %S", aLongName.Ptr(), aLongName.Length()<<1);
-	OstTrace1(TRACE_BORDER, EFSRV_EFSGETLONGNAMERETURN, "r %d", r);
+
+	TRACERETMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsGetLongNameReturn, MODULEUID, r, aLongName);
 	return r;
 	}
 
@@ -2770,11 +2814,11 @@ the file be closed.
 @see RFs::Replace
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSISFILEOPEN, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSISFILEOPEN_EFILENAME, "FileName %S", aFileName.Ptr(), aFileName.Length()<<1);
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsIsFileOpen, MODULEUID, Handle(), aFileName);
 	TPckg<TBool> b(anAnswer);
 	TInt r = SendReceive(EFsIsFileOpen,TIpcArgs(&aFileName,&b));
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSISFILEOPENRETURN, "r %d anAnswer %d", (TUint) r, (TUint) anAnswer);
+
+	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EFsIsFileOpenReturn, MODULEUID, r, anAnswer);
 	return r;
 	}
 
@@ -2806,12 +2850,14 @@ Tests whether user notification of file read or write failure is in effect.
 @return True if notification in effect, false if not.
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSGETNOTIFYUSER, "sess %x", Handle());
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsGetNotifyUser, MODULEUID, Handle());
+
 	TInt notifyUser;
 	TPckg<TInt> pckgNotify(notifyUser);
 	SendReceive(EFsGetNotifyUser,TIpcArgs(&pckgNotify));
 	TBool r = notifyUser;
-	OstTrace1(TRACE_BORDER, EFSRV_EFSGETNOTIFYUSERRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsGetNotifyUserReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -2828,10 +2874,10 @@ notified about read/write failures on it.
               EFalse, for no notification.
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSSETNOTIFYUSER, "sess %x aValue %d", (TUint) Handle(), (TUint) aValue);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsSetNotifyUser, MODULEUID, Handle(), aValue);
 	SendReceive(EFsSetNotifyUser,TIpcArgs(aValue));
 
-	OstTrace0(TRACE_BORDER, EFSRV_EFSSETNOTIFYUSERRETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFsSetNotifyUserReturn, MODULEUID);
 	}
 
 
@@ -2861,8 +2907,8 @@ NAND flash.
 
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSISFILEINROM, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSISFILEINROM_EFILENAME, "FileName %S", aFileName.Ptr(), aFileName.Length()<<1);
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsIsFileInRom, MODULEUID, Handle(), aFileName);
+
 	TPckgBuf<TUint8*> start;
 
 	TUint8* r;
@@ -2871,7 +2917,7 @@ NAND flash.
 	else
 		r = start();
 
-	OstTrace1(TRACE_BORDER, EFSRV_EFSISFILEINROMRETURN, "r %d", r);
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsIsFileInRomReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -2911,8 +2957,7 @@ The following restrictions apply to the path and to its components:
 */
 EFSRV_EXPORT_C TBool RFs::IsValidName(const TDesC& aFileName) const
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSISVALIDNAME1, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSISVALIDNAME1_EFILENAME, "FileName %S", aFileName.Ptr(), aFileName.Length()<<1);
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsIsValidName1, MODULEUID, Handle(), aFileName);
 	TBool returnInvalidChar=EFalse;
 	TPckg<TBool> bPckg(returnInvalidChar);
 	TBool b;
@@ -2920,7 +2965,7 @@ EFSRV_EXPORT_C TBool RFs::IsValidName(const TDesC& aFileName) const
 		b = EFalse;
 	else
 		b = ETrue;
-	OstTrace1(TRACE_BORDER, EFSRV_EFSISVALIDNAME1RETURN, "r %d", b);
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsIsValidName1Return, MODULEUID, b);
 	return b;
 	}
 
@@ -2963,8 +3008,7 @@ The following restrictions apply to the path and to its components:
 */
 EFSRV_EXPORT_C TBool RFs::IsValidName(const TDesC& aFileName,TText& aBadChar) const
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSISVALIDNAME2, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSISVALIDNAME2_EFILENAME, "FileName %S", aFileName.Ptr(), aFileName.Length()<<1);
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsIsValidName2, MODULEUID, Handle(), aFileName);
 	TBool returnInvalidChar=ETrue;
 	TPckg<TBool> boolPckg(returnInvalidChar);
 	TPckg<TText> textPckg(aBadChar);
@@ -2973,7 +3017,7 @@ EFSRV_EXPORT_C TBool RFs::IsValidName(const TDesC& aFileName,TText& aBadChar) co
 		b = EFalse;
 	else 
 		b = ETrue;
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSISVALIDNAME2RETURN, "r %d aBadChar %x", (TUint) b, (TUint) aBadChar);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsIsValidName2Return, MODULEUID, b, aBadChar);
 	return b;
 	}
 /**
@@ -3022,15 +3066,14 @@ The following restrictions apply to the path and to its components:
 */
 EFSRV_EXPORT_C TBool RFs::IsValidName(const TDesC& aName, TNameValidParam& aParam )
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSISVALIDNAME3, "sess %x", Handle());
-	OstTraceData(TRACE_BORDER, EFSRV_EFSISVALIDNAME3_EFILENAME, "FileName %S", aName.Ptr(), aName.Length()<<1);
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsIsValidName3, MODULEUID, Handle(), aName);
 	TPckg<TNameValidParam> paramPckg(aParam);
 	TBool b;
 	if (SendReceive(EFsIsValidName,TIpcArgs(&aName,NULL,NULL,&paramPckg))!=KErrNone)
 		b = EFalse;
 	else
 		b = ETrue;
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSISVALIDNAME3RETURN, "r %d err %d", (TUint) b, (TUint) aParam.ErrorCode());
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsIsValidName3Return, MODULEUID, b, aParam.ErrorCode());
 	return b;
 	}
 
@@ -3056,10 +3099,10 @@ this function returns a descriptor whose length is zero.
 @see TDriveNumber
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSGETDRIVENAME, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsGetDriveName, MODULEUID, Handle(), aDrive);
 	TInt r = SendReceive(EFsGetDriveName,TIpcArgs(aDrive,&aDriveName));
-	OstTraceData(TRACE_BORDER, EFSRV_EFSGETDRIVENAME_EDRIVENAME, "DriveName %S", aDriveName.Ptr(), aDriveName.Length()<<1);
-	OstTrace1(TRACE_BORDER, EFSRV_EFSGETDRIVENAMERETURN, "r %d", r);
+
+	TRACERETMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsGetDriveNameReturn, MODULEUID, r, aDriveName);
 	return r;
 	}
 
@@ -3087,10 +3130,10 @@ one drive can share the same name.
 
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSSETDRIVENAME, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSSETDRIVENAME_EDRIVENAME, "DriveName %S", aDriveName.Ptr(), aDriveName.Length()<<1);
+	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFsSetDriveName, MODULEUID, Handle(), aDrive, aDriveName);
 	TInt r = SendReceive(EFsSetDriveName,TIpcArgs(aDrive,&aDriveName));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSSETDRIVENAMERETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsSetDriveNameReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -3121,9 +3164,10 @@ by the following rules:
 
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFSLOCKDRIVE, "sess %x aDrv %d aStore %d", (TUint) Handle(), (TUint) aDrv, (TUint) aStore);
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFsLockDrive, MODULEUID, Handle(), aDrv, aStore);
 	TInt r = SendReceive(EFsLockDrive,TIpcArgs(aDrv,&aOld,&aNew,aStore));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSLOCKDRIVERETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsLockDriveReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -3152,9 +3196,10 @@ having to be prompted for it again.
 
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFSUNLOCKDRIVE, "sess %x aDrv %d aStore %d", (TUint) Handle(), (TUint) aDrive, (TUint) aStore);
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFsUnlockDrive, MODULEUID, Handle(), aDrive, aStore);
 	TInt r = SendReceive(EFsUnlockDrive,TIpcArgs(aDrive,&aPassword,aStore));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSUNLOCKDRIVERETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsUnlockDriveReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -3180,9 +3225,10 @@ the password to null.
 
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSCLEARPASSWORD, "sess %x aDrv %d", (TUint) Handle(), (TUint) aDrv);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsClearPassword, MODULEUID, Handle(), aDrv);
 	TInt r = SendReceive(EFsClearPassword,TIpcArgs(aDrv,&aPswd));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSCLEARPASSWORDRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsClearPasswordReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -3207,9 +3253,10 @@ Hence, it is recommended to format the Multimedia card after calling RFs::EraseP
 
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSERASEPASSWORD, "sess %x aDrv %d", (TUint) Handle(), (TUint) aDrv);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsErasePassword, MODULEUID, Handle(), aDrv);
 	TInt r = SendReceive(EFsErasePassword,TIpcArgs(aDrv));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSERASEPASSWORDRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsErasePasswordReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -3226,11 +3273,11 @@ Noifies the file server that startup initialisation is complete.
 // Notify file server that startup initialisation has been completed
 //
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSSTARTUPINITCOMPLETE, "sess %x status %x", (TUint) Handle(), (TUint) &aStat);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsStartupInitComplete, MODULEUID, Handle(), &aStat);
 	aStat=KRequestPending;
 	RSessionBase::SendReceive(EFsStartupInitComplete,aStat);
 
-	OstTrace0(TRACE_BORDER, EFSRV_EFSSTARTUPINITCOMPLETERETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFsStartupInitCompleteReturn, MODULEUID);
 	}
 
 
@@ -3241,11 +3288,11 @@ EFSRV_EXPORT_C TInt RFs::SetLocalDriveMapping(const TDesC8& aMapping)
 // Set the local drive mapping
 //
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSSETLOCALDRIVEMAPPING, "sess %x", Handle());
-	
-	OstTraceData( TRACE_BORDER, EFSRV_EFSSETLOCALDRIVEMAPPING_ELOCALDRIVEMAPPING, "aMapping %{int32[]}", aMapping.Ptr(), aMapping.Length());
+	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsSetLocalDriveMapping, MODULEUID, Handle(), aMapping);
+
 	TInt r = SendReceive(EFsSetLocalDriveMapping,TIpcArgs(&aMapping));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSSETLOCALDRIVEMAPPINGRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsSetLocalDriveMappingReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -3259,7 +3306,7 @@ EFSRV_EXPORT_C TInt RFs::SetLocalDriveMapping(const TDesC8& aMapping)
 
     @return KErrNone on success,
             KErrArgument if the function arguments are invalid
-            KErrInUse    if the drive has opened disk access objects (format, raw disk access, etc) and therefore can not be finalised
+            KErrInUse    if the drive has opened objects (files, directories etc.) and therefore can not be finalised
             KErrCorrupt  if the drive is corrupt.
             System wide error codes otherwise.
 
@@ -3267,9 +3314,10 @@ EFSRV_EXPORT_C TInt RFs::SetLocalDriveMapping(const TDesC8& aMapping)
 */
 EFSRV_EXPORT_C TInt RFs::FinaliseDrive(TInt aDriveNo, TFinaliseDrvMode aMode) const
     {
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFSFINALISEDRIVE, "sess %x aDriveNo %d aMode %d", (TUint) Handle(), (TUint) aDriveNo, (TUint) aMode);
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFsFinaliseDrive, MODULEUID, Handle(), aDriveNo, aMode);
     TInt r = SendReceive(EFsFinaliseDrive,TIpcArgs(aDriveNo, (TInt)aMode));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSFINALISEDRIVERETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsFinaliseDriveReturn, MODULEUID, r);
 	return r;
     }
 
@@ -3285,7 +3333,7 @@ EFSRV_EXPORT_C TInt RFs::FinaliseDrive(TInt aDriveNo, TFinaliseDrvMode aMode) co
 */
 EFSRV_EXPORT_C TInt RFs::FinaliseDrives()
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSFINALISEDRIVES, "sess %x", Handle());
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsFinaliseDrives, MODULEUID, Handle());
 	TInt nRes;
 	TDriveList driveList;
 	TDriveInfo driveInfo;
@@ -3293,7 +3341,7 @@ EFSRV_EXPORT_C TInt RFs::FinaliseDrives()
 	nRes=DriveList(driveList);
 	if(nRes != KErrNone)
 		{
-		OstTrace1(TRACE_BORDER, EFSRV_EFSFINALISEDRIVESRETURN1, "r %d", nRes);
+		TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsFinaliseDrivesReturn, MODULEUID, nRes);
 	    return nRes; //-- unable to obtain drives list
 		}
 	
@@ -3315,7 +3363,7 @@ EFSRV_EXPORT_C TInt RFs::FinaliseDrives()
 	    }
 	
 
-	OstTrace1(TRACE_BORDER, EFSRV_EFSFINALISEDRIVESRETURN2, "r %d", KErrNone);
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsFinaliseDrivesReturn, MODULEUID, KErrNone);
 	return 	KErrNone;
 	}
 
@@ -3342,11 +3390,10 @@ will be used in preference to that of the old filesystem when it is mounted.
 @capability DiskAdmin
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSSWAPFILESYSTEM, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSSWAPFILESYSTEM_EOLDNAME, "OldName %S", aOldFileSystemName.Ptr(), aOldFileSystemName.Length()<<1);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSSWAPFILESYSTEM_ENEWNAME, "NewName %S", aNewFileSystemName.Ptr(), aNewFileSystemName.Length()<<1);
+	TRACEMULT4(UTF::EBorder, UTraceModuleEfsrv::EFsSwapFileSystem, MODULEUID, Handle(), aOldFileSystemName, aNewFileSystemName, aDrive);
 	TInt r = SendReceive(EFsSwapFileSystem,TIpcArgs(&aNewFileSystemName,aDrive,&aOldFileSystemName));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSSWAPFILESYSTEMRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsSwapFileSystemReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -3371,10 +3418,11 @@ then the whole composite drive will be treated asynchronous.
 @capability DiskAdmin
 */
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFSADDCOMPOSITEMOUNT, "sess %x aLocalDriveToMount %d aCompositeDrive %d aSync %d", (TUint) Handle(), aLocalDriveToMount, aCompositeDrive, aSync);
-	OstTraceData(TRACE_BORDER, EFSRV_EFSADDCOMPOSITEMOUNT_EFILESYSTEMNAME, "FileSystemName %S", aFileSystemName.Ptr(), aFileSystemName.Length()<<1);
+	TRACEMULT5(UTF::EBorder, UTraceModuleEfsrv::EFsAddCompositeMount, MODULEUID, 
+		Handle(), aFileSystemName, aLocalDriveToMount, aCompositeDrive, aSync);
 	TInt r = SendReceive(EFsAddCompositeMount,TIpcArgs(&aFileSystemName,aLocalDriveToMount,aCompositeDrive,aSync));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSADDCOMPOSITEMOUNTRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsAddCompositeMountReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -3413,9 +3461,10 @@ the reserving session until that session releases the reserved space.
         any of the possible error return codes from TDrive::Volume()
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFSRESERVEDRIVESPACE, "sess %x aDriveNo %d aSpace %d", (TUint) Handle(), (TUint) aDriveNo, (TUint) aSpace);
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFsReserveDriveSpace, MODULEUID, Handle(), aDriveNo, aSpace);
 	TInt r = SendReceive(EFsReserveDriveSpace, TIpcArgs(aDriveNo, aSpace));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSRESERVEDRIVESPACERETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsReserveDriveSpaceReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -3433,9 +3482,10 @@ been reserved via RFs::ReserveDriveSpace
         KErrPermissionDenied if the drive has no spare reserved space
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSGETRESERVEACCESS, "sess %x aDriveNo %d", (TUint) Handle(), (TUint) aDriveNo);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsGetReserveAccess, MODULEUID, Handle(), aDriveNo);
 	TInt r = SendReceive(EFsGetReserveAccess, TIpcArgs(aDriveNo));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSGETRESERVEACCESSRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsGetReserveAccessReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -3449,9 +3499,10 @@ Release exclusive access for this session to overwrite a specific disk area.
 
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSRELEASERESERVEACCESS, "sess %x aDriveNo %d", (TUint) Handle(), (TUint) aDriveNo);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsReleaseReserveAccess, MODULEUID, Handle(), aDriveNo);
 	TInt r = SendReceive(EFsReleaseReserveAccess, TIpcArgs(aDriveNo));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSRELEASERESERVEACCESSRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsReleaseReserveAccessReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -3508,7 +3559,7 @@ Release exclusive access for this session to overwrite a specific disk area.
 */
 EFSRV_EXPORT_C void RFs::NotifyDismount(TInt aDrive, TRequestStatus& aStat, TNotifyDismountMode aMode /*=EFsDismountRegisterClient*/) const
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFSNOTIFYDISMOUNT, "sess %x aDrive %d status %x aMode %d", (TUint) Handle(), aDrive, (TUint) &aStat, (TInt) aMode);
+	TRACE4(UTF::EBorder, UTraceModuleEfsrv::EFsNotifyDismount, MODULEUID, Handle(), aDrive, &aStat, aMode);
 	aStat = KRequestPending;
 	RSessionBase::SendReceive(EFsNotifyDismount, TIpcArgs(aDrive,aMode,&aStat), aStat);
 	// This call is to synchronise with the driver thread as the corresponding cancel function (NotifyDismountCancel)
@@ -3516,7 +3567,7 @@ EFSRV_EXPORT_C void RFs::NotifyDismount(TInt aDrive, TRequestStatus& aStat, TNot
 	// This call guarantees that the notify request has been added to queue.
 	SendReceive(EFsSynchroniseDriveThread, TIpcArgs(aDrive));
 
-	OstTrace0(TRACE_BORDER, EFSRV_EFSNOTIFYDISMOUNTRETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFsNotifyDismountReturn, MODULEUID);
 	}
 
 
@@ -3531,12 +3582,12 @@ EFSRV_EXPORT_C void RFs::NotifyDismount(TInt aDrive, TRequestStatus& aStat, TNot
 */
 EFSRV_EXPORT_C void RFs::NotifyDismountCancel(TRequestStatus& aStat) const
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSNOTIFYDISMOUNTCANCEL1, "sess %x status %x", (TUint) Handle(), (TUint) &aStat);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsNotifyDismountCancel1, MODULEUID, Handle(), &aStat);
 	
 	if (aStat == KRequestPending)
 		SendReceive(EFsNotifyDismountCancel, TIpcArgs(&aStat));
 
-	OstTrace0(TRACE_BORDER, EFSRV_EFSNOTIFYDISMOUNTCANCEL1RETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFsNotifyDismountCancel1Return, MODULEUID);
 	}
 
 
@@ -3548,10 +3599,11 @@ EFSRV_EXPORT_C void RFs::NotifyDismountCancel(TRequestStatus& aStat) const
 */
 EFSRV_EXPORT_C void RFs::NotifyDismountCancel() const
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSNOTIFYDISMOUNTCANCEL2, "sess %x", Handle());
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsNotifyDismountCancel2, MODULEUID, Handle());
+
 	SendReceive(EFsNotifyDismountCancel, TIpcArgs(NULL));
 
-	OstTrace0(TRACE_BORDER, EFSRV_EFSNOTIFYDISMOUNTCANCEL2RETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFsNotifyDismountCancel2Return, MODULEUID);
 	}
 
 
@@ -3571,9 +3623,10 @@ EFSRV_EXPORT_C void RFs::NotifyDismountCancel() const
 */
 EFSRV_EXPORT_C TInt RFs::AllowDismount(TInt aDrive) const
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSALLOWDISMOUNT, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsAllowDismount, MODULEUID, Handle(), aDrive);
 	TInt r = SendReceive(EFsAllowDismount, TIpcArgs(aDrive));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSALLOWDISMOUNTRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsAllowDismountReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -3594,9 +3647,10 @@ Currently only loader thread priority can be specified.
 @return KErrNone if successful, KErrPermissionDenied if called outside estart
 */
     {
-	OstTraceExt4(TRACE_BORDER, EFSRV_EFSSETSTARTUPCONFIGURATION, "sess %x aCommand %d aParam1 %x aParam2 %x", (TUint) Handle(), aCommand, (TUint) aParam1, (TUint) aParam2);
+	TRACE4(UTF::EBorder, UTraceModuleEfsrv::EFsSetStartupConfiguration, MODULEUID, Handle(), aCommand, aParam1, aParam2);
     TInt r = SendReceive(EFsSetStartupConfiguration, TIpcArgs(aCommand,aParam1,aParam2));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSSETSTARTUPCONFIGURATIONRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsSetStartupConfigurationReturn, MODULEUID, r);
 	return r;
     }
 
@@ -3616,9 +3670,10 @@ clients of the file server not being notified of events such as directory/file c
 @see RFs::NotifyChange
  */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSSETNOTIFYCHANGE, "sess %x aNotifyChange %d", (TUint) Handle(), (TUint) aNotifyChange);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsSetNotifyChange, MODULEUID, Handle(), aNotifyChange);
 	TInt r = SendReceive(EFsSetSessionFlags, TIpcArgs(aNotifyChange ? EFsSessionNotifyChange: 0, aNotifyChange ? 0 : EFsSessionNotifyChange));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSSETNOTIFYCHANGERETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsSetNotifyChangeReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -3652,9 +3707,10 @@ Sets the F32 properties file - Can only be called from the ESTART process
 @capability KDiskAdmin
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFSINITIALISEPROPERTIESFILE, "sess %x filePtr %x fileLen %d", (TUint) Handle(), (TUint) aPtr.Ptr(), (TUint) aPtr.Length());
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFsInitialisePropertiesFile, MODULEUID, Handle(), aPtr.Ptr(), aPtr.Length());
 	TInt r = SendReceive(EFsInitialisePropertiesFile, TIpcArgs(aPtr.Ptr(), aPtr.Length(), ETrue));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSINITIALISEPROPERTIESFILERETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsInitialisePropertiesFileReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -3673,9 +3729,10 @@ Queries specific information on volumes by commands. Available commands is defin
 @see TVolumeIOParamInfo
  */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EFSQUERYVOLUMEINFOEXT, "sess %x aDrive %d aCommand %d", (TUint) Handle(), (TUint) aDrive, (TUint) aCommand);
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFsQueryVolumeInfoExt, MODULEUID, Handle(), aDrive, aCommand);
 	TInt r = SendReceive(EFsQueryVolumeInfoExt, TIpcArgs(aDrive, aCommand, &aInfo));
-	OstTrace1(TRACE_BORDER, EFSRV_EFSQUERYVOLUMEINFOEXTRETURN, "r %d", r);
+
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsQueryVolumeInfoExtReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -3694,7 +3751,8 @@ can effect the return value of each field within aParamInfo.
 @return KErrNone if successful; otherwise, another system wide error code is returned.
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSVOLUMEIOPARAM, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsVolumeIOParam, MODULEUID, Handle(), aDrive);
+
 	TInt r = KErrNone;
 
 	if (!IsValidDrive(aDrive))
@@ -3707,8 +3765,9 @@ can effect the return value of each field within aParamInfo.
 		if (r == KErrNone)
 			aParamInfo = infoPckg();
 		}
-	OstTraceExt5(TRACE_BORDER, EFSRV_EFSVOLUMEIOPARAMRETURN, "r %d iBlockSize %d iClusterSize %d iRecReadBufSize %d iRecWriteBufSize %d", (TUint) r, (TUint) aParamInfo.iBlockSize, (TUint) aParamInfo.iClusterSize, (TUint) aParamInfo.iRecReadBufSize, (TUint) aParamInfo.iRecWriteBufSize);
-		
+
+	TRACE5(UTF::EBorder, UTraceModuleEfsrv::EFsVolumeIOParamReturn, MODULEUID, 
+		r, aParamInfo.iBlockSize, aParamInfo.iClusterSize, aParamInfo.iRecReadBufSize, aParamInfo.iRecWriteBufSize);
 	return r;
 	}
 
@@ -3737,7 +3796,7 @@ can effect the return value of each field within aParamInfo.
 */
 EFSRV_EXPORT_C TInt RFs::FileSystemSubType(TInt aDrive, TDes& aName) const
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EFSFILESYSTEMSUBTYPE, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
+	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFsFileSystemSubType, MODULEUID, Handle(), aDrive, aName);
 
 	TInt r = KErrNone;
 
@@ -3751,11 +3810,8 @@ EFSRV_EXPORT_C TInt RFs::FileSystemSubType(TInt aDrive, TDes& aName) const
 		if (r == KErrNone || r == KErrNotSupported)
 			aName = namePckg();
 		}
-	
-	OstTraceData(TRACE_BORDER, EFSRV_EFSFILESYSTEMSUBTYPE_EFILESYSTEMNAME, "FileSystemName %S", aName.Ptr(), aName.Length()<<1);
 
-	OstTrace1(TRACE_BORDER, EFSRV_EFSFILESYSTEMSUBTYPERETURN, "r %d", r);
-
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsFileSystemSubTypeReturn, MODULEUID, r);
 	return r;
 	}
 
@@ -3838,21 +3894,14 @@ Dismounts a proxy drive.
 	return SendReceive(EFsDismountProxyDrive,TIpcArgs(aProxyDriveNumber));
 	}
 
-
-/**
-Closes the file server session.
-
-NB This function was added to support tracing and was not present in earlier versions of Symbian OS.
-For this reason no extra funcitonality should be added to this function.
-
-*/
 EFSRV_EXPORT_C void RFs::Close()
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_EFSCLOSE, "sess %x", Handle());
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsClose, MODULEUID, Handle());
+	RFTRACE_CLOSE;
 
 	RSessionBase::Close();
 
-	OstTrace0(TRACE_BORDER, EFSRV_EFSCLOSERETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EFsCloseReturn, MODULEUID);
 	}
 
 

@@ -343,9 +343,9 @@ TUint8* CRamFatTable::MemCopyFillZ(TAny* aTrg, TAny* aSrc,TInt aLength)
     Zero fill RAM area corresponding to the cluster number aCluster
     @param  aCluster a cluster number to be zero-filled
 */
-void CRamFatTable::ZeroFillCluster(TInt aCluster)
+void CRamFatTable::ZeroFillClusterL(TInt aCluster)
     {
-    TLinAddr clusterPos= I64LOW(DataPositionInBytes(aCluster));
+    TLinAddr clusterPos= I64LOW(DataPositionInBytesL(aCluster));
     Mem::FillZ(iRamDiskBase+clusterPos, 1<< iOwner->ClusterSizeLog2());     
     }
 
@@ -356,9 +356,15 @@ Return the location of a Cluster in the data section of the media
 @param aCluster to find location of
 @return Byte offset of the cluster data 
 */
-TInt64 CRamFatTable::DataPositionInBytes(TUint32 aCluster) const
+TInt64 CRamFatTable::DataPositionInBytesL(TUint32 aCluster) const
     {
     //__PRINT(_L("CRamFatTable::DataPositionInBytes"));
+    if(!ClusterNumberValid(aCluster))
+        {
+        __ASSERT_DEBUG(0, Fault(EFatTable_InvalidIndex));
+        User::Leave(KErrCorrupt);
+        }
+
     ReadIndirectionTable(aCluster);
     return(aCluster<<iOwner->ClusterSizeLog2());
     }
@@ -417,7 +423,7 @@ TUint32 CRamFatTable::AllocateSingleClusterL(TUint32 aNearestCluster)
     __PRINT(_L("CRamFatTable::AllocateSingleClusterL"));
     iOwner->EnlargeL(1<<iOwner->ClusterSizeLog2()); //  First enlarge the RAM drive
     TInt fileAllocated=CFatTable::AllocateSingleClusterL(aNearestCluster); //   Now update the free cluster and fat/fit
-    ZeroFillCluster(fileAllocated);  //-- zero-fill allocated cluster 
+    ZeroFillClusterL(fileAllocated);  //-- zero-fill allocated cluster 
     return(fileAllocated);
     }   
 
@@ -458,7 +464,7 @@ void CRamFatTable::ExtendClusterListL(TUint32 aNumber, TUint32& aCluster)
         DecrementFreeClusterCount(1);
         WriteL(aCluster,freeCluster);
         aCluster=freeCluster;
-        ZeroFillCluster(freeCluster); //-- zero fill just allocated cluster (RAM area)
+        ZeroFillClusterL(freeCluster); //-- zero fill just allocated cluster (RAM area)
         }
 
     SetFreeClusterHint(aCluster); 
@@ -493,7 +499,7 @@ void CRamFatTable::FreeClusterListL(TUint32 aCluster)
                 endCluster=EOF_32Bit;   // endCluster==0 -> file contained FAT loop
 
         //  Real position in bytes of the start cluster in the data area
-            TLinAddr startClusterPos=I64LOW(DataPositionInBytes(startCluster));
+            TLinAddr startClusterPos=I64LOW(DataPositionInBytesL(startCluster));
         //  Sliding value when more than one block is freed
             TLinAddr trg=startClusterPos-(totalFreed<<clusterShift);
             __PRINT1(_L("trg=0x%x"),trg);
@@ -515,7 +521,7 @@ void CRamFatTable::FreeClusterListL(TUint32 aCluster)
                 __PRINT1(_L("srcEnd=0x%x"),srcEnd);
                 }
             else                        //  Just move up to the next part of the chain
-                srcEnd=I64LOW(DataPositionInBytes(endCluster));
+                srcEnd=I64LOW(DataPositionInBytesL(endCluster));
 
         //-- Copy (srcEnd-srcStart) bytes from iRamDiskBase+srcStart onto iRamDiskBase+trg
         //-- zero-filling free space to avoid leaving something important there
@@ -545,7 +551,7 @@ void CRamFatTable::FreeClusterListL(TUint32 aCluster)
                 endCluster=EOF_16Bit;   // endCluster==0 -> file contained FAT loop
 
         //  Real position in bytes of the start cluster in the data area
-            TLinAddr startClusterPos=I64LOW(DataPositionInBytes(startCluster));
+            TLinAddr startClusterPos=I64LOW(DataPositionInBytesL(startCluster));
         //  Sliding value when more than one block is freed
             TLinAddr trg=startClusterPos-(totalFreed<<clusterShift);
             __PRINT1(_L("trg=0x%x"),trg);
@@ -567,7 +573,7 @@ void CRamFatTable::FreeClusterListL(TUint32 aCluster)
                 __PRINT1(_L("srcEnd=0x%x"),srcEnd);
                 }
             else                        //  Just move up to the next part of the chain
-                srcEnd=I64LOW(DataPositionInBytes(endCluster));
+                srcEnd=I64LOW(DataPositionInBytesL(endCluster));
 
         //-- Copy (srcEnd-srcStart) bytes from iRamDiskBase+srcStart onto iRamDiskBase+trg
         //-- zero-filling free space to avoid leaving something important there
@@ -633,12 +639,12 @@ TUint32 CRamFatTable::CountContiguousClustersL(TUint32 aStartCluster, TUint32& a
 	__PRINT2(_L("CRamFatTable::CountContiguousClustersL() start:%d, max:%d"),aStartCluster, aMaxCount);
 	TUint32 clusterListLen=1;
 	TUint32 endCluster=aStartCluster;
-	TInt64 endClusterPos=DataPositionInBytes(endCluster);
+	TInt64 endClusterPos=DataPositionInBytesL(endCluster);
 	while (clusterListLen<aMaxCount)
 		{
 		TInt oldCluster=endCluster;
 		TInt64 oldClusterPos=endClusterPos;
-		if (GetNextClusterL(endCluster)==EFalse || (endClusterPos=DataPositionInBytes(endCluster))!=(oldClusterPos+(1<<iOwner->ClusterSizeLog2())))
+		if (GetNextClusterL(endCluster)==EFalse || (endClusterPos=DataPositionInBytesL(endCluster))!=(oldClusterPos+(1<<iOwner->ClusterSizeLog2())))
 			{
 			endCluster=oldCluster;
 			break;

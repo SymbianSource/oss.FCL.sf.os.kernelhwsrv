@@ -11,11 +11,9 @@
 // Contributors:
 //
 // Description:
-// f32test\filesystem\fat\t_scn32dr1.cpp
-// Tests that ScanDrive fixes known errors to a Rugged FAT drive
+// f32test\scndrv\t_scn32dr1.cpp
 //
-
-#define __E32TEST_EXTENSION__
+//
 
 #include <f32file.h>
 #include <e32test.h>
@@ -264,10 +262,10 @@ LOCAL_C TUint32 GetFatEntry(TUint32 aIndex, const TUint8* aFat=NULL)
         {
         pos += BootSector.ReservedSectors() * BootSector.BytesPerSector();
         TInt r=TheRawDisk.Open(TheFs,gSessionPath[0]-'A');
-        test_KErrNone(r);
+        test(r==KErrNone);
         TPtr8 buf(&data[0], 4);
         r=TheRawDisk.Read(pos, buf);
-        test_KErrNone(r);
+        test(r==KErrNone);
         TheRawDisk.Close();
         }
 
@@ -292,7 +290,7 @@ LOCAL_C TUint32 GetFatEntry(TUint32 aIndex, const TUint8* aFat=NULL)
     return val;
     }
 
-LOCAL_C void WriteToFatBuf(TInt aFatIndex,TInt aValue,const TUint8* aFat)
+LOCAL_C void WriteFat(TInt aFatIndex,TInt aValue,const TUint8* aFat)
 //
 // Write a value to both fats starting at aFat
 //
@@ -346,7 +344,7 @@ static void DoReadBootSector()
     {
 
     TInt nRes = ReadBootSector(TheFs, CurrentDrive(), KBootSectorNum<<KDefaultSectorLog2, BootSector);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 
     if(!BootSector.IsValid())
         {
@@ -710,12 +708,12 @@ GLDEF_C void DumpData(const TUint8* aFat, TInt aStart, TInt aEnd = -1)
     if (aStart < 2 && gDiskType != EFat32)
         {
         HBufC8* buf=HBufC8::New(BootSector.RootDirEntries() * KSizeOfFatDirEntry);
-        test_NotNull(buf);
+        test(buf != NULL);
         TPtr8 ptr=buf->Des();
         TInt r=TheRawDisk.Open(TheFs,gSessionPath[0]-'A');
-        test_KErrNone(r);
+        test(r==KErrNone);
         r=TheRawDisk.Read(gRootDirStart, ptr);
-        test_KErrNone(r);
+        test(r==KErrNone);
         TheRawDisk.Close();
         DumpRootDir(buf->Ptr());
         delete(buf);
@@ -726,12 +724,12 @@ GLDEF_C void DumpData(const TUint8* aFat, TInt aStart, TInt aEnd = -1)
         if (GetFatEntry(cluster, aFat) != 0)
             {
             HBufC8* buf=HBufC8::New(gBytesPerCluster);
-            test_NotNull(buf);
+            test(buf!=NULL);
             TPtr8 ptr=buf->Des();
             TInt r=TheRawDisk.Open(TheFs,gSessionPath[0]-'A');
-            test_KErrNone(r);
+            test(r==KErrNone);
             r=TheRawDisk.Read(ClusterToByte(cluster), ptr);
-            test_KErrNone(r);
+            test(r==KErrNone);
             TheRawDisk.Close();
             RDebug::Print(_L("Cluster %d @ 0x%08X:"), cluster, ClusterToByte(cluster));
             DumpDirCluster(ptr.Ptr());
@@ -800,12 +798,12 @@ LOCAL_C TInt GetStartCluster(TInt aCluster, TInt aEntry)
 //
     {
     HBufC8* buf=HBufC8::New(gBytesPerCluster*2);
-    test_NotNull(buf);
+    test(buf!=NULL);
     TPtr8 ptr=buf->Des();
     TInt r=TheRawDisk.Open(TheFs,gSessionPath[0]-'A');
-    test_KErrNone(r);
+    test(r==KErrNone);
     r=TheRawDisk.Read(ClusterToByte(aCluster), ptr);
-    test_KErrNone(r);
+    test(r==KErrNone);
     TheRawDisk.Close();
     RDebug::Print(_L("Cluster %d @ 0x%08X:"), aCluster, ClusterToByte(aCluster));
     TFatDirEntry* d = (TFatDirEntry*)ptr.Ptr() + aEntry;
@@ -843,7 +841,7 @@ LOCAL_C void Format()
     nRes = FormatFatDrive(TheFs, CurrentDrive(), ETrue);
 #endif
 
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 
     }
 
@@ -861,7 +859,7 @@ LOCAL_C void CreateDeepDir(TFileName& aDir,TInt aDepth)
         num[0] = TText(aDepth % 26 + 'A');
         aDir+=num;
         r=TheFs.MkDir(aDir);
-        test_KErrNone(r);
+        test(r==KErrNone);
         }
     }
 
@@ -874,7 +872,7 @@ LOCAL_C void DeleteDeepDir(TFileName& aDir,TInt aDepth)
     while(aDepth--)
         {
         r=TheFs.RmDir(aDir);
-        test_KErrNone(r);
+        test(r==KErrNone);
         aDir.SetLength(aDir.Length()-2);
         }
     }
@@ -891,7 +889,7 @@ LOCAL_C void CreateMaxDepthDir(TFileName& aDir1,TFileName& aDir2)
     aDir2=aDir1;
     aDir2+=_L("a\\");
     TInt r=TheFs.MkDir(aDir2);
-    test_KErrNone(r);
+    test(r==KErrNone);
     // create dir with depth of 126 directories - one short of max depth
     CreateDeepDir(aDir1,101);
     // create dir with depth of 90
@@ -905,7 +903,7 @@ LOCAL_C void DeleteMaxDepthDir(TFileName&aDir1,TFileName&aDir2)
     {
     DeleteDeepDir(aDir2,64);
     TInt r=TheFs.RmDir(aDir2);
-    test_KErrNone(r);
+    test(r==KErrNone);
     aDir2.SetLength(aDir2.Length()-2);
     DeleteDeepDir(aDir1,102);
     DeleteDeepDir(aDir1,24);
@@ -939,7 +937,7 @@ GLDEF_C void CreateLongNames(TFileName& aLong, TInt aClusters)
         aLong[len+1] = TText(count%26 + 'A');
         count++;
         TInt r=temp.Create(TheFs,aLong,EFileShareAny);
-        test_KErrNone(r);
+        test(r==KErrNone);
         temp.Close();
         }
     }
@@ -958,7 +956,7 @@ GLDEF_C void DeleteLongNames(TFileName& aLong, TInt aClusters)
         aLong[len+1] = TText(count%26 + 'A');
         count++;
         TInt r=TheFs.Delete(aLong);
-        test_Value(r, r==KErrNone || r==KErrNotFound);
+        test(r==KErrNone || r==KErrNotFound);
         }
     }
 
@@ -980,7 +978,7 @@ LOCAL_C void DeleteRootDir(TInt aNum=0)
         name[2]=(TUint16)(count/26%26+'a');
         name[3]=(TUint16)(count%26+'a');
         r=TheFs.Delete(name);
-        test_Value(r, r==KErrNone || r==KErrNotFound);
+        test(r==KErrNone || r==KErrNotFound);
         ++count;
         }
     }
@@ -1004,7 +1002,7 @@ LOCAL_C void CreateRootDir()
         name[2]=(TUint16)(count/26%26+'a');
         name[3]=(TUint16)(count%26+'a');
         r=f.Create(TheFs, name, EFileWrite);
-        test_KErrNone(r);
+        test(r==KErrNone);
         f.Close();
         ++count;
         }
@@ -1026,7 +1024,7 @@ LOCAL_C void FillUpRootDir(TInt aFree=0)
         dir[1]=(TUint16)(count/26+'a');
         dir[2]=(TUint16)(count%26+'a');
         r=TheFs.MkDir(dir);
-        test_KErrNone(r);
+        test(r==KErrNone);
         entriesSoFar+=2;
         ++count;
         }
@@ -1046,7 +1044,7 @@ LOCAL_C void UnFillUpRootDir(TInt aFree=0)
         dir[1]=TUint16(count/26+'a');
         dir[2]=TUint16(count%26+'a');
         r=TheFs.RmDir(dir);
-        test_KErrNone(r);
+        test(r==KErrNone);
         entriesSoFar-=2;
         ++count;
         }
@@ -1059,27 +1057,27 @@ LOCAL_C void DeleteDirectoryStructure()
     {
     test.Next(_L("Delete Directory Structure"));
     TInt r=TheFs.RmDir(_L("\\scndrv\\dir2\\almostfull\\"));
-    test_KErrNone(r);
+    test(r==KErrNone);
     TInt entriesNeeded=(gEntriesPerCluster-2) / 2;  //7*2entries + . + .. = full sector
     for (TInt i = 0; i < entriesNeeded; i++)
         {
         TFileName file=_L("\\scndrv\\dir2\\full\\__a");
         file.AppendNum(i);
         r=TheFs.Delete(file);
-        test_Value(r, r==KErrNone||r==KErrNotFound);
+        test(r==KErrNone||r==KErrNotFound);
         }
     r=TheFs.RmDir(_L("\\scndrv\\dir2\\full\\"));
-    test_KErrNone(r);
+    test(r==KErrNone);
     r=TheFs.RmDir(_L("\\scndrv\\dir2\\"));
-    test_KErrNone(r);
+    test(r==KErrNone);
     TFileName veryLongName=(_L("\\scndrv\\dir1\\"));
     MakeVeryLongName(veryLongName);
     r=TheFs.Delete(veryLongName);
-    test_KErrNone(r);
+    test(r==KErrNone);
     r=TheFs.RmDir(_L("\\scndrv\\dir1\\"));
-    test_KErrNone(r);
+    test(r==KErrNone);
     r=TheFs.RmDir(_L("\\scndrv\\"));
-    test_KErrNone(r);
+    test(r==KErrNone);
     }
 
 LOCAL_C void CreateDirectoryStructure()
@@ -1090,34 +1088,34 @@ LOCAL_C void CreateDirectoryStructure()
     test.Next(_L("Create Directory Structure"));
     // cluster 3 (root dir is cluster 2)
     TInt r=TheFs.MkDir(_L("\\scndrv\\"));
-    test_KErrNone(r);
+    test(r==KErrNone);
     // cluster 4
     r=TheFs.MkDir(_L("\\scndrv\\dir1\\"));
-    test_KErrNone(r);
+    test(r==KErrNone);
     TFileName veryLongName=(_L("\\scndrv\\dir1\\"));
     MakeVeryLongName(veryLongName);
     RFile f;
     // cluster 5
     r=f.Create(TheFs,veryLongName,EFileShareAny);
-    test_KErrNone(r);
+    test(r==KErrNone);
     r=f.SetSize(512);
-    test_KErrNone(r);
+    test(r==KErrNone);
     f.Close();
     // cluster 6
     r=TheFs.MkDir(_L("\\scndrv\\dir2\\"));
-    test_KErrNone(r);
+    test(r==KErrNone);
     // cluster 7
     r=TheFs.MkDir(_L("\\scndrv\\dir2\\full\\"));
-    test_KErrNone(r);
+    test(r==KErrNone);
     // cluster 8
     r=TheFs.MkDir(_L("\\scndrv\\dir2\\somedirwith3entries\\"));
-    test_KErrNone(r);
+    test(r==KErrNone);
     // cluster 9
     r=TheFs.MkDir(_L("\\scndrv\\dir2\\somedir2with3entries\\"));
-    test_KErrNone(r);
+    test(r==KErrNone);
     // cluster 10
     r=TheFs.MkDir(_L("\\scndrv\\dir2\\almostfull\\"));
-    test_KErrNone(r);
+    test(r==KErrNone);
     // cluster 11-17
     TInt entriesNeeded=(gEntriesPerCluster-2) / 2;  //7*2entries + . + .. = full sector
     for (TInt i = 0; i < entriesNeeded; i++)
@@ -1126,11 +1124,11 @@ LOCAL_C void CreateDirectoryStructure()
         file.AppendNum(i);
         LastInFull = file;
         r=f.Create(TheFs,file,EFileShareAny);
-        test_KErrNone(r);
+        test(r==KErrNone);
         if (i < 7)
             {
             r=f.SetSize(512);
-            test_KErrNone(r);
+            test(r==KErrNone);
             }
         f.Close();
         }
@@ -1146,14 +1144,14 @@ LOCAL_C void CreateDirectoryStructure()
     file1.AppendNum(1);
     file2.AppendNum(2);
     r=f.Create(TheFs,file1,EFileShareAny);
-    test_KErrNone(r);
+    test(r==KErrNone);
     r=f.SetSize(512);
-    test_KErrNone(r);
+    test(r==KErrNone);
     f.Close();
     r=f.Create(TheFs,file2,EFileShareAny);
-    test_KErrNone(r);
+    test(r==KErrNone);
     r=f.SetSize(512);
-    test_KErrNone(r);
+    test(r==KErrNone);
     f.Close();
     }
 
@@ -1179,16 +1177,16 @@ LOCAL_C TUint8* DirPtr(TInt aOffset)
         // contains aOffset
         ExtBufLen = 2 * gBytesPerCluster;
         ExtBufPtr = HBufC8::New(ExtBufLen);
-        test_NotNull(ExtBufPtr);
+        test(ExtBufPtr != NULL);
         // read the clusters in
         ExtBufAdd = aOffset - aOffset % gBytesPerCluster;
         TInt clust = (ExtBufAdd - (gDataStartBytes - gRootDirStart)) /gBytesPerCluster + 2;
         RDebug::Print(_L("Extension buffer for cluster %d allocated"), clust);
         TInt r=TheRawDisk.Open(TheFs,gSessionPath[0]-'A');
-        test_KErrNone(r);
+        test(r==KErrNone);
         TPtr8 des(ExtBufPtr->Des());
         r=TheRawDisk.Read(gRootDirStart + ExtBufAdd, des);
-        test_KErrNone(r);
+        test(r==KErrNone);
         TheRawDisk.Close();
         }
     // convert to offset in the extension buffer
@@ -1223,10 +1221,10 @@ LOCAL_C void ReadDirDisk(TDes8& aDirBuf, TInt aCluster = -1)
 // reads directory section of disk into buffer
 //
     {
-    test_Value(aCluster, aCluster != 1);
+    test(aCluster != 1);
 
     TInt r=TheRawDisk.Open(TheFs,gSessionPath[0]-'A');
-    test_KErrNone(r);
+    test(r==KErrNone);
 
     if (aCluster == -1) // all clusters ?
         {
@@ -1247,7 +1245,7 @@ LOCAL_C void ReadDirDisk(TDes8& aDirBuf, TInt aCluster = -1)
         r=TheRawDisk.Read(gRootDirStart + pos, dirPtr);
         }
 
-    test_KErrNone(r);
+    test(r==KErrNone);
     TheRawDisk.Close();
     }
 
@@ -1257,21 +1255,21 @@ LOCAL_C void ReadFatDisk(TDes8& aFatBuf)
 //
     {
     TInt r=TheRawDisk.Open(TheFs,gSessionPath[0]-'A');
-    test_KErrNone(r);
+    test(r==KErrNone);
     r=TheRawDisk.Read(gFatStartBytes, aFatBuf);
-    test_KErrNone(r);
+    test(r==KErrNone);
     TheRawDisk.Close();
     }
 
-LOCAL_C void WriteDirEntryToDisk(TDes8& aDirBuf, TInt aCluster = -1)
+LOCAL_C void WriteDirDisk(TDes8& aDirBuf, TInt aCluster = -1)
 //
-// writes dir entry buffer to disk
+// writes dir buffer to disk
 //
     {
-	test_Value(aCluster, aCluster != 1);
+    test(aCluster != 1);
 
     TInt r=TheRawDisk.Open(TheFs,gSessionPath[0]-'A');
-    test_KErrNone(r);
+    test(r==KErrNone);
 
     if (aCluster == -1)
         {
@@ -1292,29 +1290,29 @@ LOCAL_C void WriteDirEntryToDisk(TDes8& aDirBuf, TInt aCluster = -1)
         r=TheRawDisk.Write(gRootDirStart + pos, dirPtr);
         }
 
-    test_KErrNone(r);
+    test(r==KErrNone);
     if (ExtBufPtr)
         {
         TPtr8 des(ExtBufPtr->Des());
         r=TheRawDisk.Write(gRootDirStart + ExtBufAdd, des);
-        test_KErrNone(r);
+        test(r==KErrNone);
         }
     TheRawDisk.Close();
     }
 
-LOCAL_C void WriteFatToDisk(TDes8& aFatBuf, TInt aStart=0)
+LOCAL_C void WriteFatDisk(TDes8& aFatBuf, TInt aStart=0)
 //
 // writes fat buffer to disk
 //
     {
     TInt r=TheRawDisk.Open(TheFs,gSessionPath[0]-'A');
-    test_KErrNone(r);
+    test(r==KErrNone);
     TInt fatCount=BootSector.NumberOfFats() - aStart;
     TInt pos = gFatStartBytes + aStart * gFatSizeSectors*BootSector.BytesPerSector();
     while(fatCount--)
         {
         r=TheRawDisk.Write(pos, aFatBuf);
-        test_KErrNone(r);
+        test(r==KErrNone);
         pos += gFatSizeSectors*BootSector.BytesPerSector();
         }
     TheRawDisk.Close();
@@ -1371,15 +1369,15 @@ LOCAL_C void InitialiseBuffers()
         gFatTestEntries = KMaxFatSize;
     gFatTestSize = PosInBytes(gFatTestEntries);
     FatBufPtr=HBufC8::New(gFatTestSize);
-    test_NotNull(FatBufPtr);
+    test(FatBufPtr!=NULL);
     DirBufPtr=HBufC8::New(DirBufferSize());
-    test_NotNull(DirBufPtr);
+    test(DirBufPtr!=NULL);
 
     // Buffers for reading from disk
     FatDiskPtr=HBufC8::New(gFatTestSize);
-    test_NotNull(FatDiskPtr);
+    test(FatDiskPtr!=NULL);
     DirDiskPtr=HBufC8::New(DirBufferSize());
-    test_NotNull(DirDiskPtr);
+    test(DirDiskPtr!=NULL);
     }
 
 LOCAL_C TBool IsSameAsDrive(const TDes8& aFatBuf,const TDes8& aDirBuf)
@@ -1466,12 +1464,12 @@ LOCAL_C TBool IsSameAsDrive(const TDes8& aFatBuf,const TDes8& aDirBuf)
     else if (ExtBufPtr)
         {
         HBufC8* extPtr = HBufC8::New(ExtBufLen);
-        test_NotNull(extPtr);
+        test(extPtr != NULL);
         TInt r=TheRawDisk.Open(TheFs,gSessionPath[0]-'A');
-        test_KErrNone(r);
+        test(r==KErrNone);
         TPtr8 des(extPtr->Des());
         r=TheRawDisk.Read(ExtBufAdd+gRootDirStart, des);
-        test_KErrNone(r);
+        test(r==KErrNone);
         TheRawDisk.Close();
         TInt i = FindUnMatch(ExtBufPtr->Ptr(), extPtr->Ptr(), ExtBufLen);
         if (i >= 0)
@@ -1520,7 +1518,7 @@ LOCAL_C void CreatePartialEntry(TEntryInfo aTrg,TInt aToDelete,TBool aAddEOfDir)
     if(aAddEOfDir)
         WriteEndOfDir(aTrg.iBytePos+aTrg.iLength*KSizeOfFatDirEntry);
     TPtr8 dirBuf=DirBufPtr->Des();
-    WriteDirEntryToDisk(dirBuf);
+    WriteDirDisk(dirBuf);
     }
 
 LOCAL_C TBool TestPartialEntry(TEntryInfo aEntry)
@@ -1530,7 +1528,7 @@ LOCAL_C TBool TestPartialEntry(TEntryInfo aEntry)
     {
     test.Next(_L("TestPartialEntry"));
     TInt r=TheFs.ScanDrive(gSessionPath);
-    test_KErrNone(r);
+    test(r==KErrNone);
     WriteDelete(aEntry.iBytePos,aEntry.iLength);
 
     TPtr8 fatBuf=FatBufPtr->Des();
@@ -1553,7 +1551,7 @@ LOCAL_C void CreateMatchingEntry(TEntryInfo aTrg,TEntryInfo aSrc,TBool aAddEOfDi
     if(aAddEOfDir)
         WriteEndOfDir(aTrg.iBytePos+aTrg.iLength*KSizeOfFatDirEntry);
     TPtr8 dirBuf=DirBufPtr->Des();
-    WriteDirEntryToDisk(dirBuf);
+    WriteDirDisk(dirBuf);
     }
 
 LOCAL_C TBool TestMatchingEntry(TEntryInfo aToDelete)
@@ -1564,7 +1562,7 @@ LOCAL_C TBool TestMatchingEntry(TEntryInfo aToDelete)
     test.Next(_L("TestMatchingEntries"));
     WriteDelete(aToDelete.iBytePos,aToDelete.iLength);
     TInt r=TheFs.ScanDrive(gSessionPath);
-    test_KErrNone(r);
+    test(r==KErrNone);
 
     TPtr8 fatBuf=FatBufPtr->Des();
     TPtr8 dirBuf=DirBufPtr->Des();
@@ -1588,8 +1586,8 @@ LOCAL_C void TestExtendedChars()
     CDir* dirs;
     // check no entries in the root directory
     TInt r=TheFs.GetDir(KRoot,KEntryAttMaskSupported,ESortNone,dirs);
-    test_KErrNone(r);
-    test_Equal(0,dirs->Count());
+    test(r==KErrNone);
+    test(dirs->Count()==0);
     delete(dirs);
     dirs=NULL;
 
@@ -1607,13 +1605,13 @@ LOCAL_C void TestExtendedChars()
 
     RFile file;
     r=file.Replace(TheFs,TestFileName,EFileShareExclusive);
-    test_KErrNone(r);
+    test(r==KErrNone);
     file.Close();
 
     // get short name
     TFileName shortName;
     r=TheFs.GetShortName(TestFileName,shortName);
-    test_KErrNone(r);
+    test(r==KErrNone);
     test(shortName==KOrigShortName);
 
     // must be first entry in root, modify to read like
@@ -1622,26 +1620,26 @@ LOCAL_C void TestExtendedChars()
     TInt bytePos=ClusterEntryToBytes(0,1);
     RRawDisk raw;
     r=raw.Open(TheFs,gSessionPath[0]-'A');
-    test_KErrNone(r);
+    test(r==KErrNone);
     TBuf8<1> buf(1);
 
     //-- change 2nd character in the short name (Fat DOS entry)
     buf[0]=(TUint8)'\xC4';
     r=raw.Write(gRootDirStart+bytePos+1,buf);
-    test_KErrNone(r);
+    test(r==KErrNone);
 
     //-- fix the fiddled short name checksum in the corresponding VFat entry
     bytePos=ClusterEntryToBytes(0,0);
     buf[0]=(TUint8)0x2f;
     r=raw.Write(gRootDirStart+bytePos+13,buf);
-    test_KErrNone(r);
+    test(r==KErrNone);
 
     // retrieve short name from media.
     // Note: do not use RFs::GetShortName() as its behaviours are code page dependent.
     bytePos=ClusterEntryToBytes(0,1);
     TBuf8<11> shortNameBuf8;
     r=raw.Read(gRootDirStart+bytePos,shortNameBuf8);
-    test_KErrNone(r);
+    test(r==KErrNone);
     shortNameBuf8 = DosNameFromStdFormat(shortNameBuf8);
     shortName.Copy(shortNameBuf8);
     raw.Close();
@@ -1652,15 +1650,15 @@ LOCAL_C void TestExtendedChars()
     //TheFs.SetDebugRegister(KFSYS);
     r=TheFs.ScanDrive(gSessionPath);
     TheFs.SetDebugRegister(0);
-    test_KErrNone(r);
+    test(r==KErrNone);
     DumpData(NULL, 0, 20);
 
     // retrieve short name from media.
     r=raw.Open(TheFs,gSessionPath[0]-'A');
-    test_KErrNone(r);
+    test(r==KErrNone);
     bytePos=ClusterEntryToBytes(0,1);
     r=raw.Read(gRootDirStart+bytePos,shortNameBuf8);
-    test_KErrNone(r);
+    test(r==KErrNone);
     shortNameBuf8 = DosNameFromStdFormat(shortNameBuf8);
     shortName.Copy(shortNameBuf8);
     raw.Close();
@@ -1669,7 +1667,7 @@ LOCAL_C void TestExtendedChars()
 
     // delete file
     r=TheFs.Delete(TestFileName);
-    test_KErrNone(r);
+    test(r==KErrNone);
     }
 
 LOCAL_C void TestMountAndScan()
@@ -1682,47 +1680,46 @@ LOCAL_C void TestMountAndScan()
 
     test.Next(_L("TestMountAndScan"));
     HBufC8* newFat=HBufC8::New(gFatTestSize);
-    test_NotNull(newFat);
+    test(newFat!=NULL);
     TPtr8 fat=newFat->Des();
     TPtr8 origFat=FatBufPtr->Des();
     TPtr8 origDir=DirBufPtr->Des();
 
     // set cluster of \scndrv\dir1\ to a hanging cluster
     ReadFatDisk(fat);
-    WriteToFatBuf(gClusterDir1ext,35,fat.Ptr());
-    WriteToFatBuf(35,36,fat.Ptr());
-    WriteFatToDisk(fat);
+    WriteFat(gClusterDir1ext,35,fat.Ptr());
+    WriteFat(35,36,fat.Ptr());
+    WriteFatDisk(fat);
     // set the default path to something other than the current drive
     TFileName fsName;
     TInt r=TheFs.FileSystemName(fsName,gSessionPath[0]-'A');
-    test_KErrNone(r);
+    test(r==KErrNone);
     TFileName origDefPath, newDefPath;
     r=TheFs.SessionPath(origDefPath);
-    test_KErrNone(r);
+    test(r==KErrNone);
     newDefPath=origDefPath;
     newDefPath[0]=(TText)'z';
     r=TheFs.SetSessionPath(newDefPath);
-    test_KErrNone(r);
+    test(r==KErrNone);
     r = TheFs.ExtensionName(extName,gSessionPath[0]-'A',0);
     if (r == KErrNone)
         {
         primaryExtensionExists = ETrue;
         }
     r=TheFs.DismountFileSystem(fsName,gSessionPath[0]-'A');
-    test_KErrNone(r);
+    test(r==KErrNone);
     // mount file system and check scandrive corrects error
     TBool isMount;
     if (primaryExtensionExists)
         r=TheFs.MountFileSystemAndScan(fsName,extName,gSessionPath[0]-'A',isMount);
     else
         r=TheFs.MountFileSystemAndScan(fsName,gSessionPath[0]-'A',isMount);
-    test(isMount);
-    test_KErrNone(r);
+    test(isMount && r==KErrNone);
     TBool res=IsSameAsDrive(origFat,origDir);
     test(res);
 
     r=TheFs.SetSessionPath(origDefPath);
-    test_KErrNone(r);
+    test(r==KErrNone);
     delete newFat;
     }
 
@@ -1736,14 +1733,14 @@ LOCAL_C void TestConsecutiveMountAndScans()
     TBool primaryExtensionExists = EFalse;
     TFileName fsName;
     TInt r=TheFs.FileSystemName(fsName,gSessionPath[0]-'A');
-    test_KErrNone(r);
+    test(r==KErrNone);
     r = TheFs.ExtensionName(extName,gSessionPath[0]-'A',0);
     if (r == KErrNone)
         {
         primaryExtensionExists = ETrue;
         }
     r=TheFs.DismountFileSystem(fsName,gSessionPath[0]-'A');
-    test_KErrNone(r);
+    test(r==KErrNone);
 
     // RFs::MountFileSystemAndScan twice consecutively
     // first time
@@ -1752,36 +1749,14 @@ LOCAL_C void TestConsecutiveMountAndScans()
         r=TheFs.MountFileSystemAndScan(fsName,extName,gSessionPath[0]-'A',isMount);
     else
         r=TheFs.MountFileSystemAndScan(fsName,gSessionPath[0]-'A',isMount);
-    test(isMount);
-    test_KErrNone(r);
+    test(isMount && r==KErrNone);
     // and a second time
     if (primaryExtensionExists)
         r=TheFs.MountFileSystemAndScan(fsName,extName,gSessionPath[0]-'A',isMount);
     else
         r=TheFs.MountFileSystemAndScan(fsName,gSessionPath[0]-'A',isMount);
-    test(!isMount);
-    test_Equal(KErrAccessDenied,r);
+    test(!isMount && r==KErrAccessDenied);
     }
-
-
-static void CreateContiguousClusterChain(TUint32 aStartIndex, TUint32 aEndIndex, const TUint8* aFatPtr, TBool aMarkEoc)
-/*
- * Creates a contiguous cluster chain in the FAT buffer.
- * 
- * @param	aStartIndex	The first cluster index of the chain
- * 			aEndIndex	The last cluster index of the chain 
- * 			aFatPtr		FAT table buffer pointer
- * 			aMarkEoc	If ETrue, aEndIndex will be marked as EOC, else it will be a hanging cluster chain
- */
-	{
-	// Write cluster chain
-    for(TUint i=aStartIndex; i<aEndIndex; ++i)
-        WriteToFatBuf(i, i+1, aFatPtr);
-    // Mark EOC if needed
-    if (aMarkEoc)
-    	WriteToFatBuf(aEndIndex, gEndOfChain, aFatPtr);
-	}
-
 
 LOCAL_C void DoHangingClusters()
 //
@@ -1790,42 +1765,42 @@ LOCAL_C void DoHangingClusters()
     {
     test.Next(_L("Check Hanging clusters"));
     HBufC8* newFat=HBufC8::New(gFatTestSize);
-    test_NotNull(newFat);
+    test(newFat!=NULL);
     TPtr8 fat=newFat->Des();
     TPtr8 origFat=FatBufPtr->Des();
     TPtr8 origDir=DirBufPtr->Des();
 
-    // Set cluster of \scndrv\dir1\ to hanging cluster chain
+    // set cluster of \scndrv\dir1\ to a hanging cluster
     test.Start(_L("Test hanging cluster in \\scndrv\\dir1\\"));
     ReadFatDisk(fat);
-    WriteToFatBuf(gClusterDir1ext,35,fat.Ptr());
-    WriteToFatBuf(35,36,fat.Ptr());
-    WriteFatToDisk(fat); // gClusterDir1ext->35->36
+    WriteFat(gClusterDir1ext,35,fat.Ptr());
+    WriteFat(35,36,fat.Ptr());
+    WriteFatDisk(fat);
     TInt r=TheFs.ScanDrive(gSessionPath);
-    test_KErrNone(r);
+    test(r==KErrNone);
     TBool res=IsSameAsDrive(origFat,origDir);
     test(res);
 
-    // Set cluster chain of first entry of \scndrv\dir1\ to
+    // set  cluster chain of first entry of \scndrv\dir1\ to
     // larger size than file size
     test.Next(_L("Test hanging cluster in first entry"));
     ReadFatDisk(fat);
-    WriteToFatBuf(gClusterDir1ext,39,fat.Ptr());
-    WriteToFatBuf(39,500,fat.Ptr());
-    CreateContiguousClusterChain(500, 505, fat.Ptr(), ETrue);
-    WriteFatToDisk(fat); // gClusterDir1ext->39->500->501->502->503->504->505->EOC
+    WriteFat(gClusterDir1ext,39,fat.Ptr());
+    WriteFat(39,500,fat.Ptr());
+    WriteFat(500,gEndOfChain,fat.Ptr());
+    WriteFatDisk(fat);
     r=TheFs.ScanDrive(gSessionPath);
-    test_KErrNone(r);
+    test(r==KErrNone);
     res=IsSameAsDrive(origFat,origDir);
     test(res);
 
-    // Set cluster of \scndrv\ to a hanging cluster
+    // set cluster of \scndrv\ to a hanging cluster
     test.Next(_L("Test hanging cluster of \\scndrv\\"));
     ReadFatDisk(fat);
-    WriteToFatBuf(gClusterScnDrv,511,fat.Ptr());
-    WriteFatToDisk(fat); // gClusterScnDrv->511
+    WriteFat(gClusterScnDrv,511,fat.Ptr());
+    WriteFatDisk(fat);
     r=TheFs.ScanDrive(gSessionPath);
-    test_KErrNone(r);
+    test(r==KErrNone);
     res=IsSameAsDrive(origFat,origDir);
     test(res);
 
@@ -1840,7 +1815,7 @@ LOCAL_C void DoLostClusters()
     {
     test.Next(_L("Check lost clusters"));
     HBufC8* newFat=HBufC8::New(gFatTestSize);
-    test_NotNull(newFat);
+    test(newFat!=NULL);
     TPtr8 fat=newFat->Des();
     TPtr8 origFat=FatBufPtr->Des();
     TPtr8 origDir=DirBufPtr->Des();
@@ -1850,10 +1825,12 @@ LOCAL_C void DoLostClusters()
     // write cluster chain
     test.Start(_L("Test removal of lost cluster chain"));
     ReadFatDisk(fat);
-    CreateContiguousClusterChain(25, 35, fat.Ptr(), ETrue);
-    WriteFatToDisk(fat); // 25->26->27->28->29->30->31->32->33->34->35->EOC
+    for(TInt i=25;i<35;++i)
+        WriteFat(i,i+1,fat.Ptr());
+    WriteFat(35,gEndOfChain,fat.Ptr());
+    WriteFatDisk(fat);
     TInt r=TheFs.ScanDrive(gSessionPath);
-    test_KErrNone(r);
+    test(r==KErrNone);
     TBool res=IsSameAsDrive(origFat,origDir);
     test(res);
 
@@ -1864,91 +1841,23 @@ LOCAL_C void DoLostClusters()
         TInt off = j*BootSector.BytesPerSector()+j*7%512;
         fat[off]=1;
         }
-    WriteFatToDisk(fat);
+    WriteFatDisk(fat);
     r=TheFs.ScanDrive(gSessionPath);
-    test_KErrNone(r);
+    test(r==KErrNone);
     res=IsSameAsDrive(origFat,origDir);
     test(res);
 
     // write semi-random changes to second fat
     test.Next(_L("Test semi-random changes to second fat"));
-    WriteFatToDisk(fat, 1);
+    WriteFatDisk(fat, 1);
     r=TheFs.ScanDrive(gSessionPath);
-    test_KErrNone(r);
+    test(r==KErrNone);
     res=IsSameAsDrive(origFat,origDir);
     test(res);
 
     delete newFat;
     test.End();
     }
-
-
-static void DoHangingAndLostClusters()
-/*
- * Tests that ScanDrive fixes MULTIPLE hanging clusters and removes lost clusters.
- * It creates multiple hanging and lost cluster chains in the FAT table and
- * expects ScanDrive to fix them all.
- */
-	{
-	test.Start(_L("Check multiple hanging and lost cluster chains"));
-	HBufC8* newFat = HBufC8::New(gFatTestSize);
-	test_NotNull(newFat);
-	TPtr8 fat = newFat->Des();
-	TPtr8 origFat = FatBufPtr->Des();
-	TPtr8 origDir = DirBufPtr->Des();
-	ReadFatDisk(origFat);
-	ReadDirDisk(origDir);
-
-	test.Printf(_L("Create multiple hanging cluster chains\n"));
-	ReadFatDisk(fat);
-	// Set hanging cluster for the file in \scndrv\dir1
-	// gClusterDir1ext+1->25->26->27->28->29->30->31->32->33->34->35
-	WriteToFatBuf(gClusterDir1ext+1, 25, fat.Ptr());
-	CreateContiguousClusterChain(25, 35, fat.Ptr(), EFalse);
-	// Set hanging cluster for the first file in \scndrv\dir2
-	// gClusterDir2_AFull+1->249->250->53->54->55->EOC
-	WriteToFatBuf(gClusterDir2_AFull+1, 249, fat.Ptr());
-	WriteToFatBuf(249, 250, fat.Ptr());
-	WriteToFatBuf(250, 53, fat.Ptr());
-	CreateContiguousClusterChain(53, 55, fat.Ptr(), ETrue);
-	// Set hanging cluster for the fourth file in \scndrv\dir2
-	// gClusterDir2_AFull+4->59->60->61->62->63
-	WriteToFatBuf(gClusterDir2_AFull+4, 59, fat.Ptr());
-	CreateContiguousClusterChain(59, 63, fat.Ptr(), EFalse);
-	// Set hanging cluster for the second file in \scndrv\dir2
-	// gClusterDir2_AFull+2->67->68->69->EOC
-	WriteToFatBuf(gClusterDir2_AFull+2, 67, fat.Ptr());
-	CreateContiguousClusterChain(67, 69, fat.Ptr(), ETrue);
-
-	test.Printf(_L("Create multiple lost clusters\n"));
-	// Create 1st lost cluster chain (clusters 36-45)
-	CreateContiguousClusterChain(36, 45, fat.Ptr(), ETrue);
-	// Create 2nd lost cluster chain (clusters 246-248,56-58)
-	CreateContiguousClusterChain(246, 248, fat.Ptr(), EFalse);
-	WriteToFatBuf(248, 56, fat.Ptr());
-	CreateContiguousClusterChain(56, 58, fat.Ptr(), ETrue);
-	// Create 3rd lost cluster chain (clusters 251-253,564-566, with hanging end)
-	CreateContiguousClusterChain(251, 253, fat.Ptr(), EFalse);
-	WriteToFatBuf(253, 564, fat.Ptr());
-	CreateContiguousClusterChain(564, 566, fat.Ptr(), EFalse);
-	
-	// Flush all FAT changes to the media
-	WriteFatToDisk(fat);
-
-	test.Next(_L("Test ScanDrive fixes multiple hanging and lost cluster chains"));
-	TInt r = TheFs.CheckDisk(gSessionPath);	// CheckDisk should detect an error
-	test_Value(r, r != KErrNone);
-	r = TheFs.ScanDrive(gSessionPath);		// ScanDrive should find the errors and fix them
-	test_KErrNone(r);
-	r = TheFs.CheckDisk(gSessionPath);
-	test_KErrNone(r);
-	TBool res = IsSameAsDrive(origFat, origDir);
-	test(res);
-
-	delete newFat;
-	test.End();
-	}
-
 
 LOCAL_C void DoPartEntries()
 //
@@ -1963,9 +1872,9 @@ LOCAL_C void DoPartEntries()
     TPtr8 dirBuf=DirBufPtr->Des();
 
     TInt r=TheFs.RmDir(_L("\\scndrv\\dir2\\somedirwith3entries\\"));
-    test_Value(r, r==KErrNone || r==KErrNotFound || r==KErrPathNotFound);
+    test(r==KErrNone || r==KErrNotFound || KErrPathNotFound);
     r=TheFs.RmDir(_L("\\scndrv\\dir2\\somedir2with3entries\\"));
-    test_Value(r, r==KErrNone || r==KErrNotFound || r==KErrPathNotFound);
+    test(r==KErrNone || r==KErrNotFound || KErrPathNotFound);
 
     if (BootSector.RootDirEntries() != 0)
         {
@@ -1974,7 +1883,7 @@ LOCAL_C void DoPartEntries()
         test.Next(_L("Partial entry at end of rootdir"));
         FillUpRootDir(2);
         r=temp.Create(TheFs,_L("\\temp"),EFileShareAny);
-        test_KErrNone(r);
+        test(r==KErrNone);
         temp.Close();
         ReadDirDisk(dirBuf);
         ReadFatDisk(fatBuf);
@@ -1994,7 +1903,7 @@ LOCAL_C void DoPartEntries()
     CreatePartialEntry(partial2,3,EFalse);
     // entry has been allocated a cluster which scandrive should delete along with partial entry
     if (last > 0)
-        WriteToFatBuf(last,0,fatBuf.Ptr());
+        WriteFat(last,0,fatBuf.Ptr());
     res=TestPartialEntry(partial2);
     test(res);
 
@@ -2002,26 +1911,26 @@ LOCAL_C void DoPartEntries()
     test.Next(_L("Test directory reclaim"));
     last = GetStartCluster(gClusterDir2_Full,gEntriesPerCluster-2);
     WriteEndOfDir(ClusterEntryToBytes(gClusterDir2_Full,gEntriesPerCluster-2));
-    WriteDirEntryToDisk(dirBuf);
+    WriteDirDisk(dirBuf);
     TInt entry = GetFatEntry(gClusterDir2_Full, fatBuf.Ptr());
-    WriteToFatBuf(gClusterDir2_Full,gEndOfChain,fatBuf.Ptr());
+    WriteFat(gClusterDir2_Full,gEndOfChain,fatBuf.Ptr());
     while (entry && (entry & gEndOfChain) != gEndOfChain)
         {
         TInt next = GetFatEntry(entry, fatBuf.Ptr());
-        WriteToFatBuf(entry,0,fatBuf.Ptr());
+        WriteFat(entry,0,fatBuf.Ptr());
         entry = next;
         }
     if (last > 0)
-        WriteToFatBuf(last,0,fatBuf.Ptr());
+        WriteFat(last,0,fatBuf.Ptr());
     r=TheFs.ScanDrive(gSessionPath);
-    test_KErrNone(r);
+    test(r==KErrNone);
     res=IsSameAsDrive(fatBuf,dirBuf);
     test(res);
 
     // use last entry of first cluster in \scndrv\dir2\full\ 
     test.Next(_L("Partial entry at end of subdir"));
     r=temp.Create(TheFs,_L("\\scndrv\\dir2\\full\\temp"),EFileShareAny);
-    test_KErrNone(r);
+    test(r==KErrNone);
     temp.Close();
     ReadDirDisk(dirBuf);
     ReadFatDisk(fatBuf);
@@ -2034,12 +1943,12 @@ LOCAL_C void DoPartEntries()
     test.Next(_L("Partial entry preceeding end-of-dir marker"));
     last = GetStartCluster(gClusterDir2_AFull,14);
     if (last > 0)
-        WriteToFatBuf(last,0,fatBuf.Ptr());
+        WriteFat(last,0,fatBuf.Ptr());
     last = GetStartCluster(gClusterDir2_AFull,8);
     if (last > 0)
-        WriteToFatBuf(last,0,fatBuf.Ptr());
+        WriteFat(last,0,fatBuf.Ptr());
     WriteEndOfDir(ClusterEntryToBytes(gClusterDir2_AFull,14));
-    WriteDirEntryToDisk(dirBuf);
+    WriteDirDisk(dirBuf);
     TEntryInfo partial4(ClusterEntryToBytes(gClusterDir2_AFull,8),6);
     CreatePartialEntry(partial4,4,EFalse);
     res=TestPartialEntry(partial4);
@@ -2055,14 +1964,14 @@ LOCAL_C void DoPartEntries()
 	// create entry in \scndrv\dir2\almostfull\ 
 //	test.Next(_L("Partial entry with invalid dos name"));
 //	r=temp.Create(TheFs,_L("\\scndrv\\dir2\\almostfull\\Dodgy file name"),EFileShareAny);
-//	test_KErrNone(r);
+//	test(r==KErrNone);
 //	temp.Close();
 //	ReadDirDisk(dirBuf);
 //	TInt dosStart=ClusterEntryToBytes(gClusterDir2_AFull,4);
 //	dirBuf[dosStart+4]=0x1;
 //	WriteDirDisk(dirBuf);
 //	r=TheFs.ScanDrive(gSessionPath);
-//	test_KErrNone(r);
+//	test(r==KErrNone);
 //	WriteDelete(dosStart-2*32,3);
 //	res=IsSameAsDrive(fatBuf,dirBuf);
 //	test(res);
@@ -2074,26 +1983,26 @@ LOCAL_C void DoPartEntries()
         last = GetStartCluster(gClusterDir2_Full,gEntriesPerCluster-1);
         WriteEndOfDir(ClusterEntryToBytes(gClusterDir2_Full,gEntriesPerCluster-2));
         WriteEndOfDir(ClusterEntryToBytes(gClusterDir2_Full,gEntriesPerCluster-1));
-        WriteDirEntryToDisk(dirBuf);
+        WriteDirDisk(dirBuf);
         TFileName longFile=_L("\\scndrv\\dir2\\full\\");
         MakeVeryLongName(longFile);
         r=temp.Create(TheFs,longFile,EFileShareAny);
-        test_KErrNone(r);
+        test(r==KErrNone);
         temp.Close();
         ReadDirDisk(dirBuf);
-        WriteToFatBuf(gClusterDir2_Full,gClusterDir2_SD3E,fatBuf.Ptr());
-        WriteToFatBuf(gClusterDir2_SD3E,gClusterDir2_SD23E,fatBuf.Ptr());
-        WriteToFatBuf(gClusterDir2_SD23E,gEndOfChain,fatBuf.Ptr());
+        WriteFat(gClusterDir2_Full,gClusterDir2_SD3E,fatBuf.Ptr());
+        WriteFat(gClusterDir2_SD3E,gClusterDir2_SD23E,fatBuf.Ptr());
+        WriteFat(gClusterDir2_SD23E,gEndOfChain,fatBuf.Ptr());
         if (last > 0)
-            WriteToFatBuf(last,0,fatBuf.Ptr());
+            WriteFat(last,0,fatBuf.Ptr());
         TEntryInfo partial5(ClusterEntryToBytes(gClusterDir2_Full,gEntriesPerCluster-2),19);
         CreatePartialEntry(partial5,7,EFalse);
         res=TestPartialEntry(partial5);
         test(res);
         r=TheFs.Delete(longFile);
-        test_Value(r, r==KErrNone || r==KErrNotFound);
+        test(r==KErrNone || r==KErrNotFound);
         r=TheFs.Delete(_L("\\temp"));
-        test_Value(r, r==KErrNone || r==KErrNotFound);
+        test(r==KErrNone || r==KErrNotFound);
         }
     ReadDirDisk(dirBuf);
 
@@ -2143,16 +2052,16 @@ LOCAL_C void DoMatchingEntries()
     test.Next(_L("matching entries in same subdir"));
     // delete entries to allow contiguous clusters in \scndrv\dir2\full directory
     TInt r=TheFs.RmDir(_L("\\scndrv\\dir2\\somedirwith3entries\\"));
-    test_KErrNone(r);
+    test(r==KErrNone);
     r=TheFs.RmDir(_L("\\scndrv\\dir2\\somedir2with3entries\\"));
-    test_KErrNone(r);
+    test(r==KErrNone);
     // ensure directory is expanded
     RFile temp;
     r=temp.Create(TheFs,_L("\\scndrv\\dir2\\full\\temp"),EFileShareAny);
-    test_KErrNone(r);
+    test(r==KErrNone);
     temp.Close();
     r=TheFs.Delete(_L("\\scndrv\\dir2\\full\\temp"));
-    test_KErrNone(r);
+    test(r==KErrNone);
     ReadDirDisk(dirBuf);
     ReadFatDisk(fatBuf);
     TEntryInfo from4(ClusterEntryToBytes(gClusterDir2_Full,4),2);
@@ -2165,14 +2074,14 @@ LOCAL_C void DoMatchingEntries()
     test.Next(_L("matching entries in diff dirs + new cluster"));
     // delete last entry in directory
     r=TheFs.Delete(LastInFull);
-    test_KErrNone(r);
+    test(r==KErrNone);
     TFileName veryLongName=_L("\\scndrv\\dir2\\full\\");
     MakeVeryLongName(veryLongName);
     r=temp.Create(TheFs,veryLongName,EFileShareAny);
-    test_KErrNone(r);
+    test(r==KErrNone);
     temp.Close();
     r=TheFs.Delete(veryLongName);
-    test_KErrNone(r);
+    test(r==KErrNone);
     ReadDirDisk(dirBuf);
     ReadFatDisk(fatBuf);
     TEntryInfo from5(ClusterEntryToBytes(gClusterDir1,2),19);
@@ -2202,7 +2111,7 @@ LOCAL_C void DoMaxDepth()
     ReadFatDisk(fatBuf);
     // run scandisk and compare
     TInt r=TheFs.ScanDrive(gSessionPath);
-    test_KErrNone(r);
+    test(r==KErrNone);
     TBool res=IsSameAsDrive(fatBuf,dirBuf);
     test(res);
     // Create a entry with matching start cluster and check fixed up
@@ -2229,7 +2138,7 @@ LOCAL_C void DoRootDir()
     ReadFatDisk(fatBuf);
 
     TInt r=TheFs.ScanDrive(gSessionPath);
-    test_KErrNone(r);
+    test(r==KErrNone);
 
     TBool res=IsSameAsDrive(fatBuf,dirBuf);
     test(res);
@@ -2322,9 +2231,9 @@ LOCAL_C void TestNonVfatNames(const TPtrC& aDirName, TInt aDirCluster, TInt aEnt
             name.AppendNumFixedWidth(i+totalFilesCreated, EHex, 3);
             RFile f;
             r = f.Create(TheFs, name, EFileShareAny);
-            test_KErrNone(r);
+            test(r == KErrNone);
             r = f.Write(buf);
-            test_KErrNone(r);
+            test(r == KErrNone);
             f.Close();
             }
 
@@ -2357,7 +2266,7 @@ LOCAL_C void TestNonVfatNames(const TPtrC& aDirName, TInt aDirCluster, TInt aEnt
 
             }
 
-        WriteDirEntryToDisk(dirBuf, cluster);
+        WriteDirDisk(dirBuf, cluster);
         totalFilesCreated += filesThisTime;
         test.Printf(_L("   created %d entries\n"), totalFilesCreated);
         }
@@ -2369,7 +2278,7 @@ LOCAL_C void TestNonVfatNames(const TPtrC& aDirName, TInt aDirCluster, TInt aEnt
 
     test.Printf(_L("Running ScanDrive\n"), filesThisTime);
     r=TheFs.ScanDrive(gSessionPath);
-    test_KErrNone(r);
+    test(r==KErrNone);
 
     TBool res=IsSameAsDrive(fatBuf,dirBuf);
     test(res);
@@ -2381,17 +2290,17 @@ LOCAL_C void TestNonVfatNames(const TPtrC& aDirName, TInt aDirCluster, TInt aEnt
         name.Append(_L("tempfile."));
         name.AppendNumFixedWidth(i, EHex, 3);
         r = TheFs.Delete(name);
-        test_KErrNone(r);
+        test(r == KErrNone);
         }
 
     ReadDirDisk(dirBuf);
     ReadFatDisk(fatBuf);
     WriteEndOfDir(ClusterEntryToBytes(cluster, startEntry));
-    WriteDirEntryToDisk(dirBuf);
+    WriteDirDisk(dirBuf);
 
     test.Printf(_L("Running ScanDrive\n"), filesThisTime);
     r=TheFs.ScanDrive(gSessionPath);
-    test_KErrNone(r);
+    test(r==KErrNone);
     res=IsSameAsDrive(fatBuf,dirBuf);
     test(res);
     }
@@ -2432,7 +2341,6 @@ LOCAL_C void DoTests()
     DoPartEntries();
     DoLostClusters();
     DoHangingClusters();
-    DoHangingAndLostClusters();
     TestMountAndScan();
     TestConsecutiveMountAndScans();
     DeleteDirectoryStructure();
@@ -2454,7 +2362,7 @@ void CallTestsL()
     {
     TInt r;
     r = TheFs.CharToDrive(gSessionPath[0], gDriveNumber);
-    test_KErrNone(r);
+    test( KErrNone == r );
 
 
     //-- set up console output
@@ -2472,7 +2380,7 @@ void CallTestsL()
     // check this is not the internal ram drive
     TVolumeInfo v;
     r=TheFs.Volume(v);
-    test_KErrNone(r);
+    test(r==KErrNone);
     if(v.iDrive.iMediaAtt&KMediaAttVariableSize)
         {
         test.Printf(_L("Error: Internal ram drive not tested\n"));
@@ -2480,7 +2388,7 @@ void CallTestsL()
         }
 
     r=TheFs.SetSessionPath(gSessionPath);
-    test_KErrNone(r);
+    test(r==KErrNone);
 
     DoTests();
 

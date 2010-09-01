@@ -651,17 +651,6 @@ TInt MmuBase::FreePhysicalRam(TInt aNumPages, TPhysAddr* aPageList)
 	}
 
 
-TInt MmuBase::FreeRamZone(TUint aZoneId, TPhysAddr& aZoneBase, TUint& aZoneBytes)
-	{
-	TUint zonePages;
-	TInt r = iRamPageAllocator->GetZoneAddress(aZoneId, aZoneBase, zonePages);
-	if (r != KErrNone)
-		return r;
-	aZoneBytes = zonePages << KPageShift;
-	return MmuBase::FreePhysicalRam(aZoneBase, aZoneBytes);
-	}
-
-
 TInt MmuBase::ClaimPhysicalRam(TPhysAddr aPhysAddr, TInt aSize)
 	{
 	__KTRACE_OPT(KMMU,Kern::Printf("Mmu::ClaimPhysicalRam(%08x,%x)",aPhysAddr,aSize));
@@ -2052,45 +2041,6 @@ EXPORT_C TInt Epoc::ClaimPhysicalRam(TPhysAddr aPhysAddr, TInt aSize)
 		m.RoundUpRangeToPageSize(pa,size);
 		BTrace8(BTrace::EKernelMemory, BTrace::EKernelMemoryDrvPhysAlloc, size, pa);
 		Epoc::DriverAllocdPhysRam += size;
-		}
-#endif
-	MmuBase::Signal();
-	return r;
-	}
-
-
-/**
-Free a RAM zone which was previously allocated by one of these methods:
-Epoc::AllocPhysicalRam(), Epoc::ZoneAllocPhysicalRam() or 
-TRamDefragRequest::ClaimRamZone().
-
-All of the pages in the RAM zone must be allocated and only via one of the methods 
-listed above, otherwise a system panic will occur.
-
-@param	aZoneId			The ID of the RAM zone to free.
-@return	KErrNone 		If the operation was successful.
-		KErrArgument 	If a RAM zone with ID aZoneId was not found.
-
-@pre Calling thread must be in a critical section.
-@pre Interrupts must be enabled.
-@pre Kernel must be unlocked.
-@pre No fast mutex can be held.
-@pre Call in a thread context.
-@pre Can be used in a device driver.
-*/
-EXPORT_C TInt Epoc::FreeRamZone(TUint aZoneId)
-	{
-	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL,"Epoc::FreeRamZone");
-	MmuBase& m = *MmuBase::TheMmu;
-	MmuBase::Wait();
-	TPhysAddr zoneBase;
-	TUint zoneBytes;
-	TInt r = m.FreeRamZone(aZoneId, zoneBase, zoneBytes);
-#ifdef BTRACE_KERNEL_MEMORY
-	if (r == KErrNone)
-		{
-		BTrace8(BTrace::EKernelMemory, BTrace::EKernelMemoryDrvPhysFree, zoneBytes, zoneBase);
-		Epoc::DriverAllocdPhysRam -= zoneBytes;
 		}
 #endif
 	MmuBase::Signal();

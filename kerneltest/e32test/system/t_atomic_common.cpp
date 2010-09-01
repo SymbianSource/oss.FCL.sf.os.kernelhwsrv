@@ -39,35 +39,6 @@ extern RTest test;
 	DEBUGPRINT("Line %d: " #x "=%02x %02x %02x %02x  %02x %02x %02x %02x", __LINE__, p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);	\
 	}
 
-#ifdef __WINS__
-#pragma warning( disable : 4127 )   // disable warning warning C4127: conditional expression is constant
-#endif
-template<typename T> void DebugPrintVar(T x, char *name, TInt line)
-	{
-	const TUint8 *p = (const TUint8 *)&x;
-	const TInt size = sizeof(T);
-	if (size < 2)
-		{
-		DEBUGPRINT("Line %d: %s =%02x", line, name, p[0]);
-		}
-	else if (size < 4)
-		{
-		DEBUGPRINT("Line %d: %s =%02x %02x", line, name, p[0], p[1]);
-		}
-	else if (size < 8)
-		{
-		DEBUGPRINT("Line %d: %s =%02x %02x %02x %02x", line, name, p[0], p[1], p[2], p[3]);
-		}
-	else
-		{
-		DEBUGPRINT("Line %d: %s =%02x %02x %02x %02x  %02x %02x %02x %02x", line, name, p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
-		}
-	}
-#ifdef __WINS__
-#pragma warning( default : 4127 )   // disable warning warning C4127: conditional expression is constant
-#endif
-
-
 extern "C" {
 
 // Simulated versions of atomic functions without the atomicity
@@ -310,10 +281,9 @@ TInt64	__nonatomic_tas64(volatile TAny* a, TInt64 t, TInt64 u, TInt64 v)
 
 #define	DEBUGPRINTxyrc()	\
 		DEBUGPRINTVAR(x);	\
-		DebugPrintVar(y, "y", __LINE__);	\
-		DebugPrintVar(r, "r", __LINE__);	\
-		DebugPrintVar(c, "c", __LINE__)
-
+		DEBUGPRINTVAR(y);	\
+		DEBUGPRINTVAR(r);	\
+		DEBUGPRINTVAR(c)
 
 template<class T> TInt DoLoadTest(TInt aIndex, TAny* aPtr, T aInitialValue)
 	{
@@ -426,10 +396,10 @@ template<class T> TInt DoCasTest(TInt aIndex, TAny* aPtr, T aInitialValue, T aEx
 		{
 		DEBUGPRINT("r=%d",r);
 		DEBUGPRINTVAR(x);
-		DebugPrintVar(ex, "ex", __LINE__);
+		DEBUGPRINTVAR(ex);
 		DEBUGPRINT("c=%d",c);
-		DebugPrintVar(y, "y", __LINE__);
-		DebugPrintVar(ey, "ey", __LINE__);
+		DEBUGPRINTVAR(y);
+		DEBUGPRINTVAR(ey);
 		}
 	return line;
 	}

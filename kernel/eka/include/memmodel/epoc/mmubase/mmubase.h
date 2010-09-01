@@ -410,7 +410,6 @@ public:
 	TInt ZoneAllocPhysicalRam(TUint* aZoneIdList, TUint aZoneIdCount, TInt aNumPages, TPhysAddr* aPageList);
 	TInt FreePhysicalRam(TPhysAddr aPhysAddr, TInt aSize);
 	TInt FreePhysicalRam(TInt aNumPages, TPhysAddr* aPageList);
-	TInt FreeRamZone(TUint aZoneId, TPhysAddr& aZoneBase, TUint& aZoneBytes);
 	TInt ClaimPhysicalRam(TPhysAddr aPhysAddr, TInt aSize);
 	TInt GetPageTableId(TPhysAddr aPtPhys);
 	void MapRamPage(TLinAddr aAddr, TPhysAddr aPage, TPte aPtePerm);

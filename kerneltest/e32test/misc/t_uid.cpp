@@ -45,6 +45,7 @@ const TUid g11 = {0x10000001};
 const TUid g2 = {0x10000002};
 const TUid g22 = {0x10000002};
 const TUid g3 = {0x10000003};
+const TUid g33 = {0x10000003};
 
 LOCAL_C void testUid()
 //

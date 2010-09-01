@@ -130,7 +130,7 @@ GLDEF_C TBool IsFileSystemFAT(RFs &aFsSession,TInt aDrive)
 	{
 	TFileName f;
 	TInt r=aFsSession.FileSystemName(f,aDrive);
-	test_Value(r, r == KErrNone || r==KErrNotFound);
+	test(r==KErrNone || r==KErrNotFound);
 	return (f.CompareF(KFatName)==0);
 	}
 
@@ -219,7 +219,7 @@ GLDEF_C void CheckEntry(const TDesC& aName,TUint anAttributes,const TTime& aModi
 
 	TEntry entry;
 	TInt r=TheFs.Entry(aName,entry);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(entry.iAtt==anAttributes);
 	if (aModified!=TTime(0))
 		test(entry.iModified==aModified);
@@ -284,20 +284,20 @@ GLDEF_C void MakeFile(const TDesC& aFileName,const TUidType& aUidType,const TDes
 
 	RFile file;
 	TInt r=file.Replace(TheFs,aFileName,0);
-	test_Value(r, r == KErrNone || r==KErrPathNotFound);
+	test(r==KErrNone || r==KErrPathNotFound);
 	if (r==KErrPathNotFound)
 		{
 		r=TheFs.MkDirAll(aFileName);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		r=file.Replace(TheFs,aFileName,0);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		}
 	TCheckedUid checkedUid(aUidType);
 	TPtrC8 uidData((TUint8*)&checkedUid,sizeof(TCheckedUid));
 	r=file.Write(uidData);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=file.Write(aFileContents);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file.Close();
 	}
 
@@ -314,16 +314,16 @@ GLDEF_C void MakeFile(const TDesC& aFileName,const TDesC8& aFileContents)
 		test.Printf(_L("ERROR: r=%d"),r);
 		test(EFalse);
 		}
-	test_Value(r, r == KErrNone || r==KErrPathNotFound);
+	test(r==KErrNone || r==KErrPathNotFound);
 	if (r==KErrPathNotFound)
 		{
 		r=TheFs.MkDirAll(aFileName);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		r=file.Replace(TheFs,aFileName,0);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		}
 	r=file.Write(aFileContents);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file.Close();
 	}
 
@@ -335,17 +335,17 @@ GLDEF_C void MakeFile(const TDesC& aFileName,TInt anAttributes)
 
 	RFile file;
 	TInt r=file.Replace(TheFs,aFileName,0);
-	test_Value(r, r == KErrNone || r==KErrPathNotFound);
+	test(r==KErrNone || r==KErrPathNotFound);
 	if (r==KErrPathNotFound)
 		{
 		r=TheFs.MkDirAll(aFileName);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		r=file.Replace(TheFs,aFileName,0);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		}
 	file.Close();
 	r=TheFs.SetAtt(aFileName,anAttributes,0);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	}
 
 GLDEF_C void SetSessionPath(const TDesC& aPathName)
@@ -355,9 +355,9 @@ GLDEF_C void SetSessionPath(const TDesC& aPathName)
 	{
 
 	TInt r=TheFs.SetSessionPath(aPathName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.SessionPath(gSessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	}
 
 GLDEF_C void MakeFile(const TDesC& aFileName)
@@ -376,7 +376,7 @@ GLDEF_C void MakeDir(const TDesC& aDirName)
 	{
 
 	TInt r=TheFs.MkDirAll(aDirName);
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	}
 
 GLDEF_C TInt CheckFileExists(const TDesC& aName,TInt aResult,TBool aCompRes/*=ETrue*/)
@@ -387,7 +387,7 @@ GLDEF_C TInt CheckFileExists(const TDesC& aName,TInt aResult,TBool aCompRes/*=ET
 
 	TEntry entry;
 	TInt r=TheFs.Entry(aName,entry);
-	test_Value(r, r == aResult);
+	test(r==aResult);
 	if (aResult!=KErrNone)
 		return(0);
 	TParsePtrC nameParse(aName);
@@ -406,15 +406,15 @@ GLDEF_C void CheckFileContents(const TDesC& aName,const TDesC8& aContents)
 
 	RFile f;
 	TInt r=f.Open(TheFs,aName,EFileRead);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	HBufC8* testBuf=HBufC8::NewL(aContents.Length());
 	test(testBuf!=NULL);
 	TPtr8 bufPtr(testBuf->Des());
 	r=f.Read(bufPtr);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(bufPtr==aContents);
 	r=f.Read(bufPtr);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(bufPtr.Length()==0);
 	f.Close();
 	User::Free(testBuf);
@@ -433,12 +433,12 @@ GLDEF_C void DeleteTestDirectory()
 	CFileMan* fMan=CFileMan::NewL(TheFs);
 	test(fMan!=NULL);
 	TInt r=TheFs.SessionPath(gSessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.CheckDisk(gSessionPath);
 	if (r!=KErrNone && r!=KErrNotSupported)
 		ReportCheckDiskFailure(r);
 	r=fMan->RmDir(gSessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	delete fMan;
 	}
 
@@ -451,11 +451,11 @@ GLDEF_C void CreateTestDirectory(const TDesC& aSessionPath)
 	test(path.DrivePresent()==EFalse);
 
 	TInt r=TheFs.SetSessionPath(aSessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.SessionPath(gSessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.MkDirAll(gSessionPath);
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	}
 
 GLDEF_C TInt CurrentDrive()
@@ -466,7 +466,7 @@ GLDEF_C TInt CurrentDrive()
 
 	TInt driveNum;
 	TInt r=TheFs.CharToDrive(gSessionPath[0],driveNum);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	return(driveNum);
 	}
 
@@ -482,11 +482,11 @@ GLDEF_C void Format(TInt aDrive)
 	RFormat format;
 	TInt count;
 	TInt r=format.Open(TheFs,driveBuf,EHighDensity,count);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	while(count)
 		{
 		TInt r=format.Next(count);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		}
 	format.Close();
 	}
@@ -512,10 +512,10 @@ LOCAL_C void DoTests(TInt aDrive)
 	gSessionPath=_L("?:\\F32-TST\\");
 	TChar driveLetter;
 	TInt r=TheFs.DriveToChar(aDrive,driveLetter);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	gSessionPath[0]=(TText)driveLetter;
 	r=TheFs.SetSessionPath(gSessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 // !!! Disable platform security tests until we get the new APIs
 //	if(User::Capability() & KCapabilityRoot)
@@ -624,7 +624,7 @@ GLDEF_C TInt E32Main()
 	test.Start(_L("Starting tests..."));
 
 	r=TheFs.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	ParseCommandArguments(); //need this for drive letter to test
 
@@ -649,7 +649,7 @@ GLDEF_C TInt E32Main()
 
 	TInt theDrive;
 	r=TheFs.CharToDrive(gDriveToTest,theDrive);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	// set up debug register
 	test.Printf(_L("debug register = 0x%X"), gDebugFlags);
@@ -665,7 +665,7 @@ GLDEF_C TInt E32Main()
 	endTimeC.HomeTime();
 	TTimeIntervalSeconds timeTakenC;
 	r=endTimeC.SecondsFrom(timerC,timeTakenC);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("Time taken for test = %d seconds\n"),timeTakenC);
 	TheFs.SetAllocFailure(gAllocFailOff);
 	TheFs.Close();

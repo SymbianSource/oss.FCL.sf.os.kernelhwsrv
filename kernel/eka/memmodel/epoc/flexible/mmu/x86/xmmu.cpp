@@ -546,15 +546,6 @@ TInt DMemModelThread::Alias(TLinAddr aAddr, DMemModelProcess* aProcess, TInt aSi
 	if(TUint(aAddr^KIPCAlias)<TUint(KIPCAliasAreaSize))
 		return KErrBadDescriptor; // prevent access to alias region
 
-#ifdef _DEBUG
-	if (KDebugNum(KFORCEKUPAGEFAULTS))
-		{
-		TInt r = ThePager.FlushRegion(aProcess, aAddr, aSize);
-		if (r != KErrNone)
-			return r;
-		}
-#endif
-	
 	// Grab the mmu lock before opening a reference on os asid so that this thread 
 	// is in an implicit critical section and therefore can't leak the reference by
 	// dying before iAliasLinAddr is set.

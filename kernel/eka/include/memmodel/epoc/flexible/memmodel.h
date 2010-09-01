@@ -30,8 +30,8 @@
 
 #ifdef __SMP__
 // SubScheduler fields for each processor
-#define	i_AliasLinAddr			iSubSchedScratch[0]
-#define	i_AliasPdePtr			iSubSchedScratch[1]
+#define	i_AliasLinAddr			iExtras[0]
+#define	i_AliasPdePtr			iExtras[1]
 #endif
 
 /********************************************

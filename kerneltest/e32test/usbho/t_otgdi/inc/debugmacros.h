@@ -27,6 +27,7 @@ Debug macro for serial port logging of function names and signatures
  e.g. 
 <Function> void CMyClass::MyFunction (TInt aParam)
 */
+#define LOG_FUNC 	if (gVerboseOutput) RDebug::Printf("<Function> %s", __PRETTY_FUNCTION__);
 
 const TInt KErrAssertionInternal	= 3;
 
@@ -35,6 +36,7 @@ const TInt KErrAssertionInternal	= 3;
 									__ASSERT_ALWAYS(a, User::Panic(_L("Test F/W Err"), KErrAssertionInternal));};
 
 
+#define LOG_FUNCERROR(a) RDebug::Printf("[WARNING %s failed %d]", __PRETTY_FUNCTION__, a);
 
 /**
 Debug macro to output test in 'verbose' detail mode

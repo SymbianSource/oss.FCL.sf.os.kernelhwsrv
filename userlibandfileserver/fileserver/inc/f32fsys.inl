@@ -270,48 +270,53 @@ inline void TDrive::SetNotifyOff()
 	__IS_DRIVETHREAD();
 	iDriveFlags |= ENotifyOff;
 	}
-
 /**
+
 Locks the drive.This function acquires iLock mutex.
+
 */
 inline void TDrive::Lock()
 	{iLock.Wait();}
-
 /**
+
 UnLocks the drive.This function signals the iLock mutex.
+
 */
+
 inline void TDrive::UnLock()
 	{iLock.Signal();}
 
 
 /**
+
+Gets the reserved space of a drive
+
 @return	Amount of space reserved in bytes.
+
 */
+
 inline TInt TDrive::ReservedSpace() const
-	{
-    return iReservedSpace;
-    }
+	{return iReservedSpace;}
 
 /**
-    Reserves space on a drive. The amount of 'reserved space' is subtracted  
-    from the amount of available free space on the volume reported by file system, when the user 
-    queries it.
 
-    @param	aReservedSpace	Amount of space to reserve in bytes.
+Reserves a space of a drive.
+
+@param	aReservedSpace	Amount of space to reserve in bytes.
+
 */
 inline void TDrive::SetReservedSpace(const TInt aReservedSpace)
-	{
-    iReservedSpace=aReservedSpace; 
-    }
+	{iReservedSpace=aReservedSpace; }
 
 /**
-    Sets the 'rugged mode' flag in the drive object. The file system associated with this TDrive object 
-    can use this flag for changing its behaviour.
-    For example, FAT file system if this flag is set, operates in 'Rugged FAT' mode, when the performance is 
-    sacrificed for the sake of reliability. 
 
-    @param aIsRugged  the 'rugged mode' flag.
+Sets the rugged flag in the drive object.
+
+@param Flag to set or clear the rugged flag.
+@see	IsRugged()
+
 */
+
 inline void TDrive::SetRugged(TBool aIsRugged)
 	{
 	if (!aIsRugged)
@@ -321,13 +326,17 @@ inline void TDrive::SetRugged(TBool aIsRugged)
 	}
 
 /**
-    @return 'Is rugged' flag.
-    See TDrive::SetRugged()
+
+Returns whether the current drive is running as rugged Fat
+or not.If IsRugged flag is set then in the event of power 
+failure fat/metadata will be in a valid state if the scandrive 
+utility is run immediately after.
+
+@return Is rugged fat flag.
 */
+
 inline TBool TDrive::IsRugged() const
-	{
-    return !(iDriveFlags & ENotRugged); 
-    }
+	{return !(iDriveFlags & ENotRugged); }
 
 
 /**
@@ -442,69 +451,64 @@ inline void CMountCB::SetNotifyOff()
 	{Drive().SetNotifyOff();}
 
 
-//---------------------------------------------------------------------------------------------------------------------------------
+
 
 /**
+Locks the mount by incrementing the internal lock counter.
 
-    Increment mount's lock counter. This happens on following events:
-        - RemoveResource() call, when file (share) or directory is closed
-        - AddDiskAccess() call,  when disk access object (like Format or RawDisk access) is opened on the mount.
-
-    See also: CMountCB::LockStatus()   
+The mount becomes locked on formatting or on the opening of a resource
+(a file or a directory) or raw disk subsession.
+A format, resource or raw disk subsession can only be opened if the mount
+is not locked.
 */
 inline void CMountCB::IncLock()
-	{
-    iLockMount++;
-    }
+	{iLockMount++;}
 
 
-//---------------------------------------------------------------------------------------------------------------------------------
+
 
 /**
-    Decrement mount's lock counter. This happens on following events:
+Unlocks the mount by decrementing the internal lock counter.
 
-    AddResource()       call when file (share) or directory is opened on the mount 
-    RemoveDiskAccess()  call when disk access object (like Format or RawDisk access) is closed.
-
-    See also: CMountCB::LockStatus()   
+The mount becomes locked on formatting or on the opening of a resource
+(a file or a directory) or raw disk subsession.
+A format, resource or raw disk subsession can only be opened if the mount
+is not locked.
 */
 inline void CMountCB::DecLock()
-	{
-    iLockMount--;
-    }
+	{iLockMount--;}
 
-//---------------------------------------------------------------------------------------------------------------------------------
+
+
 
 /**
-    @return value of the Mount's lock counter value.
-    
-    The meaning of 'iLockMount' is overloaded a bit, it's value is:
-        0   when there are no files, directories, formats and any other objects opened on the mount
-        >0  when there are disk access objects opened (raw disk access or format)
-        <0  when there are files or directories opened on the mount, and the value reflects their total number 
+Gets the current lock status.
+
+It delivers the current lock status by returning the internal lock counter.
+
+@return The current lock status.
 */
 inline TInt CMountCB::LockStatus() const
-	{
-    return iLockMount;
-    }
+	{return(iLockMount);}
 
 
 
-//---------------------------------------------------------------------------------------------------------------------------------
+
 /**
 Tests whether the mount is currently locked. 
 
 A mount is locked when the internal lock counter is greater than zero.
-    This happens when a format, resource or raw disk subsession is opened on the mount.
+On creation, the lock counter is set to zero.
 
-    See also: CMountCB::LockStatus()   
+The mount becomes locked on formatting or on the opening of a resource
+(a file or a directory) or raw disk subsession.
+A format, resource or raw disk subsession can only be opened if the mount
+is not locked.
 
-    @return True if the mount is locked by having disk access objects opened
+@return True if the mount is locked, false, otherwise.
 */
 inline TBool CMountCB::Locked() const
-	{
-    return iLockMount > 0; 
-    }
+	{return iLockMount>0; }
 
 
 
@@ -533,9 +537,7 @@ inline TBool CMountCB::IsCurrentMount() const
 /**
 */
 inline TInt64 CMountCB::Size() const
-	{
-    return iSize;
-    }
+	{return(iSize);}
 
 
 
@@ -545,19 +547,14 @@ Set the unique mount number
 @param aMountNumber - The unique mount number
 */
 const TInt KMountDismounted = 0x80000000;
-
 inline void CMountCB::SetMountNumber(TInt aMountNumber)
-	{ 
-    iMountNumber = (aMountNumber & ~KMountDismounted); 
-    }
+	{ iMountNumber = (aMountNumber &~ KMountDismounted); }
 
 
 
 
 /**
-    Set the mount flag indicating that it is in 'dismounted' state.
-    The CMountCB object in this case is still alive, but any attempts to access resources on this 
-    mount result in KErrDismounted.
+Set the mount to be dismounted
 */
 inline void CMountCB::SetDismounted(TBool aDismounted)
 	{
@@ -571,23 +568,21 @@ inline void CMountCB::SetDismounted(TBool aDismounted)
 
 
 /**
+Returns the unique mount number
 @return The unique mount number
 */
 inline TInt CMountCB::MountNumber() const
-	{ 
-    return(iMountNumber &~ KMountDismounted); 
-    }
+	{ return(iMountNumber &~ KMountDismounted); }
 
 
 
 
 /**
+Returns ETrue if the mount is flagged as dismounted.
 @return ETrue if the mount is flagged as dismounted
 */
 inline TBool CMountCB::IsDismounted() const
-	{ 
-    return(iMountNumber & KMountDismounted); 
-    }
+	{ return(iMountNumber & KMountDismounted); }
 
 
 

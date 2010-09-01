@@ -22,10 +22,8 @@
 
 TInt64 CrashTime() {return 0;}
 
-RFs gFs;
+RFs TheFs;
 RFile TheOutFile;
-CFileMan* gFileMan;
-_LIT(KZipFile,"c:\\out.zip");
 				
 class TCrashTestGzip : public MCrashGzip
 	{
@@ -40,10 +38,9 @@ RTest test(_L("T_ZIP"));
 
 void TCrashTestGzip::SetOutput()
 	{
-	TInt r=TheOutFile.Replace(gFs, KZipFile, EFileWrite);
+	TInt r=TheOutFile.Replace(TheFs, _L("c:\\out.zip"),EFileWrite);
 	test(r==KErrNone);
-	TBool bOk=Init();
-	test(bOk);
+	Init();
 	}
 
 
@@ -62,18 +59,14 @@ TInt32 TCrashTestGzip::GetMaxLength()
 
 
 _LIT8(KText, "12345");
-const TUint32 KTextSize = 5;
+
 
 GLDEF_C TInt E32Main()
 	{
 	test.Title();
 
 	test.Start(_L("Connect to file server"));
-
-	CTrapCleanup* ct = CTrapCleanup::New();
-	test(ct!=0);
-	test(gFs.Connect()==KErrNone);
-	TRAPD(r, gFileMan=CFileMan::NewL(gFs));
+	TInt r=TheFs.Connect();
 	test(r==KErrNone);
 
 	test.Next(_L("Making zip file"));
@@ -82,30 +75,8 @@ GLDEF_C TInt E32Main()
 	zip.Write(KText);
 	zip.FlushEnd();
 
-	// get the number of uncompressed bytes and check that it matches the string
-	TUint32 uncompressedBytes=zip.GetDataCompressed();
-	test(uncompressedBytes==KTextSize);
-
 	TheOutFile.Close();
-
-	test.Next(_L("Re-open zip file and check size"));
-	// Check that file exists
-	r=TheOutFile.Open(gFs, KZipFile, EFileRead);
-	test(r==KErrNone);
-	
-	//check size
-	TInt size=0;
-	r=TheOutFile.Size(size);
-	test(r==KErrNone && size>0);
-
-	TheOutFile.Close();
-
-	// Cleanup
-	gFileMan->Delete(KZipFile);
-	delete gFileMan;
-	gFs.Close();
-	delete ct;
-	test.End();
+	TheFs.Close();
 
 	return KErrNone;
 	}

@@ -31,65 +31,56 @@
 									|						  |
 								ResourceF				   ResourceG	
 	*/
-
-TInt DSimulatedPowerResourceController::DoRegisterStaticResourcesDependency(RPointerArray <DStaticPowerResourceD> & aStaticResourceDArray)
+TInt DSimulatedPowerResourceController::DoRegisterStaticResourcesDependency(DStaticPowerResourceD**& aStaticResourceDArray, TUint16& aStaticResourceDCount)
 	{
 	Kern::Printf(">DSimulatedPowerResourceController::DoRegisterStaticResourcesDependency");
-
-	// this is just for testing purposes - try to call base-class implementation, which by default resets the values and returns KErrNone
-	TInt r = DPowerResourceController::DoRegisterStaticResourcesDependency(aStaticResourceDArray);
-	if(r != KErrNone || aStaticResourceDArray.Count())
-		{
-		Kern::Printf("DPowerResourceController::DoRegisterStaticResourcesDependency() default base class implementation has failed?");
-		return KErrGeneral;
-		}
-
+	aStaticResourceDArray = (DStaticPowerResourceD**)new(DStaticPowerResourceD*[MAX_DEPENDENT_RESOURCE_COUNT]);
+	if(!aStaticResourceDArray)
+		return KErrNoMemory;
 	DStaticPowerResourceD* pR = NULL;
-	TBool error_occured = EFalse;
-
 	pR = new DMLSLGLSPDependResource();
-	if(!SafeAppend(aStaticResourceDArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResDependencyCount, aStaticResourceDArray, KErrNoMemory)
+	aStaticResourceDArray[iStaticResDependencyCount++] = pR;
 
 	pR = new DMLSIGLSNDependResource();
-	if(!SafeAppend(aStaticResourceDArray, pR))
-		error_occured = ETrue;
-
-	pR = new DBSIGLSPDependResource();
-	if(!SafeAppend(aStaticResourceDArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResDependencyCount, aStaticResourceDArray, KErrNoMemory)
+	aStaticResourceDArray[iStaticResDependencyCount++] = pR;
 	
+	pR = new DBSIGLSPDependResource();
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResDependencyCount, aStaticResourceDArray, KErrNoMemory)
+	aStaticResourceDArray[iStaticResDependencyCount++] = pR;
+
 	pR = new DMLSHIGLSPDependResource();
-	if(!SafeAppend(aStaticResourceDArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResDependencyCount, aStaticResourceDArray, KErrNoMemory)
+	aStaticResourceDArray[iStaticResDependencyCount++] = pR;
 
 	pR = new DBSHLGLSNDependResource();
-	if(!SafeAppend(aStaticResourceDArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResDependencyCount, aStaticResourceDArray, KErrNoMemory)
+	aStaticResourceDArray[iStaticResDependencyCount++] = pR;
 
 	pR = new DMLSHLGLSNDependResource();
-	if(!SafeAppend(aStaticResourceDArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResDependencyCount, aStaticResourceDArray, KErrNoMemory)
+	aStaticResourceDArray[iStaticResDependencyCount++] = pR;
 
 	//Establish resource dependencies
-	r = CreateResourceDependency(aStaticResourceDArray);
-	if(r != KErrNone)
-		error_occured = ETrue;
+	if(CreateResourceDependency(aStaticResourceDArray))
+		CLEAN_AND_RETURN(iStaticResDependencyCount, aStaticResourceDArray, KErrNoMemory)
 
-	// the only error that could occur here is KErrNoMemory (also from calling CreateResourceDependency)
-	// clean-up if the error did occur
-	if(error_occured)
-		{
-		aStaticResourceDArray.ResetAndDestroy();
-		r = KErrNoMemory;
-		}
+	iDependencyResources = aStaticResourceDArray;
 
-	return r;
+	aStaticResourceDCount = iStaticResDependencyCount;
+	return KErrNone;
 	}
 
 
 // This function establishes above dependency between static dependent resource
-TInt DSimulatedPowerResourceController::CreateResourceDependency(RPointerArray <DStaticPowerResourceD> & pResArray)
+TInt DSimulatedPowerResourceController::CreateResourceDependency(DStaticPowerResourceD** pResArray)
 	{
 	iNodeArray = new SNode[10];
 	SNode* pN1;

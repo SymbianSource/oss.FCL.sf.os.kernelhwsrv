@@ -26,6 +26,16 @@
 #define __RESMANUSCONTROL_TRACE_H__
 #ifdef BTRACE_RESMANUS
 
+//Function to format the output.
+static void UsTraceFormatPrint(TDes8& aBuf, const char* aFmt, ...)
+	{
+	if(!(&aBuf))
+		return;
+	VA_LIST list;
+	VA_START(list,aFmt);
+	Kern::AppendFormat(aBuf,aFmt,list);
+	}
+
 //definition of subcategories.
 #define PRM_US_OPEN_CHANNEL_START				BTrace::EOpenChannelUsStart
 #define PRM_US_OPEN_CHANNEL_END					BTrace::EOpenChannelUsEnd
@@ -42,38 +52,31 @@
 #define PRM_US_CANCEL_SET_RESOURCE_STATE_START	BTrace::ECancelSetResourceStateUsStart
 #define PRM_US_CANCEL_SET_RESOURCE_STATE_END	BTrace::ECancelSetResourceStateUsEnd
 
-#define APPEND_VAL(val)                                                                        \
-    {                                                                                               \
-    printBuf.Append((TUint8 *)&(val), sizeof(val));                                                       \
-    }     
-#define APPEND_STRING(des_ptr)                                                                           \
-    {                                                                                               \
-    TUint length = (des_ptr)->Length();                                                              \
-    printBuf.Append((TUint8 *)&length, sizeof(TUint));                                                     \
-    printBuf.Append(*(des_ptr));                                                                       \
-    }
-
 // Macro to output identification information provided in a request to open a channel
 #define PRM_US_OPEN_CHANNEL_START_TRACE						\
 	{														\
-	Kern::Printf("PRM_US_OPEN_CHANNEL_START_TRACE");\
-	BTraceContextN(BTrace::EResourceManagerUs, PRM_US_OPEN_CHANNEL_START, (TInt)(iClient), iUserNameUsed->Length(), iUserNameUsed->Ptr(), iUserNameUsed->Length()); \
+    TBuf8<256> printBuf;									\
+    printBuf.Zero();										\
+    UsTraceFormatPrint(printBuf, "%S", iUserNameUsed);	\
+	BTraceContextN(BTrace::EResourceManagerUs, PRM_US_OPEN_CHANNEL_START, 0, (TInt)(iClient), printBuf.Ptr(), printBuf.Length()); \
 	}
 
 // Macro to output identification information generated during a request to open a channel
 #define PRM_US_OPEN_CHANNEL_END_TRACE						\
 	{														\
-	BTraceContextN(BTrace::EResourceManagerUs, PRM_US_OPEN_CHANNEL_END, (TInt)(ClientHandle()), iUserNameUsed->Length(), iUserNameUsed->Ptr(), iUserNameUsed->Length()); \
+    TBuf8<256> printBuf;									\
+    printBuf.Zero();										\
+    UsTraceFormatPrint(printBuf, "%S", iUserNameUsed);		\
+	BTraceContextN(BTrace::EResourceManagerUs, PRM_US_OPEN_CHANNEL_END, 0, (TInt)(ClientHandle()), printBuf.Ptr(), printBuf.Length()); \
 	}
 
 // Macro to output information provided for a request to register with the Resource Controller
 #define PRM_US_REGISTER_CLIENT_START_TRACE					\
 	{														\
-    TUint32 stateRes32 = ((stateRes[0]&0xFF) << 16) | ((stateRes[1]&0xFF) << 8) | ((stateRes[2]&0xFF));\
-    TBuf8<80> printBuf;									\
+    TBuf8<256> printBuf;									\
     printBuf.Zero();										\
-    APPEND_STRING(iUserNameUsed);                      \
-	BTraceContextN(BTrace::EResourceManagerUs, PRM_US_REGISTER_CLIENT_START, (TInt)ClientHandle(), stateRes32, printBuf.Ptr(), printBuf.Length()); \
+    UsTraceFormatPrint(printBuf, "%S 0x%x %d", iUserNameUsed, (TInt)(ClientHandle()),(TInt)(stateRes[0]));	\
+	BTraceContextN(BTrace::EResourceManagerUs, PRM_US_REGISTER_CLIENT_START, (TInt)(stateRes[1]), (TInt)(stateRes[2]), printBuf.Ptr(), printBuf.Length()); \
 	}
 
 // Macro to output information after issuing a request to register with the Resource Controller
@@ -85,7 +88,10 @@
 // Macro to output information provided for a request to de-register with the Resource Controller
 #define PRM_US_DEREGISTER_CLIENT_START_TRACE				\
 	{														\
-	BTraceContextN(BTrace::EResourceManagerUs, PRM_US_DEREGISTER_CLIENT_START, (TInt)(ClientHandle()), iUserNameUsed->Length(), iUserNameUsed->Ptr(), iUserNameUsed->Length()); \
+    TBuf8<256> printBuf;									\
+    printBuf.Zero();										\
+    UsTraceFormatPrint(printBuf, "%S ", iUserNameUsed);		\
+	BTraceContextN(BTrace::EResourceManagerUs, PRM_US_DEREGISTER_CLIENT_START, 0, (TInt)(ClientHandle()), printBuf.Ptr(), printBuf.Length()); \
 	}
 
 // Macro to output information after issuing a request to de-register with the Resource Controller
@@ -97,76 +103,72 @@
 // Macro to output information provided for a request to get the state of a resource
 #define PRM_US_GET_RESOURCE_STATE_START_TRACE				\
 	{														\
-    TBuf8<80> printBuf;                                    \
-    printBuf.Zero();                                        \
-    APPEND_STRING(iUserNameUsed);                      \
+    TBuf8<256> printBuf;									\
+    printBuf.Zero();										\
+    UsTraceFormatPrint(printBuf, "%S ", iUserNameUsed);		\
 	BTraceContextN(BTrace::EResourceManagerUs, PRM_US_GET_RESOURCE_STATE_START, resourceId, (TInt)(ClientHandle()), printBuf.Ptr(), printBuf.Length()); \
 	}
 
 // Macro to output information on completion of a request to get the state of a resource
 #define PRM_US_GET_RESOURCE_STATE_END_TRACE					\
 	{														\
-    TBuf8<80> printBuf;									\
+    TBuf8<256> printBuf;									\
     printBuf.Zero();										\
-    APPEND_VAL(aClient);                                    \
-    APPEND_VAL(aResult);                                    \
+    UsTraceFormatPrint(printBuf, "%d %d", aClient, aResult);	\
 	BTraceContextN(BTrace::EResourceManagerUs, PRM_US_GET_RESOURCE_STATE_END, aResourceId, aLevel, printBuf.Ptr(), printBuf.Length()); \
 	}
 
 // Macro to output information provided for a request to set the state of a resource
 #define PRM_US_SET_RESOURCE_STATE_START_TRACE				\
 	{														\
-    TBuf8<80> printBuf;									\
+    TBuf8<256> printBuf;									\
     printBuf.Zero();										\
-    TInt ch = ClientHandle();                               \
-    APPEND_VAL(ch);                                         \
-    APPEND_STRING(iUserNameUsed);                      \
+    UsTraceFormatPrint(printBuf, "%S %d", iUserNameUsed, (TInt)(ClientHandle()));	\
 	BTraceContextN(BTrace::EResourceManagerUs, PRM_US_SET_RESOURCE_STATE_START, resourceId, newState, printBuf.Ptr(), printBuf.Length()); \
 	}
 
 // Macro to output information on completion of a request to set the state of a resource
 #define PRM_US_SET_RESOURCE_STATE_END_TRACE					\
 	{														\
-    TBuf8<80> printBuf;									\
+    TBuf8<256> printBuf;									\
     printBuf.Zero();										\
-    APPEND_VAL(aClient);                                    \
-    APPEND_VAL(aResult);                                    \
+    UsTraceFormatPrint(printBuf, "%d %d", aClient, aResult);	\
 	BTraceContextN(BTrace::EResourceManagerUs, PRM_US_SET_RESOURCE_STATE_END, aResourceId, aLevel, printBuf.Ptr(), printBuf.Length()); \
 	}
 
 // Macro to output information provided for a request to cancel the get resource state requests for a resource
 #define PRM_US_CANCEL_GET_RESOURCE_STATE_START_TRACE		\
 	{														\
-    TBuf8<80> printBuf;                                    \
-    printBuf.Zero();                                        \
-    APPEND_STRING(iUserNameUsed);                      \
+    TBuf8<256> printBuf;									\
+    printBuf.Zero();										\
+    UsTraceFormatPrint(printBuf, "%S ", iUserNameUsed);		\
 	BTraceContextN(BTrace::EResourceManagerUs, PRM_US_CANCEL_GET_RESOURCE_STATE_START, aResourceId, (TInt)(ClientHandle()), printBuf.Ptr(), printBuf.Length()); \
 	}
 
 // Macro to output information on completion of a request to cancel the get resource state requests for a resource
 #define PRM_US_CANCEL_GET_RESOURCE_STATE_END_TRACE			\
 	{														\
-    TBuf8<80> printBuf;                                    \
-    printBuf.Zero();                                        \
-    APPEND_STRING(iUserNameUsed);                      \
+    TBuf8<256> printBuf;									\
+    printBuf.Zero();										\
+    UsTraceFormatPrint(printBuf, "%S ", iUserNameUsed);		\
 	BTraceContextN(BTrace::EResourceManagerUs, PRM_US_CANCEL_GET_RESOURCE_STATE_END, aResourceId, (TInt)(ClientHandle()), printBuf.Ptr(), printBuf.Length()); \
 	}
 
 // Macro to output information provided for a request to cancel the set resource state requests for a resource
 #define PRM_US_CANCEL_SET_RESOURCE_STATE_START_TRACE		\
 	{														\
-    TBuf8<80> printBuf;                                    \
-    printBuf.Zero();                                        \
-    APPEND_STRING(iUserNameUsed);                      \
+    TBuf8<256> printBuf;									\
+    printBuf.Zero();										\
+    UsTraceFormatPrint(printBuf, "%S ", iUserNameUsed);		\
 	BTraceContextN(BTrace::EResourceManagerUs, PRM_US_CANCEL_SET_RESOURCE_STATE_START, aResourceId, (TInt)(ClientHandle()), printBuf.Ptr(), printBuf.Length()); \
 	}
 
 // Macro to output information on completion of a request to cancel the get resource state requests for a resource
 #define PRM_US_CANCEL_SET_RESOURCE_STATE_END_TRACE			\
 	{														\
-    TBuf8<80> printBuf;                                    \
-    printBuf.Zero();                                        \
-    APPEND_STRING(iUserNameUsed);                      \
+    TBuf8<256> printBuf;									\
+    printBuf.Zero();										\
+    UsTraceFormatPrint(printBuf, "%S ", iUserNameUsed);		\
 	BTraceContextN(BTrace::EResourceManagerUs, PRM_US_CANCEL_SET_RESOURCE_STATE_END, aResourceId, (TInt)(ClientHandle()), printBuf.Ptr(), printBuf.Length()); \
 	}
 

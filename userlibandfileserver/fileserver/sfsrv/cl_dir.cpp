@@ -17,10 +17,6 @@
 
 #include "cl_std.h"
 
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "cl_dirTraces.h"
-#endif
-
 
 
 
@@ -52,14 +48,13 @@ Note: to close the directory, use Close()
 
 */
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_EDIROPEN1, "sess %x aUidType0 %x aUidType1 %x aUidType2 %x", (TUint) Session().Handle(), (TUint) aUidType[0].iUid, (TUint) aUidType[1].iUid, (TUint) aUidType[2].iUid);
-	OstTraceData(TRACE_BORDER, EFSRV_EDIROPEN1_EDIRNAME, "Dir %S", aName.Ptr(), aName.Length()<<1);
+	TRACEMULT5(UTF::EBorder, UTraceModuleEfsrv::EDirOpen1, MODULEUID,
+		Session().Handle(), aName, aUidType[0].iUid, aUidType[1].iUid, aUidType[2].iUid);
 
 	TPckgC<TUidType> pckgUid(aUidType);
 	TInt r = CreateSubSession(aFs,EFsDirOpen,TIpcArgs(&aName,KEntryAttAllowUid,&pckgUid));
 
-	OstTraceExt2(TRACE_BORDER, EFSRV_EDIROPEN1RETURN, "r %d subs %x", (TUint) r, (TUint) SubSessionHandle());
-
+	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EDirOpen1Return, MODULEUID, r, SubSessionHandle());
 	return r;
 	}
 
@@ -97,15 +92,13 @@ Note: to close the directory, use Close()
 
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EDIROPEN2, "sess %x anAttMask %x", (TUint) Session().Handle(), (TUint) anAttMask);
-	OstTraceData(TRACE_BORDER, EFSRV_EDIROPEN2_EDIRNAME, "Dir %S", aName.Ptr(), aName.Length()<<1);
+	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EDirOpen2, MODULEUID, Session().Handle(), aName, anAttMask);
 
 	TUidType uidType(TUid::Null(),TUid::Null(),TUid::Null());
 	TPckgC<TUidType> pckgUid(uidType);
 	TInt r = CreateSubSession(aFs,EFsDirOpen,TIpcArgs(&aName,anAttMask,&pckgUid));
 
-	OstTraceExt2(TRACE_BORDER, EFSRV_EDIROPEN2RETURN, "r %d subs %x", (TUint) r, (TUint) SubSessionHandle());
-
+	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EDirOpen2Return, MODULEUID, r, SubSessionHandle());
 	return r;
 	}
 
@@ -119,11 +112,11 @@ Close() is guaranteed to return, and provides no indication whether
 it completed successfully or not.
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EDIRCLOSE, "sess %x subs %x", (TUint) Session().Handle(), (TUint) SubSessionHandle());
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EDirClose, MODULEUID, Session().Handle(), SubSessionHandle());
 
 	CloseSubSession(EFsDirSubClose);
 
-	OstTrace0(TRACE_BORDER, EFSRV_EDIRCLOSERETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EDirCloseReturn, MODULEUID);
 	}
 
 
@@ -147,13 +140,12 @@ This is a synchronous function that returns when the operation is complete.
         (e.g. KErrCorrupt, KErrNoMemory etc).
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EDIRREAD1, "sess %x subs %x", (TUint) Session().Handle(), (TUint) SubSessionHandle());
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EDirRead1, MODULEUID, Session().Handle(), SubSessionHandle());
 
 	anArray.iCount=KCountNeeded;
 	TInt r = SendReceive(EFsDirReadPacked,TIpcArgs(&anArray.iBuf));
 
-	OstTraceExt2(TRACE_BORDER, EFSRV_EDIRREAD1RETURN, "r %d count %d", (TUint) r, (TUint) anArray.Count());
-
+	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EDirRead1Return, MODULEUID, r, anArray.Count());
 	return r;
 	}
 
@@ -179,12 +171,12 @@ This is an asynchronous function.
                (e.g. KErrCorrupt, KErrNoMemory etc).
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EDIRREAD2, "sess %x subs %x status %x", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) &aStatus);
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EDirRead2, MODULEUID, Session().Handle(), SubSessionHandle(), &aStatus);
 
 	anArray.iCount=KCountNeeded;
 	RSubSessionBase::SendReceive(EFsDirReadPacked,TIpcArgs(&anArray.iBuf),aStatus);
 
-	OstTrace0(TRACE_BORDER, EFSRV_EDIRREAD2RETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EDirRead2Return, MODULEUID);
 	}
 
 
@@ -202,13 +194,12 @@ This is a synchronous function that returns when the operation is complete.
         codes.
 */
 	{
-	OstTraceExt2(TRACE_BORDER, EFSRV_EDIRREAD3, "sess %x subs %x", (TUint) Session().Handle(), (TUint) SubSessionHandle());
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EDirRead3, MODULEUID, Session().Handle(), SubSessionHandle());
 
 	TPckg<TEntry> e(anEntry);
 	TInt r = SendReceive(EFsDirReadOne,TIpcArgs(&e));
 
-	OstTrace1(TRACE_BORDER, EFSRV_EDIRREAD3RETURN, "r %d", r);
-
+	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EDirRead3Return, MODULEUID, r);
 	return r;
 	}
 
@@ -227,9 +218,9 @@ This is an asynchronous function.
                error codes.
 */
 	{
-	OstTraceExt3(TRACE_BORDER, EFSRV_EDIRREAD4, "sess %x subs %x status %x", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) &aStatus);
+	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EDirRead4, MODULEUID, Session().Handle(), SubSessionHandle(), &aStatus);
 
 	RSubSessionBase::SendReceive(EFsDirReadOne,TIpcArgs(&anEntry),aStatus);
 
-	OstTrace0(TRACE_BORDER, EFSRV_EDIRREAD4RETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EDirRead4Return, MODULEUID);
 	}

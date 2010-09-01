@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -23,11 +23,6 @@
 */
 
 #include <drivers/usbc.h>
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "queueTraces.h"
-#endif
-
 
 
 void TSglQueLink::Enque(TSglQueLink* aLink)
@@ -91,8 +86,7 @@ void TSglQueBase::DoRemove(TAny* aPtr)
 		pN = pP->iNext;
 		}
 	// This doesn't have to indicate an error (but might):
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TSGLQUEBASE_DOREMOVE, 
-	        "TSglQueBase::DoRemove: ESQueLinkNotQueued" );
+	__KTRACE_OPT(KPANIC, Kern::Printf("TSglQueBase::DoRemove: ESQueLinkNotQueued"));
 	}
 
 

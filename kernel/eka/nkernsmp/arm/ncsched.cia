@@ -54,7 +54,6 @@
 
 extern "C" void NewThreadTrace(NThread* a);
 extern "C" void send_accumulated_resched_ipis();
-extern "C" void wake_up_for_ipi(TSubScheduler*, TInt);
 
 
 __NAKED__ void TScheduler::Reschedule()
@@ -72,7 +71,7 @@ __NAKED__ void TScheduler::Reschedule()
 	__ASM_CLI();							// interrupts off
 	asm("ldr	r1, [r0, #%a0]" : : "i" (_FOFF(TSubScheduler,iDfcPendingFlag)&~3));	// check iDfcPendingFlag and iExIDfcPendingFlag
 	asm("mov	r11, r0 ");					// r11->TSubScheduler
-	asm("ldr	r10, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iLocalTimerAddr));	// r10->CPU local timer
+	asm("ldr	r10, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_LocalTimerAddr));	// r10->CPU local timer
 
 	asm("start_resched: ");
 	asm("movs	r1, r1, lsr #16 ");			// check if IDFCs or ExIDFCs pending
@@ -830,13 +829,11 @@ EXPORT_C __NAKED__ TInt NKern::CurrentContext()
 	}
 
 
-extern "C" __NAKED__ void send_irq_ipi(TSubScheduler*, TInt)
+extern "C" __NAKED__ void send_irq_ipi(TSubScheduler*)
 	{
-	asm("tst	r1, #%a0" : : "i" ((TInt)EQueueEvent_WakeUp) );
-	asm("bne "	CSM_CFUNC(wake_up_for_ipi));
 	__DATA_SYNC_BARRIER_Z__(r3);			// need DSB before sending any IPI
 	asm("ldr	r3, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, iCpuMask));
-	asm("ldr	r2, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iGicDistAddr));	// we assume i_GicDistAddr is the same for all CPUs
+	asm("ldr	r2, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, i_GicDistAddr));	// we assume i_GicDistAddr is the same for all CPUs
 	asm("mov	r1, #%a0" : : "i" ((TInt)TRANSFERRED_IRQ_VECTOR));
 	asm("orr	r1, r1, r3, lsl #16 ");
 	asm("str	r1, [r2, #%a0]" : : "i" _FOFF(GicDistributor, iSoftIrq));	// trigger IPIs
@@ -848,12 +845,7 @@ extern "C" __NAKED__ void send_irq_ipi(TSubScheduler*, TInt)
 // Return with R0 unaltered.
 extern "C" __NAKED__ void send_accumulated_resched_ipis()
 	{
-	asm("ldr	r3, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, iScheduler));
-	asm("ldr	r2, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iGicDistAddr));
-	asm("ldr	r1, [r3, #%a0]" : : "i" _FOFF(TScheduler, iThreadAcceptCpus));
-	asm("bics	r1, r12, r1 ");
-	asm("bne	2f ");
-	asm("1:		");
+	asm("ldr	r2, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, i_GicDistAddr));
 	asm("mov	r1, #0 ");
 	asm("str	r1, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iReschedIPIs));
 	__DATA_SYNC_BARRIER__(r1);				// need DSB before sending any IPI
@@ -861,16 +853,6 @@ extern "C" __NAKED__ void send_accumulated_resched_ipis()
 //	asm("orr	r1, r1, #%a0" : : "i" ((TInt)RESCHED_IPI_VECTOR));	RESCHED_IPI_VECTOR=0
 	asm("str	r1, [r2, #%a0]" : : "i" _FOFF(GicDistributor, iSoftIrq));	// trigger IPIs
 	__JUMP(,lr);
-
-	asm("2:		");
-	asm("stmfd	sp!, {r0,lr} ");
-	asm("mov	r0, r3 ");
-	asm("mov	r1, r12 ");
-	asm("bl		ReschedInactiveCpus__10TSchedulerUl ");
-	asm("mov	r12, r0 ");
-	asm("ldmfd	sp!, {r0,lr} ");
-	asm("ldr	r2, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iGicDistAddr));
-	asm("b		1b ");
 	}
 
 // Send a reschedule IPI to the specified CPU
@@ -878,7 +860,7 @@ extern "C" __NAKED__ void send_resched_ipi(TInt /*aCpu*/)
 	{
 	GET_RWNO_TID(,r3);
 	__DATA_SYNC_BARRIER_Z__(r2);			// need DSB before sending any IPI
-	asm("ldr	r2, [r3, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iGicDistAddr));	// we assume i_GicDistAddr is the same for all CPUs
+	asm("ldr	r2, [r3, #%a0]" : : "i" _FOFF(TSubScheduler, i_GicDistAddr));	// we assume i_GicDistAddr is the same for all CPUs
 	ASM_DEBUG1(SendReschedIPI,r0);
 	asm("mov	r1, #0x10000 ");
 	asm("mov	r1, r1, lsl r0 ");	// 0x10000<<aCpu
@@ -893,12 +875,26 @@ extern "C" __NAKED__ void send_self_resched_ipi()
 	{
 	GET_RWNO_TID(,r3);
 	__DATA_SYNC_BARRIER_Z__(r2);			// need DSB before sending any IPI
-	asm("ldr	r2, [r3, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iGicDistAddr));	// we assume i_GicDistAddr is the same for all CPUs
+	asm("ldr	r2, [r3, #%a0]" : : "i" _FOFF(TSubScheduler, i_GicDistAddr));	// we assume i_GicDistAddr is the same for all CPUs
 	asm("mov	r1, #0x02000000 ");			// target = requesting CPU only
 //	asm("orr	r1, r1, #%a0" : : "i" ((TInt)RESCHED_IPI_VECTOR));	RESCHED_IPI_VECTOR=0
 	asm("str	r1, [r2, #%a0]" : : "i" _FOFF(GicDistributor, iSoftIrq));	// trigger IPI
 	__JUMP(,lr);
 	}
+
+extern "C" __NAKED__ void send_resched_ipis(TUint32 aMask)
+	{
+	ASM_DEBUG1(SendReschedIPIs,r0);
+	__DATA_SYNC_BARRIER_Z__(r2);			// need DSB before sending any IPI
+	asm("cmp	r0, #0 ");		// any bits set in aMask?
+	GET_RWNO_TID(ne,r3);
+	asm("ldrne	r2, [r3, #%a0]" : : "i" _FOFF(TSubScheduler, i_GicDistAddr));	// we assume i_GicDistAddr is the same for all CPUs
+	asm("movne	r0, r0, lsl #16 ");
+//	asm("orrne	r0, r0, #%a0" : : "i" ((TInt)RESCHED_IPI_VECTOR));	RESCHED_IPI_VECTOR=0
+	asm("strne	r0, [r2, #%a0]" : : "i" _FOFF(GicDistributor, iSoftIrq));	// trigger IPIs if any
+	__JUMP(,lr);
+	}
+
 
 extern "C" __NAKED__ void send_resched_ipi_and_wait(TInt /*aCpu*/)
 	{
@@ -906,17 +902,17 @@ extern "C" __NAKED__ void send_resched_ipi_and_wait(TInt /*aCpu*/)
 	asm("mov	r2, #0x10000 ");
 	asm("mov	r2, r2, lsl r0 ");	// 0x10000<<aCpu
 	ASM_DEBUG1(SendReschedIPIAndWait,r0);
-	asm("add	r0, r1, r0, lsl #%a0 " : : "i" ((TInt)KSubSchedulerShift));
-	asm("ldr	r3, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iGicDistAddr));	// we assume i_GicDistAddr is the same for all CPUs
-	asm("ldr	r12, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iIrqCount));
+	asm("add	r0, r1, r0, lsl #9 ");	// sizeof(TSubScheduler)=512
+	asm("ldr	r3, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, i_GicDistAddr));	// we assume i_GicDistAddr is the same for all CPUs
+	asm("ldr	r12, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, i_IrqCount));
 	__DATA_SYNC_BARRIER_Z__(r1);		// make sure i_IrqCount is read before IPI is sent
 //	asm("orr	r2, r2, #%a0" : : "i" ((TInt)RESCHED_IPI_VECTOR));	RESCHED_IPI_VECTOR=0
 	asm("str	r2, [r3, #%a0]" : : "i" _FOFF(GicDistributor, iSoftIrq));	// trigger IPIs
 	__DATA_SYNC_BARRIER__(r1);			// make sure IPI has been sent
 	asm("1: ");
 	asm("ldrb	r1, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, iRescheduleNeededFlag));
-	asm("ldr	r2, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iIrqNestCount));
-	asm("ldr	r3, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iIrqCount));
+	asm("ldr	r2, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, i_IrqNestCount));
+	asm("ldr	r3, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, i_IrqCount));
 	asm("cmp	r1, #0 ");
 	asm("beq	0f ");					// iRescheduleNeededFlag not set -> wait
 	asm("cmp	r2, #0 ");
@@ -934,7 +930,6 @@ extern "C" __NAKED__ void send_resched_ipi_and_wait(TInt /*aCpu*/)
 	asm(".word TheSubSchedulers ");
 	}
 
-
 /*	If the current thread is subject to timeslicing, update its remaining time
 	from the current CPU's local timer. Don't stop the timer.
 	If the remaining time is negative, save it as zero.
@@ -943,38 +938,127 @@ __NAKED__ void TSubScheduler::SaveTimesliceTimer(NThreadBase* /*aThread*/)
 	{
 	asm("ldr	r3, [r1, #%a0]" : : "i" _FOFF(NThreadBase,iTime));
 	asm("ldrb	r12, [r1, #%a0]" : : "i" _FOFF(NThreadBase,i_NThread_Initial));
-	asm("ldr	r2, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iLocalTimerAddr));
+	asm("ldr	r2, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_LocalTimerAddr));
 	asm("cmp	r3, #0 ");
 	asm("ble	0f ");					// thread isn't timesliced or timeslice already expired so skip
 	asm("cmp	r12, #0 ");
 	asm("bne	0f ");					// initial (i.e. idle) thread, so skip
 	asm("ldr	r3, [r2, #%a0]" : : "i" _FOFF(ArmLocalTimer,iTimerCount));
-	asm("ldr	r12, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iTimerFreqRI.iI.iM));
-	asm("ldr	r2, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iTimerFreqRI.iI.iX));
+	asm("ldr	r12, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_TimerMultI));
 	asm("cmp	r3, #0 ");
 	asm("movmi	r0, #0 ");				// if timer count is negative, save zero
 	asm("bmi	1f ");
-	asm("mov	r2, r2, lsl #16 ");
-	asm("mov	r2, r2, asr #16 ");
-	asm("umull	r0, r3, r12, r3 ");		// scale up to max timer clock (R3:R0) - need to shift right by -iX
-	asm("rsb	r2, r2, #0 ");
-	asm("rsb	r12, r2, #32 ");
-	asm("movs	r0, r0, lsr r2 ");		// r0 >>= iSSX.iTimerFreqRI.iI.iX, C = last bit shifted off (rounding)
-	asm("orr	r0, r0, r3, lsl r12 ");	// bottom bits from r3 into top bits of r0
-	asm("adcs	r0, r0, #0 ");			// round using last bit shifted off
+	asm("umull	r0, r3, r12, r3 ");		// scale up to max timer clock
+	asm("adds	r0, r0, #0x00800000 ");
+	asm("adcs	r3, r3, #0 ");
+	asm("mov	r0, r0, lsr #24 ");
+	asm("orr	r0, r0, r3, lsl #8 ");
 	asm("1:		");
 	asm("str	r0, [r1, #%a0]" : : "i" _FOFF(NThreadBase,iTime));
 	asm("0:		");
 	__JUMP(,lr);
 	}
 
+/*	Update aOld's execution time and set up the timer for aNew
+	Update this CPU's timestamp value
 
-#if defined(__UTT_MACHINE_CODED__)
-#if defined(__NKERN_TIMESTAMP_USE_LOCAL_TIMER__)
-#error Use of local timer for NKern::Timestamp() no longer supported
-#else
+	if (!aOld) aOld=iInitialThread
+	if (!aNew) aNew=iInitialThread
+	newcount = aNew->iTime>0 ? Max(aNew->iTime*i_TimerMultF/2^32, 1) : 2^31-1
+	cli()
+	oldcount = timer count
+	if (oldcount<=0 || aOld!=aNew)
+		{
+		timer count = newcount
+		elapsed = i_LastTimerSet - oldcount
+		i_LastTimerSet = newcount
+		elapsed = elapsed * i_TimerMultI / 2^24
+		aOld->iTotalCpuTime64 += elapsed
+		correction = i_TimestampError;
+		if (correction > i_MaxCorrection)
+			correction = i_MaxCorrection
+		else if (correction < -i_MaxCorrection)
+			correction = -i_MaxCorrection
+		i_TimestampError -= correction
+		i_LastTimestamp += elapsed + i_TimerGap - correction
+		}
+	sti()
+ */
+__NAKED__ void TSubScheduler::UpdateThreadTimes(NThreadBase* /*aOld*/, NThreadBase* /*aNew*/)
+	{
+	asm("cmp	r2, #0 ");
+	asm("ldreq	r2, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iInitialThread));
+	asm("ldr	r12, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_TimerMultF));
+	asm("cmp	r1, #0 ");
+	asm("ldreq	r1, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iInitialThread));
+	asm("ldr	r3, [r2, #%a0]" : : "i" _FOFF(NThreadBase,iTime));
+	asm("stmfd	sp!, {r4-r7} ");
+	asm("ldr	r6, [r2, #%a0]" : : "i" _FOFF(NThreadBase,iRunCount64));
+	asm("ldr	r7, [r2, #%a0]" : : "i" (_FOFF(NThreadBase,iRunCount64)+4));
+	asm("cmp	r1, r2 ");
+	asm("beq	2f ");
+	asm("adds	r6, r6, #1 ");
+	asm("str	r6, [r2, #%a0]" : : "i" _FOFF(NThreadBase,iRunCount64));
+	asm("ldr	r4, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iReschedCount64));
+	asm("ldr	r6, [r0, #%a0]" : : "i" (_FOFF(TSubScheduler,iReschedCount64)+4));
+	asm("adcs	r7, r7, #0 ");
+	asm("str	r7, [r2, #%a0]" : : "i" (_FOFF(NThreadBase,iRunCount64)+4));
+	asm("adds	r4, r4, #1 ");
+	asm("adcs	r6, r6, #0 ");
+	asm("str	r4, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iReschedCount64));
+	asm("str	r6, [r0, #%a0]" : : "i" (_FOFF(TSubScheduler,iReschedCount64)+4));
+	asm("2:		");
+	asm("cmp	r3, #1 ");					// aNew->iTime > 0 ?
+	asm("umullge r4, r3, r12, r3 ");
+	asm("ldr	r5, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_LocalTimerAddr));
+	asm("movlt	r3, #0x7fffffff ");
+	asm("addges	r3, r3, r4, lsr #31 ");		// round up top 32 bits if bit 31 set
+	asm("moveq	r3, #1 ");					// if result zero, limit to 1
+	asm("ldr	r12, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_LastTimerSet));
+	__ASM_CLI();
+	asm("ldr	r4, [r5, #%a0]" : : "i" _FOFF(ArmLocalTimer,iTimerCount));
+	asm("cmp	r1, r2 ");
+	asm("bne	1f ");
+	asm("cmp	r4, #0 ");
+	asm("bgt	0f ");						// same thread, timeslice not expired -> leave timer alone
+	asm("1:		");
+	asm("str	r3, [r5, #%a0]" : : "i" _FOFF(ArmLocalTimer,iTimerCount));	// set new timeslice value in timer
+	asm("ldr	r5, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_TimerMultI));
+	asm("str	r3, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_LastTimerSet));
+	asm("sub	r12, r12, r4 ");			// r12 = elapsed (actual timer ticks)
+	asm("umull	r4, r5, r12, r5 ");
+	asm("ldr	r3, [r1, #%a0]!" : : "i" _FOFF(NThreadBase,iTotalCpuTime64));
+	asm("ldr	r12, [r1, #4] ");
+	asm("adds	r4, r4, #0x00800000 ");
+	asm("adcs	r5, r5, #0 ");
+	asm("mov	r4, r4, lsr #24 ");
+	asm("orr	r4, r4, r5, lsl #8 ");		// r4 = elapsed
+	asm("adds	r3, r3, r4 ");
+	asm("adcs	r12, r12, #0 ");
+	asm("stmia	r1, {r3,r12} ");			// aOld->iTotalCpuTime64 += elapsed
+	asm("ldr	r3, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_TimestampError));
+	asm("ldr	r5, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_MaxCorrection));
+	asm("ldr	r1, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iLastTimestamp64));
+	asm("ldr	r2, [r0, #%a0]" : : "i" (_FOFF(TSubScheduler,iLastTimestamp64)+4));
+	asm("mov	r12, r3 ");
+	asm("cmp	r3, r5 ");
+	asm("movgt	r3, r5 ");					// if (correction>i_MaxCorrection) correction=i_MaxCorrection
+	asm("cmn	r3, r5 ");
+	asm("rsblt	r3, r5, #0 ");				// if (correction+i_MaxCorrection<0) correction=-i_MaxCorrection
+	asm("ldr	r5, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_TimerGap));
+	asm("sub	r12, r12, r3 ");
+	asm("str	r12, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_TimestampError));
+	asm("add	r4, r4, r5 ");				// r4 = elapsed + i_TimerGap
+	asm("adds	r1, r1, r4 ");
+	asm("adcs	r2, r2, #0 ");				// iLastTimestamp64 + (elapsed + i_TimerGap)
+	asm("subs	r1, r1, r3 ");
+	asm("sbcs	r1, r1, r3, asr #32 ");		// iLastTimestamp64 + (elapsed + i_TimerGap - correction)
+	asm("str	r1, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iLastTimestamp64));
+	asm("str	r2, [r0, #%a0]" : : "i" (_FOFF(TSubScheduler,iLastTimestamp64)+4));
+	asm("0:		");
+	__ASM_STI();
+	asm("ldmfd	sp!, {r4-r7} ");
+	__JUMP(,lr);
+	}
 
-#error UpdateThreadTimes assembler out of date!
 
-#endif
-#endif	// __UTT_MACHINE_CODED__

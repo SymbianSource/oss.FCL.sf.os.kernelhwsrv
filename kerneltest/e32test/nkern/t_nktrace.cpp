@@ -151,7 +151,9 @@ GLDEF_C TInt E32Main()
 	TRequestStatus timerStat;
 	timer.After(timerStat,10*1000000);
 	User::WaitForRequest(timerStat,keyStat);
-	(void)test.Console()->KeyCode();
+	TInt key;
+	if(keyStat!=KRequestPending)
+		key = test.Console()->KeyCode();
 	timer.Cancel();
 	test.Console()->ReadCancel();
 	User::WaitForAnyRequest();

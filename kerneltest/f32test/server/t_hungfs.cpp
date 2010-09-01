@@ -18,7 +18,6 @@
 //
 
 
-#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include "t_server.h"
@@ -150,7 +149,7 @@ LOCAL_C TInt ThreadFunctionC(TAny* aDrive)
 	{
 	RFs fs;
 	TInt r=fs.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	TInt drive;
 #if defined(__WINS__)
@@ -194,7 +193,7 @@ LOCAL_C void PutNonCriticalNotifier(TAny* aInfo,RThread& aThread)
 //
 	{
 	TInt r=aThread.Create(_L("ThreadNC"),ThreadFunctionNC,KDefaultStackSize,KMinHeapSize,KMinHeapSize,aInfo);
-	test_KErrNone(r);	
+	test(r==KErrNone);	
 	aThread.SetPriority(EPriorityMore);
 	aThread.Resume();
 	HungSemaphoreNC.Wait();
@@ -208,7 +207,7 @@ LOCAL_C void PutCriticalNotifier(TBool aBool,RThread& aThread)
 //
 	{
 	TInt r=aThread.Create(_L("ThreadC"),ThreadFunctionC,KDefaultStackSize,KMinHeapSize,KMinHeapSize,&aBool);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	aThread.SetPriority(EPriorityMore);
 	aThread.Resume();
 	User::After(1000000);
@@ -254,18 +253,18 @@ void TestCriticalFunctions()
 	// used for EFsSubClose
 	RFile file;
 	TInt r=file.Create(TheFs,File1,EFileShareAny|EFileWrite);
-	test_Value(r, r == KErrNone || r == KErrAlreadyExists);
+	test(r==KErrNone||KErrAlreadyExists);
 	if(r==KErrAlreadyExists)
 		{
 		r=file.Open(TheFs,File1,EFileShareAny|EFileWrite);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		}
 	TBuf8<16> buf=_L8("abcdefghijklmnop");
 	r=file.Write(buf);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.MkDir(NotifyDir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	RThread thread;
 	PutCriticalNotifier(ETrue,thread);
@@ -301,17 +300,17 @@ void TestCriticalFunctions()
 	// EFsFileOpen
 	test.Next(_L("test functions that are not supported with critical notifier"));
 	r=file.Open(TheFs,File2,EFileShareAny);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 	// EFsFileCreate
 	r=file.Create(TheFs,File2,EFileShareAny);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 	// EFsMkDir
 	r=TheFs.MkDir(Dir1);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 	// EFsVolume
 	TVolumeInfo info;
 	r=TheFs.Volume(info,gSessionDrive);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 
 	// get rid of critical notifier
 	test.Printf(_L("Press escape on the critical notifier\n"));
@@ -330,16 +329,16 @@ void TestCriticalFunctions()
 	TFileName notDir=gLockedBase;
 	notDir+=NotifyDir;
 	r=TheFs.MkDir(notDir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(status==KRequestPending&&status2==KErrNone);
 	TheFs.NotifyChangeCancel();
 	test(status==KErrCancel);
 	r=TheFs.Delete(File1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.RmDir(notDir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.RmDir(NotifyDir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	}
 
 void TestParsingFunctions()	
@@ -358,50 +357,50 @@ void TestParsingFunctions()
 	TFileName dir=gLockedBase;
 	dir+=Dir1;
 	TInt r=TheFs.MkDir(dir);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 	TFileName file=gLockedPath;
 	file+=File1;
 	RFile f;
 	r=f.Create(TheFs,file,EFileShareAny);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 	// Using ParsePathPtr0
 	r=TheFs.SetSubst(gLockedPath,EDriveO);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 	// ValidateDrive
 	TVolumeInfo info;
 	r=TheFs.Volume(info,gLockedDrive);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 
 	TFileName origSessPath;
 	r=TheFs.SessionPath(origSessPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	// test these work ok
 	r=TheFs.SetSessionPath(gLockedPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.SetSessionPath(origSessPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	// test on different drive from notifier - the session path
 	test.Next(_L("test parsing functions on a different drive"));
 	// Using ParseSubst
 	r=TheFs.MkDir(Dir1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.RmDir(Dir1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=f.Create(TheFs,File1,EFileShareAny);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	f.Close();
 	r=TheFs.Delete(File1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	// Using ParsePathPtr0
 	r=TheFs.SetSubst(gSessionPath,EDriveO);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.SetSubst(_L(""),EDriveO);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	// ValidateDrive
 	r=TheFs.Volume(info,gSessionDrive);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	// get rid of non-critical notifier
 	test.Printf(_L("Enter %S on the notifier\n"),&KPassword);
@@ -424,9 +423,9 @@ void TestTFsFunctions()
 	test.Next(_L("TestTFsFunctions"));
 	TFileName sessName,lockedName;
 	TInt r=TheFs.FileSystemName(sessName,gSessionDrive);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.FileSystemName(lockedName,gLockedDrive);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	RThread thread;
 	PutNonCriticalNotifier(NULL,thread);
@@ -435,13 +434,13 @@ void TestTFsFunctions()
 	test.Next(_L("test TFs functions on hung drive"));
 	// TFsDismountFileSystem
 	r=TheFs.DismountFileSystem(lockedName,gLockedDrive);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 	// TFsMountFileSystem
 	r=TheFs.MountFileSystem(lockedName,gLockedDrive);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 	// TFsFileSystemName
 	r=TheFs.FileSystemName(lockedName,gLockedDrive);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 
 	// test functions on drive other than hung drive
 	test.Next(_L("test TFs functions on drive that is not hung"));
@@ -452,17 +451,17 @@ void TestTFsFunctions()
 		{
 #endif
 	r=TheFs.DismountFileSystem(sessName,gSessionDrive);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	// TFsMountFileSystem
 	r=TheFs.MountFileSystem(sessName,gSessionDrive);
-	test_KErrNone(r);
+	test(r==KErrNone);
 #if defined(__WINS__)
 		}
 #endif
 	// TFsFileSystemName
 	TFileName fsName;
 	r=TheFs.FileSystemName(fsName,gSessionDrive);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(fsName==sessName);
 
 	// test functions that fail on all drives
@@ -471,16 +470,16 @@ void TestTFsFunctions()
 	CFileList* list=NULL;
 	TOpenFileScan fileScan(TheFs);
 	TRAP(r,fileScan.NextL(list));
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 
 	// test functions that should pass on any drive
 	test.Next(_L("test TFs functions that pass on all drives"));
 	// TFsSetDefaultPath
 	// TFsSetSessionPath
 	r=TheFs.SetSessionPath(gLockedPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.SetSessionPath(gSessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	// get rid of non-critical notifier
 	test.Printf(_L("Enter %S on the notifier\n"),&KPassword);
@@ -510,20 +509,20 @@ void TestSubsessions()
 	TFileName fileName=gLockedPath;
 	fileName+=File1;
 	TInt r=file.Create(TheFs,fileName,EFileShareAny);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 	// EFsFormatOpen
 	RFormat format;
 	TInt count;
 	r=format.Open(TheFs,gLockedPath,EHighDensity,count);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 	// EFsDirOpen
 	RDir dir;
 	r=dir.Open(TheFs,gLockedPath,KEntryAttMaskSupported);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 	// EFsRawDiskOpen
 	RRawDisk raw;
 	r=raw.Open(TheFs,gLockedDrive);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 
 	// get rid of non-critical notifier
 	test.Printf(_L("Enter %S on the notifier\n"),&KPassword);
@@ -536,14 +535,14 @@ void TestSubsessions()
 
 	// now open the subsessions
 	r=file.Create(TheFs,fileName,EFileShareAny);
-	test_Value(r, r == KErrNone || r == KErrAlreadyExists);
+	test(r==KErrNone||KErrAlreadyExists);
 	if(r==KErrAlreadyExists)
 		{
 		r=file.Open(TheFs,fileName,EFileShareAny);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		}
 	r=dir.Open(TheFs,gLockedPath,KEntryAttMaskSupported);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	// put notifier back up
 	PutNonCriticalNotifier(NULL,thread);
@@ -553,16 +552,16 @@ void TestSubsessions()
 	// EFsFileRead
 	TBuf8<16> readBuf;
 	r=file.Read(readBuf);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 	// subsession should be able to be closed ok
 	file.Close();
 	// EFsDelete
 	r=TheFs.Delete(fileName);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 	// EFsDirRead
 	TEntry entry;
 	r=dir.Read(entry);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 	// subsession should be able to be closed ok
 	dir.Close();
 
@@ -578,7 +577,7 @@ void TestSubsessions()
 	thread.Close();
 
 	r=TheFs.Delete(fileName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 //	test.End();
 	}
 
@@ -591,7 +590,7 @@ void TestSameSession()
 
 	RFile file;
 	TInt r=file.Create(TheFs,File1,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	// put notifier up using TheFs session
 	SNonCriticalInfo info={ETrue,0};
@@ -623,12 +622,12 @@ void TestSameSession()
 	TFileName defPath;
 	// EFsCheckDisk
 	r=TheFs.CheckDisk(gSessionPath);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 	// EFsFileWrite
 	_LIT8(buffer,"abc");
 	TBuf8<8> buf(buffer);
 	r=file.Write(buf);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 
 	// this file should be able to be closed
 	file.Close();
@@ -644,7 +643,7 @@ void TestSameSession()
 	thread.Close();
 
 	r=TheFs.Delete(File1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 //	test.End();
 	}
 
@@ -659,7 +658,7 @@ void TestSameSubSession()
 	_LIT(file4Name,"\\SubFile4");
 	TFileName origSession;
 	TInt r=TheFs.SessionPath(origSession);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TFileName file1Path(gLockedBase);
 	file1Path+=file1Name;
 	TFileName file2Path(file2Name);
@@ -668,24 +667,24 @@ void TestSameSubSession()
 	TFileName file4Path(file4Name);
 	// create file that will be used to hang file server
 	r=SubFile1.Create(TheFs,file1Path,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	// create file with same session but on different drive
 	RFile subfile2;
 	r=subfile2.Create(TheFs,file2Path,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	// create file on unhung drive and with different session
 	RFs fs2;
 	r=fs2.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=fs2.SetSessionPath(origSession);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	RFile subfile3;
 	r=subfile3.Create(fs2,file3Path,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	// create file on unhung drive and with different session
 	RFile subfile4;
 	r=subfile4.Create(fs2,file4Path,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	// in a different thread cause the server to hang using one of the File1 subsession
 	// put notifier up using TheFs session
 	SNonCriticalInfo info={ETrue,ETrue};
@@ -697,16 +696,16 @@ void TestSameSubSession()
 	TBuf8<8> buf(buffer);
 	// File1 caused hung file server
 	r=SubFile1.Write(buf);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 	// file2 is same session as subsession that caused hung file server
 	r=subfile2.Write(buf);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 	// file3 is opened on hung drive
 	r=subfile3.Write(buf);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 	// file4 should be ok
 	r=subfile4.Write(buf);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	// hard to test EFsSubClose since does not return an error value
 	test.Next(_L("test closing down the subsessions"));
 	subfile4.Close();
@@ -728,13 +727,13 @@ void TestSameSubSession()
 	// clean up
 	fs2.Close();
 	r=TheFs.Delete(file1Path);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.Delete(file2Path);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.Delete(file3Path);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.Delete(file4Path);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	}
 
 void TestExtendedNotifier()
@@ -752,9 +751,9 @@ void TestExtendedNotifier()
 	test(status==KRequestPending);
 	// now do an operation on c: and test no notification
 	TInt r=TheFs.MkDir(NotifyDir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.RmDir(NotifyDir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	User::After(1000000);
 	test(status==KRequestPending);
 	TheFs.NotifyChangeCancel(status);
@@ -772,15 +771,15 @@ void TestExtendedNotifier()
 	test(status==KRequestPending);
 	// test notification does not go off with wrong path
 	r=TheFs.MkDir(NotifyDir2);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.RmDir(NotifyDir2);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(status==KRequestPending);
 	// now do an operation on c: and test there has been a notification
 	r=TheFs.MkDir(NotifyDir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.RmDir(NotifyDir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	User::After(1000000);
 	// request should be completed this time
 	test(status==KErrNone);
@@ -793,17 +792,17 @@ void TestExtendedNotifier()
 	TRequestStatus status2;
 	TFileName origSession;
 	r=TheFs.SessionPath(origSession);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	RFs fs2;
 	r=fs2.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=fs2.SetSessionPath(origSession);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	_LIT(notifyDirZ,"z:\\test\\");
 	_LIT(notifyDirSess,"\\test\\");
 	// notifyDirZ already exists, create test dir in session path
 	r=fs2.MkDir(notifyDirSess);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	fs2.NotifyChange(ENotifyDir,status2,notifyDirZ);
 	test(status2==KRequestPending);
 	TRequestStatus status3;
@@ -811,7 +810,7 @@ void TestExtendedNotifier()
 	test(status3==KRequestPending);
 	// now delete session dir and test no notification
 	r=TheFs.RmDir(notifyDirSess);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(status2==KRequestPending && status3==KErrNone);
 
 	// get rid of non-critical notifier
@@ -842,11 +841,11 @@ void TestExtendedNotifier()
 	test(status==KRequestPending);
 	// create directory on locked drive
 	r=TheFs.MkDir(notDir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	// test notifier goes off
 	test(status==KErrNone);
 	r=TheFs.RmDir(notDir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	// get rid of critical notifier
 	}	
 
@@ -857,15 +856,15 @@ LOCAL_C TBool TestSessionPath()
 	{
 #if defined(__WINS__)
 	TInt r=TheFs.CharToDrive(gSessionPath[0],gSessionDrive);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	if(gSessionDrive==EDriveX)
 		return(EFalse);
 #else
 	TInt r=TheFs.CharToDrive(gSessionPath[0],gSessionDrive);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TDriveList list;
 	r=TheFs.DriveList(list);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	if((list[gSessionDrive])&KDriveAttRemovable)
 		return(EFalse);
 #endif
@@ -906,9 +905,9 @@ GLDEF_C void CallTestsL()
 		isSecureMmc=EFalse;
 
 	TInt r=HungSemaphoreC.CreateLocal(0);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=HungSemaphoreNC.CreateLocal(0);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	// create sharable session
 	TheFs.ShareAuto();

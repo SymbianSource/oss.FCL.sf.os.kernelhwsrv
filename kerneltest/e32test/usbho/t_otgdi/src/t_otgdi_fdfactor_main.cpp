@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -24,10 +24,6 @@
 #include <e32std_private.h>
 
 #include "t_otgdi_fdfactor.h"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "t_otgdi_fdfactor_mainTraces.h"
-#endif
 
 LOCAL_C void DoStartL()
 	{
@@ -35,7 +31,7 @@ LOCAL_C void DoStartL()
 	TInt err = User::LoadLogicalDevice(KDriverLddFileName);
 	if(err)
 		{
-		OstTrace1(TRACE_NORMAL, DOSTARTL_DOSTARTL, "FDFActor failed to load LDD %d",err);
+		RDebug::Print(_L("FDFActor failed to load LDD %d"),err);
 		}
 
 	// Create active scheduler (to run active objects)
@@ -67,7 +63,7 @@ LOCAL_C void DoStartL()
 	err = User::FreeLogicalDevice(RUsbHubDriver::Name());
 	if(err)
 		{
-		OstTrace1(TRACE_NORMAL, DOSTARTL_DOSTARTL_DUP01, "FDFActor failed to unload LDD %d",err);
+		RDebug::Print(_L("FDFActor failed to unload LDD %d"),err);
 		}	
 	}
 
@@ -85,7 +81,7 @@ GLDEF_C TInt E32Main()
 
 	if (mainError)
 		{
-		OstTrace1(TRACE_NORMAL, E32MAIN_E32MAIN, "FDF Actor left with %d", mainError);
+		RDebug::Print(_L("FDF Actor left with %d"), mainError);
 		//	Also means that we left before we did a Rendezvous(KErrNone) to free up t_otgdi.exe
 		//	Rendezvous with KErrAbort to indicate we couldn't start up properly.
 		RProcess::Rendezvous(KErrAbort);
@@ -94,7 +90,7 @@ GLDEF_C TInt E32Main()
 	delete cleanup;
 	__UHEAP_MARKEND;
 
-	OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN_DUP01, "About to end FDFActor process");
+	RDebug::Print(_L("About to end FDFActor process"));
 	return KErrNone;
 	}
 

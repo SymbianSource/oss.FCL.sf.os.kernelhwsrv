@@ -402,7 +402,7 @@ TUint32 CFatTable::AllocateClusterListL(TUint32 aNumber, TUint32 aNearestCluster
     Notify the media drive about media areas that shall be treated as "deleted" if this feature is supported.
     @param aFreedClusters array with FAT numbers of clusters that shall be marked as "deleted"
 */
-void CFatTable::DoFreedClustersNotify(RClusterArray &aFreedClusters)
+void CFatTable::DoFreedClustersNotifyL(RClusterArray &aFreedClusters)
 {
     ASSERT(iMediaAtt & KMediaAttDeleteNotify);
 
@@ -423,7 +423,7 @@ void CFatTable::DoFreedClustersNotify(RClusterArray &aFreedClusters)
         const TUint currCluster = aFreedClusters[i];
         
         if (deleteLen == 0)
-		    byteAddress = DataPositionInBytes(currCluster); //-- start of the media range
+		    byteAddress = DataPositionInBytesL(currCluster); //-- start of the media range
         
         deleteLen += bytesPerCluster;
 
@@ -438,7 +438,7 @@ void CFatTable::DoFreedClustersNotify(RClusterArray &aFreedClusters)
                 {//-- if DeleteNotify() failed, it means that something terribly wrong happened to the NAND media; 
                  //-- in normal circumstances it can not happen. One of the reasons: totally worn out media.
                 const TBool platSecEnabled = PlatSec::ConfigSetting(PlatSec::EPlatSecEnforcement);
-                __PRINT3(_L("CFatTable::DoFreedClustersNotify() DeleteNotify failure! drv:%d err:%d, PlatSec:%d"),iOwner->DriveNumber(), r, platSecEnabled);
+                __PRINT3(_L("CFatTable::DoFreedClustersNotifyL() DeleteNotify failure! drv:%d err:%d, PlatSec:%d"),iOwner->DriveNumber(), r, platSecEnabled);
 
                 if(platSecEnabled)
                     {
@@ -521,7 +521,7 @@ void CFatTable::FreeClusterListL(TUint32 aCluster)
             cntFreedClusters = 0;
 
             SetFreeClusterHint(lastKnownFreeCluster);
-            DoFreedClustersNotify(deletedClusters);
+            DoFreedClustersNotifyL(deletedClusters);
         }
 
     }
@@ -531,7 +531,7 @@ void CFatTable::FreeClusterListL(TUint32 aCluster)
     SetFreeClusterHint(lastKnownFreeCluster);
     
     if(bFreeClustersNotify)
-        DoFreedClustersNotify(deletedClusters);
+        DoFreedClustersNotifyL(deletedClusters);
 
 	CleanupStack::PopAndDestroy(&deletedClusters);
 	}
@@ -671,14 +671,6 @@ TBool CFatTable::RequestFreeClusters(TUint32 aClustersRequired) const
     return (NumberOfFreeClusters() >= aClustersRequired);
     }
 
-//-----------------------------------------------------------------------------
-/**
-    @return ETrue if the cluster number aClusterNo is valid, i.e. belongs to the FAT table
-*/
-TBool CFatTable::ClusterNumberValid(TUint32 aClusterNo) const 
-    {
-    return (aClusterNo >= KFatFirstSearchCluster) && (aClusterNo < iMaxEntries); 
-    }
     
 
 
@@ -692,7 +684,7 @@ TBool CFatTable::ClusterNumberValid(TUint32 aClusterNo) const
 CAtaFatTable::CAtaFatTable(CFatMountCB& aOwner)
              :CFatTable(aOwner), iDriveInteface(aOwner.DriveInterface())
     {
-    iState = ENotInitialised;
+        iState = ENotInitialised;
     }
 
 
@@ -1044,16 +1036,10 @@ void CAtaFatTable::MountL(const TMountParams& aMountParam)
             //-- create helper thread object and start the thread
             ipHelperThread = CFat32BitCachePopulator::NewL(*this);
 
-            if(ipHelperThread->Launch() != KErrNone)
-                {//-- failed for some reason
-                DestroyHelperThread();
-                }
-                else
-                {
-                //-- background FAT bit cache populating thread is running now.
-                //-- the result of thread start up and completion isn't very interesting: If it fails to 
-                //-- properly populate the cache, nothing fatal will happen.
-                }
+            ipHelperThread->Launch(); 
+            //-- background FAT bit cache populating thread is running now.
+            //-- the result of thread start up and completion isn't very interesting: If it fails to 
+            //-- properly populate the cache, nothing fatal will happen.
             }
 
         //-- CFat32BitCachePopulator doesn't affect FAT table state. 
@@ -1486,7 +1472,7 @@ void CAtaFatTable::CountFreeClustersL()
                 {//-- test property for this drive is defined
                     if(nMntDebugFlags & KMntDisable_FatBkGndScan)
                     {
-                    __PRINT(_L("#- FAT32 BkGnd scan is disabled by debug interface."));
+                    __PRINT(_L("#- FAT32 BkGnd scan is disabled is disabled by debug interface."));
                     bFat32BkGndScan = EFalse;
                     }
             
@@ -1550,8 +1536,7 @@ void CAtaFatTable::DoLaunchFat32FreeSpaceScanThreadL()
     
     SetState(EFreeClustersScan);
     
-    User::LeaveIfError(ipHelperThread->Launch()); 
-    
+    ipHelperThread->Launch(); 
     //-- background FAT scanning thread is running now
     }
 
@@ -1796,17 +1781,20 @@ void CFatTable::MarkAsBadClusterL(TUint32 aFatIndex)
 
 
 /**
-    Return the location of a Cluster in the data section of the media
+    Return media position in bytes of the cluster start
 
     @param aCluster to find location of
     @return Byte offset of the cluster data 
 */
-TInt64 CAtaFatTable::DataPositionInBytes(TUint32 aCluster) const
+TInt64 CAtaFatTable::DataPositionInBytesL(TUint32 aCluster) const
 	{
+    if(!ClusterNumberValid(aCluster))
+        {
+        __ASSERT_DEBUG(0, Fault(EFatTable_InvalidIndex));
+        User::Leave(KErrCorrupt);
+        }
 
-    __ASSERT_DEBUG(ClusterNumberValid(aCluster), Fault(EFatTable_InvalidIndex));
-
-    const TInt clusterBasePosition=iOwner->ClusterBasePosition();
+    const TUint32 clusterBasePosition=iOwner->ClusterBasePosition();
 	return(((TInt64(aCluster)-KFatFirstSearchCluster) << iOwner->ClusterSizeLog2()) + clusterBasePosition);
 	}
 
@@ -1971,8 +1959,8 @@ TInt CFatHelperThreadBase::DoLaunchThread(TThreadFunction aFunction, TAny* aThre
         return nRes;
         }
 
-    //-- Helper FAT thread is running now
-    return KErrNone; 
+   //-- Helper FAT thread is running now
+   return KErrNone; 
     }
 
 
@@ -1990,8 +1978,7 @@ CFat32ScanThread::CFat32ScanThread(CAtaFatTable& aOwner)
 
 /**
     Launches the FAT32_ScanThread scaner thread.
-    @return  KErrNone if the thread launched OK
-             standard error code otherwise
+    @return  standard error code
 */
 TInt CFat32ScanThread::Launch()
     {

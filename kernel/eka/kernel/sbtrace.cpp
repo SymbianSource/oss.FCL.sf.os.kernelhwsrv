@@ -427,13 +427,8 @@ TBool BTrace::IsSupported(TUint aCategory)
 
 #endif
 
-#ifdef BTRACE_RESMANUS
-    case EResourceManagerUs:
-       return ETrue;
-#endif
-
-    case EIic:
-       return ETrue;
+	   case EIic:
+		   return ETrue;
 
 #ifdef BTRACE_TRAWEVENT
 	case ERawEvent:
@@ -447,11 +442,6 @@ TBool BTrace::IsSupported(TUint aCategory)
 
 #ifdef BTRACE_FLEXIBLE_MEM_MODEL
 	case EFlexibleMemModel:
-		return ETrue;
-#endif
-
-#ifdef __SMP__
-	case EHSched:
 		return ETrue;
 #endif
 

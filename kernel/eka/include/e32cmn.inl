@@ -51,6 +51,120 @@ inline RAllocator::RAllocator()
 inline void RAllocator::__DbgMarkCheck(TBool aCountAll, TInt aCount, const TUint8* aFileName, TInt aLineNum)
 	{__DbgMarkCheck(aCountAll, aCount, TPtrC8(aFileName), aLineNum);}
 
+// Class RHeap
+inline RHeap::RHeap()
+	{}
+
+/**
+@return The maximum length to which the heap can grow.
+
+@publishedAll
+@released
+*/
+inline TInt RHeap::MaxLength() const
+	{return iMaxLength;}
+
+inline void RHeap::operator delete(TAny*, TAny*) 
+/**
+Called if constructor issued by operator new(TUint aSize, TAny* aBase) throws exception.
+This is dummy as corresponding new operator does not allocate memory.
+*/
+	{}
+
+
+inline TUint8* RHeap::Base() const
+/**
+Gets a pointer to the start of the heap.
+	
+Note that because of the small space overhead incurred by all allocated cells, 
+no cell will have the same address as that returned by this function.
+	
+@return A pointer to the base of the heap.
+*/
+	{return iBase;}
+
+
+
+
+inline TInt RHeap::Size() const
+/**
+Gets the current size of the heap.
+
+This is the total number of bytes committed by the host chunk. 
+It is the requested size rounded up by page size minus the size of RHeap object(116 bytes)
+minus the cell alignment overhead as shown:
+
+Size = (Rounded committed size - Size of RHeap - Cell Alignment Overhead).
+
+The cell alignment overhead varies between release builds and debug builds.
+
+Note that this value is always greater than the total space available across all allocated cells.
+	
+@return The size of the heap.
+
+@see Rheap::Available( )
+*/
+	{return iTop-iBase;}
+
+
+
+
+inline TInt RHeap::Align(TInt a) const
+/**
+@internalComponent
+*/
+	{return _ALIGN_UP(a, iAlign);}
+
+
+
+
+inline const TAny* RHeap::Align(const TAny* a) const
+/**
+@internalComponent
+*/
+	{return (const TAny*)_ALIGN_UP((TLinAddr)a, iAlign);}
+
+
+
+
+inline TBool RHeap::IsLastCell(const SCell* aCell) const
+/**
+@internalComponent
+*/
+	{return (((TUint8*)aCell) + aCell->len) == iTop;}
+
+
+
+
+#ifndef __KERNEL_MODE__
+inline void RHeap::Lock() const
+/**
+@internalComponent
+*/
+	{((RFastLock&)iLock).Wait();}
+
+
+
+
+inline void RHeap::Unlock() const
+/**
+@internalComponent
+*/
+	{((RFastLock&)iLock).Signal();}
+
+
+inline TInt RHeap::ChunkHandle() const
+/**
+@internalComponent
+*/
+	{
+	return iChunkHandle;
+	}
+#endif
+
+
+
+
 // Class TRefByValue
 template <class T>
 inline TRefByValue<T>::TRefByValue(T &aRef)

@@ -50,138 +50,12 @@ const TInt KMaxTestTime	= 10000000;	// Run the test for 10 seconds on target
 
 const TInt KPowerUpTimeOut = 5000000; // Give the card 5 seconds to power up
 
-const TUint KDriveAttMask = KDriveAttLocal | KDriveAttRom | KDriveAttRemote;
-const TUint KMediaAttMask = KMediaAttVariableSize | KMediaAttDualDensity | KMediaAttLockable | KMediaAttLocked | KMediaAttHasPassword  | KMediaAttReadWhileWrite;
-
 LOCAL_D	RTest test(_L("Media change test"));
 
 LOCAL_D	TBusLocalDrive TheDrive;
 LOCAL_D	RMedCh TheMediaChange;
 LOCAL_D TRequestStatus TheMediaStatus;
 LOCAL_D TBool TheChangedFlag;
-
-LOCAL_C TInt FindDataPagingDrive()
-/** 
-Find the drive containing the swap partition.
-
-@return		Local drive identifier or KErrNotFound if not found
-*/
-	{
-	TInt drive = KErrNotFound;
-	
-	RLocalDrive	d;
-	TBool change = EFalse;
-	TLocalDriveCapsV5 driveCaps;
-	TPckg<TLocalDriveCapsV5> capsPack(driveCaps);
-	
-	for(TInt i = 0; i < KMaxLocalDrives && drive < 0; ++i)
-		{
-		if(d.Connect(i, change) == KErrNone)
-			{
-			if(d.Caps(capsPack) == KErrNone)
-				{
-				if ((driveCaps.iMediaAtt & KMediaAttPageable) &&
-					(driveCaps.iPartitionType == KPartitionTypePagedData))
-					{
-					drive = i;
-					}
-				}
-			d.Close();
-			}
-		}
-		
-	if(drive == KErrNotFound)
-		{
-		test.Printf(_L("No data paging drive found\n"));
-		}
-		
-	return drive;
-	}
-	
-LOCAL_C TInt DataPagingMediaCaps(TLocalDriveCapsV5 &aCaps)
-/** 
-Return the caps of the media containing a swap partition.
-
-@return		Error code, on success aCaps contains the capabilities of the paging drive
-*/
-	{
-	TInt dataPagingDrive = FindDataPagingDrive();
-	
-	if (dataPagingDrive == KErrNotFound)
-		{
-		return KErrNotFound;
-		}
-
-	RLocalDrive	dpDrive;
-	TBool change = EFalse;
-
-	TInt r = dpDrive.Connect(dataPagingDrive, change);
-	test(r == KErrNone);
-	
-	TLocalDriveCapsV5 dpDriveCaps;
-	TPckg<TLocalDriveCapsV5> capsPack(dpDriveCaps);
-	r = dpDrive.Caps(capsPack);
-	test(r == KErrNone);
-	
-	if((dpDriveCaps.iDriveAtt & KDriveAttHidden) == 0)
-		{
-		test.Printf(_L("Paging partition is not hidden! Assuming it is correct anyway!\n"));
-		}
-	
-	aCaps = dpDriveCaps;
-	
-	return KErrNone;
-	}
-	
-LOCAL_C TBool IsDriveOnPagingMedia(TInt aDrive, TLocalDriveCapsV5 &aPagingMediaCaps)
-/** 
-Determines whether a drive is on the same media as the paging media by comparing 
-media characteristics
-
-@return		ETrue if (likely) to be on the same media, EFalse if not.
-*/	{
-	RLocalDrive	drive;
-	TBool change = EFalse;
-
-	TInt r = drive.Connect(aDrive, change);
-	test(r == KErrNone);
-	
-	TLocalDriveCapsV5 driveCaps;
-	TPckg<TLocalDriveCapsV5> capsPack(driveCaps);
-	r = drive.Caps(capsPack);
-	test(r == KErrNone);
-	
-	// Check media serial number
-	if(aPagingMediaCaps.iSerialNumLength > 0)
-		{
-		if((driveCaps.iSerialNumLength > 0) && 
-		   ((memcompare(driveCaps.iSerialNum, driveCaps.iSerialNumLength, 
-			aPagingMediaCaps.iSerialNum, aPagingMediaCaps.iSerialNumLength)) == 0))
-			{
-			// serial numbers equal, so drive in question is on same media as paging drive
-			test.Printf(_L("Based on serial number match, drive %d shares the same media as paging drive\n"), aDrive);
-			return ETrue;
-			}
-		}
-	else
-		{
-		// Turn off bits which may be different
-		aPagingMediaCaps.iDriveAtt &= KDriveAttMask;
-		aPagingMediaCaps.iMediaAtt &= KMediaAttMask;
-		driveCaps.iDriveAtt &= KDriveAttMask;
-		driveCaps.iMediaAtt &= KMediaAttMask;
-
-		if ((driveCaps.iType == aPagingMediaCaps.iType) &&
-			(driveCaps.iDriveAtt == aPagingMediaCaps.iDriveAtt) && 
-			(driveCaps.iMediaAtt == aPagingMediaCaps.iMediaAtt))
-			{
-			test.Printf(_L("Based on media characteristics match, drive %d shares the same media as paging drive\n"), aDrive);
-			return ETrue;
-			}
-		}
-		
-	return EFalse;
-	}
 
 
 LOCAL_C TBool SetupDrivesForPlatform(TInt& aDrive, TInt& aSocket)
@@ -201,30 +75,11 @@ LOCAL_C TBool SetupDrivesForPlatform(TInt& aDrive, TInt& aSocket)
 	aDrive  = -1;
 	aSocket = -1;
 	
-	TLocalDriveCapsV5 pagingMediaCaps;
-	TBool pagingMediaCheck = EFalse;
-	if(DataPagingMediaCaps(pagingMediaCaps) == KErrNone)
-		{
-		pagingMediaCheck = ETrue;
-		}
-	
 	for(aDrive=0; aDrive < di.iTotalSupportedDrives; aDrive++)
 		{
 		test.Printf(_L(" Drive %d - %S\r\n"), aDrive, &di.iDriveName[aDrive]);
 		if(di.iDriveName[aDrive].MatchF(_L("MultiMediaCard0")) == KErrNone)
-			{
-			if(pagingMediaCheck)
-				{
-				if( ! IsDriveOnPagingMedia(aDrive, pagingMediaCaps))
-					{
-					break;
-					}
-				}
-			else
-				{
-				break;
-				}
-			}
+			break;
 		}
 
 	if(aDrive == di.iTotalSupportedDrives)
@@ -317,14 +172,14 @@ LOCAL_C void NextTest(const TDesC& aTitle, TInt aCycles)
  */
 	{
 	test.Console()->SetPos(20, 25);
-	test.Printf(_L("%S [%d cycles]\n"), &aTitle, aCycles);
+	test.Printf(_L("%S [%d cycles]"), &aTitle, aCycles);
 #ifdef __MANUAL_TEST__
 	test.Console()->SetPos(20, 27);
-	test.Printf(_L("<press a key>\n"));
+	test.Printf(_L("<press a key>"));
 	test.Getch();
 #endif
 	}
-
+		
 GLDEF_C TInt E32Main()
 /**
  * Test Entry Point for T_MEDCH.
@@ -358,7 +213,6 @@ GLDEF_C TInt E32Main()
 	 */
 	TInt drive;
 	TInt socket;
-
 	if(SetupDrivesForPlatform(drive, socket))
 		{
 		b.Format(_L("Connect to local drive %d"), drive);

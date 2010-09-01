@@ -697,11 +697,11 @@ EXPORTS
 	_ZN5RHeap5ResetEv @ 696 NONAME ; RHeap::Reset()
 	_ZN5RHeap7ReAllocEPvii @ 697 NONAME ; RHeap::ReAlloc(void*, int, int)
 	_ZN5RHeap8CompressEv @ 698 NONAME ; RHeap::Compress()
-	_ZN5RHeapC1Eiii @ 699 NONAME ABSENT ; RHeap::RHeap(int, int, int)
-	_ZN5RHeapC1Eiiiiiii @ 700 NONAME ABSENT ; RHeap::RHeap(int, int, int, int, int, int, int)
-	_ZN5RHeapC2Eiii @ 701 NONAME ABSENT ; RHeap::RHeap(int, int, int)
-	_ZN5RHeapC2Eiiiiiii @ 702 NONAME ABSENT ; RHeap::RHeap(int, int, int, int, int, int, int)
-	_ZN5RHeapnwEjPv @ 703 NONAME ABSENT ; RHeap::operator new(unsigned int, void*)
+	_ZN5RHeapC1Eiii @ 699 NONAME ; RHeap::RHeap(int, int, int)
+	_ZN5RHeapC1Eiiiiiii @ 700 NONAME ; RHeap::RHeap(int, int, int, int, int, int, int)
+	_ZN5RHeapC2Eiii @ 701 NONAME ; RHeap::RHeap(int, int, int)
+	_ZN5RHeapC2Eiiiiiii @ 702 NONAME ; RHeap::RHeap(int, int, int, int, int, int, int)
+	_ZN5RHeapnwEjPv @ 703 NONAME ; RHeap::operator new(unsigned int, void*)
 	_ZN5RTest3EndEv @ 704 NONAME ; RTest::End()
 	_ZN5RTest4NextERK7TDesC16 @ 705 NONAME ; RTest::Next(TDesC16 const&)
 	_ZN5RTest5CloseEv @ 706 NONAME ; RTest::Close()
@@ -1601,7 +1601,7 @@ EXPORTS
 	_ZNK4TUid4NameEv @ 1600 NONAME ; TUid::Name() const
 	_ZNK4TUideqERKS_ @ 1601 NONAME ; TUid::operator==(TUid const&) const
 	_ZNK4TUidneERKS_ @ 1602 NONAME ; TUid::operator!=(TUid const&) const
-	_ZNK5RHeap10GetAddressEPKv @ 1603 NONAME ABSENT ; RHeap::GetAddress(void const*) const
+	_ZNK5RHeap10GetAddressEPKv @ 1603 NONAME ; RHeap::GetAddress(void const*) const
 	_ZNK5RHeap8AllocLenEPKv @ 1604 NONAME ; RHeap::AllocLen(void const*) const
 	_ZNK5RHeap9AllocSizeERi @ 1605 NONAME ; RHeap::AllocSize(int&) const
 	_ZNK5RHeap9AvailableERi @ 1606 NONAME ; RHeap::Available(int&) const
@@ -2504,42 +2504,38 @@ EXPORTS
 	_ZN4Math7RandomLER5TDes8 @ 2503 NONAME
 	_ZN4Math6RandomER5TDes8 @ 2504 NONAME
 	_ZN4Math7RandomLEv @ 2505 NONAME
-	_ZN6TDes1610LowerCase2Ev @ 2506 NONAME
-	_ZN6TDes1610UpperCase2Ev @ 2507 NONAME
-	_ZN6TDes1611AppendFill2E5TChari @ 2508 NONAME
-	_ZN6TDes1611Capitalize2Ev @ 2509 NONAME
-	_ZN6TDes1614AppendJustify2EPKti6TAlign5TChar @ 2510 NONAME
-	_ZN6TDes1614AppendJustify2EPKtii6TAlign5TChar @ 2511 NONAME
-	_ZN6TDes1614AppendJustify2ERK7TDesC16i6TAlign5TChar @ 2512 NONAME
-	_ZN6TDes1614AppendJustify2ERK7TDesC16ii6TAlign5TChar @ 2513 NONAME
-	_ZN6TDes165Fill2E5TChar @ 2514 NONAME
-	_ZN6TDes165Fill2E5TChari @ 2515 NONAME
-	_ZN6TDes165Fold2Ev @ 2516 NONAME
-	_ZN6TDes166CopyC2ERK7TDesC16 @ 2517 NONAME
-	_ZN6TDes166CopyF2ERK7TDesC16 @ 2518 NONAME
-	_ZN6TDes167Append2E5TChar @ 2519 NONAME
-	_ZN6TDes167CopyCP2ERK7TDesC16 @ 2520 NONAME
-	_ZN6TDes167CopyLC2ERK7TDesC16 @ 2521 NONAME
-	_ZN6TDes167CopyUC2ERK7TDesC16 @ 2522 NONAME
-	_ZN6TDes168Collate2Ev @ 2523 NONAME
-	_ZN6TDes168Justify2ERK7TDesC16i6TAlign5TChar @ 2524 NONAME
-	_ZNK7TDesC1614LocateReverse2E5TChar @ 2525 NONAME
-	_ZNK7TDesC1615LocateReverseF2E5TChar @ 2526 NONAME
-	_ZNK7TDesC1620FindCorruptSurrogateEv @ 2527 NONAME
-	_ZNK7TDesC166Match2ERKS_ @ 2528 NONAME
-	_ZNK7TDesC167Locate2E5TChar @ 2529 NONAME
-	_ZNK7TDesC168LocateF2E5TChar @ 2530 NONAME
-	_ZN6RTimer12AgainHighResER14TRequestStatus27TTimeIntervalMicroSeconds32 @ 2531 NONAME ; RTimer::AgainHighRes(TRequestStatus&, TTimeIntervalMicroSeconds32)
-	_ZNK10RAllocator4BaseEv @ 2532 NONAME
-	_ZNK10RAllocator4SizeEv @ 2533 NONAME
-	_ZNK10RAllocator5AlignEPv @ 2534 NONAME
-	_ZNK10RAllocator5AlignEi @ 2535 NONAME
-	_ZNK10RAllocator9MaxLengthEv @ 2536 NONAME
-	_ZN10RAllocator17__DbgGetAllocFailEv @ 2537 NONAME
-	_ZN4User17__DbgGetAllocFailEi @ 2538 NONAME
+	_ZN6TDes1610LowerCase2Ev @ 2506 NONAME ABSENT
+	_ZN6TDes1610UpperCase2Ev @ 2507 NONAME ABSENT
+	_ZN6TDes1611AppendFill2E5TChari @ 2508 NONAME ABSENT
+	_ZN6TDes1611Capitalize2Ev @ 2509 NONAME ABSENT
+	_ZN6TDes1614AppendJustify2EPKti6TAlign5TChar @ 2510 NONAME ABSENT
+	_ZN6TDes1614AppendJustify2EPKtii6TAlign5TChar @ 2511 NONAME ABSENT
+	_ZN6TDes1614AppendJustify2ERK7TDesC16i6TAlign5TChar @ 2512 NONAME ABSENT
+	_ZN6TDes1614AppendJustify2ERK7TDesC16ii6TAlign5TChar @ 2513 NONAME ABSENT
+	_ZN6TDes165Fill2E5TChar @ 2514 NONAME ABSENT
+	_ZN6TDes165Fill2E5TChari @ 2515 NONAME ABSENT
+	_ZN6TDes165Fold2Ev @ 2516 NONAME ABSENT
+	_ZN6TDes166CopyC2ERK7TDesC16 @ 2517 NONAME ABSENT
+	_ZN6TDes166CopyF2ERK7TDesC16 @ 2518 NONAME ABSENT
+	_ZN6TDes167Append2E5TChar @ 2519 NONAME ABSENT
+	_ZN6TDes167CopyCP2ERK7TDesC16 @ 2520 NONAME ABSENT
+	_ZN6TDes167CopyLC2ERK7TDesC16 @ 2521 NONAME ABSENT
+	_ZN6TDes167CopyUC2ERK7TDesC16 @ 2522 NONAME ABSENT
+	_ZN6TDes168Collate2Ev @ 2523 NONAME ABSENT
+	_ZN6TDes168Justify2ERK7TDesC16i6TAlign5TChar @ 2524 NONAME ABSENT
+	_ZNK7TDesC1614LocateReverse2E5TChar @ 2525 NONAME ABSENT
+	_ZNK7TDesC1615LocateReverseF2E5TChar @ 2526 NONAME ABSENT
+	_ZNK7TDesC1620FindCorruptSurrogateEv @ 2527 NONAME ABSENT
+	_ZNK7TDesC166Match2ERKS_ @ 2528 NONAME ABSENT
+	_ZNK7TDesC167Locate2E5TChar @ 2529 NONAME ABSENT
+	_ZNK7TDesC168LocateF2E5TChar @ 2530 NONAME ABSENT
+	_ZN6RTimer12AgainHighResER14TRequestStatus27TTimeIntervalMicroSeconds32 @ 2531 NONAME ABSENT
+	_ZNK10RAllocator4BaseEv @ 2532 NONAME ABSENT
+	_ZNK10RAllocator4SizeEv @ 2533 NONAME ABSENT
+	_ZNK10RAllocator5AlignEPv @ 2534 NONAME ABSENT
+	_ZNK10RAllocator5AlignEi @ 2535 NONAME ABSENT
+	_ZNK10RAllocator9MaxLengthEv @ 2536 NONAME ABSENT
+	_ZN10RAllocator17__DbgGetAllocFailEv @ 2537 NONAME ABSENT
+	_ZN4User17__DbgGetAllocFailEi @ 2538 NONAME ABSENT
 	_ZN10RArrayBase12SetKeyOffsetEi @ 2539 NONAME
-	_ZN10RSemaphore4PollEv @ 2540 NONAME ; RSemaphore::Poll()
-	_ZN6RMutex4WaitEi @ 2541 NONAME ; RMutex::Wait(int)
-	_ZN6RMutex4PollEv @ 2542 NONAME ; RMutex::Poll()
-	_ZN9RFastLock4PollEv @ 2543 NONAME ; RFastLock::Poll()
-	_ZN9RFastLock4WaitEi @ 2544 NONAME ; RFastLock::Wait(int)
+

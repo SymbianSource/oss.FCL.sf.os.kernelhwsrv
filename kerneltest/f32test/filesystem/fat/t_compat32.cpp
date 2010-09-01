@@ -98,13 +98,13 @@ static void DoFiddleWithFileNames(TNameCase aCase)
 
 	RFile file;
 	TInt r=file.Create(TheFs,fileName,EFileRead);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file.Close();
 //	Assume this file is the first entry in the root directory
 
 
 	r=TheDisk.Open(TheFs,CurrentDrive());
-	test_KErrNone(r);
+	test(r==KErrNone);
 
     //-- read 1st dir. entry it can be FAT or VFat , depending on the filename
     const TInt posEntry1=gBootSector.RootDirStartSector() << KDefaultSectorLog2; //-- dir entry1 position
@@ -169,16 +169,16 @@ static void Test1(TNameCase aCase)
     TInt r;
 
 	r=file.Replace(TheFs,_L("\\FILE.TMP"),EFileRead);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=file.Write(_L8("Hello World"));
 	file.Close();
 
 	r=TheFs.Replace(_L("\\File.tmp"),_L("\\Word"));
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	CDir* entryCount;
 	r=TheFs.GetDir(_L("\\*.*"),KEntryAttMaskSupported,ESortNone,entryCount);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TInt count=entryCount->Count();
 
 	test(count==1);
@@ -202,17 +202,17 @@ static void Test2(TNameCase aCase)
     DoFiddleWithFileNames(aCase);
 
 	r=file.Create(TheFs,_L("\\TEST"),EFileRead);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file.Close();
 
 	r=TheFs.Rename(_L("\\TEST"),_L("\\Word"));
-	test_Value(r, r == KErrAlreadyExists);
+	test(r==KErrAlreadyExists);
 	r=TheFs.Delete(_L("\\TEST"));
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	CDir* entryCount;
 	r=TheFs.GetDir(_L("\\*.*"),KEntryAttMaskSupported,ESortNone,entryCount);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TInt count=entryCount->Count();
 	test(count==1);
 	delete entryCount;
@@ -241,14 +241,14 @@ void TestDEF115314()
     fn.Format(_L("%c:\\\x60\x60\x60.TXT"), (TUint8)gDriveToTest);
 
     r = TheFs.Delete(fn);
-	test_Value(r, r == KErrNone || r==KErrNotFound);
+	test(r==KErrNone || r==KErrNotFound);
 
 	r = file.Create(TheFs, fn, EFileRead);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file.Close();
 
 	r=TheDisk.Open(TheFs,CurrentDrive());
-	test_KErrNone(r);
+	test(r==KErrNone);
 
     //-- read 1st dir. it should be DOS Entry
     const TInt posEntry1=gBootSector.RootDirStartSector() << KDefaultSectorLog2; //-- dir entry1 position
@@ -261,11 +261,11 @@ void TestDEF115314()
     // tests short name
     TFileName sn;
     r = TheFs.GetShortName(fn, sn);
-    test_KErrNone(r);
+    test(r==KErrNone);
     test(sn.Compare(_L("```.TXT"))==0);
 
     r = TheFs.Delete(fn);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	}
 
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)
@@ -295,23 +295,23 @@ void TestDEF113633()
     TInt drvNum;
 
     r = TheFs.CharToDrive(gDriveToTest,drvNum);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
     // turn on FatUtilityFunctions
     r = TheFs.ControlIo(drvNum, KControlIoEnableFatUtilityFunctions);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	// load cp932 codepage dll
 	r = UserSvr::ChangeLocale(KTestLocale);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
     // create file "\x65B0\x6587\x4EF6", check DOS entry & VFat entry
 	r = file.Create(TheFs, KTestUnicodeFileName, EFileRead);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file.Close();
 
 	r=TheDisk.Open(TheFs,CurrentDrive());
-	test_KErrNone(r);
+	test(r==KErrNone);
 
     //-- read 1st dir. it should be VFat
 //    const TInt posEntry1=gRootDirStart; //-- dir entry1 position
@@ -339,11 +339,11 @@ void TestDEF113633()
     // delete file
     TheDisk.Close();
     r = TheFs.Delete(KTestUnicodeFileName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	// turn off FatUtilityFunctions
 	r = TheFs.ControlIo(drvNum, KControlIoDisableFatUtilityFunctions);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 #else
 	test.Printf(_L("Test only runs on DEBUG builds, see test logs of debug builds for details."));
@@ -607,7 +607,7 @@ void CallTestsL()
 
 	TInt drvNum;
 	TInt r=TheFs.CharToDrive(gDriveToTest,drvNum);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
     if (!Is_Fat(TheFs,drvNum))
 		{

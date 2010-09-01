@@ -135,7 +135,7 @@ static const TOperation OperationArray[EMaxClientOperations]=
 		{	EFsAddPlugin,				ESync,					&TFsAddPlugin::Initialise,					NULL,								&TFsAddPlugin::DoRequestL					},
 		{	EFsRemovePlugin,			ESync,					&TFsRemovePlugin::Initialise,				NULL,								&TFsRemovePlugin::DoRequestL				},
 		{	EFsMountPlugin,				ESync,					&TFsMountPlugin::Initialise,				NULL,								&TFsMountPlugin::DoRequestL					},
-		{	EFsDismountPlugin,			0, /*PluginThrdContxt*/	&TFsDismountPlugin::Initialise,				NULL,								&TFsDismountPlugin::DoRequestL				},
+		{	EFsDismountPlugin,			0,						&TFsDismountPlugin::Initialise,				NULL,								&TFsDismountPlugin::DoRequestL				},
 		{	EFsPluginName,				ESync,					&TFsPluginName::Initialise,					NULL,								&TFsPluginName::DoRequestL					},
 		{	EFsPluginOpen,				ESync | EParseSrc,		&TFsPluginOpen::Initialise,					NULL,								&TFsPluginOpen::DoRequestL					},
 		{	EFsPluginSubClose,			ESync,					&TFsSubClose::Initialise,					NULL,								&TFsSubClose::DoRequestL					},

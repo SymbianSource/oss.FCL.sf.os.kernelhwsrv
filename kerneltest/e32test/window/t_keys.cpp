@@ -1,4 +1,4 @@
-// Copyright (c) 1996-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1996-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -14,19 +14,16 @@
 // e32test\window\t_keys.cpp
 // 
 //
-#define __E32TEST_EXTENSION__
+
 #include <e32test.h>
 #include <e32hal.h>
 #include <e32twin.h>
-#include <e32keys.h>
 #include <e32svr.h>
 
 const TBool KEY_UP=ETrue;
 const TBool KEY_DOWN=EFalse;
 const TBool EXPECT_NO_KEY_PRESS=EFalse;
 const TBool EXPECT_KEY_PRESS=ETrue;
-
-_LIT(REFKDATA, "REFKDATA");
 
 LOCAL_D RTest test(_L("T_KEYS"));
 LOCAL_D CKeyTranslator *KeyTranslator;
@@ -138,73 +135,7 @@ GLDEF_C TInt E32Main()
 
 	CaptureKeys->Construct();
 
-
-	test.Printf(_L("Load template EKData dll \n"));       // Test with rfkdata.dll	 
-	TInt res=KeyTranslator->ChangeKeyData(REFKDATA);
-	test_KErrNone(res);
-	
-	/* Test the AddCapture failure case */
-	TCaptureKey ck;
-	ck.iModifiers.iMask = 11;
-	ck.iModifiers.iValue = 100;
-	ck.iKeyCodePattern.iKeyCode = EKeyNull;
-	ck.iKeyCodePattern.iPattern = EAnyKey;
-	ck.iApp = 111;
-	ck.iHandle = 123;
-
-	TInt r = KErrNone;
-	TRAP(r, CaptureKeys->AddCaptureKeyL(ck));
-	test_Equal(r, KErrArgument);
-
-	/* Test the AddCapture success case */
-	ck.iModifiers.iMask = 11;
-	ck.iModifiers.iValue = 1;
-
-	TRAP(r, CaptureKeys->AddCaptureKeyL(ck));
-	test_KErrNone(r);
-
-	/* Test the SetCapture case */
-	TCaptureKey replaceck;
-	replaceck.iModifiers.iMask = 0;
-	replaceck.iModifiers.iValue = 0;
-	replaceck.iKeyCodePattern.iKeyCode = EKeyNull;
-	replaceck.iKeyCodePattern.iPattern = EAnyKey;
-	replaceck.iApp = 222;
-	replaceck.iHandle = 456;
-
-	/* Test the SetCapture failure case */
-	CaptureKeys->SetCaptureKey(replaceck.iHandle, ck);
-
-	/* Test the SetCapture success case */
-	CaptureKeys->SetCaptureKey(ck.iHandle, replaceck, 0x80);
-
-	/* Test the Cancelcapture failure case */
-	CaptureKeys->CancelCaptureKey(ck.iHandle);
-
-	/* Let us add one more with a different set of mask to test ProcessCaptureKeys */
-	ck.iModifiers.iMask = 11;
-	ck.iModifiers.iValue = 1;
-	ck.iKeyCodePattern.iKeyCode = EKeyNull;
-	ck.iKeyCodePattern.iPattern = EMatchLeftOrRight+1;
-	ck.iApp = 111;
-	ck.iHandle = 123;
-
-	TRAP(r, CaptureKeys->AddCaptureKeyL(ck));
-	test_KErrNone(r);
-
-	/* Let us add one more with a different set of mask to test ProcessCaptureKeys */
-	ck.iModifiers.iMask = 11;
-	ck.iModifiers.iValue = 1;
-	ck.iKeyCodePattern.iKeyCode = EKeyNull;
-	ck.iKeyCodePattern.iPattern = EAnyKey;
-	ck.iApp = 333;
-	ck.iHandle = 789;
-
-	TRAP(r, CaptureKeys->AddCaptureKeyL(ck));
-	test_KErrNone(r);
-
     TUint scancode=EStdKeyLeftArrow;
-
 //
 // Test that the special keys pass through and anything after
 // or before raises an error
@@ -328,29 +259,6 @@ GLDEF_C TInt E32Main()
 	testAccents('6','E',0xea);
 
 */
-
-	/* Test the CancelAllCaptureKeys failure case */
-	CaptureKeys->CancelAllCaptureKeys(ck.iApp);
-
-	/* Test the CancelCaptureKey success case */
-	CaptureKeys->CancelCaptureKey(replaceck.iHandle);
-
-	/* Now add a CaptureKey to test CancelAllCaptureKeys success case */
-	ck.iModifiers.iMask = 11;
-	ck.iModifiers.iValue = 1;
-	ck.iKeyCodePattern.iKeyCode = EKeyNull;
-	ck.iKeyCodePattern.iPattern = EAnyKey;
-	ck.iApp = 111;
-	ck.iHandle = 123;
-
-	TRAP(r, CaptureKeys->AddCaptureKeyL(ck));
-	test_KErrNone(r);
-
-	/* Test CancelAllCaptureKeys success case */
-	CaptureKeys->CancelAllCaptureKeys(ck.iApp);
-
-	delete CaptureKeys;
-
 	test.End();
 	return(KErrNone);
     }

@@ -42,7 +42,7 @@ public:
 private:
 	TInt TestAllocZerosMemory();
 	TInt TestReAllocZerosMemory();
-	TInt AllocTest1(TInt aSize);
+	TInt AllocTest1();
 	TInt ReAllocTest1();
 	TInt ReAllocTest2(TUint8*& mem1, TUint8*& mem2, TUint8*& mem3);
 	TInt AllocPhysTest(TUint32 aIters, TUint32 aSize); 
@@ -135,7 +135,7 @@ TInt DMemoryTestChannel::Request(TInt aFunction, TAny* a1, TAny* a2)
 		TUint32 value=(TUint32)a2;
 #ifdef _DEBUG
 		TInt debugMask = Kern::CurrentThread().iDebugMask;
-		Kern::CurrentThread().iDebugMask = debugMask&~(1U<<KPANIC);
+		Kern::CurrentThread().iDebugMask = debugMask&~(1<<KPANIC);
 #endif
 		XTRAP(r, XT_DEFAULT,
 			if(aFunction==RMemoryTestLdd::EReadWriteMemory)
@@ -215,12 +215,12 @@ TInt DMemoryTestChannel::Request(TInt aFunction, TAny* a1, TAny* a2)
 #ifdef _DEBUG
 		DThread& thread = Kern::CurrentThread();
 		TInt debugMask = thread.iDebugMask;
-		if(debugMask&(1U<<KPANIC))
+		if(debugMask&(1<<KPANIC))
 			old = true;
 		if(a1)
-			debugMask |= (1U<<KPANIC);
+			debugMask |= (1<<KPANIC);
 		else
-			debugMask &= ~(1U<<KPANIC);
+			debugMask &= ~(1<<KPANIC);
 		thread.iDebugMask = debugMask;
 #endif
 		return old;
@@ -434,32 +434,29 @@ TInt DMemoryTestChannel::TestAllocZerosMemory()
 	{
 	TInt count = 100;
 	TInt r = KErrNotSupported;
-	TInt size = 256;
 
 	do	{	//re-try up to 100 times if memory conditions are not correct
-		r=AllocTest1(size);
-		size -= 2;
-		} while(((r == KErrNoMemory)||(r == KErrUnknown)) && --count );
+		r=AllocTest1();
+		} while(((r == KErrNoMemory)||(r == KErrUnknown)) && --count);
 
 	return r;
 	}
 
-TInt DMemoryTestChannel::AllocTest1(TInt aSize)
+TInt DMemoryTestChannel::AllocTest1()
 	{
+	const TInt KSize = 256;
 	TInt err = KErrNone;
-	TUint8* mem1 = (TUint8*)Kern::Alloc(aSize);
+	TUint8* mem1 = (TUint8*)Kern::Alloc(KSize);
 	if (!mem1)
 		return KErrNoMemory;
-  	memset(mem1, 0xff, aSize);	
+	memset(mem1, KSize, 0xff);
 	Kern::Free(mem1);
-	TUint8* mem2 = (TUint8*)Kern::Alloc(aSize);
+	TUint8* mem2 = (TUint8*)Kern::Alloc(KSize);
 	if (!mem2)
 		return KErrNoMemory;
-	
 	if (mem1 != mem2)
 		err = KErrUnknown;	// Test inconclusive, can retry
-
-	for (TInt i = 0 ; i<aSize && err==KErrNone; ++i)
+	for (TInt i = 0 ; i<KSize && err==KErrNone; ++i)
 		{
 		if (mem2[i] != 0)
 			FAIL_ALLOC_TEST(1, i, mem2[i]);
@@ -501,7 +498,7 @@ TInt DMemoryTestChannel::TestReAllocZerosMemory()
 // The actual size of the block allocated given the size requested.
 #define ALIGNED_SIZE(aReqSize) (_ALIGN_UP(aReqSize + RHeap::EAllocCellSize, RHeap::ECellAlignment) - RHeap::EAllocCellSize)
 
-// We only allocate blocks where the size we get is the size we ask for - this
+// We only acllocate blocks where the size we get is the size we ask for - this
 // just makes testing easier.
 const TInt KSize = ALIGNED_SIZE(200), KHalfSize = ALIGNED_SIZE(100), KSmallSize = ALIGNED_SIZE(50);
 
@@ -526,19 +523,14 @@ TInt DMemoryTestChannel::ReAllocTest1()
 		Kern::Free(mem2);
 		return KErrUnknown; // Don't expect move on shrink
 		}
-	//
-	// With DL allocator growth into original area cannot be expected !
-	//
-//	mem2 = (TUint8*)Kern::ReAlloc(mem1, KSize); // 3
-/*	
+	mem2 = (TUint8*)Kern::ReAlloc(mem1, KSize); // 3
 	if (mem1 != mem2)
 		{
 		mem1 = 0;
 		Kern::Free(mem2);
 		return KErrUnknown; // Expect growth into original area
 		}
-*/
-  	mem1 = (TUint8*)Kern::ReAlloc(mem1, KSize); // 3	
+	
 	TInt i;
 	for (i = 0 ; i<KHalfSize && err==KErrNone; ++i)
 		{
@@ -572,48 +564,27 @@ TInt DMemoryTestChannel::ReAllocTest2(TUint8*& mem1, TUint8*& mem2, TUint8*& mem
 	mem2 = (TUint8*)Kern::Alloc(KSmallSize); // 2
 	if (!mem2)
 		return KErrNoMemory;
-	//
-	// The following exception is not possible with DL allocator
-	//
-/*	
 	if (mem2 <= (mem1 + KSmallSize))
 		return KErrUnknown;	// Expect mem2 higher than mem1
-*/		
 	memset(mem2, 0xee, KSmallSize);		
 	mem3 = (TUint8*)Kern::Alloc(KSize); // 3
 	if (!mem3)
 		return KErrNoMemory;
-	//
-	// The following exception is not possible with DL allocator
-	//
-/*	
 	if (mem3 <= (mem2 + KSmallSize))
-		return KErrUnknown+2;	// Expect mem3 higher than mem2
-*/		
+		return KErrUnknown;	// Expect mem3 higher than mem2
 	memset(mem3, 0xdd, KSize);
 	Kern::Free(mem3);
-
-/*	
 	TUint8* m3 = mem3;
-*/	
 	mem3 = NULL;
-
 	TUint8* mem4 = (TUint8*)Kern::ReAlloc(mem1, KSize); // 4
 	if (!mem4)
-		return KErrNoMemory;
-	//
-	// The following exceptions are not possible with DL allocator
-	//
-/*	
-	if (mem3 <= (mem2 + KSmallSize))
-		return KErrUnknown+2;	// Expect mem3 higher than mem2
+		return KErrNoMemory;	
 	if (mem4 == mem1)
 		return KErrUnknown; // Expect move on grow
 	mem1=mem4;
 	if (mem4 != m3)
 		return KErrUnknown; // Expect to realloc to use old mem3 space
-*/
-	mem1=mem4;	
+	
 	TInt i;
 	TInt err = KErrNone;
 	for (i = 0 ; i<KSmallSize && err==KErrNone; ++i)

@@ -382,7 +382,6 @@ public:
 	IMPORT_C static TInt ZoneAllocPhysicalRam(TUint* aZoneIdList, TUint aZoneIdCount, TInt aNumPages, TPhysAddr* aPageList);
 	IMPORT_C static TInt FreePhysicalRam(TPhysAddr aPhysAddr, TInt aSize);
 	IMPORT_C static TInt FreePhysicalRam(TInt aNumPages, TPhysAddr* aPageList);
-	IMPORT_C static TInt FreeRamZone(TUint aZoneId);
 	IMPORT_C static TInt ClaimPhysicalRam(TPhysAddr aPhysAddr, TInt aSize);
 	IMPORT_C static TPhysAddr LinearToPhysical(TLinAddr aLinAddr);
 	IMPORT_C static void RomProcessInfo(TProcessCreateInfo& aInfo, const TRomImageHeader& aRomImageHeader);	/**< @internalComponent */

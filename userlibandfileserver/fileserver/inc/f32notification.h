@@ -17,8 +17,6 @@
 #ifndef __F32NOTIFICATION_H__
 #define __F32NOTIFICATION_H__
 
-#include <f32file.h> //For clients that include F32Notification.h first.
-
 /*
  * This class is not intended for instantiation neither on the stack
  * nor on the heap.

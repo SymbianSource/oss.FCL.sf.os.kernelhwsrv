@@ -34,9 +34,9 @@ const TInt KMaxHandles=KMaxHandlesPerDll*KNumModules;
 
 extern "C" TInt _E32Startup();
 
-extern "C" __MODULE_IMPORT void RegisterConstructorCall(TInt aDllNum);
-extern "C" __MODULE_IMPORT void RegisterInitCall(TInt aDllNum);
-extern "C" __MODULE_IMPORT void RegisterDestructorCall(TInt aDllNum);
+extern "C" IMPORT_C void RegisterConstructorCall(TInt aDllNum);
+extern "C" IMPORT_C void RegisterInitCall(TInt aDllNum);
+extern "C" IMPORT_C void RegisterDestructorCall(TInt aDllNum);
 
 #define PANIC()		ExeTPanic(__LINE__)
 #define EXET_ASSERT(c)	((void)((c)||(PANIC(),0)))

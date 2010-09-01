@@ -72,7 +72,6 @@ public:
 	TInt ZoneAllocToMany2(TInt aZoneIndex, TInt aNumPages);
 	TInt AllocContiguous(TUint aNumBytes);
 	TInt FreeZone(TInt aNumPages);
-	TInt FreeZoneId(TUint aZoneId);
 	TInt FreeFromAllZones();
 	TInt FreeFromAddr(TInt aNumPages, TUint32 aAddr);
 	TInt PageCount(TUint aId, STestUserSidePageCount* aPageData);
@@ -388,10 +387,6 @@ TInt DRamDefragFuncTestChannel::Request(TInt aFunction, TAny* a1, TAny* a2)
 
 		case RRamDefragFuncTestLdd::EFreeZone:
 			retVal = DRamDefragFuncTestChannel::FreeZone((TInt)a1);
-			break;
-
-		case RRamDefragFuncTestLdd::EFreeZoneId:
-			retVal = DRamDefragFuncTestChannel::FreeZoneId((TUint)a1);
 			break;
 
 		case RRamDefragFuncTestLdd::EFreeFromAllZones:
@@ -1514,30 +1509,6 @@ TInt DRamDefragFuncTestChannel::FreeZone(TInt aNumPages)
 
 	NKern::ThreadLeaveCS();
 	return returnValue;
-	}
-
-//
-// FreeZoneId
-//
-// Call Epoc::FreeRamZone()
-//
-TInt DRamDefragFuncTestChannel::FreeZoneId(TUint aZoneId)
-	{
-	NKern::ThreadEnterCS();
-	
-	TInt r = Epoc::FreeRamZone(aZoneId);
-	if (r == KErrNone)
-		{
-		if (iContigAddr == KPhysAddrInvalid)
-			{
-			Kern::Printf("Error some how freed a RAM zone that wasn't previously claimed");
-			NKern::ThreadLeaveCS();
-			return KErrGeneral;
-			}
-		iContigAddr = KPhysAddrInvalid;
-		}
-	NKern::ThreadLeaveCS();
-	return r;
 	}
 
 //

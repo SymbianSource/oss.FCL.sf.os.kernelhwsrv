@@ -122,7 +122,7 @@ EXPORT_C TInt TPcCardControllerInterface::Create()
 			if (!pM)
 				return KErrNoMemory;
 			r=LocDrv::RegisterMediaDevice(mdi.iDevice,mdi.iDriveCount,mdi.iDriveList,pM,mdi.iNumMedia,*mdi.iDeviceName);
-			__KTRACE_OPT(KPBUS1,Kern::Printf("Registering PcCard device %S (socket %d) for %d drives returns %d",mdi.iDeviceName,pM->iSocket->iSocketNumber,mdi.iDriveCount,r));
+			__KTRACE_OPT(KPBUS1,Kern::Printf("Registering PcCard device %lS (socket %d) for %d drives returns %d",mdi.iDeviceName,pM->iSocket->iSocketNumber,mdi.iDriveCount,r));
 			if (r!=KErrNone)
 				return r;
 			}

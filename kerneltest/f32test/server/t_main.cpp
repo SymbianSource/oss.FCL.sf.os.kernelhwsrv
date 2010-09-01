@@ -24,7 +24,6 @@
 #include <f32dbg.h>
 #include "t_server.h"
 #include "t_chlffs.h"
-#include "f32_test_utils.h"
 
 GLDEF_D	RFs TheFs;
 GLDEF_D TFileName gSessionPath;
@@ -158,11 +157,14 @@ StartAgain:
 
 		while(illegalChar)
 			{
-			if (F32_Test_Utils::Is_SimulatedSystemDrive(TheFs, CurrentDrive()))
+#if defined(__WINS__)
+			if (gSessionPath[0]=='C')
 				letter=(TChar)('A'+Math::Rand(aSeed)%26);
 			else
 				letter=(TChar)Math::Rand(aSeed)%256;
-
+#else
+			letter=(TChar)Math::Rand(aSeed)%256;
+#endif
 			TBool space=letter.IsSpace();
 			if (space && spaceChar==-1)
 				spaceChar=i;
@@ -664,12 +666,12 @@ GLDEF_C TInt E32Main()
 
 	TInt orgSessionCount;
 	r = controlIo(TheFs,theDrive, KControlIoSessionCount, orgSessionCount);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("Session count start=%d\n"),orgSessionCount);
 
 	TInt orgObjectCount;
 	r = controlIo(TheFs,theDrive, KControlIoObjectCount, orgObjectCount);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("Object count start=%d\n"),orgObjectCount);
 
 
@@ -715,7 +717,7 @@ GLDEF_C TInt E32Main()
 	// NB: This won't help if the test has opened another session & left sub-sessions open.
 	TheFs.Close();
 	r=TheFs.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	// Display the file cache stats before closing the file queue
 	TFileCacheStats endFileCacheStats;
@@ -741,11 +743,11 @@ GLDEF_C TInt E32Main()
 		test_KErrNone(r);
 
 		r = controlIo(TheFs,theDrive, KControlIoSessionCount, endSessionCount);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		test.Printf(_L("Session count end=%d\n"),endSessionCount);
 
 		r = controlIo(TheFs,theDrive, KControlIoObjectCount, endObjectCount);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		test.Printf(_L("Object count end=%d\n"),endObjectCount);
 
 		if (endSessionCount == orgSessionCount && endObjectCount == orgObjectCount)

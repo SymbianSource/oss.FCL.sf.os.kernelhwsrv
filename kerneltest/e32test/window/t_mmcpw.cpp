@@ -18,7 +18,6 @@
 
 #include <e32svr.h>
 
-#define __E32TEST_EXTENSION__
 #include <e32test.h>
 #include <e32twin.h>
 #include <e32def.h>
@@ -36,8 +35,8 @@ GLDEF_C TInt E32Main()
 	RNotifier n;
 	
 	test.Next(_L("Connected to notify server."));
-	TInt r = n.Connect();
-	test_KErrNone(r);
+	TInt r;
+	test((r = n.Connect()) == KErrNone);
 
 	TPckgBuf<TMediaPswdSendNotifyInfoV1> send;
 	send().iVersion = TVersion(1, 0, 0);

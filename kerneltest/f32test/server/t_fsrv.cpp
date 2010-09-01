@@ -99,9 +99,9 @@ LOCAL_C TInt pathTestThread(TAny*)
 	test.Start(_L("Path test thread"));
 	RFs f;
 	TInt r=f.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=f.SessionPath(tPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	f.Close();
 
 	return(KErrNone);
@@ -209,55 +209,59 @@ LOCAL_C void DisMountRemoteFilesystem()
  	 
  	test.Printf(_L("Dismounting the Remote Drive returned %d\n"),r);
  	
- 	test_Value(r, r == KErrNone );
+ 	test(r==KErrNone );
 	}
 
 
 LOCAL_C void CreateSubstDrive()
 	{
-	test.Printf(_L("Create Substitute Drive \n"));
-
-	TDriveList driveList;   
-
-	TInt r=TheFs.SessionPath(gTestSessionPath);
-	test_KErrNone(r);
+     test.Printf(_L("Create Substitute Drive \n"));
+    
+    TDriveList driveList;   
+    TInt i ;
+      
+    TInt r=TheFs.SessionPath(gTestSessionPath);
+	test(r==KErrNone);  
  	
  	r=TheFs.DriveList(driveList, KDriveAttExclude|KDriveAttLocal);
-   	test_KErrNone(r);
+   	test( r==KErrNone );
    
 
-	for (TInt i = EDriveO; i < KMaxDrives; i++)
-		{
-		if (driveList[i] == 0)
-			{
-			if (i == EDriveQ)
-				continue;  // Q reserved to mount a virtual Remote Drive, as part of the test.
-			substDrive = i;
-			break;
-			}
-		}
-
+   	for ( i = EDriveO; i < KMaxDrives; i++) 
+      	{
+    
+      	if ( driveList[i] == 0) 
+          	{
+          	if (i == EDriveQ) continue;  // Q reserved to mount a virtual Remote Drive, as part of the test.
+        	substDrive = i;
+          	break;          
+          	}
+      	}
+           
+   
    	if (substDrive)
    		{
  		TDriveInfo driveInfo;
 		r=TheFs.Drive(driveInfo,substDrive);
-		test_KErrNone(r);
+		test(r==KErrNone);
 	
 		if (driveInfo.iDriveAtt==KDriveAttLocal)
-			{
+			{	
 			return;	//	Subst local drives fails
 			}
 	
 		TFileName n;
 		r=TheFs.Subst(n,substDrive);
-		test_KErrNone(r);
-		test_Value(n.Length(), n.Length() == 0);
+		test(r==KErrNone);
+		test(n.Length()==0);	
 		r=TheFs.SetSubst(gTestSessionPath,substDrive);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		r=TheFs.Subst(n,substDrive);
-		test_KErrNone(r);
-		test(n==gTestSessionPath);
+		test(r==KErrNone);
+		test(n==gTestSessionPath);   		
    		}
+
+	
 	}
 
 		
@@ -265,9 +269,9 @@ LOCAL_C void RemoveSubstDrive()
 	{
 	 	if( substDrive)
 	 		{
-	 		test.Printf(_L("Removing Substitute Drive \n"));
-	 		TInt r =TheFs.SetSubst(_L(""),substDrive);
-			test_KErrNone(r);
+	 		test.Printf(_L("Removing Substitute Drive \n"));	 	 
+	 		TInt r =TheFs.SetSubst(_L(""),substDrive);	
+			test(r ==KErrNone);	 		
 	 		}
 
 	}
@@ -280,16 +284,16 @@ LOCAL_C void testDriveInfo(TInt aDrive,TDriveInfo& anInfo)
 //
 	{
 
-	test_Value(anInfo.iConnectionBusType, anInfo.iConnectionBusType==EConnectionBusInternal || anInfo.iConnectionBusType==EConnectionBusUsb);
+	test(anInfo.iConnectionBusType==EConnectionBusInternal || anInfo.iConnectionBusType==EConnectionBusUsb);
 	
 	if (aDrive==EDriveZ)
 		{
 		if (anInfo.iType==EMediaNotPresent)
 			return;
 		
-		test_Value(anInfo.iMediaAtt, anInfo.iMediaAtt==KMediaAttWriteProtected);
-		test_Value(anInfo.iDriveAtt, anInfo.iDriveAtt==(KDriveAttRom|KDriveAttInternal));
-		test_Value(anInfo.iType, anInfo.iType==EMediaRom);
+		test(anInfo.iMediaAtt==KMediaAttWriteProtected);
+		test(anInfo.iDriveAtt==(KDriveAttRom|KDriveAttInternal));
+		test(anInfo.iType==EMediaRom);
 		}
 
 	else if (GetDriveLFFS()==aDrive)
@@ -297,9 +301,9 @@ LOCAL_C void testDriveInfo(TInt aDrive,TDriveInfo& anInfo)
         if (anInfo.iType==EMediaNotPresent)
             return;
 
-		test_Value(anInfo.iDriveAtt, anInfo.iDriveAtt&(KDriveAttLocal|KDriveAttInternal)==KDriveAttLocal|KDriveAttInternal);	// LFFS sets KDriveAttTransaction as well
-        test_Value(anInfo.iType, anInfo.iType==EMediaFlash);
-        test_Value(anInfo.iMediaAtt, anInfo.iMediaAtt==KMediaAttFormattable);
+		test(anInfo.iDriveAtt&(KDriveAttLocal|KDriveAttInternal)==KDriveAttLocal|KDriveAttInternal);	// LFFS sets KDriveAttTransaction as well
+        test(anInfo.iType==EMediaFlash);
+        test(anInfo.iMediaAtt==KMediaAttFormattable);
 		}
 /*
 Why assume certain drive letters can only refer to certain drive types?
@@ -377,17 +381,17 @@ LOCAL_C void testDriveList()
     test.Printf(_L("Test existing DriveList \n"));
     
     err = TheFs.DriveList(driveList);
-	test_KErrNone(err);
+    test( err == KErrNone );
     
     for ( i = 0; i < KMaxDrives; i++) 
         {
         if (driveList[i]) 
             {
             err = TheFs.Drive(info, i);
-			test_KErrNone(err);
-            test_Value(info.iType, info.iType != EMediaRemote);
-            test_Value(info.iDriveAtt, !(info.iDriveAtt & KDriveAttRemote)); 
-			test_Value(info.iDriveAtt, !(info.iDriveAtt & KDriveAttHidden));
+            test( err == KErrNone );
+            test( info.iType  !=  EMediaRemote  );
+            test( !(info.iDriveAtt & KDriveAttRemote ) ); 
+			test( !(info.iDriveAtt & KDriveAttHidden ) );
             drivecount++; 
             
             if( info.iDriveAtt  & KDriveAttRemovable) 
@@ -426,13 +430,13 @@ LOCAL_C void testDriveList()
    flags = KDriveAttAll;
    err = TheFs.DriveList(driveList, flags);
 
-	test_KErrNone(err);
+   test( err == KErrNone );
    for ( i = 0; i < KMaxDrives; i++) 
        {
        if (driveList[i]) 
            {
            err = TheFs.Drive(info,i);
-			test_KErrNone(err);
+           test( err == KErrNone );
            allDrivecount++;
            
            if( info.iDriveAtt  & KDriveAttSubsted ) 
@@ -458,6 +462,9 @@ LOCAL_C void testDriveList()
            }
         }  
 
+ 	test(allDrivecount == drivecount + hiddenOrRemoteDriveCount);
+	test(hiddenOrRemoteDriveCount - hiddenDriveCount == 1);
+
 	test.Printf(_L("Found %d substitute drives\n"), substDriveCount);
 	test.Printf(_L("Found %d exclusively substitute  drives \n"),exclusiveSubstDriveCount);
 	test.Printf(_L("Found %d hidden drives\n"), hiddenDriveCount);
@@ -468,9 +475,6 @@ LOCAL_C void testDriveList()
 	test.Printf(_L("Found %d physically removable drives \n"),physicallyRemovable);
 	test.Printf(_L("Found %d logically removable drives \n"),logicallyRemovableDriveCount);
   
- 	test(allDrivecount == drivecount + hiddenOrRemoteDriveCount);
-	test(hiddenOrRemoteDriveCount - hiddenDriveCount == 1);
-
   
   	//--------------------------------------------- 
 	//! @SYMTestCaseID			PBASE-T_FSRV-0546
@@ -491,22 +495,22 @@ LOCAL_C void testDriveList()
 	
     flags = KDriveAttRemovable;
     err = TheFs.DriveList(driveList, flags);
-	test_KErrNone(err);
+    test( err == KErrNone );
     for ( i = 0; i < KMaxDrives; i++) 
         {
         if (driveList[i]) 
             {
             err = TheFs.Drive(info, i);
-			test_KErrNone(err);
-            test_Value(info.iDriveAtt, info.iDriveAtt & KDriveAttRemovable);
-            drivecount++;
+            test( err == KErrNone );
+            test( info.iDriveAtt & KDriveAttRemovable );
+            drivecount++; 
       
             printDriveAtt(i,info.iDriveAtt);
             }
 
         }
 
-	test_Value(drivecount, drivecount == removableDriveCount); // no removable drive was added
+    test( drivecount == removableDriveCount ); // no removable drive was added
 
 
   	//--------------------------------------------- 
@@ -527,14 +531,14 @@ LOCAL_C void testDriveList()
     drivecount = 0;
     flags = KDriveAttRemovable | KDriveAttRemote;
     err = TheFs.DriveList(driveList, flags);
-	test_KErrNone(err);
+    test( err == KErrNone );
     for ( i = 0; i < KMaxDrives; i++) 
         {
         if (driveList[i]) 
             {
             err = TheFs.Drive(info, i);
-			test_KErrNone(err);
-            test_Value(info.iDriveAtt, (info.iDriveAtt & KDriveAttRemovable ) || (info.iDriveAtt & KDriveAttRemote)); 
+            test( err == KErrNone );
+            test( (info.iDriveAtt & KDriveAttRemovable ) || (info.iDriveAtt & KDriveAttRemote)); 
             drivecount++; 
            
            	printDriveAtt(i,info.iDriveAtt);
@@ -542,7 +546,7 @@ LOCAL_C void testDriveList()
             }
 
         }
-	test_Value(drivecount, drivecount == removableDriveCount + 1 );  //contains the remote drive we mounted
+    test( drivecount == removableDriveCount + 1 );  //contains the remote drive we mounted
     
 
   	//--------------------------------------------- 
@@ -564,21 +568,21 @@ LOCAL_C void testDriveList()
     flags = KDriveAttExclusive | KDriveAttRemote;
     TUint match = KDriveAttRemote;
     err = TheFs.DriveList(driveList, flags);
-	test_KErrNone(err);
+    test( err == KErrNone );
     for ( i = 0; i < KMaxDrives; i++) 
         {
         if (driveList[i]) 
             {
             err = TheFs.Drive(info, i);
-			test_KErrNone(err);
-            test_Value(info.iDriveAtt, (info.iDriveAtt == match)); 
+            test( err == KErrNone );
+            test( (info.iDriveAtt == match)); 
             drivecount++;
             
             printDriveAtt(i,info.iDriveAtt);
             }
 
         }
-   	test_Value(drivecount, drivecount == 1); //The remote drive we mounted.
+   	test( drivecount == 1 ); //The remote drive we mounted.
 
 
   	//--------------------------------------------- 
@@ -599,22 +603,22 @@ LOCAL_C void testDriveList()
    drivecount = 0; 	
    flags = KDriveAttExclude | KDriveAttRemovable;
    err = TheFs.DriveList(driveList, flags);
-	test_KErrNone(err);
+   test( err == KErrNone );
    for (i = 0; i < KMaxDrives; i++) 
        {
        if (driveList[i]) 
            {
            err = TheFs.Drive(info, i);
-			test_KErrNone(err);
-           test_Value(info.iDriveAtt, (!(info.iDriveAtt & KDriveAttRemovable ) )); 
+           test( err == KErrNone );
+           test( (!(info.iDriveAtt & KDriveAttRemovable ) )); 
            drivecount++;
            
            printDriveAtt(i,info.iDriveAtt);
            }
 
        }  
-     test_Value(drivecount, drivecount == allDrivecount - removableDriveCount); 
-	 test_Value (drivecount, drivecount == nonRemovables + hiddenDriveCount + 1) ;   //The remote drive we added is non removable  
+     test ( drivecount == allDrivecount - removableDriveCount); 
+	 test ( drivecount == nonRemovables + hiddenDriveCount + 1) ;   //The remote drive we added is non removable  
 
 
 
@@ -639,21 +643,21 @@ LOCAL_C void testDriveList()
    flags = KDriveAttExclude | KDriveAttRemovable | KDriveAttRemote;
    err = TheFs.DriveList(driveList, flags);
    
-	test_KErrNone(err);
+   test( err == KErrNone );
    
    for ( i = 0; i < KMaxDrives; i++) 
        {
        if (driveList[i]) 
            {
            err = TheFs.Drive(info,i);
-			test_KErrNone(err);
-           test_Value(info.iDriveAtt, (!(info.iDriveAtt & KDriveAttRemovable ) && (!(info.iDriveAtt & KDriveAttRemote ))));
+           test( err == KErrNone );
+           test( (!(info.iDriveAtt & KDriveAttRemovable ) && (!(info.iDriveAtt & KDriveAttRemote ))));
            drivecount++;
            
            printDriveAtt(i,info.iDriveAtt);
            }
        }
-	test_Value(drivecount, drivecount == (allDrivecount - removableDriveCount - 1)  ); // also excluding the removables and the remote drive   
+   test(drivecount == (allDrivecount - removableDriveCount - 1)  ); // also excluding the removables and the remote drive   
   
   
 
@@ -683,21 +687,21 @@ LOCAL_C void testDriveList()
    		flags = KDriveAttExclude | KDriveAttRemote | KDriveAttSubsted;
    		err = TheFs.DriveList(driveList, flags);
    
-		test_KErrNone(err);
+   		test( err == KErrNone );
    
    		for ( i = 0; i < KMaxDrives; i++) 
        		{
        		if (driveList[i]) 
            		{
            		err = TheFs.Drive(info,i);
-			test_KErrNone(err);
-           		test_Value(info.iDriveAtt, (!(info.iDriveAtt & KDriveAttRemote )  && (!(info.iDriveAtt & KDriveAttSubsted ))));
+           		test( err == KErrNone );
+           		test( (!(info.iDriveAtt & KDriveAttRemote )  && (!(info.iDriveAtt & KDriveAttSubsted ))));
            		drivecount++;
            
            		printDriveAtt(i,info.iDriveAtt);
            		}
        		}
-		test_Value(drivecount, drivecount == (allDrivecount - substDriveCount- 1)  );    
+    	test(drivecount == (allDrivecount - substDriveCount- 1)  );    
 
 
 		
@@ -707,15 +711,15 @@ LOCAL_C void testDriveList()
    		flags = KDriveAttExclusive | KDriveAttExclude | KDriveAttSubsted;
    		err = TheFs.DriveList(driveList, flags);
    
-		test_KErrNone(err);
+   		test( err == KErrNone );
    
    		for ( i = 0; i < KMaxDrives; i++) 
        		{
        		if (driveList[i]) 
            		{
            		err = TheFs.Drive(info,i);
-				test_KErrNone(err);
-           		test_Value(info.iDriveAtt, info.iDriveAtt != KDriveAttSubsted);
+           		test( err == KErrNone );
+           		test( info.iDriveAtt != KDriveAttSubsted );
            		drivecount++;
            
            		printDriveAtt(i,info.iDriveAtt);
@@ -723,7 +727,7 @@ LOCAL_C void testDriveList()
    		    
    		    }
     
-		test_Value(drivecount, drivecount == (allDrivecount - exclusiveSubstDriveCount)  );        
+		test(drivecount == (allDrivecount - exclusiveSubstDriveCount)  );        
 		
 		}
 
@@ -763,14 +767,14 @@ LOCAL_C void testDriveList()
 
 	TDriveList fullDriveList;
 	err = TheFs.DriveList(fullDriveList, KDriveAttAll);
-	test_KErrNone(err);
+	test( err == KErrNone );
 
 	for ( i = 0; i < KMaxDrives; i++) 
 		{
 		if (driveList[i]) 
 			{
 			err = TheFs.Drive(info,i);
-			test_KErrNone(err);
+			test( err == KErrNone );
 			printDriveAtt(i,info.iDriveAtt);
 			}
 		}
@@ -790,14 +794,14 @@ LOCAL_C void testDriveList()
 			//test.Printf(_L("Expected Result : %d     \n"), testAtt == 0 ? testCombinations[matchIdx].iExpectedResultNoAtts : testCombinations[matchIdx].iExpectedResultWithAtts);
 			//test.Printf(_L("  Actual Result : 0x%08x \n"), err);
 
-			test_Value(err, err == (testAtt == 0 ? testCombinations[matchIdx].iExpectedResultNoAtts : testCombinations[matchIdx].iExpectedResultWithAtts));
+			test( err == (testAtt == 0 ? testCombinations[matchIdx].iExpectedResultNoAtts : testCombinations[matchIdx].iExpectedResultWithAtts) );
 
 			if(err == KErrNone)
 				{
 				//printDriveAtt(0, testAtt);  //Prints attributes   
 				for ( i = 0; i < KMaxDrives; i++) 
 					{
-					TBool expectMatch = EFalse;
+					TBool expectMatch = EFalse;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
 
 					switch(testCombinations[matchIdx].iMatchMask)
 						{
@@ -809,11 +813,11 @@ LOCAL_C void testDriveList()
 							expectMatch = ETrue;
 							break;
 
-						case KDriveAttExclude:
+						case KDriveAttExclude :
 							expectMatch = (fullDriveList[i] & testAtt) == 0;
 							break;
 
-						case KDriveAttExclusive:
+						case KDriveAttExclusive :
 							expectMatch = (fullDriveList[i] == testAtt);
 							break;
 
@@ -821,14 +825,20 @@ LOCAL_C void testDriveList()
 							expectMatch = (fullDriveList[i] != testAtt);
 							break;
 	
-						case KDriveAttAll | KDriveAttExclude:
-							// Invalid - should never get here as this returns KErrArgument for all cases
-						case KDriveAttAll | KDriveAttExclusive:
-							// Invalid - should never get here as this returns KErrArgument for all cases
-						case KDriveAttAll | KDriveAttExclude | KDriveAttExclusive:
-							// Invalid - should never get here as this returns KErrArgument for all cases
+						case KDriveAttAll | KDriveAttExclude :
+							test(0);	// Invalid - should never get here as this returns KErrArgument for all cases
+							break;
+
+						case KDriveAttAll | KDriveAttExclusive :
+							test(0);	// Invalid - should never get here as this returns KErrArgument for all cases
+							break;
+
+						case KDriveAttAll | KDriveAttExclude | KDriveAttExclusive :
+							test(0);	// Invalid - should never get here as this returns KErrArgument for all cases
+							break;
+
 						default:
-							test.Printf(_L("Unexpected or invalid Match Mask %08x"), testCombinations[matchIdx].iMatchMask);
+							test.Printf(_L("Unexpected Match Mask %08x"), testCombinations[matchIdx].iMatchMask);
 							test(0);
 							break;
 						}
@@ -836,7 +846,7 @@ LOCAL_C void testDriveList()
 					if(expectMatch) 
 						{
 						//test.Printf(_L(" %c MATCHED OK "), 'A' + i);
-						test_Value(newDriveList[i], newDriveList[i] == fullDriveList[i]);
+						test(newDriveList[i] == fullDriveList[i]);
 						}
 					else
 						{
@@ -849,7 +859,7 @@ LOCAL_C void testDriveList()
 							test.Printf(_L(" %c NOT MATCHED "), 'A' + i);
 							}
 						*/
-						test_Value(newDriveList[i], newDriveList[i] == 0);
+						test(newDriveList[i] == 0);
 						}
 					}
 				}
@@ -875,14 +885,14 @@ LOCAL_C void testDriveList()
  	drivecount = 0;
     flags = KDriveAttLogicallyRemovable;
     err = TheFs.DriveList(driveList, flags);
-	test_KErrNone(err);
+    test( err == KErrNone );
     for ( i = 0; i < KMaxDrives; i++) 
         {
         if (driveList[i]) 
             {
             err = TheFs.Drive(info, i);
-			test_KErrNone(err);
-            test_Value(info.iDriveAtt, info.iDriveAtt & KDriveAttLogicallyRemovable);
+            test( err == KErrNone );
+            test( info.iDriveAtt & KDriveAttLogicallyRemovable );
             drivecount++; 
       
             printDriveAtt(i,info.iDriveAtt);
@@ -890,7 +900,8 @@ LOCAL_C void testDriveList()
 
         }
 
-    test_Value(drivecount, drivecount == logicallyRemovableDriveCount); // no logically removable drive was added
+    test( drivecount == logicallyRemovableDriveCount ); // no logically removable drive was added
+ 
 
 	test.End();
 	}
@@ -910,7 +921,7 @@ LOCAL_C void testDriveInfo()
 	test.Start(_L("The drive info"));
 	TDriveList list;
 	TInt r=TheFs.DriveList(list);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	for (TInt i=0;i<KMaxDrives;i++)
 		{
 		TInt att=list[i];
@@ -918,7 +929,7 @@ LOCAL_C void testDriveInfo()
 			{
 			TDriveInfo d;
 			r=TheFs.Drive(d,i);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			printDriveInfo(i,d);
 			test.Printf(_L("\n"));
 			testDriveInfo(i,d);
@@ -937,7 +948,7 @@ LOCAL_C void testVolumeInfo()
 	test.Start(_L("The volume info"));
 	TDriveList list;
 	TInt r=TheFs.DriveList(list);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	for (TInt i=0;i<KMaxDrives;i++)
 		{
 		TVolumeInfo v;
@@ -1001,7 +1012,7 @@ LOCAL_C void testClientParse()
 			}
 		else
 			r=f.Set(name,NULL,NULL);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		test(TPtrC(p.fullName)==f.FullName());
 		test(TPtrC(p.drive)==f.Drive());
 		test(TPtrC(p.path)==f.Path());
@@ -1021,28 +1032,28 @@ LOCAL_C void testPath()
 	test.Start(_L("Test path handling"));
 	TFileName p;
 	TInt r=TheFs.SessionPath(p);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("SESSION=\"%S\"\n"),&p);
 	r=TheFs.SetSessionPath(_L("A:\\TEST\\"));
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.SessionPath(p);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(p==_L("A:\\TEST\\"));
 	r=TheFs.SetSessionPath(gSessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 
 	TheFs.SetAllocFailure(gAllocFailOff);
 
 	RThread t;
 	r=t.Create(_L("PathTest"),pathTestThread,KDefaultStackSize,KHeapSize,KHeapSize,NULL);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TRequestStatus tStat;
 	t.Logon(tStat);
 	t.Resume();
 	User::WaitForRequest(tStat);
-	r = tStat.Int();
-	test_KErrNone(r);
+	test(tStat==KErrNone);
+	test(r==KErrNone);
 	t.Close();
 
 	TheFs.SetAllocFailure(gAllocFailOn);
@@ -1060,9 +1071,9 @@ LOCAL_C void testServerParse()
 
 	TFileName old;
 	TInt r=TheFs.SessionPath(old);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.SetSessionPath(_L("C:\\ABCDEF\\"));
-	test_KErrNone(r);
+	test(r==KErrNone);
 	for (TInt i=0;i<KMaxParses;i++)
 		{
 		TInt r;
@@ -1073,7 +1084,7 @@ LOCAL_C void testServerParse()
 			r=TheFs.Parse(name,TPtrC(p.rel),f);
 		else
 			r=TheFs.Parse(name,f);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		test(TPtrC(p.fullName)==f.FullName());
 		test(TPtrC(p.drive)==f.Drive());
 		test(TPtrC(p.path)==f.Path());
@@ -1081,7 +1092,7 @@ LOCAL_C void testServerParse()
 		test(TPtrC(p.ext)==f.Ext());
 		}
 	r=TheFs.SetSessionPath(old);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	test.End();
 	}
@@ -1095,14 +1106,14 @@ LOCAL_C void testSubst()
 	test.Printf(_L("Test subst"));
 	TVolumeInfo v;
 	TInt r=TheFs.Volume(v);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TDriveInfo origDI;
 	r=TheFs.Drive(origDI);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	TDriveInfo driveInfo;
 	r=TheFs.Drive(driveInfo,EDriveO);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	if (driveInfo.iDriveAtt==KDriveAttLocal)
 		{	
@@ -1111,40 +1122,40 @@ LOCAL_C void testSubst()
 	
 	TFileName n;
 	r=TheFs.Subst(n,EDriveO);
-	test_KErrNone(r);
-	test_Value(n.Length(), n.Length()==0);
+	test(r==KErrNone);
+	test(n.Length()==0);
 	r=TheFs.SetSubst(gSessionPath,EDriveO);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.Subst(n,EDriveO);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(n==gSessionPath);
 	TVolumeInfo w;
 	r=TheFs.Volume(w,EDriveO);
-	test_KErrNone(r);
-	test_Value(w.iDrive.iType, w.iDrive.iType==v.iDrive.iType);
-	test_Value(w.iDrive.iConnectionBusType, w.iDrive.iConnectionBusType==v.iDrive.iConnectionBusType);
-	test_Value(w.iDrive.iDriveAtt, w.iDrive.iDriveAtt==KDriveAttSubsted);
-	test_Value(w.iDrive.iMediaAtt, w.iDrive.iMediaAtt==v.iDrive.iMediaAtt);
+	test(r==KErrNone);
+	test(w.iDrive.iType==v.iDrive.iType);
+	test(w.iDrive.iConnectionBusType==v.iDrive.iConnectionBusType);
+	test(w.iDrive.iDriveAtt==KDriveAttSubsted);
+	test(w.iDrive.iMediaAtt==v.iDrive.iMediaAtt);
 	test(w.iUniqueID==v.iUniqueID);
 	test(w.iSize==v.iSize);
 	test(w.iFree==v.iFree);
 	test(w.iName==v.iName);
 	TDriveList driveList;
 	r=TheFs.DriveList(driveList);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(driveList[EDriveO]==KDriveAttSubsted);
 	TDriveInfo d;
 	r=TheFs.Drive(d,EDriveO);
-	test_KErrNone(r);
-	test_Value(d.iDriveAtt, d.iDriveAtt==KDriveAttSubsted);
-	test_Value(d.iMediaAtt, d.iMediaAtt==origDI.iMediaAtt);
-	test_Value(d.iType, d.iType==origDI.iType);
-	test_Value(d.iConnectionBusType, d.iConnectionBusType==origDI.iConnectionBusType);
+	test(r==KErrNone);
+	test(d.iDriveAtt==KDriveAttSubsted);
+	test(d.iMediaAtt==origDI.iMediaAtt);
+	test(d.iType==origDI.iType);
+	test(d.iConnectionBusType==origDI.iConnectionBusType);
 
 
 	test.Next(_L("Test real name"));
 	r=TheFs.RealName(_L("O:\\FILE.XXX"),n);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TFileName substedPath=gSessionPath;
 	substedPath.Append(_L("FILE.XXX"));
 	test(n.CompareF(substedPath)==KErrNone);
@@ -1154,25 +1165,25 @@ LOCAL_C void testSubst()
 	TFileName dir=gSessionPath;
 	dir+=KTurgid;
 	r=TheFs.MkDirAll(dir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	dir+=_L("subdir\\");
 	r=TheFs.MkDir(dir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.RmDir(_L("O:\\turgid\\subdir\\"));
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.Rename(_L("O:\\turgid"), _L("O:\\facile"));
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.MkDir(_L("O:\\insipid\\"));
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.Rename(_L("O:\\insipid"), _L("O:\\glib"));
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.RmDir(_L("O:\\facile\\"));
-	test_KErrNone(r);
+	test(r==KErrNone);
 	_LIT(KGlib,"glib\\");
 	dir=gSessionPath;
 	dir+=KGlib;
 	r=TheFs.RmDir(dir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 //	
 	test.Next(_L("Test file operations on Substed drive"));
 	_LIT(File1,"File1.txt");
@@ -1184,21 +1195,21 @@ LOCAL_C void testSubst()
 	name1+=File1;
 	RFile f1;
 	r=f1.Replace(TheFs,name1,EFileShareExclusive|EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	name2=SubstRoot;
 	name2+=File2;
 	TBool isValid=TheFs.IsValidName(name2);
 	test(isValid);
 	r=f1.Rename(name2);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	f1.Close();
 	r=f1.Create(TheFs,name1,EFileShareExclusive|EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	f1.Close();
 	r=TheFs.Replace(name2,name1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.Delete(name1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Next(_L("Test notifications on Substed drive"));
 	name1=gSessionPath;
 	name1+=Subdir;
@@ -1209,62 +1220,58 @@ LOCAL_C void testSubst()
 	TRequestStatus status2;
 	TRequestStatus status3;
 	TheFs.NotifyChange(ENotifyDir,status1,name1);
-	test_Value(status1.Int(), status1==KRequestPending);
+	test(status1==KRequestPending);
 	TheFs.NotifyChange(ENotifyDir,status2,name2);
-	test_Value(status2.Int(), status2==KRequestPending);
+	test(status2==KRequestPending);
 	r=TheFs.MkDirAll(name1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	User::WaitForRequest(status1);
 	User::WaitForRequest(status2);
-	test_KErrNone(status1.Int());
-	test_KErrNone(status2.Int());
+	test(status1==KErrNone && status2==KErrNone);
 	TheFs.NotifyChange(ENotifyDir,status1,name1);
-	test_Value(status1.Int(), status1==KRequestPending);
+	test(status1==KRequestPending);
 	TheFs.NotifyChange(ENotifyDir,status2,name2);
-	test_Value(status2.Int(), status2==KRequestPending);
+	test(status2==KRequestPending);
 	TheFs.NotifyChange(ENotifyAll,status3,name2);
-	test_Value(status3.Int(), status3==KRequestPending);
+	test(status3==KRequestPending);
 	r=f1.Temp(TheFs,name2,n,EFileShareAny|EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	User::WaitForRequest(status3);
-	test_KErrNone(status3.Int());
-	test_Value(status1.Int(), status1==KRequestPending);
-	test_Value(status2.Int(), status2==KRequestPending);
+	test(status3==KErrNone && status1==KRequestPending && status2==KRequestPending);
 	f1.Close();
 	TheFs.NotifyChangeCancel();
-	test_Value(status1.Int(), status1==KErrCancel);
-       	test_Value(status2.Int(), status2==KErrCancel);
+	test(status1==KErrCancel && status2==KErrCancel);
 	r=TheFs.Delete(n);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.RmDir(name1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 //
 	test.Next(_L("Test file systems on Substed drive"));
 	// test cannot mount file system on substituted drive
 	TInt sessionDrv;
 	r=TheFs.CharToDrive(gSessionPath[0],sessionDrv);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.FileSystemName(n,sessionDrv);
-	test_Value(r, r == KErrNone || r==KErrNotFound);
+	test(r==KErrNone || r==KErrNotFound);
 	r=TheFs.MountFileSystem(n,EDriveO);
-	test_Value(r, r == KErrAccessDenied);
+	test(r==KErrAccessDenied);
 	// test file system name on substitued drive is null
 	r=TheFs.FileSystemName(n,EDriveO);
-	test_Value(r, r == KErrNotFound && n==KNullDesC);
+	test(r==KErrNotFound && n==KNullDesC);
 	// test cannot format a substitued drive
 	RFormat format;
 	TInt count;
 	r=format.Open(TheFs,SubstRoot,EHighDensity,count);
-	test_Value(r, r == KErrAccessDenied);
+	test(r==KErrAccessDenied);
 	
 	r=TheFs.SetSubst(_L(""),EDriveO);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.Subst(n,EDriveO);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(n==_L(""));
 	r=TheFs.Drive(d,EDriveO);
-	test_KErrNone(r);
-	test_Value(d.iDriveAtt, d.iDriveAtt==0);
+	test(r==KErrNone);
+	test(d.iDriveAtt==0);
 	}
 
 LOCAL_C void testSetVolume()
@@ -1279,7 +1286,7 @@ LOCAL_C void testSetVolume()
 
 	TVolumeInfo v;
 	TInt r=TheFs.Volume(v,driveNum);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TFileName n=v.iName;
 	test.Printf(_L("VOL=\"%S\"\n"),&n);
 
@@ -1293,27 +1300,27 @@ LOCAL_C void testSetVolume()
 		return;
 		}
 
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.Volume(v,driveNum);
-	test_Value(r, r == KErrNone );
-	test.Printf(_L("VOL=\"%S\"\n"),&v.iName);
+	test(r==KErrNone );
 	test(v.iName==_L(""));
+	test.Printf(_L("VOL=\"%S\"\n"),&v.iName);
 
 	test.Next(_L("Set volume label to ABCDEFGHIJK"));
 	r=TheFs.SetVolumeLabel(_L("ABCDEFGHIJK"),driveNum);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.Volume(v,driveNum);
-	test_KErrNone(r);
-	test.Printf(_L("VOL=\"%S\"\n"),&v.iName);
+	test(r==KErrNone);
 	test(v.iName==_L("ABCDEFGHIJK"));
+	test.Printf(_L("VOL=\"%S\"\n"),&v.iName);
 
 	test.Next(_L("Set volume label to ABCDE"));
 	r=TheFs.SetVolumeLabel(_L("ABCDE"),driveNum);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.Volume(v,driveNum);
-	test_KErrNone(r);
-	test.Printf(_L("VOL=\"%S\"\n"),&v.iName);
+	test(r==KErrNone);
 	test(v.iName==_L("ABCDE"));
+	test.Printf(_L("VOL=\"%S\"\n"),&v.iName);
 
 
 	test.Next(_L("Test replacement of non-ascii chars"));
@@ -1331,7 +1338,7 @@ LOCAL_C void testSetVolume()
 	uBuf[9]=0x104;
 	uBuf[10]='f';
 	r=TheFs.SetVolumeLabel(uBuf,driveNum);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TFileName drive=_L("?:");
 	drive[0]=gSessionPath[0];
 
@@ -1341,54 +1348,56 @@ LOCAL_C void testSetVolume()
 
 	TFileName sess;
 	r=TheFs.SessionPath(sess);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.Volume(v,driveNum);
-	test_KErrNone(r);
-	test.Printf(_L("VOL=\"%S\"\n"),&v.iName);
+	test(r==KErrNone);
+
 	if(Is_Fat(TheFs, gDrive)) //-- FAT doesn't support normal UNICODE in volume labels
 		test(v.iName==_L("a_b_c_d_e_f"));
 	else
 		test(v.iName == uBuf);
 
+
+	test.Printf(_L("VOL=\"%S\"\n"),&v.iName);
+
+
 	test.Next(_L("Set volume label back to nothing"));
 	r=TheFs.SetVolumeLabel(_L(""),driveNum);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.Volume(v,driveNum);
-	test_KErrNone(r);
-	test.Printf(_L("VOL=\"%S\"\n"),&v.iName);
+	test(r==KErrNone);
 	test(v.iName==_L(""));
+	test.Printf(_L("VOL=\"%S\"\n"),&v.iName);
 
 	test.Next(_L("Attempt to set volume label containing illegal characters"));
 	r=TheFs.SetVolumeLabel(_L("abc>def"),driveNum);
-	test_Value(r, r == KErrBadName);
+	test(r==KErrBadName);
 	r=TheFs.SetVolumeLabel(_L("ghi*jkl"),driveNum);
-	test_Value(r, r == KErrBadName);
+	test(r==KErrBadName);
 	r=TheFs.SetVolumeLabel(_L("mno?pqr"),driveNum);
-	test_Value(r, r == KErrBadName);
+	test(r==KErrBadName);
 	r=TheFs.SetVolumeLabel(_L("stu|vwx"),driveNum);
-	test_Value(r, r == KErrBadName);
+	test(r==KErrBadName);
 	r=TheFs.SetVolumeLabel(_L("yz<abc"),driveNum);
-	test_Value(r, r == KErrBadName);
+	test(r==KErrBadName);
 	r=TheFs.SetVolumeLabel(_L("def//ghi"),driveNum);
-	test_Value(r, r == KErrBadName);
+	test(r==KErrBadName);
 
 	r=TheFs.Volume(v,driveNum);
-	test_KErrNone(r);
-	test.Printf(_L("VOL=\"%S\"\n"),&v.iName);
+	test(r==KErrNone);
 	test(v.iName==_L(""));
+	test.Printf(_L("VOL=\"%S\"\n"),&v.iName);
 
 	// test volume label after remount (for removable media only)
 	test.Next(_L("Test volume label after remount"));
 
 	TDriveInfo info;
-	r = TheFs.Drive(info, driveNum);
-	test_KErrNone(r);
+	test(TheFs.Drive(info, driveNum) == KErrNone);
 
 	if((info.iDriveAtt & KDriveAttRemovable) != 0)
 		{
 		// 1. set volume label
-		r = TheFs.SetVolumeLabel(_L("XXX"), driveNum);
-		test_KErrNone(r);
+		test(TheFs.SetVolumeLabel(_L("XXX"), driveNum) == KErrNone);
 
 		// 2. change bootsector volume label
 		const TInt	offset = IsFileSystemFAT32(TheFs, driveNum)? 
@@ -1399,20 +1408,15 @@ LOCAL_C void testSetVolume()
 		RRawDisk	rdisk;
 		TPtrC8		label(_S8("Z"), 1);
 
-		r = rdisk.Open(TheFs, driveNum);
-		test_KErrNone(r);
-		r = rdisk.Write(offset, label);
-		test_KErrNone(r);
+		test(rdisk.Open(TheFs, driveNum) == KErrNone);
+		test(rdisk.Write(offset, label) == KErrNone);
 		rdisk.Close();
 
 		// 3. remount the drive
-		r = TheFs.RemountDrive(driveNum);
-		test_KErrNone(r);
+		test(TheFs.RemountDrive(driveNum) == KErrNone);
 
 		// 4. check volume label
-		r = TheFs.Volume(v, driveNum);
-		test_KErrNone(r);
-		test.Printf(_L("VOL=\"%S\"\n"),&v.iName);
+		test(TheFs.Volume(v, driveNum) == KErrNone);
 		test(v.iName == _L("XXX"));
 		test.Printf(_L("- Passed.\n"));
 		}
@@ -1422,11 +1426,11 @@ LOCAL_C void testSetVolume()
 	// clean up
 	test.Next(_L("Set volume label to original"));
 	r=TheFs.SetVolumeLabel(n,driveNum);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.Volume(v,driveNum);
-	test_KErrNone(r);
-	test.Printf(_L("VOL=\"%S\"\n"),&v.iName);
+	test(r==KErrNone);
 	test(v.iName==n);
+	test.Printf(_L("VOL=\"%S\"\n"),&v.iName);
 
 	test.End();
 	}
@@ -1440,46 +1444,45 @@ LOCAL_C void testModified()
 	test.Start(_L("Test modified/SetModified functions"));
 	TTime savedTime;
 	TInt r=TheFs.Modified(_L("\\F32-TST\\TFSRV\\T_FSRV.CPP"),savedTime);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TDateTime dateTime=savedTime.DateTime();
 	test.Printf(_L("T_FSRV.CPP last modified %d/%d/%d %d:%d:%d.%-06d\n"),dateTime.Day()+1,dateTime.Month()+1,dateTime.Year(),dateTime.Hour(),dateTime.Minute(),dateTime.Second(),dateTime.MicroSecond());
 	test.Next(_L("Set modified"));
 	dateTime.Set(1993,EAugust,23,1,13,54,123456);
 	TTime newTime(dateTime);
 	r=TheFs.SetModified(_L("\\F32-TST\\TFSRV\\T_FSRV.CPP"),newTime);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TTime checkTime;
 	r=TheFs.Modified(_L("\\XXXX\\YYYY\\ZZZZ.CPP"),checkTime);
-	test_Value(r, r == KErrPathNotFound);
+	test(r==KErrPathNotFound);
 	r=TheFs.Modified(_L("\\F32-TST\\TFSRV\\T_FSRV.CPP"),checkTime);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	dateTime=checkTime.DateTime();	
-	test.Printf(_L("T_FSRV.CPP last modified %d/%d/%d %d:%d:%d.%-06d\n"),dateTime.Day()+1,dateTime.Month()+1,dateTime.Year(),dateTime.Hour(),dateTime.Minute(),dateTime.Second(),dateTime.MicroSecond());
 	test(dateTime.Year()==1993);
 	test(dateTime.Month()==EAugust);
 	test(dateTime.Day()==23);
 	test(dateTime.Hour()==1);
 	test(dateTime.Minute()==13);
 	test(dateTime.Second()==54);
+	test.Printf(_L("T_FSRV.CPP last modified %d/%d/%d %d:%d:%d.%-06d\n"),dateTime.Day()+1,dateTime.Month()+1,dateTime.Year(),dateTime.Hour(),dateTime.Minute(),dateTime.Second(),dateTime.MicroSecond());
 //		test(dateTime.MicroSecond()==123456); // dos is not accurate enough
 	r=TheFs.SetModified(_L("\\F32-TST\\TFSRV\\T_FSRV.CPP"),savedTime);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.Modified(_L("\\F32-TST\\TFSRV\\T_FSRV.CPP"),checkTime);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(checkTime==savedTime);
 
 	RFile f;
 	r=f.Open(TheFs,_L("\\F32-TST\\TFSRV\\T_FSRV.CPP"),EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	dateTime.Set(1997,EJanuary,1,2,55,51,999999);
 	newTime=dateTime;
 	r=f.SetModified(newTime);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.Modified(_L("\\F32-TST\\TFSRV\\T_FSRV.CPP"),checkTime);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	dateTime=checkTime.DateTime();	
-	test.Printf(_L("T_FSRV.CPP last modified via RFs::Modified() %d/%d/%d %d:%d:%d.%-06d\n"),dateTime.Day()+1,dateTime.Month()+1,dateTime.Year(),dateTime.Hour(),dateTime.Minute(),dateTime.Second(),dateTime.MicroSecond());
 	test(dateTime.Year()==1997);
 	test(dateTime.Month()==EJanuary);
 	test(dateTime.Day()==1);
@@ -1488,10 +1491,9 @@ LOCAL_C void testModified()
 	test(dateTime.Second()>=50 && dateTime.Second()<=51); // Dos stores seconds %2
 
 	r=f.Modified(checkTime);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	dateTime=checkTime.DateTime();	
-	test.Printf(_L("T_FSRV.CPP last modified via RFile::Modified() %d/%d/%d %d:%d:%d.%-06d\n"),dateTime.Day()+1,dateTime.Month()+1,dateTime.Year(),dateTime.Hour(),dateTime.Minute(),dateTime.Second(),dateTime.MicroSecond());
 	test(dateTime.Year()==1997);
 	test(dateTime.Month()==EJanuary);
 	test(dateTime.Day()==1);
@@ -1501,10 +1503,9 @@ LOCAL_C void testModified()
 	f.Close();
 
 	r=TheFs.Modified(_L("\\F32-TST\\TFSRV\\T_FSRV.CPP"),checkTime);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	dateTime=checkTime.DateTime();	
-	test.Printf(_L("T_FSRV.CPP last modified via RFs::Modified() %d/%d/%d %d:%d:%d.%-06d\n"),dateTime.Day()+1,dateTime.Month()+1,dateTime.Year(),dateTime.Hour(),dateTime.Minute(),dateTime.Second(),dateTime.MicroSecond());
 	test(dateTime.Year()==1997);
 	test(dateTime.Month()==EJanuary);
 	test(dateTime.Day()==1);
@@ -1528,27 +1529,23 @@ LOCAL_C void testName()
 	RFile file;
 	
 	TInt r=file.Open(TheFs, KFileName, 0 );
-	test_KErrNone(r);
+	if (r!=KErrNone)
+		{
+		test.Printf(_L("Error %d opening file %S\n"), r, &KFileName);
+		test(0);
+		}
 	
 	TFileName fileName;
 
 	// Check RFile::Name just retuns the file name, without path and drive
 	r=file.Name(fileName);
-	test_KErrNone(r);
-	if (fileName != KFileName)
-		{
-		test.Printf(_L("%S\n"), &fileName);
-		test(0);
-		}
+	test(r==KErrNone);
+	test(fileName==KFileName());
 
 	// Check RFile::FullName returns the complete file name and path
 	r=file.FullName(fileName);
-	test_KErrNone(r);
-	if (fileName.Mid(2)!=KFileNameAndPath)	// chop off drive letter + ':'
-		{
-		test.Printf(_L("%S\n"), &fileName);
-		test(0);
-		}
+	test(r==KErrNone);
+	test(fileName.Mid(2)==KFileNameAndPath); // chop off drive letter + ':'
 	
 	file.Close();
 	
@@ -1568,7 +1565,13 @@ LOCAL_C TInt CreateFileX(const TDesC& aBaseName,TInt aX)
 	TInt r=file.Replace(TheFs,fileName,EFileWrite);
 	if (r==KErrDiskFull)
 		return(r);
-	test_KErrNone(r);
+	if (r!=KErrNone)
+		{
+		test.Printf(_L("ERROR:: Replace returned %d\n"),r);
+		test(0);
+		//test.Getch();
+		return(KErrDiskFull);
+		}
 
 	if (!IsTestingLFFS())
 		r=file.SetSize(LargeFileSize);
@@ -1585,7 +1588,14 @@ LOCAL_C TInt CreateFileX(const TDesC& aBaseName,TInt aX)
 		file.Close();
 		return(r);
 		}
-	test_KErrNone(r);
+	if (r!=KErrNone)
+		{
+		test.Printf(_L("ERROR:: SetSize/Write returned %d\n"),r);
+		test(0);
+		//test.Getch();
+		file.Close();
+		return(KErrDiskFull);
+		}
 
 	file.Close();
 //	r=TheFs.CheckDisk(fileName);
@@ -1608,12 +1618,12 @@ LOCAL_C TInt DeleteFileX(TBuf<128>& aBaseName,TInt aX)
 	TBuf<128> fileName=aBaseName;
 	fileName.AppendNum(aX);
 	TInt r=TheFs.Delete(fileName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 //	r=TheFs.CheckDisk(fileName);
 //	if (r!=KErrNone && r!=KErrNotSupported)
 //		{
 //		test.Printf(_L("ERROR:: CheckDisk returned %d\n"),r);
-//		test_KErrNone(r);
+//		test(r==KErrNone);
 //		}
 	test.Printf(_L("Deleted File %d\n"),aX);
 	return(KErrNone);
@@ -1627,37 +1637,43 @@ LOCAL_C void MakeAndDeleteFiles()
 
 	test.Start(_L("Create and delete large files"));
 	TInt r=TheFs.MkDirAll(_L("\\F32-TST\\SMALLDIRECTORY\\"));
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	TBuf<128> fileName=_L("\\F32-TST\\SMALLDIRECTORY\\FILE");
 	r=CreateFileX(fileName,0);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=CreateFileX(fileName,1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=DeleteFileX(fileName,0);	
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=CreateFileX(fileName,2);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=CreateFileX(fileName,1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=CreateFileX(fileName,3);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=DeleteFileX(fileName,1);	
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=CreateFileX(fileName,4);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=DeleteFileX(fileName,2);	
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=DeleteFileX(fileName,3);	
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=DeleteFileX(fileName,4);	
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=CreateFileX(fileName,1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=DeleteFileX(fileName,1);	
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.CheckDisk(fileName);
-	test_Value(r, r == KErrNone || r == KErrNotSupported);
+	if (r!=KErrNone && r!=KErrNotSupported)
+		{
+		test.Printf(_L("ERROR:: CheckDisk returned %d\n"),r);
+		test(0);
+		//test.Getch();
+		}
+	
 	test.End();
 	}
 
@@ -1669,31 +1685,43 @@ LOCAL_C void FillUpDisk()
 
 	test.Start(_L("Fill disk to capacity"));
 	TInt r=TheFs.MkDirAll(_L("\\F32-TST\\BIGDIRECTORY\\"));
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	TInt count=0;
 	TFileName sessionPath;
 	r=TheFs.SessionPath(sessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TBuf<128> fileName=_L("\\F32-TST\\BIGDIRECTORY\\FILE");
 	FOREVER
 		{
 		TInt r=CreateFileX(fileName,count);
 		if (r==KErrDiskFull)
 			break;
-		test_KErrNone(r);
+		test(r==KErrNone);
 		count++;
-		if (Is_SimulatedSystemDrive(TheFs,gDrive) && count==32)
-			break;	// Limit on disk size for emulator/PlatSim
+#if defined(__WINS__)
+		if (count==32 && sessionPath[0]=='C')
+			break;
+#endif
 		}
 
 	r=TheFs.CheckDisk(fileName);
-	test_Value(r, r == KErrNone || r == KErrNotSupported);
+	if (r!=KErrNone && r!=KErrNotSupported)
+		{
+		test.Printf(_L("ERROR:: CheckDisk returned %d\n"),r);
+		test(0);
+		//test.Getch();
+		}
 
 	while(count--)
 		DeleteFileX(fileName,count);
 
 	r=TheFs.CheckDisk(fileName);
-	test_Value(r, r == KErrNone || r == KErrNotSupported);
+	if (r!=KErrNone && r!=KErrNotSupported)
+		{
+		test.Printf(_L("ERROR:: CheckDisk returned %d\n"),r);
+		test(0);
+		//test.Getch();
+		}
 
 	test.End();
 	}
@@ -1708,31 +1736,31 @@ LOCAL_C void CopyFileToTestDirectory()
 	fn[0] = gExeFileName[0];
 	TParse f;
 	TInt r=TheFs.Parse(fn,f);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Next(_L("Copying file to test directory"));
 	TParse fCopy;
 	r=TheFs.Parse(f.NameAndExt(),fCopy);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	RFile f1;
 	r=f1.Open(TheFs,f.FullName(),EFileStreamText|EFileShareReadersOnly);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	RFile f2;
 	r=f2.Replace(TheFs,fCopy.FullName(),EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TBuf8<512> copyBuf;
 	TInt rem;
 	r=f1.Size(rem);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TInt pos=0;
 	while (rem)
 		{
 		TInt s=Min(rem,copyBuf.MaxSize());
 		r=f1.Read(pos,copyBuf,s);
-		test_KErrNone(r);
-		test_Value(copyBuf.Length(), copyBuf.Length() == s);
+		test(r==KErrNone);
+		test(copyBuf.Length()==s);
 		r=f2.Write(pos,copyBuf,s);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		pos+=s;
 		rem-=s;
 		}
@@ -1762,26 +1790,26 @@ void TestSetErrorCondition()
     
     //==========  just create a file
     nRes = TheFs.SetErrorCondition(KMyError,0); //-- set up FS error simulation
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 
     //-- this shall fail immediately 
     nRes = file.Replace(TheFs, KFileName, EFileWrite);
-    test_Value(nRes, nRes == KMyError);
+    test(nRes == KMyError);
 
     nRes = TheFs.SetErrorCondition(KErrNone); //-- disable FS error simulation
     file.Close();
 
     //========== create file & duplicate a handle #1
     nRes = TheFs.SetErrorCondition(KMyError,1); //-- set up FS error simulation
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 
     //-- this shall succeed
     nRes = file.Replace(TheFs, KFileName, EFileWrite); //-- err cnt -> 0
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 
     //-- this shall fail inside RFile::Duplicate() half way through in the RFile::DuplicateHandle()
     nRes = file1.Duplicate(file);
-    test_Value(nRes, nRes == KMyError);
+    test(nRes == KMyError);
     file1.Close();
     
     nRes = TheFs.SetErrorCondition(KErrNone); //-- disable FS error simulation
@@ -1789,19 +1817,19 @@ void TestSetErrorCondition()
 
     //-- check that the file isn't locked
     nRes = TheFs.Delete(KFileName);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 
     //========== create file & duplicate a handle #2
     nRes = TheFs.SetErrorCondition(KMyError,2); //-- set up FS error simulation
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 
     //-- this shall succeed
     nRes = file.Replace(TheFs, KFileName, EFileWrite); //-- err cnt -> 1
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 
     //-- this must not fail, because EFsFileAdopt is excluded from the erros simulation
     nRes = file1.Duplicate(file);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
     file1.Close();
     
     nRes = TheFs.SetErrorCondition(KErrNone); //-- disable FS error simulation
@@ -1809,7 +1837,7 @@ void TestSetErrorCondition()
 
     //-- check that the file isn't locked
     nRes = TheFs.Delete(KFileName);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 
     //========== crazy loop, for DEF103757
 
@@ -1831,7 +1859,7 @@ void TestSetErrorCondition()
 
     //-- check that the file isn't locked
     nRes = TheFs.Delete(KFileName);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 
 
 #endif
@@ -1849,14 +1877,14 @@ GLDEF_C void CallTestsL()
     F32_Test_Utils::SetConsole(test.Console()); 
     
     TInt nRes=TheFs.CharToDrive(gDriveToTest, gDrive);
-    test_KErrNone(nRes);
+    test(nRes==KErrNone);
     
     PrintDrvInfo(TheFs, gDrive);
 
 
 	TVolumeInfo v;
 	TInt r=TheFs.Volume(v, CurrentDrive());
-	test_KErrNone(r);
+	test(r==KErrNone);
 	LargeFileSize=Max((TUint32)I64LOW(v.iFree >> 7), (TUint32)65536u);
 
     if (gFirstTime)

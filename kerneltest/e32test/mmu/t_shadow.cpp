@@ -195,27 +195,24 @@ void TestNoFreeRAM(TLinAddr aPageAddr)
 	{
 	test.Start(_L("Test allocating a shadow page when all free RAM is in 'chunk caches'"));
 	
-	// Remove limit on max size of live list
-	TUint originalMin = 0;
-	TUint originalMax = 0;
-	TUint currentSize = 0;
-	TInt r = DPTest::CacheSize(originalMin, originalMax, currentSize);
-	test_Value(r, r == KErrNone || r == KErrNotSupported);
-	TBool resizeCache = r == KErrNone;
-	if (resizeCache)
-		test_KErrNone(DPTest::SetCacheSize(originalMin, KMaxTUint));
-
 	test.Next(_L("Load gobbler LDD"));
-	r = User::LoadLogicalDevice(KGobblerLddFileName);
+	TInt r = User::LoadLogicalDevice(KGobblerLddFileName);
 	test_Value(r, r==KErrNone || r==KErrAlreadyExists);
-	RGobbler gobbler, gobbler2;
+	RGobbler gobbler;
 	test_KErrNone(gobbler.Open());
 	TUint32 taken = gobbler.GobbleRAM(496*1024*1024);
 	test.Printf(_L("  Gobbled: %dK\n"), taken/1024);
 	test.Printf(_L("  Free RAM 0x%08X bytes\n"),FreeRam());
-	//  Open 2nd globber here, while we still have some free pages.
-	test_KErrNone(gobbler2.Open());
 
+	// Remove limit on max size of live list
+	TUint originalMin = 0;
+	TUint originalMax = 0;
+	TUint currentSize = 0;
+	r = DPTest::CacheSize(originalMin, originalMax, currentSize);
+	test_Value(r, r == KErrNone || r == KErrNotSupported);
+	TBool resizeCache = r == KErrNone;
+	if (resizeCache)
+		test_KErrNone(DPTest::SetCacheSize(originalMin, KMaxTUint));
 
 	// put all of free RAM in a chunk...
 	TChunkCreateInfo createInfo;
@@ -226,14 +223,7 @@ void TestNoFreeRAM(TLinAddr aPageAddr)
 	while(KErrNone==(r=testChunk.Commit(commitEnd,PageSize)))
 		commitEnd += PageSize;
 	test_Equal(KErrNoMemory,r);
-
-	// Now we have some memory in a cache chunk ensure definitely no 
-	// other free pages.
-	taken = gobbler2.GobbleRAM(0);
-	test.Printf(_L("  Gobbled: %dK\n"), taken/1024);
-	test_Equal(0, FreeRam());
-
-
+	
 	// no memory to allocate shadow page...
 	test_Equal(KErrNoMemory,Shadow.Alloc(aPageAddr));
 	// unlock all of RAM in chunk...
@@ -249,7 +239,6 @@ void TestNoFreeRAM(TLinAddr aPageAddr)
 		test_KErrNone(DPTest::SetCacheSize(originalMin, originalMax));
 
 	gobbler.Close();
-	gobbler2.Close();
 	test.End();
 	}
 

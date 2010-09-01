@@ -113,7 +113,6 @@ CDynamicDirCache::CDynamicDirCache(TDriveInterface& aDrive, TUint32 aMinPageNum,
                   iMinSizeInPages(aMinPageNum),
                   iMaxSizeInPages(aMaxPageNum),
                   iDrive(aDrive),
-				  iLastVisitedPage(NULL),
                   iLockedQ(_FOFF(TDynamicDirCachePage, iLink)),
                   iUnlockedQ(_FOFF(TDynamicDirCachePage, iLink)),
                   iLockedQCount(0),
@@ -159,19 +158,19 @@ void CDynamicDirCache::ConstructL(const TDesC& aClientName)
 
 	// allocate as many permanently locked pages as there are threads - plus one
 	// otherwise DoMakePageMRU() won't work properly with only one thread
-    //-- At present moment the size of TDrive thread pool is 1 (1 drive thread in a pool)
-    const TUint KThreadCount = 1;
-    iPermanentlyAllocatedPageCount = KThreadCount; 
+	//-- At present moment the size of TDrive thread pool is 1 (1 drive thread in a pool)
+	const TUint KThreadCount = 1;
+	iPermanentlyAllocatedPageCount = KThreadCount + 1; 
 
 	if (iPermanentlyAllocatedPageCount > iMinSizeInPages)
 		iMinSizeInPages = iPermanentlyAllocatedPageCount;
 
 	for (TUint n=0; n<iPermanentlyAllocatedPageCount; n++)
 		{
-        TDynamicDirCachePage* pPage = AllocateAndLockNewPage();
-        ASSERT(pPage);
-        if (!pPage)
-            User::Leave(KErrNoMemory);
+		TDynamicDirCachePage* pPage = AllocateAndLockNewPage(0);
+		ASSERT(pPage);
+		if (!pPage)
+			User::Leave(KErrNoMemory);
 		AddFirstOntoQueue(pPage, TDynamicDirCachePage::ELocked);
 		LookupTblAdd(pPage);
 		}
@@ -190,6 +189,42 @@ CDynamicDirCache* CDynamicDirCache::NewL(TDriveInterface& aDrive, TUint32 aMinPa
     CleanupStack::Pop();
     return pSelf;
     }
+
+/**
+Insert an unlocked page into the last position of the locked queue, may squeeze the original last page into
+the unlocked queue.
+This function is used on last visited but 'unlocked' pages to avoid excessive lock/unlock calls to cache memory
+manager as contiguous entry reading/writing often happens on the same page.
+@param	aPage	the page to be inserted.
+@pre	the page type of aPage should only be TDynamicDirCachePage::EUnknown
+*/
+void CDynamicDirCache::MakePageLastLocked(TDynamicDirCachePage* aPage)
+	{
+	// this function should not be called on active pages
+	ASSERT(aPage->iType == TDynamicDirCachePage::EUnknown);
+
+	if (iLockedQ.IsEmpty())
+		{
+		// if locked queue is empty, add it onto the locked queue directly
+		AddFirstOntoQueue(aPage, TDynamicDirCachePage::ELocked);
+		}
+	else
+		{
+		// otherwise, we squeeze for the last position on locked queue
+		while (iLockedQCount + 1 >= iMinSizeInPages)
+			{
+			TDynamicDirCachePage* last = iLockedQ.Last();
+			DeQueue(last);
+			UnlockPage(last);
+			AddFirstOntoQueue(last, TDynamicDirCachePage::EUnlocked);
+			}
+
+		// iLockedQCount + 1 < iMinSizeInPages
+		iLockedQ.AddLast(*aPage);
+		aPage->SetPageType(TDynamicDirCachePage::ELocked);
+		iLockedQCount++;
+		}
+	}
 
 /**
     Read data from a single page. If the page is not found or not valid anymore, read media onto iActive page first.
@@ -213,19 +248,13 @@ void CDynamicDirCache::ReadDataFromSinglePageL(TInt64 aPos, TInt aLength, TDes8&
             aDes.Append(pPage->PtrInPage(aPos), aLength);
 
 
-            // if page is from unlocked queue, try to keep it locked until we move to a 
-            //  different page from the unlocked queue 
-            // this is to avoid excessive locking and unlocking operations that is
-            //  highly likely to happen when DoFindL() linearly scan through the directory
-            if (pPage->PageType() == TDynamicDirCachePage::EUnlocked
-                && iLastVisitedPage != pPage)
-                {
-                // Note: iLastVisitedPage may have been moved from unlocked queue to locked queue
-                if(iLastVisitedPage && iLastVisitedPage->PageType() == TDynamicDirCachePage::EUnlocked)
-                    {
-                    User::LeaveIfError(UnlockPage(iLastVisitedPage));
-                    }
-                iLastVisitedPage = pPage;
+            // if page is from unlocked queue, insert it onto the last page of the locked
+            //  queue. this is to avoid excessive locking and unlocking operations that is
+            //  highly likely to happen for following reads.
+            if (pPage->PageType() == TDynamicDirCachePage::EUnlocked)
+            	{
+            	DeQueue(pPage);
+            	MakePageLastLocked(pPage);
             	}
     		}
     	else	// page locking failed
@@ -595,32 +624,23 @@ TInt CDynamicDirCache::Control(TUint32 aFunction, TUint32 aParam1, TAny* aParam2
         case EDumpCache:
         	{
         	RFs fs;
-        	r = fs.Connect();
-            if(r != KErrNone)
-                break;
-
+        	fs.Connect();
         	const TUint32 debugRegister = DebugRegister();
         	fs.SetDebugRegister(debugRegister|KFSYS);
         	Dump();
         	fs.SetDebugRegister(debugRegister);
         	fs.Close();
-        	r = KErrNone;
         	break;
         	}
         case ECacheInfo:
         	{
         	RFs fs;
-        	r = fs.Connect();
-            if(r != KErrNone)
-                break;
-        	
+        	fs.Connect();
         	const TUint32 debugRegister = DebugRegister();
         	fs.SetDebugRegister(debugRegister|KFSYS);
-            TDirCacheInfo* aInfo = static_cast<TDirCacheInfo*>(aParam2);
-            Info(aInfo);
+        	Info();
         	fs.SetDebugRegister(debugRegister);
         	fs.Close();
-        	r = KErrNone;
         	break;
         	}
 
@@ -663,14 +683,14 @@ void CDynamicDirCache::DoMakePageMRU(TInt64 aPos)
 	{
 //	__PRINT1(_L("MakePageMRU (%lx)"), aPos);
 //	__PRINT4(_L("Current Cache State: iLockedQCount=%d, iUnlockedQCount=%d, iLookupTbl=%d, iMaxSizeInPages=%d"), iLockedQCount, iUnlockedQCount, iLookupTable.Count(), iMaxSizeInPages);
-	// check there are at least one locked pages
-	ASSERT(iLockedQCount > 0);
+	// check there are at least two locked pages
+	ASSERT(iLockedQCount > 1);
 	
 	// check the MRU page first, if it is already the MRU page, we can return immediately
 	TInt64 pageStartMedPos = CalcPageStartPos(aPos);
 	if (!iLockedQ.IsEmpty())
 		{
-        if (iLockedQCount > 1 && iLockedQ.First()->StartPos() == pageStartMedPos)
+		if (iLockedQ.First()->StartPos() == pageStartMedPos)
 			{
 			return;
 			}
@@ -683,7 +703,7 @@ void CDynamicDirCache::DoMakePageMRU(TInt64 aPos)
 		// lock page before make it MRU
 		if (pPage->PageType() == TDynamicDirCachePage::EUnlocked)
 			{
-            ASSERT(!pPage->IsLocked() || (pPage->IsLocked() && pPage == iLastVisitedPage));
+			ASSERT(!pPage->IsLocked());
 			if (LockPage(pPage) == NULL)
 				{
 				DeQueue(pPage);
@@ -699,7 +719,6 @@ void CDynamicDirCache::DoMakePageMRU(TInt64 aPos)
 			ASSERT(LockPage(pPage) != NULL);
 			}
 		}
-
 	// if page not found or page data not valid anymore, use active page to read data
 	if (!pPage)
 		{
@@ -715,9 +734,8 @@ void CDynamicDirCache::DoMakePageMRU(TInt64 aPos)
 	ASSERT(pPage && pPage->IsValid() && pPage->IsLocked());
 
 
-
-    TBool makeNewPageMRU = pPage == iLockedQ.Last();
-
+	// if we used the active page (last on the queue), try to grow the cache.
+	TBool growCache = pPage == iLockedQ.Last();
 
 	switch (pPage->PageType())
 		{
@@ -745,27 +763,16 @@ void CDynamicDirCache::DoMakePageMRU(TInt64 aPos)
 			ASSERT(0);
 		}
 
-    if (!makeNewPageMRU)
-        return;
-    
-    // when cache is full and a new MRU page is about to be added, we will need to evict the LRU page
-    //  accordingly
-    if (CacheIsFull())
-        {
-        TUint32& queueCnt = iMaxSizeInPages - iMinSizeInPages > 0 ? iUnlockedQCount : iLockedQCount;
-        queueCnt++;
-        CheckThresholds();
-        queueCnt--;
-        }
+	if (CacheIsFull() || !growCache)
+		return;
 
-    // attempt to grow the cache by appending a clean, new page at the end of the locked page queue.
-    // This can fail when out of memory; the LRU mechanism then makes sure the oldest page will be re-used.
-    TDynamicDirCachePage* nPage = AllocateAndLockNewPage();
-    if (!nPage)
-        return;
+	// attempt to grow the cache by appending a clean, new page at the end of the LRU list.
+	// This can fail when out of memory; the LRU mechanism then makes sure the oldest page will be re-used.
+	TDynamicDirCachePage* nPage = AllocateAndLockNewPage(0);
+	if (!nPage)
+		return;
 
-    // about to add the new active page, force the locked queue to evict the existing last page to make room 
-    //  for the new active page 
+	// about to add a page to end of locked queue, so lie about iLockedQCount
 	iLockedQCount++;
 	CheckThresholds();
 	iLockedQCount--;
@@ -773,6 +780,7 @@ void CDynamicDirCache::DoMakePageMRU(TInt64 aPos)
 	iLockedQ.AddLast(*nPage);
 	nPage->SetPageType(TDynamicDirCachePage::ELocked);
 	++iLockedQCount;
+	LookupTblAdd(nPage);
 	}
 
 /**
@@ -848,7 +856,7 @@ number and maximum allowed page number respectively.
 */
 void CDynamicDirCache::CheckThresholds()
 	{
-    while (iLockedQCount > iMinSizeInPages)
+	while (iLockedQCount + 1 > iMinSizeInPages)
 		{
 		TDynamicDirCachePage* movePage = iLockedQ.Last();
 		UnlockPage(movePage);
@@ -888,67 +896,66 @@ void CDynamicDirCache::CheckThresholds()
 Try to create a new page and lock the page content when it is created. This function should only be called
 when creating iActive page or making a page MRU (which might result in page evictions).
 @return	the pointer of the newly created page, or NULL if allocation failed.
+@param	aStartMedPos	the starting media address of the page to be created.
+@pre	aStartMedPos should not already be existing in the cache.
 */
-TDynamicDirCachePage* CDynamicDirCache::AllocateAndLockNewPage(/*TInt64 aStartMedPos*/)
-    {
-    __PRINT(_L("CDynamicDirCache::AllocateAndLockNewPage()"));
+TDynamicDirCachePage* CDynamicDirCache::AllocateAndLockNewPage(TInt64 aStartMedPos)
+	{
+	__PRINT1(_L("CDynamicDirCache::AllocateAndLockNewPage(aStartMedPos=%lx)"), aStartMedPos);
 
-    TUint8* startRamAddr = iCacheMemoryClient->AllocateAndLockSegments(PageSizeInSegs());
+	TUint8* startRamAddr = iCacheMemoryClient->AllocateAndLockSegments(PageSizeInSegs());
 
-    if (!startRamAddr)
-        return NULL;
+	if (!startRamAddr)
+		return NULL;
 
-    TDynamicDirCachePage* pPage = TDynamicDirCachePage::CreateCachePage(this, 0, startRamAddr);
+	TDynamicDirCachePage* pPage = TDynamicDirCachePage::CreateCachePage(this, aStartMedPos, startRamAddr);
 
-    // Failure would mean the cache chunk was able to grow but we've run out of heap.
-    // This seems extremely unlikely, but decommit the now-unmanageable cache segment just in case.
-    if (!pPage)
-        {
-        iCacheMemoryClient->DecommitSegments(startRamAddr, PageSizeInSegs());
-        return NULL;
-        }
+	// Failure would mean the cache chunk was able to grow but we've run out of heap.
+	// This seems extremely unlikely, but decommit the now-unmanageable cache segment just in case.
+	if (!pPage)
+		{
+		iCacheMemoryClient->DecommitSegments(startRamAddr, PageSizeInSegs());
+		return NULL;
+		}
 
 	pPage->SetLocked(ETrue);
 	pPage->SetValid(EFalse);
 	return pPage;
 	}
 
-#if defined(_DEBUG) || defined(_DEBUG_RELEASE)
+
+#ifdef _DEBUG
 /**
 Dump cache information, only enabled in debug mode.
 @see CDynamicDirCache::Control()
 */
-void CDynamicDirCache::Info(TDirCacheInfo* aInfo) const
-    {
-    __PRINT(_L("======== CDynamicDirCache::Info ========="));
-    const TUint32 SegmentSizeInBytesLog2 = CCacheMemoryManagerFactory::CacheMemoryManager()->SegmentSizeInBytesLog2();
-    const TUint32 pageMemSizeLog2 = iPageSizeLog2 > SegmentSizeInBytesLog2 ? iPageSizeLog2 : SegmentSizeInBytesLog2;
-    // page size
-    __PRINT1(_L("=== Segment size:             [%d Bytes]"), 1 << SegmentSizeInBytesLog2);
-    __PRINT1(_L("=== Page data size:           [%d Bytes]"), iPageSizeInBytes);
-    __PRINT1(_L("=== Page mem size:            [%d Bytes]"), 1 << pageMemSizeLog2);
+void CDynamicDirCache::Info() const
+	{
+	__PRINT(_L("======== CDynamicDirCache::Info ========="));
+	const TUint32 SegmentSizeInBytesLog2 = CCacheMemoryManagerFactory::CacheMemoryManager()->SegmentSizeInBytesLog2();
+	// page size
+	__PRINT1(_L("=== Pages size:               [%d Bytes]"), iPageSizeInBytes);
+	__PRINT1(_L("=== Segment size:             [%d Bytes]"), 1 << SegmentSizeInBytesLog2);
 
-    // cache size in pages
-    __PRINT1(_L("=== Min cache size in pages:  [%d]"), iMinSizeInPages);
-    __PRINT1(_L("=== Max cache size in pages:  [%d]"), iMaxSizeInPages);
+	// data size:
+	__PRINT1(_L("=== Min data size:            [%d Bytes]"), iMinSizeInPages << iPageSizeLog2);
+	__PRINT1(_L("=== Max data size:            [%d Bytes]"), iMaxSizeInPages << iPageSizeLog2);
 
-    // locked page num
-    __PRINT1(_L("=== Number of pages locked:   [%d]"), iLockedQCount);
-    // unlocked page num
-    __PRINT1(_L("=== Number of pages unlocked: [%d]"), iUnlockedQCount);
-    __PRINT(_L("=========================================\n"));
-    
-    ASSERT(aInfo);
-    aInfo->iMemorySegmentSize       = 1 << SegmentSizeInBytesLog2;
-    aInfo->iPageSizeInMemory        = PageSizeInSegs() << SegmentSizeInBytesLog2;
-    aInfo->iPageSizeInData          = iPageSizeInBytes;
-    aInfo->iMinCacheSizeInPages     = iMinSizeInPages;
-    aInfo->iMaxCacheSizeInPages     = iMaxSizeInPages;
-    aInfo->iMinCacheSizeInMemory    = iMinSizeInPages * aInfo->iPageSizeInMemory;
-    aInfo->iMaxCacheSizeInMemory    = iMaxSizeInPages * aInfo->iPageSizeInMemory;
-    aInfo->iLockedPageNumber        = iLockedQCount;
-    aInfo->iUnlockedPageNumber      = iUnlockedQCount;
-    }
+	// memory size:
+	const TUint32 pageMemSizeLog2 = iPageSizeLog2 > SegmentSizeInBytesLog2 ? iPageSizeLog2 : SegmentSizeInBytesLog2;
+	__PRINT1(_L("=== Min memory size:          [%d Bytes]"), iMinSizeInPages << pageMemSizeLog2);
+	__PRINT1(_L("=== Max memory size:          [%d Bytes]"), iMaxSizeInPages << pageMemSizeLog2);
+
+	// reserved pages
+	__PRINT1(_L("=== Number of pages reserved: [%d]"), iMinSizeInPages);
+	__PRINT1(_L("=== Reserved memory:          [%d Bytes]"), (iMinSizeInPages * PageSizeInSegs()) << SegmentSizeInBytesLog2);
+	// locked page num
+	__PRINT1(_L("=== Number of pages locked:   [%d]"), iLockedQCount);
+	__PRINT1(_L("=== Locked memory:            [%d Bytes]"), (iLockedQCount * PageSizeInSegs()) << SegmentSizeInBytesLog2);
+	// unlocked page num
+	__PRINT1(_L("=== Number of pages unlocked: [%d]"), iUnlockedQCount);
+	__PRINT1(_L("=== Unlocked memory:          [%d Bytes]"), (iUnlockedQCount * PageSizeInSegs()) << SegmentSizeInBytesLog2);
+	}
 
 /**
 Dump cache content, only enabled in debug mode.
@@ -998,7 +1005,7 @@ void CDynamicDirCache::Dump()
         }
     __PRINT(_L("===========================================\n"));
     }
-#endif //#if defined(_DEBUG) || defined(_DEBUG_RELEASE)
+#endif //_DEBUG
 
 /**
 Lock an unlocked page, or do nothing if the page is already locked.
@@ -1030,17 +1037,14 @@ TInt CDynamicDirCache::UnlockPage(TDynamicDirCachePage* aPage)
 	{
 	ASSERT(aPage != NULL);
 	__PRINT1(_L("CDynamicDirCache::UnlockPage(%lx)"), aPage->StartPos());
-    if (aPage)
-        {
-		TInt r = iCacheMemoryClient->UnlockSegments(aPage->StartPtr(), PageSizeInSegs());
-		if (r == KErrNone)
-			{
-			aPage->SetLocked(EFalse);
-			}
-		return r;
+	TInt r = iCacheMemoryClient->UnlockSegments(aPage->StartPtr(), PageSizeInSegs());
+	if (r == KErrNone)
+		{
+		aPage->SetLocked(EFalse);
 		}
-    return KErrArgument;
-    }
+	return r;
+	}
+
 /**
 Decommit a locked or unlocked page.
 @return	TInt	KErrNone if decommition was successful, otherwise system-wide error code.

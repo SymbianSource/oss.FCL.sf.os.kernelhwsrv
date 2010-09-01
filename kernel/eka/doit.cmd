@@ -18,7 +18,6 @@ cd \e32toolp\group
 call setupprj
 call bld rel
 
-
 cd \
 perl e32\configure.pl %* >e32rt.txt
 call genbuild e32rt.txt

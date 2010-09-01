@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -24,10 +24,6 @@
 #include "testcaseroot.h"
 #include "testcasewd.h"
 #include "testcase0469.h"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "testcase0469Traces.h"
-#endif
 
 #define _REPEATS (oOpenIterations*3)
 
@@ -40,10 +36,7 @@ const TTestCaseFactoryReceipt<CTestCase0469> CTestCase0469::iFactoryReceipt(KTes
 
 CTestCase0469* CTestCase0469::NewL(TBool aHost)
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0469_NEWL);
-	    }
+	LOG_FUNC
 	CTestCase0469* self = new (ELeave) CTestCase0469(aHost);
 	CleanupStack::PushL(self);
 	self->ConstructL();
@@ -54,10 +47,7 @@ CTestCase0469* CTestCase0469::NewL(TBool aHost)
 CTestCase0469::CTestCase0469(TBool aHost)
 	: CTestCaseB2BRoot(KTestCaseId, aHost, iStatus) 
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0469_CTESTCASE0469);
-	    }
+	LOG_FUNC
 		
 	} 
 
@@ -66,10 +56,7 @@ CTestCase0469::CTestCase0469(TBool aHost)
 */
 void CTestCase0469::ConstructL()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0469_CONSTRUCTL);
-	    }
+	LOG_FUNC
     iDualRoleCase = EFalse; // Not back to back
 	BaseConstructL();
 	}
@@ -77,10 +64,7 @@ void CTestCase0469::ConstructL()
 
 CTestCase0469::~CTestCase0469()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0469_DCTESTCASE0469);
-	    }
+	LOG_FUNC
     iCollector.DestroyObservers();
 	Cancel();
 	}
@@ -88,10 +72,7 @@ CTestCase0469::~CTestCase0469()
 
 void CTestCase0469::ExecuteTestCaseL()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0469_EXECUTETESTCASEL);
-	    }
+	LOG_FUNC
 	iCaseStep = EPreconditions;
 	iRepeats = 3;
 	
@@ -102,10 +83,7 @@ void CTestCase0469::ExecuteTestCaseL()
 	
 void CTestCase0469::DoCancel()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0469_DOCANCEL);
-	    }
+	LOG_FUNC
 	// cancel our timer
 	iTimer.Cancel();
 	}
@@ -113,10 +91,7 @@ void CTestCase0469::DoCancel()
 // handle event completion	
 void CTestCase0469::RunStepL()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0469_RUNSTEPL);
-	    }
+	LOG_FUNC
 	// Obtain the completion code for this CActive obj.
 	TInt completionCode(iStatus.Int()); 
 	TBuf<MAX_DSTRLEN> aDescription;
@@ -130,11 +105,8 @@ void CTestCase0469::RunStepL()
         iCaseStep = ELoadLdd;
         // prompt to insert connectors
         test.Printf(KInsertBCablePrompt);
-        OstTrace0(TRACE_NORMAL, CTESTCASE0469_RUNSTEPL_DUP01, KInsertBCablePrompt);
         test.Printf(KRemoveAFromPC);
-        OstTrace0(TRACE_NORMAL, CTESTCASE0469_RUNSTEPL_DUP02, KRemoveAFromPC);
         test.Printf(KPressAnyKeyToContinue);
-        OstTrace0(TRACE_NORMAL, CTESTCASE0469_RUNSTEPL_DUP03, KPressAnyKeyToContinue);
         RequestCharacter();			
         break;
 			
@@ -177,12 +149,12 @@ void CTestCase0469::RunStepL()
 
         if (iRepeats--)
             {
-            OstTrace1(TRACE_NORMAL, CTESTCASE0469_RUNSTEPL_DUP04, "ELoopControl around again %d", iRepeats);
+            RDebug::Printf("ELoopControl around again %d", iRepeats);
             iCaseStep = ETestVbusRise;
             }
         else
             {
-            OstTrace0(TRACE_NORMAL, CTESTCASE0469_RUNSTEPL_DUP05, "ELoopControl we're done");
+            RDebug::Printf("ELoopControl we're done");
             iCaseStep = EUnloadLdd;
             }
         SelfComplete();
@@ -200,7 +172,6 @@ void CTestCase0469::RunStepL()
         iCollector.AddRequiredNotification(EWatcherEvent, RUsbOtgDriver::EEventVbusRaised);
         iCaseStep = ETestVbusFall;
         test.Printf(KInsertAIntoPC);
-        OstTrace0(TRACE_NORMAL, CTESTCASE0469_RUNSTEPL_DUP06, KInsertAIntoPC);
         SetActive();
         break;
 
@@ -216,20 +187,19 @@ void CTestCase0469::RunStepL()
         iCollector.AddRequiredNotification(EWatcherEvent, RUsbOtgDriver::EEventVbusDropped);
         iCaseStep = ELoopControl;
         test.Printf(KRemoveAFromPC);
-        OstTrace0(TRACE_NORMAL, CTESTCASE0469_RUNSTEPL_DUP07, KRemoveAFromPC);
         SetActive();
         break;
 
     case EUnloadLdd:
         LOG_STEPNAME(_L("EUnloadLdd"))
         iCollector.DestroyObservers();
-        OstTrace0(TRACE_NORMAL, CTESTCASE0469_RUNSTEPL_DUP08, "Destroyed observers");
+        RDebug::Printf("Destroyed observers");
         if (EFalse == StepUnloadLDD())
             return TestFailed(KErrAbort,_L("unload Ldd failure"));	
-        OstTrace0(TRACE_NORMAL, CTESTCASE0469_RUNSTEPL_DUP09, "unloaded ldd");
+        RDebug::Printf("unloaded ldd");
         if (!StepUnloadClient())
             return TestFailed(KErrAbort,_L("Client Unload Failure"));	
-        OstTrace0(TRACE_NORMAL, CTESTCASE0469_RUNSTEPL_DUP10, "unloaded client");
+        RDebug::Printf("unloaded client");
 
         iCaseStep = ELastStep;
         SelfComplete();
@@ -242,7 +212,6 @@ void CTestCase0469::RunStepL()
 			
     default:
         test.Printf(_L("<Error> unknown test step"));
-        OstTrace0(TRACE_NORMAL, CTESTCASE0469_RUNSTEPL_DUP11, "<Error> unknown test step");
         Cancel();
         return (TestFailed(KErrCorrupt, _L("<Error> unknown test step")));
 		}

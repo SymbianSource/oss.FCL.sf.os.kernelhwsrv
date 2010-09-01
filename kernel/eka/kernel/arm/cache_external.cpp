@@ -313,24 +313,21 @@ void ExternalCache::CleanAndInvalidate(TLinAddr aBase, TUint aSize)
 
 void ExternalCache::AtomicSync()
 	{
-	// This methos is called during reboot or power down sequence and therefore is not allowed
-	// to do Kernel calls that may hold spin lock - such as Kern::Print or precondition checkings.
-	// CHECK_PRECONDITIONS(MASK_INTERRUPTS_DISABLED,"ExternalCache::AtomicSync");
-	// __KTRACE_OPT(KMMU,Kern::Printf("ExternalCache::AtomicSync"));
+	CHECK_PRECONDITIONS(MASK_INTERRUPTS_DISABLED,"ExternalCache::AtomicSync");
+	__KTRACE_OPT(KMMU,Kern::Printf("ExternalCache::AtomicSync"));
+
 #if defined(__ARM_PL310_CACHE__)
-    // Do not use maintain-by-way operations on PL310 (due to erratum 727915 for example)
-    // Also, do not use ARML2C_CleanInvalidateByIndexWay (erratum 588369)
-    // Do not hold spin lock as it is assumed this is the only running CPU.
-    TInt indexNo = Info.iSize>>3; // This is the number of cache lines in each way. Assoc is always 8 in this cache
-    volatile TInt* ctrlReg = (volatile TInt*)(Base+ARML2C_CleanByIndexWay);
-    TInt way,index;
-    for (way = 0 ; way <Info.iAssoc ; way++)
-        {
-        for (index = 0 ; index <indexNo ; index++)
-            {
-            *ctrlReg = (way<<ARML2C_WayShift) | (index<<ARML2C_IndexShift); //This will maintain a single cache line
-            }
-        }
+	// On Pl310, we hold the lock while maintaining cache. Therefore, we cannot
+	// do that on a way basis as it takes too long to complete.
+	// This will also ensure that PL310 erratum 727915 is sorted out.
+
+#if defined(__ARM_PL310_ERRATUM_588369_FIXED)
+	Maintain_All((TInt*)(Base+ARML2C_CleanInvalidateByIndexWay));
+#else //defined(__ARM_PL310_ERRATUM_588369_FIXED)
+	//CleanAndInvalidate is broken. Just clean it.
+	Maintain_All((TInt*)(Base+ARML2C_CleanByIndexWay));
+#endif //else defined(__ARM_PL310_ERRATUM_588369_FIXED)
+	
 #else //defined(__ARM_PL310_CACHE__)
 
 	#if defined (__ARM_L210_CACHE__)

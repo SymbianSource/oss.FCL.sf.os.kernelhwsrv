@@ -105,10 +105,6 @@ TInt DArmPlatProcess::GetNewThread(DThread*& aThread, SThreadCreateInfo& aInfo)
 				{
 				*(TUint32*)(pT->iNThread.iExtraContext) = Arm::FpScr() & VFP_FPSCR_MODE_MASK;
 				}
-			else
-				{
-				*(TUint32*)(pT->iNThread.iExtraContext) = *(TUint32*)(Kern::CurrentThread().iNThread.iExtraContext);
-				}
 			}
 		}
 #endif
@@ -361,8 +357,8 @@ EXPORT_C void Exc::Fault(TAny* aExcInfo)
 	TSubScheduler* ss = &SubScheduler();
 	if (!ss)
 		ss = &TheSubSchedulers[0];
-	ss->iSSX.iExcInfo = aExcInfo;
-	SFullArmRegSet* a = ss->iSSX.iRegs;
+	ss->i_ExcInfo = aExcInfo;
+	SFullArmRegSet* a = (SFullArmRegSet*)ss->i_Regs;
 	if (!a)
 		a = &DefaultRegSet;
 #else

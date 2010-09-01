@@ -1,0 +1,130 @@
+The Specimen Implementations of the Exception Handling Components of the ABI for the ARM(R) Architecture consists of copyright owned by ARM Limited and copyright owned by Nokia Corporation. Each is licensed to you separately by the respective copyright owner, on the terms set out in this file.
+
+1. LICENSE TO ARM COPYRIGHT
+
+IMPORTANT: THIS IS A LEGAL AGREEMENT ("LICENCE") BETWEEN YOU (AN INDIVIDUAL OR
+SINGLE ENTITY WHO IS RECEIVING THIS SOURCE CODE DIRECTLY FROM ARM LIMITED)
+("LICENSEE") AND ARM LIMITED ("ARM") FOR THE VERSION OF THE SOURCE CODE SUPPLIED
+WITH THIS LICENCE ("SOURCE CODE"). THE SOURCE CODE IS A SPECIMEN IMPLEMENTATION OF
+EXCEPTION HANDLING COMPONENTS COMPLYING WITH THE SPECIFICATION DEFINED IMMEDIATELY
+BELOW. BY DOWNLOADING OR OTHERWISE USING THE SOURCE CODE, YOU AGREE TO BE BOUND BY
+ALL OF THE TERMS OF THIS LICENCE. IF YOU DO NOT AGREE TO THIS, DO NOT DOWNLOAD OR
+USE THE SOURCE CODE.
+
+“Specification” means, and is limited to, version 2 of the specification for the
+Applications Binary Interface for the ARM Architecture published by ARM.
+Notwithstanding the foregoing,  Specification” shall not include (i) the
+implementation of other published specifications referenced in this  Specification;
+(ii) any enabling technologies that may be necessary to make or use any product or
+portion thereof that complies with this Specification, but are not themselves
+expressly set forth in this Specification (e.g. compiler front ends, code
+generators, back ends, libraries or other compiler, assembler or linker
+technologies; validation or debug software or hardware; applications, operating
+system or driver software; RISC architecture; processor microarchitecture);
+(iii) maskworks and physical layouts of integrated circuit designs; or (iv) RTL or
+other high level representations of integrated circuit designs.
+
+Use, copying or disclosure by the US Government is subject to the restrictions set
+out in subparagraph (c)(1)(ii) of the Rights in Technical Data and Computer Software
+clause at DFARS 252.227-7013 or subparagraphs (c)(1) and (2) of the Commercial
+Computer Software - Restricted Rights at 48 C.F.R. 52.227-19, as applicable.
+
+The Source Code is owned by ARM or its licensors and is protected by copyright laws
+and international copyright treaties as well as other intellectual property laws and
+treaties. The Source Code is licensed not sold.
+
+1.  Subject to the provisions of Clauses 2 and 3, ARM hereby grants to LICENSEE,
+under any intellectual property that is (i) owned or freely licensable by ARM
+without payment to unaffiliated third parties and (ii) either embodied in the Source
+Code, or Necessary to copy or implement an applications binary interface compliant
+with the Specification, a perpetual, non-exclusive, non-transferable, fully paid,
+worldwide limited licence to use, copy, modify and sublicense this Source Code (in
+source or object code form) solely for the purpose of developing, having developed,
+manufacturing, having manufactured, offering to sell, selling, supplying or
+otherwise distributing products which comply with the Specification, provided that
+LICENSEE preserves all copyright notices included in the Source Code. All other
+rights are reserved to ARM or its licensors.
+
+2. THIS SOURCE CODE IS PROVIDED "AS IS" WITH NO WARRANTIES EXPRESS, IMPLIED OR
+STATUTORY, INCLUDING BUT NOT LIMITED TO ANY WARRANTY OF SATISFACTORY QUALITY,
+MERCHANTABILITY, NONINFRINGEMENT OR FITNESS FOR A PARTICULAR PURPOSE. THE SOURCE
+CODE MAY INCLUDE ERRORS. ARM RESERVES THE RIGHT TO INCORPORATE MODIFICATIONS TO THE
+SOURCE CODE IN LATER REVISIONS OF IT, AND TO MAKE IMPROVEMENTS OR CHANGES IN THE
+SPECIFICATION OR THE PRODUCTS OR TECHNOLOGIES DESCRIBED THEREIN AT ANY TIME.
+
+3.  This Licence shall immediately terminate and shall be unavailable to LICENSEE if
+LICENSEE or any party affiliated to LICENSEE asserts any patents against ARM, ARM
+affiliates, third parties who have a valid licence from ARM for the Specification or
+the Source Code, or any customers or distributors of any of them based upon a claim
+that a LICENSEE (or LICENSEE affiliate) patent is Necessary to implement the
+Specification. In this Licence; (i) "affiliate" means any entity controlling,
+controlled by or under common control with a party (in fact or in law, via voting
+securities, management control or otherwise) and "affiliated" shall be construed
+accordingly; (ii) "assert" means to allege infringement in legal or administrative
+proceedings, or proceedings before any other competent trade, arbitral or
+international authority; (iii) “Necessary” means with respect to any claims of any
+patent, those claims which, without the appropriate permission of the patent owner,
+will be infringed when implementing the Specification because no alternative,
+commercially reasonable, non-infringing way of implementing the Specification is
+known; and (iv) English law and the jurisdiction of the English courts shall apply
+to all aspects of this Licence, its interpretation and enforcement. The total
+liability of ARM and any of its suppliers and licensors under or in relation to this
+Licence shall be limited to the greater of the amount actually paid by LICENSEE for
+the Specification or US$10.00. The limitations, exclusions and disclaimers in this
+Licence shall apply to the maximum extent allowed by applicable law.
+
+
+ARM contract reference number LEC-ELA-00080-V2.0.
+
+
+2. LICENSE TO NOKIA COPYRIGHT
+
+IMPORTANT: THIS IS A LEGAL AGREEMENT ("LICENCE") BETWEEN YOU (AN INDIVIDUAL OR
+SINGLE ENTITY WHO IS RECEIVING THIS SOURCE CODE FROM NOKIA CORPORATION)
+("LICENSEE") AND NOKIA CORPORATION ("NOKIA") FOR THE VERSION OF THE SOURCE CODE SUPPLIED WITH THIS LICENCE ("SOURCE CODE"). THE SOURCE CODE IS A SPECIMEN IMPLEMENTATION OF EXCEPTION HANDLING COMPONENTS COMPLYING WITH THE SPECIFICATION DEFINED IMMEDIATELY BELOW. BY DOWNLOADING OR OTHERWISE USING THE SOURCE CODE, YOU AGREE TO BE BOUND BY ALL OF THE TERMS OF THIS LICENCE. IF YOU DO NOT AGREE TO THIS, DO NOT DOWNLOAD OR USE THE SOURCE CODE.
+
+“Specification” means, and is limited to, version 2 of the specification for the
+Applications Binary Interface for the ARM Architecture published by ARM LIMITED.
+Notwithstanding the foregoing,  Specification” shall not include (i) the
+implementation of other published specifications referenced in this Specification;
+(ii) any enabling technologies that may be necessary to make or use any product or
+portion thereof that complies with this Specification, but are not themselves
+expressly set forth in this Specification (e.g. compiler front ends, code
+generators, back ends, libraries or other compiler, assembler or linker
+technologies; validation or debug software or hardware; applications, operating
+system or driver software; RISC architecture; processor microarchitecture);
+(iii) maskworks and physical layouts of integrated circuit designs; or (iv) RTL or
+other high level representations of integrated circuit designs.
+
+Use, copying or disclosure by the US Government is subject to the restrictions set
+out in subparagraph (c)(1)(ii) of the Rights in Technical Data and Computer Software
+clause at DFARS 252.227-7013 or subparagraphs (c)(1) and (2) of the Commercial
+Computer Software - Restricted Rights at 48 C.F.R. 52.227-19, as applicable.
+
+The Source Code is owned by Nokia or its licensors and is protected by copyright laws
+and international copyright treaties as well as other intellectual property laws and
+treaties. The Source Code is licensed not sold.
+
+1.  Subject to the provisions of Clauses 2 and 3, Nokia hereby grants to LICENSEE,
+under any intellectual property that is (i) owned or freely licensable by Nokia
+without payment to unaffiliated third parties and (ii) either embodied in the Source
+Code, or Necessary to copy or implement an applications binary interface compliant
+with the Specification, a perpetual, non-exclusive, non-transferable, fully paid,
+worldwide limited licence to use, copy, modify and sublicense this Source Code (in
+source or object code form) solely for the purpose of developing, having developed,
+manufacturing, having manufactured, offering to sell, selling, supplying or
+otherwise distributing products which comply with the Specification, provided that
+LICENSEE preserves all copyright notices included in the Source Code. All other
+rights are reserved to Nokia or its licensors.
+
+2. THIS SOURCE CODE IS PROVIDED "AS IS" WITH NO WARRANTIES EXPRESS, IMPLIED OR
+STATUTORY, INCLUDING BUT NOT LIMITED TO ANY WARRANTY OF SATISFACTORY QUALITY,
+MERCHANTABILITY, NONINFRINGEMENT OR FITNESS FOR A PARTICULAR PURPOSE. THE SOURCE
+CODE MAY INCLUDE ERRORS. ARM RESERVES THE RIGHT TO INCORPORATE MODIFICATIONS TO THE
+SOURCE CODE IN LATER REVISIONS OF IT, AND TO MAKE IMPROVEMENTS OR CHANGES IN THE
+SPECIFICATION OR THE PRODUCTS OR TECHNOLOGIES DESCRIBED THEREIN AT ANY TIME.
+
+3.  English law and the jurisdiction of the English courts shall apply
+to all aspects of this Licence, its interpretation and enforcement. TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL NOKIA, ITS EMPLOYEES OR LICENSORS OR AFFILIATES BE LIABLE FOR ANY LOST PROFITS, REVENUE, SALES, DATA, OR COSTS OF PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, PROPERTY DAMAGE, PERSONAL INJURY, INTERRUPTION OF BUSINESS, LOSS OF BUSINESS INFORMATION, OR FOR ANY SPECIAL, DIRECT, INDIRECT, INCIDENTAL, ECONOMIC, COVER, PUNITIVE, OR CONSEQUENTIAL DAMAGES, HOWEVER CAUSED AND WHETHER ARISING UNDER CONTRACT, TORT, NEGLIGENCE, OR OTHER THEORY OF LIABILITY ARISING OUT OF THE USE OF OR INABILITY TO USE THE SOFTWARE, EVEN IF NOKIA OR ITS LICENSORS OR AFFILIATES ARE ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. BECAUSE SOME COUNTRIES/STATES/JURISDICTIONS DO NOT ALLOW THE EXCLUSION OF LIABILITY, BUT MAY ALLOW LIABILITY TO BE LIMITED, IN SUCH CASES, NOKIA, ITS EMPLOYEES OR LICENSORS OR AFFILIATES' LIABILITY SHALL BE LIMITED TO U.S. $50. Nothing contained in this Agreement shall prejudice the statutory rights of any party dealing as a consumer. Nothing contained in this Agreement limits Nokia's liability to You in the event of death or personal injury resulting from Nokia's negligence. Nokia is acting on behalf of its employees and licensors or affiliates for the purpose of disclaiming, excluding, and/or restricting obligations, warranties, and liability as provided in this clause 9, but in no other respects and for no other purpose.
+
+</End>

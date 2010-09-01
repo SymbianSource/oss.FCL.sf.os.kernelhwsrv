@@ -62,8 +62,8 @@ WARNING This implementation of symmetric multiprocessing is a prototype, not lic
 file=ABI_DIR\DEBUG_DIR\eka1_entry_stub.dll              \sys\bin\Eka1_Entry_Stub.dll
 #endif
 
-// Stop-mode debug sub-system
-#include <sm_debug.iby>
+// Run-mode debug sub-system
+#include <rm_debug_svr.iby>
 
 #if !defined(EUSER_DLL)
 #error EUSER_DLL not defined
@@ -92,6 +92,7 @@ file=ABI_DIR\DEBUG_DIR\KEYMAP_FILE.dll                      \sys\bin\EKData.dll
 
 secondary=ABI_DIR\DEBUG_DIR\efile.exe                       \sys\bin\efile.exe  FIXED HEAPMAX(0x40000)
 file=ABI_DIR\DEBUG_DIR\efsrv.dll                            \sys\bin\EFSrv.dll
+device[VARID]=KERNEL_DIR\DEBUG_DIR\d_ftrace.ldd             \sys\bin\d_ftrace.ldd
 
 #ifdef WITH_EXFAT
 file=ABI_DIR\DEBUG_DIR\exfat.fsy                            sys\bin\exfat.fsy
@@ -160,7 +161,7 @@ file=ABI_DIR\DEBUG_DIR\usbhostms.pxy    sys\bin\usbhostms.pxy
 file=ABI_DIR\DEBUG_DIR\usbhostmsclient.dll  sys\bin\usbhostmsclient.dll
 file=ABI_DIR\DEBUG_DIR\usbhostmssrv.exe     sys\bin\usbhostmssrv.exe
 #endif
-#endif //#if defined(SYMBIAN_ENABLE_USB_OTG_HOST) && defined(SYMBIAN_INCLUDE_USB_OTG_HOST) && defined(__USB)
+#endif //#if defined(SYMBIAN_ENABLE_USB_OTG_HOST) && defined(SYMBIAN_INCLUDE_USB_OTG_HOST) && !defined(SYMBIAN_EXCLUDE_USB)
 
 #if defined(_NAND) || defined(_NAND2) || defined(_ONENAND) || defined (WITH_INTERNAL_MMC)
 #if !defined PAGED_ROM || defined EFFICIENT_ROM_PAGING || defined CODE_PAGING_FROM_ROFS

@@ -37,28 +37,13 @@ _LIT(KIicProxyFileName, "iic_client.ldd");		// Kernel-side proxy LDD acting as a
 _LIT(KIicProxyFileNameRoot, "iic_client");
 _LIT(KIicProxySlaveFileName, "iic_slaveclient.ldd");	// Kernel-side proxy LDD acting as a slave client of the IIC
 _LIT(KIicProxySlaveFileNameRoot, "iic_slaveclient");
-//These are used to exercise stub functions.
-_LIT(KIicProxyFileNameStubs, "iic_client_stubs.ldd");
-_LIT(KIicProxyFileNameRootStubs, "iic_client_stubs");
-_LIT(KIicProxySlaveFileNameStubs, "iic_slaveclient_stubs.ldd");
-_LIT(KIicProxySlaveFileNameRootStubs, "iic_slaveclient_stubs");
-
 
 #ifdef IIC_SIMULATED_PSL
 _LIT(KSpiFileNameCtrlLess, "spi_ctrless.pdd");	// Simulated PSL bus implementation
-_LIT(KI2cFileNameCtrlLess, "i2c_ctrless.pdd");  // Simulated PSL bus implementation
+_LIT(KI2cFileNameCtrlLess, "i2c_ctrless.pdd");	// Simulated PSL bus implementation
 _LIT(KIicPslFileName, "iic_testpsl.pdd");	// Simulated PSL implementation
 _LIT(KSpiFileName, "spi.pdd");	// Simulated PSL bus implementation
-_LIT(KI2cFileName, "i2c.pdd");  // Simulated PSL bus implementation
-//These are used to exercise stubs. The I2C pdd to use for stub tests will depend on
-//whether Master, Slave mode has been selected. 
-#if defined(MASTER_MODE)&&!defined(SLAVE_MODE)
-_LIT(KI2cFileNameStubs, "i2c_slavestubs_ctrless.pdd");
-#elif !defined(MASTER_MODE)&& defined(SLAVE_MODE)
-_LIT(KI2cFileNameStubs, "i2c_masterstubs_ctrless.pdd");
-#else
-_LIT(KI2cFileNameStubs, "i2c_ctrless.pdd");
-#endif
+_LIT(KI2cFileName, "i2c.pdd");	// Simulated PSL bus implementation
 #endif
 
 _LIT(KIicPslFileNameRoot, "iic.pdd");
@@ -745,9 +730,6 @@ LOCAL_C TInt SlaveChannelCaptureReleaseTests()
 //!						    of words. Wait for the TRequestStatus to be completed (with KErrNone). Specify a notification trigger for Tx and
 //!							Tx Overrun, then use controlIO to instruct the simulated bus to unblock Master responses.Wait for the TRequestStatus
 //!							to be completed.
-//!         
-//!                     12) Test the PIL behavior for a client timeout: request notification of an event but deliberately delay the client response.  
-//!                         The PIL should return KErrTimedOut when a subsequent request for a notification is made.
 //!
 //! @SYMTestExpectedResults 0) Kernel-side proxy client should return with KErrNone, exits otherwise.
 //!						1) Kernel-side proxy client should return with KErrNone, exits otherwise.
@@ -768,9 +750,6 @@ LOCAL_C TInt SlaveChannelCaptureReleaseTests()
 //!						   TRequestStatus should be set to KErrNone, exits otherwise.
 //!						11) Kernel-side proxy client should return with KErrNone for each API call, exits otherwise. The associated
 //!						   TRequestStatus should be set to KErrNone in both cases, exits otherwise.
-//!                     12) Kernel-side proxy client should return with KErrNone for each API call, exits otherwise. The associated
-//!                        TRequestStatus should be set to KErrNone in both cases, exits otherwise, except for when the client response
-//!                        exceeds the timeout period, and the next request for a notification expects KErrTimedOut.
 //!
 //! @SYMTestPriority        High
 //! @SYMTestStatus          Implemented
@@ -1169,6 +1148,10 @@ LOCAL_C TInt SlaveRxTxNotificationTests()
 	gTest.Printf(_L("BlockNotification\n"));
 	r=gChanSlaveI2c.BlockNotification(busIdI2c, chanId);
 	gTest(r==KErrNone);
+	// Now instruct the bus implementation to represent the bus master attempting to read the required number of words
+	gTest.Printf(_L("\nStarting SimulateTxNWords\n"));
+	r=gChanSlaveI2c.SimulateTxNWords(busIdI2c, chanId, 12);
+	gTest(r==KErrNone);
 	//
 	// Wait for the notification
 	User::WaitForRequest(status);
@@ -1179,10 +1162,6 @@ LOCAL_C TInt SlaveRxTxNotificationTests()
 		gTest(r==KErrNone);
 		}
 	gTest.Printf(_L("Blocked notification test completed OK\n"));
-    // Now instruct the bus implementation to represent the bus master attempting to read the required number of words
-    gTest.Printf(_L("\nStarting SimulateTxNWords\n"));
-    r=gChanSlaveI2c.SimulateTxNWords(busIdI2c, chanId, 12);
-    gTest(r==KErrNone);
 	// Re-set the notification trigger - for the 'blocked' Tx
 	// This is required because, in the event of a bus error, the set of requested Rx,Tx
 	// flags are cleared
@@ -1210,50 +1189,6 @@ LOCAL_C TInt SlaveRxTxNotificationTests()
 	r=gChanSlaveI2c.SetNotificationTrigger(chanId,triggerMask,&status);
 	gTest(r==KErrNone);
 
-	//Test the PIL behavior for a client timeout: request notification of an event
-	//but deliberately delay the client response. The PIL should return KErrTimedOut 
-	//when a subsequent request for a notification is made.
-	gTest.Printf(_L("Starting test for SendBusErrorAndReturn.\n"));
-	
-	// For Rx, specify buffer granularity=4 (32-bit words), 8 words to receive, offset of 16 bytes
-	// 64 bytes as 16 words: words 0-3 offset, words 4-11 data, words 12-15 unused
-	gTest.Printf(_L("Starting RegisterRxBuffer\n"));
-	r=gChanSlaveI2c.RegisterRxBuffer(chanId, 4, 8, 16);
-	gTest(r==KErrNone);
-
-	// Now set the notification trigger
-	//TRequestStatus status;
-	triggerMask=ERxAllBytes;
-	
-    gTest.Printf(_L("Starting SetNotificationTrigger with ERxAllBytes\n"));
-    r=gChanSlaveI2c.SetNotificationTrigger(chanId,triggerMask,&status);
-    gTest(r==KErrNone);
-    // Now instruct the bus implementation to represent receipt of the required number of words from the bus master.
-    gTest.Printf(_L("Starting SimulateRxNWords\n"));
-    r=gChanSlaveI2c.SimulateRxNWords(busIdI2c, chanId, 8);
-    gTest(r==KErrNone);
-    //
-    // Wait for the notification
-    User::WaitForRequest(status);
-    r=status.Int();
-    if(r != KErrNone)
-        {
-        gTest.Printf(_L("TRequestStatus value after receiving data = %d\n"),r);
-        gTest(r==KErrNone);
-        }
-    //Delay the client response to exceed the timeout period, and check that the next
-    //request for a notification encounters the expected error code.
-    User::After(1000 * 1000);
-    r=gChanSlaveI2c.SetNotificationTrigger(chanId,triggerMask,&status);
-    gTest(r==KErrNone);
-    User::WaitForRequest(status);
-	r = status.Int();
-    if(r!=KErrTimedOut)
-        {
-        gTest.Printf(_L("TRequestStatus value = %d\n"),status.Int());
-        gTest(r==KErrTimedOut);
-        } 
-    gTest.Printf(_L("The test for SendBusErrorAndReturn is completed OK\n"));
 	// Release the channel
 	r = gChanSlaveI2c.ReleaseChannel( chanId );
 	gTest(r==KErrNone);
@@ -1468,125 +1403,6 @@ LOCAL_C TInt IicInterfaceInlineTests()
         }
     }
 
-//Only get called in stand alone mode
-LOCAL_C TInt IicTestStubs()
-    {
-    //Function to call the stub methods for Master and slave channels
-    //when Master and Slave functionality has not been built. The stubs
-    //return KErrNotSupported.
-    TInt r=KErrNone;
-    
-    TUint32 busIdI2c = 0;
-    TConfigI2cBufV01* i2cBuf=NULL;
-    TRequestStatus status;
-
-    //Starting master channel stubs test.
-    //a valid transaction is required when calling the Master QueueTransaction stub.
-    //Use I2C channel here. In MASTER_MODE, channelId starting from 10, 
-    //and 10 is a master channel
-    SET_BUS_TYPE(busIdI2c,EI2c);
-    SET_CHAN_NUM(busIdI2c,10);
-    // aDeviceId=1 ... 100kHz ... aTimeoutPeriod=100 ... aTransactionWaitCycles=10 - arbitrary paarmeters.
-    r=CreateI2cBuf(i2cBuf, EI2cAddr7Bit, 36, ELittleEndian, 100);
-    gTest(r==KErrNone);
-
-    // Use a single transfer
-    _LIT(halfDuplexText,"Half Duplex Text");
-    TBuf8<17> halfDuplexBuf_8;
-    halfDuplexBuf_8.Copy(halfDuplexText);
-    TUsideTferDesc* tfer = NULL;
-    r = CreateSingleUserSideTransfer(tfer, EMasterWrite, 8, &halfDuplexBuf_8, NULL);
-    gTest(r==KErrNone);
-
-    // Create the transaction object
-    TUsideTracnDesc* tracn = NULL;
-    r = CreateSingleUserSideTransaction(tracn, EI2c, i2cBuf, tfer, NULL, 0, NULL, NULL);
-    gTest(r==KErrNone);
-
-    // queue a synchronous transaction
-    gTest.Printf(_L("\n\nStarting synchronous QueueTransaction \n"));
-    r = gChanMasterI2c.QueueTransaction(busIdI2c, tracn);
-    gTest.Printf(_L("Synchronous QueueTransaction returned = %d\n"),r);
-    //Queueing a transaction in SLAVE_MODE should return KErrNotSupported 
-    gTest(r==KErrNotSupported); 
-    
-    // queue an asynchronous transaction and cancel the trasnaction
-    // QueueTransaction actually completes before CancelAsyncOperation with KErrNotSupported
-    // In test driver, we pretend the request is still in the queue and then cancel it.
-    gChanMasterI2c.QueueTransaction(status, busIdI2c, tracn);
-    gChanMasterI2c.CancelAsyncOperation(&status, busIdI2c);
-    User::WaitForRequest(status);
-    if(status != KErrNotSupported)
-        {
-        gTest.Printf(_L("TRequestStatus value after queue = %d\n"),status.Int());
-        gTest(r==KErrNotSupported);
-        }
-    //spare1 is an unused method that is present to provide for future extension,
-    //which just returns KErrNotSupported. 
-    r = gChanMasterI2c.TestSpare1(busIdI2c);
-    gTest(r == KErrNotSupported);
-    //StaticExtension is present for PSL implementations to override, the default
-    //implementation just returns KErrNotSupported
-    r = gChanMasterI2c.TestStaticExtension(busIdI2c);
-    gTest(r == KErrNotSupported);
-    //free the memory
-    delete i2cBuf;
-    delete tfer;
-    delete tracn;
-
-    //Start to test slave channel operations
-    SET_BUS_TYPE(busIdI2c,EI2c);
-    SET_CHAN_NUM(busIdI2c,11); // 11 is the Slave channel number
-    //
-    // clock speed=36Hz, aTimeoutPeriod=100 - arbitrary parameter
-    r=CreateI2cBuf(i2cBuf, EI2cAddr7Bit, 36, ELittleEndian, 100);
-    gTest(r==KErrNone);
-
-    // Synchronous capture of a Slave channel.
-    TInt chanId = 0; // Initialise to zero to silence compiler ...
-    gTest.Printf(_L("\n\nStarting synchronous CaptureChannel \n"));
-    r = gChanSlaveI2c.CaptureChannel(busIdI2c, i2cBuf, chanId );
-    gTest.Printf(_L("Synchronous CaptureChannel returned = %d, aChanId=0x%x\n"),r,chanId);
-    gTest(r==KErrNotSupported);
-    
-    gTest.Printf(_L("Starting RegisterRxBuffer\n"));
-    r=gChanSlaveI2c.RegisterRxBuffer(chanId, 4, 8, 16);
-    gTest(r==KErrNotSupported);
-    
-    gTest.Printf(_L("\nStarting RegisterTxBuffer\n"));
-    r=gChanSlaveI2c.RegisterTxBuffer(chanId, 4, 12, 8);
-    gTest(r==KErrNotSupported);
-    //
-    // Now set the notification trigger
-    TInt triggerMask=ERxAllBytes;
-
-    gTest.Printf(_L("Starting SetNotificationTrigger with ERxAllBytes\n"));
-    r=gChanSlaveI2c.SetNotificationTrigger(chanId,triggerMask,&status);
-    gTest(r==KErrNotSupported);
-    
-    r = gChanSlaveI2c.TestSpare1(busIdI2c);
-    gTest(r == KErrNotSupported);
-    r = gChanSlaveI2c.TestStaticExtension(busIdI2c);
-    gTest(r == KErrNotSupported);
-    delete i2cBuf;
-
-    //Start to test MasterSlave channel operations
-    //Create a Master-Slave channel
-    RBusDevIicClient chanMasterSlaveI2c;
-    TBufC<18> proxyName;
-    proxyName = KIicProxyFileNameRootStubs;
-    r = chanMasterSlaveI2c.Open(proxyName);
-    gTest(r==KErrNone);
-    
-    SET_BUS_TYPE(busIdI2c,EI2c);
-    SET_CHAN_NUM(busIdI2c,12); // 12 is the MasterSlave channel number
-    r = chanMasterSlaveI2c.TestStaticExtension(busIdI2c);
-    gTest(r==KErrNotSupported);
-    chanMasterSlaveI2c.Close();
-
-    return KErrNone;
-    }
-
 LOCAL_C TInt RunTests()
 //
 //	Utility method to invoke the separate tests
@@ -1706,8 +1522,6 @@ GLDEF_C TInt E32Main()
 	gChanSlaveI2c.Close();
 	
 	UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, 0, 0);
-// Not safe to assume that heap clean-up has completed for the channels just closed, so insert a delay.(DEF145202)
-	User::After(20 * 1000);
 	__KHEAP_MARKEND;
 
 	gTest.Next(_L("Free kernel-side proxy IIC client"));
@@ -1784,8 +1598,6 @@ GLDEF_C TInt E32Main()
 	gChanSlaveI2c.Close();
 
 	UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, 0, 0);
-// Not safe to assume that heap clean-up has completed for the channels just closed, so insert a delay.(DEF145202)
-	User::After(20 * 1000);
 	__KHEAP_MARKEND;
 
 	gTest.Next(_L("Free kernel-side proxy IIC client"));
@@ -1803,63 +1615,6 @@ GLDEF_C TInt E32Main()
 	gTest.Next(_L("Free Simulated PSL SPI bus driver"));
 	err = User::FreePhysicalDevice(KSpiFileNameCtrlLess);
 	gTest(err==KErrNone);
-	
-    //For simplicity, the code coverage tests are executed in STANDALONE_CHANNEL mode
-	//All the changes are made in test code, and not affect PIL.
-	gTest.Next(_L("Start the code coverage tests"));
-
-    gTest.Next(_L("Load Simulated PSL I2C bus driver"));
-    r = User::LoadPhysicalDevice(KI2cFileNameStubs);
-    gTest.Printf(_L("return value r=%d"),r);
-    gTest(r==KErrNone || r==KErrAlreadyExists);
-
-    gTest.Next(_L("Load kernel-side proxy IIC client"));
-    r = User::LoadLogicalDevice(KIicProxyFileNameStubs);
-    gTest(r==KErrNone || r==KErrAlreadyExists);
-
-    gTest.Next(_L("Load kernel-side proxy IIC slave client"));
-    r = User::LoadLogicalDevice(KIicProxySlaveFileNameStubs);
-    gTest(r==KErrNone || r==KErrAlreadyExists);
-
-    __KHEAP_MARK;
-    TBufC<30> proxyNameStubs(KIicProxyFileNameRootStubs);
-    // Open a Master I2C channel to the kernel side proxy
-    r = gChanMasterI2c.Open(proxyNameStubs);
-
-    gTest(r==KErrNone);
-    TBufC<35> proxySlaveNameStubs(KIicProxySlaveFileNameRootStubs);
-
-    r = gChanSlaveI2c.Open(proxySlaveNameStubs);
-    gTest(r==KErrNone);
-    r = gChanSlaveI2c.InitSlaveClient();
-    gTest(r==KErrNone);
-
-    // Instigate tests
-    r = IicTestStubs();
-    gTest(r==KErrNone);
-
-    gTest.Printf(_L("Tests completed OK, about to close channel\n"));
-    gChanMasterI2c.Close();
-    gChanSlaveI2c.Close();
-
-    UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, 0, 0);
-    // Not safe to assume that heap clean-up has completed for the channels just closed, so insert a delay.(DEF145202)
-    User::After(20 * 1000);
-    __KHEAP_MARKEND;
-
-    gTest.Next(_L("Free kernel-side proxy IIC client"));
-
-    err = User::FreeLogicalDevice(KIicProxyFileNameRootStubs);
-    gTest(err==KErrNone || err==KErrAlreadyExists);
-    gTest.Next(_L("Free kernel-side proxy IIC slave client"));
-    err = User::FreeLogicalDevice(KIicProxySlaveFileNameRootStubs);
-    gTest(err==KErrNone || err==KErrAlreadyExists);
-
-    gTest.Next(_L("Free Simulated PSL I2C bus driver"));
-    err = User::FreePhysicalDevice(KI2cFileNameStubs);
-    gTest(err==KErrNone);
-
-	gTest.Next(_L("End the code coverage tests"));
 #else
 	gTest.Printf(_L("Don't do the test if it is not IIC_SIMULATED_PSL"));
 #endif

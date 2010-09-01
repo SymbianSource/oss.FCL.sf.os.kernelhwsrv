@@ -20,7 +20,7 @@
 files=
 
 #ifdef PAGED_ROM
-data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\gentestpaged.txt			Test\test_paged.cpp
+data=gentestpaged.txt			Test\test_paged.cpp
 #endif
 
 #include <rom\##VARIANT##\kernel.iby>
@@ -56,5 +56,5 @@ data=EPOCROOT##Epoc32\Release\##KMAIN##\##BUILD##\minkda.ldd			\sys\bin\minkda.l
 data=EPOCROOT##epoc32\rom\##VARIANT##\autoexec_f32test.bat				\autoexec.bat
 
 #ifdef PAGED_ROM
-data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\gentestnonpaged.txt			Test\test_unpaged.cpp	unpaged
+data=gentestnonpaged.txt			Test\test_unpaged.cpp	unpaged
 #endif

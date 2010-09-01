@@ -335,6 +335,28 @@ private:
 	TInt8 iChanRwFlags;		// Bit 0 for write, bit 1 for read
 	};
 
+#ifdef IIC_SIMULATED_PSL
+_LIT(KPddName,"iic.pdd");
+
+NONSHARABLE_CLASS(DIicPdd) : public DPhysicalDevice
+	{
+// Class to faciliate loading of the IIC classes
+public:
+	class TCaps
+		{
+	public:
+		TVersion iVersion;
+		};
+public:
+	DIicPdd();
+	~DIicPdd();
+	virtual TInt Install();
+	virtual TInt Create(DBase*& aChannel, TInt aUnit, const TDesC8* anInfo, const TVersion& aVer);
+	virtual TInt Validate(TInt aUnit, const TDesC8* anInfo, const TVersion& aVer);
+	virtual void GetCaps(TDes8& aDes) const;
+	inline static TVersion VersionRequired();
+	};
+#endif
 
 #include <drivers/iic.inl>
 

@@ -24,7 +24,6 @@
 //! @SYMCreationDate 1/11/04
 //! @SYMTestCaseDesc Check trap action of CorruptFileNames.lst
 
-#define __E32TEST_EXTENSION__
 #include <e32test.h>
 RTest test(_L("t_corruptlog"));
 
@@ -107,7 +106,7 @@ TInt GetNumberOfTraps()
 	// Note that C: is used in the IoControl call, which requires a valid drive, but has no other relevance
 	TInt numberOfRecords;
 	TInt r=controlIo(TheFs, EDriveC, KControlIoGetNumberOfCorruptLogRecords, numberOfRecords);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	return numberOfRecords;
 	}
 
@@ -116,7 +115,7 @@ TInt GetTrapLogRecord(TFsDebugCorruptLogRecordBuf &alogRec, TInt aRecordNumber)
 	// fetchs a trap record
 	// Note that C: is used in the IoControl call, which requires a valid drive, but has no other relevance
 	TInt r=controlIo(TheFs, EDriveC, KControlIoGetCorruptLogRecord, alogRec, aRecordNumber);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	return r;
 	}
 
@@ -126,7 +125,7 @@ TInt GetCorruptFileListFile(TDes& aFileName)
 	// the corrupt files list.
 	// Note that C: is used in the IoControl call, which requires a valid drive, but has no other relevance
 	TInt r=controlIo(TheFs, EDriveC, KControlIoGetCorruptListFile, aFileName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	return r;
 	}
 
@@ -137,22 +136,22 @@ void AccessFiles()
 	const TInt attribs=EFileShareExclusive|EFileStreamText|EFileRead;
 	// File1 
 	TInt r=f.Open(TheFs,KTestFile1,attribs);
-	test_Value(r, r == KTestFile1Error1);
+	test(r==KTestFile1Error1);
 	f.Close();
 	numberOfTraps+=(r==KErrNone?0:1);
 	// try again
 	r=f.Open(TheFs,KTestFile1,attribs);
-	test_Value(r, r == KTestFile1Error2);
+	test(r==KTestFile1Error2);
 	f.Close();
 	numberOfTraps+=(r==KErrNone?0:1);
 	// File2 
 	r=f.Open(TheFs,KTestFile2,attribs);
-	test_Value(r, r == KTestFile2Error1);
+	test(r==KTestFile2Error1);
 	f.Close();
 	numberOfTraps+=(r==KErrNone?0:1);
 	// try again
 	r=f.Open(TheFs,KTestFile2,attribs);
-	test_Value(r, r == KTestFile2Error2);
+	test(r==KTestFile2Error2);
 	f.Close();
 	numberOfTraps+=(r==KErrNone?0:1);
 	}
@@ -162,7 +161,7 @@ void DoTests()
 	TFileName corruptFileNamesList;
     test.Next(_L("Get name of file with list of nominated files"));
 	TInt r=GetCorruptFileListFile(corruptFileNamesList);
-    test_KErrNone(r);
+    test(r==KErrNone);
  	test.Printf(_L("Using %S\n"),&corruptFileNamesList);
 
 	AccessFiles();
@@ -175,9 +174,9 @@ void DoTests()
 	for (TInt i=1;i<=nRecs;i++)
 		{ // fetch record #i
 		TInt r=GetTrapLogRecord(logRec,i);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		r=logRec().iProcessName.CompareF(_L("t_corruptlog.exe"));
-		test_KErrNone(r);
+		test(r==KErrNone);
 		PrintLogRecord(logRec,i);
 		}
 	}
@@ -195,7 +194,7 @@ extern TInt E32Main()
     test.Start(_L("Corrupt File trap log"));
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)
 	TInt r=TheFs.Connect();
-    test_KErrNone(r);
+    test(r==KErrNone);
 
     TheFs.ResourceCountMarkStart();
     

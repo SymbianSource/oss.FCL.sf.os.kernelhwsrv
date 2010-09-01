@@ -26,7 +26,7 @@ files=
 
 file=\EPOC32\RELEASE\##MAIN##\##BUILD##\T_SOAK.EXE          sys\bin\T_SOAK.EXE
 
-data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\t_soak_autoexec.bat \autoexec.bat
+data=t_soak_autoexec.bat \autoexec.bat
 
 
 

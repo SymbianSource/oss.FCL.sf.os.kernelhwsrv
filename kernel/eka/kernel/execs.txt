@@ -680,8 +680,6 @@ slow {
 
 slow {
 	name = MutexWait
-	return = TInt
-	arg2 = TInt
 	handle = mutex
 }
 
@@ -1530,8 +1528,9 @@ slow {
 slow {
 	name = ThreadGetCpuTime
 	return = TInt
-	arg1 = TInt
 	arg2 = EXEC_INT64&
+	handle = thread
+	norelease
 }
 
 slow {
@@ -2431,17 +2430,11 @@ slow {
 	norelease
 }
 
+
 slow {
 	name = MathSecureRandom
 	return = TInt
 	arg1 = TDes8&
-}
-
-slow {
-	name = TimerAgainHighRes
-	arg2 = TRequestStatus&
-	arg3 = TInt
-	handle = timer
 }
 
 

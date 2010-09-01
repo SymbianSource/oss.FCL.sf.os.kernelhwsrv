@@ -46,12 +46,13 @@ TBool TDriveInterface::Init(CFatMountCB* aMount)
     Close the interface to the media driver
 */
 void TDriveInterface::Close()
-{	 
+{
 	 if((iMount != NULL) && (iMount->LocalDrive() != NULL))
 		{
 		ASSERT(iMount->LocalDrive()->Mount() == NULL || iMount->LocalDrive()->Mount() == iMount);
 		iMount->LocalDrive()->SetMount(NULL);
-		}
+        }
+
      iMount = NULL;
 }
 
@@ -550,7 +551,7 @@ TInt TDriveInterface::XProxyDriveWrapper::Read(TInt64 aPos,TInt aLength,const TA
     LeaveCriticalSection();
     return nRes;
 }
-       
+
 TInt TDriveInterface::XProxyDriveWrapper::Read(TInt64 aPos,TInt aLength,TDes8& aTrg) const
 {
     EnterCriticalSection();

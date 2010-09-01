@@ -228,12 +228,6 @@ public:
 	@publishedPartner
 	@released
 	*/
-	IMPORT_C static void SetIdleHandler(TCpuIdleHandlerFn aHandler, TAny* aPtr);
-
-	/**
-	@publishedPartner
-	@released
-	*/
 	IMPORT_C static TInt DebugOutJTAG(TUint aChar);
 
 	/**

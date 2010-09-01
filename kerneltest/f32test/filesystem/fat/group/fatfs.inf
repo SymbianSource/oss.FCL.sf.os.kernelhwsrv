@@ -11,7 +11,7 @@
 // Contributors:
 //
 // Description:
-// f32test/filesystem/fat/group/fatfs.inf
+// f32test/group/bld.inf
 // Test code for file server
 // 
 //
@@ -37,7 +37,6 @@ t_compat32
 //b_fat //obsolete
 t_mount
 t_fatcache_bm
-t_raw
+t_raw   
 t_fatcorrupt
-t_nonrugged
 

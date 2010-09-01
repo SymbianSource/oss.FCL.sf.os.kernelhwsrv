@@ -71,7 +71,7 @@ FORCE_INLINE void CacheMaintenance::MultiplePtesUpdated(TLinAddr aPte, TUint aSi
 	#endif	// else (__CPU_SUPPORTS_PAGE_TABLE_WALK_TO_L1_CACHE) || !(__CPU_PAGE_TABLES_FULLY_CACHED)
 #if defined (__FLUSH_PT_INTO_RAM__)
 	//See SinglePteUpdated for details.
-	ExternalCache::Clean(aPte, aSize);
+	ExternalCache::Clean(aAddr, aSize);
 #endif // (__FLUSH_PT_INTO_RAM__)
 	}
 
@@ -106,7 +106,7 @@ FORCE_INLINE void CacheMaintenance::SinglePteUpdated(TLinAddr aPte)
 	// tables separately (e.g. another processor using the same page tables out
 	// of main memory), and is not necessary on standard platforms.
 	// Either __ARM_L210_CACHE__ or __ARM_L220_CACHE__ must also be defined
-	ExternalCache::Clean(aPte, 4);
+	ExternalCache::Clean(aAddr, 4);
 #endif
 	}
 

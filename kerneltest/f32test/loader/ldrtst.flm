@@ -20,7 +20,7 @@ $(DEST_FILES): $(TO_BLDINF)/$(GDIR)/% : $(TO_BLDINF)/% $(TO_BLDINF)/$(GDIR)/gene
 	cp -u $$(filter-out %generated,$$^) $$@
 
 $(TO_BLDINF)/$(GDIR)/generated: $(TO_BLDINF)/dlltree.pl $(TO_BLDINF)/dlltree.txt
-	perl $(TO_BLDINF)/dlltree.pl $(TO_BLDINF)/dlltree.txt $(TO_BLDINF)/$(GDIR) raptor
+	perl $(TO_BLDINF)/dlltree.pl $(TO_BLDINF)/dlltree.txt $(TO_BLDINF)/$(GDIR)
 	touch $$@
 endif
 

@@ -45,28 +45,18 @@
 #include <e32test.h>
 #include <e32def.h>
 #include <e32def_private.h>
-#include "dla.h"
-#include "slab.h"
-#include "page_alloc.h"
-#include "heap_hybrid.h"
-#define KHEAPCELLINFO RHybridHeap::SHeapCellInfo
 
 LOCAL_D RTest test(_L("T_HEAPDB"));
 
 #if defined(_DEBUG)
 
-KHEAPCELLINFO CellInfo[4];
+RHeap::SHeapCellInfo CellInfo[4];
 
 class RTestHeap : public RHeap
 	{
 public:
-	void AttachInfo(KHEAPCELLINFO* aInfo)
-		{
-		RHybridHeap::STestCommand cmd;
-		cmd.iData = aInfo;
-		cmd.iCommand = RHybridHeap::ETestData;
-		DebugFunction(RHeap::EHybridHeap, (TAny*)&cmd);
-		}
+	void AttachInfo(SHeapCellInfo* aInfo)
+		{iTestData = aInfo;}
 	};
 
 void AttachToHeap(RHeap* aHeap, TInt aInfo)
@@ -78,17 +68,19 @@ void AttachToHeap(RHeap* aHeap, TInt aInfo)
 
 void TestCellInfo(TInt aInfo, TInt aNest, TInt aAllocCount, TInt aLevelAlloc, TInt aSize, TAny* aAddr)
 	{
-	(void) aSize;
-	KHEAPCELLINFO& ci = CellInfo[aInfo];
+	RHeap::SHeapCellInfo& ci = CellInfo[aInfo];
 	RHeap::SDebugCell& cell = *ci.iStranded;
 	test(cell.nestingLevel == aNest);
 	test(cell.allocCount == aAllocCount);
 	test(ci.iLevelAlloc == aLevelAlloc);
+	test(cell.len == aSize + RHeap::EAllocCellSize);
 	test((&cell+1) == aAddr);
 	}
 
 const TInt KMaxFailureRate=100;
 const TInt KThreadMemError=-50;
+const TInt KCellSize=(sizeof(RHeap::SCell)); // Size of free cell header	
+const TInt KHeadSize=(sizeof(RHeap::SDebugCell)); // Size of allocated cell header with space for heaven info
 
 LOCAL_D TInt heapCount=1;
 LOCAL_D RSemaphore threadSemaphore;

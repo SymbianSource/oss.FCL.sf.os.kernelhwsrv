@@ -37,12 +37,7 @@ const TInt KLongFormatInSectors=KSectBufSizeInSectors+1;	// 4.5K - exceeds drive
 const TInt KLongFormatInBytes=(KLongFormatInSectors<<KAtaSectorShift);
 
 const TInt KHeapSize=0x4000;
-
-#undef USE_IDLE_CURRENT
-#ifdef USE_IDLE_CURRENT
 const TInt KAtaIdleCurrentInMilliAmps=1; 
-#endif
-
 
 #define PDD_NAME _L("MEDATA")
 
@@ -268,13 +263,10 @@ GLDEF_C TInt E32Main()
 	test(info.iDriveAtt==(TUint)(KDriveAttLocal|KDriveAttRemovable));
 	test(info.iMediaAtt==KMediaAttFormattable);
 	test(info.iFileSystemId==KDriveFileSysFAT);
-#undef USE_IDLE_CURRENT
-#ifdef USE_IDLE_CURRENT
-	TSupplyInfoV1Buf supply2;
-	test(UserHal::SupplyInfo(supply2)==KErrNone);
-	if (mediaChangeSupported)
-		test(supply2().iCurrentConsumptionMilliAmps==supply1().iCurrentConsumptionMilliAmps+KAtaIdleCurrentInMilliAmps); // Snowball idle current is zero
-#endif
+//	TSupplyInfoV1Buf supply2;
+//	test(UserHal::SupplyInfo(supply2)==KErrNone);
+//	if (mediaChangeSupported)
+//		test(supply2().iCurrentConsumptionMilliAmps==supply1().iCurrentConsumptionMilliAmps+KAtaIdleCurrentInMilliAmps); // Snowball idle current is zero
 
 	b.Format(_L("ATA drive: Sector RdWr(%d)"),KAtaSectorSize);
 	test.Next(b);
@@ -458,11 +450,8 @@ GLDEF_C TInt E32Main()
 	test.Next(_L("ATA drive: Caps following media change"));
 	test(theAtaDrive.Caps(infoPckg)==KErrNone);
 	test(info.iType==EMediaHardDisk);
-#undef USE_IDLE_CURRENT
-#ifdef USE_IDLE_CURRENT
-	test(UserHal::SupplyInfo(supply2)==KErrNone);
-	test(supply2().iCurrentConsumptionMilliAmps==supply1().iCurrentConsumptionMilliAmps+KAtaIdleCurrentInMilliAmps);
-#endif
+//	test(UserHal::SupplyInfo(supply2)==KErrNone);
+//	test(supply2().iCurrentConsumptionMilliAmps==supply1().iCurrentConsumptionMilliAmps+KAtaIdleCurrentInMilliAmps);
 
 	test.Next(_L("ATA drive: Caps while OOM"));
 	TInt err=KErrNoMemory;

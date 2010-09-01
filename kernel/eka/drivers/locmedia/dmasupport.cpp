@@ -278,7 +278,7 @@ TInt DDmaHelper::SendReceive(TLocDrvRequest& aReq, TLinAddr aLinAddress)
 	TInt r;
 	do
 		{
-		__KTRACE_DMA(Kern::Printf(">PHYSADDR:SendReceive() iReqLen %d; iLenConsumed %d; fragments %d",iReqLenClient, iLenConsumed, fragments));
+		__KTRACE_DMA(Kern::Printf(">PHYSADDR:SendReceive() iReqLen %d; iLenConsumed %d; fragments %d",iReqLen, iLenConsumed, fragments));
 		OstTraceExt2( TRACE_DMASUPPORT, DDMAHELPER_SENDRECEIVE1, "PHYSADDR:SendReceive() iLenConsumed=%d; fragments=%d", iLenConsumed, fragments);
 		r = RequestStart();
 		if (r != KErrNone)

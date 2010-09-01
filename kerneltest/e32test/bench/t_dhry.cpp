@@ -383,8 +383,9 @@ test.Printf(_L("Press any key to exit (or wait 20 seconds)"));
 	TRequestStatus timerStat;
 	timer.After(timerStat,20*1000000);
 	User::WaitForRequest(timerStat,keyStat);
+	TInt key = 0;
 	if(keyStat!=KRequestPending)
-		(void)test.Console()->KeyCode();
+		key = test.Console()->KeyCode();
 	timer.Cancel();
 	test.Console()->ReadCancel();
 	User::WaitForAnyRequest();

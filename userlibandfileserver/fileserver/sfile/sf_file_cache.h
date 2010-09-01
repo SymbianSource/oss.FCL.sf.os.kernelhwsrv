@@ -28,9 +28,6 @@
 
 //#define _DEBUG_READ_AHEAD
 
-// if writing sequentially, start flushing dirty data when the cache is half full
-//#define DOUBLE_BUFFERED_WRITING
-
 
 NONSHARABLE_CLASS(CFileCache) : public CFsDispatchObject
 	{
@@ -78,7 +75,7 @@ private:
 
 	TInt DoReadBuffered(CFsMessageRequest& aMsgRequest, TUint aMode, CFsClientMessageRequest*& aNewRequest);
 	TInt DoWriteBuffered(CFsMessageRequest& aMsgRequest, CFsClientMessageRequest*& aNewRequest, TUint aMode);
-	enum TFlushMode {EFlushSingle, EFlushHalf, EFlushAll};
+	enum TFlushMode {EFlushSingle, EFlushAll};
 	TInt DoFlushDirty(CFsClientMessageRequest*& aNewRequest, CFsRequest* aOldRequest, TFlushMode aFlushMode);
 
 
@@ -159,11 +156,6 @@ private:
 	TInt iLastReadLen;
 	TBool iFileCacheReadAsync;
 	CFsClientMessageRequest* iReadAheadRequest;
-
-#ifdef DOUBLE_BUFFERED_WRITING
-	// sequential append-write detection
-	TInt iSequentialAppends;
-#endif
 
 	friend class TClosedFileUtils;
 	friend class TFsFileWriteDirty;

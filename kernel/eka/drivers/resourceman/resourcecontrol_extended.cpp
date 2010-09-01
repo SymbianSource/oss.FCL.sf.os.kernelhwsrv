@@ -35,14 +35,14 @@ TInt DPowerResourceController::ReserveClientLevelPoolCount(TUint16 aCount)
 		iResourceLevelPoolCount = (TUint16)(iResourceLevelPoolCount - aCount);
 	else
 		{
-		TUint allocCount = (iStaticResDependencyArray.Count() / 2) + aCount;
+		TUint allocCount = (iStaticResDependencyCount / 2) + aCount;
 		// coverity[alloc_fn]
 		SPowerResourceClientLevel* pCL = new SPowerResourceClientLevel[allocCount];
 		if(!pCL)
 			return KErrNoMemory;
 		for(TUint count = 0;count<(TUint)(allocCount);count++)
 			LIST_PUSH(iResourceLevelPool, &pCL[count], iNextInList);
-		iResourceLevelPoolCount= (TUint16)(iResourceLevelPoolCount + (iStaticResDependencyArray.Count() / 2));
+		iResourceLevelPoolCount= (TUint16)(iResourceLevelPoolCount + (iStaticResDependencyCount / 2));
 #ifdef PRM_INSTRUMENTATION_MACRO
 		TUint size = allocCount * sizeof(SPowerResourceClientLevel);
 		PRM_MEMORY_USAGE_TRACE
@@ -79,16 +79,16 @@ TInt DPowerResourceController::GetNumDependentsForResource(TUint aResourceId, TU
 	SNode* pN;
 	if(aResourceId & KIdMaskDynamic)
 		{
-		DDynamicPowerResourceD* pDR = iDynamicResDependencyList[(aResourceId & ID_INDEX_BIT_MASK)];		
+		DDynamicPowerResourceD* pDR = iDynamicResDependencyList[(TUint16)(aResourceId & ID_INDEX_BIT_MASK)];		
 		if(!pDR)														
 			return KErrNotFound;
 		pN = pDR->iDependencyList;
 		}
 	else
 		{
-		if((aResourceId & ID_INDEX_BIT_MASK) > (TUint)iStaticResDependencyArray.Count())
+		if((aResourceId & ID_INDEX_BIT_MASK) > iStaticResDependencyCount)
 			return KErrNotFound;
-		DStaticPowerResourceD* pDR = iStaticResDependencyArray[(aResourceId & ID_INDEX_BIT_MASK) - 1];
+		DStaticPowerResourceD* pDR = iStaticResDependencyArray[(TUint16)(aResourceId & ID_INDEX_BIT_MASK) - 1];
 		pN = pDR->iDependencyList;
 		}
 	*aNumResources = 0;
@@ -123,16 +123,16 @@ TInt DPowerResourceController::GetDependentsIdForResource(TUint aResourceId, TAn
 	SNode* pN;
 	if(aResourceId & KIdMaskDynamic)
 		{
-		DDynamicPowerResourceD* pDR = iDynamicResDependencyList[(aResourceId & ID_INDEX_BIT_MASK)];
+		DDynamicPowerResourceD* pDR = iDynamicResDependencyList[(TUint16)(aResourceId & ID_INDEX_BIT_MASK)];
 		if(!pDR)
 			return KErrNotFound;
 		pN = pDR->iDependencyList;
 		}
 	else
 		{
-		if((aResourceId & ID_INDEX_BIT_MASK) > (TUint)iStaticResDependencyArray.Count())
+		if((aResourceId & ID_INDEX_BIT_MASK) > iStaticResDependencyCount)
 			return KErrNotFound;
-		DStaticPowerResourceD* pDR = iStaticResDependencyArray[(aResourceId & ID_INDEX_BIT_MASK) -1];
+		DStaticPowerResourceD* pDR = iStaticResDependencyArray[(TUint16)(aResourceId & ID_INDEX_BIT_MASK) -1];
 		pN = pDR->iDependencyList;
 		}
 	TUint count = 0;
@@ -184,31 +184,31 @@ TInt DPowerResourceController::RegisterResourceDependency(SPowerResourceClient* 
 	//Retrieve resource1 from the corresponding list.
 	if(aInfo1->iResourceId & KIdMaskDynamic)
 		{
-		pR1 = iDynamicResDependencyList[(aInfo1->iResourceId & ID_INDEX_BIT_MASK)];
+		pR1 = iDynamicResDependencyList[(TUint16)(aInfo1->iResourceId & ID_INDEX_BIT_MASK)];
 		if(!pR1)
 			return KErrNotFound;
 		pN1 = pR1->iDependencyList;
 		}
 	else 
 		{
-		if((aInfo1->iResourceId & ID_INDEX_BIT_MASK) > (TUint)iStaticResDependencyArray.Count())
+		if((aInfo1->iResourceId & ID_INDEX_BIT_MASK) > iStaticResDependencyCount)
 			return KErrNotFound;
-		pR1 = (DDynamicPowerResourceD*)iStaticResDependencyArray[(aInfo1->iResourceId & ID_INDEX_BIT_MASK) - 1];
+		pR1 = (DDynamicPowerResourceD*)iStaticResDependencyArray[(TUint16)(aInfo1->iResourceId & ID_INDEX_BIT_MASK) - 1];
 		pN1 = ((DStaticPowerResourceD*)pR1)->iDependencyList;
 		}
 	//Retrieve resource2 from the corresponding list.
 	if(aInfo2->iResourceId & KIdMaskDynamic)
 		{
-		pR2 = iDynamicResDependencyList[(aInfo2->iResourceId & ID_INDEX_BIT_MASK)];
+		pR2 = iDynamicResDependencyList[(TUint16)(aInfo2->iResourceId & ID_INDEX_BIT_MASK)];
 		if(!pR2)
 			return KErrNotFound;
 		pN2 = pR2->iDependencyList;
 		}
 	else
 		{
-		if((aInfo2->iResourceId & ID_INDEX_BIT_MASK) > (TUint)iStaticResDependencyArray.Count())
+		if((aInfo2->iResourceId & ID_INDEX_BIT_MASK) > iStaticResDependencyCount)
 			return KErrNotFound;
-		pR2 = (DDynamicPowerResourceD*)iStaticResDependencyArray[(aInfo2->iResourceId & ID_INDEX_BIT_MASK) - 1];
+		pR2 = (DDynamicPowerResourceD*)iStaticResDependencyArray[(TUint16)(aInfo2->iResourceId & ID_INDEX_BIT_MASK) - 1];
 		pN2 = ((DStaticPowerResourceD*)pR2)->iDependencyList;
 		}
 
@@ -325,13 +325,13 @@ TInt DPowerResourceController::DeregisterDynamicResource(SPowerResourceClient* a
 	//Get the resource from appropriate container
 	if(aResourceId & KIdMaskResourceWithDependencies)
 		{
-		pDR = iDynamicResDependencyList[(aResourceId & ID_INDEX_BIT_MASK)];		
+		pDR = iDynamicResDependencyList[(TUint16)(aResourceId & ID_INDEX_BIT_MASK)];		
 		if(!pDR)														
 			return KErrNotFound;
 		}
 	else
 		{
-		pDR = iDynamicResourceList[(aResourceId & ID_INDEX_BIT_MASK)];		
+		pDR = iDynamicResourceList[(TUint16)(aResourceId & ID_INDEX_BIT_MASK)];		
 		if(!pDR)														
 			return KErrNotFound;
 		}
@@ -460,9 +460,9 @@ TInt DPowerResourceController::DeregisterDynamicResource(SPowerResourceClient* a
 		{
 		pCL = (SPowerResourceClientLevel*)pRC;
 		if(pCL->iClientId & USER_SIDE_CLIENT_BIT_MASK)
-			pC = iUserSideClientList[(pCL->iClientId & ID_INDEX_BIT_MASK)];								
+			pC = iUserSideClientList[(TUint16)(pCL->iClientId & ID_INDEX_BIT_MASK)];								
 		else																										
-			pC = iClientList[(pCL->iClientId & ID_INDEX_BIT_MASK)];										
+			pC = iClientList[(TUint16)(pCL->iClientId & ID_INDEX_BIT_MASK)];										
 		LIST_REMOVE(pC->iLevelList, pCL, iNextInList, SPowerResourceClientLevel);
 		LIST_PUSH(iClientLevelPool, pCL, iNextInList);
 		if(pC->iUnderFlowClCount > 0)
@@ -477,12 +477,12 @@ TInt DPowerResourceController::DeregisterDynamicResource(SPowerResourceClient* a
 	aClientPtr->iDynamicResCount--;
 	if(aResourceId & KIdMaskResourceWithDependencies)
 		{
-		iDynamicResDependencyList.Remove((DDynamicPowerResourceD*)pDR, (pDR->iResourceId & ID_INDEX_BIT_MASK));
+		iDynamicResDependencyList.Remove((DDynamicPowerResourceD*)pDR, (TUint16)(pDR->iResourceId & ID_INDEX_BIT_MASK));
 		iDynamicResDependencyCount--;
 		}
 	else
 		{
-		iDynamicResourceList.Remove(pDR, (pDR->iResourceId & ID_INDEX_BIT_MASK));
+		iDynamicResourceList.Remove(pDR, (TUint16)(pDR->iResourceId & ID_INDEX_BIT_MASK));
 		iDynamicResourceCount--;
 		}
 	__KTRACE_OPT(KRESMANAGER, Kern::Printf("<DExtendedResourceController::DeregisterDynamicResource"));
@@ -498,10 +498,12 @@ TInt DPowerResourceController::DeregisterDynamicResource(SPowerResourceClient* a
 @prototype 9.6
 Default implementation, PSL re-implements this if features supported.
 */
-TInt DPowerResourceController::DoRegisterStaticResourcesDependency(RPointerArray <DStaticPowerResourceD> & aStaticResourceDArray)
+TInt DPowerResourceController::DoRegisterStaticResourcesDependency(DStaticPowerResourceD**& aStaticResourceDArray, 
+																    TUint16& aStaticResourceDCount)
 	{
 	__KTRACE_OPT(KRESMANAGER, Kern::Printf("DExtendedResourceController::DoRegisterStaticResourcesDependency default implementation"));
-	aStaticResourceDArray.Reset();
+	aStaticResourceDArray = NULL;
+	aStaticResourceDCount = 0;
 	return KErrNone;
 	}
 
@@ -706,18 +708,18 @@ TInt DPowerResourceController::HandleDependencyResourceStateChange(SPowerResourc
 			{																							
 			DStaticPowerResourceD* pResource;												
 			if(aRequest.ClientId() & KIdMaskDynamic)										
-				pResource = (DStaticPowerResourceD*)iDynamicResDependencyList[(aRequest.ClientId() & ID_INDEX_BIT_MASK)];
+				pResource = (DStaticPowerResourceD*)iDynamicResDependencyList[(TUint16)(aRequest.ClientId() & ID_INDEX_BIT_MASK)];
 			else																						
-				pResource = iStaticResDependencyArray[(aRequest.ClientId() & ID_INDEX_BIT_MASK)  - 1];	
+				pResource = iStaticResDependencyArray[(TUint16)(aRequest.ClientId() & ID_INDEX_BIT_MASK)  - 1];	
 			name = pResource->iName;																	
 			}																							
 		else																							
 			{																							
 			SPowerResourceClient* pClient;																
 			if(aRequest.ClientId() & USER_SIDE_CLIENT_BIT_MASK)										
-				pClient = iUserSideClientList[(aRequest.ClientId() & ID_INDEX_BIT_MASK)];	
+				pClient = iUserSideClientList[(TUint16)(aRequest.ClientId() & ID_INDEX_BIT_MASK)];	
 			else // coverity[returned_null]
-				pClient = iClientList[(aRequest.ClientId() & ID_INDEX_BIT_MASK)];			
+				pClient = iClientList[(TUint16)(aRequest.ClientId() & ID_INDEX_BIT_MASK)];			
 			name = pClient->iName;				
 			}
 		}
@@ -760,7 +762,7 @@ TInt DPowerResourceController::DeregisterResourceDependency(SPowerResourceClient
 
 	if(aResId1 & KIdMaskDynamic)
 		{
-		pDR1 = iDynamicResDependencyList[(aResId1 & ID_INDEX_BIT_MASK)];	
+		pDR1 = iDynamicResDependencyList[(TUint16)(aResId1 & ID_INDEX_BIT_MASK)];	
 		if(!pDR1)															
 			UNLOCK_RETURN(KErrNotFound);
 		pN1 = pDR1->iDependencyList;
@@ -768,7 +770,7 @@ TInt DPowerResourceController::DeregisterResourceDependency(SPowerResourceClient
 		}
 	else
 		{
-		if((aResId1 & ID_INDEX_BIT_MASK) > (TUint)iStaticResDependencyArray.Count())			
+		if((aResId1 & ID_INDEX_BIT_MASK) > iStaticResDependencyCount)			
 			UNLOCK_RETURN(KErrNotFound);			
 		pDR1 = (DDynamicPowerResourceD*)iStaticResDependencyArray[(aResId1 & ID_INDEX_BIT_MASK) - 1];
 		pN1 = ((DStaticPowerResourceD*)pDR1)->iDependencyList;
@@ -778,7 +780,7 @@ TInt DPowerResourceController::DeregisterResourceDependency(SPowerResourceClient
 	//Get second resource from list
 	if(aResId2 & KIdMaskDynamic)
 		{
-		pDR2 = iDynamicResDependencyList[(aResId2 & ID_INDEX_BIT_MASK)];	
+		pDR2 = iDynamicResDependencyList[(TUint16)(aResId2 & ID_INDEX_BIT_MASK)];	
 		if(!pDR2)															
 			UNLOCK_RETURN(KErrNotFound);
 		pN2 = pDR2->iDependencyList;
@@ -786,9 +788,9 @@ TInt DPowerResourceController::DeregisterResourceDependency(SPowerResourceClient
 		}
 	else
 		{
-		if((aResId2 & ID_INDEX_BIT_MASK)> (TUint)iStaticResDependencyArray.Count())			
+		if((aResId2 & ID_INDEX_BIT_MASK)> iStaticResDependencyCount)			
 				UNLOCK_RETURN(KErrNotFound);			
-		pDR2 = (DDynamicPowerResourceD*)iStaticResDependencyArray[(aResId2 & ID_INDEX_BIT_MASK) - 1];
+		pDR2 = (DDynamicPowerResourceD*)iStaticResDependencyArray[(TUint16)(aResId2 & ID_INDEX_BIT_MASK) - 1];
 		pN2 = ((DStaticPowerResourceD*)pDR2)->iDependencyList;
 		pCL2 = ((DStaticPowerResourceD*)pDR2)->iResourceClientList;
 		}

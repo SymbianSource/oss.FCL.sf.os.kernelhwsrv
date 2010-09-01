@@ -230,36 +230,42 @@ private:
 		do { \
 		iConsole->Printf(_L(string)); \
 		iConsole->Printf(_L("\n")); \
+		RDebug::Print(_L(string)); \
 		} while (0)
 
 #define TUSB_PRINT1(string, a) \
 		do { \
 		iConsole->Printf(_L(string), (a)); \
 		iConsole->Printf(_L("\n")); \
+		RDebug::Print(_L(string), (a)); \
 		} while (0)
 
 #define TUSB_PRINT2(string, a, b) \
 		do { \
 		iConsole->Printf(_L(string), (a), (b)); \
 		iConsole->Printf(_L("\n")); \
+		RDebug::Print(_L(string), (a), (b)); \
 		} while (0)
 
 #define TUSB_PRINT3(string, a, b, c) \
 		do { \
 		iConsole->Printf(_L(string), (a), (b), (c)); \
 		iConsole->Printf(_L("\n")); \
+		RDebug::Print(_L(string), (a), (b), (c)); \
 		} while (0)
 
 #define TUSB_PRINT5(string, a, b, c, d, e) \
 		do { \
 		iConsole->Printf(_L(string), (a), (b), (c), (d), (e)); \
 		iConsole->Printf(_L("\n")); \
+		RDebug::Print(_L(string), (a), (b), (c), (d), (e)); \
 		} while (0)
 
 #define TUSB_PRINT6(string, a, b, c, d, e, f) \
 		do { \
 		iConsole->Printf(_L(string), (a), (b), (c), (d), (e), (f)); \
 		iConsole->Printf(_L("\n")); \
+		RDebug::Print(_L(string), (a), (b), (c), (d), (e), (f)); \
 		} while (0)
 
 #define TUSB_VERBOSE_PRINT(string) \

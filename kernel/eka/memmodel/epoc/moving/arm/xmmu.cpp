@@ -1275,16 +1275,23 @@ TPte ArmMmu::PtePermissions(TChunkType aChunkType)
 	}
 
 const TUint FBLK=(EMapAttrFullyBlocking>>12);
+const TUint BFNC=(EMapAttrBufferedNC>>12);
 const TUint BUFC=(EMapAttrBufferedC>>12);
+const TUint L1UN=(EMapAttrL1Uncached>>12);
 const TUint WTRA=(EMapAttrCachedWTRA>>12);
+const TUint WTWA=(EMapAttrCachedWTWA>>12);
 const TUint WBRA=(EMapAttrCachedWBRA>>12);
-
-#if defined(__CPU_XSCALE__) || defined(__CPU_SA1__)
+const TUint WBWA=(EMapAttrCachedWBWA>>12);
+const TUint AWTR=(EMapAttrAltCacheWTRA>>12);
+const TUint AWTW=(EMapAttrAltCacheWTWA>>12);
 const TUint AWBR=(EMapAttrAltCacheWBRA>>12);
-#endif
+const TUint AWBW=(EMapAttrAltCacheWBWA>>12);
+const TUint MAXC=(EMapAttrL1CachedMax>>12);
+
+const TUint L2UN=(EMapAttrL2Uncached>>12);
 
 const TUint16 UNS=0xffffu;	// Unsupported attribute
-
+const TUint16 SPE=0xfffeu;	// Special processing required
 
 #if defined(__CPU_ARM710T__) || defined(__CPU_ARM720T__)
 // Original definition of C B
@@ -1308,17 +1315,9 @@ static const TUint8 CacheBuffActual[16]=
 	{FBLK,FBLK,BUFC,BUFC,BUFC,BUFC,WBRA,WBRA,FBLK,FBLK,AWBR,AWBR,FBLK,FBLK,FBLK,WBRA};
 
 #elif defined(__CPU_XSCALE__)
-const TUint WBWA=(EMapAttrCachedWBWA>>12);
-const TUint16 SPE=0xfffeu;	// Special processing required
-
 #ifdef __CPU_XSCALE_MANZANO__
-const TUint L1UN=(EMapAttrL1Uncached>>12);
-const TUint BFNC=(EMapAttrBufferedNC>>12);
-
 #ifdef __HAS_EXTERNAL_CACHE__
 // ***MANZANO with L2 cache****** //
-const TUint L2UN=(EMapAttrL2Uncached>>12);
-const TUint MAXC=(EMapAttrL1CachedMax>>12);
 
 //Specifies TEX::CB bits for different L1/L2 cache attributes
 //  ...876543201

@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -19,10 +19,6 @@
 #include "modelleddevices.h"
 #include "testinterfacebase.h"
 #include "testinterfacesettingbase.h"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "vendordeviceTraces.h"
-#endif
 
 namespace NUnitTesting_USBDI
 	{
@@ -30,28 +26,23 @@ namespace NUnitTesting_USBDI
 
 RUsbDeviceVendor::RUsbDeviceVendor()
 	{
-	OstTraceFunctionEntry1( RUSBDEVICEVENDOR_RUSBDEVICEVENDOR_ENTRY, this );
-	OstTraceFunctionExit1( RUSBDEVICEVENDOR_RUSBDEVICEVENDOR_EXIT, this );
 	}
 	
 RUsbDeviceVendor::RUsbDeviceVendor(CBaseTestCase* aTestCase):RUsbTestDevice(aTestCase)
 	{
-	OstTraceFunctionEntryExt( RUSBDEVICEVENDOR_RUSBDEVICEVENDOR_ENTRY_DUP01, this );
-	OstTrace1(TRACE_NORMAL, RUSBDEVICEVENDOR_RUSBDEVICEVENDOR, "aTestCase = %d", aTestCase);
-	OstTraceFunctionExit1( RUSBDEVICEVENDOR_RUSBDEVICEVENDOR_EXIT_DUP01, this );
+	LOG_FUNC
+	RDebug::Printf("aTestCase = %d", aTestCase);
 	}
 	
 
 RUsbDeviceVendor::~RUsbDeviceVendor()
 	{	
-	OstTraceFunctionEntry1( RUSBDEVICEVENDOR_RUSBDEVICEVENDOR_ENTRY_DUP02, this );
-	OstTraceFunctionExit1( RUSBDEVICEVENDOR_RUSBDEVICEVENDOR_EXIT_DUP02, this );
 	}
 	
 
 void RUsbDeviceVendor::OpenL(const TDesC& aSerialNumber)
 	{
-	OstTraceFunctionEntryExt( RUSBDEVICEVENDOR_OPENL_ENTRY, this );
+	LOG_FUNC
 	
 	RUsbTestDevice::OpenL();
 	
@@ -76,14 +67,12 @@ void RUsbDeviceVendor::OpenL(const TDesC& aSerialNumber)
 	CleanupStack::Pop(interface0s0);
 	AddInterface(interface0);
 	CleanupStack::Pop(interface0);
-	OstTraceFunctionExit1( RUSBDEVICEVENDOR_OPENL_EXIT, this );
 	}
 
 
 void RUsbDeviceVendor::OnStateChangeL(TUsbcDeviceState aNewState)
 	{
-	OstTraceFunctionEntryExt( RUSBDEVICEVENDOR_ONSTATECHANGEL_ENTRY, this );
-	OstTraceFunctionExit1( RUSBDEVICEVENDOR_ONSTATECHANGEL_EXIT, this );
+	LOG_FUNC
 	}
 
 	

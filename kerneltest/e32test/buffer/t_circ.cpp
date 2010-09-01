@@ -232,34 +232,6 @@ void TestBuf()
 			test(Mem::Compare(buf,arraySize,theCharArray,arraySize)==KErrNone);
 			}
 		}
-	
-	// Test Reset, Put and Get
-	TInt count = cbInt->Count();
-	test(count>0);
-	cbInt->Reset();
-	count = cbInt->Count();
-	test(count==0);
-	TUint index = 0;
-	
-	// Put 100 integers to the circular buffer.
-	TUint numberOfObjects= 100;
-	for(index=1;index<=numberOfObjects; index++)
-	    {
-	    TInt result= cbInt->Put(index);
-	    User::LeaveIfError(result);
-	    }
-	count = cbInt->Count();
-	test(count==100);
-	
-	// Get 50 integers from the circular buffer.
-	for(index=1;index<=(numberOfObjects/2); index++)
-	    {
-	    TUint cb = cbInt->Get();
-	    test(cb==index);
-	    }
-	count = cbInt->Count();
-	test(count==50);
-		
 	delete [] buf;
 	delete cbInt;
 	}

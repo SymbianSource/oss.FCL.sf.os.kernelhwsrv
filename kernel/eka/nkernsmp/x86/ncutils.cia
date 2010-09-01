@@ -18,7 +18,7 @@
 #include <x86.h>
 #include <apic.h>
 
-extern "C" __NAKED__ void NKIdle(TUint32)
+extern "C" __NAKED__ void NKIdle(TInt)
 	{
 	asm("sti");
 	asm("hlt");
@@ -68,7 +68,7 @@ __NAKED__ void NKern::NotifyCrash(const TAny* /*a0*/, TInt /*a1*/)
 	asm("mov edx, eax ");
 	asm("cmp eax, 0 ");
 	asm("jnz short atomic_set_1 ");
-	asm("mov edx, [%a0]" : : "i" (&TheScheduler.iIpiAcceptCpus));
+	asm("mov edx, [%a0]" : : "i" (&TheScheduler.iActiveCpus1));
 	asm("shl edx, 16 ");
 	asm("atomic_set_1: ");
 	asm("or edx, [esi+%0]" : : "i" _FOFF(TSubScheduler,iCpuMask));
@@ -90,7 +90,7 @@ __NAKED__ void NKern::NotifyCrash(const TAny* /*a0*/, TInt /*a1*/)
 	asm("jmp short crash_halt ");
 
 	asm("first_to_crash: ");
-	asm("mov ebp, [esi+%0]" : : "i" _FOFF(TSubScheduler,iSSX.iTss));	// points to SCpuData
+	asm("mov ebp, [esi+60+%0]" : : "i" _FOFF(TSubScheduler,iExtras));	// points to SCpuData
 	asm("lea ebp, [ebp+%0]" : : "i" _FOFF(SCpuData,iRegs));
 	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet,iEsi));
 	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet,iEbp));
@@ -111,7 +111,7 @@ __NAKED__ void NKern::NotifyCrash(const TAny* /*a0*/, TInt /*a1*/)
 	asm("mov [eax+12], fs ");
 	asm("mov [eax+16], gs ");
 	asm("mov [eax+20], ss ");
-	asm("lea ebx, [esi+%0]" : : "i" _FOFF(TSubScheduler,iSSX.iIrqNestCount));
+	asm("lea ebx, [esi+52+%0]" : : "i" _FOFF(TSubScheduler,iExtras));	// points to i_IrqNestCount
 	asm("mov eax, 0x80000000 ");
 	asm("lock xchg eax, [ebx] ");
 	asm("mov [ebp+%0], eax" : : "i" _FOFF(SFullX86RegSet,iIrqNestCount));
@@ -137,7 +137,7 @@ __NAKED__ void NKern::NotifyCrash(const TAny* /*a0*/, TInt /*a1*/)
 	asm("not eax ");
 	asm("mov edx, %0": :"i" (addressof_CrashState)); 
 	asm("lock and [edx+2], ax ");
-	asm("mov dword ptr [esi+%0], 1" : : "i" _FOFF(TSubScheduler, iSSX.iCrashState));	// flag that this CPU is done
+	asm("mov dword ptr [esi+44+%0], 1" : : "i" _FOFF(TSubScheduler, iExtras));	// flag that this CPU is done
 	asm("xor ecx, ecx ");
 	asm("wait_other_cpus: ");
 	asm("mov ax, [edx+2] ");

@@ -47,8 +47,7 @@ source			us_gcc.cpp
 #endif
 
 sourcepath		../common
-source			array.cpp des8.cpp des16.cpp alloc.cpp 
-source			heap_hybrid.cpp debugfunction.cpp
+source			array.cpp des8.cpp des16.cpp alloc.cpp heap.cpp
 source			mem.cpp secure.cpp
 macro			__EXPORT_MEMCPY__
 #ifdef GCC32
@@ -82,7 +81,7 @@ source			 uc_gcc.cia
 source			 uc_i64.cia uc_realx.cpp uc_realx.cia uc_huffman.cia
 source			 uc_trp.cpp uc_trp.cia uc_utl.cia uc_exec.cia uc_data.cpp
 sourcepath		../common/arm
-source			carray.cia cdes8.cia cdes16.cia cmem.cia atomics.cia
+source			carray.cia cdes8.cia cdes16.cia cheap.cia cmem.cia atomics.cia
 #if defined(GCC32)
 source			cgcchelp.cpp cgcchelp.cia
 #endif

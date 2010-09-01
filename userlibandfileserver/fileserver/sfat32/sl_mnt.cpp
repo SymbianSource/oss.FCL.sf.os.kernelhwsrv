@@ -26,7 +26,6 @@
 #include "sl_dir_cache.h"
 #include "sl_scandrv.h"
 #include <hal.h>
-#include <f32dbg.h>
 
 TShortName DoGenerateShortNameL(const TDesC& aLongName,TInt& aNum,TBool aUseTildeSelectively);
 
@@ -551,8 +550,10 @@ void CFatMountCB::FinaliseMountL(TInt aOperation, TAny* /*aParam1*/, TAny* /*aPa
         return;
         }
 
-    if(Locked())
-        {//-- can't finalise the volume if it has opened disk access objects, like Format or RawAccess
+    if(LockStatus() != 0)
+        {//-- can't finalise the volume if it has opened objects and not in the consistent state.
+         //-- Theoretically, we can finalise the mount if we have files opened only for read, but at present,
+         //-- it's impossible to detect such situation.
         User::Leave(KErrInUse);
         }
 
@@ -611,23 +612,10 @@ void CFatMountCB::FinaliseMountL(TInt aOperation, TAny* /*aParam1*/, TAny* /*aPa
 */
 TBool CFatMountCB::VolCleanFlagSupported() const
     {
-    const TFatType fatType=FatType();
+        const TFatType fatType=FatType();
 
-    ASSERT(fatType == EFat12 || fatType == EFat16 || fatType == EFat32);
-    return (fatType != EFat12);
-    }
-
-
-//-----------------------------------------------------------------------------------------
-/**
-    @return Volume size in bytes according to the number of usable clusters.
-    This approach is not applicable to RAM drive, because its size isn't fixed and can be adjusted by the system.
-*/
-TUint64 CFatMountCB::VolumeSizeInBytes() const
-    {
-    ASSERT(ConsistentState());
-    ASSERT(!iRamDrive);
-    return ((TUint64)UsableClusters()) << ClusterSizeLog2();
+        ASSERT(fatType == EFat12 || fatType == EFat16 || fatType == EFat32);
+        return (fatType != EFat12);
     }
 
 //-----------------------------------------------------------------------------------------
@@ -692,21 +680,16 @@ void CFatMountCB::VolumeL(TVolumeInfo& aVolume) const
 
 
     const TUint32 freeClusters = FAT().NumberOfFreeClusters(bSyncOp);
-    aVolume.iFree = (TInt64)freeClusters << ClusterSizeLog2();
+
     __PRINT1(_L("CFatMountCB::VolumeL() free clusters:%d"), freeClusters);
 
+    aVolume.iFree = (TInt64)freeClusters << ClusterSizeLog2();
 
-    if(drvInfo.iType==EMediaRam)
-        {//-- a special case. RAM drive size is variable and adjustable. It should be calculated from aVolume.iFree and CMountCB::iFree
-        ASSERT(iRamDrive);
+    if (drvInfo.iType==EMediaRam)
         aVolume.iSize=aVolume.iFree+iSize;
-        aVolume.iSize-=ClusterBasePosition(); // Allow for bytes used by FAT etc
-        aVolume.iSize=(aVolume.iSize >> ClusterSizeLog2()) << ClusterSizeLog2();  //-- round down to cluster size
-        }
-    else
-        {//-- normal case; the volume size is determined by amount of usable clusters
-        aVolume.iSize = VolumeSizeInBytes();
-        }
+
+    aVolume.iSize-=ClusterBasePosition(); // Allow for bytes used by FAT etc
+    aVolume.iSize=(aVolume.iSize >> ClusterSizeLog2()) << ClusterSizeLog2();  //-- round down to cluster size
 
     }
 
@@ -1639,7 +1622,7 @@ void CFatMountCB::DoWriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny*
     const TInt maxClusters=((aLength+clusterRelativePos-1)>>ClusterSizeLog2())+1;
     const TInt clusterListLen=FAT().CountContiguousClustersL(aPos.iCluster,endCluster,maxClusters);
     const TInt writeLength=Min(aLength,(clusterListLen<<ClusterSizeLog2())-clusterRelativePos);
-    TInt64 dataStart=FAT().DataPositionInBytes(aPos.iCluster)+clusterRelativePos;
+    TInt64 dataStart=FAT().DataPositionInBytesL(aPos.iCluster)+clusterRelativePos;
 
     TRAPD(r, iRawDisk->WriteL(dataStart,writeLength,aSrc,aMessage,anOffset, aFlag));
 
@@ -1670,7 +1653,7 @@ void CFatMountCB::DoWriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny*
         if((aPos.iPos != 0) && (badcluster == aPos.iCluster) && (aLastcluster == 0) && (aPos.iCluster == cluster))
             { //Copy the contents already present in this cluster to new cluster allocated.
             const TInt sizeToRead = aPos.iPos - ((aPos.iPos >> ClusterSizeLog2()) << ClusterSizeLog2());
-            dataStart = FAT().DataPositionInBytes(aPos.iCluster) + ClusterRelativePos((aPos.iPos - sizeToRead));
+            dataStart = FAT().DataPositionInBytesL(aPos.iCluster) + ClusterRelativePos((aPos.iPos - sizeToRead));
 
 
             //-- Allocate the buffer required to copy the contents from bad cluster
@@ -1699,7 +1682,7 @@ void CFatMountCB::DoWriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny*
                 {
                 //Calculate and copy the contents to new cluster.
                 aPos.iCluster = goodcluster;
-                dataStart = FAT().DataPositionInBytes(aPos.iCluster) + ClusterRelativePos(aPos.iPos - sizeToRead);
+                dataStart = FAT().DataPositionInBytesL(aPos.iCluster) + ClusterRelativePos(aPos.iPos - sizeToRead);
 
                 r = LocalDrive()->Write(dataStart, clustBuf);
                 if(r == KErrNone)
@@ -1807,7 +1790,7 @@ void CFatMountCB::DoReadFromClusterListL(TEntryPos& aPos,TInt aLength,const TAny
     const TInt maxClusters=((aLength+clusterRelativePos-1)>>ClusterSizeLog2())+1;
     const TInt clusterListLen=FAT().CountContiguousClustersL(aPos.iCluster,endCluster,maxClusters);
     const TInt readLength=Min(aLength,(clusterListLen<<ClusterSizeLog2())-clusterRelativePos);
-    const TInt64 dataStart=FAT().DataPositionInBytes(aPos.iCluster)+clusterRelativePos;
+    const TInt64 dataStart=FAT().DataPositionInBytesL(aPos.iCluster)+clusterRelativePos;
 
     TRAPD(r, iRawDisk->ReadL(dataStart,readLength,aTrg,aMessage,anOffset, aFlag));
 
@@ -3171,7 +3154,7 @@ void CFatMountCB::ReadUidL(TUint32 aCluster,TEntry& anEntry) const
         User::Leave(KErrCorrupt);
 
     TBuf8<sizeof(TCheckedUid)> uidBuf;
-    iRawDisk->ReadCachedL(FAT().DataPositionInBytes(aCluster),sizeof(TCheckedUid),uidBuf);
+    iRawDisk->ReadCachedL(FAT().DataPositionInBytesL(aCluster),sizeof(TCheckedUid),uidBuf);
     __ASSERT_DEBUG(uidBuf.Length()==sizeof(TCheckedUid),Fault(EFatReadUidFailed));
     TCheckedUid uid(uidBuf);
     anEntry.iType=uid.UidType();
@@ -3247,7 +3230,7 @@ void CFatMountCB::ReadSectionL(const TDesC& aName,TInt aPos,TAny* aTrg,TInt aLen
 			//  Read the remaining length or the entire cluster block whichever is smaller
 			TInt readLength = Min(aLength-readTotal,(clusterListLen<<ClusterSizeLog2())-pos);
 			__ASSERT_DEBUG(readLength>0,Fault(EReadFileSectionFailed));
-			TInt64 dataAddress=(FAT().DataPositionInBytes(cluster))+pos;
+			TInt64 dataAddress=(FAT().DataPositionInBytesL(cluster))+pos;
 			iRawDisk->ReadL(dataAddress,readLength,aTrg,aMessage,readTotal, 0);
 			readTotal += readLength;
 
@@ -3451,7 +3434,7 @@ TInt64 CFatMountCB::MakeLinAddrL(const TEntryPos& aPos) const
     if (!IsRootDir(aPos))
         {
         TInt relPos=ClusterRelativePos(aPos.iPos);
-        return FAT().DataPositionInBytes(aPos.iCluster)+relPos;
+        return FAT().DataPositionInBytesL(aPos.iCluster)+relPos;
         }
     if (aPos.iPos+StartOfRootDirInBytes()>=RootDirEnd())
         User::Leave(KErrDirFull); // Past last root dir entry
@@ -3643,36 +3626,23 @@ TInt CFatMountCB::ControlIO(const RMessagePtr2& aMessage,TInt aCommand,TAny* aPa
 		case EDisableFATDirCache:
 			{
 		    MWTCacheInterface* pDirCache = iRawDisk->DirCacheInterface();
-		    TUint32 KEDisableFATDirCache = MWTCacheInterface::EDisableCache;
+		    TUint32 KEDisableFATDirCache = CDynamicDirCache::EDisableCache;
 		    pDirCache->Control(KEDisableFATDirCache, (TUint32) aParam1, NULL);
 			break;
 			}
 		case EDumpFATDirCache:
 			{
 		    MWTCacheInterface* pDirCache = iRawDisk->DirCacheInterface();
-		    if (pDirCache)
-		        {
-	            TUint32 KEDumpFATDirCache = MWTCacheInterface::EDumpCache;
-	            pDirCache->Control(KEDumpFATDirCache, 0, NULL);
-		        }
+		    TUint32 KEDumpFATDirCache = CDynamicDirCache::EDumpCache;
+		    pDirCache->Control(KEDumpFATDirCache, 0, NULL);
 			break;
 			}
 		case EFATDirCacheInfo:
 			{
-			MWTCacheInterface* pDCache = iRawDisk->DirCacheInterface();
-		    if (pDCache)
-		        {
-	            TUint32 KEFATDirCacheInfo = MWTCacheInterface::ECacheInfo;
-	            TDirCacheInfo aInfo;
-	            TInt r = pDCache->Control(KEFATDirCacheInfo, 0, static_cast<TAny*>(&aInfo));
-	            if (r == KErrNone)
-	                {
-	                TPckgBuf<TDirCacheInfo> pkgBuf(aInfo);
-	                r = aMessage.Write(2,pkgBuf);
-	                }
-                return r;
-		        }
-		    return KErrNotSupported;
+		    MWTCacheInterface* pDirCache = iRawDisk->DirCacheInterface();
+		    TUint32 KEFATDirCacheInfo = CDynamicDirCache::ECacheInfo;
+		    pDirCache->Control(KEFATDirCacheInfo, 0, NULL);
+			break;
 			}
 
 
@@ -4100,7 +4070,7 @@ void CFatMountCB::BlockMapReadFromClusterListL(TEntryPos& aPos, TInt aLength, SB
             User::LeaveIfError(r);
         if ( caps().iType&EMediaRam )
             {
-            realPosition = FAT().DataPositionInBytes( aPos.iCluster );
+            realPosition = FAT().DataPositionInBytesL( aPos.iCluster );
             aPos.iCluster = I64LOW((realPosition - aInfo.iStartBlockAddress)>>ClusterSizeLog2());
             blockMapEntry.SetStartBlock( aPos.iCluster );
             }
@@ -4213,7 +4183,7 @@ TInt CFatMountCB::CheckDisk()
     if(bProblemsFound && chkDskRes == CScanDrive::ENoErrors)
         {//-- ScanDrive in this mode can leave unexpectedly without setting an error code that is returned by ProblemsDiscovered();
          //-- leave itself means a problem
-        chkDskRes = nScnDrvRes == KErrNone ? CScanDrive::EUnknownError : (CScanDrive::TGenericError) nScnDrvRes;
+        chkDskRes = CScanDrive::EUnknownError;
         }
 
     delete pScnDrv;
@@ -4293,7 +4263,7 @@ TInt CFatMountCB::ScanDrive()
     TInt nRes;
 
     if(LockStatus()!=0)
-        {//-- can't run if the volume has opened objects, like files, directories, formats etc.
+        {
 		__PRINT(_L("CFatMountCB::ScanDrive() locked!\n"));
         return KErrInUse;
         }

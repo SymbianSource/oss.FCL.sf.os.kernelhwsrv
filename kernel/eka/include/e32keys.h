@@ -1,4 +1,4 @@
-// Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -101,10 +101,8 @@ enum TEventModifier
 	EModifierPointer3DButton1=0x02000000,/**< 3D pointer device specific modifier (button 1). */
 	EModifierPointer3DButton2=0x04000000,/**< 3D pointer device specific modifier (button 2). */
 	EModifierPointer3DButton3=0x08000000,/**< 3D pointer device specific modifier (button 3). */
-	EModifierAdvancedPointerEvent=0x10000000, /**< TPointerEvent is a TAdvancedPointerEvent.*/	
-	EModifierLongKey = 0x20000000,		/**< Long key press event */
-	EModifierExternalKey = 0x40000000,	/**< Accessory key event.*/
-	EAllModifiers=0xffffffff            /**< A combination of all event modifiers.*/	
+	EModifierAdvancedPointerEvent=0x10000000, /**< TPointerEvent is a TAdvancedPointerEvent.*/
+	EAllModifiers=0x1fffffff            /**< A combination of all event modifiers.*/
 	};
 
 

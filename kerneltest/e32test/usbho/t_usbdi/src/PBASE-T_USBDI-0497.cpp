@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -20,10 +20,6 @@
 #include "testpolicy.h"
 #include "modelleddevices.h"
 #include "testliterals.h"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "PBASE-T_USBDI-0497Traces.h"
-#endif
 
 
  
@@ -67,12 +63,10 @@ const TFunctorTestCase<CUT_PBASE_T_USBDI_0497,TBool> CUT_PBASE_T_USBDI_0497::iFu
 
 CUT_PBASE_T_USBDI_0497* CUT_PBASE_T_USBDI_0497::NewL(TBool aHostRole)
 	{
-	OstTraceFunctionEntry1( CUT_PBASE_T_USBDI_0497_NEWL_ENTRY, aHostRole );
 	CUT_PBASE_T_USBDI_0497* self = new (ELeave) CUT_PBASE_T_USBDI_0497(aHostRole);
 	CleanupStack::PushL(self);
 	self->ConstructL();
 	CleanupStack::Pop(self);
-	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0497_NEWL_EXIT, ( TUint )( self ) );
 	return self;
 	}
 	
@@ -81,16 +75,12 @@ CUT_PBASE_T_USBDI_0497::CUT_PBASE_T_USBDI_0497(TBool aHostRole)
 :	CBaseBulkTestCase(KTestCaseId,aHostRole),
 	iCaseStep(EInProgress)
 	{
-	OstTraceFunctionEntryExt( CUT_PBASE_T_USBDI_0497_CUT_PBASE_T_USBDI_0497_ENTRY, this );
-	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0497_CUT_PBASE_T_USBDI_0497_EXIT, this );
 	} 
 
 
 void CUT_PBASE_T_USBDI_0497::ConstructL()
 	{
-	OstTraceFunctionEntry1( CUT_PBASE_T_USBDI_0497_CONSTRUCTL_ENTRY, this );
 	BaseBulkConstructL();
-	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0497_CONSTRUCTL_EXIT, this );
 	}
 
 
@@ -99,7 +89,7 @@ CUT_PBASE_T_USBDI_0497::~CUT_PBASE_T_USBDI_0497()
 	The transfer objects have test specific names - so perform transfer specific clean up here.
 	*/
 	{
-	OstTraceFunctionEntry1( CUT_PBASE_T_USBDI_0497_CUT_PBASE_T_USBDI_0497_ENTRY_DUP01, this );
+	LOG_FUNC
 	
 	Cancel();
 
@@ -121,31 +111,29 @@ CUT_PBASE_T_USBDI_0497::~CUT_PBASE_T_USBDI_0497()
 		delete iIfc2InTransfer[count];
 		iIfc2InTransfer[count] = NULL;
 		}
-	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0497_CUT_PBASE_T_USBDI_0497_EXIT_DUP01, this );
 	}
 	
 	
 void CUT_PBASE_T_USBDI_0497::Ep0TransferCompleteL(TInt aCompletionCode)
 	{
-	OstTraceFunctionEntryExt( CUT_PBASE_T_USBDI_0497_EP0TRANSFERCOMPLETEL_ENTRY, this );
+	LOG_FUNC
 	
-	OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_EP0TRANSFERCOMPLETEL, "Ep0TransferCompleteL with aCompletionCode = %d",aCompletionCode);
+	RDebug::Printf("Ep0TransferCompleteL with aCompletionCode = %d",aCompletionCode);
 	
 	if(aCompletionCode != KErrNone)
 		{
 		if(iCaseStep == EFailed)
 			{// ignore error, nad catch the TestFailed method called further down.
-			OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_EP0TRANSFERCOMPLETEL_DUP01, "***Failure sending FAIL message to client on endpoint 0***");
+			RDebug::Printf("***Failure sending FAIL message to client on endpoint 0***");
 			}
 		else
 			{
 			TBuf<256> msg;
 			msg.Format(_L("<Error %d> Transfer to control endpoint 0 was not successful"),aCompletionCode);
-			OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_EP0TRANSFERCOMPLETEL_DUP02, msg);
+			RDebug::Print(msg);
 			iCaseStep = EFailed;
 			TTestCaseFailed request(aCompletionCode,msg);
 			iControlEp0->SendRequest(request,this);
-			OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0497_EP0TRANSFERCOMPLETEL_EXIT, this );
 			return;
 			}
 		}
@@ -164,7 +152,7 @@ void CUT_PBASE_T_USBDI_0497::Ep0TransferCompleteL(TInt aCompletionCode)
 		
 		case ERequestDeviceRead:
 			{
-			OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_EP0TRANSFERCOMPLETEL_DUP03, "Asking client for 'Read' on interface 2");
+			RDebug::Printf("Asking client for 'Read' on interface 2");
 			iCaseStep = ETransferOut;	
 			TEndpointReadRequest request(2,1,KDeviceNumReadBytes);// EP1 means endpoint index 1 not the actual endpoint number
 			iControlEp0->SendRequest(request,this);
@@ -172,7 +160,7 @@ void CUT_PBASE_T_USBDI_0497::Ep0TransferCompleteL(TInt aCompletionCode)
 			break;
 			
 		case ETransferOut:
-			OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_EP0TRANSFERCOMPLETEL_DUP04, "Try to write data on BOTH interfaces");
+			RDebug::Printf("Try to write data on BOTH interfaces");
 	
 			iStartTime[0].HomeTime();
 			iStartTime[1].HomeTime();
@@ -185,7 +173,7 @@ void CUT_PBASE_T_USBDI_0497::Ep0TransferCompleteL(TInt aCompletionCode)
 		
 		case ERequestDeviceWriteBack:
 			{
-			OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_EP0TRANSFERCOMPLETEL_DUP05, "Asking client for 'Write' back on interface 2");
+			RDebug::Printf("Asking client for 'Write' back on interface 2");
 			iCaseStep = ETransferIn;	
 			TWriteCachedReadDataRequest request(2,1,1);// EP1 means endpoint index 1 not the actual endpoint number
 			iControlEp0->SendRequest(request,this);
@@ -193,7 +181,7 @@ void CUT_PBASE_T_USBDI_0497::Ep0TransferCompleteL(TInt aCompletionCode)
 			break;
 			
 		case ETransferIn:
-			OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_EP0TRANSFERCOMPLETEL_DUP06, "Try to receive data on BOTH interfaces");
+			RDebug::Printf("Try to receive data on BOTH interfaces");
 	
 			iStartTime[0].HomeTime();
 			iStartTime[1].HomeTime();
@@ -205,21 +193,20 @@ void CUT_PBASE_T_USBDI_0497::Ep0TransferCompleteL(TInt aCompletionCode)
 			break;
 	
 		default:
-			OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_EP0TRANSFERCOMPLETEL_DUP07, "<Error> Unknown test step");
+			RDebug::Printf("<Error> Unknown test step");
 			TestFailed(KErrUnknown);
 			break;
 		}
-	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0497_EP0TRANSFERCOMPLETEL_EXIT_DUP01, this );
 	}
 	
 void CUT_PBASE_T_USBDI_0497::TransferCompleteL(TInt aTransferId,TInt aCompletionCode)
 	{
-	OstTraceFunctionEntryExt( CUT_PBASE_T_USBDI_0497_TRANSFERCOMPLETEL_ENTRY, this );
+	LOG_FUNC
 	Cancel();
 	
 	TInt err(KErrNone);
 	TBuf<256> msg;
-	OstTraceExt3(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_TRANSFERCOMPLETEL, "Transfer completed (id=%d), aCompletionCode = %d, test step = %d",aTransferId, aCompletionCode, iCaseStep);
+	RDebug::Printf("Transfer completed (id=%d), aCompletionCode = %d, test step = %d",aTransferId, aCompletionCode, iCaseStep);
 
 	switch(iCaseStep)
 		{
@@ -242,7 +229,7 @@ void CUT_PBASE_T_USBDI_0497::TransferCompleteL(TInt aTransferId,TInt aCompletion
 				case KIfc2BulkTransferOutId1:
 				case KIfc2BulkTransferOutId2:
 					iTransferComplete |= aTransferId;
-					OstTraceExt2(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_TRANSFERCOMPLETEL_DUP01, "Transfer OUT %d completed (Transfer Completion Aggregation Mask 0x%x)", aTransferId, iTransferComplete);
+					RDebug::Printf("Transfer OUT %d completed (Transfer Completion Aggregation Mask 0x%x)", aTransferId, iTransferComplete);
 					break; //switch(aTransferId)
 				default:
 					iTransferComplete = 0; //reset
@@ -266,7 +253,7 @@ void CUT_PBASE_T_USBDI_0497::TransferCompleteL(TInt aTransferId,TInt aCompletion
 
 			if(err==KErrNone && (iTransferComplete & KBulkTransferOutIdMask) == KBulkTransferOutIdMask)
 				{
-				OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_TRANSFERCOMPLETEL_DUP02, "All OUT Transfers Completed Successfully: Transfer Completion Aggregation Mask 0x%x", iTransferComplete);
+				RDebug::Printf("All OUT Transfers Completed Successfully: Transfer Completion Aggregation Mask 0x%x", iTransferComplete);
 				iTransferComplete = 0; //reset
 				err = CheckAndResetTimes(0, 1, KMaxTimeDiffPercentage);
 				if(err!=KErrNone)
@@ -274,7 +261,7 @@ void CUT_PBASE_T_USBDI_0497::TransferCompleteL(TInt aTransferId,TInt aCompletion
 					break; //switch(iCaseStep)
 					}
 	
-				OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_TRANSFERCOMPLETEL_DUP03, "Asking client for 'Write' back on interface 1");
+				RDebug::Printf("Asking client for 'Write' back on interface 1");
 				iCaseStep = ERequestDeviceWriteBack;
 				TWriteCachedReadDataRequest request(1,1,1);// EP1 means endpoint index 1 not the actual endpoint number
 				iControlEp0->SendRequest(request,this);
@@ -301,7 +288,7 @@ void CUT_PBASE_T_USBDI_0497::TransferCompleteL(TInt aTransferId,TInt aCompletion
 				case KIfc2BulkTransferInId1:
 				case KIfc2BulkTransferInId2:
 					iTransferComplete |= aTransferId;
-					OstTraceExt2(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_TRANSFERCOMPLETEL_DUP04, "Transfer OUT %d completed (Transfer Completion Aggregation Mask 0x%x)", aTransferId, iTransferComplete);
+					RDebug::Printf("Transfer OUT %d completed (Transfer Completion Aggregation Mask 0x%x)", aTransferId, iTransferComplete);
 					break; //switch(aTransferId)
 	
 				default:
@@ -327,7 +314,7 @@ void CUT_PBASE_T_USBDI_0497::TransferCompleteL(TInt aTransferId,TInt aCompletion
 			if(err==KErrNone && (iTransferComplete & KBulkTransferInIdMask) == KBulkTransferInIdMask)
 				{
 				// ok, compare data rcvd now
-				OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_TRANSFERCOMPLETEL_DUP05, "All IN Transfers Completed Successfully: Transfer Completion Aggregation Mask 0x%x", iTransferComplete);
+				RDebug::Printf("All IN Transfers Completed Successfully: Transfer Completion Aggregation Mask 0x%x", iTransferComplete);
 				iTransferComplete = 0; //reset
 				err = CheckAndResetTimes(0, 1, KMaxTimeDiffPercentage);
 				if(err!=KErrNone)
@@ -342,7 +329,7 @@ void CUT_PBASE_T_USBDI_0497::TransferCompleteL(TInt aTransferId,TInt aCompletion
 				//Validate first transfer on Interface 1 for number of bytes originally written.
 				if(ValidateData(data1, KLiteralFrench4(), KHostNumWriteBytes1) == EFalse)
 					{
-					OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_TRANSFERCOMPLETEL_DUP06, "Validation failure 1st transfer, Interface 1");
+					RDebug::Printf("Validation failure 1st transfer, Interface 1");
 					err = KErrCompletion; //indicates data validation failure
 					break; //switch(iCaseStep)
 					}
@@ -350,7 +337,7 @@ void CUT_PBASE_T_USBDI_0497::TransferCompleteL(TInt aTransferId,TInt aCompletion
 				//Validate second transfer on Interface 1 for number of bytes originally written.
 				if(ValidateData(data2, KLiteralFrench4(), KHostNumWriteBytes1, KHostNumWriteBytes2) == EFalse)
 					{
-					OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_TRANSFERCOMPLETEL_DUP07, "Validation failure 2nd transfer, Interface 1");
+					RDebug::Printf("Validation failure 2nd transfer, Interface 1");
 					err = KErrCompletion; //indicates data validation failure
 					break; //switch(iCaseStep)
 					}
@@ -358,7 +345,7 @@ void CUT_PBASE_T_USBDI_0497::TransferCompleteL(TInt aTransferId,TInt aCompletion
 				//Validate first transfer on Interface 2 for number of bytes originally written.
 				if(ValidateData(data3, KLiteralEnglish8(), KHostNumWriteBytes1) == EFalse)
 					{
-					OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_TRANSFERCOMPLETEL_DUP08, "Validation failure 1st transfer, Interface 2");
+					RDebug::Printf("Validation failure 1st transfer, Interface 2");
 					err = KErrCompletion; //indicates data validation failure
 					break; //switch(iCaseStep)
 					}
@@ -366,13 +353,13 @@ void CUT_PBASE_T_USBDI_0497::TransferCompleteL(TInt aTransferId,TInt aCompletion
 				//Validate second transfer on Interface 2 for number of bytes originally written.
 				if(ValidateData(data4, KLiteralEnglish8(), KHostNumWriteBytes1, KHostNumWriteBytes2) == EFalse)
 					{
-					OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_TRANSFERCOMPLETEL_DUP09, "Validation failure 2nd transfer, Interface 2");
+					RDebug::Printf("Validation failure 2nd transfer, Interface 2");
 					err = KErrCompletion; //indicates data validation failure
 					break; //switch(iCaseStep)
 					}
 
 				// Comparison is a match
-				OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_TRANSFERCOMPLETEL_DUP10, "Comparison for IN transfer is a match");
+				RDebug::Printf("Comparison for IN transfer is a match");
 				iCaseStep = EPassed;
 				TTestCasePassed request;
 				iControlEp0->SendRequest(request,this);
@@ -399,20 +386,19 @@ void CUT_PBASE_T_USBDI_0497::TransferCompleteL(TInt aTransferId,TInt aCompletion
 	
 	if(err!=KErrNone)
 		{	
-		OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_TRANSFERCOMPLETEL_DUP11, msg);
+		RDebug::Print(msg);
 		iCaseStep = EFailed;
 		TTestCaseFailed request(err,msg);
 		return iControlEp0->SendRequest(request,this);
 		}	
-	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0497_TRANSFERCOMPLETEL_EXIT, this );
 	}
 	
 void CUT_PBASE_T_USBDI_0497::DeviceInsertedL(TUint aDeviceHandle)
 	{
-	OstTraceFunctionEntryExt( CUT_PBASE_T_USBDI_0497_DEVICEINSERTEDL_ENTRY, this );
+	LOG_FUNC
 	
 	Cancel();
-	OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_DEVICEINSERTEDL, "this - %08x", this);
+	RDebug::Printf("this - %08x", this);
 	
 	TBuf<256> msg;
 	TInt err = KErrNone;
@@ -444,7 +430,7 @@ void CUT_PBASE_T_USBDI_0497::DeviceInsertedL(TUint aDeviceHandle)
 			iIfc2OutTransfer[1] = new (ELeave) CBulkTransfer(iTestPipeInterface2BulkOut1,iUsbInterface2,KBulkMaxTransferSize,*this,KIfc2BulkTransferOutId2);
 			
 			// Initialise the descriptors for transfer		
-			OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_DEVICEINSERTEDL_DUP01, "Initialising the transfer descriptors - interface 1");
+			RDebug::Printf("Initialising the transfer descriptors - interface 1");
 			err = iUsbInterface1.InitialiseTransferDescriptors();
 			if(err != KErrNone)
 				{
@@ -453,7 +439,7 @@ void CUT_PBASE_T_USBDI_0497::DeviceInsertedL(TUint aDeviceHandle)
 			else
 				{
 				// Initialise the descriptors for transfer		
-				OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_DEVICEINSERTEDL_DUP02, "Initialising the transfer descriptors (Interface 2)");
+				RDebug::Printf("Initialising the transfer descriptors (Interface 2)");
 				err = iUsbInterface2.InitialiseTransferDescriptors();
 				if(err != KErrNone)
 					{
@@ -464,19 +450,18 @@ void CUT_PBASE_T_USBDI_0497::DeviceInsertedL(TUint aDeviceHandle)
 		}
 	if(err != KErrNone)
 		{
-		OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_DEVICEINSERTEDL_DUP03, msg);
+		RDebug::Print(msg);
 		iCaseStep = EFailed;
 		TTestCaseFailed request(err,msg);
 		iControlEp0->SendRequest(request,this);
 		}
 	else
 		{
-		OstTrace0(TRACE_NORMAL, CUT_PBASE_T_USBDI_0497_DEVICEINSERTEDL_DUP04, "Asking client for 'Read' on interface 1");
+		RDebug::Printf("Asking client for 'Read' on interface 1");
 		iCaseStep = ERequestDeviceRead;	
 		TEndpointReadRequest request(1,1,KDeviceNumReadBytes);// EP1 means endpoint index 1 not the actual endpoint number
 		iControlEp0->SendRequest(request,this);
 		}
-	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0497_DEVICEINSERTEDL_EXIT, this );
 	}
 	
 	} //end namespace

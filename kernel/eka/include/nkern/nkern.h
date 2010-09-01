@@ -36,7 +36,7 @@ extern "C" {
 /** @internalComponent */
 IMPORT_C void NKFault(const char* file, TInt line);
 /** @internalComponent */
-void NKIdle(TUint32 aStage);
+void NKIdle(TInt aStage);
 }
 
 /**
@@ -715,14 +715,13 @@ struct SNThreadCreateInfo
 	Pointer to a function which is called whenever a CPU goes idle
 
 	@param	aPtr	The iPtr stored in the SCpuIdleHandler structure
-	@param	aStage	Bits 0-7 give a bitmask of CPUs now active, i.e. 0 means all processors now idle
-					Bit 31 set indicates that the current core can now be powered down
-					Bit 30 set indicates that other cores still remain to be retired
-					Bit 29 set indicates that postamble processing is required after waking up
+	@param	aStage	If positive, the number of processors still active
+					If zero, indicates all processors are now idle
+					-1 indicates that postamble processing is required after waking up
 
 	@internalComponent
 */
-typedef void (*TCpuIdleHandlerFn)(TAny* aPtr, TUint32 aStage);
+typedef void (*TCpuIdleHandlerFn)(TAny* aPtr, TInt aStage);
 
 /** Idle handler structure
 
@@ -730,17 +729,6 @@ typedef void (*TCpuIdleHandlerFn)(TAny* aPtr, TUint32 aStage);
 */
 struct SCpuIdleHandler
 	{
-	/**
-	Defined flag bits in aStage parameter
-	*/
-	enum
-		{
-		EActiveCpuMask=0xFFu,
-		EPostamble=1u<<29,		// postamble needed
-		EMore=1u<<30,			// more cores still to be retired
-		ERetire=1u<<31,			// this core can now be retired
-		};
-
 	TCpuIdleHandlerFn	iHandler;
 	TAny*				iPtr;
 	volatile TBool		iPostambleRequired;
@@ -826,7 +814,6 @@ public:
 	IMPORT_C static void ThreadRelease(NThread* aThread, TInt aReturnValue, NFastMutex* aMutex);
 	IMPORT_C static void ThreadSetPriority(NThread* aThread, TInt aPriority);
 	IMPORT_C static void ThreadSetPriority(NThread* aThread, TInt aPriority, NFastMutex* aMutex);
-	static void ThreadSetNominalPriority(NThread* aThread, TInt aPriority);
 	IMPORT_C static void ThreadRequestSignal(NThread* aThread);
 	IMPORT_C static void ThreadRequestSignal(NThread* aThread, NFastMutex* aMutex);
 	IMPORT_C static void ThreadRequestSignal(NThread* aThread, TInt aCount);

@@ -32,10 +32,6 @@
 #include "sf_cache_client.h"
 #include "sf_file_cache_defs.h"
 
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "sf_file_cacheTraces.h"
-#endif
-
 
 // disables flushing of stale cachelines before each write
 #define LAZY_WRITE
@@ -83,10 +79,6 @@ LOCAL_C void Fault(TFileCacheFault aFault)
 	}
 
 const TInt KMinSequentialReadsBeforeReadAhead = 3;
-
-#ifdef DOUBLE_BUFFERED_WRITING
-const TInt KMinSequentialAppendsBeforeFlush = 3;
-#endif
 
 //************************************
 // CFileCache
@@ -1171,18 +1163,6 @@ TInt CFileCache::DoWriteBuffered(CFsMessageRequest& aMsgRequest, CFsClientMessag
 					currentPos = iSize64;
 				iInitialSize = iSize64;
 
-
-#ifdef DOUBLE_BUFFERED_WRITING
-				// count the number of sequential write-appends
-				if (currentOperation->iClientRequest)
-					{
-					if (currentPos == iSize64)
-						iSequentialAppends++;
-					else
-						iSequentialAppends = 0;
-					}
-#endif // DOUBLE_BUFFERED_WRITING
-
 				// if EFileWriteDirectIO OR 
 				// (caching writes and requested write len > size of the cache), 
 				// flush the write cache
@@ -1289,13 +1269,6 @@ TInt CFileCache::DoWriteBuffered(CFsMessageRequest& aMsgRequest, CFsClientMessag
 					TInt r = DoFlushDirty(aNewRequest, &aMsgRequest, EFlushSingle);
 					if (r != CFsRequest::EReqActionBusy && r != CFsRequest::EReqActionComplete)
 						lastError = r;
-					}
-#endif
-#ifdef DOUBLE_BUFFERED_WRITING
-				if (cachingWrites && lastError == KErrNone && 
-					iSequentialAppends >= KMinSequentialAppendsBeforeFlush && iCacheClient->LockedSegmentsHalfUsed())
-					{
-					DoFlushDirty(aNewRequest, &aMsgRequest, EFlushHalf);
 					}
 #endif
 				// if no cacheline found & write caching is enabled, allocate a new cacheline
@@ -1630,13 +1603,17 @@ void CFileCache::Purge(TBool aPurgeDirty)
 
 void CFileCache::PropagateFlushErrorToAllFileShares()
 	{
-	ASSERT(IsDriveThread());
-	TDblQueIter<CFileShare> fileShareIter(iFileCB->FileShareList());
-	CFileShare* pFileShare;
-	while ((pFileShare = fileShareIter++) != NULL)
+	FileShares->Lock();
+	TInt count = FileShares->Count();
+	while(count--)
 		{
-		pFileShare->iFlushError = iFlushError;
+		CFileShare* share = (CFileShare*)(*FileShares)[count];
+		if (&share->File() == iFileCB)
+			{
+			share->iFlushError = iFlushError;
+			}
 		}
+	FileShares->Unlock();
 	}
 
 /**
@@ -1838,7 +1815,7 @@ TInt CFileCache::FlushDirtySm(CFsMessageRequest& aMsgRequest)
 
 #ifdef SETSIZE_BEFORE_WRITE	
 				TInt64 physicalFileSize = iFileCB->Size64();
-				if ((pos + (TInt64) len) > physicalFileSize)
+				if ( (!iDrive->IsRugged()) && ((pos + (TInt64) len) > physicalFileSize))
 					{
 					// Need to switch to drive thread before calling CFileCB::SetSizeL()
 					if (!IsDriveThread())
@@ -1956,12 +1933,6 @@ TInt CFileCache::FlushDirtySm(CFsMessageRequest& aMsgRequest)
 					case EFlushSingle:
 						currentOperation->iState = EStEnd;
 						break;
-					case EFlushHalf:
-						if (iCacheClient->LockedSegmentsHalfUsed())
-							currentOperation->iState = EStWriteToDisk;
-						else
-							currentOperation->iState = EStEnd;
-						break;
 					case EFlushAll:
 						currentOperation->iState = EStWriteToDisk;
 						break;
@@ -2063,11 +2034,11 @@ TInt CFileCache::HandleWriteDirtyError(TInt aError)
 			// However if the write error is to the bootsector remounting will always fail because the boot
 			// sector will have changed and hence the disk is useless.
 			// 
-			OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBREMOUNT2, "drive %d", DriveNumber());
+			TRACE1(UTF::EBorder, UTraceModuleFileSys::ECMountCBReMount, EF32TraceUidFileSys, DriveNumber());
 
 			TInt remountSuccess = iDrive->ReMount(*iMount);
 
-			OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBREMOUNT2RET, "success %d", remountSuccess);
+			TRACE1(UTF::EBorder, UTraceModuleFileSys::ECMountCBReMountRet, EF32TraceUidFileSys, remountSuccess);
 			if (!remountSuccess)
 				continue;
 			

@@ -26,7 +26,7 @@ const TInt KTimerQDfcPriority=6;
 
 GLDEF_D NTimerQ TheTimerQ;
 
-extern "C" void send_irq_ipi(TSubScheduler*, TInt);
+extern "C" void send_irq_ipi(TSubScheduler*);
 
 #ifndef __MSTIM_MACHINE_CODED__
 #ifdef _DEBUG
@@ -345,6 +345,7 @@ EXPORT_C TInt NTimer::Again(TInt aTime)
 // Wait aTime from last trigger time - used for periodic timers
 //
 	{
+	__NK_ASSERT_DEBUG(aTime>0);
 	TInt irq = TheTimerQ.iTimerSpinLock.LockIrqSave();
 	if (!IsValid())
 		{
@@ -585,8 +586,6 @@ void NTimerQ::Init3(TDfcQue* aDfcQ)
 	{
 	__KTRACE_OPT(KBOOT,DEBUGPRINT("NTimerQ::Init3 DFCQ at %08x",aDfcQ));
 	TheTimerQ.iDfc.SetDfcQ(aDfcQ);
-	NThreadBase* t = aDfcQ->iThread;
-	t->iRebalanceAttr = 1;
 	}
 
 #ifndef __MSTIM_MACHINE_CODED__
@@ -743,7 +742,8 @@ void NTimerQ::Dfc()
 EXPORT_C void NTimerQ::Tick()
 	{
 	TInt irq = iTimerSpinLock.LockIrqSave();
-	TInt i = TInt(__e32_atomic_add_rlx64(&iMsCount64, 1)) & ETimerQMask;
+	TInt i=iMsCount & ETimerQMask;
+	iMsCount++;
 	STimerQ* pQ=iTickQ+i;
 	iPresent &= ~(1<<i);
 	TBool doDfc=FALSE;
@@ -802,10 +802,10 @@ EXPORT_C void NTimerQ::Tick()
 					{
 					pC->i_NTimer_iState = TUint8(NTimer::EEventQ + cpu);
 					TSubScheduler* ss = TheSubSchedulers + cpu;
-					TInt kick = ss->QueueEvent(pC);
+					TBool kick = ss->QueueEvent(pC);
 					iTimerSpinLock.UnlockIrqRestore(irq);
 					if (kick)
-						send_irq_ipi(ss, kick);
+						send_irq_ipi(ss);
 					continue;
 					}
 				}
@@ -921,8 +921,8 @@ EXPORT_C TInt NTimerQ::IdleTime()
  */
 EXPORT_C void NTimerQ::Advance(TInt aTicks)
 	{
-	CHECK_PRECONDITIONS(MASK_INTERRUPTS_DISABLED,"NTimerQ::Advance");
-	__e32_atomic_add_rlx64(&TheTimerQ.iMsCount64, TUint64(TUint32(aTicks)));
+	CHECK_PRECONDITIONS(MASK_INTERRUPTS_DISABLED,"NTimerQ::Advance");	
+	TheTimerQ.iMsCount+=(TUint32)aTicks;
 	}
 
 

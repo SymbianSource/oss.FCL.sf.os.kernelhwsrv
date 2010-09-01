@@ -940,12 +940,14 @@ void TestTQueIter<T,Iter>::Test5()
 	T item1,item2;
 	TSglQue<T> que(_FOFF(T,iLink));
 	Iter* iter;
+	T* a;
 
 	que.AddFirst(item2);
 	que.AddFirst(item1);
 	test.Start(_L("Constructor"));
 	iter=new Iter(que);
 	test.Next(_L("Iterators"));
+	a=*iter;
 	(*iter)++;
 	delete iter;
 	test.Next(_L("Finished"));

@@ -1,4 +1,4 @@
-// Copyright (c) 2006-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -22,8 +22,10 @@
 #include <e32cmn_private.h>
 #include <u32std.h>
 #include <kernel/kernel.h>
+#include <rm_debug_api.h>
 #include <sm_debug_api.h>
-
+#include "d_rmd_breakpoints.h"
+#include "rm_debug_kerneldriver.h"
 #include "d_debug_functionality.h"
 #include "d_buffer_manager.h"
 
@@ -87,9 +89,15 @@ const TSubBlock StopModeFunctionalityBuffers[]=
 
 const TTag StopModeFunctionalityFunctionsInfo[] =
 	{
+#ifdef __LAUNCH_AS_EXTENSION__
 	{EStopModeFunctionsExitPoint,ETagTypePointer,0,(TUint32)&StopModeDebug::ExitPoint}, 
 	{EStopModeFunctionsGetList,ETagTypePointer,0,(TUint32)&StopModeDebug::GetList},
 	{EStopModeFunctionsTestAPI,ETagTypePointer,0,(TUint32)&StopModeDebug::TestAPI} 
+#else
+	{EStopModeFunctionsExitPoint,ETagTypePointer,0,NULL}, 
+	{EStopModeFunctionsGetList,ETagTypePointer,0,NULL},
+	{EStopModeFunctionsTestAPI,ETagTypePointer,0,NULL} 
+#endif
 	};
 
 const TSubBlock StopModeFunctionalityFunctions[]=

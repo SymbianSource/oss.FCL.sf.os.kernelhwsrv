@@ -28,9 +28,6 @@
 #include <e32def_private.h>
 #include "d_rescontrolcli.h"
 
-#include <drivers/resourcecontrol_clientsettings.h>
-#include <drivers/resourcecontrol_settings.h>
-
 #define MAX_STATIC_RESOURCE_NUM 24 //Maximum number of static resources in simulated PSL
 #define MAX_STATIC_DEPENDENCY_RESOURCE_NUM 7 //Maximum number of static dependency resources in simulated PSL
 #define DEPENDENCY_RESOURCE_BIT_MASK 0x00010000
@@ -4240,87 +4237,10 @@ void TestRM::RegressionTest()
 	Clients.Close();
 	}
 
-void TestClientSettings(TInt aClientToken, TUint aExpectedBase)
-	{
-	TUint clientBase = ElementId_ClientSettingBase(aClientToken);
-	test(clientBase == aExpectedBase);
-
-	HCR::TElementId Id;
-
-	Id = ElementId_ClientName(aClientToken);
-	test(Id == aExpectedBase);
-
-	Id = ElementId_ClientPropertyFlag(aClientToken);
-	test(Id == (aExpectedBase + 1));
-
-	Id = ElementId_ClientPreallocation(aClientToken);
-	test(Id == (aExpectedBase + 2));
-
-	TInt firstResource = 0;
-	Id = ElementId_ClientStaticResource(aClientToken, firstResource);
-	test(Id == (aExpectedBase + 3));
-	
-	TInt thirdResource = 2;
-	Id = ElementId_ClientStaticResource(aClientToken, thirdResource);
-	test(Id == (aExpectedBase + 5));
-	}
-	
-void TestDynamicResourceSettings(TInt aDynamicResource,  TUint aExpectedBase)
-	{
-	TUint dynamicResourceBase = ElementId_DynamicResourceBase(aDynamicResource);
-	test(dynamicResourceBase == aExpectedBase);
-	
-	HCR::TElementId Id;	
-	
-	Id = ElementId_DynamicResourceName(aDynamicResource);
-	test(Id == aExpectedBase);
-
-	Id = ElementId_DynamicResourcePropertyFlag(aDynamicResource);
-	test(Id == (aExpectedBase + 1));
-
-	Id = ElementId_DynamicResourceMaxLevel(aDynamicResource);
-	test(Id == (aExpectedBase + 2));
-	
-	Id = ElementId_DynamicResourceMinLevel(aDynamicResource);
-	test(Id == (aExpectedBase + 3));
-
-	Id = ElementId_DynamicResourceDefaultLevel(aDynamicResource);
-	test(Id == (aExpectedBase + 4));
-
-	Id = ElementId_DynamicResourceDependencyMask1(aDynamicResource);
-	test(Id == (aExpectedBase + 5));
-
-	Id = ElementId_DynamicResourceDependencyMask2(aDynamicResource);
-	test(Id == (aExpectedBase + 6));
-
-	Id = ElementId_DynamicResourceDependencyMask3(aDynamicResource);
-	test(Id == (aExpectedBase + 7));
-	}
-	
-void TestClientHCRSettingMacros()
-	{
-	TInt clientToken = 2; // Random token number
-	TUint expectedBase = 80; // refer resourcecontrol_clientsettings.h for calculations
-	TestClientSettings(clientToken, expectedBase);
-	
-	clientToken = 0;
-	expectedBase = 16; // refer resourcecontrol_clientsettings.h for calculations
-	TestClientSettings(clientToken, expectedBase);
-
-	// Dynamic Resource settings
-	TUint dynamicResource = 3; // Random token number
-	expectedBase = 131168; // refer resourcecontrol_clientsettings.h for calculations
-	TestDynamicResourceSettings(dynamicResource, expectedBase);
-	
-	test.Printf(_L("Testing HCR client setting Macro's for Resource Manager successful \n"));
-	}
-	
 GLDEF_C TInt E32Main()
 	{
 	test.Title();
 	test.Start(_L("Testing Resource Manager...\n"));
-	test.Printf(_L("Testing HCR client setting Macro's for Resource Manager \n"));
-	TestClientHCRSettingMacros();
 	test.Next(_L("Load Physical device"));
 #ifndef PRM_ENABLE_EXTENDED_VERSION
 	r = User::LoadPhysicalDevice(KPddFileName);
@@ -4336,22 +4256,8 @@ GLDEF_C TInt E32Main()
 	r=User::LoadLogicalDevice(KExtLddFileName);
 	test(r==KErrNone || r==KErrAlreadyExists);
 #endif
-
-	RDevice d;
-	TPckgBuf<RTestResMan::TCaps> caps;
-	r = d.Open(KLddName);
-	test(r == KErrNone);
-	d.GetCaps(caps);
-	d.Close();
-
-	TVersion ver = caps().iVersion;
-	test(ver.iMajor == 1);
-	test(ver.iMinor == 0);
-	test(ver.iBuild == KE32BuildVersionNumber);
-
 	r = lddChan.Open();
 	test(r==KErrNone || r==KErrAlreadyExists);
-
 	//Check whether the notifications recieved as a result of postboot level setting is as expected.
 	r = lddChan.CheckPostBootLevelNotifications();
 	test(r == KErrNone);

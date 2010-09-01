@@ -47,10 +47,6 @@ public:
 	TUint8* Base();
 	void 	FreeMemoryChanged(TBool aIsMemoryLow);
 
-#if defined(_DEBUG) || defined(_DEBUG_RELEASE)
-	void    SetMemoryLow(TBool aSetMemoryLow) {isMemoryLow = aSetMemoryLow;}; 
-#endif //defined(_DEBUG) || defined(_DEBUG_RELEASE)
-
 private:
 	~CCacheMemoryManager();
 	CCacheMemoryManager(TUint32 aMaxSize);
@@ -95,8 +91,8 @@ NONSHARABLE_CLASS(TGlobalCacheMemorySettings)
 public:
 	static void ReadPropertiesFile();
 
-	static TInt32 CacheSize();
-	static TInt32 LowMemoryThreshold();
+	static TInt CacheSize();
+	static TInt LowMemoryThreshold();
 private:
 	static TInt32 iCacheSizeInBytes;
 	static TInt32 iLowMemoryThreshold;

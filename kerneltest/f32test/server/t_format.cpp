@@ -40,7 +40,7 @@ void GenerateMediaChange()
 	RFormat format;
 	TInt count;
 	TInt r=format.Open(TheFs,b,EHighDensity,count);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	format.Close();
 	}
 
@@ -96,9 +96,9 @@ static TInt ThreadEntryPoint(TAny* aTestCode)
 
 	RFs fs;
 	TInt ret=fs.Connect();
-	test_KErrNone(ret);
+	test(ret==KErrNone);
 	ret=fs.SetSessionPath(gSessionPath);
-	test_KErrNone(ret);
+	test(ret==KErrNone);
 	TTestCode testCode=*(TTestCode*)&aTestCode;
 	TInt count;
 	RFormat format;
@@ -107,10 +107,10 @@ static TInt ThreadEntryPoint(TAny* aTestCode)
 		case ETest3:
 			{
 			ret=format.Open(fs,gSessionPath,EQuickFormat,count);
-			test_KErrNone(ret);
+			test(ret==KErrNone);
 			
             ret = DoFormatSteps(format, count);
-            test_KErrNone(ret);
+            test(ret==KErrNone);
 	
             format.Close();
 			break;
@@ -118,7 +118,7 @@ static TInt ThreadEntryPoint(TAny* aTestCode)
 		case ETest5:
 			{
 			ret=format.Open(fs,gSessionPath,EFullFormat,count);
-			test_KErrNone(ret);
+			test(ret==KErrNone);
 			gSleepThread.Signal();
 			User::After(100000000);		
 			break;
@@ -139,7 +139,7 @@ static void CorruptCurrentDrive()
     
 	RRawDisk raw;
 	TInt r=raw.Open(TheFs,CurrentDrive());
-	test_KErrNone(r);
+	test(r==KErrNone);
 	if (!Is_Lffs(TheFs, gDrive))
 		{
 		TBuf8<KSectorSize> zeroBuf(KSectorSize);
@@ -151,7 +151,7 @@ static void CorruptCurrentDrive()
         for(TInt i=0; i<KMaxSectors; ++i)
             {
             r=raw.Write(i*KSectorSize, zeroBuf);
-		    test_KErrNone(r);
+		    test(r==KErrNone);
             }
 		}
 	else
@@ -174,7 +174,7 @@ static void CorruptCurrentDrive()
 				// aligned 32-byte blocks, we don't need to bother that much.
 				// The device driver writes the block but fails when reading
 				// it back.
-				// test_KErrNone(r);
+				// test(r==KErrNone);
 				}
 			}
 		else if(cntlModeSize>0)
@@ -238,16 +238,16 @@ static void Test1()
 	RFormat format;
 
 	TInt r=format.Open(TheFs,gSessionPath,EFullFormat,count);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
     r = DoFormatSteps(format, count);
-    test_KErrNone(r);
+    test(r==KErrNone);
 
 	format.Close();
 	
 	TVolumeInfo volInfo;
 	r=TheFs.Volume(volInfo);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	if (volInfo.iSize-volInfo.iFree!=0)
 		{
@@ -258,15 +258,15 @@ static void Test1()
 		
 	test.Next(_L("Test EQuickFormat"));
 	r=format.Open(TheFs,gSessionPath,EQuickFormat,count);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
     r = DoFormatSteps(format, count);
-    test_KErrNone(r);
+    test(r==KErrNone);
 
 	format.Close();
 
 	r=TheFs.Volume(volInfo);
-	test_KErrNone(r);
+	test(r==KErrNone);
 		
 	if (volInfo.iSize-volInfo.iFree!=0)
 		{
@@ -288,16 +288,16 @@ static void Test2()
 	test.Next(_L("Test disk cannot be formatted while a file is open"));
 	RFile f;
 	TInt r=f.Replace(TheFs,_L("BLARGME.BLARG"),EFileStream);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	TInt count;
 	RFormat format;
 	r=format.Open(TheFs,gSessionPath,EFullFormat,count);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 
 	f.Close();
 	r=format.Open(TheFs,gSessionPath,EFullFormat,count);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	format.Close();
 
 	CheckFileExists(_L("BLARGME.BLARG"),KErrNone);
@@ -318,7 +318,7 @@ static void Test3()
 	RThread clientThread;
 	TInt r=clientThread.Create(_L("ClientThread"),ThreadEntryPoint,0x4000,KHeapSize,KHeapSize,(TAny*)ETest3);
 	test.Printf(_L("Created helper thread #1, res=%d\n"),r);	
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	clientThread.Logon(gThreadLogon);
 	clientThread.Resume();
@@ -336,7 +336,7 @@ static void Test3()
 	TheFs.NotifyChange(ENotifyAll,reqStat);
 	r=clientThread.Create(_L("ClientThread"),ThreadEntryPoint,0x4000,KHeapSize,KHeapSize,(TAny*)ETest3);
     test.Printf(_L("Created helper thread #2, res=%d\n"),r);	
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 
 	clientThread.Logon(gThreadLogon);
@@ -375,15 +375,15 @@ static void Test4()
 
 	RFormat format;
 	TInt r=format.Open(TheFs,gSessionPath,EFullFormat,count);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	while(count)
 		{
 		RDir dir;
 		r=dir.Open(TheFs,_L("\\*.*"),KEntryAttNormal);
-		test_Value(r, r == KErrInUse);
+		test(r==KErrInUse);
 		r=format.Next(count);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		}
 	format.Close();
 
@@ -418,7 +418,7 @@ static void Test5()
 	RThread clientThread;
 	TInt r=clientThread.Create(_L("ClientThread"),ThreadEntryPoint,0x4000,KHeapSize,KHeapSize,(TAny*)ETest5);
 	test.Printf(_L("Created helper thread #1, res=%d\n"),r);	
-	test_KErrNone(r);
+	test(r==KErrNone);
 
     test.Printf(_L("Panicing formatting thread #1\n"));	
 	clientThread.Resume();
@@ -438,7 +438,7 @@ static void Test5()
 //	}
 //	else
 //	{
-	test_Value(r, r == KErrCorrupt);
+	test(r==KErrCorrupt);
 //	}
 
     test.Printf(_L("Formatting the drive...\n"));	
@@ -446,10 +446,10 @@ static void Test5()
 	TInt count;
 	RFormat format;
 	r=format.Open(TheFs,gSessionPath,EQuickFormat,count);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
     r = DoFormatSteps(format, count);
-    test_KErrNone(r);
+    test(r==KErrNone);
 	
     format.Close();
 
@@ -469,51 +469,51 @@ static void Test6()
 	test.Next(_L("Test ramdrive shrinks after formatting"));
 	TVolumeInfo volInfo;
 	TInt r=TheFs.Volume(volInfo);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	if ((volInfo.iDrive.iMediaAtt&KMediaAttVariableSize)==0)
 		return;
 
 	TInt64 used=volInfo.iSize-volInfo.iFree;
 	RFile f;
 	r=f.Replace(TheFs,_L("BIGFILE.SIZE"),EFileRead|EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	f.SetSize(0x100000); // 1MB
 	f.Close();
 
 	r=TheFs.Volume(volInfo);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TInt64 used2=volInfo.iSize-volInfo.iFree;
 	test(used<used2);
 
 	r=TheFs.Delete(_L("BIGFILE.SIZE"));
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.Volume(volInfo);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	used2=volInfo.iSize-volInfo.iFree;
 	test(used==used2);
 
 	r=f.Replace(TheFs,_L("BIGFILE.SIZE"),EFileRead|EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	f.SetSize(0x100000); // 1MB
 	f.Close();
 
 	r=TheFs.Volume(volInfo);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	used2=volInfo.iSize-volInfo.iFree;
 	test(used<used2);
 
 	TInt count;
 	RFormat format;
 	r=format.Open(TheFs,gSessionPath,EQuickFormat,count);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
     r = DoFormatSteps(format, count);
-    test_KErrNone(r);
+    test(r==KErrNone);
 	
     format.Close();
 
 	r=TheFs.Volume(volInfo);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	used2=volInfo.iSize-volInfo.iFree;
 	test(used>=used2);
 	}
@@ -535,7 +535,7 @@ static void Test7()
 	
     TVolumeInfo volInfo;
 	TInt r=TheFs.Volume(volInfo);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
     if (volInfo.iDrive.iMediaAtt&KMediaAttVariableSize)
 		return; // Don't bother on internal disk
@@ -550,10 +550,10 @@ static void Test7()
 	TInt count;
 	RFormat format;
 	r=format.Open(TheFs,gSessionPath,EQuickFormat,count);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
     r = DoFormatSteps(format, count);
-    test_KErrNone(r);
+    test(r==KErrNone);
 
 	format.Close();
 	}
@@ -585,33 +585,33 @@ static void Test8()
 	
     TVolumeInfo volInfo;
 	TInt r=TheFs.Volume(volInfo);
-//	test_Value(r, r == KErrCorrupt);
+//	test(r==KErrCorrupt);
 	TInt count;
 	RFormat format;
 	r=format.Open(TheFs,gSessionPath,EQuickFormat,count);
 	r=TheFs.Volume(volInfo);
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 	r=format.Next(count);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TDriveList driveList;
 	r=TheFs.DriveList(driveList);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
     if(gDrive == EDriveC)
     {
 		r=TheFs.Volume(volInfo, gDrive);
-		test_Value(r, r == KErrInUse);
+		test(r==KErrInUse);
     } 
     else
     {
 		r=TheFs.Volume(volInfo,EDriveC);
-		test_KErrNone(r);
+		test(r==KErrNone);
 
 		r=TheFs.Volume(volInfo,gDrive);	
-		test_Value(r, r == KErrInUse);
+		test(r==KErrInUse);
 
     	r=TheFs.Volume(volInfo,gDrive);	
-		test_Value(r, r == KErrInUse);
+		test(r==KErrInUse);
     }
 
     
@@ -664,7 +664,7 @@ void TestFormat_ForceDismount()
     fmtMode = EQuickFormat;
 
     nRes = format.Open(TheFs, drivePath, fmtMode, fmtCnt);
-    test_Value(nRes, nRes == KErrInUse);
+    test(nRes == KErrInUse);
     format.Close();
 
     buf8.SetLength(22);
@@ -679,7 +679,7 @@ void TestFormat_ForceDismount()
 
     fmtMode = EQuickFormat;
     nRes = format.Open(TheFs, drivePath, fmtMode, fmtCnt);
-    test_Value(nRes, nRes == KErrInUse);
+    test(nRes == KErrInUse);
     format.Close();
 
     dir.Close();
@@ -695,9 +695,9 @@ void TestFormat_ForceDismount()
     test_KErrNone(nRes);
 
     //-- this will mark the current Mount as "Dismounted" and will instantiate another CMountCB for formatting
-    fmtMode = EQuickFormat | EForceFormat;
+    fmtMode = EQuickFormat | EForceFormat; 
 
-    nRes = format.Open(TheFs, drivePath, fmtMode, fmtCnt);
+    nRes = format.Open(TheFs, drivePath, fmtMode, fmtCnt); 
     test_KErrNone(nRes);
     
     nRes = DoFormatSteps(format, fmtCnt);
@@ -707,11 +707,11 @@ void TestFormat_ForceDismount()
 
  
 	nRes=TheFs.CheckDisk(gSessionPath);
-	test_Value(nRes, nRes == KErrNone||nRes==KErrNotSupported);
+	test(nRes==KErrNone||nRes==KErrNotSupported);
 
     buf8.SetLength(22);
     nRes = file1.Write(buf8);
-    test_Value(nRes, nRes == KErrDisMounted);
+    test(nRes == KErrDisMounted);
     file1.Close();  //-- this will make the previously "Dismounted" mount die.
     dir.Close();
 
@@ -734,11 +734,11 @@ void TestFormat_ForceDismount()
     format.Close();
 
 	nRes=TheFs.CheckDisk(gSessionPath);
-	test_Value(nRes, nRes == KErrNone||nRes==KErrNotSupported);
+	test(nRes==KErrNone||nRes==KErrNotSupported);
 
     buf8.SetLength(22);
     nRes = file1.Write(buf8);
-    test_Value(nRes, nRes == KErrDisMounted);
+    test(nRes == KErrDisMounted);
     file1.Close();  //-- this will make the previously "Dismounted" mount die.
 
     //---------------------------------------------------------------------------------
@@ -754,7 +754,7 @@ void TestFormat_ForceDismount()
 
     fmtMode = EQuickFormat;
     nRes = format.Open(TheFs, drivePath, fmtMode, fmtCnt);
-    test_Value(nRes, nRes == KErrInUse);
+    test(nRes == KErrInUse);
     format.Close();
 
     test(stat1.Int() == KRequestPending);
@@ -769,7 +769,7 @@ void TestFormat_ForceDismount()
 
     buf8.SetLength(22);
     nRes = file1.Write(buf8);
-    test_Value(nRes, nRes == KErrDisMounted);
+    test(nRes == KErrDisMounted);
     file1.Close();  
 
     //---------------------------------------------------------------------------------
@@ -789,7 +789,7 @@ void TestFormat_ForceDismount()
     format.Close();
 
     nRes = file1.Write(buf8);
-    test_Value(nRes, nRes == KErrDisMounted);
+    test(nRes == KErrDisMounted);
     file1.Close();  
 
 
@@ -801,11 +801,11 @@ void TestFormat_ForceDismount()
     RFormat     format1;
 
     nRes = format1.Open(TheFs, drivePath, fmtMode, fmtCnt);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
     
     fmtMode = EQuickFormat | EForceFormat; 
     nRes = format.Open(TheFs, drivePath, fmtMode, fmtCnt); 
-    test_Value(nRes, nRes == KErrInUse);
+    test(nRes == KErrInUse);
     format.Close();
 
     format1.Close();
@@ -813,11 +813,11 @@ void TestFormat_ForceDismount()
     //-- 5.1 check that forced formatting will fail when there are "disk access" objects opened RRawDisk
     RRawDisk    rawDisk;
     nRes = rawDisk.Open(TheFs, gDrive);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 
     fmtMode = EQuickFormat | EForceFormat; 
     nRes = format.Open(TheFs, drivePath, fmtMode, fmtCnt); 
-    test_Value(nRes, nRes == KErrInUse);
+    test(nRes == KErrInUse);
     format.Close();
 
     rawDisk.Close();
@@ -847,7 +847,7 @@ void TestFormat_ForceDismount()
     {
         fmtMode = EQuickFormat | EForceFormat; 
         nRes = format.Open(TheFs, drivePath, fmtMode, fmtCnt); 
-        test_Value(nRes, nRes == KErrInUse);
+        test(nRes == KErrInUse);
         format.Close();
     }
     
@@ -867,21 +867,18 @@ void CallTestsL()
 
     TInt r;
     r = TheFs.CharToDrive(gDriveToTest, gDrive);
-    test_KErrNone(r);
+    test(r == KErrNone);
 
     //-- set up console output 
     F32_Test_Utils::SetConsole(test.Console()); 
     
     TInt nRes=TheFs.CharToDrive(gDriveToTest, gDrive);
-    test_KErrNone(nRes);
+    test(nRes==KErrNone);
     
     PrintDrvInfo(TheFs, gDrive);
 
-    if(Is_SimulatedSystemDrive(TheFs, gDrive))
-    	{
-		test.Printf(_L("Skipping T_FORMAT on PlatSim/Emulator drive %C:\n"), gSessionPath[0]);
-		return;
-    	}
+    if(Is_Win32(TheFs, gDrive))
+        return; //-- emulator drive c:
 
 
 	SetSessionPath(_L("\\"));
@@ -897,7 +894,7 @@ void CallTestsL()
     TestFormat_ForceDismount();
 
 	r=TheFs.CheckDisk(gSessionPath);
-	test_Value(r, r == KErrNone||r==KErrNotSupported);
+	test(r==KErrNone||r==KErrNotSupported);
 	}
 
 

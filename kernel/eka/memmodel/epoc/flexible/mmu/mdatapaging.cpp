@@ -67,7 +67,7 @@ public:
 	enum TSwapState
 		{
 		EStateUnreserved = 0,	///< swap space not yet reserved, or page is being decommitted
-		EStateBlank      = 1,	///< swap page has never been written or the last write failed
+		EStateBlank      = 1,	///< swap page has never been written
 		EStateWritten    = 2,	///< swap page has been written out at least once
 		EStateWriting    = 3	///< swap page is in the process of being written out
 		};
@@ -157,26 +157,26 @@ private:
 
 private:
 	/**
-	The paging device used for accessing the backing store.
-	This is set by #InstallPagingDevice.
+	   The paging device used for accessing the backing store.
+	   This is set by #InstallPagingDevice.
 	*/
 	DPagingDevice* iDevice;
 
 	/**
-	The instance of #DSwapManager being used by this manager.
+	   The instance of #DSwapManager being used by this manager.
 	*/
 	DSwapManager* iSwapManager;
 
 	/**
-	Whether to read and write pages by physical address without mapping them first.
+	   Whether to read and write pages by physical address without mapping them first.
 
-	Set if the paging media driver supports it.
+	   Set if the paging media driver supports it.
 	*/
 	TBool iUsePhysicalAccess;
 
 public:
 	/**
-	The single instance of this manager class.
+	   The single instance of this manager class.
 	*/
 	static DDataPagedMemoryManager TheManager;
 	};
@@ -187,9 +187,9 @@ DPagedMemoryManager* TheDataPagedMemoryManager = &DDataPagedMemoryManager::TheMa
 
 
 /**
-Create a swap manager.
+   Create a swap manager.
 
-@param	aDevice	The demand paging device for access to the swap.
+   @param	aDevice	The demand paging device for access to the swap.
 */
 TInt DSwapManager::Create(DPagingDevice* aDevice)
 	{
@@ -231,7 +231,7 @@ void DSwapManager::SetSwapAlign(TUint aSwapAlign)
 inline DSwapManager::TSwapState DSwapManager::SwapState(TUint aSwapData)
 	{
 	TSwapState state = (TSwapState)(aSwapData & ESwapStateMask);
-	__NK_ASSERT_DEBUG(state >= EStateBlank || aSwapData == 0);
+	__NK_ASSERT_DEBUG(state >= EStateWritten || (aSwapData & ~ESwapStateMask) == 0);
 	return state;
 	}
 
@@ -244,19 +244,18 @@ inline TInt DSwapManager::SwapIndex(TUint aSwapData)
 
 inline TUint DSwapManager::SwapData(TSwapState aSwapState, TInt aSwapIndex)
 	{
-	__NK_ASSERT_DEBUG(aSwapIndex < (1 << (32 - ESwapIndexShift)));
 	return (aSwapIndex << ESwapIndexShift) | aSwapState;
 	}
 
 
 /**
-Allocate one or more page's worth of space within the swap area.
+   Allocate one or more page's worth of space within the swap area.
 
-The location is represented by a page-based index into the swap area.
+   The location is represented by a page-based index into the swap area.
 
-@param aCount The number of page's worth of space to allocate.
+   @param aCount The number of page's worth of space to allocate.
 
-@return The swap index of the first location allocated.
+   @return The swap index of the first location allocated.
 */
 TInt DSwapManager::AllocSwapIndex(TUint aCount)
 	{
@@ -314,9 +313,9 @@ TInt DSwapManager::AllocSwapIndex(TUint aCount)
 
 
 /**
-Free one page's worth of space within the swap area.
+   Free one page's worth of space within the swap area.
 
-The index must have been previously allocated with AllocSwapIndex().
+   The index must have been previously allocated with AllocSwapIndex().
 */
 void DSwapManager::FreeSwapIndex(TInt aSwapIndex)
 	{
@@ -329,15 +328,15 @@ void DSwapManager::FreeSwapIndex(TInt aSwapIndex)
 
 
 /**
-Reserve some swap pages for the requested region of the memory object
+   Reserve some swap pages for the requested region of the memory object
 
-@param aMemory		The memory object to reserve pages for.
-@param aStartIndex	The page index in the memory object of the start of the region.
-@param aPageCount	The number of pages to reserve.
+   @param aMemory		The memory object to reserve pages for.
+   @param aStartIndex	The page index in the memory object of the start of the region.
+   @param aPageCount	The number of pages to reserve.
 
-@return KErrNone on success, KErrNoMemory if not enough swap space available.
-@pre aMemory's lock is held.
-@post aMemory's lock is held.
+   @return KErrNone on success, KErrNoMemory if not enough swap space available.
+   @pre aMemory's lock is held.
+   @post aMemory's lock is held.
 */
 TInt DSwapManager::ReserveSwap(DMemoryObject* aMemory, TUint aStartIndex, TUint aPageCount)
 	{
@@ -370,15 +369,15 @@ TInt DSwapManager::ReserveSwap(DMemoryObject* aMemory, TUint aStartIndex, TUint 
 
 
 /**
-Unreserve swap pages for the requested region of the memory object.
+   Unreserve swap pages for the requested region of the memory object.
 
-@param aMemory		The memory object to unreserve pages for.
-@param aStartIndex	The page index in the memory object of the start of the region.
-@param aPageCount	The number of pages to unreserve.
+   @param aMemory		The memory object to unreserve pages for.
+   @param aStartIndex	The page index in the memory object of the start of the region.
+   @param aPageCount	The number of pages to unreserve.
 
-@return The number of pages freed.
-@pre aMemory's lock is held.
-@post aMemory's lock is held.
+   @return The number of pages freed.
+   @pre aMemory's lock is held.
+   @post aMemory's lock is held.
 */
 TInt DSwapManager::UnreserveSwap(DMemoryObject* aMemory, TUint aStartIndex, TUint aPageCount)
 	{
@@ -425,13 +424,13 @@ TInt DSwapManager::UnreserveSwap(DMemoryObject* aMemory, TUint aStartIndex, TUin
 
 
 /**
-Determine whether the specified pages in the memory object have swap reserved for them.
+   Determine whether the specified pages in the memory object have swap reserved for them.
 
-@param aMemory		The memory object that owns the pages.
-@param aStartIndex	The first index of the pages to check.
-@param aPageCount	The number of pages to check.
+   @param aMemory		The memory object that owns the pages.
+   @param aStartIndex	The first index of the pages to check.
+   @param aPageCount	The number of pages to check.
 
-@return ETrue if swap is reserved for all the pages, EFalse otherwise.
+   @return ETrue if swap is reserved for all the pages, EFalse otherwise.
 */
 TBool DSwapManager::IsReserved(DMemoryObject* aMemory, TUint aStartIndex, TUint aPageCount)
 	{// MmuLock required to protect manager data.
@@ -452,19 +451,20 @@ TBool DSwapManager::IsReserved(DMemoryObject* aMemory, TUint aStartIndex, TUint 
 
 
 /**
-Read from the swap the specified pages associated with the memory object.
+   Read from the swap the specified pages associated with the memory object.
 
-@param aMemory 	The memory object to read the pages for
-@param aIndex	The index of the first page within the memory object.
-@param aCount	The number of pages to read.
-@param aLinAddr	The address to copy the pages to.
-@param aRequest	The request to use for the read.
-@param aPhysAddrs	An array of the physical addresses for each page to read in.
+   @param aMemory 	The memory object to read the pages for
+   @param aIndex	The index of the first page within the memory object.
+   @param aCount	The number of pages to read.
+   @param aLinAddr	The address to copy the pages to.
+   @param aRequest	The request to use for the read.
+   @param aPhysAddrs	An array of the physical addresses for each page to read in.
 */
 TInt DSwapManager::ReadSwapPages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TLinAddr aLinAddr, TPhysAddr* aPhysAddrs)
 	{
 	__ASSERT_CRITICAL;
 	
+	TInt r = KErrNone;
 	const TUint readUnitShift = iDevice->iReadUnitShift;
 	TUint readSize = KPageSize >> readUnitShift;
 	TThreadMessage message;
@@ -477,36 +477,24 @@ TInt DSwapManager::ReadSwapPages(DMemoryObject* aMemory, TUint aIndex, TUint aCo
 		MmuLock::Lock();	// MmuLock required for atomic access to manager data.
 		TUint swapData = aMemory->PagingManagerData(index);
 		TSwapState state = SwapState(swapData);
-		TUint swapPage = SwapIndex(swapData);
 
 		if (state == EStateUnreserved)
-			{
-			// This page is not committed to the memory object
+			{// This page is not committed to the memory object
 			MmuLock::Unlock();
 			return KErrNotFound;			
 			}
 		else if (state == EStateBlank)
-			{
-			if (swapPage != 0)
+			{// This page has not been written to yet so don't read from swap 
+			// just wipe it if required.
+			TUint allocFlags = aMemory->RamAllocFlags();
+			MmuLock::Unlock();
+			TBool wipePages = !(allocFlags & Mmu::EAllocNoWipe);
+			if (wipePages)
 				{
-				// An error occured while writing the page out, so report it now
-				MmuLock::Unlock();
-				return -swapPage; 
-				}
-			else
-				{
-				// This page has not been written to yet so don't read from swap 
-				// just wipe it if required.
-				TUint allocFlags = aMemory->RamAllocFlags();
-				MmuLock::Unlock();
-				TBool wipePages = !(allocFlags & Mmu::EAllocNoWipe);
-				if (wipePages)
-					{
-					TUint8 wipeByte = (allocFlags & Mmu::EAllocUseCustomWipeByte) ?
-						(allocFlags >> Mmu::EAllocWipeByteShift) & 0xff :
-						0x03;
-					memset((TAny*)aLinAddr, wipeByte, KPageSize);
-					}
+				TUint8 wipeByte = (allocFlags & Mmu::EAllocUseCustomWipeByte) ?
+					(allocFlags >> Mmu::EAllocWipeByteShift) & 0xff :
+					0x03;
+				memset((TAny*)aLinAddr, wipeByte, KPageSize);
 				}
 			}
 		else
@@ -518,35 +506,33 @@ TInt DSwapManager::ReadSwapPages(DMemoryObject* aMemory, TUint aIndex, TUint aCo
 			// OK to release as if the object's data is decommitted the pager 
 			// will check that data is still valid before mapping it.
 			MmuLock::Unlock();
-			TUint readStart = (swapPage << KPageShift) >> readUnitShift;
+			TUint readStart = (SwapIndex(swapData) << KPageShift) >> readUnitShift;
 			START_PAGING_BENCHMARK;
-			TInt r = iDevice->Read(&message, aLinAddr, readStart, readSize, DPagingDevice::EDriveDataPaging);
+			r = iDevice->Read(&message, aLinAddr, readStart, readSize, DPagingDevice::EDriveDataPaging);
+			if (r != KErrNone)
+				__KTRACE_OPT(KPANIC, Kern::Printf("DSwapManager::ReadSwapPages: error reading media at %08x + %x: %d", readStart << readUnitShift, readSize << readUnitShift, r));				
+			__NK_ASSERT_DEBUG(r!=KErrNoMemory); // not allowed to allocate memory, therefore can't fail with KErrNoMemory
 			END_PAGING_BENCHMARK(EPagingBmReadDataMedia);
-			__NK_ASSERT_DEBUG(r!=KErrNoMemory); // not allowed to allocate memory, therefore shouldn't fail with KErrNoMemory
-			if (r != KErrNone)
-				__KTRACE_OPT(KPANIC, Kern::Printf("DSwapManager::ReadSwapPages: error reading media at %08x + %x: %d", readStart << readUnitShift, readSize << readUnitShift, r));
-			r = ThePager.EmbedErrorContext(EPagingErrorContextDataRead, r);
-			if (r != KErrNone)
-				return r;
+			__NK_ASSERT_ALWAYS(r == KErrNone);
 			}
 		END_PAGING_BENCHMARK(EPagingBmReadDataPage);
 		}
-	
-	return KErrNone;
+
+	return r;
 	}
 
 
 /**
-Write the specified memory object's pages from the RAM into the swap.
+   Write the specified memory object's pages from the RAM into the swap.
 
-@param	aMemory		The memory object who owns the pages.
-@param	aIndex		The index within the memory object.
-@param 	aCount		The number of pages to write out.
-@param	aLinAddr	The location of the pages to write out.
-@param  aBackground Whether this is being called in the background by the page cleaning thread
-                    as opposed to on demand when a free page is required.
+   @param	aMemory		The memory object who owns the pages.
+   @param	aIndex		The index within the memory object.
+   @param 	aCount		The number of pages to write out.
+   @param	aLinAddr	The location of the pages to write out.
+   @param  aBackground Whether this is being called in the background by the page cleaning thread
+   as opposed to on demand when a free page is required.
 
-@pre Called with page cleaning lock held
+   @pre Called with page cleaning lock held
 */
 TInt DSwapManager::WriteSwapPages(DMemoryObject** aMemory, TUint* aIndex, TUint aCount, TLinAddr aLinAddr, TPhysAddr* aPhysAddrs, TBool aBackground)
 	{
@@ -640,16 +626,14 @@ TInt DSwapManager::DoWriteSwapPages(DMemoryObject** aMemory, TUint* aIndex, TUin
 		r = iDevice->WritePhysical(&msg, aPhysAddrs, aCount, writeOffset, aBackground);
 	else
 		r = iDevice->Write(&msg, aLinAddr + (aPageIndex << KPageShift), writeOffset, writeSize, aBackground);
-	END_PAGING_BENCHMARK(EPagingBmWriteDataMedia);
 		
 	if (r != KErrNone)
 		{
 		__KTRACE_OPT(KPANIC, Kern::Printf("DSwapManager::WriteSwapPages: error writing media from %08x to %08x + %x: %d", aLinAddr, writeOffset << readUnitShift, writeSize << readUnitShift, r));
-		if (r > 0)
-			r = KErrGeneral;
 		}
 	__NK_ASSERT_DEBUG(r!=KErrNoMemory); // not allowed to allocate memory, therefore can't fail with KErrNoMemory
-	r = ThePager.EmbedErrorContext(EPagingErrorContextDataWrite, r); 
+	__NK_ASSERT_ALWAYS(r == KErrNone);
+	END_PAGING_BENCHMARK(EPagingBmWriteDataMedia);
 
 	TUint i;
 	TUint swapData[KMaxPagesToClean];
@@ -663,12 +647,8 @@ TInt DSwapManager::DoWriteSwapPages(DMemoryObject** aMemory, TUint* aIndex, TUin
 		__NK_ASSERT_DEBUG(s == EStateUnreserved || s == EStateWriting);
 		if (s == EStateWriting)
 			{
-			// Store the new swap location and mark the page as saved, or if an error occured then
-			// record the error code instead
-			TUint swapData = (r == KErrNone) 
-				? SwapData(EStateWritten, aSwapIndex + i)
-				: SwapData(EStateBlank, -r);
-			aMemory[i]->SetPagingManagerData(aIndex[i], swapData);
+			// Store the new swap location and mark the page as saved.
+			aMemory[i]->SetPagingManagerData(aIndex[i], SwapData(EStateWritten, aSwapIndex + i));
 			}
 		}
 	MmuLock::Unlock();
@@ -676,17 +656,15 @@ TInt DSwapManager::DoWriteSwapPages(DMemoryObject** aMemory, TUint* aIndex, TUin
 	for (i = 0 ; i < aCount ; ++i)
 		{
 		TSwapState s = SwapState(swapData[i]);
-		if (s == EStateUnreserved || s == EStateBlank)
+		if (s == EStateUnreserved)
 			{
-			// The page was either decommitted while we were cleaning it, or an error occured while
-			// writing.  Free the swap page and don't modify the state.
+			// The page was decommitted while we were cleaning it, so free the swap page we
+			// allocated and continue, leaving this page in the unreserved state.
 			FreeSwapIndex(aSwapIndex + i);
 			}
 		}
 
-	// write errors are not reported at this point as this will just kill a thread unrelated to the
-	// one whose data has been lost
-	return KErrNone;  
+	return KErrNone;
 	}
 	
 

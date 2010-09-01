@@ -81,7 +81,7 @@ void CCacheMemoryManager::ConstructL()
 	TInt r = UserHal::MemoryInfo(meminfo);
 	ASSERT(r==KErrNone);
 	User::LeaveIfError(r);
-	iLowMemoryThreshold = (TInt) (meminfo().iTotalRamInBytes * (TGlobalCacheMemorySettings::LowMemoryThreshold() / 100.00));
+	iLowMemoryThreshold = (meminfo().iTotalRamInBytes * TGlobalCacheMemorySettings::LowMemoryThreshold()) / 100;
 	TChunkCreateInfo createInfo;
 	createInfo.SetCache(iSizeInBytes);
 	createInfo.SetOwner(EOwnerProcess);
@@ -287,10 +287,6 @@ Global factory function of CCacheMemoryManager.
 */
 void CCacheMemoryManagerFactory::CreateL()
 	{
-	// Panic in DEBUG mode when GlobalCacheMemorySize is set as a negative value.  
-	ASSERT(TGlobalCacheMemorySettings::CacheSize() >= 0);
-	ASSERT(TGlobalCacheMemorySettings::LowMemoryThreshold() >= 0);
-	
 	if (TGlobalCacheMemorySettings::CacheSize() > 0)
 	    iCacheMemoryManager = CCacheMemoryManager::NewL(TGlobalCacheMemorySettings::CacheSize());
 	else
@@ -341,12 +337,12 @@ void TGlobalCacheMemorySettings::ReadPropertiesFile()
 		iLowMemoryThreshold = lowMemoryThreshold;
 	}
 
-TInt32 TGlobalCacheMemorySettings::CacheSize()
+TInt TGlobalCacheMemorySettings::CacheSize()
 	{
 	return iCacheSizeInBytes;
 	}
 
-TInt32 TGlobalCacheMemorySettings::LowMemoryThreshold()
+TInt TGlobalCacheMemorySettings::LowMemoryThreshold()
 	{
 	return iLowMemoryThreshold;
 	}

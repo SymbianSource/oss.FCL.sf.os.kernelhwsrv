@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -25,6 +25,16 @@
 #ifndef __RESOURCECONTROL_TRACE_H__
 #define __RESOURCECONTROL_TRACE_H__
 #ifdef BTRACE_RESOURCE_MANAGER
+
+//Function to format the output.
+static void TraceFormatPrint(TDes8& aBuf, const char* aFmt, ...)
+	{
+	if(aBuf.MaxLength() == 0)
+		return;
+	VA_LIST list;
+	VA_START(list,aFmt);
+	Kern::AppendFormat(aBuf,aFmt,list);
+	}
 
 //definition of subcategories.
 #define PRM_REGISTER_RESOURCE BTrace::ERegisterResource
@@ -56,27 +66,13 @@
 #define PRM_REGISTER_RESOURCE_DEPENDENCY BTrace::ERegisterResourceDependency
 #define PRM_DEREGISTER_RESOURCE_DEPENDENCY BTrace::EDeRegisterResourceDependency
 #endif
-
-#define APPEND_VAL(val)                                                                        \
-    {                                                                                               \
-    printBuf.Append((TUint8 *)&(val), sizeof(val));                                                       \
-    }                                                                                           
-#define APPEND_STRING(des_ptr)                                                                           \
-    {                                                                                               \
-	TUint length = (des_ptr)->Length();                                                              \
-	printBuf.Append((TUint8 *)&length, sizeof(TUint));                                                     \
-	printBuf.Append(*(des_ptr));                                                                       \
-    }
-
 //Macro to output resource information
 #define PRM_REGISTER_RESOURCE_TRACE																	\
 	{																								\
     TBuf8<80> printBuf;																				\
     printBuf.Zero();													                            \
-    APPEND_VAL(pResInfo->iMinLevel);                                                       \
-    APPEND_VAL(pResInfo->iMaxLevel);                                                       \
-    APPEND_VAL(pResInfo->iDefaultLevel);                                                   \
-    APPEND_STRING(pR->iName);                                                                     \
+    TraceFormatPrint(printBuf, "%S %d %d %d", pR->iName, pResInfo->iMinLevel, pResInfo->iMaxLevel,	\
+																		 pResInfo->iDefaultLevel);	\
 	BTraceContextN(BTrace::EResourceManager, PRM_REGISTER_RESOURCE, resCount+1, pR, printBuf.Ptr(), \
 	                                                                     printBuf.Length());		\
 	}
@@ -84,21 +80,15 @@
 //Macro to output client details. Used during client registration
 #define PRM_CLIENT_REGISTER_TRACE			                                                        \
 	{									                                                            \
-    TBuf8<80> printBuf;                                                                             \
-    printBuf.Zero();                                                                                \
-    APPEND_STRING(pC->iName);                                                                       \
 	BTraceContextN(BTrace::EResourceManager, PRM_REGISTER_CLIENT, aClientId, (TUint)pC,				\
-                                                printBuf.Ptr(), printBuf.Length());             \
+                                                pC->iName->Ptr(), pC->iName->Length());             \
 	}
 
 //Used during client deregistration
 #define PRM_CLIENT_DEREGISTER_TRACE																	\
 	{																								\
-    TBuf8<80> printBuf;                                                                             \
-    printBuf.Zero();                                                                                \
-    APPEND_STRING(pC->iName);                                                                       \
 	BTraceContextN(BTrace::EResourceManager, PRM_DEREGISTER_CLIENT, aClientId,						\
-                          (TUint)pC, printBuf.Ptr(), printBuf.Length());						    \
+                          (TUint)pC, pC->iName->Ptr(), pC->iName->Length());						\
 	}
 
 //Used to resource state change operation.Used at the start of the operation. 
@@ -106,9 +96,7 @@
 	{																								\
     TBuf8<80> printBuf;																				\
 	printBuf.Zero();																				\
-	APPEND_VAL(aNewState);                                                                          \
-	APPEND_STRING(pC->iName);                                                                     \
-	APPEND_STRING(pR->iName);                                                                     \
+    TraceFormatPrint(printBuf, "%S %S %d", pC->iName, pR->iName, aNewState);						\
 	BTraceContextN(BTrace::EResourceManager, PRM_CLIENT_STATE_CHANGE_START, pC->iClientId,			\
 	                                      aResourceId, printBuf.Ptr(), printBuf.Length());			\
 	}
@@ -118,10 +106,7 @@
 	{																								\
 	TBuf8<80> printBuf;																				\
 	printBuf.Zero();																				\
-	APPEND_VAL(r);                                                                                  \
-	APPEND_VAL(aNewState);                                                                          \
-	APPEND_STRING(pC->iName);                                                                  \
-	APPEND_STRING(pR->iName);                                                                  \
+	TraceFormatPrint(printBuf, "%S %S %d %d", pC->iName, pR->iName, r, aNewState);					\
 	BTraceContextN(BTrace::EResourceManager, PRM_CLIENT_STATE_CHANGE_END, pC->iClientId,			\
 						                 aResourceId, printBuf.Ptr(), printBuf.Length());			\
 	}
@@ -157,6 +142,8 @@
 //Calling TraceFormatPrint just to avoid warning
 #define PRM_CALLBACK_COMPLETION_TRACE																\
 	{																								\
+	TPtr8 zeroDes(NULL, 0);																		\
+	TraceFormatPrint(zeroDes, "%d", pCb->iClientId);												\
 	BTraceContext8(BTrace::EResourceManager, PRM_CALLBACK_COMPLETE, pCb->iClientId,					\
                                                                  pCb->iResourceId);					\
 	}
@@ -169,9 +156,9 @@
 
 #define PRM_PSL_RESOURCE_GET_STATE_START_TRACE														\
 	{																								\
-    TBuf8<80> printBuf;                                                                             \
-    printBuf.Zero();                                                                                \
-    APPEND_STRING(iName);                                                                           \
+	TBuf8<80> printBuf;																				\
+	printBuf.Zero();																				\
+	TraceFormatPrint(printBuf, "%S ", iName);														\
 	BTraceContextN(BTrace::EResourceManager, PRM_PSL_RESOURCE_GET_STATE_START, aRequest.ClientId(), \
 										 aRequest.ResourceId(), printBuf.Ptr(), printBuf.Length());	\
 	}
@@ -181,8 +168,7 @@
 	{																								\
 	TBuf8<80> printBuf;																				\
 	printBuf.Zero();																				\
-	APPEND_STRING(pC->iName);                                                                     \
-	APPEND_STRING(pR->iName);                                                                  \
+    TraceFormatPrint(printBuf, "%S %S", pC->iName, pR->iName);										\
 	BTraceContextN(BTrace::EResourceManager, PRM_CLIENT_GET_STATE_START, pC->iClientId, aResourceId,\
 												                 printBuf.Ptr(), printBuf.Length());\
 	}
@@ -191,9 +177,7 @@
 	{																								\
 	TBuf8<80> printBuf;																				\
 	printBuf.Zero();																				\
-	APPEND_VAL(iCurLevel);                                                                          \
-	APPEND_VAL(retVal);                                                                             \
-	APPEND_STRING(iName);                                                                      \
+	TraceFormatPrint(printBuf, "%S %d %d", iName, iCurLevel,retVal);								\
 	BTraceContextN(BTrace::EResourceManager, PRM_PSL_RESOURCE_GET_STATE_END, aRequest.ClientId(),	\
 										aRequest.ResourceId(), printBuf.Ptr(), printBuf.Length());	\
 	}
@@ -203,10 +187,7 @@
 	{																								\
 	TBuf8<80> printBuf;																				\
 	printBuf.Zero();																				\
-	APPEND_VAL(aState);                                                                             \
-	APPEND_VAL(r);                                                                                  \
-	APPEND_STRING(pC->iName);                                                                  \
-	APPEND_STRING(pR->iName);                                                                  \
+	TraceFormatPrint(printBuf, "%S %S %d %d", pC->iName, pR->iName, aState, r);						\
 	BTraceContextN(BTrace::EResourceManager, PRM_CLIENT_GET_STATE_END, pC->iClientId, aResourceId,	\
 																 printBuf.Ptr(), printBuf.Length());\
 	}
@@ -216,9 +197,7 @@
 	{																								\
 	TBuf8<80> printBuf;																				\
 	printBuf.Zero();																				\
-	APPEND_VAL(r);                                                                                  \
-	APPEND_STRING(pC->iName);                                                                  \
-	APPEND_STRING(pR->iName);                                                                  \
+	TraceFormatPrint(printBuf, "%S %S %d", pC->iName, pR->iName, r);								\
 	BTraceContextN(BTrace::EResourceManager, PRM_CANCEL_LONG_LATENCY_OPERATION, pC->iClientId,		\
 										      aResourceId, printBuf.Ptr(), printBuf.Length());		\
 	}
@@ -227,10 +206,7 @@
 	{																									\
 	TBuf8<80> printBuf;																					\
 	printBuf.Zero();																					\
-	APPEND_VAL(iCurLevel);                                                                              \
-	TInt RequestLevel = aRequest.Level();                                                                      \
-	APPEND_VAL(RequestLevel);                                                                                 \
-	APPEND_STRING(iName);                                                                          \
+	TraceFormatPrint(printBuf, "%S %d %d", iName, iCurLevel, aRequest.Level());							\
 	BTraceContextN(BTrace::EResourceManager, PRM_PSL_RESOURCE_CHANGE_STATE_START, aRequest.ClientId(),	\
 											aRequest.ResourceId(), printBuf.Ptr(), printBuf.Length());  \
 	}
@@ -239,11 +215,7 @@
 	{																									\
 	TBuf8<80> printBuf;																					\
 	printBuf.Zero();																					\
-	APPEND_VAL(iCurLevel);                                                                              \
-    TInt RequestLevel = aRequest.Level();                                                                      \
-	APPEND_VAL(RequestLevel);                                                                                  \
-	APPEND_VAL(retVal);                                                                                 \
-	APPEND_STRING(iName);                                                                          \
+	TraceFormatPrint(printBuf, "%S %d %d %d", iName, iCurLevel, aRequest.Level(),retVal);				\
 	BTraceContextN(BTrace::EResourceManager, PRM_PSL_RESOURCE_CHANGE_STATE_END, aRequest.ClientId(),	\
 										  aRequest.ResourceId(), printBuf.Ptr(), printBuf.Length());	\
 	}
@@ -252,9 +224,7 @@
 	{																									\
 	TBuf8<80> printBuf;																					\
 	printBuf.Zero();																					\
-	APPEND_VAL(iDefaultLevel);                                                                          \
-	APPEND_VAL(iFlags);                                                                                 \
-	APPEND_STRING(iName);                                                                          \
+	TraceFormatPrint(printBuf, "%d %d %S", iDefaultLevel, iFlags, iName);								\
 	BTraceContextN(BTrace::EResourceManager, PRM_PSL_RESOURCE_CREATE, iMinLevel, iMaxLevel,				\
 											            printBuf.Ptr(), printBuf.Length());				\
 	}
@@ -263,6 +233,8 @@
 //Calling TraceFormatPrint just to avoid warning
 #define PRM_BOOTING_TRACE																				\
 	{																									\
+	TPtr8 zeroDes(NULL, 0);																			\
+	TraceFormatPrint(zeroDes, "%d", aReason);															\
 	BTraceContext4(BTrace::EResourceManager, PRM_BOOTING, (TUint)aReason);								\
 	}
 
@@ -270,14 +242,12 @@
 //Macro to output static resource with dependency
 #define PRM_REGISTER_STATIC_RESOURCE_WITH_DEPENDENCY_TRACE													\
 	{																										\
-	TBuf8<80> printBuf;																							\
-	printBuf.Zero();																							\
-	APPEND_VAL(pResInfo->iMinLevel);                                                                        \
-	APPEND_VAL(pResInfo->iMaxLevel);                                                                        \
-	APPEND_VAL(pResInfo->iDefaultLevel);                                                                    \
-	APPEND_STRING(pR->iName);                                                                          \
+	TBuf8<80> pBuf;																							\
+	pBuf.Zero();																							\
+	TraceFormatPrint(pBuf, "%S %d %d %d", pR->iName, pResInfo->iMinLevel, pResInfo->iMaxLevel,				\
+										                             pResInfo->iDefaultLevel);				\
 	BTraceContextN(BTrace::EResourceManager, PRM_REGISTER_STATIC_RESOURCE_WITH_DEPENDENCY, pR->iResourceId, \
-	                                                               pR, printBuf.Ptr(), printBuf.Length());	\
+	                                                                        pR, pBuf.Ptr(), pBuf.Length());	\
 	}
 
 //Macro to output dynamic resource registration.
@@ -285,9 +255,7 @@
 	{																										\
 	TBuf8<80> printBuf;																						\
 	printBuf.Zero();																						\
-	APPEND_VAL(aPDRes);                                                                                     \
-	APPEND_STRING(aClientPtr->iName);                                                                         \
-	APPEND_STRING(aPDRes->iName);                                                                      \
+	TraceFormatPrint(printBuf, "%S %S %d", aClientPtr->iName, aPDRes->iName, aPDRes);						\
 	BTraceContextN(BTrace::EResourceManager, PRM_REGISTER_DYNAMIC_RESOURCE, aClientPtr->iClientId,			\
 										   aPDRes->iResourceId, printBuf.Ptr(), printBuf.Length());			\
 	}
@@ -297,10 +265,7 @@
 	{																										\
 	TBuf8<80> printBuf;																						\
 	printBuf.Zero();																						\
-	APPEND_VAL(pDR);                                                                                        \
-	APPEND_VAL(level);                                                                                      \
-	APPEND_STRING(aClientPtr->iName);                                                                  \
-	APPEND_STRING(pDR->iName);                                                                         \
+	TraceFormatPrint(printBuf, "%S %S %d %d", aClientPtr->iName, pDR->iName, pDR, level);					\
 	BTraceContextN(BTrace::EResourceManager, PRM_DEREGISTER_DYNAMIC_RESOURCE, aClientPtr->iClientId,		\
 												pDR->iResourceId, printBuf.Ptr(), printBuf.Length());		\
 	}
@@ -308,14 +273,10 @@
 //Macro to output registration of resource dependency.
 #define PRM_REGISTER_RESOURCE_DEPENDENCY_TRACE																\
 	{																										\
-	TBuf8<80> printBuf;																					\
+	TBuf8<256> printBuf;																					\
 	printBuf.Zero();																						\
-	APPEND_VAL(pR2->iResourceId);                                                                           \
-    APPEND_VAL(pR1);                                                                                        \
-    APPEND_VAL(pR2);                                                                                        \
-    APPEND_STRING(aClientPtr->iName);                                                                  \
-    APPEND_STRING(pR1->iName);                                                                         \
-    APPEND_STRING(pR2->iName);                                                                         \
+	TraceFormatPrint(printBuf, "%S %S %d %S %d %d", aClientPtr->iName, pR1->iName, pR2->iResourceId,		\
+										                                      pR2->iName, pR1, pR2);		\
 	BTraceContextN(BTrace::EResourceManager, PRM_REGISTER_RESOURCE_DEPENDENCY, aClientPtr->iClientId,		\
 	                                            pR1->iResourceId, printBuf.Ptr(), printBuf.Length());		\
 	}
@@ -323,14 +284,10 @@
 //Macro to output deregistration of resource dependency.
 #define PRM_DEREGISTER_RESOURCE_DEPENDENCY_TRACE															\
 	{																										\
-	TBuf8<80> printBuf;																					\
+	TBuf8<256> printBuf;																					\
 	printBuf.Zero();																						\
-	APPEND_VAL(pDR2->iResourceId);                                                                          \
-    APPEND_VAL(pDR1);                                                                                       \
-    APPEND_VAL(pDR2);                                                                                       \
-    APPEND_STRING(aClientPtr->iName);                                                                  \
-    APPEND_STRING(pDR1->iName);                                                                        \
-    APPEND_STRING(pDR2->iName);                                                                        \
+	TraceFormatPrint(printBuf, "%S %S %d %S %d %d", aClientPtr->iName, pDR1->iName, pDR2->iResourceId,		\
+												                             pDR2->iName, pDR1, pDR2);		\
 	BTraceContextN(BTrace::EResourceManager, PRM_DEREGISTER_RESOURCE_DEPENDENCY, aClientPtr->iClientId,		\
 	                                              pDR1->iResourceId, printBuf.Ptr(), printBuf.Length());	\
 	}

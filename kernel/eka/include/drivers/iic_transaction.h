@@ -192,7 +192,7 @@ typedef TPckgBuf <TConfigI2cV01> TConfigI2cBufV01;
 // 27:23 - Reserved
 // 22:20 - Bus type
 // 19:15 - Channel number
-// 14:10 - Transaction speed	// For use with SET_TRANS_SPEED, GET_TRANS_SPEED - Deprecated
+// 14:10 - Transaction speed
 //  9:0  - Slave address
 #define HS_MASTER_ADDR_SHIFT 29
 #define HS_MASTER_ADDR_MASK 0x7
@@ -202,8 +202,8 @@ typedef TPckgBuf <TConfigI2cV01> TConfigI2cBufV01;
 #define BUS_TYPE_MASK 0x7
 #define CHANNEL_NO_SHIFT 15
 #define CHANNEL_NO_MASK 0x1F
-#define TRANS_SPEED_SHIFT 10	// For use with SET_TRANS_SPEED, GET_TRANS_SPEED - Deprecated
-#define TRANS_SPEED_MASK 0x1F	// For use with SET_TRANS_SPEED, GET_TRANS_SPEED - Deprecated
+#define TRANS_SPEED_SHIFT 10
+#define TRANS_SPEED_MASK 0x1F
 #define SLAVE_ADDR_SHIFT 0
 #define SLAVE_ADDR_MASK 0x3FF
 
@@ -262,13 +262,13 @@ Macro to set the Channel number of a Bus realisation configuration
 #define SET_CHAN_NUM(aBusId,aChanNum) SET_CONF_FIELD(aBusId,aChanNum,CHANNEL_NO_MASK,CHANNEL_NO_SHIFT)
 /**
 @publishedPartner
-@deprecated
+@prototype 9.6
 Macro to set the Transaction speed of a Bus realisation configuration
 */
 #define SET_TRANS_SPEED(aBusId,aTransSpeed) SET_CONF_FIELD(aBusId,aTransSpeed,TRANS_SPEED_MASK,TRANS_SPEED_SHIFT)
 /**
 @publishedPartner
-@deprecated
+@prototype 9.6
 Macro to get the Transaction speed of a Bus realisation configuration
 */
 #define GET_TRANS_SPEED(aBusId) GET_CONF_FIELD(aBusId,TRANS_SPEED_MASK,TRANS_SPEED_SHIFT)
@@ -421,7 +421,6 @@ class TIicBusTransaction : public SOrdQueLink
         inline TIicBusTransaction();
     
         // the client interface for creating half duplex transactions
-		// The parameter aPriority is required to be at least zero and less than KNumTrancPriorities.
         inline TIicBusTransaction(TDes8* aHeader, TIicBusTransfer* aHdTrans, TInt aPriority=0);
         inline ~TIicBusTransaction();
         inline TInt SetHalfDuplexTrans(TDes8* aHeader, TIicBusTransfer* aHdTrans);

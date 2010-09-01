@@ -1992,7 +1992,6 @@ public:
 	TInt ZoneAllocPhysicalRam(TUint* aZoneIdList, TUint aZoneIdCount, TInt aNumPages, TPhysAddr* aPageList);
 	TInt RamHalFunction(TInt aFunction, TAny* a1, TAny* a2);	
 	void ChangePageType(SPageInfo* aPageInfo, TZonePageType aOldPageType, TZonePageType aNewPageType);
-	TInt FreeRamZone(TUint aZoneId);
 
 	TInt AllocPhysicalRam(TPhysAddr* aPages, TUint aCount, TRamAllocFlags aFlags);
 	void FreePhysicalRam(TPhysAddr* aPages, TUint aCount);

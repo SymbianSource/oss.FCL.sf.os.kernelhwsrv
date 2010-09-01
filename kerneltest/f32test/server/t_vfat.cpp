@@ -15,7 +15,6 @@
 // 
 //
 
-#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include <e32math.h>
@@ -57,15 +56,15 @@ static void Test1()
 		TBuf<32> longName=namelong;
 		longName.AppendNum(fileNum);
 		TInt r=TheFs.Rename(shortName,longName);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		}
 
 	TInt r=TheFs.CheckDisk(gSessionPath);
-	test_Value(r, r == KErrNone || r==KErrNotSupported);
+	test(r==KErrNone || r==KErrNotSupported);
 
 	CDir* dirList;
 	r=TheFs.GetDir(_L("*.*"),KEntryAttMaskSupported,ESortBySize,dirList);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(dirList->Count()==totalFiles);
 	for (i=0;i<totalFiles;i++)
 		{
@@ -130,7 +129,7 @@ LOCAL_C void Test2()
 			if (fileName==_L(""))
 				goto End;
 			r=TheFs.Delete(fileName);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			gFileName[fileNum]=_L("");
 			goto End;
 		default:
@@ -143,14 +142,14 @@ LOCAL_C void Test2()
 			TInt r;
 			RFile thing;
 			r=thing.Open(TheFs, fileName, EFileShareAny);
-			test_Value(r, r == KErrNone || r==KErrNotFound);
+			test (r==KErrNone || r==KErrNotFound);
 			if (r==KErrNone)
 				{
 				TInt s;
 				test (thing.Size(s) == KErrNone);
 				thing.Close();
 				r=TheFs.Delete(fileName);
-				test_KErrNone(r);
+				test (r==KErrNone);
 				gFileName[s]=_L("");
 				}
 			else
@@ -169,7 +168,7 @@ LOCAL_C void Test2()
 			TInt r=TheFs.Rename(gFileName[fileNum],fileName);
             if (r != KErrNone && r != KErrAlreadyExists)
                 test.Printf(_L("Rename returned %d at line %d"), r, __LINE__);
-			test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+			test(r==KErrNone || r==KErrAlreadyExists);
 			if (r==KErrNone)
 				gFileName[fileNum]=fileName;
 			}
@@ -178,11 +177,11 @@ End:
 			{
 			test.Printf(_L("Iteration %d    \r"),gMaxIterations-maxIterations);
 			TInt r=TheFs.CheckDisk(gSessionPath);
-			test_Value(r, r == KErrNone || r==KErrNotSupported);
+			test(r==KErrNone || r==KErrNotSupported);
 			TInt count=0;
 			CDir* dirList;
 			r=TheFs.GetDir(_L("*.*"),KEntryAttMaskSupported,ESortBySize,dirList);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			for(i=0;i<gMaxFiles;i++)
 				{
 				if (gFileName[i]==_L(""))
@@ -232,19 +231,19 @@ void DoCheckTD_FN()
     TEntry  entry;
 
     nRes = TheFs.Entry(KName1, entry);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
     test(entry.iName.CompareF(KExpectedName) == 0);
 
     nRes = TheFs.Entry(KName2, entry);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
     test(entry.iName.CompareF(KExpectedName) == 0);
 
     nRes = TheFs.Entry(KName3, entry);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
     test(entry.iName.CompareF(KExpectedName) == 0);
 
     nRes = TheFs.Entry(KName3, entry);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
     test(entry.iName.CompareF(KExpectedName) == 0);
 }
 
@@ -274,46 +273,46 @@ void TestTrailingDots()
 
     //----- create and check "\\file1"
     nRes = file.Replace(TheFs, KName1, EFileWrite);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
     file.Close();
     
     DoCheckTD_FN();
 
     nRes = TheFs.Delete(KName1);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 
 
     //----- create and check "\\file1."
     nRes = file.Replace(TheFs, KName2, EFileWrite);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
     file.Close();
     
     DoCheckTD_FN();
 
     nRes = TheFs.Delete(KName2);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 
 
     //----- create and check "\\file1.."
     nRes = file.Replace(TheFs, KName3, EFileWrite);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
     file.Close();
     
     DoCheckTD_FN();
 
     nRes = TheFs.Delete(KName3);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 
 
     //----- create and check "\\file1..."
     nRes = file.Replace(TheFs, KName4, EFileWrite);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
     file.Close();
     
     DoCheckTD_FN();
     
     nRes = TheFs.Delete(KName4);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 
 
 }

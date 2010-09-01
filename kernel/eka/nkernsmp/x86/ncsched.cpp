@@ -55,38 +55,35 @@ extern "C" void send_resched_ipi(TInt aCpu)
 	{
 	TSubScheduler& ss = TheSubSchedulers[aCpu];
 	__KTRACE_OPT(KSCHED2,DEBUGPRINT("@%d",aCpu));
-	send_ipi(ss.iSSX.iAPICID);
+	send_ipi((TUint32)ss.i_APICID);
 	}
-
-#ifndef __USE_LOGICAL_DEST_MODE__
-extern "C" void __fastcall do_send_resched_ipis(TUint32 aMask)
-	{
-	TInt i=0;
-	for (; aMask; aMask>>=1, ++i)
-		if (aMask&1)
-			send_resched_ipi(i);
-	}
-#endif
 
 extern "C" void send_resched_ipis(TUint32 aMask)
 	{
 	__KTRACE_OPT(KSCHED2,DEBUGPRINT("@%02x",aMask));
-	TScheduler& s = TheScheduler;
-	if (aMask &~ s.iThreadAcceptCpus)
-		aMask = s.ReschedInactiveCpus(aMask);
-	if (aMask)
-		do_send_resched_ipis(aMask);
+#ifdef __USE_LOGICAL_DEST_MODE__
+	do_send_resched_ipis(aMask);
+#else
+	TInt i=0;
+	while (aMask)
+		{
+		if (aMask&1)
+			send_resched_ipi(i);
+		aMask>>=1;
+		++i;
+		}
+#endif
 	}
 
 extern "C" void send_resched_ipi_and_wait(TInt aCpu)
 	{
 	TSubScheduler& ss = TheSubSchedulers[aCpu];
 	__KTRACE_OPT(KSCHED2,DEBUGPRINT("@@%d",aCpu));
-	volatile TUint32& irqc = ss.iSSX.iIrqCount;
-	volatile TInt& irqn = ss.iSSX.iIrqNestCount;
+	volatile TUint32& irqc = (volatile TUint32&)ss.i_IrqCount;
+	volatile TInt& irqn = (volatile TInt&)ss.i_IrqNestCount;
 	TUint32 irqc0 = irqc;
 	mb();
-	send_ipi(ss.iSSX.iAPICID);
+	send_ipi((TUint32)ss.i_APICID);
 	mb();
 	while (!ss.iRescheduleNeededFlag || (irqn<0 && irqc==irqc0))
 		{
@@ -99,8 +96,11 @@ void TSubScheduler::SaveTimesliceTimer(NThreadBase* aT)
 	{
 	if (aT->iTime>0 && !aT->i_NThread_Initial)
 		{
-		TUint32 x = read_apic_reg(CURRCNT);
-		iSSX.iTimerFreqRI.iI.Mult(x);
+		TUint32 remain32 = read_apic_reg(CURRCNT);
+		TUint64 x(remain32);
+		x *= TUint32(i_TimerMultI);
+		x += 0x00800000u;
+		x >>= 24;
 		aT->iTime = (TInt)x;
 		}
 	write_apic_reg(INITCNT, 0);
@@ -125,33 +125,21 @@ void TSubScheduler::UpdateThreadTimes(NThreadBase* aOld, NThreadBase* aNew)
 		aNew = iInitialThread;
 	if (aNew->iTime>0)
 		{
-		TUint32 x = (TUint32)aNew->iTime;
-		iSSX.iTimerFreqRI.iR.Mult(x);
-		write_apic_reg(INITCNT, x);
+		TUint32 remain32 = (TUint32)aNew->iTime;
+		TUint64 x(remain32);
+		x *= TUint32(i_TimerMultF);
+		x += 0x80000000u;
+		x >>= 32;
+		write_apic_reg(LVTTMR, TIMESLICE_VECTOR);
+		write_apic_reg(INITCNT, (TUint32)x);
 		}
 	if (aNew!=aOld)
 		{
 		TUint64 now = NKern::Timestamp();
-		TUint64 delta = now - iLastTimestamp.i64;
-		iLastTimestamp.i64 = now;
-		aOld->iLastRunTime.i64 = now;
-		aOld->iTotalCpuTime.i64 += delta;
-		++iReschedCount.i64;
-		++aNew->iRunCount.i64;
-		if (!aOld->iActiveState)
-			aOld->iTotalActiveTime.i64 += (now - aOld->iLastActivationTime.i64);
-		NSchedulable* parent = aOld->iParent;
-		if (parent != aOld)
-			{
-			parent->iLastRunTime.i64 = now;
-			if (!parent->iActiveState)
-				parent->iTotalActiveTime.i64 += (now - parent->iLastActivationTime.i64);
-			if (parent != aNew->iParent)
-				parent->iTotalCpuTime.i64 += (now - parent->iLastStartTime.i64);
-			}
-		NSchedulable* np = aNew->iParent;
-		if (np!=aNew && np!=parent)
-			np->iLastStartTime.i64 = now;
+		aOld->iTotalCpuTime64 += (now - iLastTimestamp64);
+		iLastTimestamp64 = now;
+		++iReschedCount64;
+		++aNew->iRunCount64;
 		}
 	}
 

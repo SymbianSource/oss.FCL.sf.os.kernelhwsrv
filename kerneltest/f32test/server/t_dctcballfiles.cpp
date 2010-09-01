@@ -13,7 +13,6 @@
 // Description:
 //
 
-#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include <e32std.h>
@@ -77,6 +76,9 @@ TRequestStatus aStat2;
 TRequestStatus aStat3;
 TRequestStatus aStat4;
 
+TVolumeInfo aVolInfo;
+//	TDriveInfo adriveInfo;
+
 TBuf<40> systestfile;
 TBuf<40> pritestfile;
 TBuf<40> restestfile;
@@ -104,19 +106,19 @@ LOCAL_C void systemRFsTest()
 	mkdirname.Append(systestname);
 	mkdirname.Append(KMkDirSub);
 	r=TheFs.MkDirAll(mkdirname);	
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	TheFs.RmDir(mkdirname);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.SetSubst(systestname,EDriveO);
-	test_Value(r, r == KErrPermissionDenied);
+	test(r==KErrPermissionDenied);
 	
 	r=TheFs.RealName(_L("O:\\File.XXX"),realName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.SetSessionPath(systestname);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	TheFs.NotifyChange(ENotifyAll,aStat1,systestname);
 	test(aStat1==KRequestPending);
@@ -131,29 +133,29 @@ LOCAL_C void systemRFsTest()
 	oldName[0]=(TText)gDriveToTest;
 
 	r=TheFs.GetShortName(systestfile, shortfilename);
-	test_Value(r, r == KErrNotFound || r==KErrNotSupported);
+	test(r==KErrNotFound || r==KErrNotSupported);
 
 	r=TheFs.GetLongName(systestfile1, longfilename);
-	test_Value(r, r == KErrNotFound || r==KErrNotSupported);
+	test(r==KErrNotFound || r==KErrNotSupported);
 
 	r=file1.Create(TheFs,oldName,EFileWrite);
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	file1.Close();
 
 	r=TheFs.Replace(oldName,systestfile);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	r=TheFs.Rename(systestfile,systestfile1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	r=TheFs.Entry(systestfile1,entry);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.SetEntry(systestfile1,testtime,KEntryAttNormal,KEntryAttReadOnly);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.Delete(systestfile1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	}
 
 LOCAL_C void ResourceRFsTest()
@@ -168,19 +170,19 @@ LOCAL_C void ResourceRFsTest()
 	mkdirname.Append(restestname);
 	mkdirname.Append(KMkDirSub);
 	r=TheFs.MkDirAll(mkdirname);	
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	TheFs.RmDir(mkdirname);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.SetSubst(restestname,EDriveO);
-	test_Value(r, r == KErrPermissionDenied);
+	test(r==KErrPermissionDenied);
 	
 	r=TheFs.RealName(_L("O:\\File.XXX"),realName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.SetSessionPath(restestname);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	TheFs.NotifyChange(ENotifyAll,aStat4,restestname);
 	test(aStat4==KRequestPending);
@@ -195,29 +197,29 @@ LOCAL_C void ResourceRFsTest()
 	oldName[0]=(TText)gDriveToTest;
 
 	r=TheFs.GetShortName(restestfile, shortfilename);
-	test_Value(r, r == KErrNone || r == KErrNotFound || r==KErrNotSupported);
+	test(r==KErrNone || KErrNotFound || r==KErrNotSupported);
 
 	r=TheFs.GetLongName(restestfile1, longfilename);
-	test_Value(r, r == KErrNone || r == KErrNotFound || r==KErrNotSupported);
+	test(r==KErrNone || KErrNotFound || r==KErrNotSupported);
 
 	r=file1.Create(TheFs,oldName,EFileWrite);
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	file1.Close();
 
 	r=TheFs.Replace(oldName,restestfile);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	r=TheFs.Rename(restestfile,restestfile1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	r=TheFs.Entry(restestfile1,entry);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.SetEntry(restestfile1,testtime,KEntryAttNormal,KEntryAttReadOnly);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.Delete(restestfile1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	}
 
@@ -235,19 +237,19 @@ LOCAL_C void privatefalseIDRFsTest()
 	mkdirname.Append(KMkDirSub);
 
 	r=TheFs.MkDirAll(mkdirname);	
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.RmDir(mkdirname);	
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.SetSubst(pritestfalseidname,EDriveO);
-	test_Value(r, r == KErrPermissionDenied);
+	test(r==KErrPermissionDenied);
 
 	r=TheFs.RealName(_L("O:\\File.XXX"),realName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.SetSessionPath(pritestfalseidname);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	TheFs.NotifyChange(ENotifyAll,aStat2,pritestfalseidname);
 	test(aStat2==KRequestPending);
@@ -263,29 +265,29 @@ LOCAL_C void privatefalseIDRFsTest()
 	oldName[0]=(TText)gDriveToTest;
 
 	r=TheFs.GetShortName(pritestfile, shortfilename);
-	test_Value(r, r == KErrNone || r==KErrNotFound || r==KErrNotSupported);
+	test(r==KErrNone || r==KErrNotFound || r==KErrNotSupported);
 
 	r=TheFs.GetLongName(pritestfile1, longfilename);
-	test_Value(r, r == KErrNone || r==KErrNotFound || r==KErrNotSupported);
+	test(r==KErrNone || r==KErrNotFound || r==KErrNotSupported);
 
 	r=file1.Create(TheFs,oldName,EFileWrite);
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	file1.Close();
 
 	r=TheFs.Replace(oldName,pritestfile);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	r=TheFs.Rename(pritestfile,pritestfile1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	r=TheFs.Entry(pritestfile1,entry);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.SetEntry(pritestfile1,testtime,KEntryAttNormal,KEntryAttReadOnly);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.Delete(pritestfile1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	}
 
@@ -304,19 +306,19 @@ LOCAL_C void privateRFsTest()
 	mkdirname.Append(KMkDirSub);
 
 	r=TheFs.MkDirAll(mkdirname);	
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.RmDir(mkdirname);	
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.SetSubst(pritestname,EDriveO);
-	test_Value(r, r == KErrPermissionDenied);
+	test(r==KErrPermissionDenied);
 
 	r=TheFs.RealName(_L("O:\\File.XXX"),realName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.SetSessionPath(pritestname);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	TheFs.NotifyChange(ENotifyAll,aStat2,pritestname);
 	test(aStat2==KRequestPending);
@@ -332,29 +334,29 @@ LOCAL_C void privateRFsTest()
 	oldName[0]=(TText)gDriveToTest;
 
 	r=TheFs.GetShortName(pritestfile, shortfilename);
-	test_Value(r, r == KErrNone || r==KErrNotFound || r==KErrNotSupported);
+	test(r==KErrNone || r==KErrNotFound || r==KErrNotSupported);
 
 	r=TheFs.GetLongName(pritestfile1, longfilename);
-	test_Value(r, r == KErrNone || r==KErrNotFound || r==KErrNotSupported);
+	test(r==KErrNone || r==KErrNotFound || r==KErrNotSupported);
 
 	r=file1.Create(TheFs,oldName,EFileWrite);
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	file1.Close();
 
 	r=TheFs.Replace(oldName,pritestfile);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	r=TheFs.Rename(pritestfile,pritestfile1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	r=TheFs.Entry(pritestfile1,entry);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.SetEntry(pritestfile1,testtime,KEntryAttNormal,KEntryAttReadOnly);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.Delete(pritestfile1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	}
 
@@ -368,19 +370,19 @@ LOCAL_C void privateSIDRFstest()
 	mkdirname.Append(theprivatepath);
 	mkdirname.Append(KMkDirSub);
 	r=TheFs.MkDirAll(mkdirname);	
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.RmDir(mkdirname);	
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.SetSubst(theprivatepath,EDriveO);	
-	test_Value(r, r == KErrPermissionDenied);
+	test(r==KErrPermissionDenied);
 
 	r=TheFs.RealName(_L("O:\\File.XXX"),realName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.SetSessionPath(theprivatepath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	TheFs.NotifyChange(ENotifyAll,aStat3,theprivatepath);
 	test(aStat3==KRequestPending);
@@ -395,29 +397,29 @@ LOCAL_C void privateSIDRFstest()
 	oldName[0]=(TText)gDriveToTest;
 
 	r=TheFs.GetShortName(pritestfile, shortfilename);
-	test_Value(r, r == KErrNone || r==KErrNotFound || r==KErrNotSupported);
+	test(r==KErrNone || r==KErrNotFound || r==KErrNotSupported);
 
 	r=TheFs.GetLongName(pritestfile1, longfilename);
-	test_Value(r, r == KErrNone || r==KErrNotFound || r==KErrNotSupported);
+	test(r==KErrNone || r==KErrNotFound || r==KErrNotSupported);
 
 	r=file1.Create(TheFs,oldName,EFileWrite);
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	file1.Close();
 
 	r=TheFs.Replace(oldName,pritestfile);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	r=TheFs.Rename(pritestfile,pritestfile1);
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	
 	r=TheFs.Entry(pritestfile1,entry);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.SetEntry(pritestfile1,testtime,KEntryAttNormal,KEntryAttReadOnly);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.Delete(pritestfile1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	}
 
 
@@ -428,29 +430,29 @@ LOCAL_C void systemRFiletest()
 	{
 
 	r=TheFs.SetSessionPath(systestname);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=file1.Temp(TheFs,systestname,fromTemp,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 
 	r=file1.Create(TheFs,KFileSys,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 
 	r=file1.Open(TheFs,KFileSys,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 	
 	r=file1.Open(TheFs,KFileSys,EFileRead);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 
 	r=file1.Replace(TheFs,KFileSys,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	r=file1.Rename(KFileSys3);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 
     TFindFile finder(TheFs);
@@ -458,7 +460,7 @@ LOCAL_C void systemRFiletest()
     r=finder.FindWildByDir(KWildFile, KWildPath, dir);
 	if (!(r==KErrNone))
         test.Printf(_L("T_DCTCBALLFILES: test find wildcards r = %d (expected KErrNone)\n"), r);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	delete dir;
 	}
 
@@ -468,40 +470,40 @@ LOCAL_C void resourceRFiletest()
 //
 	{
 	r=TheFs.SetSessionPath(restestname);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=file1.Temp(TheFs,restestname,fromTemp,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 
 	r=file1.Create(TheFs,KFileRes,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 
 	r=file1.Open(TheFs,KFileRes,EFileWrite|EFileShareExclusive );
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	r=file1.Rename(KFileRes3);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 
 	r=file1.Open(TheFs,KFileRes3,EFileShareReadersOrWriters|EFileRead);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 
 	r=file1.Open(TheFs,KFileRes3,EFileShareReadersOrWriters|EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 
 	r=file1.Open(TheFs,KFileRes3,EFileShareReadersOnly);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=file1.ChangeMode(EFileShareExclusive);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 
 	r=file1.Replace(TheFs,KFileRes,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();	
 	}
 
@@ -512,29 +514,29 @@ LOCAL_C void privateRFiletest()
 //
 	{
 	r=TheFs.SetSessionPath(pritestfalseidname);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=file1.Temp(TheFs,pritestfalseidname,fromTemp,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 
 	r=file1.Create(TheFs,KFilePri,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 
 	r=file1.Open(TheFs,KFilePri,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 	
 	r=file1.Open(TheFs,KFilePri,EFileRead);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 	
 	r=file1.Replace(TheFs,KFilePri,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	r=file1.Rename(KFilePri3);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 	}
 
@@ -545,29 +547,29 @@ LOCAL_C void privatefalseIDRFiletest()
 //
 	{
 	r=TheFs.SetSessionPath(pritestname);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=file1.Temp(TheFs,pritestname,fromTemp,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 
 	r=file1.Create(TheFs,KFilePri,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 
 	r=file1.Open(TheFs,KFilePri,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 	
 	r=file1.Open(TheFs,KFilePri,EFileRead);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 	
 	r=file1.Replace(TheFs,KFilePri,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	r=file1.Rename(KFilePri3);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 	}
 
@@ -578,29 +580,29 @@ LOCAL_C void privateSIDRFiletest()
 //
 	{
 	r=TheFs.SetSessionToPrivate(gTheDriveNum);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	r=file1.Temp(TheFs,theprivatepath,fromTemp,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 
 	r=file1.Create(TheFs,KFilePri,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 
 	r=file1.Open(TheFs,KFilePri,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 	
 	r=file1.Open(TheFs,KFilePri,EFileRead);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 	
 	r=file1.Replace(TheFs,KFilePri,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	r=file1.Rename(KFilePri3);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 	}
 
@@ -615,10 +617,10 @@ LOCAL_C void RDirtest()
 	TBuf<30> dirNameBuf(KSystemPath);
 	dirNameBuf[0]=(TText)gDriveToTest;
 	r=dir.Open(TheFs,dirNameBuf,KEntryAttNormal);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	dir.Close();
 	r=TheFs.GetDir(dirNameBuf,KEntryAttMatchMask,ESortByName,dirEntries);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	dirNameBuf.Zero();
 	delete dirEntries;
 
@@ -626,10 +628,10 @@ LOCAL_C void RDirtest()
 	dirNameBuf=KPrivatePath;
 	dirNameBuf[0]=(TText)gDriveToTest;
 	r=dir.Open(TheFs,dirNameBuf,KEntryAttNormal);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	dir.Close();
 	r=TheFs.GetDir(dirNameBuf,KEntryAttMatchMask,ESortByName,dirEntries);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	dirNameBuf.Zero();
 	delete dirEntries;
 
@@ -637,10 +639,10 @@ LOCAL_C void RDirtest()
 	dirNameBuf=KPrivateFalseID;
 	dirNameBuf[0]=(TText)gDriveToTest;
 	r=dir.Open(TheFs,dirNameBuf,KEntryAttNormal);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	dir.Close();
 	r=TheFs.GetDir(dirNameBuf,KEntryAttMatchMask,ESortByName,dirEntries);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	dirNameBuf.Zero();
 	delete dirEntries;
 
@@ -649,19 +651,19 @@ LOCAL_C void RDirtest()
 	dirNameBuf.Insert(0,_L("?:"));
 	dirNameBuf[0]=(TText)gDriveToTest;
 	r=dir.Open(TheFs,dirNameBuf,KEntryAttNormal);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	dir.Close();
 	r=TheFs.GetDir(dirNameBuf,KEntryAttMatchMask,ESortByName,dirEntries);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	dirNameBuf.Zero();
 	delete dirEntries;
 	//Resource
 	dirNameBuf=KResourcePath;
 	dirNameBuf[0]=(TText)gDriveToTest;
 	r=dir.Open(TheFs,dirNameBuf,KEntryAttNormal);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.GetDir(dirNameBuf,KEntryAttMatchMask,ESortByName,dirEntries);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	dir.Close();
 	delete dirEntries;
 	}
@@ -673,21 +675,21 @@ LOCAL_C void TestTcbAllfiles()
 //
 	{
 	r=TheFs.FileSystemName(fsname,gTheDriveNum);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r = DismountFileSystem(TheFs, fsname, gTheDriveNum);
-	test_Value(r, r == KErrPermissionDenied);
+	test(r==KErrPermissionDenied);
 //	r=TheFs.RemoveFileSystem(fsname);	//can not test due to bug else where fix exists
-//	test_KErrNone(r);
+//	test(r==KErrNone);
 //	r=TheFs.AddFileSystem(fsname);
-//	test_KErrNone(r);
+//	test(r==KErrNone);
 	r = MountFileSystem(TheFs, fsname, gTheDriveNum);
-	test_Value(r, r == KErrPermissionDenied);
+	test(r==KErrPermissionDenied);
 	test.Printf(_L("r=%d"),r);
 	r=TheFs.SetDriveName(gTheDriveNum,KDriveName);
-	test_Value(r, r == KErrPermissionDenied);
+	test(r==KErrPermissionDenied);
 #ifndef __WINS__
  	r=TheFs.SetVolumeLabel(KVolLable, gTheDriveNum);
-	test_Value(r, r == KErrPermissionDenied);
+	test(r==KErrPermissionDenied);
 #endif
 
 	systemRFsTest();
@@ -713,11 +715,11 @@ LOCAL_C void TestTcbAllfiles()
 	test(aStat4==KErrNone);
 
 	r=TheFs.SetSessionPath(systestname);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 //Test RRawDisk class
 	r=rawdisk.Open(TheFs,gTheDriveNum);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	rawdisk.Close();
 
 	RDirtest();
@@ -728,12 +730,12 @@ LOCAL_C void TestTcbAllfiles()
 		{
 		//Test RFormat class
 		r=format.Open(TheFs,driveBuf,EHighDensity,count);
-		test_Value(r, r == KErrPermissionDenied);
+		test(r==KErrPermissionDenied);
 
 		while(count)	
 			{
 			TInt r=format.Next(count);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			}
 		format.Close();
 		}
@@ -741,9 +743,9 @@ LOCAL_C void TestTcbAllfiles()
 	driveBuf[0]=(TText)gDriveToTest;
 	r=TheFs.ScanDrive(driveBuf);
 	RDebug::Print(_L("r=%d"),r);
-	test_Value(r, r == KErrPermissionDenied);
+	test(r==KErrPermissionDenied);
 	r=TheFs.CheckDisk(driveBuf);
-	test_Value(r, r == KErrPermissionDenied);
+	test(r==KErrPermissionDenied);
 	}
 
 LOCAL_C void TestCaps()
@@ -761,16 +763,16 @@ LOCAL_C void TestCaps()
 	
 	driveBuf[0]=(TText)gDriveToTest;
 	r=TheFs.SessionPath(temp);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	test.Printf(_L("Session path: %S"),&temp);
 
 	r=TheFs.CreatePrivatePath(gTheDriveNum);
-	test_Value(r, r == KErrNone || r== KErrAlreadyExists);
+	test(r==KErrNone || r== KErrAlreadyExists);
 
 	TBuf<18> tempPri;
 	r=TheFs.PrivatePath(tempPri);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	theprivatepath = _L("?:");
 	theprivatepath.Append(tempPri);
 
@@ -778,9 +780,9 @@ LOCAL_C void TestCaps()
 	
 	TFileName thesessionpath;
 	r=TheFs.SetSessionToPrivate(gTheDriveNum);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.SessionPath(thesessionpath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	test(thesessionpath == theprivatepath);
 	}
@@ -792,16 +794,16 @@ LOCAL_C void ScanDir(const TDesC& aName, CDirScan::TScanDirection aDirection, TI
 	{
 	CDirScan* scanner = NULL;
 	TRAP(r, scanner = CDirScan::NewL(TheFs));
-	test_Value(r, r == KErrNone && scanner);
+	test(r == KErrNone && scanner);
 
 	TRAP(r, scanner->SetScanDataL(aName,KEntryAttDir,ESortByName|EAscending,aDirection));
-	test_KErrNone(r);
+	test(r == KErrNone);
 
 	CDir *entryList=NULL;
 	for (;;)
 		{
 		TRAP(r, scanner->NextL(entryList));
-		test_Value(r, r == aError);
+		test(r == aError);
 		if (entryList==NULL)
 			break;
 
@@ -843,11 +845,11 @@ LOCAL_C void TestCaging()
 		test.Printf(_L("Private Path is=%S"),&privatepath);
 		
 		r = TheFs.MkDir(_L("\\Caged\\"));
-		test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+		test(r==KErrNone || r==KErrAlreadyExists);
 		
 		CDir* entryCount=NULL;
 		r=TheFs.GetDir(_L("\\*.*"),KEntryAttNormal|KEntryAttDir,ESortNone,entryCount);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		
 		delete entryCount;
 		entryCount=NULL;
@@ -856,23 +858,23 @@ LOCAL_C void TestCaging()
 		//Testing Copy
 		CDir* entryCount2=NULL;
 		r=fMan->Copy(_L("\\sys\\"),_L("\\Caged\\"));
-		test_KErrNone(r);
+		test(r == KErrNone);
 		r=fMan->Copy(_L("\\*"),_L("\\Caged\\"));
-		test_KErrNone(r);
+		test(r == KErrNone);
 		
 		r=TheFs.GetDir(_L("\\Caged\\*.*"),KEntryAttNormal|KEntryAttDir,ESortNone,entryCount2);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		
 		delete entryCount2;
 		entryCount2=NULL;
 	
 		r=fMan->Copy(_L("\\private\\two\\moo"),_L("\\private\\two\\mew")); 
-		test_Value(r, r == KErrPathNotFound);
+		test(r == KErrPathNotFound);
 	
 		// Create a test file
 		RFile testFile;
 		r = testFile.Replace(TheFs, _L("\\capTest"),EFileWrite);
-		test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+		test(r==KErrNone || r==KErrAlreadyExists);
 		testFile.Close();
 		
 		TFileName name;
@@ -880,88 +882,88 @@ LOCAL_C void TestCaging()
 		name.Append(_L("privateFile.tst"));
 		RFile privateFile;
 		r = privateFile.Replace(TheFs, name,EFileWrite);
-		test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+		test(r==KErrNone || r==KErrAlreadyExists);
 		privateFile.Close();
 
 	
 		r=fMan->Copy(_L("\\capTest"),_L("\\private\\two\\moo")); 
-		test_Value(r, r == KErrPathNotFound);
+		test(r == KErrPathNotFound);
 		r=fMan->Copy(_L("\\capTest"),_L("\\sys\\bin\\moo")); 
-		test_Value(r, r == KErrPathNotFound); 
+		test(r == KErrPathNotFound); 
 		r=fMan->Copy(_L("\\sys\\bin\\capTest"),_L("\\sys\\bin\\moo")); 
-		test_Value(r, r == KErrPathNotFound);
+		test(r == KErrPathNotFound);
 		r=fMan->Copy(_L("\\capTest"),_L("\\sys\\capTest")); 
-		test_Value(r, r == KErrNone || r==KErrAlreadyExists); 
+		test(r == KErrNone || r==KErrAlreadyExists); 
 		r=fMan->Copy(_L("\\sys\\*"),_L("\\"));
-		test_KErrNone(r);
+		test (r==KErrNone);
 		r=fMan->Copy(name,_L("\\sys\\"));
-		test_KErrNone(r);
+		test(r==KErrNone);
 
 		// Testing Attribs
 		r=fMan->Attribs(_L("\\private\\two\\moo"),KEntryAttReadOnly,0,TTime(0)); 
-		test_Value(r, r == KErrPathNotFound);
+		test(r == KErrPathNotFound);
 		r=fMan->Attribs(_L("\\private\\moo"),KEntryAttReadOnly,0,TTime(0)); 
-		test_Value(r, r == KErrNotFound);
+		test(r == KErrNotFound);
 		r=fMan->Attribs(name,KEntryAttReadOnly,0,TTime(0));
-		test_KErrNone(r);
+		test(r == KErrNone);
 		r=fMan->Attribs(name,0,KEntryAttReadOnly,TTime(0));
-		test_KErrNone(r);
+		test(r == KErrNone);
 
 		// Testing Move
 		r=fMan->Move(_L("\\private\\two\\moo"),_L("\\private\\one\\moo"));
-		test_Value(r, r == KErrPathNotFound);
+		test(r == KErrPathNotFound);
 		r=fMan->Move(_L("\\private\\two\\moo.."),_L("\\private\\one\\moo"));
-		test_Value(r, r == KErrPathNotFound);
+		test(r == KErrPathNotFound);
 		r=fMan->Move(_L("\\private\\two\\moo"),_L("\\private\\one\\moo.."));
-		test_Value(r, r == KErrPathNotFound);
+		test(r == KErrPathNotFound);
 		r=fMan->Move(name,_L("\\privateFile.tst"));
-		test_KErrNone(r);
+		test(r == KErrNone);
 		r=fMan->Move(_L("\\privateFile.tst"),name);
-		test_KErrNone(r);
+		test(r == KErrNone);
 
 
 		// Testing RmDir
 		r=fMan->RmDir(_L("\\private\\"));
-		test_KErrNone(r);
+		test(r == KErrNone);
 		// put it back where it was
 		r = TheFs.MkDirAll(_L("\\private\\00000001\\"));
-		test_KErrNone(r);
+		test(r == KErrNone);
 		r=fMan->RmDir(_L("\\private\\two\\"));
-		test_Value(r, r == KErrPathNotFound);
+		test(r == KErrPathNotFound);
 		r=fMan->RmDir(_L("\\private\\tw?\\"));
-		test_Value(r, r == KErrBadName);
+		test(r == KErrBadName);
 
 		r=fMan->RmDir(_L("\\private\\two\\"));
-		test_Value(r, r == KErrPathNotFound);
+		test(r == KErrPathNotFound);
 		r=fMan->RmDir(_L("\\private\\tw?\\"));
-		test_Value(r, r == KErrBadName);
+		test(r == KErrBadName);
 		
 		
 		// Testing Rename
 		r=fMan->Rename(_L("\\private\\two\\moo"),_L("\\private\\two\\mew")); 
-		test_Value(r, r == KErrPathNotFound);
+		test(r == KErrPathNotFound);
 		
 		// Testing Delete
 		r=fMan->Delete(_L("\\private\\two\\test")); 
-		test_Value(r, r == KErrPathNotFound);
+		test(r == KErrPathNotFound);
 		r=fMan->Delete(_L("\\private\\moo")); 
-		test_Value(r, r == KErrNotFound);
+		test(r == KErrNotFound);
 		
 		//Something that actually exists in Private
 		r=fMan->Rename(name,_L("\\private\\00000001\\moo")); 
-		test_Value(r, r == KErrNotFound);
+		test(r == KErrNotFound);
 		r=fMan->Rename(_L("\\private\\00000001\\moo"),name); 
-		test_Value(r, r == KErrNotFound);
+		test(r == KErrNotFound);
 		r=fMan->Copy(name,_L("\\private\\00000001\\moo")); 
-		test_Value(r, r == KErrNotFound);
+		test(r == KErrNotFound);
 		r=fMan->Delete(_L("\\private\\00000001\\moo")); 
-		test_Value(r, r == KErrNotFound);
+		test(r == KErrNotFound);
 
 		// Clean up the test data
 		r=fMan->RmDir(_L("\\Caged\\")); 
-		test_KErrNone(r);
+		test(r == KErrNone);
 		r=fMan->Delete(_L("\\capTest")); 
-		test_KErrNone(r);
+		test(r == KErrNone);
 		delete(fMan);
 		}
 	
@@ -982,7 +984,7 @@ LOCAL_C void CleanupL()
 	test.Next(_L("Delete test directory"));
 	CFileMan* fMan=CFileMan::NewL(TheFs);
 	TInt r=fMan->RmDir(gSessionPath);
-	test_Value(r, r == KErrNone || r == KErrPathNotFound);
+	test(r==KErrNone || KErrPathNotFound);
 	delete fMan;
 	}
 
@@ -1006,7 +1008,7 @@ GLDEF_C void CallTestsL(/*TChar aDriveLetter*/)
 	sesspath[0] = (TText)gDriveToTest;
 
 	TInt r= TheFs.SetSessionPath(sesspath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	//cleanup from previous run of this test
 	TBuf<20> delDir;
@@ -1014,15 +1016,15 @@ GLDEF_C void CallTestsL(/*TChar aDriveLetter*/)
 	delDir=KResourcePath;
 	delDir[0]=(TText)gDriveToTest;
 	r=fMan->RmDir(delDir);
-	test_Value(r, r == KErrNone || r == KErrNotFound || r == KErrPathNotFound);
+	test(r==KErrNone || KErrNotFound);
 	delDir=KSystemPath;
 	delDir[0]=(TText)gDriveToTest;
 	r=fMan->RmDir(delDir);
-	test_Value(r, r == KErrNone || r == KErrNotFound || r == KErrPathNotFound);
+	test(r==KErrNone || KErrNotFound);
 	delDir=KPrivatePath;
 	delDir[0]=(TText)gDriveToTest;
 	r=fMan->RmDir(delDir);
-	test_Value(r, r == KErrNone || r == KErrNotFound || r == KErrPathNotFound);
+	test(r==KErrNone || KErrNotFound);
 	delete fMan;
 
 	//check double mode ie that Defpath still works	
@@ -1030,30 +1032,30 @@ GLDEF_C void CallTestsL(/*TChar aDriveLetter*/)
 	RFs fs2;
 	
 	r=fs1.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=fs1.SessionPath(sesspath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("session1 Path=%S"),&sesspath);
 
 	TBuf<30> privatepath;
 	r=fs1.SetSessionToPrivate(gTheDriveNum);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=fs1.PrivatePath(privatepath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=privatepath.Compare(KExpectedPrivatePath());
-	test_Value(r, r == 0);
+	test(r==0);
 	r=fs1.SessionPath(sesspath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=privatepath.Compare(sesspath.Mid(KPathPosition));
-	test_Value(r, r == 0);
+	test(r==0);
 	r=fs1.CreatePrivatePath(gTheDriveNum);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	fs1.Close();
 
 	r=fs2.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=fs2.SessionPath(sesspath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.Printf(_L("session2 Path=%S"),&sesspath);
 	fs2.Close();
 

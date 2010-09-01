@@ -49,8 +49,7 @@ void DSimulatedPowerResourceController::EventDfcFunc(TAny *ptr)
 	}
 
 /** Constructor for simulated resource controller. */
-DSimulatedPowerResourceController::DSimulatedPowerResourceController()
-	: iEventDfc(EventDfcFunc, this)
+DSimulatedPowerResourceController::DSimulatedPowerResourceController():DPowerResourceController(),iStaticResourceCount(0), iEventDfc(EventDfcFunc, this)
 	{
 	Kern::Printf(">DSimulatedPowerResourceController");
 	}
@@ -58,51 +57,26 @@ DSimulatedPowerResourceController::DSimulatedPowerResourceController()
 /** Destructor for simulated resource controller. */
 DSimulatedPowerResourceController::~DSimulatedPowerResourceController()
 	{
-	Kern::Printf(">~DSimulatedPowerResourceController()\n");
+	Kern::Printf("DSimulatedPowerResourceController::~DSimulatedPowerResourceController()\n");
 	((TDynamicDfcQue*)iDfcQ)->Destroy();
-	delete iMsgQ;
-
-	SPowerResourceClientLevel *pCL = iClientLevelPool;
-	while(iClientLevelPool) //Find the starting position of array to delete
+	DStaticPowerResource *pR;
+	TUint c;
+	for(c = 0; c < iStaticResourceCount; c++)
 		{
-		if(iClientLevelPool < pCL)
-			pCL = iClientLevelPool;
-		iClientLevelPool = iClientLevelPool->iNextInList;
+		pR = iResources[c];
+		delete pR;
 		}
-
-	delete [] pCL;
-	SPowerRequest *pReq = iRequestPool;
-	while(iRequestPool) //Find the starting position of array to delete
-		{
-		if(iRequestPool < pReq)
-			pReq = iRequestPool;
-		iRequestPool = iRequestPool->iNext;
-		}
-	delete [] pReq;
-
+	delete []iResources;
 #ifdef PRM_ENABLE_EXTENDED_VERSION
-	pCL = iResourceLevelPool;
-	while(iResourceLevelPool)
+	DStaticPowerResourceD* pDR;
+	
+	delete []iNodeArray; //Delete dependency nodes
+	for(c = 0; c < iStaticResDependencyCount; c++) 
 		{
-		if(iResourceLevelPool < pCL)
-			pCL = iResourceLevelPool;
-		iResourceLevelPool = iResourceLevelPool->iNextInList;
+		pDR = iDependencyResources[c];
+		delete pDR;
 		}
-	//delete resource pool
-	delete [] pCL;
-	delete iMsgQDependency;
-#endif
-
-	iClientList.Delete();
-	iUserSideClientList.Delete();
-	iStaticResourceArray.ResetAndDestroy();
-
-#ifdef PRM_ENABLE_EXTENDED_VERSION
-	iCleanList.ResetAndDestroy();
-	iDynamicResourceList.Delete();
-	iDynamicResDependencyList.Delete();
-	delete [] iNodeArray; //Delete dependency nodes
-	iStaticResDependencyArray.ResetAndDestroy();
+	delete []iDependencyResources;
 #endif
 	}
 
@@ -300,133 +274,147 @@ TInt DSimulatedPowerResourceController::ProcessEventResources(TPowerRequest& req
 	}
 
 //This registers all static resource with resource controller. This function is called by PIL
-TInt DSimulatedPowerResourceController::DoRegisterStaticResources(RPointerArray <DStaticPowerResource> & aStaticResourceArray)
+TInt DSimulatedPowerResourceController::DoRegisterStaticResources(DStaticPowerResource**& aStaticResourceArray, TUint16& aStaticResourceCount)
 	{
 	Kern::Printf(">DSimulatedPowerResourceController::DoRegisterStaticResources");
-
-	TBool error_occured = EFalse;
-	TInt r = KErrNone;
+	aStaticResourceArray = (DStaticPowerResource**)new(DStaticPowerResource*[MAX_RESOURCE_COUNT]);
+	if(!aStaticResourceArray)
+		return KErrNoMemory;
+	DStaticPowerResource* pR = NULL;
 
 	//Create Binary Single Instantaneous Positive Resource
-	DStaticPowerResource* pR = new DBSIGISPResource();
-	if(!SafeAppend(aStaticResourceArray, pR))
-		error_occured = ETrue;
+	pR = new DBSIGISPResource();
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResourceCount, aStaticResourceArray, KErrNoMemory)
+	aStaticResourceArray[iStaticResourceCount++] = pR;
 
 	//Create Multilevel Single Instantaneous Positive Resource
 	pR = new DMLSIGISPResource();
-	if(!SafeAppend(aStaticResourceArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResourceCount, aStaticResourceArray, KErrNoMemory)
+	aStaticResourceArray[iStaticResourceCount++] = pR;
 
 	//Create Binary Single Instantaneous Negative Resource
 	pR = new DBSIGISNResource();
-	if(!SafeAppend(aStaticResourceArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResourceCount, aStaticResourceArray, KErrNoMemory)
+	aStaticResourceArray[iStaticResourceCount++] = pR;
 
 	//Create Multilevel Single Instantaneous Negative Resource
 	pR = new DMLSIGISNResource();
-	if(!SafeAppend(aStaticResourceArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResourceCount, aStaticResourceArray, KErrNoMemory)
+	aStaticResourceArray[iStaticResourceCount++] = pR;
 
-	//Create Binary Single Long latency Positive Resource
+	//Create Binary Single Longlatency Positive Resource
 	pR = new DBSLGLSPResource();
-	if(!SafeAppend(aStaticResourceArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResourceCount, aStaticResourceArray, KErrNoMemory)
+	aStaticResourceArray[iStaticResourceCount++] = pR;
 
-	//Create Multilevel Single Long latency  Positive Resource
+	//Create Multilevel Single Longlatency  Positive Resource
 	pR = new DMLSLGLSPResource();
-	if(!SafeAppend(aStaticResourceArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResourceCount, aStaticResourceArray, KErrNoMemory)
+	aStaticResourceArray[iStaticResourceCount++] = pR;
 
-	//Create Binary Single Long latency Get & Instantaneous Set Negative Resource
+	//Create Binary Single Longlatency Get & Instantaneous Set Negative Resource
 	pR = new DBSLGISNResource();
-	if(!SafeAppend(aStaticResourceArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResourceCount, aStaticResourceArray, KErrNoMemory)
+	aStaticResourceArray[iStaticResourceCount++] = pR;
 
-	//Create Multilevel Single Long latency Get & Instantaneous Set Negative Resource
+	//Create Multilevel Single Longlatency Get & Instantaneous Set Negative Resource
 	pR = new DMLSLGISNResource();
-	if(!SafeAppend(aStaticResourceArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResourceCount, aStaticResourceArray, KErrNoMemory)
+	aStaticResourceArray[iStaticResourceCount++] = pR;
 
-	//Create Binary Single Instantaneous Get & Long latency Set Positive Resource
+	//Create Binary Single Instantaneous Get & Longlatency Set Positive Resource
 	pR = new DBSIGLSPResource();
-	if(!SafeAppend(aStaticResourceArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResourceCount, aStaticResourceArray, KErrNoMemory)
+	aStaticResourceArray[iStaticResourceCount++] = pR;
 
-	//Create Multilevel Single Instantaneous Get & Long latency Set Positive Resource
+	//Create Multilevel Single Instantaneous Get & Longlatency Set Positive Resource
 	pR = new DMLSIGLSPResource();
-	if(!SafeAppend(aStaticResourceArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResourceCount, aStaticResourceArray, KErrNoMemory)
+	aStaticResourceArray[iStaticResourceCount++] = pR;
 
 	//Create Binary SHared Instantaneous Positive Resource
 	pR = new DBSHIGISPResource();
-	if(!SafeAppend(aStaticResourceArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResourceCount, aStaticResourceArray, KErrNoMemory)
+	aStaticResourceArray[iStaticResourceCount++] = pR;
 
 	//Create Multilevel SHared Instantaneous Positive Resource
 	pR = new DMLSHIGISPResource();
-	if(!SafeAppend(aStaticResourceArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResourceCount, aStaticResourceArray, KErrNoMemory)
+	aStaticResourceArray[iStaticResourceCount++] = pR;
 
 	//Create Binary SHared Instantaneous Negative Resource
 	pR = new DBSHIGISNResource();
-	if(!SafeAppend(aStaticResourceArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResourceCount, aStaticResourceArray, KErrNoMemory)
+	aStaticResourceArray[iStaticResourceCount++] = pR;
 
 	//Create Multilevel SHared Instantaneous Negative Resource
 	pR = new DMLSHIGISNResource();
-	if(!SafeAppend(aStaticResourceArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResourceCount, aStaticResourceArray, KErrNoMemory)
+	aStaticResourceArray[iStaticResourceCount++] = pR;
 
-	//Create Binary SHared Long latency Positive Resource
+	//Create Binary SHared Longlatency Positive Resource
 	pR = new DBSHLGLSPResource();
-	if(!SafeAppend(aStaticResourceArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResourceCount, aStaticResourceArray, KErrNoMemory)
+	aStaticResourceArray[iStaticResourceCount++] = pR;
 
-	//Create Multilevel SHared Long latency  Positive Resource
+	//Create Multilevel SHared Longlatency  Positive Resource
 	pR = new DMLSHLGLSPResource();
-	if(!SafeAppend(aStaticResourceArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResourceCount, aStaticResourceArray, KErrNoMemory)
+	aStaticResourceArray[iStaticResourceCount++] = pR;
 
-	//Create Binary SHared Long latency Get & Instantaneous Set Negative Resource
+	//Create Binary SHared Longlatency Get & Instantaneous Set Negative Resource
 	pR = new DBSHLGISNResource();
-	if(!SafeAppend(aStaticResourceArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResourceCount, aStaticResourceArray, KErrNoMemory)
+	aStaticResourceArray[iStaticResourceCount++] = pR;
 
-	//Create Multilevel SHared Long latency Get & Instantaneous Set Negative Resource
+	//Create Multilevel SHared Longlatency Get & Instantaneous Set Negative Resource
 	pR = new DMLSHLGISNResource();
-	if(!SafeAppend(aStaticResourceArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResourceCount, aStaticResourceArray, KErrNoMemory)
+	aStaticResourceArray[iStaticResourceCount++] = pR;
 
 	//Create holes in resource array
-	if(aStaticResourceArray.Append(NULL) != KErrNone)
-		error_occured = ETrue;
-
-	if(aStaticResourceArray.Append(NULL) != KErrNone)
-		error_occured = ETrue;
-
-	//Create Binary SHared Instantaneous Get & Long latency Set Positive Resource
+	aStaticResourceArray[iStaticResourceCount++] = NULL;
+	aStaticResourceArray[iStaticResourceCount++] = NULL;
+	//Create Binary SHared Instantaneous Get & Longlatency Set Positive Resource
 	pR = new DBSHIGLSPResource();
-	if(!SafeAppend(aStaticResourceArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResourceCount, aStaticResourceArray, KErrNoMemory)
+	aStaticResourceArray[iStaticResourceCount++] = pR;
 
-	//Create Multilevel SHared Instantaneous Get & Long latency Set Positive Resource
+	//Create Multilevel SHared Instantaneous Get & Longlatency Set Positive Resource
 	pR = new DMLSHIGLSPResource();
-	if(!SafeAppend(aStaticResourceArray, pR))
-		error_occured = ETrue;
-
-	//Create Binary shared Long latency get and set Custom Resource
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResourceCount, aStaticResourceArray, KErrNoMemory)
+	aStaticResourceArray[iStaticResourceCount++] = pR;
+	 
+	//Create Binary shared Longlatency get and set Custom Resource
 	pR = new DBSHLGLSCResource();
-	if(!SafeAppend(aStaticResourceArray, pR))
-		error_occured = ETrue;
+	if(!pR)
+		CLEAN_AND_RETURN(iStaticResourceCount, aStaticResourceArray, KErrNoMemory)
+	aStaticResourceArray[iStaticResourceCount++] = pR;
 
-	// the only error that could occur here is KErrNoMemory
-	// clean-up if the error did occur
-	if(error_occured)
-		{
-		aStaticResourceArray.ResetAndDestroy();
-		r = KErrNoMemory;
-		}
-	return r;
+	iResources = aStaticResourceArray;
+
+	aStaticResourceCount = iStaticResourceCount;
+	return KErrNone;
 	}
 
 //Constructors of all resources

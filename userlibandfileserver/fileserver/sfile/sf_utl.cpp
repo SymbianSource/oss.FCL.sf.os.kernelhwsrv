@@ -613,11 +613,9 @@ CFileShare* GetShareFromHandle(CSessionFs* aSession, TInt aHandle)
 	}
 
 
-
-/**
-    @return ETrue if aDes only contains spaces or is zero length
-    Note that _all_ UNICODE space characters are treated as usual spaces
-*/
+//
+// Returns ETrue if aDes only contains spaces or is zero length
+//
 static TBool IsSpace(const TDesC& aDes)
 	{
 
@@ -892,43 +890,38 @@ TBool PowerOk()
 	return powerGood;
 	}
 
-//---------------------------------------------------------------------------------------------------------------------------------
-/**
-    Decrement mount's lock counter when the mount resource, like a file or directory is opened. 
-    See also: CMountCB::LockStatus()   
-*/
 void AddResource(CMountCB& aMount)
+//
+// Decrement resource counters
+//
 	{
 	__CHECK_DRIVETHREAD(aMount.Drive().DriveNumber());
 	__ASSERT_DEBUG(aMount.LockStatus()<=0,Fault(ERawDiskBadAccessCount2));
 	aMount.DecLock();
 	}
 
-/**
-    Increment mount's lock counter when the mount resource, like a file or directory is closed. 
-    See also: CMountCB::LockStatus()   
-*/
 void RemoveResource(CMountCB& aMount)
+//
+// Increment resource counters
+//
 	{
 	__ASSERT_DEBUG(aMount.LockStatus()<0,Fault(ERawDiskBadAccessCount1));
 	aMount.IncLock();
 	}
 
 
-/**
-    Increment mount's lock counter when the disk access (Format, Raw disk) is opened on the mount
-    See also: CMountCB::LockStatus()   
-*/
 void AddDiskAccess(CMountCB& aMount)
+//
+// Increment resource counters
+//
 	{
 	aMount.IncLock();
 	}
 
-/**
-    Decrement mount's lock counter when the disk access (Format, Raw disk) is closed on the mount
-    See also: CMountCB::LockStatus()   
-*/
 void RemoveDiskAccess(CMountCB& aMount)
+//
+// Decrement resource counters
+//
 	{
 	aMount.DecLock();
 	}

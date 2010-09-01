@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -18,10 +18,6 @@
 
 #include "controlendpointreader.h"
 #include "testdebug.h"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "controlendpointreaderTraces.h"
-#endif
 
 namespace NUnitTesting_USBDI
 	{	
@@ -32,48 +28,43 @@ CControlEndpointReader::CControlEndpointReader(RDevUsbcClient& aClientDriver,MRe
 	iDataPhase(EFalse),
 	iRequestHandler(aRequestHandler)
 	{
-	OstTraceFunctionEntryExt( CCONTROLENDPOINTREADER_CCONTROLENDPOINTREADER_ENTRY, this );
-	OstTraceFunctionExit1( CCONTROLENDPOINTREADER_CCONTROLENDPOINTREADER_EXIT, this );
 	}
 	
 	
 CControlEndpointReader::~CControlEndpointReader()
 	{
-	OstTraceFunctionEntry1( CCONTROLENDPOINTREADER_CCONTROLENDPOINTREADER_ENTRY_DUP01, this );
-	OstTraceFunctionExit1( CCONTROLENDPOINTREADER_CCONTROLENDPOINTREADER_EXIT_DUP01, this );
+	LOG_FUNC
 	}
 
 
 void CControlEndpointReader::ReadRequestsL()
 	{
-	OstTraceFunctionEntry1( CCONTROLENDPOINTREADER_READREQUESTSL_ENTRY, this );
+	LOG_FUNC
 	
 	// Read a packet from endpoint 0 (this should incorporate a request)
 	
 	ReadPacketL(this);
-	OstTraceFunctionExit1( CCONTROLENDPOINTREADER_READREQUESTSL_EXIT, this );
 	}
 	
 
 void CControlEndpointReader::EndpointReadError(TEndpointNumber aEndpointNumber,TInt aErrorCode)
 	{
-	OstTraceFunctionEntryExt( CCONTROLENDPOINTREADER_ENDPOINTREADERROR_ENTRY, this );
+	LOG_FUNC
 	
-	OstTraceExt2(TRACE_NORMAL, CCONTROLENDPOINTREADER_ENDPOINTREADERROR, "<Error %d> Asynchronous read on endpoint %d",aErrorCode,aEndpointNumber);
-	OstTraceFunctionExit1( CCONTROLENDPOINTREADER_ENDPOINTREADERROR_EXIT, this );
+	RDebug::Printf("<Error %d> Asynchronous read on endpoint %d",aErrorCode,aEndpointNumber);
 	}
 	
 	
 void CControlEndpointReader::DataReceivedFromEndpointL(TEndpointNumber aEndpointNumber,const TDesC8& aData)
 	{
-	OstTraceFunctionEntryExt( CCONTROLENDPOINTREADER_DATARECEIVEDFROMENDPOINTL_ENTRY, this );
+	LOG_FUNC
 	
-	OstTraceExt5(TRACE_NORMAL, CCONTROLENDPOINTREADER_DATARECEIVEDFROMENDPOINTL, "ibRequestType = %d, ibRequest = %d, iwValue = %d, iwIndex = %d, iwLength = %d",ibRequestType, ibRequest, iwValue, iwIndex, iwLength);
-	OstTraceExt2(TRACE_NORMAL, CCONTROLENDPOINTREADER_DATARECEIVEDFROMENDPOINTL_DUP01, "iDeviceToHost = %d, iDataPhase = %d",iDeviceToHost,iDataPhase);
+	RDebug::Printf("ibRequestType = %d, ibRequest = %d, iwValue = %d, iwIndex = %d, iwLength = %d",ibRequestType, ibRequest, iwValue, iwIndex, iwLength);
+	RDebug::Printf("iDeviceToHost = %d, iDataPhase = %d",iDeviceToHost,iDataPhase);
 	if(iDeviceToHost && iDataPhase)
 		{
 		TInt err = iRequestHandler.ProcessRequestL(ibRequest,iwValue,iwIndex,iwLength,aData);
-		OstTrace1(TRACE_NORMAL, CCONTROLENDPOINTREADER_DATARECEIVEDFROMENDPOINTL_DUP02, "ProdessRequestL returned %d",err);
+		RDebug::Printf("ProdessRequestL returned %d",err);
 		
 		if(err != KErrAbort)
 			{
@@ -113,12 +104,12 @@ void CControlEndpointReader::DataReceivedFromEndpointL(TEndpointNumber aEndpoint
 		
 		// Read all information about the request sent by the host
 		// i.e. any DATA1 packets sent after the setup DATA0 packet
-		OstTrace0(TRACE_NORMAL, CCONTROLENDPOINTREADER_DATARECEIVEDFROMENDPOINTL_DUP03, "AFTER UPDATES");
-		OstTraceExt5(TRACE_NORMAL, CCONTROLENDPOINTREADER_DATARECEIVEDFROMENDPOINTL_DUP04, "ibRequestType = %d, ibRequest = %d, iwValue = %d, iwIndex = %d, iwLength = %d",ibRequestType, ibRequest, iwValue, iwIndex, iwLength);
-		OstTraceExt2(TRACE_NORMAL, CCONTROLENDPOINTREADER_DATARECEIVEDFROMENDPOINTL_DUP05, "iDeviceToHost = %d, iDataPhase = %d",iDeviceToHost,iDataPhase);
+		RDebug::Printf("AFTER UPDATES");
+		RDebug::Printf("ibRequestType = %d, ibRequest = %d, iwValue = %d, iwIndex = %d, iwLength = %d",ibRequestType, ibRequest, iwValue, iwIndex, iwLength);
+		RDebug::Printf("iDeviceToHost = %d, iDataPhase = %d",iDeviceToHost,iDataPhase);
 		if(iDeviceToHost && iDataPhase)
 			{
-			OstTrace1(TRACE_NORMAL, CCONTROLENDPOINTREADER_DATARECEIVEDFROMENDPOINTL_DUP06, "Issuing another read of %d bytes",iwLength);
+			RDebug::Printf("Issuing another read of %d bytes",iwLength);
 			ReadL(iwLength);
 			}
 		else
@@ -133,7 +124,6 @@ void CControlEndpointReader::DataReceivedFromEndpointL(TEndpointNumber aEndpoint
 				}
 			}
 		}
-	OstTraceFunctionExit1( CCONTROLENDPOINTREADER_DATARECEIVEDFROMENDPOINTL_EXIT, this );
 	}
 	
 	

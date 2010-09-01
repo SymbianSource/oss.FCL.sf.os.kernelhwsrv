@@ -20,7 +20,7 @@
 _LIT(KLitKernHeap,"KernHeap");
 
 RHeapK::RHeapK(TInt aInitialSize)
-	: RHybridHeap(aInitialSize, 0, EFalse)			
+	: RHeap(aInitialSize, 0, EFalse)
 	{
 	}
 
@@ -59,7 +59,8 @@ RHeapK* RHeapK::FixedHeap(TAny* aBase, TInt aInitialSize)
 // Create a kernel fixed heap.
 //
 	{
-	__ASSERT_ALWAYS(aInitialSize>(TInt)sizeof(RHeapK), K::Fault(K::ETHeapMaxLengthNegative));
+
+	__ASSERT_ALWAYS(aInitialSize>KMinHeapSize, K::Fault(K::ETHeapMaxLengthNegative));
 	return new(aBase) RHeapK(aInitialSize);
 	}
 
@@ -73,20 +74,6 @@ void RHeapK::CheckThreadState()
 	__NK_ASSERT_UNLOCKED;
 	__ASSERT_NO_FAST_MUTEX;
 	__ASSERT_CRITICAL;
-	}
-
-void RHybridHeap::Lock() const   
-	{
-	DMutex* m = *(DMutex**)&iLock;
-	if (m)
-		Kern::MutexWait(*m);
-	}
-
-void RHybridHeap::Unlock() const   
-	{
-	DMutex* m = *(DMutex**)&iLock;
-	if (m)
-		Kern::MutexSignal(*m);
 	}
 
 void RHeapK::Fault(TInt aFault)

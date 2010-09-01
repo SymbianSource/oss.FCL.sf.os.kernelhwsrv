@@ -22,7 +22,6 @@ targettype		kext
 systeminclude	../../include/drivers
 
 source			bgahsmmcptn.cpp
-source			toc.cpp
 
 library			epbusmmc.lib
 library			elocd.lib

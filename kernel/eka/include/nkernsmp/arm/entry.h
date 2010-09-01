@@ -40,7 +40,6 @@ extern void btrace_fiq_entry();
 #endif
 
 extern void handle_crash_ipi();
-extern void handle_indirect_powerdown_ipi();
 
 #ifdef _DEBUG
 extern void __DebugMsgIrq(TUint aIrqNumber);
@@ -125,22 +124,22 @@ __NAKED__ void __this_must_go_at_the_beginning_of_the_kernel_image()
 	asm("mov	r5, sp ");
 	asm("str	r1, [sp, #%a0]" : : "i" _FOFF(SThreadExcStack,iExcCode));	// word describing exception type
 	__ASM_STI2_MODE(MODE_SYS);			// mode_sys, IRQs off, FIQs on
-	asm("ldr	sp, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iIrqStackTop));
+	asm("ldr	sp, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, i_IrqStackTop));
 	USER_MEMORY_GUARD_ON(,r8,r0);		// r8 = original DACR if user memory guards in use
 
 	asm("nested_irq_rejoin: ");
-	asm("ldr	r0, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iIrqCount));
-	asm("ldr	r7, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iIrqNestCount));
+	asm("ldr	r0, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, i_IrqCount));
+	asm("ldr	r7, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, i_IrqNestCount));
 	asm("ldr	r12, __ArmInterrupt ");
 	asm("ldr	r10, _ArmVectorIrq ");
 	asm("add	r0, r0, #1 ");
 	asm("add	r7, r7, #1 ");
 	__DATA_MEMORY_BARRIER_Z__(r2);		// ensure memory accesses in interrupted code are observed before
 										// the writes to i_IrqCount, i_IrqNestCount
-	asm("str	r0, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iIrqCount));		// increment i_IrqCount
-	asm("ldr	r11, [r12,#%a0]" : : "i" _FOFF(SArmInterruptInfo,iIrqHandler));		// address if IRQ handler
-	asm("ldr	r6, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iGicCpuIfcAddr));
-	asm("str	r7, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iIrqNestCount));	// increment i_IrqNestCount
+	asm("str	r0, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, i_IrqCount));		// increment i_IrqCount
+	asm("ldr	r11, [r12,#%a0]" : : "i" _FOFF(SArmInterruptInfo,iIrqHandler));	// address of IRQ handler
+	asm("ldr	r6, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, i_GicCpuIfcAddr));
+	asm("str	r7, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, i_IrqNestCount));	// increment i_IrqNestCount
 
 	asm("1: ");
 #ifdef BTRACE_CPU_USAGE
@@ -188,8 +187,6 @@ __NAKED__ void __this_must_go_at_the_beginning_of_the_kernel_image()
 	asm("beq	do_generic_ipi ");
 	asm("cmp	r2, #%a0" : : "i" ((TInt)TRANSFERRED_IRQ_VECTOR));
 	asm("beq	do_transferred_ipi ");
-	asm("cmp	r2, #%a0" : : "i" ((TInt)INDIRECT_POWERDOWN_IPI_VECTOR));
-	asm("beq	do_indirect_powerdown_ipi ");
 	asm("cmp	r2, #15 ");
 	__JUMP(hi,	r11);					// if >15 but not TIMESLICE_VECTOR, call dispatcher
 
@@ -201,7 +198,7 @@ __NAKED__ void __this_must_go_at_the_beginning_of_the_kernel_image()
 
 	// TIMESLICE, RESCHED or TRANSFERRED
 	asm("do_timeslice_irq: ");
-	asm("ldr	r2, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iLocalTimerAddr));
+	asm("ldr	r2, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, i_LocalTimerAddr));
 	asm("mov	r1, #1 ");
 	asm("str	r1, [r2, #%a0]" : : "i" _FOFF(ArmLocalTimer, iTimerIntStatus));	// clear timer event flag
 	asm("do_resched_ipi: ");
@@ -214,16 +211,6 @@ __NAKED__ void __this_must_go_at_the_beginning_of_the_kernel_image()
 	ARM_SEV;							// kick any CPUs waiting for us to enter the ISR
 	asm("b		1b ");
 
-	asm("do_indirect_powerdown_ipi: ");
-	asm("str	r0, [r6, #%a0]" : : "i" _FOFF(GicCpuIfc, iEoi));		// acknowledge interrupt
-	__DATA_SYNC_BARRIER_Z__(r1);		// ensure writes to i_IrqCount, i_IrqNestCount, iRescheduleNeededFlag complete before SEV
-										// also ensure EOI is written before we return from the interrupt
-	ARM_SEV;							// kick any CPUs waiting for us to enter the ISR
-	asm("stmfd	sp!, {r0-r3,r12,lr} ");
-	asm("bl		call_ipd_handler ");
-	asm("ldmfd	sp!, {r0-r3,r12,lr} ");
-	asm("b		1b ");
-
 	// GENERIC_IPI
 	asm("do_generic_ipi: ");
 	asm("ldr	r2, _GenericIPIIsr ");
@@ -234,9 +221,6 @@ __NAKED__ void __this_must_go_at_the_beginning_of_the_kernel_image()
 
 	asm("__DebugMsg_longjump_Irq: ");
 	asm("ldr	pc, _dmIrq ");
-
-	asm("call_ipd_handler: ");
-	asm("ldr	pc, __handle_ipd_ipi ");
 
 	asm("__reset_vector:");
 	asm(".word	__ArmVectorReset "); 
@@ -271,8 +255,6 @@ __NAKED__ void __this_must_go_at_the_beginning_of_the_kernel_image()
 #endif
 	asm("_dmIrq: ");
 	asm(".word __DebugMsgIrq ");
-	asm("__handle_ipd_ipi: ");
-	asm(".word handle_indirect_powerdown_ipi ");
 	}
 }
 

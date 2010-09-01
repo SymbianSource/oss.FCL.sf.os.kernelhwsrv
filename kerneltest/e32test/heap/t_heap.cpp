@@ -66,10 +66,6 @@
 #include <e32hal.h>
 #include <e32def.h>
 #include <e32def_private.h>
-#include "dla.h"
-#include "slab.h"
-#include "page_alloc.h"
-#include "heap_hybrid.h"
 
 // Sets data for Test6
 #define SetData(size)	pHeap->Reset();\
@@ -94,8 +90,7 @@
 #endif
 
 const TInt KHeadSize = (TInt)RHeap::EAllocCellSize;
-
-const TInt KAlign = RHeap::ECellAlignment;
+const TInt KAlign = _FOFF(RHeap::_s_align, d);
 const TInt KMinCellLength = _ALIGN_UP((KHeapMinCellSize + Max(TInt(RHeap::EFreeCellSize),TInt(RHeap::EAllocCellSize))),KAlign) - RHeap::EAllocCellSize;
 const TInt KMinFreeSize = _ALIGN_UP((KHeapMinCellSize + Max(TInt(RHeap::EFreeCellSize),TInt(RHeap::EAllocCellSize))),KAlign);
 
@@ -113,7 +108,7 @@ struct RHeapDump
 	RChunk				iChunk;
 	TUint8				*iBase;
 	TUint8				*iTop;
-	//RHeap::SCell		iFree;
+	RHeap::SCell		iFree;
 	};
 
 #pragma warning ( disable :4705 ) // statement has no effect
@@ -123,15 +118,12 @@ RHeapDump OrigDump;
 #if defined(_DEBUG)
 void RTestHeap::__DbgTest(void* aPtr) const
 	{
-	(void) aPtr;
-/*	
 	RHeapDump& d = *(RHeapDump*)aPtr;
 	d.iMinLength=iMinLength;
 	d.iChunk.SetHandle(iChunkHandle);
 	d.iBase=iBase;
 	d.iTop=iTop;
 	d.iFree=iFree;
-*/	
 	}
 #endif
 
@@ -139,8 +131,6 @@ void RTestHeap::__DbgTest(void* aPtr) const
 #if defined(_DEBUG)
 TBool Invariant(RHeap* aHeap)
 	{
-	(void) aHeap;
-/*	
 	RHeapDump dump;
 	((RTestHeap*)aHeap)->__DbgTest(&dump);
 	if(dump.iMinLength!=OrigDump.iMinLength) 		return(EFalse);
@@ -151,7 +141,6 @@ TBool Invariant(RHeap* aHeap)
 	if(dump.iTop[-1]!=OrigDump.iTop[-1])	return(EFalse);	
 	if(dump.iFree.len!=OrigDump.iFree.len)	return(EFalse);
 	// iFree.Next changes during allocation/freeing etc.
-*/
 	return(ETrue);
 	}
 #define INV(x) x;
@@ -163,23 +152,6 @@ LOCAL_D RTest test(_L("T_HEAP"));
 LOCAL_D TInt heapCount=1;
 LOCAL_D RHeap *gHeapPtr;
 LOCAL_D RHeap *gHeapPtr2;
-
-/*
-Friend class of RHeapHybrid to access to hybrid heap metadata
-*/
-class TestHybridHeap
-{
-public:
-    static TBool IsHybrid(const RHybridHeap * aHybridHeap);
-};
-
-TBool TestHybridHeap::IsHybrid(const RHybridHeap * aHybridHeap)
-  {
-  if (aHybridHeap->iDLOnly)
-      return EFalse;
-  else
-      return ETrue;
-  }
 
 class TestRHeap
 	{
@@ -244,9 +216,8 @@ void TestRHeap::Test2(void)
 
 	((RTestHeap*)pHeap)->__DbgTest(&OrigDump);
 	((RTestHeap*)pHeap)->__DbgTest(&dump);
-	
-//	test(dump.iBase==pHeap->Base());
-//	test((dump.iTop-dump.iBase)==pHeap->Size());
+	test(dump.iBase==pHeap->Base());
+	test((dump.iTop-dump.iBase)==pHeap->Size());
 	pHeap->Check();
 	test(Invariant(pHeap));
 	pHeap->Close();
@@ -539,12 +510,33 @@ void TestRHeap::Test5(void)
 	// Resize positively
 	for(TInt aSize=0; aSize<=BiggestBlock; aSize++, pHeap->Available(BiggestBlock))
 		{
-		aCell = pHeap->ReAlloc(aCell, aSize); 
-		test(aCell!=NULL); 
+		test(pHeap->ReAlloc(aCell, aSize)!=NULL); 
 		CellSize=pHeap->AllocLen(aCell);
 		test(CellSize>=aSize);
+		if (aSize<KMinCellLength)
+			test(CellSize==KMinCellLength);
+		else
+			test(CellSize<aSize+KAlign);
 		}
 
+	// Note: when increasing a cell size the size is rounded up to the nearest 4 but when 
+	// decreasing a cell the size is rounded down to the nearest 8 - this is due to the fact
+	// that when memory is released its size must be big enough to hold a free cell header which
+	// is greater(8) than an allocated header(4)
+	// i.e. size = 16, resize to 17 => result  is 20. But resize to 15 stays as 16, resize to 9
+	// stays as 16 but resize as 8 will resize to 8
+
+	for(TInt aSize2=(TInt)pHeap->AllocLen(aCell); aSize2>=0; aSize2--)
+		{
+		test(pHeap->ReAlloc(aCell, aSize2)!=NULL);
+
+		test((TInt)pHeap->AllocLen(aCell)>=aSize2);		
+
+		TInt aTmpSize2 = Max(_ALIGN_UP(aSize2 + RHeap::EAllocCellSize, KAlign), KMinFreeSize);
+
+		test((TInt)pHeap->AllocLen(aCell)<=aTmpSize2+KMinFreeSize);		
+		}
+  
 	pHeap->Check();
 	pHeap->Reset();
 	// Allocate a block, fill with data, allocate another block or two then resize the original
@@ -746,18 +738,6 @@ void TestRHeap::TestCompressAll()
 	RMyHeap* myHeap=(RMyHeap*)User::ChunkHeap(&myHeapName,0x100,0x2000);
 const TInt KnormHeapGrowBy = 0x2000;
 	RHeap* normHeap=User::ChunkHeap(NULL,0x100,0x20000,KnormHeapGrowBy);
-	//
-	// Configure paged heap threshold 128 Kb (pagepower 17)
-	//
-	RHybridHeap::STestCommand conf;
-	conf.iCommand = RHybridHeap::EGetConfig;
-	if ( normHeap->DebugFunction(RHeap::EHybridHeap, (TAny*)&conf ) == KErrNone )
-		{
-		test.Printf(_L("New allocator detected, configuring paged threshold to 128 kb\r\n"));
-		conf.iCommand = RHybridHeap::ESetConfig;
-		conf.iConfig.iPagePower = 17;
-		test( normHeap->DebugFunction(RHeap::EHybridHeap, (TAny*)&conf ) == KErrNone);
-		}
 
 	TAny* ptrMy1=myHeap->Alloc(0x102);
 	test(ptrMy1!=NULL);
@@ -804,8 +784,8 @@ const TInt KnormHeapGrowBy = 0x2000;
 	// Calc the amount, if any, the overall size of normHeap will have been shrunk by
 	// will depend on value of KHeapShrinkHysRatio.
 	// 1st calc current total size of the allocated cells
-	TInt normAllocdSize = 	normHeap->AllocLen(ptrNorm1)+KHeadSize +
-							normHeap->AllocLen(ptrNorm2)+KHeadSize;
+	TInt normAllocdSize = 	normHeap->AllocLen(ptrNorm1)+RHeap::EAllocCellSize +
+							normHeap->AllocLen(ptrNorm2)+RHeap::EAllocCellSize;
 	TInt normReduce = RHeapCalcReduce(oldNormHeapSize-normAllocdSize,KnormHeapGrowBy);
 	oldNormHeapSize -= normReduce;
 	test(r==oldNormHeapSize);
@@ -817,7 +797,7 @@ const TInt KnormHeapGrowBy = 0x2000;
 	r=myHeap->Size();
 
 	// Calc the current total size of the allocated cells
-	TInt myAllocdSize = myHeap->AllocLen(ptrMy1)+KHeadSize;
+	TInt myAllocdSize = myHeap->AllocLen(ptrMy1)+RHeap::EAllocCellSize;
 	TInt myReduce=RHeapCalcReduce(oldMyHeapSize-myAllocdSize,1);
 	oldMyHeapSize -= myReduce;
 	test(r==oldMyHeapSize);
@@ -884,6 +864,7 @@ void TestRHeap::TestOffset()
 		test(last+space <= chunk.Base()+size);
 		// but that it is within the alignment requirement, as less than this
 		// would be short of the end
+		test(last+space > chunk.Base()+size-RHeap::ECellAlignment);
 		}
 	else
 		{
@@ -1145,7 +1126,6 @@ LOCAL_C void TestAuto()
 	test.Start(_L("Create chunk to"));
 	TPtrC autoHeap=_L("AutoHeap");
 	gHeapPtr=User::ChunkHeap(&autoHeap,0x1800,0x6000);
-	
 	test(gHeapPtr!=NULL);
 	TInt biggest;
 	TInt avail=gHeapPtr->Available(biggest);
@@ -1180,133 +1160,13 @@ LOCAL_C void TestAuto()
 	test(comp==0);
 	TInt biggest1;
 	TInt avail1=gHeapPtr->Available(biggest1);
-	test(avail==avail1);
+	test(avail1==avail1);
 	test(biggest==biggest1);
 	test(gHeapPtr->Count()==0);
 	gHeapPtr->Close();
 	test.End();
 	}
 
-LOCAL_C TInt NormalChunk(RChunk& aChunk, TInt aInitialSize, TInt aMaxSize)
-    {
-    TChunkCreateInfo createInfo;
-    createInfo.SetNormal(aInitialSize, aMaxSize);
-    TInt r=aChunk.Create(createInfo);
-    return r;
-    }    
-
-LOCAL_C TInt DisconnectedChunk(RChunk& aChunk, TInt aInitialBottom, TInt aInitialTop, TInt aMaxSize)
-    {
-    TChunkCreateInfo createInfo;
-    createInfo.SetDisconnected(aInitialBottom, aInitialTop, aMaxSize);
-    TInt r=aChunk.Create(createInfo);
-    return r;  
-    }
-
-LOCAL_C TBool TestIsHybridHeap(RHeap* aHeap)
-    {
-    RHybridHeap::STestCommand cmd;
-    cmd.iCommand = RHybridHeap::EHeapMetaData;
-    aHeap->DebugFunction(RHeap::EHybridHeap, (TAny*)&cmd, 0);
-               
-    RHybridHeap* hybridHeap = (RHybridHeap*) cmd.iData;
-    return (TestHybridHeap::IsHybrid(hybridHeap));  
-    }
-
-LOCAL_C void TestHeapType()
-    {
-    TBool onlyDL = EFalse;
-    _LIT(KHeap, "NamedHeap");
-    // 1: Create a heap in a local chunk
-    RHeap* heap;
-    heap = UserHeap::ChunkHeap(NULL,0x100,0x2000);
-    TBool hybrid = TestIsHybridHeap(heap);
-    if (hybrid==0)
-        {
-        test.Printf(_L("Only DL allocator is in use \n"));
-        onlyDL = ETrue;;
-        }
-    else
-        test(hybrid==1); 
-    heap->Close();
-    
-    // 2: Create a heap in a global chunk
-    heap = UserHeap::ChunkHeap(&KHeap,0,0x1800,0x6000);
-    hybrid = TestIsHybridHeap(heap);
-    if(!onlyDL)
-        test(hybrid==1); 
-    heap->Close();
-    
-    // 3: Create a heap in an existing normal chunk
-    RChunk chunk;
-    TInt r = NormalChunk(chunk,0,0x1000);
-    heap = UserHeap::ChunkHeap(chunk,0);
-    hybrid = TestIsHybridHeap(heap);
-    test(hybrid==0);
-    heap->Close();
-                   
-    // 4: Create a heap in an existing disconnected chunk
-    // when offset = 0.  Minimum heap size for a hybrid heap is 12KB
-    r = DisconnectedChunk(chunk,0,0,0x3000);
-    heap = UserHeap::ChunkHeap(chunk,0);
-    hybrid = TestIsHybridHeap(heap);
-    if(!onlyDL)
-        test(hybrid==1);
-    heap->Close();
-        
-    // 5: Create a heap in an existing disconnected chunk
-    // when offset > 0
-    r = DisconnectedChunk(chunk,0,0x1800,0x6000); 
-    heap = UserHeap::OffsetChunkHeap(chunk,0,0x2800);
-    hybrid = TestIsHybridHeap(heap);
-    test(hybrid==0);
-    heap->Close();
-    
-    // 6: Create a fixed length heap at a normal chunk's base address 
-    r = NormalChunk(chunk,0x1000,0x1000);
-    heap = UserHeap::FixedHeap(chunk.Base(), 0x1000);
-    hybrid = TestIsHybridHeap(heap);
-    test(hybrid==0);
-    heap->Close();
-    chunk.Close();
-    
-    // 7: Create a fixed length heap at a disconnected chunk's base address
-    // when bottom = 0
-    r = DisconnectedChunk(chunk,0,0x2000,0x2000); 
-    heap = UserHeap::FixedHeap(chunk.Base(), 0x2000);
-    hybrid = TestIsHybridHeap(heap);
-    test(hybrid==0);
-    heap->Close();
-    chunk.Close();
-        
-    // 8: Create a fixed length heap at a disconnected chunk's base address
-    // when bottom > 0
-    r = DisconnectedChunk(chunk,0x6000,0x7000,0x13000); 
-    heap = UserHeap::FixedHeap(chunk.Base()+ 0x6000, 0x1000); 
-    hybrid = TestIsHybridHeap(heap);
-    test(hybrid==0);
-    heap->Close();
-    chunk.Close();
-    
-    // 9: Create a fixed length heap for allocated buffer
-    heap = UserHeap::ChunkHeap(&KNullDesC(), 4096, (4096 * 1024));
-    test(heap != NULL);
-    TAny* buffer = heap->Alloc(1024 * 1024);    
-    test(buffer != NULL);
-    TInt lth = heap->AllocLen(buffer);
-    test.Printf(_L("Fixed heap buffer: %x, length: %x \n"), buffer, lth);  
-
-    RHeap* heapf = UserHeap::FixedHeap(buffer, (1024 * 1024));
-    test(heapf != NULL);
-    test.Printf(_L("Fixed heap: %x \n"), heapf);
-    hybrid = TestIsHybridHeap(heapf);
-    test(hybrid==0);
-
-    heapf->Close();
-    heap->Free(buffer);
-
-    heap->Close();
-    }
 
 GLDEF_C TInt E32Main(void)
 	{
@@ -1318,7 +1178,6 @@ GLDEF_C TInt E32Main(void)
 	test.Start(_L("Test 1"));
 	UserHal::PageSizeInBytes(PageSize);
         TestRHeap T;
-
 	T.Test1();
 	test.Next(_L("Test auto expand and compress"));
 	TestAuto();
@@ -1345,12 +1204,10 @@ GLDEF_C TInt E32Main(void)
 	test.Next(_L("Shared heap test 3"));
 	SharedHeapTest3();
 	sem.Close();
-	test.Next(_L("Test HeapType()"));    
-	TestHeapType();
 
 	__KHEAP_CHECK(0);
 	__KHEAP_MARKEND;
-
+//
 	test.End();
 	return(0);
     }

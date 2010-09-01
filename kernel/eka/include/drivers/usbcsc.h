@@ -1,4 +1,4 @@
-// Copyright (c) 2000-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2000-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -235,6 +235,7 @@ private:
 	TUint* iPhysicalMap;
 public:
 	DChunk* iChunk;
+	TDfc iCleanup;
 
 	TInt8 iPageNtz; // Number of trailing zeros for a page. (Eg 4k page has 12 t.z.)
 	TInt iAllocatedSize;
@@ -414,8 +415,6 @@ public:
 	void CancelQueued(TInt aErrorCode=KErrCancel);
 	TInt Complete(TInt aError);
 	void Complete();
-	void SetClient(DThread& aThread);
-	TBool IsRequestPending();
 public:
 	TUsbcScStatusState iState;
 
@@ -458,7 +457,6 @@ public:
 	void UpdateBufferList(TInt aByteCount,TUint aFlags, TBool aStartNextRead=ETrue);
 	void Ep0CancelLddRead();
 	void SendEp0StatusPacket(TInt aState);
-	TBool IsRequestPending();
 
 public:
 	

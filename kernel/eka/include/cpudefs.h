@@ -198,9 +198,8 @@
 
 #if defined(__WINS__)
 #define __NAKED__ __declspec( naked )
-#if !defined(__MINIMUM_MACHINE_CODE__) && defined(__KERNEL_MODE__)
-// Assembly language memmove() and memcpy() are used for WINS but only in the kernel, not euser
-#define __MEMMOVE_MACHINE_CODED__
+#ifndef __MINIMUM_MACHINE_CODE__
+//#define __MEM_MACHINE_CODED__
 #endif
 #define __CPU_X86
 #endif
@@ -369,21 +368,21 @@
 #define __END_ARM
 #endif
 
-#define CC_EQ	0U
-#define	CC_NE	1U
-#define CC_CS	2U
-#define CC_CC	3U
-#define CC_MI	4U
-#define CC_PL	5U
-#define CC_VS	6U
-#define CC_VC	7U
-#define CC_HI	8U
-#define CC_LS	9U
-#define CC_GE	10U
-#define CC_LT	11U
-#define CC_GT	12U
-#define CC_LE	13U
-#define	CC_AL	14U
+#define CC_EQ	0
+#define	CC_NE	1
+#define CC_CS	2
+#define CC_CC	3
+#define CC_MI	4
+#define CC_PL	5
+#define CC_VS	6
+#define CC_VC	7
+#define CC_HI	8
+#define CC_LS	9
+#define CC_GE	10
+#define CC_LT	11
+#define CC_GT	12
+#define CC_LE	13
+#define	CC_AL	14
 
 #ifdef __CPU_ARM_HAS_CLZ
 #if __ARM_ASSEMBLER_ISA__ >= 5
@@ -606,10 +605,8 @@
 
 // Causes undefined instruction exception on both ARM and THUMB
 #define __ASM_CRASH()					asm(".word 0xe7ffdeff ")
-#if defined(__GNUC__)  
+#if defined(__GNUC__)
 #define	__crash()						asm(".word 0xe7ffdeff " : : : "memory")
-#elif defined(__GCCXML__)
-#define __crash()						(*((TInt *) 0x0) = 0xd1e)
 #elif defined(__ARMCC__)
 // RVCT doesn't let us inline an undefined instruction
 // use a CDP to CP15 instead - doesn't work on THUMB but never mind
@@ -641,10 +638,8 @@
 #define	EXC_TRAP_CTX_SZ		10		// ebx, esp, ebp, esi, edi, ds, es, fs, gs, eip
 
 // Causes exception
-#if defined(__VC32__)
-#define	__crash()						do { _asm int 255 } while(0)
-#elif defined(__CW32__)
-#define	__crash()						do { *(volatile TInt*)0 = 0; } while(0)
+#if defined(__VC32__) || defined(__CW32__)
+#define	__crash()						do { _asm int 0ffh } while(0)
 #else
 #define	__crash()						asm("int 0xff " : : : "memory")
 #endif

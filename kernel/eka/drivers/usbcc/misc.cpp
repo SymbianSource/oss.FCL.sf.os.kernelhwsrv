@@ -1,4 +1,4 @@
-// Copyright (c) 2000-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2000-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -23,11 +23,6 @@
 */
 
 #include <drivers/usbc.h>
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "miscTraces.h"
-#endif
-
 
 
 /** Helper function for logical endpoints and endpoint descriptors:
@@ -102,8 +97,8 @@ TInt TUsbcEndpointInfo::AdjustEpSizes(TInt& aEpSize_Fs, TInt& aEpSize_Hs) const
 			{
 			if (aEpSize_Hs < 513)
 				{
-				OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCENDPOINTINFO_ADJUSTEPSIZES,
-				        "  Warning: Ep size too small: %d < 513. Correcting...", aEpSize_Hs );
+				__KTRACE_OPT(KPANIC, Kern::Printf("  Warning: Ep size too small: %d < 513. Correcting...",
+												  aEpSize_Hs));
 				aEpSize_Hs = 513;
 				}
 			}
@@ -111,8 +106,8 @@ TInt TUsbcEndpointInfo::AdjustEpSizes(TInt& aEpSize_Fs, TInt& aEpSize_Hs) const
 			{
 			if (aEpSize_Hs < 683)
 				{
-                OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCENDPOINTINFO_ADJUSTEPSIZES_DUP1,
-                        "  Warning: Ep size too small: %d < 683. Correcting...", aEpSize_Hs );
+				__KTRACE_OPT(KPANIC, Kern::Printf("  Warning: Ep size too small: %d < 683. Correcting...",
+												  aEpSize_Hs));
 				aEpSize_Hs = 683;
 				}
 			}
@@ -199,15 +194,13 @@ TInt TUsbcEndpointInfo::AdjustPollInterval()
 TUsbcPhysicalEndpoint::TUsbcPhysicalEndpoint()
 	: iEndpointAddr(0), iIfcNumber(NULL), iLEndpoint(NULL), iSettingReserve(EFalse), iHalt(EFalse)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCPHYSICALENDPOINT_TUSBCPHYSICALENDPOINT_CONS,
-	        "TUsbcPhysicalEndpoint::TUsbcPhysicalEndpoint()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcPhysicalEndpoint::TUsbcPhysicalEndpoint"));
 	}
 
 
 TInt TUsbcPhysicalEndpoint::TypeAvailable(TUint aType) const
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCPHYSICALENDPOINT_TYPEAVAILABLE, 
-	        "TUsbcPhysicalEndpoint::TypeAvailable" );
+	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcPhysicalEndpoint::TypeAvailable"));
 	switch (aType)
 		{
 	case KUsbEpTypeControl:
@@ -219,8 +212,7 @@ TInt TUsbcPhysicalEndpoint::TypeAvailable(TUint aType) const
 	case KUsbEpTypeInterrupt:
 		return (iCaps.iTypesAndDir & KUsbEpTypeInterrupt);
 	default:
-	    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCPHYSICALENDPOINT_TYPEAVAILABLE_DUP1, 
-	            "  Error: invalid EP type: %d", aType );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: invalid EP type: %d", aType));
 		return 0;
 		}
 	}
@@ -228,8 +220,7 @@ TInt TUsbcPhysicalEndpoint::TypeAvailable(TUint aType) const
 
 TInt TUsbcPhysicalEndpoint::DirAvailable(TUint aDir) const
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCPHYSICALENDPOINT_DIRAVAILABLE, 
-	        "TUsbcPhysicalEndpoint::DirAvailable" );
+	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcPhysicalEndpoint::DirAvailable"));
 	switch (aDir)
 		{
 	case KUsbEpDirIn:
@@ -237,8 +228,7 @@ TInt TUsbcPhysicalEndpoint::DirAvailable(TUint aDir) const
 	case KUsbEpDirOut:
 		return (iCaps.iTypesAndDir & KUsbEpDirOut);
 	default:
-	    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCPHYSICALENDPOINT_DIRAVAILABLE_DUP1, 
-	            "  Error: invalid EP direction: %d", aDir );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: invalid EP direction: %d", aDir));
 		return 0;
 		}
 	}
@@ -246,15 +236,12 @@ TInt TUsbcPhysicalEndpoint::DirAvailable(TUint aDir) const
 
 TInt TUsbcPhysicalEndpoint::EndpointSuitable(const TUsbcEndpointInfo* aEpInfo, TInt aIfcNumber) const
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCPHYSICALENDPOINT_ENDPOINTSUITABLE,
-	        "TUsbcPhysicalEndpoint::EndpointSuitable" );
-	OstTraceDefExt4( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCPHYSICALENDPOINT_ENDPOINTSUITABLE_DUP1,
-	        "  looking for EP: type=0x%x dir=0x%x size=%d (ifc_num=%d)",
-	        aEpInfo->iType, aEpInfo->iDir, aEpInfo->iSize, aIfcNumber );
+	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcPhysicalEndpoint::EndpointSuitable"));
+	__KTRACE_OPT(KUSB, Kern::Printf("  looking for EP: type=0x%x dir=0x%x size=%d (ifc_num=%d)",
+									aEpInfo->iType, aEpInfo->iDir, aEpInfo->iSize, aIfcNumber));
 	if (iSettingReserve)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCPHYSICALENDPOINT_ENDPOINTSUITABLE_DUP2,
-                "  -> setting conflict" );
+		__KTRACE_OPT(KUSB, Kern::Printf("  -> setting conflict"));
 		return 0;
 		}
 	// (aIfcNumber == -1) means the ep is for a new default interface setting
@@ -267,26 +254,22 @@ TInt TUsbcPhysicalEndpoint::EndpointSuitable(const TUsbcEndpointInfo* aEpInfo, T
 		// to different alternate settings of the *same* interface, and
 		// because we check for available endpoints for every alternate setting
 		// as a whole.
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCPHYSICALENDPOINT_ENDPOINTSUITABLE_DUP3,
-                "  -> ifc conflict" );
+		__KTRACE_OPT(KUSB, Kern::Printf("  -> ifc conflict"));
 		return 0;
 		}
 	else if (!TypeAvailable(aEpInfo->iType))
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCPHYSICALENDPOINT_ENDPOINTSUITABLE_DUP4,
-                "  -> type conflict" );
+		__KTRACE_OPT(KUSB, Kern::Printf("  -> type conflict"));
 		return 0;
 		}
 	else if (!DirAvailable(aEpInfo->iDir))
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCPHYSICALENDPOINT_ENDPOINTSUITABLE_DUP5,
-                "  -> direction conflict" );
+		__KTRACE_OPT(KUSB, Kern::Printf("  -> direction conflict"));
 		return 0;
 		}
 	else if (!(iCaps.iSizes & PacketSize2Mask(aEpInfo->iSize)) && !(iCaps.iSizes & KUsbEpSizeCont))
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCPHYSICALENDPOINT_ENDPOINTSUITABLE_DUP6,
-                "  -> size conflict" );
+		__KTRACE_OPT(KUSB, Kern::Printf("  -> size conflict"));
 		return 0;
 		}
 	else
@@ -296,8 +279,7 @@ TInt TUsbcPhysicalEndpoint::EndpointSuitable(const TUsbcEndpointInfo* aEpInfo, T
 
 TUsbcPhysicalEndpoint::~TUsbcPhysicalEndpoint()
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCPHYSICALENDPOINT_TUSBCPHYSICALENDPOINT_DES,
-	        "TUsbcPhysicalEndpoint::~TUsbcPhysicalEndpoint()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcPhysicalEndpoint::~TUsbcPhysicalEndpoint()"));
 	iLEndpoint = NULL;
 	}
 
@@ -308,37 +290,34 @@ TUsbcLogicalEndpoint::TUsbcLogicalEndpoint(DUsbClientController* aController, TU
 	: iController(aController), iLEndpointNum(aEndpointNum), iInfo(aEpInfo), iInterface(aInterface),
 	  iPEndpoint(aPEndpoint)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCLOGICALENDPOINT_TUSBCLOGICALENDPOINT_CONS, 
-	        "TUsbcLogicalEndpoint::TUsbcLogicalEndpoint()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcLogicalEndpoint::TUsbcLogicalEndpoint()"));
 	//  Adjust FS/HS endpoint sizes
 	if (iInfo.AdjustEpSizes(iEpSize_Fs, iEpSize_Hs) != KErrNone)
 		{
-        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCLOGICALENDPOINT_TUSBCLOGICALENDPOINT_CONS_DUP1, 
-                "  Error: Unknown endpoint type: %d", iInfo.iType );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Unknown endpoint type: %d", iInfo.iType));
 		}
-	OstTraceDefExt3( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCLOGICALENDPOINT_TUSBCLOGICALENDPOINT_CONS_DUP2, 
-	        "  Now set: iEpSize_Fs=%d iEpSize_Hs=%d (iInfo.iSize=%d)", iEpSize_Fs, iEpSize_Hs, iInfo.iSize );
+	__KTRACE_OPT(KUSB, Kern::Printf("  Now set: iEpSize_Fs=%d iEpSize_Hs=%d (iInfo.iSize=%d)",
+									iEpSize_Fs, iEpSize_Hs, iInfo.iSize));
 	//  Adjust HS polling interval
 	if (iInfo.AdjustPollInterval() != KErrNone)
 		{
-        OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCLOGICALENDPOINT_TUSBCLOGICALENDPOINT_CONS_DUP3, 
-                "  Error: Unknown ep type (%d) or invalid interval value (%d)", iInfo.iType, iInfo.iInterval );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Unknown ep type (%d) or invalid interval value (%d)",
+										  iInfo.iType, iInfo.iInterval));
 		}
-	OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCLOGICALENDPOINT_TUSBCLOGICALENDPOINT_CONS_DUP4, 
-	        "  Now set: iInfo.iInterval=%d iInfo.iInterval_Hs=%d", iInfo.iInterval, iInfo.iInterval_Hs );
+	__KTRACE_OPT(KUSB, Kern::Printf("  Now set: iInfo.iInterval=%d iInfo.iInterval_Hs=%d",
+									iInfo.iInterval, iInfo.iInterval_Hs));
 	// Additional transactions requested on a non High Bandwidth ep?
 	if ((iInfo.iTransactions > 0) && !aPEndpoint->iCaps.iHighBandwidth)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, TUSBCLOGICALENDPOINT_TUSBCLOGICALENDPOINT_CONS_DUP5, 
-                "  Warning: Additional transactions requested but not a High Bandwidth ep" );
+		__KTRACE_OPT(KPANIC,
+					 Kern::Printf("  Warning: Additional transactions requested but not a High Bandwidth ep"));
 		}
 	}
 
 
 TUsbcLogicalEndpoint::~TUsbcLogicalEndpoint()
 	{
-	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCLOGICALENDPOINT_TUSBCLOGICALENDPOINT_DES, 
-	        "TUsbcLogicalEndpoint::~TUsbcLogicalEndpoint: #%d", iLEndpointNum );
+	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcLogicalEndpoint::~TUsbcLogicalEndpoint: #%d", iLEndpointNum));
 	// If the real endpoint this endpoint points to is also used by
 	// any other logical endpoint in any other setting of this interface
 	// then we leave the real endpoint marked as used. Otherwise we mark
@@ -353,20 +332,17 @@ TUsbcLogicalEndpoint::~TUsbcLogicalEndpoint()
 			const TUsbcLogicalEndpoint* const ep = ifc->iEndpoints[j];
 			if ((ep->iPEndpoint == iPEndpoint) && (ep != this))
 				{
-                OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCLOGICALENDPOINT_TUSBCLOGICALENDPOINT_DES_DUP1, 
-                        "  Physical endpoint still in use -> we leave it as is" );
+				__KTRACE_OPT(KUSB, Kern::Printf("  Physical endpoint still in use -> we leave it as is"));
 				return;
 				}
 			}
 		}
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCLOGICALENDPOINT_TUSBCLOGICALENDPOINT_DES_DUP2, 
-	        "  Closing DMA channel" );
+	__KTRACE_OPT(KUSB, Kern::Printf("  Closing DMA channel"));
 	const TInt idx = iController->EpAddr2Idx(iPEndpoint->iEndpointAddr);
 	// If the endpoint doesn't support DMA (now or ever) the next operation will be a no-op.
 	iController->CloseDmaChannel(idx);
-    OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TUSBCLOGICALENDPOINT_TUSBCLOGICALENDPOINT_DES_DUP3, 
-            "  Setting physical ep 0x%02x ifc number to NULL (was %d)",
-            iPEndpoint->iEndpointAddr, *iPEndpoint->iIfcNumber );
+	__KTRACE_OPT(KUSB, Kern::Printf("  Setting physical ep 0x%02x ifc number to NULL (was %d)",
+									iPEndpoint->iEndpointAddr, *iPEndpoint->iIfcNumber));
 	iPEndpoint->iIfcNumber = NULL;
 	}
 
@@ -374,15 +350,13 @@ TUsbcLogicalEndpoint::~TUsbcLogicalEndpoint()
 TUsbcInterface::TUsbcInterface(TUsbcInterfaceSet* aIfcSet, TUint8 aSetting, TBool aNoEp0Requests)
 	: iEndpoints(2), iInterfaceSet(aIfcSet), iSettingCode(aSetting), iNoEp0Requests(aNoEp0Requests)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCINTERFACE_TUSBCINTERFACE_CONS,
-	        "TUsbcInterface::TUsbcInterface()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcInterface::TUsbcInterface()"));
 	}
 
 
 TUsbcInterface::~TUsbcInterface()
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCINTERFACE_TUSBCINTERFACE_DES,
-	        "TUsbcInterface::~TUsbcInterface()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcInterface::~TUsbcInterface()"));
 	iEndpoints.ResetAndDestroy();
 	}
 
@@ -390,15 +364,13 @@ TUsbcInterface::~TUsbcInterface()
 TUsbcInterfaceSet::TUsbcInterfaceSet(const DBase* aClientId, TUint8 aIfcNum)
 	: iInterfaces(2), iClientId(aClientId), iInterfaceNumber(aIfcNum), iCurrentInterface(0)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCINTERFACESET_TUSBCINTERFACESET_CONS, 
-	        "TUsbcInterfaceSet::TUsbcInterfaceSet()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcInterfaceSet::TUsbcInterfaceSet()"));
 	}
 
 
 TUsbcInterfaceSet::~TUsbcInterfaceSet()
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCINTERFACESET_TUSBCINTERFACESET_DES,
-	        "TUsbcInterfaceSet::~TUsbcInterfaceSet()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcInterfaceSet::~TUsbcInterfaceSet()"));
 	iInterfaces.ResetAndDestroy();
 	}
 
@@ -406,15 +378,13 @@ TUsbcInterfaceSet::~TUsbcInterfaceSet()
 TUsbcConfiguration::TUsbcConfiguration(TUint8 aConfigVal)
 	: iInterfaceSets(1), iConfigValue(aConfigVal)			// iInterfaceSets(1): granularity
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCCONFIGURATION_TUSBCCONFIGURATION_CONS, 
-	        "TUsbcConfiguration::TUsbcConfiguration()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcConfiguration::TUsbcConfiguration()"));
 	}
 
 
 TUsbcConfiguration::~TUsbcConfiguration()
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TUSBCCONFIGURATION_TUSBCCONFIGURATION_DES, 
-	        "TUsbcConfiguration::~TUsbcConfiguration()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcConfiguration::~TUsbcConfiguration()"));
 	iInterfaceSets.ResetAndDestroy();
 	}
 

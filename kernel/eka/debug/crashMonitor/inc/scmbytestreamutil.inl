@@ -62,9 +62,7 @@ namespace Debug
 	 */		
 	inline TUint64 TByteStreamReader::ReadInt64()
 		{
-		TUint32 high = ReadInt();
-		TUint32 low = ReadInt();
-		return  MAKE_TUINT64(high, low) ;
+		return  MAKE_TUINT64(ReadInt(), ReadInt()) ;
 		}
 	
 	/**

@@ -227,18 +227,6 @@ GLDEF_C TInt E32Main(void)
 	__UHEAP_RESET;
 	__UHEAP_MARK;
 
-	// Make sure that we can retrieve the failure type set with __UHEAP_SETFAIL
-	test.Next(_L("Set and get user heap failure simulation mode"));
-	__UHEAP_SETFAIL(RHeap::EFailNext, 1);
-	test(User::__DbgGetAllocFail(EFalse) == RHeap::EFailNext);
-	__UHEAP_SETFAIL(RHeap::ENone, 0);
-
-	// Make sure that we can retrieve the failure type set with __KHEAP_SETFAIL
-	test.Next(_L("Set and get kernel heap failure simulation mode"));
-	__KHEAP_SETFAIL(RHeap::EFailNext, 1);
-	test(User::__DbgGetAllocFail(ETrue) == RHeap::EFailNext);
-	__KHEAP_SETFAIL(RHeap::ENone, 0);
-
 	// Prepare for __RHEAP tests
 	TInt pageSize;
 	test_KErrNone(HAL::Get(HAL::EMemoryPageSize, pageSize));

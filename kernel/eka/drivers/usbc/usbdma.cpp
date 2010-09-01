@@ -23,11 +23,6 @@
 */
 
 #include <drivers/usbc.h>
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "usbdmaTraces.h"
-#endif
-
 
 
 #if defined(_DEBUG)
@@ -107,25 +102,20 @@ TInt TDmaBuf::Construct(TUsbcEndpointInfo* aEndpointInfo)
 		// At most 2 packets (clump of max packet size packets) + possible zlp
 		TUsbcPacketArray* bufPtr = iPacketInfoStorage;
 		// this divides up the packet indexing & packet size array over the number of buffers
-		OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TDMABUF_CONSTRUCT,
-		        "TDmaBuf::Construct() array base=0x%08x", bufPtr );
+		__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::Construct() array base=0x%08x", bufPtr));
 		for (TInt i = 0; i < iNumberofBuffers; i++)
 			{
 			iPacketIndex[i] = bufPtr;
 			bufPtr += KUsbcDmaBufMaxPkts;
 			iPacketSize[i] = bufPtr;
 			bufPtr += KUsbcDmaBufMaxPkts;
-            OstTraceDefExt4( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TDMABUF_CONSTRUCT_DUP1,
-                    "TDmaBuf::Construct() packetIndex[%d]=0x%08x packetSize[%d]=0x%08x",
-                    i, reinterpret_cast<TUint>(iPacketIndex[i]), i, 
-                    reinterpret_cast<TUint>(iPacketSize[i]) );
-
+			__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::Construct() packetIndex[%d]=0x%08x packetSize[%d]=0x%08x",
+											i, iPacketIndex[i], i, iPacketSize[i]));
 			}
 		}
 	else
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TDMABUF_CONSTRUCT_DUP2,
-                "TDmaBuf::Construct() IN endpoint" );
+		__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::Construct() IN endpoint"));
 		}
 	Flush();
 	return KErrNone;
@@ -134,7 +124,7 @@ TInt TDmaBuf::Construct(TUsbcEndpointInfo* aEndpointInfo)
 
 TDmaBuf::~TDmaBuf()
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, TDMABUF_TDMABUF_DES, "TDmaBuf::~TDmaBuf()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::~TDmaBuf()"));
 	}
 
 TInt TDmaBuf::BufferTotalSize() const
@@ -154,9 +144,7 @@ TInt TDmaBuf::SetBufferAddr(TInt aBufInd, TUint8* aBufAddr)
     iDrainable[aBufInd] = iCanBeFreed[aBufInd] = EFalse;
     iBuffers[aBufInd] = aBufAddr;
     iBufferPhys[aBufInd] = Epoc::LinearToPhysical((TLinAddr)aBufAddr);
-    OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TDMABUF_SETBUFFERADDR,
-            "TDmaBuf::SetBufferAddr() iBuffers[%d]=0x%08x", aBufInd, 
-            reinterpret_cast<TUint>(iBuffers[aBufInd]) );
+    __KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::SetBufferAddr() iBuffers[%d]=0x%08x", aBufInd, iBuffers[aBufInd]));
     return KErrNone;
     }
 
@@ -173,8 +161,7 @@ void TDmaBuf::SetMaxPacketSize(TInt aSize)
 
 void TDmaBuf::Flush()
 	{
-	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TDMABUF_FLUSH,
-	        "TDmaBuf::Flush %x", this );
+	__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::Flush %x", this));
 	iRxActive = EFalse;
 	iTxActive = EFalse;
 	iExtractOffset = 0;
@@ -209,16 +196,14 @@ void TDmaBuf::Flush()
 
 void TDmaBuf::RxSetActive()
 	{
-	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TDMABUF_RXSETACTIVE, 
-	        "TDmaBuf::RxSetActive %x", this );
+	__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::RxSetActive %x", this));
 	iRxActive = ETrue;
 	}
 
 
 void TDmaBuf::RxSetInActive()
 	{
-	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TDMABUF_RXSETINACTIVE, 
-	        "TDmaBuf::RxSetInActive %x", this );
+	__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::RxSetInActive %x", this));
 	iRxActive = EFalse;
 	}
 
@@ -329,8 +314,8 @@ inline TInt TDmaBuf::GetCurrentError()
 // used to decide whether a client read can complete straight away
 TBool TDmaBuf::IsReaderEmpty()
 	{
-	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TDMABUF_ISREADEREMPTY, 
-	        "TDmaBuf::IsReaderEmpty iTotalRxPacketsAvail=%d", iTotalRxPacketsAvail);
+	__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::IsReaderEmpty iTotalRxPacketsAvail=%d",
+									iTotalRxPacketsAvail));
 	return (iTotalRxPacketsAvail == 0);
 	}
 
@@ -355,8 +340,8 @@ void TDmaBuf::ReadXferComplete(TInt aNoBytesRecv, TInt aNoPacketsRecv, TInt aErr
 	iNumberofPacketsRxRemain[iCurrentFillingBufferIndex] = aNoPacketsRecv;
 #endif
 
-	OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TDMABUF_READXFERCOMPLETE,
-	        "TDmaBuf::ReadXferComplete 2 # of bytes=%d # of packets=%d", iTotalRxBytesAvail, iTotalRxPacketsAvail );
+	__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::ReadXferComplete 2 # of bytes=%d # of packets=%d",
+									iTotalRxBytesAvail, iTotalRxPacketsAvail));
 	iDrainable[iCurrentFillingBufferIndex] = ETrue;
 	iError[iCurrentFillingBufferIndex] = aErrorCode;
 	AddToDrainQueue(iCurrentFillingBufferIndex);
@@ -370,17 +355,15 @@ void TDmaBuf::ReadXferComplete(TInt aNoBytesRecv, TInt aNoPacketsRecv, TInt aErr
 TInt TDmaBuf::RxGetNextXfer(TUint8*& aBufferAddr, TUsbcPacketArray*& aIndexArray,
 							TUsbcPacketArray*& aSizeArray, TInt& aLength, TPhysAddr& aBufferPhys)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TDMABUF_RXGETNEXTXFER,
-	        "TDmaBuf::RxGetNextXfer 1" );
+	__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::RxGetNextXfer 1"));
 	if (RxIsActive())
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TDMABUF_RXGETNEXTXFER_DUP1,
-                " ---> RxIsActive, returning" );
+		__KTRACE_OPT(KUSB, Kern::Printf(" ---> RxIsActive, returning"));
 		return KErrInUse;
 		}
 
-    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TDMABUF_RXGETNEXTXFER_DUP2,
-            "TDmaBuf::RxGetNextXfer Current buffer=%d", iCurrentFillingBufferIndex );
+	__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::RxGetNextXfer Current buffer=%d",
+									iCurrentFillingBufferIndex));
 	if (iDrainable[iCurrentFillingBufferIndex])
 		{
 		// If the controller refused the last read request, then the current buffer will still be marked
@@ -392,8 +375,8 @@ TInt TDmaBuf::RxGetNextXfer(TUint8*& aBufferAddr, TUsbcPacketArray*& aIndexArray
 			}
 		}
 
-    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TDMABUF_RXGETNEXTXFER_DUP3,
-            "TDmaBuf::RxGetNextXfer New buffer=%d", iCurrentFillingBufferIndex );
+	__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::RxGetNextXfer New buffer=%d",
+									iCurrentFillingBufferIndex));
 	aBufferAddr = iBuffers[iCurrentFillingBufferIndex];
 	aBufferPhys = iBufferPhys[iCurrentFillingBufferIndex];
 	aIndexArray = iPacketIndex[iCurrentFillingBufferIndex];
@@ -410,8 +393,7 @@ TInt TDmaBuf::RxGetNextXfer(TUint8*& aBufferAddr, TUsbcPacketArray*& aIndexArray
 
 TInt TDmaBuf::RxCopyPacketToClient(DThread* aThread, TClientBuffer *aTcb, TInt aLength)
 	{
-    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TDMABUF_RXCOPYPACKETTOCLIENT,
-            "TDmaBuf::RxCopyPacketToClient 1" );
+	__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::RxCopyPacketToClient 1"));
 
 #if defined(USBC_LDD_BUFFER_TRACE)
 	const TInt numPkts = NoRxPackets();
@@ -421,26 +403,25 @@ TInt TDmaBuf::RxCopyPacketToClient(DThread* aThread, TClientBuffer *aTcb, TInt a
 
 	if (numPkts != numPktsAlt)
 		{
-	    OstTraceExt2( TRACE_NORMAL, TDMABUF_RXCOPYPACKETTOCLIENT_DUP1,
-	            "TDmaBuf::RxCopyPacketToClient: Error: #pkts mismatch global=%d actual=%d",
-	            numPkts, numPktsAlt);
+		Kern::Printf(
+			"TDmaBuf::RxCopyPacketToClient: Error: #pkts mismatch global=%d actual=%d",
+			numPkts, numPktsAlt);
 		}
 	if (numBytes != numBytesAlt)
 		{
-        OstTraceExt2( TRACE_NORMAL, TDMABUF_RXCOPYPACKETTOCLIENT_DUP2,
-                "TDmaBuf::RxCopyPacketToClient: Error: #bytes mismatch global=%d actual=%d",
-                numBytes, numBytesAlt);
-
+		Kern::Printf(
+			"TDmaBuf::RxCopyPacketToClient: Error: #bytes mismatch global=%d actual=%d",
+			numBytes, numBytesAlt);
 		}
 	if ((numPkts == 0) && (numBytes !=0))
 		{
-    OstTraceExt2( TRACE_NORMAL, TDMABUF_RXCOPYPACKETTOCLIENT_DUP3,
+		Kern::Printf(
 			"TDmaBuf::RxCopyPacketToClient: Error: global bytes & pkts mismatch pkts=%d bytes=%d",
 			numPkts, numBytes);
 		}
 	if ((numPktsAlt == 0) && (numBytesAlt !=0))
 		{
-    OstTraceExt2( TRACE_NORMAL, TDMABUF_RXCOPYPACKETTOCLIENT_DUP4,
+		Kern::Printf(
 			"TDmaBuf::RxCopyPacketToClient: Error: actual bytes & pkts mismatch pkts=%d bytes=%d",
 			numPktsAlt, numBytesAlt);
 		}
@@ -449,8 +430,7 @@ TInt TDmaBuf::RxCopyPacketToClient(DThread* aThread, TClientBuffer *aTcb, TInt a
 	if (!NoRxPackets())
 		return KErrNotFound;
 
-    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TDMABUF_RXCOPYPACKETTOCLIENT_DUP5,
-            "TDmaBuf::RxCopyPacketToClient 2" );
+	__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::RxCopyPacketToClient 2"));
 	// the next condition should be true because we have some packets available
 	// coverity[var_tested_neg]
 	if (iCurrentDrainingBufferIndex == KUsbcInvalidBufferIndex)
@@ -524,9 +504,7 @@ TInt TDmaBuf::RxCopyPacketToClient(DThread* aThread, TClientBuffer *aTcb, TInt a
 		{
 		r = errorCode;
 		}
-    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TDMABUF_RXCOPYPACKETTOCLIENT_DUP6,
-            "TDmaBuf::RxCopyPacketToClient 3" );
-
+	__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::RxCopyPacketToClient 3"));
 
 	FreeDrainedBuffers();
 
@@ -538,8 +516,7 @@ TInt TDmaBuf::RxCopyPacketToClient(DThread* aThread, TClientBuffer *aTcb, TInt a
 TInt TDmaBuf::RxCopyDataToClient(DThread* aThread, TClientBuffer *aTcb, TInt aLength, TUint32& aDestOffset,
 								 TBool aRUS, TBool& aCompleteNow)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TDMABUF_RXCOPYDATATOCLIENT,
-	        "TDmaBuf::RxCopyDataToClient 1" );
+	__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::RxCopyDataToClient 1"));
 	aCompleteNow = ETrue;
 
 #if defined(USBC_LDD_BUFFER_TRACE)
@@ -550,25 +527,25 @@ TInt TDmaBuf::RxCopyDataToClient(DThread* aThread, TClientBuffer *aTcb, TInt aLe
 
 	if (numPkts != numPktsAlt)
 		{
-    OstTraceExt2( TRACE_NORMAL, TDMABUF_RXCOPYDATATOCLIENT_DUP1,
+		Kern::Printf(
 			"TDmaBuf::RxCopyDataToClient: Error: #pkts mismatch global=%d actual=%d",
 			numPkts, numPktsAlt);
 		}
 	if (numBytes != numBytesAlt)
 		{
-    OstTraceExt2( TRACE_NORMAL, TDMABUF_RXCOPYDATATOCLIENT_DUP2,
+		Kern::Printf(
 			"TDmaBuf::RxCopyDataToClient: Error: #bytes mismatch global=%d actual=%d",
 			numBytes, numBytesAlt);
 		}
 	if ((numPkts == 0) && (numBytes != 0))
 		{
-    OstTraceExt2( TRACE_NORMAL, TDMABUF_RXCOPYDATATOCLIENT_DUP3,
+		Kern::Printf(
 			"TDmaBuf::RxCopyDataToClient: Error: global bytes & pkts mismatch pkts=%d bytes=%d",
 			numPkts, numBytes);
 		}
 	if ((numPktsAlt == 0) && (numBytesAlt != 0))
 		{
-    OstTraceExt2( TRACE_NORMAL, TDMABUF_RXCOPYDATATOCLIENT_DUP4,
+		Kern::Printf(
 			"TDmaBuf::RxCopyDataToClient: Error: actual bytes & pkts mismatch pkts=%d bytes=%d",
 			numPktsAlt, numBytesAlt);
 		}
@@ -589,9 +566,8 @@ TInt TDmaBuf::RxCopyDataToClient(DThread* aThread, TClientBuffer *aTcb, TInt aLe
 		if (!NextDrainableBuffer())
 			{
 #if defined(USBC_LDD_BUFFER_TRACE)
-            OstTraceExt2( TRACE_NORMAL, TDMABUF_RXCOPYDATATOCLIENT_DUP5,
-                    "TDmaBuf::RxCopyDataToClient: Error:  No buffer draining=%d, packets=%d",
-				    iCurrentDrainingBufferIndex, iTotalRxPacketsAvail);
+			Kern::Printf("TDmaBuf::RxCopyDataToClient: Error:  No buffer draining=%d, packets=%d",
+						 iCurrentDrainingBufferIndex, iTotalRxPacketsAvail);
 #endif
 			return KErrNotFound;
 			}
@@ -603,13 +579,11 @@ TInt TDmaBuf::RxCopyDataToClient(DThread* aThread, TClientBuffer *aTcb, TInt aLe
 		
 	if (iDrainingOrder != iFillingOrderArray[iCurrentDrainingBufferIndex])
 		{
-        OstTrace1( TRACE_NORMAL, TDMABUF_RXCOPYDATATOCLIENT_DUP6,
-		        "!!! Out of Order Draining TDmaBuf::RxCopyDataToClient 10 draining=%d",
-			    iCurrentDrainingBufferIndex);
+		Kern::Printf("!!! Out of Order Draining TDmaBuf::RxCopyDataToClient 10 draining=%d",
+					 iCurrentDrainingBufferIndex);
 		}
 #endif
-    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TDMABUF_RXCOPYDATATOCLIENT_DUP7,
-            "TDmaBuf::RxCopyDataToClient 2" );
+	__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::RxCopyDataToClient 2"));
 
 	TUint8* blockStartAddr = iCurrentDrainingBuffer + iCurrentPacketIndexArray[iCurrentPacket] + iExtractOffset;
 	TUint8* lastEndAddr = blockStartAddr;					// going to track the contiguity of the memory
@@ -629,9 +603,8 @@ TInt TDmaBuf::RxCopyDataToClient(DThread* aThread, TClientBuffer *aTcb, TInt aLe
 			bufnum = iCurrentDrainingBufferIndex;
 			if (iDrainingOrder != iFillingOrderArray[iCurrentDrainingBufferIndex])
 				{
-                OstTrace1( TRACE_NORMAL, TDMABUF_RXCOPYDATATOCLIENT_DUP8,
-				        "!!! Out of Order Draining TDmaBuf::RxCopyDataToClient 20 draining=%d",
-					    iCurrentDrainingBufferIndex);
+				Kern::Printf("!!! Out of Order Draining TDmaBuf::RxCopyDataToClient 20 draining=%d",
+							 iCurrentDrainingBufferIndex);
 				}
 			}
 #endif
@@ -646,14 +619,7 @@ TInt TDmaBuf::RxCopyDataToClient(DThread* aThread, TClientBuffer *aTcb, TInt aLe
 			{
 			if (iEndpointType == KUsbEpTypeBulk)
 				{
-                if(iExtractOffset & maxPacketSizeMask)
-                	{
-                    isShortPacket = ((size+iExtractOffset) < iMaxPacketSize) || ((size+iExtractOffset) & maxPacketSizeMask);
-                	}
-                else
-                	{
-                    isShortPacket = (size < iMaxPacketSize) || (size & maxPacketSizeMask);
-                	}
+				isShortPacket = (size < iMaxPacketSize) || (size & maxPacketSizeMask);
 				}
 			else
 				{
@@ -762,9 +728,9 @@ TBool TDmaBuf::NextDrainableBuffer()
 		TUint& pktsRemain = iNumberofPacketsRxRemain[iCurrentDrainingBufferIndex];
 		if ((bytesRemain != 0) || (pktsRemain != 0))
 			{
-			OstTraceExt3( TRACE_NORMAL, TDMABUF_NEXTDRAINABLEBUFFER,
-				    "TDmaBuf::NextDrainableBuffer: Error: data discarded buffer=%d pkts=%d bytes=%d",
-				    iCurrentDrainingBufferIndex, pktsRemain, bytesRemain);
+			Kern::Printf(
+				"TDmaBuf::NextDrainableBuffer: Error: data discarded buffer=%d pkts=%d bytes=%d",
+				iCurrentDrainingBufferIndex, pktsRemain, bytesRemain);
 			bytesRemain = 0;
 			pktsRemain = 0;
 			}
@@ -846,8 +812,7 @@ void TDmaBuf::FreeDrainedBuffers()
 TBool TDmaBuf::ShortPacketExists()
 	{
 	// Actually, a short packet or residue data
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TDMABUF_SHORTPACKETEXISTS,
-	        "TDmaBuf::ShortPacketExists 1" );
+	__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::ShortPacketExists 1"));
 	TInt index = iCurrentDrainingBufferIndex;
 	TUsbcPacketArray* pktSizeArray = iCurrentPacketSizeArray;
 
@@ -865,7 +830,17 @@ TBool TDmaBuf::ShortPacketExists()
 		if (iEndpointType == KUsbEpTypeBulk)
 			{
 			const TInt mask = iMaxPacketSize - 1;
+			if (iTotalRxBytesAvail & mask)
+				return ETrue;
 
+			// residue==0; this can be because
+			// zlps exist, or short packets combine to n * max_packet_size
+			// This means spadework
+			const TInt s = iCurrentPacketSizeArray[iCurrentPacket] - iExtractOffset;
+			if ((s == 0) || (s & mask))
+				{
+				return ETrue;
+				}
 
 			for (TInt i = 0; i < iNumberofBuffers; i++)
 				{
@@ -926,7 +901,7 @@ void TDmaBuf::AddToDrainQueue(TInt aBufferIndex)
 	if (iDrainQueue[iDrainQueueIndex + 1] != KUsbcInvalidBufferIndex)
 		{
 #if defined(USBC_LDD_BUFFER_TRACE)
-		OstTrace0( TRACE_NORMAL, TDMABUF_ADDTODRAINQUEUE, "TDmaBuf::AddToDrainQueue: Error: invalid iDrainQueue[x]" );
+		Kern::Printf("TDmaBuf::AddToDrainQueue: Error: invalid iDrainQueue[x]");
 #endif
 		}
 	iDrainQueue[++iDrainQueueIndex] = aBufferIndex;
@@ -966,13 +941,12 @@ TInt TDmaBuf::NoRxBytesAlt() const
 // We only store 1 transaction, no other buffering is done
 TInt TDmaBuf::TxStoreData(DThread* aThread, TClientBuffer *aTcb, TInt aTxLength, TUint32 aBufferOffset)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TDMABUF_TXSTOREDATA,
-	        "TDmaBuf::TxStoreData 1" );
+	__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::TxStoreData 1"));
 	if (!IsReaderEmpty())
 		return KErrInUse;
 
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TDMABUF_TXSTOREDATA_DUP1,
-	        "TDmaBuf::TxStoreData 2" );
+	__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::TxStoreData 2"));
+	
 	TInt remainTxLength = aTxLength;
 	TUint32 bufferOffset = aBufferOffset;
 	// Store each buffer separately

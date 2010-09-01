@@ -301,9 +301,7 @@ private:
 /*
  * Cleans and invalidates the entire content of data and unified cache(s) and drains
  * write buffers (DSB barrier)..
- * On SMP, only the running core is maintained.
- * This methos is called during reboot or power down sequence and therefore is not allowed
- * to do Kernel calls that may hold spin lock - such as Kern::Print or precondition checkings.
+ * On SMP, only the running core is maintained. 
  */
 	static void CleanAndInvalidate_DCache_All();
 

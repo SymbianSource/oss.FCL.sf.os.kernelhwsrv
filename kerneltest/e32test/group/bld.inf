@@ -31,21 +31,21 @@ PRJ_EXPORTS
 
 PRJ_TESTEXPORTS
 
-../../../kernel/eka/include/kernel/dobject.h						OS_LAYER_PLATFORM_EXPORT_PATH(kernel/dobject.h)			
+../../../kernel/eka/include/kernel/dobject.h						/epoc32/include/kernel/			
 
-../../../userlibandfileserver/domainmgr/inc/domainobserver.h				OS_LAYER_PLATFORM_EXPORT_PATH(domainobserver.h)
+../../../userlibandfileserver/domainmgr/inc/domainobserver.h				/epoc32/include/
 
-../dll/d_ldrtst.h					OS_LAYER_PLATFORM_EXPORT_PATH(d_ldrtst.h)
+../dll/d_ldrtst.h					/epoc32/include/
 
-../nkernsa/interrupts.h				OS_LAYER_PLATFORM_EXPORT_PATH(nktest/interrupts.h)	//
-../nkernsa/nkutils.h				OS_LAYER_PLATFORM_EXPORT_PATH(nktest/nkutils.h)	//
-../nkernsa/utils.h					OS_LAYER_PLATFORM_EXPORT_PATH(nktest/utils.h)	//
-../nkernsa/diag.h					OS_LAYER_PLATFORM_EXPORT_PATH(nktest/diag.h)	//
+../nkernsa/interrupts.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nktest/interrupts.h)	//
+../nkernsa/nkutils.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nktest/nkutils.h)	//
+../nkernsa/utils.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nktest/utils.h)	//
+../nkernsa/diag.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nktest/diag.h)	//
 
-../../../kernel/eka/include/e32huffman.h				OS_LAYER_PLATFORM_EXPORT_PATH(e32huffman.h)
+../../../kernel/eka/include/e32huffman.h				/epoc32/include/
 
 platsec.settings        /epoc32/data/defaulttest.ini
-../mmu/d_memorytest.h   OS_LAYER_PLATFORM_EXPORT_PATH(e32test/d_memorytest.h)
+../mmu/d_memorytest.h   /epoc32/include/e32test/d_memorytest.h
 
 ../buffer/UnicodeData.txt    /epoc32/data/z/test/unicodedata.txt
 ../buffer/UnicodeData.txt    /epoc32/release/wins/udeb/z/test/unicodedata.txt
@@ -68,10 +68,11 @@ platsec.settings        /epoc32/data/defaulttest.ini
 ../dll/oe/eabi/urel/t_oeexport.exe      /epoc32/release/armv5/urel/t_oeexport.exe
 ../dll/oe/eabi/urel/t_oeexport1.exe     /epoc32/release/armv5/urel/t_oeexport1.exe
 
-../demandpaging/d_pagestress.h		OS_LAYER_PLATFORM_EXPORT_PATH(d_pagestress.h)
+../demandpaging/d_pagestress.h		/epoc32/include/
+../pci/t_pci.h						/epoc32/include/e32test/t_pci.h
 
-../iic/iic_psl/i2c.h			OS_LAYER_PLATFORM_EXPORT_PATH(e32test/i2c.h)
-../iic/iic_psl/spi.h			OS_LAYER_PLATFORM_EXPORT_PATH(e32test/spi.h)
+../iic/iic_psl/i2c.h			/epoc32/include/e32test/
+../iic/iic_psl/spi.h			/epoc32/include/e32test/
 
 PRJ_TESTMMPFILES
 
@@ -82,8 +83,6 @@ PRJ_TESTMMPFILES
  positive check ( #ifdef SMP ), however these binaries will not be included in BTB 
  autotest images for SMP platforms. Refer to DTW-KHS BTB00055 for more details.
  ******************************************************************************/
-d_timestamp					support
-d_kerncorestats				support
 d_implicit					support
 d_emitest					support
 d_ldd						support
@@ -92,9 +91,6 @@ d_ldd2						support
 d_ldd2_ram					support
 d_lddns						support
 d_lddpowerseqtest			support
-#if !defined(X86) && !defined(WINS)
-../power/d_powermisctest					support
-#endif
 d_ldddigitisertest			support
 d_lddturnaroundtimertest	support
 d_newldd					support
@@ -123,7 +119,6 @@ d_shbuf_client				support
 d_shbuf_own					support
 d_asid						support
 d_entropysources			support
-d_khal						support
 
 #ifdef GENERIC_MARM
 d_schedhook					support
@@ -139,19 +134,16 @@ d_testearlyextension		support
 rescontrol_psl				support
 rescontrol_extended_psl		support
 d_rescontrolcli				support
-d_rescontrolclisync			support
 d_extendedrescontrolcli		support
 d_prmacctstsim				support
 ../resmanus/resourcecontrol	support
 ../resmanus/resourcecontrollerextended	support
-../resmanus/d_resmanusbtrace		support
 #endif
 
 // DMA kernel-side test harness for software-simulated DMA framework
 // software-simulated DMA framework
 d_dmasim					support
 dmasim						support
-d_dma2_sim					support
 
 // Examples for demand paging device driver migration
 d_pagingexample_1_pre  support
@@ -162,9 +154,6 @@ d_pagingexample_2_post support
 #if defined(EPOC32) && !defined(X86)
 // Test LDD for real hardware DMA
 d_dma						support
-d_dma2						support
-d_dma_compat				support
-d_dma2_compat				support
 #endif
 
 #ifdef EPOC32
@@ -196,21 +185,18 @@ d_smpsoak					support
 #endif
 
 #if !defined(X86)
+#if defined(WINS)
 ../iic/iic_psl/iic_testpsl			support
-../iic/iic_psl/spi				support
-../iic/iic_psl/i2c				support
+../iic/iic_psl/spi					support
+../iic/iic_psl/i2c					support
 ../iic/iic_psl/d_iic_client			support
-../iic/iic_psl/d_iic_slaveclient		support
+../iic/iic_psl/d_iic_slaveclient	support
 
 ../iic/iic_psl/spi_ctrless			support
 ../iic/iic_psl/i2c_ctrless			support
 ../iic/iic_psl/d_iic_client_ctrless		support
 ../iic/iic_psl/d_iic_slaveclient_ctrless	support
-
-../iic/iic_psl/i2c_masterstubs_ctrless		support
-../iic/iic_psl/i2c_slavestubs_ctrless		support
-../iic/iic_psl/d_iic_client_stubs		support
-../iic/iic_psl/d_iic_slaveclient_stubs		support
+#endif
 #endif
 
 #if !defined(WINS) && !defined(X86)
@@ -231,8 +217,6 @@ d_crazyints support
 #ifdef EPOC32
 //T_ROMCHK      // check the ROM is OK before starting tests
 #endif
-
-t_printsysinfo		/* t_printsysinfo is the first test to run because it logs the system information */
 
 // todo: t_shadow tests currently need to run before any ROM pages get shadowed so do this first
 // for now
@@ -258,9 +242,6 @@ t_emi
 #if !defined(WINS) && !defined(X86)
 t_ramdefrag
 #endif
-
-// /E32TEST/TIMESTAMP test must also come before t_lat2 as it goes into Low Power Mode.
-t_timestamp
 
 #ifdef EPOC32
 // Start the latency measurement
@@ -395,18 +376,12 @@ t_testearlyextension
 #endif
 #ifdef MARM_ARMV5
 t_usb_device	manual
-t_usb_tranhandleclient	support
-t_usb_transfersrvclient	support
-t_usb_transfersrv	manual
 t_usb_scdevice	manual
 #endif
 
 t_tldd
 t_newldd
 t_lddpowerseqtest
-#if !defined(X86) && !defined(WINS)
-../power/t_powermisctest 
-#endif
 t_ldddigitisertest
 t_userdigitisertest
 t_userdigitisernocaps
@@ -518,19 +493,16 @@ t_wsd_tst_cu
 ../ethernet/pump/etherpump  manual
 ../ethernet/macset/macset   manual
 
-// /e32test/heap tests
-#ifdef EPOC32
-t_hcomp			support
-#endif
+// /E32TEST/HEAP tests
 t_fail
+
+#ifdef EPOC32
+t_hcomp     support
+#endif
+
 t_heap
 t_heap2
 t_heapdb
-t_heapdl
-t_heapslab
-t_heapstress		manual
-t_heapcheck
-t_heappagealloc
 t_kheap
 
 // Secure RNG tests
@@ -592,9 +564,6 @@ t_vfp
 
 t_duid      support
 t_uid
-#ifdef EPOC32
-ccthrash	support
-#endif
 cpumeter    support
 crash       support
 reboot		support
@@ -620,7 +589,6 @@ t_proc3a    support
 t_mem       support
 t_unzip     support
 t_ymodem    support
-ymodemtx	support
 t_ymodemz   support
 t_lbk       support
 t_forever   support
@@ -636,10 +604,8 @@ drvread     support
 eject       support
 t_pcreat    support
 
-t_loadsim	support
-
 #if !defined(WINS)
-t_zip       
+t_zip       manual
 #endif
 
 #ifdef EPOC32
@@ -726,8 +692,10 @@ t_medch
 // /E32TEST/POWER tests
 t_power
 t_power_slave   support
+t_domain
+t_domain_slave  support
+domainPolicyTest support
 t_switchoff
-t_frqchg
 
 // /E32TEST/PRIME tests
 t_kern      support
@@ -757,18 +725,16 @@ t_write     support
 
 // /E32TEST/SYSTEM tests
 t_atomic
-t_atomicu
 t_chnot     
 t_cobj      
 t_ctrap     
 t_exc       
-t_inf
+t_inf       manual
 t_multin    
 t_prot
 t_prot2     support
 t_prot2a    support
 t_reason    support 
-t_reason2
 t_ref       
 t_reg       
 t_trap
@@ -794,7 +760,6 @@ t_debug     support
 //  T_REGRAM    support
 t_panic     support
 #endif
-t_khal
 
 // /E32TEST/THREAD tests
 t_killer    support // because it takes several minutes to run
@@ -842,8 +807,7 @@ t_wsimp     support
 t_wwins     manual
 t_mmcpw     manual
 
-refkeymap   support //Reference template keyboard look-up tables for T_KEYS test 
-t_keys
+t_keys      support
 
 // /E32TEST/Y2K tests
 t_y2k
@@ -894,7 +858,7 @@ t_ipcsafety
 t_logtofile         manual
 t_eventtracker      manual
 t_traceredirect     support
-t_heapcorruption    support
+t_heapcorruption	support
 t_btrace
 t_perflogger
 
@@ -905,7 +869,6 @@ t_context
 
 // /E32TEST/DMA tests
 t_dma       // user-side test harness for real DMA framework
-t_dma2       // user-side test harness for DMAv2 framework
 
 // Example RTOS personality
 ../personality/example/t_expers support
@@ -999,20 +962,20 @@ t_defragdll0	support
 ../resmanus/t_resmanus
 ../resmanus/t_resmanuskern
 ../resmanus/t_resmanusextended
-../resmanus/t_resmanusbtrace
 #endif
 
 // /E32TEST/RESOURCEMAN tests
 #if !defined X86 
 t_rescontrolcli
-t_rescontrolclisync
 t_extendedrescontrolcli
 t_prmacctstsim
 #endif
 
 // /E32TEST/IIC tests
 #if !defined(X86)
+#if defined(WINS)
 ../iic/t_iic
+#endif
 #endif
 
 #if defined(MARM_ARMV5)
@@ -1024,13 +987,43 @@ t_oeexport2
 #endif
 
 #if defined(MARM_ARMV5)
+../rm_debug/group/t_rmdebug_dll support
+../rm_debug/group/t_rmdebug_security0 support
+../rm_debug/group/t_rmdebug_security1 support
+../rm_debug/group/t_rmdebug_security2 support
+../rm_debug/group/t_rmdebug_security3 support
+../rm_debug/group/t_rmdebug_app support
+../rm_debug/group/t_rmdebug2
+../rm_debug/group/t_rmdebug2_oem
+../rm_debug/group/t_rmdebug2_oemtoken support
+../rm_debug/group/t_rmdebug2_oem2
+../rm_debug/group/t_rmdebug2_oemtoken2 support
 ../rm_debug/group/t_crashmonitor_lib
+
+../rm_debug/group/t_rmdebug_app1 support
+../rm_debug/group/t_rmdebug_app2 support
+../rm_debug/group/t_rmdebug_app3 support
+../rm_debug/group/t_rmdebug_app4 support
+../rm_debug/group/t_rmdebug_app5 support
+../rm_debug/group/t_rmdebug_app6 support
+../rm_debug/group/t_rmdebug_app7 support
+../rm_debug/group/t_rmdebug_app8 support
+../rm_debug/group/t_rmdebug_app9 support
+../rm_debug/group/t_rmdebug_app10 support
+
+../rm_debug/group/t_rmdebug_target_launcher support
+../rm_debug/group/t_rmdebug_multi_target
+
+../rm_debug/group/t_rmdebug_multi_agent support
+../rm_debug/group/t_multi_agent_launcher
+
+
 #endif
 
 t_stacksize
 
 #if !defined(WINS) && !defined(X86)
-t_crazyints
+t_crazyints	
 #endif
 
 #endif	// SMP
@@ -1046,11 +1039,14 @@ t_destruct_dll2		support
 t_destruct_dll3		support
 
 #include "../examples/examples.inf"
+// Shared chunk camera driver tests.
+t_camera_api		manual
+t_camera_gen		manual
 d_mmcsc			support
-
-t_kerncorestats		support
 
 #include "../hcr/hcr.inf"
 
-#include "../domainmgr/test.inf"
+//pci tests
+t_pci
 
+sdapctest

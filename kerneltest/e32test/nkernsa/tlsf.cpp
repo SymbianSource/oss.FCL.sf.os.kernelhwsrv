@@ -357,6 +357,7 @@ TUint32 STlsfAllocator::ConsistencyCheck()
 	TUint32 a;
 	TUint32 szs = 0;
 	TUint32 size;
+	TUint32 total_user_size;
 	TUint32 total_block_size = 0;
 	TUint32 block_count = 0;
 	TUint32 flb = 0;
@@ -366,35 +367,34 @@ TUint32 STlsfAllocator::ConsistencyCheck()
 	TUint32 total_free = 0;
 	SBlock* b = iff;
 	SBlock* pb = 0;
-	TUint32 total_user_size;
 
 	memset(slb, 0, sizeof(slb));
-	__NK_ASSERT_ALWAYS(imin_size == 16);
-	__NK_ASSERT_ALWAYS(insl == 16);
-	__NK_ASSERT_ALWAYS(il2min == 4);
-	__NK_ASSERT_ALWAYS(il2nsl == 4);
-	__NK_ASSERT_ALWAYS(infl == __e32_find_ms1_32(itotal_size) - il2min + 1);
+	__NK_ASSERT_DEBUG(imin_size == 16);
+	__NK_ASSERT_DEBUG(insl == 16);
+	__NK_ASSERT_DEBUG(il2min == 4);
+	__NK_ASSERT_DEBUG(il2nsl == 4);
+	__NK_ASSERT_DEBUG(infl == __e32_find_ms1_32(itotal_size) - il2min + 1);
 	a = (TUint32)&islb[infl];
 	a = (a+63)&~63;
-	__NK_ASSERT_ALWAYS(isll == (SFreeBlock**)a);
+	__NK_ASSERT_DEBUG(isll == (SFreeBlock**)a);
 	a += insl * infl * sizeof(TUint32*);
-	__NK_ASSERT_ALWAYS(iff == (SBlock*)a);
+	__NK_ASSERT_DEBUG(iff == (SBlock*)a);
 	total_user_size = itotal_size - (a - (TUint32)this);
 
 	do	{
 		szs = b->size;
 		size = szs & BLOCK_SIZE_MASK;
-		__NK_ASSERT_ALWAYS(b->predecessor == pb);
-		__NK_ASSERT_ALWAYS(size > 0);
-		__NK_ASSERT_ALWAYS(size <= total_user_size);
-		__NK_ASSERT_ALWAYS(size == ((size >> il2min) << il2min));
+		__NK_ASSERT_DEBUG(b->predecessor == pb);
+		__NK_ASSERT_DEBUG(size > 0);
+		__NK_ASSERT_DEBUG(size <= total_user_size);
+		__NK_ASSERT_DEBUG(size == ((size >> il2min) << il2min));
 		total_block_size += size;
 		++block_count;
 		pb = b;
 		b = (SBlock*)((TUint32)b + size);
 		} while(!(szs & BLOCK_STATUS_FINAL));
-	__NK_ASSERT_ALWAYS((TUint32)b == (TUint32)this + itotal_size);
-	__NK_ASSERT_ALWAYS(total_block_size == total_user_size);
+	__NK_ASSERT_DEBUG((TUint32)b == (TUint32)this + itotal_size);
+	__NK_ASSERT_DEBUG(total_block_size == total_user_size);
 
 	b = iff;
 	do	{
@@ -403,9 +403,9 @@ TUint32 STlsfAllocator::ConsistencyCheck()
 		if (szs & BLOCK_STATUS_FREE)
 			{
 			SFreeBlock* fb = (SFreeBlock*)b;
-			TUint32 lhi;
-			SFreeBlock* lh;
 			SFreeBlock* pfb = fb;
+			SFreeBlock* lh;
+			TUint32 lhi;
 			TInt lh_found = 0;
 			TInt c = (TInt)block_count;
 			TUint32 fli = __e32_find_ms1_32(size) - il2min;
@@ -415,8 +415,8 @@ TUint32 STlsfAllocator::ConsistencyCheck()
 			(void)sli2, (void)fli2;
 			if (fli > il2nsl)
 				sli >>= (fli - il2nsl);
-			__NK_ASSERT_ALWAYS(fli == fli2);
-			__NK_ASSERT_ALWAYS(sli == sli2);
+			__NK_ASSERT_DEBUG(fli == fli2);
+			__NK_ASSERT_DEBUG(sli == sli2);
 			flb |= (1u << fli);
 			slb[fli] |= (1u << sli);
 			lhi = (fli << il2nsl) | sli;
@@ -426,27 +426,28 @@ TUint32 STlsfAllocator::ConsistencyCheck()
 					lh_found = 1;
 				pfb = fb;
 				fb = fb->next;
-				__NK_ASSERT_ALWAYS(fb->prev == pfb);
-				__NK_ASSERT_ALWAYS(fb->b.size & BLOCK_STATUS_FREE);
+				__NK_ASSERT_DEBUG(fb->prev == pfb);
+				__NK_ASSERT_DEBUG(fb->b.size & BLOCK_STATUS_FREE);
 				} while ((fb != (SFreeBlock*)b) && --c>=0);
-			__NK_ASSERT_ALWAYS(fb == (SFreeBlock*)b);
-			__NK_ASSERT_ALWAYS(lh_found);
+			__NK_ASSERT_DEBUG(fb == (SFreeBlock*)b);
+			__NK_ASSERT_DEBUG(lh_found);
 			total_free += size;
 			}
 		b = (SBlock*)((TUint32)b + size);
 		} while(!(szs & BLOCK_STATUS_FINAL));
 
-	__NK_ASSERT_ALWAYS(flb == iflb);
+	__NK_ASSERT_DEBUG(flb == iflb);
 	for (fli=0; fli<infl; ++fli)
 		{
-		__NK_ASSERT_ALWAYS(slb[fli] == islb[fli]);
+		__NK_ASSERT_DEBUG(slb[fli] == islb[fli]);
 		if (!(flb & (1u<<fli)))
-			__NK_ASSERT_ALWAYS(slb[fli]==0);
+			__NK_ASSERT_DEBUG(slb[fli]==0);
 		for (sli=0; sli<insl; ++sli)
 			{
 			TUint32 lhi = (fli << il2nsl) | sli;
+			(void)lhi;
 			if (!(slb[fli] & (1u<<sli)))
-				__NK_ASSERT_ALWAYS(!isll[lhi]);
+				__NK_ASSERT_DEBUG(!isll[lhi]);
 			}
 		}
 	return total_free;

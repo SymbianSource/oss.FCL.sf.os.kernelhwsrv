@@ -669,26 +669,12 @@ do not read back correctly, but instead always return 0.
 
 #define	__chill()
 
-#ifdef 	__CPU_ARM_HAS_WFE_SEV
-
-extern "C" void __arm_wfe();
-extern "C" void __arm_sev();
-
-#define	__snooze()	__arm_wfe()
-#define	__holler()	__arm_sev()
-#else
-#define	__snooze()
-#define	__holler()
-#endif
-
 #if defined(__SMP__) && !defined(__CPU_ARM_HAS_LDREX_STREX_V6K)
 #error SMP not allowed without v6K
 #endif
 #if defined(__SMP__) && !defined(__CPU_HAS_CP15_THREAD_ID_REG)
 #error SMP not allowed without thread ID registers
 #endif
-
-#define	__SRATIO_MACHINE_CODED__
 
 #endif	//	end of __CPU_ARM
 
@@ -709,9 +695,6 @@ extern "C" void __arm_sev();
 #else
 #error Unknown x86 compiler
 #endif
-
-#define	__snooze()	__chill()
-#define	__holler()
 
 #if defined(__cplusplus)
 extern "C" {
@@ -814,8 +797,8 @@ inline void _outpd(TUint16 port, TUint32 data)
 
 #define USER_MEMORY_GUARD_SAVE_WORDS			2
 #define USER_MEMORY_DOMAIN						15
-#define	USER_MEMORY_DOMAIN_MASK					(3U << (2*USER_MEMORY_DOMAIN))
-#define	USER_MEMORY_DOMAIN_CLIENT				(1U << (2*USER_MEMORY_DOMAIN))
+#define	USER_MEMORY_DOMAIN_MASK					(3 << (2*USER_MEMORY_DOMAIN))
+#define	USER_MEMORY_DOMAIN_CLIENT				(1 << (2*USER_MEMORY_DOMAIN))
 
 // Save the DACR in the named register
 #define USER_MEMORY_GUARD_SAVE(save)											\

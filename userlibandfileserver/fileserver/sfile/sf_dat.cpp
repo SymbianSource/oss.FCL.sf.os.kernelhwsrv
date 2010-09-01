@@ -51,6 +51,7 @@ TBool CompFsSync;
 TBool StartupInitCompleted;
 TBool LocalDriveMappingSet;
 CKernEventNotifier* TheKernEventNotifier;
+RFTrace TheFtrace;
 
 
 GLDEF_D TCodePageUtils TheCodePage;

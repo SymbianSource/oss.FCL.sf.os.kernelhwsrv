@@ -74,7 +74,6 @@
 #include <hal_data.h>
 #include <hal_data.h>
 #include <e32svr.h>
-#include <collate.h> 
 
 #ifdef __VC32__
     // Solve compilation problem caused by non-English locale
@@ -300,9 +299,6 @@ GLDEF_C void TestTBuf<T,S,DESTEMPLATE>::Test1()
 	a.Zero();
 	a.AppendJustify(_TL("AB"),10,ELeft,' ');
 	a.AppendJustify(b,10,ELeft,' ');
-	a.AppendJustify(b,10,KDefaultJustifyWidth,ELeft,' ');
-	a.AppendJustify(b.Ptr(),10,ELeft,' ');
-	
 	TInt v1=10;
 	a.Num(v1);
 	a.AppendNum(v1);
@@ -311,25 +307,6 @@ GLDEF_C void TestTBuf<T,S,DESTEMPLATE>::Test1()
 	a.AppendNum((TUint)v2,EHex);
 	a.NumUC((TUint)v2,EHex);
 	a.AppendNumUC((TUint)v2,EHex);
-	
-	//Converts the specified unsigned integer into a fixed width character representation
-	//based on the specified number system and copies the conversion into this descriptor,
-	//replacing any existing data. The length of this descriptor is set to reflect the new data.
-	a.NumFixedWidth(v1,EBinary,4); 
-	a.NumFixedWidth(v1,EOctal,3);
-	a.NumFixedWidth(v1,EDecimal,2);
-	a.NumFixedWidth(v1,EHex,1);
-	//When a hexadecimal conversion is specified, hexadecimal characters are in upper case.
-	a.NumFixedWidthUC(v1,EBinary,4);
-	a.NumFixedWidthUC(v1,EOctal,3);
-	a.NumFixedWidthUC(v1,EDecimal,2);
-	a.NumFixedWidthUC(v1,EHex,1);
-	//Appends the conversion onto the end of this descriptor's data.
-	a.AppendNumFixedWidthUC(v1,EBinary,4);
-	a.AppendNumFixedWidthUC(v1,EOctal,3);
-	a.AppendNumFixedWidthUC(v1,EDecimal,2);
-	a.AppendNumFixedWidthUC(v1,EHex,1); 
-	
 	TReal v3=10.0;
 	TRealFormat ff;
 	ff.iType=KRealFormatFixed;
@@ -1382,14 +1359,7 @@ GLDEF_C void TestTBuf<T,S,DESTEMPLATE>::Test14()
 #if !(defined(__GCC32__) && defined(__X86__))
 	const TAny* const zeroTerminatedString=(sizeof(S)==2)? (const TAny*)_S16(":-)E"): (const TAny*)_S8(":-)E");
 	const TInt dummyParameter=0;
-#ifdef __ARMCC__
-#pragma push
-#pragma diag_suppress 1446 
-#endif
 	Test14_ReorderedParameterFormatting(dummyParameter, 0x20ac, 11, 3, 13.89543, zeroTerminatedString, '!', TInt64(199), 2, &b, 6, 30005, TRealX(0.125), 0x8bdd);
-#ifdef __ARMCC__
-#pragma pop
-#endif
 #endif
 
 	test.Next(_L("Print some numbers"));
@@ -1598,10 +1568,6 @@ LOCAL_C void testFormat()
 
 // Cannot do these on GCC (X86) because of "Cannot pass objects of non-POD type through '...'. Call will abort at runtime".
 #if !(defined(__GCC32__) && defined(__X86__))
-#ifdef __ARMCC__
-#pragma push
-#pragma diag_suppress 1446 
-#endif
 	aa.Format(_L("x%- 5Fx"), TRealX(6.2345678));
 	test(aa==_L("x6.234568x"));
 	aa.Format(_L("x%+ 5Fx"), TRealX(6.2345678));
@@ -1632,9 +1598,6 @@ LOCAL_C void testFormat()
 	test(aa==_L("x         1.012345679x"));
 	aa.Format(_L("x%5.1Fx"), TRealX(1.99));
 	test(aa==_L("x  2.0x"));
-#ifdef __ARMCC__	
-#pragma pop
-#endif
 #endif
 
 	aa.Format(_L("x%- 5ex"), 6.2345678);
@@ -1918,134 +1881,6 @@ void INC061330()
 	lang = User::Language();
 	test(lang == defaultLang);
 	}
-
-// Test the surrogate aware version functions of the class. 
-GLDEF_C void SurrogateAware1()
-    {
-    test.Start(_L("Constructors"));
-    TBuf16<0x50> a;
-    TBuf16<0x50> b;
-    TBuf16<0x50> c;
-    TBuf16<0x50> d;
-    
-    a=_L("ABCD");
-    b=_L("abcd");
-    // Cannot define these on GCC (X86).
-	#if !(defined(__GCC32__) && defined(__X86__))
-    c=_L("‡·‚„‰ÂÁËÈÍÎÏÌÓÔÒÚÛÙıˆ˘˙˚¸˝");
-    d=_L("¿¡¬√ƒ≈«»… ÀÃÕŒœ—“”‘’÷Ÿ⁄€‹›");
-    #else
-    c=_L("aaaaaaceeeeiiiinooooouuuuy");
-    d=_L("AAAAAACEEEEIIIINOOOOOUUUUY");
-    #endif
- 
-    test.Next(_L("Fill2"));
-    TInt maxBufLength=a.MaxLength();
-    a.Fill2(' ');
-    a.Fill2(' ',maxBufLength);
-    a.Fill2('z');
-    a.Fill2('*',maxBufLength);
-    a=c;
-    b=d;
-    a.Swap(b);
-    test(a==d);
-
-    test.Next(_L("Conversion 2"));
-    a.Fold2();
-    b.Collate2();
-    a.UpperCase2();
-    a.LowerCase2();
-    a.Capitalize2();
-    b.Capitalize2();
-    
-    test.Next(_L("Locating"));
-    a=_L("ABCDabcd");
-    test(a.Locate('A')==0);
-    test(a.LocateF('b')==1);
-    test(a.LocateReverse('A')==0);
-    test(a.LocateReverse('a')==4);
-    test(a.LocateReverse('b')==5);
-
-    test.Next(_L("Copying"));
-    a.Copy(b); // Copies a 16 bit descriptor
-    a.Copy(_L("AB")); 
-    a.Copy(b.Ptr(),3); // Copies aLength characters from the aBuf pointer
-    a.CopyF2(c); // Copies and folds
-    a.CopyF2(_L("AB"));
-    a.CopyC2(d); // Copies and collates
-    a.CopyC2(_L("AB"));
-    a.CopyLC(d); // Copies and converts the text to lower case
-    a.CopyLC(_L("AB"));
-    a.CopyUC2(c); // Copies and converts the text to upper case
-    a.CopyUC2(_L("AB"));
-    a.CopyCP2(b); // Copies and capitalizes the text
-    a.CopyCP2(_L("AB"));
-    
-    test.Next(_L("Finding"));
-    a=_L("ABCDabcd");
-    b=_L("bc");
-    test(a.Find(b)==5);
-    test(a.Find(_L("ab"))==4);
-    test(a.FindF(b)==1);
-    test(a.FindF(_L("ab"))==0);
-    test(a.FindC(b)==1);
-    test(a.FindC(_L("AB"))==0);
-    test(a.FindC(b.Ptr(), b.Length(), 3)==1);
-    test(a.FindC(b.Ptr(), b.Length(), 2)==1);
-    test(a.FindC(b.Ptr(), b.Length(), 1)==1);
-    test(a.FindC(b.Ptr(), b.Length(), 0)==1); 
-    test(a.FindF(b.Ptr(), b.Length())==1);
-    
-    test.Next(_L("Formating"));
-    TInt width = 10;
-    a.Justify2(_L("AB"),width,ELeft,' ');
-    a.Justify2(b,10,ELeft,' ');
-    b.Fill2('A',2);
-    a.Zero();
-    a.AppendJustify2(_L("AB"),width,ELeft,' ');
-    a.AppendJustify2(b,width,ELeft,' ');
-    a=_L("ABCDE");
-    b=_L("abcde");
-    a.AppendJustify2(b,width,ELeft,'*');
-    a.AppendJustify2(b.Ptr(),width,ELeft,'*');
-    // Append and justify with explicit length
-    TInt length = 5;
-    a.AppendJustify2(b,length,KDefaultJustifyWidth,ELeft,'*');
-    a.AppendJustify2(b.Ptr(),length,KDefaultJustifyWidth,ELeft,'*');
-    
-    TCollationMethod cm = *Mem::CollationMethodByIndex( 0 ); // default collation method
-    cm.iFlags |= TCollationMethod::EIgnoreNone;
-    TDesC::TPrefix prefix = a.HasPrefixC(a, 0, &cm);
-    test(prefix==TDesC16::EIsPrefix);
-    test.End();
-    }
-
-// Test the surrogate aware versions of conversion operators (test7) 
-// 
-void SurrogateAware7()
-    {
-    test.Start(_L("Fold2, Collate2 ..."));
-    TBuf16<0x50> a;
-    TBuf16<0x50> b;
-    a=_L("abc AbC");
-    b=_L("ABC ABC");
-    a.Fold2();
-    b.Fold2();
-    test(a==b);
-    a=_L("abc AbC");
-    b=_L("ABC ABC");
-    a.Collate2();
-    b.Collate2();
-    test(a==b);
-    a.UpperCase2();
-    test(a==_L("ABC ABC"));
-    a.LowerCase2();
-    test(a==_L("abc abc"));
-    a.Capitalize2();
-    test(a==_L("Abc abc"));
-    test.End();
-    }
-
 #ifndef _DEBUG
 #pragma warning( disable : 4702) //Unreachable code
 #pragma warning( disable : 4710) //Function not expanded
@@ -2081,12 +1916,6 @@ GLDEF_C TInt E32Main()
 
 	test.Next(_L("INC061330"));
 	INC061330();
-	
-	test.Next(_L("Surrogate aware version"));
-	SurrogateAware1();
-	    
-	test.Next(_L("Surrogate aware version"));
-	SurrogateAware7();
 
 	test.End();
 

@@ -18,7 +18,9 @@
 #include <e32test.h>
 
 const TInt KHeapSize=0x2000;
-
+const TInt KMajorVersionNumber=1;
+const TInt KMinorVersionNumber=0;
+const TInt KBuildVersionNumber=1;
 
 LOCAL_D RTest test(_L("T_EXEC"));
 LOCAL_D RTest testSvr(_L("Server"));
@@ -34,9 +36,10 @@ LOCAL_C TInt speedyThreadEntryPoint(TAny*)
 	speedCount=0;
 	semmy.Signal();
 	TUint myChar='a';
+	TUint r;
 	for (TUint i=0;i<0xffffffff;i++)
 		{
-		User::UpperCase(myChar);
+		r=User::UpperCase(myChar);
 		speedCount++;
 		}
 	return(KErrNone);

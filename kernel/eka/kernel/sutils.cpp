@@ -1580,7 +1580,7 @@ TInt DThread::OpenFindHandle(TOwnerType aType, const TFindHandle& aFindHandle, T
 
 TInt DThread::OpenObject(TOwnerType aType, const TDesC& aName, TInt& aHandle, DObject*& anObj, TInt aObjType)
 	{
-	__KTRACE_OPT(KEXEC,Kern::Printf("DThread::OpenObject %S",&aName));
+	__KTRACE_OPT(KEXEC,Kern::Printf("DThread::OpenObject %lS",&aName));
 	anObj=NULL;
 	TInt r=Kern::ValidateFullName(aName);
 	if (r!=KErrNone)
@@ -2373,7 +2373,7 @@ Note that, on return, the semaphore is not visible, and has no owner.
 EXPORT_C TInt Kern::SemaphoreCreate(DSemaphore*& aSem, const TDesC& aName, TInt aInitialCount)
 	{
 	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL,"Kern::SemaphoreCreate");				
-	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("Kern::SemaphoreCreate %S init %d", &aName, aInitialCount));
+	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("Kern::SemaphoreCreate %lS init %d", &aName, aInitialCount));
 	TInt r = KErrNoMemory;
 	DSemaphore* pS = new DSemaphore;
 	if (pS)
@@ -2538,9 +2538,8 @@ TInt WaitForIdle(TInt aTimeoutMilliseconds)
 	return KErrNone;
 	}
 
-TInt K::KernelHal(TInt aFunction, TAny* a1, TAny* a2)
+TInt K::KernelHal(TInt aFunction, TAny* a1, TAny* /*a2*/)
 	{
-	(void)a2;
 	TInt r=KErrNone;
 	switch (aFunction)
 		{
@@ -2683,23 +2682,15 @@ TInt K::KernelHal(TInt aFunction, TAny* a1, TAny* a2)
 		case EKernelHalLockThreadToCpu:
 			{
 #ifdef __SMP__
-			r = KErrArgument;
 			TUint32 cpuId = (TUint32)a1;
-			TUint32 ncpus = NKern::NumberOfCpus();
-			if (cpuId < ncpus)
+			if (cpuId < (TUint32)NKern::NumberOfCpus())
 				{
 				NKern::ThreadSetCpuAffinity(NKern::CurrentThread(), cpuId);
 				r = KErrNone;
 				}
-			else if (cpuId & NTHREADBASE_CPU_AFFINITY_MASK)
+			else
 				{
-				TUint32 mask = cpuId & ~NTHREADBASE_CPU_AFFINITY_MASK;
-				TUint32 amask = ~((~0u)<<ncpus);
-				if (cpuId==KCpuAffinityAny || ((mask & amask) && (mask &~ amask)==0))
-					{
-					NKern::ThreadSetCpuAffinity(NKern::CurrentThread(), cpuId);
-					r = KErrNone;
-					}
+				r = KErrArgument;
 				}
 #else
 			r = KErrNone;
@@ -2711,57 +2702,7 @@ TInt K::KernelHal(TInt aFunction, TAny* a1, TAny* a2)
 			// return bottom 31 bits of config flags so as not to signal an error
 			r=K::KernelConfigFlags() & 0x7fffffff;
 			break;
-
-#ifdef __SMP__
-		case EKernelHalCpuStates:
-			{
-			SCpuStates states;
-			memclr(&states, sizeof(states));
-
-			TScheduler& s = TheScheduler;
-			TInt irq = s.iGenIPILock.LockIrqSave();
-			states.iTA = s.iThreadAcceptCpus;
-			states.iIA = s.iIpiAcceptCpus;
-			states.iCU = s.iCpusComingUp;
-			states.iGD = s.iCpusGoingDown;
-			states.iDC = s.iCCDeferCount;
-			states.iSC = s.iCCSyncCpus;
-			states.iRC = s.iCCReactivateCpus;
-			states.iCCS = s.iCCState;
-			states.iPO = TUint8(s.iPoweringOff ? (s.iPoweringOff->iCpuNum|0x80) : 0);
-			states.iPODC = s.iDetachCount;
-			TInt i;
-			TInt nc = NKern::NumberOfCpus();
-			for (i=0; i<nc; ++i)
-				{
-				TSubScheduler& ss = TheSubSchedulers[i];
-				states.iDS[i] = ss.iDeferShutdown;
-#ifdef __CPU_ARM
-				volatile TUint32* p = (volatile TUint32*)ss.iUncached;
-				states.iUDC[i] = p[0];
-				states.iUAC[i] = p[1];
-#endif
-				}
-			s.iGenIPILock.UnlockIrqRestore(irq);
-
-			kumemput32(a1, &states, sizeof(states));
-			r = KErrNone;
-			break;
-			}
-
-		case EKernelHalSetNumberOfCpus:
-			{
-			TInt n = (TInt)a1;
-			if (n<=0 || n>NKern::NumberOfCpus())
-				r = KErrArgument;
-			else
-				{
-				NKern::SetNumberOfActiveCpus(n);
-				r = KErrNone;
-				}
-			break;
-			}
-#endif
+	
 		default:
 			r=KErrNotSupported;
 			break;

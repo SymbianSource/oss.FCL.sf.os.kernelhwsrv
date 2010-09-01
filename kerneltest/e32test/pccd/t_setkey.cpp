@@ -66,12 +66,8 @@ void SetupConsoleL();
 GLDEF_C TInt E32Main()									// main function called by E32
     {
 	CTrapCleanup* cleanup=CTrapCleanup::New();			// get clean-up stack
-#if defined(_DEBUG) 
 	TRAPD(error,SetupConsoleL());						// more initialization, then do example
 	__ASSERT_DEBUG(!error,User::Panic(_L("BossTextUi"),error));
-#else
-	TRAP_IGNORE(SetupConsoleL());
-#endif
 	delete cleanup;										// destroy clean-up stack
 	return 0;											// and return
     }

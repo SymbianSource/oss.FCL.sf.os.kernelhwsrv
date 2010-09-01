@@ -1036,7 +1036,6 @@ void DoRWTest(TInt aTestType, TUint32 aReadLimit, TUint32 aInSeq, TUint32 aOutSe
 	NThreadGroup group;
 	SNThreadGroupCreateInfo ginfo;
 	ginfo.iCpuAffinity = aRWCpu;
-	ginfo.iDestructionDfc = 0;	//FIXME
 	TInt r = NKern::GroupCreate(&group, ginfo);
 	TEST_RESULT(r==KErrNone, "");
 	winfo->iGroup = &group;

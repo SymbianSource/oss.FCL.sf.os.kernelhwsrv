@@ -25,7 +25,7 @@ TBool DisableWSDWarning;
 
 GLREF_D TBool EmulRunExe;
 
-extern "C" void NKIdle(TUint32 aStage)
+extern "C" void NKIdle(TInt aStage)
 	{
 	SCpuIdleHandler* cih = NKern::CpuIdleHandler();
 	if (cih && cih->iHandler)

@@ -43,16 +43,20 @@ PRJ_EXPORTS
 ../inc/rofs.h									SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(rofs.h)
 ../inc/ftlcontrolio.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(ftlcontrolio.h)
 ../inc/f32pluginUtils.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(f32pluginutils.h)
-../inc/f32plugin.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(f32plugin.h)
+../inc/F32plugin.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(f32plugin.h)
 ../inc/f32plugin.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(f32plugin.inl)
 
+../inc/f32tracedef.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(f32tracedef.h)
+../inc/utraceefsrv.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(utraceefsrv.h)
+../inc/utraceefile.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(utraceefile.h)
 ../rom/f32.iby	 		/epoc32/rom/f32/f32.iby
 
 PRJ_MMPFILES
 
 #if !defined(SMP)
-../sfsrv/efsrv
-../sfile/efile
+efsrv
+efile
 runtests
 #endif
 
+ftrace

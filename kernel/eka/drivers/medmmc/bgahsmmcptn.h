@@ -33,7 +33,7 @@
 /* Partition type field supported from version 1.1 onwards */
 #define BGAHSMMCPTN_PART_TYPE_SUPP_VER_MINOR    1
 
-#define BGAHSMMCPTN_LAST_DRIVE		16 /* MMC1_DRIVECOUNT - defined in variantmediadef.h */
+#define BGAHSMMCPTN_LAST_DRIVE		7 /* MMC1_DRIVECOUNT - defined in variantmediadef.h */
 
 typedef struct
 {
@@ -61,8 +61,5 @@ typedef struct
 } BGAHSMMCPTN_PI_STR;
 
 #define BGAHSMMCPTN_PI_STR_SIZE sizeof( BGAHSMMCPTN_PI_STR )
-
-const TUint32 KBB5HeaderSizeInSectors   = 8;
-const TUint32 KPIOffsetFromMediaEnd     = 1;
 
 #endif /*BGAHSMMCPTN_H*/

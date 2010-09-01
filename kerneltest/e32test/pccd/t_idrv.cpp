@@ -44,9 +44,7 @@
 
 const TInt KTestDriveLen=0x00040000;	//256K
 const TInt KSmallDriveInc=0x00000400;	//1K
-#if defined (__WINS__)
 const TInt KBigDriveLen=0x00100000;		//1M - WINS
-#endif
 const TInt KTestBufLen=256;
 
 
@@ -104,23 +102,28 @@ GLDEF_C TInt E32Main()
 
 	test.Next(_L("Find internal drive"));
 	
-	TInt drive;
-	for (drive = 0; drive < KMaxLocalDrives; drive++)
+	TDriveInfoV1Buf driveInfoBuf;
+	UserHal::DriveInfo(driveInfoBuf);
+	TDriveInfoV1& driveInfo = driveInfoBuf();
+
+	TInt drive = 0;
+	for ( ; drive < driveInfo.iTotalSupportedDrives; ++drive)
 		{
 		TBool changedFlag;
-		if (theInternalDrive.Connect(drive, changedFlag) != KErrNone)
-			continue;
+		theInternalDrive.Connect(drive, changedFlag);
 
 		TLocalDriveCapsV2 info;
 		TPckg<TLocalDriveCapsV2> infoPckg(info);
 		theInternalDrive.Caps(infoPckg);
 
 		if (info.iType == EMediaRam)
-			break;						// found it
+			{
+			break;
+			}
 
 		theInternalDrive.Disconnect();
 		}
-	test(drive < KMaxLocalDrives);		// iterated over all, found none
+	test(drive < driveInfo.iTotalSupportedDrives);
 
 	test.Next(_L("Capabilities"));
 	TLocalDriveCapsV2 info;

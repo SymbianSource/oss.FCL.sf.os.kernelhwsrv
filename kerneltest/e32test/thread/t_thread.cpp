@@ -601,8 +601,7 @@ LOCAL_D void test2(TOwnerType anOwnerType)
 		test(thread.ExitCategory()==_L("panic"));
 		test(thread.ExitReason()==123);
 		test(thread.ExitType()==EExitPanic);
-		r = RTest::CloseHandleAndWaitForDestruction(thread);
-		test_KErrNone(r);
+		CLOSE_AND_WAIT(thread);
 		}
 	
 	test.Next(_L("Internal exit"));

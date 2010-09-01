@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -29,10 +29,6 @@
 #include "TestCaseController.h"
 #include "TestCaseFactory.h"
 #include "TestCaseRoot.h"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "testengineTraces.h"
-#endif
 
 // Console application parameter options
 _LIT(KArgAllTestCases,"/ALL");			// see default test-list below
@@ -84,10 +80,7 @@ CTestEngine::CTestEngine():
 
 CTestEngine::~CTestEngine()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTENGINE_DCTESTENGINE);
-	    }
+	LOG_FUNC
 	// Destroy the test case controller
 	if (iTestCaseController)
 		{
@@ -101,21 +94,15 @@ CTestEngine::~CTestEngine()
 	
 void CTestEngine::ConstructL()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTENGINE_CONSTRUCTL);
-	    }
+	LOG_FUNC
 	TInt menuSelection(0);
 
 	// Display information 
 	test.Title();
 	test.Start(_L("Test Engine Initiation v2.00 "));
 	test.Printf(_L(">>\n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_CONSTRUCTL_DUP01, ">>\n");
 	test.Printf(_L(">>   T E S T   R U N \n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_CONSTRUCTL_DUP02, ">>   T E S T   R U N \n");
 	test.Printf(_L(">>\n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_CONSTRUCTL_DUP03, ">>\n");
 	
 
 	// Process the command line parameters for batch/etc
@@ -144,9 +131,7 @@ void CTestEngine::ConstructL()
 		iTestCasesIdentities.ResetAndDestroy();
 		
 		test.Printf(_L("Please select 0 to %d\n"), RTestFactory::TestCaseCount()-1);
-		OstTrace1(TRACE_NORMAL, CTESTENGINE_CONSTRUCTL_DUP04, "Please select 0 to %d\n", RTestFactory::TestCaseCount()-1);
 		test.Printf(_L("or 99<ENTER> to exit\n"));
-		OstTrace0(TRACE_NORMAL, CTESTENGINE_CONSTRUCTL_DUP05, "or 99<ENTER> to exit\n");
 		GetNumericInput(menuSelection);
 		if ((menuSelection >=0) &&(menuSelection < RTestFactory::TestCaseCount()))
 			{
@@ -168,7 +153,6 @@ void CTestEngine::ConstructL()
 		{
 		// Create the test case controller
 		test.Printf(_L("Creating the test controller\n"));
-		OstTrace0(TRACE_NORMAL, CTESTENGINE_CONSTRUCTL_DUP06, "Creating the test controller\n");
 		iTestCaseController = CTestCaseController::NewL(*this, ETrue);
 		
 		// Test-engine is non CActive class
@@ -177,7 +161,6 @@ void CTestEngine::ConstructL()
 		{
 		// nothing to do, exit. USER aborted
 		test.Printf(_L("Test run stopped by user, nothing to do.\n"));
-		OstTrace0(TRACE_NORMAL, CTESTENGINE_CONSTRUCTL_DUP07, "Test run stopped by user, nothing to do.\n");
 		User::Leave(-2);
 		}
 	}
@@ -188,31 +171,18 @@ void CTestEngine::ConstructL()
 void CTestEngine::PrintUsage()
 	{
 	test.Printf(_L("OTGDI Unit Test Suite.\n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_PRINTUSAGE, "OTGDI Unit Test Suite.\n");
 	test.Printf(_L("Usage : t_otgdi.exe [/option] /G:<TESTNUM1>\n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_PRINTUSAGE_DUP01, "Usage : t_otgdi.exe [/option] /G:<TESTNUM1>\n");
 	test.Printf(_L("  /ALL = add default test subset to List\n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_PRINTUSAGE_DUP02, "  /ALL = add default test subset to List\n");
 	test.Printf(_L("  /G:<TESTNUM>  where <testname> is the test# to add \n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_PRINTUSAGE_DUP03, "  /G:<TESTNUM>  where <testname> is the test# to add \n");
 	test.Printf(_L("  /AUTO  = largely unattended operation\n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_PRINTUSAGE_DUP04, "  /AUTO  = largely unattended operation\n");
 	test.Printf(_L("  /VERBOSE = test debugging info\n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_PRINTUSAGE_DUP05, "  /VERBOSE = test debugging info\n");
 	test.Printf(_L("  /LOOPO:<n> = Open/close repeat counter<n>\n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_PRINTUSAGE_DUP06, "  /LOOPO:<n> = Open/close repeat counter<n>\n");
 	test.Printf(_L("  /LOOPM:<n> = OOM HEAP_ALLOCS counter<n>\n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_PRINTUSAGE_DUP07, "  /LOOPM:<n> = OOM HEAP_ALLOCS counter<n>\n");
 	test.Printf(_L("  /SLAVE = Test-peer server mode\n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_PRINTUSAGE_DUP08, "  /SLAVE = Test-peer server mode\n");
 	test.Printf(_L("  /PID:<n> = USB VID/PID in hex eg 2670\n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_PRINTUSAGE_DUP09, "  /PID:<n> = USB VID/PID in hex eg 2670\n");
 	test.Printf(_L("Valid test ID range 0456...0469\n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_PRINTUSAGE_DUP10, "Valid test ID range 0456...0469\n");
 	test.Printf(_L("and 0675...0684 .\n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_PRINTUSAGE_DUP11, "and 0675...0684 .\n");
 	test.Printf(_L("\n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_PRINTUSAGE_DUP12, "\n");
 	}
 	
 /** process the command-line, ; arguments appear in any order
@@ -268,7 +238,6 @@ void CTestEngine::ProcessCommandLineL()
 			{
 			// skip some of the press-any key things
 			test.Printf(_L("Test semi-automated mode.\n"));
-			OstTrace0(TRACE_NORMAL, CTESTENGINE_PROCESSCOMMANDLINEL, "Test semi-automated mode.\n");
 			gSemiAutomated = ETrue;
 			tokenParsed = ETrue;
 			}
@@ -281,10 +250,6 @@ void CTestEngine::ProcessCommandLineL()
 			TPtrC testID = tc->Right(tc->Length() - pos - KArgGoTestCase().Length());
 
 			LOG_VERBOSE2(_L("Parameter found:'%S'\n"), &testID);
-			if(gVerboseOutput)
-			    {
-			    OstTraceExt1(TRACE_VERBOSE, CTESTENGINE_PROCESSCOMMANDLINEL_DUP01, "Parameter found:'%S'\n", testID);
-			    }
 
 			// Check if it is a test we know of in our suite, users may provide the full  
 			// name "PBASE-USB_OTGDI-0466", or just the last 4 digits "0466", in such cases, fetch the full name
@@ -298,7 +263,6 @@ void CTestEngine::ProcessCommandLineL()
 					{
 					
 					test.Printf(_L("Test case does NOT Exist: '%lS'\n"), &testID);
-					OstTraceExt1(TRACE_NORMAL, CTESTENGINE_PROCESSCOMMANDLINEL_DUP02, "Test case does NOT Exist: '%lS'\n", testID);
 					}
 				else
 					{ // only the number was supplied, copy the full name
@@ -311,7 +275,6 @@ void CTestEngine::ProcessCommandLineL()
 				HBufC* testIdentity = HBufC::NewLC(KTestCaseIdLength);
 				*testIdentity = testID;
 				test.Printf(_L("Test case specified: %lS\n"), testIdentity);
-				OstTraceExt1(TRACE_NORMAL, CTESTENGINE_PROCESSCOMMANDLINEL_DUP03, "Test case specified: %lS\n", *testIdentity);
 
 				iTestCasesIdentities.Append(testIdentity);
 				CleanupStack::Pop(testIdentity);
@@ -369,17 +332,12 @@ void CTestEngine::ProcessCommandLineL()
 					prodID = 0xFFFF;
 				tokenParsed = ETrue;
 				LOG_VERBOSE2(_L(" accept param %04X \n\n"), prodID);
-				if(gVerboseOutput)
-				    {
-				    OstTrace1(TRACE_VERBOSE, CTESTENGINE_PROCESSCOMMANDLINEL_DUP05, " accept param %04X \n\n", prodID);
-				    }
 				gUSBVidPid = prodID; // replace the vid-pid with the user-supplied one 
 				}
 			else
 				{
 				// print error
 				test.Printf(_L("Warning: VID+PID '%lS' not parsed .\n"), tc);
-				OstTraceExt1(TRACE_NORMAL, CTESTENGINE_PROCESSCOMMANDLINEL_DUP06, "Warning: VID+PID '%lS' not parsed .\n", *tc);
 				}
 			}
 		
@@ -402,7 +360,6 @@ void CTestEngine::ProcessCommandLineL()
 			{
 			// warn about unparsed parameter
 			test.Printf(_L("Warning: '%lS'??? not parsed\n"), tc);
-			OstTraceExt1(TRACE_NORMAL, CTESTENGINE_PROCESSCOMMANDLINEL_DUP07, "Warning: '%lS'??? not parsed\n", *tc);
 			iHelpRequested = ETrue;
 			}
 			
@@ -419,7 +376,6 @@ void CTestEngine::ProcessCommandLineL()
 void CTestEngine::AddAllDefaultTests()
 	{
 	test.Printf(_L("Adding default set test cases\n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_ADDALLDEFAULTTESTS, "Adding default set test cases\n");
 	//
 	TInt index(0);
 	while (index < sizeof(KAllDefaultTestIDs)/sizeof(KAllDefaultTestIDs[0]))
@@ -474,7 +430,6 @@ void CTestEngine::GetNumericInput(TInt &aNumber)
 		if ( ( key >= '0' ) && ( key <= '9' ) )
 			{
 			test.Printf(_L("%c"),key);
-			OstTraceExt1(TRACE_NORMAL, CTESTENGINE_GETNUMERICINPUT, "%c",key);
 			
 			value = ( 10 * value ) + ( key - '0' );
 			digits++;
@@ -485,7 +440,6 @@ void CTestEngine::GetNumericInput(TInt &aNumber)
 				value = value/10;
 				digits--;
 				test.Printf(_L("\r    \r%d"), value);
-				OstTrace1(TRACE_NORMAL, CTESTENGINE_GETNUMERICINPUT_DUP01, "\r    \r%d", value);
 				}
 			}
 		}
@@ -495,7 +449,6 @@ void CTestEngine::GetNumericInput(TInt &aNumber)
 		aNumber = value;
 		}
 	test.Printf(_L("\n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_GETNUMERICINPUT_DUP02, "\n");
 	}
 
 
@@ -505,25 +458,19 @@ void CTestEngine::Report()
 	{
 	TBuf<KTestCaseIdLength> aTestCaseId;
 	test.Printf(_L("============================\n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_REPORT, "============================\n");
 	test.Printf(_L("PASSED TESTS:\n"));
-	OstTrace0(TRACE_NORMAL, CTESTENGINE_REPORT_DUP01, "PASSED TESTS:\n");
 	// itterate our list of tests to perform
 	ResetTestCaseIndex();
 	while (KErrNone == NextTestCaseId(aTestCaseId))
 		{
 		test.Printf(_L("%S\n"), &aTestCaseId);
-		OstTraceExt1(TRACE_NORMAL, CTESTENGINE_REPORT_DUP02, "%S\n", aTestCaseId);
 		}
 	}
 	
 	
 void CTestEngine::DoCancel()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTENGINE_DOCANCEL);
-	    }
+	LOG_FUNC
 	test.Console()->ReadCancel();	
 	}
 		

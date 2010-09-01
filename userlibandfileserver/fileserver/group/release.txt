@@ -1,539 +1,386 @@
-Version 2.00.3058
-=================
-(Made by fadhliM 30/07/2010)
-
-1.	niccox
-	1.	ou1cimx1#393936 Incorrect update of progress bar with format of Usb Mass Storage 
-	2.	ou1cimx1#500789 ENV : F32Test T_WCACHE - Incorrect Check for Disk Size
-
-
-Version 2.00.3057
-=================
-(Made by fadhliM 27/07/2010)
-
-1.	niccox
-	1.	ou1cimx1#393936 Incorrect update of progress bar with format of Usb Mass Storage 
-	2.	ou1cimx1#493805 USB Host MS does not recognise NTFS partition info
-
-2.	h14jiang
-	1.	ou1cimx1#495683 FileServer - Bad usage of RArray::Append() and RPointerArray::Append()
-
-
-Version 2.00.3056
+Version 2.00.2505
 =================
 (Made by fadhliM 26/07/2010)
 
-1.	dlyokhin
-	1.	ou1cimx1#481268 ENV: F32TEST T_FILE Fails during testMultipleReadFile()
+1.	h14jiang
+	1.	ou1cimx1#495678 FileServer - Bad usage of RArray::Append() and RPointerArray::Append()
 
-2.	necliffo
-	1.	ou1cimx1#456106 [DEV] Improve MedMMC and PBus Coverage
-
-3.	martai
-	1.	ou1cimx1#493927 ENV : E32TEST T_SHADOW Fails during testMultipleReadFile()
-
-4.	migubarr
-	1.	ou1cimx1#469293 t_pwstr failures
-	2.	ou1cimx1#488785 SD stack: formatting a card on a multiple-card stack can fail with KErrNotReady
-	3.	ou1cimx1#485015 Internal file server attribute (KEntryAttModified) can be returned to the client
-	4.	ou1cimx1#459805 Querying the attributes of an open file on the emulator's Z: drive returns incorrect attributes
-
-5.	michcox
-	1.	ou1cimx1#455757 MINOR_CHANGE - t_fman test fail error code print out
-	2.	MINOR_CHANGE MCL change includes from <F32Plugin.h> to <f32plugin.h> (i.e. case correction)
+2.	michcox
+	1.	MINOR_CHANGE 9.2 change includes from <F32Plugin.h> to <f32plugin.h> (i.e. case correction)
 
 
-Version 2.00.3055
+Version 2.00.2504
 =================
-(Made by fadhliM 23/07/2010)
+(Made by fadhliM 21/07/2010)
 
-1.	michcox
-	1.	ou1cimx1#488769 Race condition in file server plugins
-	2.	ou1cimx1#502970 [ENV] Fileserver Coverity Defects
-
-2.	niccox
-	1.	ou1cimx1#486762 ENV T_FSCHED.EXE failure: line 936, after "Sync read done 0 ms before the write ended"
+1.	dlyokhin
+	1.	ou1cimx1#491761 ENV 92 : CAtaFatTable::DataPositionInBytes() Should Fail 'Gracefully' if Cluster is Invalid (Corrupted Media)
 
 
-Version 2.00.3054
+Version 2.00.2503
 =================
 (Made by fadhliM 19/07/2010)
 
 1.	migubarr
+	1.	ou1cimx1#485027 Internal file server attribute (KEntryAttModified) can be returned to the client
+	2.	ou1cimx1#493751 Querying the attributes of an open file on the emulator's Z: drive returns incorrect attributes
+
+
+Version 2.00.2502
+=================
+(Made by famustaf 14/07/2010)
+
+1.	frhofman
+	1.	ou1cimx1#489934 ENV F32TEST T_RCACHE test failure investigation (t_rcache.cpp:1556)
+
+2.	migubarr
 	1.	ou1cimx1#476545 Inefficiencies in RFile::SetSize() & RFile::Write()
 
 
-Version 2.00.3053
+Version 2.00.2501
 =================
-(Made by famustaf 12/07/2010)
+(Made by famustaf 07/07/2010)
+
+1.	migubarr
+	1.	REQ 415-7212 NFE drive encryption on Demand Paging-enabled device
+
+
+Version 2.00.2500
+=================
+(Made by vfebvre 29/06/2010)
 
 1.	h14jiang
-	1.	ou1cimx1#428840 Not getting any Notification from RFs::NotifyDiskSpace() for E and F drive when when tested multiple time.
-
-2.	famustaf
-	1.	ou1cimx1#466351 Modify t_nmbs for Platsim's HVFS
-
-3.	migubarr
-	1.	ou1cimx1#437919 File Server flushes FAT metadata too often
+	1.	ou1cimx1#428824 Not getting any Notification from RFs::NotifyDiskSpace() for E and F drive when when tested multiple time.
 
 
-Version 2.00.3052
-=================
-(Made by famustaf 01/07/2010)
-
-1.	dlyokhin
-	1.	ou1cimx1#424702 FAT, exFAT should allow volume finalisation even if it has opened files or directories
-
-
-Version 2.00.3051
-=================
-(Made by vfebvre 21/06/2010)
-
-1.	michcox
-	1.	ou1cimx1#439295 [DEV] MCL Improve Code Coverage in MFS Code - Improve CFileMan observer
-
-
-Version 2.00.3050
+Version 2.00.2065
 =================
 (Made by vfebvre 18/06/2010)
 
-1.	shubmurt
-	1.	ou1cimx1#428765 Case and Slash fix for Linux Build
-
-2.	dlyokhin
-	1.	ou1cimx1#423737 FAT FS can report incorrect volume size
+1.	erifung
+	1.	ou1cimx1#435443 ENV F32TEST T_LDRCHECK test failure investigation (t_ldrcheck.cpp:714)
 
 
-Version 2.00.3049
+Version 2.00.2064
 =================
 (Made by vfebvre 15/06/2010)
 
 1.	migubarr
-	1.	ou1cimx1#393016 Crash when usb memory is dismounted during copy
+	1.	ou1cimx1#441149 File Server flushes FAT metadata too often
 
 2.	michcox
-	1.	ou1cimx1#419149 MCL fix CDirStack array panic
+	1.	ou1cimx1#418214 9.2 fix CDirStack array panic
 
 
-Version 2.00.3048
-=================
-(Made by vfebvre 14/06/2010)
-
-1.	migubarr
-	1.	ou1cimx1#420772 File Server flushes FAT metadata too often
-
-
-Version 2.00.3047
+Version 2.00.2063
 =================
 (Made by vfebvre 11/06/2010)
 
-1.	dlyokhin
-	1.	ou1cimx1#423683 IT__BITO_SSS - 92_201019_hw79- \sf\os\kernelhwsrv\- Bad usage of RXXX::Connect() derived from RSessionBase
-
-2.	paconway
-	1.	DEF144802 CDynamicDirCache tests should be automated
-	2.	DEF144801 CDynamicDirCache leaks cache pages occasionally
+1.	migubarr
+	1.	ou1cimx1#424879 Phone resets sometimes when disconnecting OTG cable during playback
 
 
-Version 2.00.3046
+Version 2.00.2062
 =================
 (Made by vfebvre 07/06/2010)
 
 1.	davegord
-	1.	ou1cimx1#414735 Occasional Loader crashes observed during T_WSD_TST_* tests
+	1.	ou1cimx1#414834 TB92 Occasional Loader crashes observed during T_WSD_TST_* tests
 		Crash caused by interrupt occurring during handling of SWI called from
 		SVC mode -- which is not supported. Fix is for Loader not to call RDebug
 		methods while executing in supervisor mode.
 
 
-Version 2.00.3045
-=================
-(Made by vfebvre 04/06/2010)
-
-1.	famustaf
-	1.	ou1cimx1#383105 Modify F32 Tests for Platsim's HVFS
-
-
-Version 2.00.3044
+Version 2.00.2061
 =================
 (Made by vfebvre 27/05/2010)
 
 1.	vfebvre
-	1.	ou1cimx1#400806 Warnings reported by the Symbian Foundation license checker
-
-2.	h14jiang
-	1.	DEF145205 File server crash observed when running F32TEST T_PLUGIN_V2
-
-3.	michcox
-	1.	ou1cimx1#378866 MCL Symbian.org Bug 2544 -  Possible deadlocks on f32 plugin chains
-
-4.	vinjose
-	1.	ou1cimx1#394794 Raptor creates incorrect .iby files for f32test/loader
+	1.	ou1cimx1#400807 Warnings reported by the Symbian Foundation license checker
 
 
-Version 2.00.3043
+Version 2.00.2060
 =================
-(Made by vfebvre 27/05/2010)
+(Made by vfebvre 25/05/2010)
 
-1.	paconway
-	1.	REQ 417-56766 MBBMS over CMMB for TD-SCDMA Gen. 2 MobileTv
-		PackageReleaseID=497412 FeatureReleaseID=494378
+1.	migubarr
+	1.	ou1cimx1#393012 Crash when usb memory is dismounted during copy
+
+2.	michcox
+	1.	ou1cimx1#378895 TB92 Symbian.org Bug 2544 -  Possible deadlocks on f32 plugin chains
 
 
-Version 2.00.3042
+Version 2.00.2059
+=================
+(Made by vfebvre 21/05/2010)
+
+1.	niccox
+	1.	ou1cimx1#391109 Incorrect update of progress bar with format of Usb Mass Storage
+
+
+Version 2.00.2058
 =================
 (Made by vfebvre 14/05/2010)
 
-1.	migubarr
-	1.	REQ 428-1297 Migrate File Server Tracing from UTF to OST
-		PackageReleaseID=495120
+1.	famustaf
+	1.	ou1cimx1#380187 Build on Linux - Incorrect slash in #include in sf_sys.cpp
+		Changed backslash to forward slash.
 
 
-Version 2.00.3041
+Version 2.00.2057
 =================
-(Made by vfebvre 13/05/2010)
+(Made by vfebvre 07/05/2010)
 
 1.	famustaf
-	1.	ou1cimx1#380321 Build on Linux - Incorrect slash in #include in sf_sys.cpp
-
-
-Version 2.00.3040
-=================
-(Made by vfebvre 12/05/2010)
-
-1.	cnotton
-	1.	MINOR_CHANGE Corrected MRP comment text
-
-2.	hengrant
-	1.	ou1cimx1#370931 Memory card gets locked by itself MCL
-
-
-Version 2.00.3039
-=================
-(Made by vfebvre 06/05/2010)
-
-1.	famustaf
-	1.	ou1cimx1#372432 CFileMan malfunctioning in copying
+	1.	ou1cimx1#372053 CFileMan malfunctioning in copying
 
 2.	dlyokhin
-	1.	ou1cimx1#372220 File server may request more free space on the volume than necessary
+	1.	ou1cimx1#372172 File server may request more free space on the volume than necessary
 
 
-Version 2.00.3038
+Version 2.00.2056
 =================
 (Made by vfebvre 05/05/2010)
 
 1.	niccox
-	1.	ou1cimx1#371028 shostmassstorage capabilities are too high
+	1.	ou1cimx1#371021 shostmassstorage capabilities are too high
 
 
-Version 2.00.3037
+Version 2.00.2055
 =================
 (Made by vfebvre 30/04/2010)
 
-1.	vfebvre
-	1.	ou1cimx1#357360 Some test binaries are targeted by several bld.inf files
-
-2.	frhofman
-	1.	ou1cimx1#367552 BC Drivers: Os/KernelHwSrv: 2 failures in Base API on Vasco
-
-3.	michcox
-	1.	ou1cimx1#357494 Maps 3.04: File mode EFileWrite (defined in f32file.h) corrupts memory of other processes under certain conditions on 5.0 devices
-	2.	ou1cimx1#367062 Update T_filecache for ou1cimx1#357494
+1.	frhofman
+	1.	ou1cimx1#360143 BC Drivers: Os/KernelHwSrv: 2 failures in Base API on Vasco
 
 
-Version 2.00.3036
-=================
-(Made by vfebvre 27/04/2010)
-
-1.	erifung
-	1.	DEF144399 Frequent T_LDRCHECK failures on the H4
-
-
-Version 2.00.3035
+Version 2.00.2054
 =================
 (Made by vfebvre 23/04/2010)
 
-1.	niccox
-	1.	ou1cimx1#357492 Disconnecting memory card reader/writer from phone causes phone crash
+1.	michcox
+	1.	ou1cimx1#357507 TB92 Maps 3.04: File mode EFileWrite (defined in f32file.h) corrupts memory of other processes under certain conditions on 5.0 devices
 
 
-Version 2.00.3034
+Version 2.00.2053
 =================
-(Made by vfebvre 20/04/2010)
-
-1.	vfebvre
-	1.	REQ417-62711 Sirocco: Build and Test Systems Migration
-		PackageReleaseID=487623 FeaturePlanID=457782
-
-
-Version 2.00.3033
-=================
-(Made by vfebvre 16/04/2010)
+(Made by vfebvre 22/04/2010)
 
 1.	niccox
-	1.	DEF145330 Error in mass storage note when connecting SanDisk 16GB stick to phone
+	1.	ou1cimx1#356808 Disconnecting memory card reader/writer from phone causes phone crash
 
 
-Version 2.00.3032
-=================
-(Made by vfebvre 16/04/2010)
-
-1.	vfebvre
-	1.	No change
-
-
-Version 2.00.3031
-=================
-(Made by vfebvre 15/04/2010)
-
-1.	migubarr
-	1.	REQ 415-7212 NFE drive encryption on Demand Paging-enabled device, kernelhwsrv/MCL
-		PackageReleaseID=453228 FeatureReleaseID=447937
-
-
-Version 2.00.3030
+Version 2.00.2052
 =================
 (Made by vfebvre 14/04/2010)
 
 1.	famustaf
-	1.	DEF145043 F32TEST T_FSYS test failure investigation
-		Added the KMediaRemountForceMediaChange flag in the call to RemountDrive() to
-		simulate ejecting and re-inserting the media.
+	1.	PDEF145305 F32TEST T_FSYS test failure investigation
 
 
-Version 2.00.3029
-=================
-(Made by vfebvre 12/04/2010)
-
-1.	kmetherm
-	1.	REQ 417-57581 RVCT 4 compatible software codebase (SSS)
-		PackageReleaseID=476546 FeaturePlanID=444184
-
-
-Version 2.00.3028
+Version 2.00.2051
 =================
 (Made by vfebvre 09/04/2010)
 
+1.	niccox
+	1.	DEF145248 Error in mass storage note when connecting SanDisk 16GB stick to phone
+
+
+Version 2.00.2050
+=================
+(Made by vfebvre 24/03/2010)
+
 1.	fagortz
-	1.	PDEF145219 TTPA-83EAYU: Partition handling for USB drives with 4K block size is incorrect
+	1.	DEF145067: TTPA-83EAYU: Partition handling for USB drives with 4K block size is incorrect
 
 
-Version 2.00.3027
-=================
-(Made by vfebvre 08/04/2010)
-
-1.	frhofman
-	1.	DEF145044: F32TEST T_HANDSHARE test failure investigation
-
-
-Version 2.00.3026
-=================
-(Made by vfebvre 30/03/2010)
-
-1.	michcox
-	1.	DEF145235 DNAK-83X92C Symbian^3 SDK : Compilation error in Error in "f32notification.h"
-
-
-Version 2.00.3025
-=================
-(Made by vfebvre 26/03/2010)
-
-1.	famustaf
-	1.	REQ 417-52995 Improved rugged FAT performance
-		PackageReleaseID=419439 FeatureReleaseID=419437
-
-
-Version 2.00.3024
+Version 2.00.2049
 =================
 (Made by vfebvre 22/03/2010)
 
-1.	migubarr
-	1.	DEF144423 Frequent T_RCACHE failures on the H2/H6 (line 1556)
-
-2.	michcox
-	1.	PDEF145110 File server does not check return result of some User::ReAlloc()'s 
+1.	michcox
+	1.	DEF145080 SMAD-83NJMP: File server does not check return result of some User::ReAlloc()'s
 
 
-Version 2.00.3023
+Version 2.00.2048
 =================
 (Made by vfebvre 15/03/2010)
 
 1.	niccox
-	1.	DEF145021 Improper Mass Storage Error Code for Empty Drive case
-
-2.	shamaden
-	1.	PDEF144922 TRAI-82RJFS Crash when usb memory is dismounted during copy 
+	1.	DEF144933 Improper Mass Storage Error Code for Empty Drive case
 
 
-Version 2.00.3022
+Version 2.00.2047
 =================
 (Made by vfebvre 12/03/2010)
 
 1.	famustaf
 	1.	MINOR_CHANGE Updated RFs::ScanDrive and RFs::CheckDisk Documentation
 
-2.	michcox
-	1.	DEF144912 T_EXT1 fails under platsim as it doesn't support fsys extensions 
 
-
-Version 2.00.3021
+Version 2.00.2046
 =================
-(Made by vfebvre 11/03/2010)
+(Made by vfebvre 10/03/2010)
 
 1.	frhofman
-	1.	PDEF144919: SALM-82WCVK: efile.exe crashes in dynamic dir cache code when out-of-memory
+	1.	PDEF144910: Revert IsFileOpen() behaviour to perform file existance check
+	2.	DEF144911: SALM-82WCVK: efile.exe crashes in dynamic dir cache code when out-of-memory
 
 
-Version 2.00.3020
+Version 2.00.2045
 =================
 (Made by vfebvre 08/03/2010)
 
-1.	niccox
-	1.	PDEF144805 Transcend flash drive not recognised 
+1.	shamaden
+	1.	DEF144753 Crash when usb memory is dismounted during copy
 
 2.	dlyokhin
-	1.	PDEF144751 FAT: unable to mount volume larger than 1TB  
+	1.	DEF144750 FAT: unable to mount volume larger than 1TB  
 
 
-Version 2.00.3019
+Version 2.00.2044
+=================
+(Made by vfebvre 05/03/2010)
+
+1.	niccox
+	1.	DEF144749 Transcend flash drive not recognised 
+
+
+Version 2.00.2043
 =================
 (Made by vfebvre 04/03/2010)
 
 1.	dlyokhin
-	1.	PDEF144780  exFAT: T_chkUID test failure  
+	1.	DEF144779 exFAT: T_chkUID test failure  
 
 
-Version 2.00.3018
+Version 2.00.2042
 =================
 (Made by vfebvre 03/03/2010)
 
 1.	niccox
-	1.	DEF144738 Initialisation of MaxLun if USB device stalls request
+	1.	DEF144548 Initialisation of MaxLun if USB device stalls request
 
 
-Version 2.00.3017
+Version 2.00.2041
 =================
 (Made by vfebvre 02/03/2010)
 
 1.	dlyokhin
-	1.	DEF144683 TUint32 overflow in CFatFileCB::DoExpandFileL()
+	1.	DEF144598 FAT leaf directory cache should be enabled by default  
 
 
-Version 2.00.3016
+Version 2.00.2040
 =================
 (Made by vfebvre 26/02/2010)
 
 1.	famustaf
-	1.	PDEF144638 Missing Trap in a non-leaving function.
+	1.	DEF144608 Missing Trap in a non-leaving function.
 
-2.	frhofman
-	1.	DEF144651: Revert IsFileOpen() behaviour to perform file existance check
-
-3.	dlyokhin
-	1.	PDEF144599 FAT leaf directory cache should be enabled by default  
-	2.	DEF144629 Better checks in CFat16FixedCache code  
+2.	dlyokhin
+	1.	PDEF144630 Better checks in CFat16FixedCache code 
 
 
-Version 2.00.3015
-=================
-(Made by vfebvre 25/02/2010)
-
-1.	niccox
-	1.	DEF144571 remove redundant bootsector code from smassstorage
-
-
-Version 2.00.3014
+Version 2.00.2039
 =================
 (Made by vfebvre 23/02/2010)
 
-1.	jsucksmi
-	1.	PDEF144223:Emulated removable drive X is not present in tb10.1(MSF00326) and tb9.2(1014) 
+1.	niccox
+	1.	DEF144323 remove redundant bootsector code from smassstorage
 
 
-Version 2.00.3013
-=================
-(Made by vfebvre 19/02/2010)
-
-1.	dlyokhin
-	1.	DEF144487: FAT FS should allow skipping file timestamp update on data flushing
-
-
-Version 2.00.3012
+Version 2.00.2038
 =================
 (Made by vfebvre 18/02/2010)
 
 1.	famustaf
-	1.	DEF144437 Optimise TParseBase::AddDir() to not use TFileName
+	1.	PDEF144438 Optimise TParseBase::AddDir() to not use TFileName
 
 2.	migubarr
-	1.	PDEF144408: File Server request cache is not big enough for S60 
+	1.	DEF144407: File Server request cache is not big enough for S60
 
 
-Version 2.00.3011
+Version 2.00.2037
 =================
 (Made by vfebvre 11/02/2010)
 
 1.	dlyokhin
-	1.	PDEF144357 VFAT interoperability: LFN entries padding is wrong
+	1.	DEF144356 VFAT interoperability: LFN entries padding is wrong
 
 
-Version 2.00.3010
+Version 2.00.2036
 =================
 (Made by vfebvre 09/02/2010)
 
 1.	kaduan
-	1.	DEF144138:  Unwanted directory cache change caused performance regression 
+	1.	PDEF144352:  Unwanted directory cache change caused performance regression 
 
 2.	dlyokhin
-	1.	PDEF144270 potential memory leak in TFindFile::FindWildByDir()  
+	1.	DEF144134 potential memory leak in TFindFile::FindWildByDir()  
 
 
-Version 2.00.3009
+Version 2.00.2035
 =================
 (Made by vfebvre 05/02/2010)
 
 1.	niccox
-	1.	PDEF144293 Add ModeSense10 support to USB MS Client
+	1.	DEF144268 Add ModeSense10 support to USB MS Client
 
 
-Version 2.00.3008
+Version 2.00.2034
 =================
 (Made by vfebvre 03/02/2010)
 
 1.	migubarr
-	1.	PDEF144173: Small FAT32 partitions on large media can sometimes be formatted incorrectly 
+	1.	DEF144172: Small FAT32 partitions on large media can sometimes be formatted incorrectly 
 
 
-Version 2.00.3007
+Version 2.00.2033
+=================
+(Made by vfebvre 01/02/2010)
+
+1.	jsucksmi
+	1.	DEF144003 Emulated removable drive X is not present in tb10.1(MSF00326) and tb9.2(1014) 
+
+
+Version 2.00.2032
 =================
 (Made by vfebvre 28/01/2010)
 
 1.	famustaf
-	1.	DEF144032 Change tests in t_fman to use __E32TEST_EXTENSION__
+	1.	PDEF144033 Change tests in t_fman to use __E32TEST_EXTENSION__
 
 2.	hengrant
-	1.	DEFECT FIX: DEF144005 New Memory & File Server Coverity Defects
-		Fix 3 Coverity Issues
+	1.	PDEF144090 New Memory & File Server Coverity Defects
+		3 Coverity Fixes
 
 
-Version 2.00.3006
+Version 2.00.2031
+=================
+(Made by vfebvre 26/01/2010)
+
+1.	famustaf
+	1.	MINOR_CHANGE Add documentation to 'Copy' in Text Shell (TB9.2)
+		Added documentation to state that ShellFunction::Copy will overwrite existing file(s)
+
+
+Version 2.00.2030
 =================
 (Made by vfebvre 21/01/2010)
 
 1.	dlyokhin
-	1.	PDEF143792 FAT: renaming many files in a directory corrupts short file names  
+	1.	PDEF143791 FAT: renaming many files in a directory corrupts short file names
 
 
-Version 2.00.3005
+Version 2.00.2029
 =================
 (Made by vfebvre 19/01/2010)
 
 1.	necliffo
-	1.	DEF143911 WDP: T_locate fails on VASCO 
+	1.	PDEF143913 WDP: T_locate fails on VASCO 
 
 
-Version 2.00.3004
+Version 2.00.2028
 =================
 (Made by vfebvre 15/01/2010)
 
@@ -541,46 +388,25 @@ Version 2.00.3004
 	1.	PDEF143832 t_falsespace should not be run on drive if media type is EMediaRAM
 
 
-Version 2.00.3003
+Version 2.00.2027
 =================
 (Made by vfebvre 15/01/2010)
 
 1.	niccox
-	1.	DEF143785 USB Host MS does not handle non-mass-storage drive correctly
-	2.	MINOR_CHANGE hostusbmsapp support for different screen sizes
+	1.	PDEF143508 Host USB ModeSense10 command does not decode ModeDataLength
+	2.	MINOR_CHANGE usbtestclient corrections
+	3.	MINOR_CHANGE hostusbmsapp support for different screen sizes
+	4.	DEF143785 USB Host MS does not handle non-mass-storage drive correctly
 
 2.	kaduan
-	1.	PDEF143820: File system caching should be turned off on the S60 emulator 
+	1.	DEF143211 File system caching should be turned off on the S60 emulator
+	2.	DEF136627:  T_HANDSHARE failed on NE1_TB_ARMV5.UDEB.SMPPAGE image 
 
 3.	migubarr
-	1.	PDEF143787: t_ms_mountstart fails on H4 and VASCO
+	1.	DEF143592: t_ms_mountstart fails on H4 and VASCO 
 
-
-Version 2.00.3002
-=================
-(Made by vfebvre 13/01/2010)
-
-1.	kaduan
-	1.	PDEF143778 T_HANDSHARE failed on NE1_TB_ARMV5.UDEB.SMPPAGE image
-
-2.	dlyokhin
-	1.	DEF143404 FAT: deleting VFAT entryset is not optimal
-
-
-Version 2.00.3001
-=================
-(Made by vfebvre 12/01/2010)
-
-1.	niccox
-	1.	MINOR_CHANGE usbtestclient corrections
-
-
-Version 2.00.3000
-=================
-(Made by vfebvre 07/01/2010)
-
-1.	niccox
-	1.	DEF143508 Host USB ModeSense10 command does not decode ModeDataLength
+4.	dlyokhin
+	1.	PDEF143794  FAT: deleting VFAT entryset is not optimal
 
 
 Version 2.00.2026

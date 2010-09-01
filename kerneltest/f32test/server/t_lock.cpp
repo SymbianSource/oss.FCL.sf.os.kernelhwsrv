@@ -15,7 +15,6 @@
 // 
 //
 
-#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include "t_server.h"
@@ -62,11 +61,11 @@ LOCAL_C void DoFormat()
 #else
 	TInt r=format.Open(TheFs,_L("C:\\"),EHighDensity,count);
 #endif
-	test_KErrNone(r);
+	test(r==KErrNone);
 	while(count)
 		{
 		r=format.Next(count);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		}
 	format.Close();
 	}
@@ -84,7 +83,7 @@ LOCAL_C void MakeTestDirectory()
 	test.Next(_L("Formatting disk"));
 	DoFormat();
 	r=TheFs.MkDir(testDir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	}
 
 RFileTest::RFileTest(const TDesC& aName)
@@ -102,7 +101,7 @@ RFileTest& RFileTest::Replace(const TDesC& aName)
 
 	test.Printf(_L("%S replace %S\n"),&iName,&aName);
 	TInt r=RFile::Replace(TheFs,aName,EFileStream|EFileWrite|EFileShareAny);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	return(*this);
 	}
 
@@ -114,7 +113,7 @@ RFileTest& RFileTest::Open(const TDesC& aName)
 
 	test.Printf(_L("%S open %S\n"),&iName,&aName);
 	TInt r=RFile::Open(TheFs,aName,EFileStream|EFileWrite|EFileShareAny);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	return(*this);
 	}
 
@@ -126,7 +125,7 @@ RFileTest& RFileTest::Lock(TInt aPos,TInt aLen)
 
 	test.Printf(_L("%S lock   %08x-%08x\n"),&iName,aPos,aPos+aLen-1);
 	TInt r=RFile::Lock(aPos,aLen);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	return(*this);
 	}
 
@@ -138,7 +137,7 @@ RFileTest& RFileTest::LockE(TInt aPos,TInt aLen)
 
 	test.Printf(_L("%S lockE  %08x-%08x\n"),&iName,aPos,aPos+aLen-1);
 	TInt r=RFile::Lock(aPos,aLen);
-	test_Value(r, r == KErrLocked);
+	test(r==KErrLocked);
 	return(*this);
 	}
 
@@ -150,7 +149,7 @@ RFileTest& RFileTest::UnLock(TInt aPos,TInt aLen)
 
 	test.Printf(_L("%S ulock  %08x-%08x\n"),&iName,aPos,aPos+aLen-1);
 	TInt r=RFile::UnLock(aPos,aLen);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	return(*this);
 	}
 
@@ -162,7 +161,7 @@ RFileTest& RFileTest::UnLockE(TInt aPos,TInt aLen)
 
 	test.Printf(_L("%S ulockE %08x-%08x\n"),&iName,aPos,aPos+aLen-1);
 	TInt r=RFile::UnLock(aPos,aLen);
-	test_Value(r, r == KErrNotFound);
+	test(r==KErrNotFound);
 	return(*this);
 	}
  
@@ -175,7 +174,7 @@ RFileTest& RFileTest::LockEA(TInt aPos,TInt aLen)
 
 	test.Printf(_L("%S lock   %08x-%08x\n"),&iName,aPos,aPos+aLen-1);
 	TInt r=RFile::Lock(aPos,aLen);
-	test_Value(r, r == KErrArgument);
+	test(r==KErrArgument);
 	return(*this);
 	}
 
@@ -187,7 +186,7 @@ RFileTest& RFileTest::UnLockEA(TInt aPos,TInt aLen)
 
 	test.Printf(_L("%S ulock  %08x-%08x\n"),&iName,aPos,aPos+aLen-1);
 	TInt r=RFile::UnLock(aPos,aLen);
-	test_Value(r, r == KErrArgument);
+	test(r==KErrArgument);
 	return(*this);
 	}
 
@@ -199,7 +198,7 @@ RFileTest& RFileTest::Write(TInt aPos,TInt aLen)
 
 	test.Printf(_L("%S write  %08x-%08x\n"),&iName,aPos,aPos+aLen-1);
 	TInt r=RFile::Write(aPos,Pattern,aLen);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	return(*this);
 	}
 
@@ -211,7 +210,7 @@ RFileTest& RFileTest::WriteE(TInt aPos,TInt aLen)
 
 	test.Printf(_L("%S writeE %08x-%08x\n"),&iName,aPos,aPos+aLen-1);
 	TInt r=RFile::Write(aPos,Pattern,aLen);
-	test_Value(r, r == KErrLocked);
+	test(r==KErrLocked);
 	return(*this);
 	}
 
@@ -223,7 +222,7 @@ RFileTest& RFileTest::Read(TInt aPos,TInt aLen)
 
 	test.Printf(_L("%S read   %08x-%08x\n"),&iName,aPos,aPos+aLen-1);
 	TInt r=RFile::Read(aPos,Buffer,aLen);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	return(*this);
 	}
 
@@ -235,7 +234,7 @@ RFileTest& RFileTest::ReadE(TInt aPos,TInt aLen)
 
 	test.Printf(_L("%S readE  %08x-%08x\n"),&iName,aPos,aPos+aLen-1);
 	TInt r=RFile::Read(aPos,Buffer,aLen);
-	test_Value(r, r == KErrLocked);
+	test(r==KErrLocked);
 	return(*this);
 	}
 
@@ -247,7 +246,7 @@ RFileTest& RFileTest::Size(TInt aSize)
 
 	test.Printf(_L("%S size   %08x\n"),&iName,aSize);
 	TInt r=RFile::SetSize(aSize);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	return(*this);
 	}
 
@@ -259,7 +258,7 @@ RFileTest& RFileTest::SizeE(TInt aSize)
 
 	test.Printf(_L("%S sizeE  %08x\n"),&iName,aSize);
 	TInt r=RFile::SetSize(aSize);
-	test_Value(r, r == KErrLocked);
+	test(r==KErrLocked);
 	return(*this);
 	}
 

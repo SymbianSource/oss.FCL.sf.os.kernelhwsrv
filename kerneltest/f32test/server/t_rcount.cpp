@@ -15,7 +15,6 @@
 // 
 //
 
-#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 
@@ -41,7 +40,7 @@ LOCAL_C void Test1()
 	name[0] = gExeFileName[0];
 	test.Printf(_L("%S\n"),&name);
 	TInt r=file.Open(TheFs,name,EFileRead);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	count=TheFs.ResourceCount();
 	test(count==1);
 	file.Close();
@@ -60,14 +59,14 @@ LOCAL_C TInt TestPanic(TAny*)
 	User::SetJustInTime(EFalse);
 	RFs fs;
 	TInt r=fs.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	RFile file;
 	fs.ResourceCountMarkStart();
 	TFileName name=_L("Z:\\Test\\T_FILE.CPP");
 	name[0] = gExeFileName[0];
 
 	r=file.Open(fs,name,EFileRead);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TInt count=fs.ResourceCount();
 	test(count==1);
 	fs.ResourceCountMarkEnd(); // MarkEnd without close
@@ -85,7 +84,7 @@ LOCAL_C void Test2()
 	TRequestStatus stat;	
 	RThread t;
 	TInt r=t.Create(_L("TestPanicThread"),TestPanic,KDefaultStackSize,KHeapSize,KHeapSize,NULL);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	t.Logon(stat);
 	t.Resume();
 	User::WaitForRequest(stat);	
@@ -155,11 +154,11 @@ LOCAL_C TInt SendBadHandle3(TAny*)
 	{
 	RFs f;
 	TInt r = f.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	RFile a;
 	r=a.Replace(f,KFileName1,EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	RFile b(a);
 	a.Close();
 	
@@ -182,11 +181,11 @@ LOCAL_C TInt SendBadHandle4(TAny*)
 	{
 	RFs f;
 	TInt r = f.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	RDir a;
 	r=a.Open(f,KDirName1,KEntryAttNormal);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	RDir b(a);
 	a.Close();
 	
@@ -216,12 +215,12 @@ LOCAL_C TInt SendBadHandle5(TAny*)
 
 	RFs f;
 	TInt r = f.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	RFormat a;
 	TInt count;
 	r=a.Open(f,KDrive1,EQuickFormat,count);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	RFormat b(a);
 	a.Close();
 	
@@ -251,12 +250,12 @@ LOCAL_C TInt SendBadHandle6(TAny*)
 	
 	RFs f;
 	TInt r = f.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	RRawDisk a;
     r=a.Open(f,KDrive1);
 
-	test_KErrNone(r);
+	test(r==KErrNone);
 	RRawDisk b(a);
 	a.Close();
 	TBuf8<19> buffer;

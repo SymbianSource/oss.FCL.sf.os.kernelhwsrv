@@ -293,6 +293,7 @@ void CAtaDisk::ReadL(TInt64 aPos,TInt aLength,const TAny* aTrg,const RMessagePtr
 	User::LeaveIfError(iDrive.ReadNonCritical(aPos,aLength,aTrg,aMessage,anOffset, aFlag));
 	}
 
+
 //-------------------------------------------------------------------------------------
 
 /**
@@ -325,6 +326,7 @@ void CAtaDisk::WriteL(TInt64 aPos,TInt aLength,const TAny* aSrc,const RMessagePt
     iFatMount->FAT().InvalidateCacheL(aPos,aLength);
 
 	}
+
 
 //-------------------------------------------------------------------------------------
 
@@ -453,6 +455,7 @@ void CRamDisk::ReadL(TInt64 aPos,TInt aLength,const TAny* /*aTrg*/,const RMessag
 	aMessage.WriteL(0,buf,anOffset);
 	}
 
+	
 //-------------------------------------------------------------------------------------
 //
 // Write from thread relative descriptor into ramDrive
@@ -465,23 +468,6 @@ void CRamDisk::WriteL(TInt64 aPos,TInt aLength,const TAny* /*aSrc*/,const RMessa
 	TPtr8 buf(pos,aLength);
 	aMessage.ReadL(0,buf,anOffset);
 	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

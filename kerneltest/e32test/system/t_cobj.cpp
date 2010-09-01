@@ -30,7 +30,6 @@
 // - Test all the objects together: create two containers, find objects by 
 // name in a variety of ways, delete objects and verify the results are 
 // as expected.
-// - Test panic functions by behaving badly
 // Platforms/Drives/Compatibility:
 // All.
 // Assumptions/Requirement/Pre-requisites:
@@ -46,7 +45,6 @@
 #include <e32test.h>
 #include <e32svr.h>
 #include <e32ver.h>
-#include <e32panic.h>
 #include "../misc/prbs.h"
 
 struct TCObjectDump
@@ -208,7 +206,6 @@ public:
 	void Test6(void);
 	void Test7(void);
 	void Test8(void);
-	void Test9(void);
 private:
 	static void GetObjName(TName& aDest,const CObject& aObj);
 	static void GetObjFullName(TFullName& aDest,const CObject& aObj);
@@ -362,9 +359,6 @@ GLDEF_C void TestCObjects::Test6(void)
 	test(pCon->Count()==1);
 	pCon->AddL(pObj2);
 	test(pCon->Count()==2);
-
-	test((*pCon)[0]==pObj1);
-	test((*pCon)[1]==pObj2);
 
 	aFindHandle=0;
 	test(pCon->FindByName(aFindHandle, _L("xxx"), gName)==KErrNotFound);
@@ -752,119 +746,6 @@ GLDEF_C void TestCObjects::Test8(void)
 
 	}
 
-
-TInt PanicCObjectConIndexOutOfRangeFn(TAny* aCObjectCon)
-	{	
-	CObjectCon* pCObjectCon=(CObjectCon*)aCObjectCon;
-	(*pCObjectCon)[1]; // no objects added to the container
-	return KErrNone; // should not come here
-	}
-
-TInt PanicCObjectConFindIndexOutOfRangeFn(TAny* aCObjectCon)
-	{
-	CObjectCon* pCObjectCon=(CObjectCon*)aCObjectCon;
-	TInt aFindHandle=1;
-	pCObjectCon->At(aFindHandle);
-	return KErrNone; // should not come here
-	}
-
-TInt PanicCObjectConFindBadHandleFn(TAny* aCObjectCon)
-	{	
-	CObjectCon* pCObjectCon=(CObjectCon*)aCObjectCon;
-	TInt aFindHandle=KMaxTInt;
-	pCObjectCon->At(aFindHandle);
-	return KErrNone; // should not come here
-	}
-
-TInt PanicCObjectIxIndexOutOfRangeFn(TAny* aCObjectIx)
-	{	
-	CObjectIx* pCObjectIx=(CObjectIx*)aCObjectIx;
-	(*pCObjectIx)[1]; // no objects added to the container
-	return KErrNone; // should not come here
-	}
-	
-void StartPanicTest(TInt aPanicType)
-	{
-	CObjectCon* pCObjectCon=CObjectCon::NewL();
-	CObjectIx* pCObjectIx=CObjectIx::NewL();
-	RThread thread;
-	TRequestStatus status;
-	TInt r=KErrNone;
-
-	switch (aPanicType)
-		{
-		case 0:		// this index used for (PanicCObjectIxIndexOutOfRange) CObjectIx index out of range
-			r=thread.Create(_L("PanicCObjectIxIndexOutOfRangeThread"),PanicCObjectIxIndexOutOfRangeFn,KDefaultStackSize,NULL,(TAny*)pCObjectIx);
-			break;
-		case EObjFindBadHandle:			// for testing CObjectCon panic (PanicCObjectConFindBadHandle)
-			r=thread.Create(_L("PanicCObjectConFindBadHandleThread"),PanicCObjectConFindBadHandleFn,KDefaultStackSize,NULL,(TAny*)pCObjectCon);
-			break;
-		case EObjFindIndexOutOfRange:	// for testing CObjectCon panic (PanicCObjectConFindIndexOutOfRange)
-			r=thread.Create(_L("PanicCObjectConFindIndexOutOfRangeThread"),PanicCObjectConFindIndexOutOfRangeFn,KDefaultStackSize,NULL,(TAny*)pCObjectCon);
-			break;
-		case EArrayIndexOutOfRange:		// for testing CObjectCon panic (PanicCObjectConIndexOutOfRange)
-			r=thread.Create(_L("PanicCObjectConIndexOutOfRangeThread"),PanicCObjectConIndexOutOfRangeFn,KDefaultStackSize,NULL,(TAny*)pCObjectCon);
-			break;
-		default:
-			break;
-		}
-
-	test (r==KErrNone);
-	thread.SetPriority(EPriorityMore);
-	thread.Logon(status);
-	thread.Resume();
-	User::WaitForRequest(status);
-
-	test(status.Int() != KErrNone);
-	test(thread.ExitType()==EExitPanic);
-	test(thread.ExitCategory()==_L("E32USER-CBase"));
-
-	switch (aPanicType)
-		{
-		case 0:		// this index used for (PanicCObjectIxIndexOutOfRange) CObjectIx index out of range
-			test(thread.ExitReason()==EArrayIndexOutOfRange);
-			break;
-		case EObjFindBadHandle:			// for testing CObjectCon panic (PanicCObjectConFindBadHandle)
-			test(thread.ExitReason()==EObjFindBadHandle);
-			break;
-		case EObjFindIndexOutOfRange:	// for testing CObjectCon panic (PanicCObjectConFindIndexOutOfRange)
-			test(thread.ExitReason()==EObjFindIndexOutOfRange);
-			break;
-		case EArrayIndexOutOfRange:		// for testing CObjectCon panic (PanicCObjectConIndexOutOfRange)
-			test(thread.ExitReason()==EArrayIndexOutOfRange);
-			break;
-		default:
-			break;
-		}
-	
-	CLOSE_AND_WAIT(thread);
-	delete pCObjectCon;
-	delete pCObjectIx;
-	}
-
-
-GLDEF_C void TestCObjects::Test9(void)
-	{
-	// Disable JIT debugging.
-	TBool justInTime=User::JustInTime();
-	User::SetJustInTime(EFalse);
-
-	test.Next(_L("test PanicCObjectConFindBadHandle"));
-	StartPanicTest(EObjFindBadHandle);
-	test.Next(_L("test PanicCObjectConFindIndexOutOfRange"));
-	StartPanicTest(EObjFindIndexOutOfRange);
-	test.Next(_L("test PanicCObjectConIndexOutOfRange"));
-	StartPanicTest(EArrayIndexOutOfRange);
-	test.Next(_L("test PanicCObjectIxIndexOutOfRange"));
-	StartPanicTest(0);
-
-	// Put JIT debugging back to previous status.
-	User::SetJustInTime(justInTime);
-
-	test.End();
-	}
-
-
 GLDEF_C void TestCObjects::GetObjName(TName& aDest,const CObject& aObj)
 //
 // Utility function to reduce stack usage in functions, and so get rid of __chkstk errors
@@ -1174,9 +1055,7 @@ void TestCObjectConIxL(void)
 		
 		TInt handle = ix->AddL(obj);
 		test(ix->At(handle) == obj);
-		test(ix->AtL(handle) == obj);
 		test(ix->At(handle, con->UniqueID()) == obj);
-		test(ix->AtL(handle, con->UniqueID()) == obj);
 
 		TName name;
 		TInt findHandle = 0;
@@ -1298,10 +1177,6 @@ GLDEF_C TInt E32Main()
 	if (err != KErrNone)
 		test.Printf(_L("TestCObjectConIxL left with %d\n"), err);
 	test(err == KErrNone);
-
-	//Test Panics
-	test.Start(_L("Test Panic functions"));
-	T.Test9();
 
 	test.End();
 

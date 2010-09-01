@@ -22,17 +22,11 @@
 #include <arm_scu.h>
 #endif
 
-extern "C" void NKIdle(TUint32 aStage)
+extern "C" void NKIdle(TInt aStage)
 	{
 	SCpuIdleHandler* cih = NKern::CpuIdleHandler();
-#ifdef __SMP__
-	TSubScheduler& ss = SubScheduler();
-	if (cih && cih->iHandler)
-		(*cih->iHandler)(cih->iPtr, aStage, ss.iUncached);
-#else
 	if (cih && cih->iHandler)
 		(*cih->iHandler)(cih->iPtr, aStage);
-#endif
 	else if (K::PowerModel)
 		K::PowerModel->CpuIdle();
 	else
@@ -62,17 +56,6 @@ TInt A::CreateVariant(const TAny* aFile, TInt aMode)
 				__KTRACE_OPT(KBOOT,Kern::Printf("VariantInitialise returns %08x", p));
 				}
 			}
-#ifdef __SMP__
-		SVariantInterfaceBlock* vib = (SVariantInterfaceBlock*)K::VariantData[0];
-		TSuperPage& spg = TheSuperPage();
-		for (i=0; i<KMaxCpus; ++i)
-			{
-			if (!vib->iUncached[i])
-				{
-				vib->iUncached[i] = (UPerCpuUncached*)(spg.iAPBootPageLin + 0xE00 + (i<<6));
-				}
-			}
-#endif
 		}
 	return KErrNone;
 	}

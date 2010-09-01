@@ -349,10 +349,6 @@ public:
 	// Delayed threads
 	SDblQue iDelayedQ;
 	TDfc iDelayDfc;
-	// KernCoreStats
-	TUint iMadeReadyCounter;	// Number of times threads' where made ready.
-	TUint iMadeUnReadyCounter;	// Number of times threads' where made unready.
-	TUint iTimeSliceExpireCounter;	// Number of times threads' time slice expire, resulting in round robin.
 	};
 
 GLREF_D TScheduler TheScheduler;
@@ -532,21 +528,21 @@ so is outside the #ifdef _DEBUG.
 /**
 @internalComponent
 */
-#define	MASK_NO_FAST_MUTEX			0x1
-#define	MASK_CRITICAL				0x2
-#define	MASK_NO_CRITICAL			0x4
-#define	MASK_KERNEL_LOCKED			0x8
-#define	MASK_KERNEL_UNLOCKED		0x10
-#define	MASK_KERNEL_LOCKED_ONCE		0x20
-#define	MASK_INTERRUPTS_ENABLED		0x40
-#define	MASK_INTERRUPTS_DISABLED	0x80
-#define	MASK_SYSTEM_LOCKED			0x100
-#define	MASK_NOT_ISR				0x400
-#define	MASK_NOT_IDFC				0x800 
-#define	MASK_NOT_THREAD				0x1000
-#define	MASK_NO_CRITICAL_IF_USER	0x2000
-#define	MASK_ALWAYS_FAIL			0x4000
-#define	MASK_NO_RESCHED				0x8000
+#define MASK_NO_FAST_MUTEX 0x1
+#define MASK_CRITICAL 0x2
+#define MASK_NO_CRITICAL 0x4
+#define MASK_KERNEL_LOCKED 0x8
+#define MASK_KERNEL_UNLOCKED 0x10
+#define MASK_KERNEL_LOCKED_ONCE 0x20
+#define MASK_INTERRUPTS_ENABLED 0x40
+#define MASK_INTERRUPTS_DISABLED 0x80
+#define MASK_SYSTEM_LOCKED 0x100
+#define MASK_NOT_ISR 0x400
+#define MASK_NOT_IDFC 0x800 
+#define MASK_NOT_THREAD 0x1000
+#define MASK_NO_CRITICAL_IF_USER 0x2000
+#define MASK_ALWAYS_FAIL 0x4000
+#define	MASK_NO_RESCHED 0x8000
 #define MASK_NO_KILL_OR_SUSPEND	0x10000
 
 #define MASK_THREAD_STANDARD ( MASK_NO_FAST_MUTEX | MASK_KERNEL_UNLOCKED | MASK_INTERRUPTS_ENABLED | MASK_NOT_ISR | MASK_NOT_IDFC )

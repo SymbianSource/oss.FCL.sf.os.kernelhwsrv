@@ -1132,8 +1132,8 @@ TInt DMmcMediaDriverFlash::LaunchFormat(TInt64 aStart, TUint32 aLength)
 		iPhysStart = aStart & ~iBlkMsk;
 
 		// formats are always block-aligned, and the buffer is initialized to 0xff
-		//  Check whether erase commands are supported by this card		
-		if ( (iCard->CSD().CCC() & KMMCCmdClassErase) && iEraseInfo.iEraseFlags) 		       
+		//  Check whether erase commands are supported by this card
+		if (iCard->CSD().CCC() & KMMCCmdClassErase)
 			{
 			// Determine the erase end point for the next command. We don't erase past the preferred erase unit
 			// size. Therefore, check which is lower, the preferred erase unit size or the end of the requested range.
@@ -2725,9 +2725,6 @@ TInt DMmcMediaDriverFlash::EngageAndSetRequest(DMmcMediaDriverFlash::TMediaReque
 
 	iMedReq = aRequest;
 	SetCurrentConsumption(aCurrent);
-
-	// Reset the card pointer just in case the stack has changed it.
-	iSession->SetCard(iCard);
 
 	TInt r = InCritical();
 	if (r == KErrNone)

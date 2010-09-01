@@ -19,10 +19,6 @@
 #define __E32BASE_H__
 #include <e32std.h>
 
-#ifdef __ARMCC__
-#pragma push
-#pragma diag_suppress 830 
-#endif
 /**
  * Container Base Class
  */
@@ -75,10 +71,8 @@ private:
 	CBase& operator=(const CBase&);
 private:
 	};
-
-#ifdef __ARMCC__	
-#pragma pop 	
-#endif
+	
+	
 	
 	
 class CBufBase : public CBase

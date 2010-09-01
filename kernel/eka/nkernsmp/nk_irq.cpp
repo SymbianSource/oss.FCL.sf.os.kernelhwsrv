@@ -29,7 +29,7 @@ NIrq		Irq[NK_MAX_IRQS];
 NIrqHandler	Handlers[NK_MAX_IRQ_HANDLERS];
 NIrqHandler* NIrqHandler::FirstFree;
 
-extern "C" void send_irq_ipi(TSubScheduler*, TInt);
+extern "C" void send_irq_ipi(TSubScheduler*);
 
 void StepCookie(volatile TUint16& p, TInt n)
 	{
@@ -252,8 +252,7 @@ void NIrqHandler::Activate(TInt aCount)
 	TRACE_IRQ12(17, this, orig, aCount);
 	if (orig & (EDisable|EUnbind|EActive))
 		return;	// disabled or already active
-	NSchedulable* tied = iTied;
-	if (tied)
+	if (iTied)
 		{
 		// we need to enforce mutual exclusion between the event handler
 		// and the tied thread or thread group, so the event handler must
@@ -262,7 +261,7 @@ void NIrqHandler::Activate(TInt aCount)
 		// can't be migrated until the event handler completes.
 		// need a pending event count for the tied thread/group
 		// so we know when the thread/group can be migrated
-		TInt tied_cpu = tied->BeginTiedEvent();
+		TInt tied_cpu = iTied->BeginTiedEvent();
 		TInt this_cpu = NKern::CurrentCpu();
 		if (tied_cpu != this_cpu)
 			{
@@ -283,8 +282,8 @@ void NIrqHandler::Activate(TInt aCount)
 		TRACE_IRQ8(19, this, orig);
 		if (!(orig & EActive))
 			{
-			if (tied)
-				tied->EndTiedEvent();
+			if (iTied)
+				iTied->EndTiedEvent();
 			return;	// that was last occurrence or event now disabled
 			}
 		}
@@ -457,27 +456,22 @@ void NIrqHandler::DoUnbind()
 	pI->Done();
 	}
 
-TInt TSubScheduler::QueueEvent(NEventHandler* aEvent)
+TBool TSubScheduler::QueueEvent(NEventHandler* aEvent)
 	{
-	TInt r = 0;
 	TInt irq = __SPIN_LOCK_IRQSAVE(iEventHandlerLock);
-	if (!(iScheduler->iIpiAcceptCpus & iCpuMask))
-		r = EQueueEvent_WakeUp;
-	else if (!iEventHandlersPending)
-		r = EQueueEvent_Kick;
+	TBool pending = iEventHandlersPending;
 	iEventHandlersPending = TRUE;
 	iEventHandlers.Add(aEvent);
 	__SPIN_UNLOCK_IRQRESTORE(iEventHandlerLock,irq);
-	return r;
+	return !pending;
 	}
 
 void TSubScheduler::QueueEventAndKick(NEventHandler* aEvent)
 	{
-	TInt kick = QueueEvent(aEvent);
-	if (kick)
+	if (QueueEvent(aEvent))
 		{
 		// extra barrier ?
-		send_irq_ipi(this, kick);
+		send_irq_ipi(this);
 		}
 	}
 

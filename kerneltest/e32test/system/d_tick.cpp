@@ -224,15 +224,6 @@ TUint TicksToMicroseconds(TDelta aTicks)
 	x /= TUint64(f);
 	return (TUint)x;
 #endif
-#if defined(__MRAP__)
-    // RTC runs with 32.768 kHz -> one tick is 
-    const TUint KRTCClockHz = 32768;
-    Int64 ticks(aTicks);
-    ticks*=(1000000);
-	ticks+=KRTCClockHz/2;		// 32.768 kHz tick
-	ticks/=KRTCClockHz;
-	return (TInt)ticks;
-#endif
 #if defined(__MAWD__) || defined(__MEIG__)
 	return aTicks*500;					// 2kHz tick
 #endif
@@ -610,9 +601,6 @@ TInt DTick::DoCreate(TInt /*aUnit*/, const TDesC8* /*anInfo*/, const TVersion& a
 #endif
 #if defined(__NE1_TB__)
 	// nothing to do since we use fast counter
-#endif
-#if defined(__MRAP__)
-	// nothing to do here RTC runs with 32.768 kHz
 #endif
 #ifdef __MAWD__
 	// Set up timer 1 as free running 2kHz clock

@@ -155,6 +155,13 @@ to be less than the longer.
 
 
 
+// class RHeap
+inline TInt RHeap::SetBrk(TInt aBrk)
+	{ return ((RChunk*)&iChunkHandle)->Adjust(aBrk); }
+
+
+
+
 // class TChar
 #ifndef __KERNEL_MODE__
 inline void TChar::SetChar(TUint aChar)
@@ -252,102 +259,6 @@ Tests whether the character is the C/C++ end-of-string character - 0.
 @return True, if the character is 0; false, otherwise.
 */
 	{return(iChar==0);}
-
-
-
-
-inline TBool TChar::IsSupplementary(TUint aChar)
-/**
-@param aChar The 32-bit code point value of a Unicode character.
-
-@return True, if aChar is supplementary character; false, otherwise.
-*/
-	{
-	return (aChar > 0xFFFF);
-	}
-
-
-
-
-inline TBool TChar::IsSurrogate(TText16 aInt16)
-/**
-@return True, if aText16 is high surrogate or low surrogate; false, otherwise.
-*/
-	{
-	return (aInt16 & 0xF800) == 0xD800;
-	}
-
-
-
-
-inline TBool TChar::IsHighSurrogate(TText16 aInt16)
-/**
-@return True, if aText16 is high surrogate; false, otherwise.
-*/
-	{
-	return (aInt16 & 0xFC00) == 0xD800;
-	}
-
-
-
-
-inline TBool TChar::IsLowSurrogate(TText16 aInt16)
-/**
-@return True, if aText16 is low surrogate; false, otherwise.
-*/
-	{
-	return (aInt16 & 0xFC00) == 0xDC00;
-	}
-
-
-
-
-inline TUint TChar::JoinSurrogate(TText16 aHighSurrogate, TText16 aLowSurrogate)
-/**
-Combine a high surrogate and a low surrogate into a supplementary character.
-
-@return The 32-bit code point value of the generated Unicode supplementary
-        character.
-*/
-	{
-	return ((aHighSurrogate - 0xD7F7) << 10) + aLowSurrogate;
-	}
-
-
-
-
-inline TText16 TChar::GetHighSurrogate(TUint aChar)
-/**
-Retrieve the high surrogate of a supplementary character.
-
-@param aChar The 32-bit code point value of a Unicode character.
-
-@return High surrogate of aChar, if aChar is a supplementary character; 
-        aChar itself, if aChar is not a supplementary character.
-
-@see TChar::GetLowSurrogate
-*/
-	{
-	return STATIC_CAST(TText16, 0xD7C0 + (aChar >> 10));
-	}
-
-
-
-
-inline TText16 TChar::GetLowSurrogate(TUint aChar)
-/**
-Retrieve the low surrogate of a supplementary character.
-
-@param aChar The 32-bit code point value of a Unicode character.
-
-@return Low surrogate of aChar, if aChar is a supplementary character; 
-        zero, if aChar is not a supplementary character.
-
-@see TChar::GetHighSurrogate
-*/
-	{
-	return STATIC_CAST(TText16, 0xDC00 | (aChar & 0x3FF));
-	}
 #endif // _UNICODE
 
 

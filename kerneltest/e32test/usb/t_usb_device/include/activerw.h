@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -39,7 +39,6 @@ public:
 	void ResumeAltSetting(TUint aAltSetting);
 	void SendWaitSetting();
 	void StartOrSuspend();
-	inline RDEVCLIENT* Ldd();
 			
 private:
 	CActiveRW(CConsoleBase* aConsole, RDEVCLIENT* aPort, RFs aFs, TUint16 aIndex, TBool aLastSetting);
@@ -86,10 +85,5 @@ private:
 	TUint16 iIndex;
 	TBool iLastSetting;
 	};
-
-inline RDEVCLIENT* CActiveRW::Ldd()
-	{
-	return iPort;
-	}
 
 #endif	// __ACTIVERW_H__

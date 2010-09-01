@@ -42,15 +42,13 @@ const TInt8 KI2cChannelNumBase = 10 + NUM_CHANNELS;	// For Slave mode, want to p
 #endif/*STANDALONE_CHANNEL*/
 
 
+#if defined(MASTER_MODE)
 const TInt KI2cThreadPriority = 5; // Arbitrary, can be 0-7, 7 highest
+#endif
 
 const TInt16 KI2cSlaveChannelIdBase = 0x1D00;	// Arbitrary
 
-const TInt KI2cSlaveAsyncDelaySim = 20;	// Arbitrary delay, for timer to simulate asynchronous processing
-
-//Macros MASTER_MODE and SLAVE_MODE are intentionally omitted from this file
-//This is for master and slave stubs to exercise the channel class,
-//and we need these stubs for code coverage tests.
+#ifdef MASTER_MODE
 class DSimulatedIicBusChannelMasterI2c : public DIicBusChannelMaster
 	{
 	// platform specific implementation
@@ -87,7 +85,9 @@ private:
 #ifndef STANDALONE_CHANNEL
 TInt8 DSimulatedIicBusChannelMasterI2c::iCurrentChanNum = KI2cChannelNumBase; // Initialise static member of DSimulatedIicBusChannelMasterI2c
 #endif
+#endif/*MASTER_MODE*/
 
+#ifdef SLAVE_MODE
 class DSimulatedIicBusChannelSlaveI2c : public DIicBusChannelSlave
 	{
 public:
@@ -109,16 +109,6 @@ public:
 	inline void ChanCaptureCb(TInt aResult) {ChanCaptureCallback(aResult);}
 
 	inline void SetChanNum(TInt8 aChanNum) {iChannelNumber = aChanNum;};
-
-	enum TAsyncEvent
-		{
-		ENoEvent = 0,
-		EAsyncChanCapture,
-		ERxWords,
-		ETxWords,
-		ERxTxWords
-		};
-	inline void ChanNotifyClient(TInt aTrigger) {NotifyClient(aTrigger);}
 
 	protected:
 		virtual void SendBusErrorAndReturn() {return;} // Not implemented in simulated PSL
@@ -142,13 +132,11 @@ public:
 		TInt iBlockedTrigger;
 		TBool iBlockNotification;
 
-		TAsyncEvent iAsyncEvent;
-		TInt iRxTxTrigger;
-
 		NTimer iSlaveTimer; // Used to simulate an asynchronous capture operation
-		TSpinLock iEventSpinLock; // To serialise simulated bus events - Rx, Tx or Rx+Tx
 		};
+#endif/*SLAVE_MODE*/
 
+#if defined(MASTER_MODE) && defined(SLAVE_MODE)
 class DSimulatedIicBusChannelMasterSlaveI2c : public DIicBusChannelMasterSlave
 	{
 public:
@@ -159,5 +147,6 @@ public:
 				
 	TInt StaticExtension(TUint aFunction, TAny* aParam1, TAny* aParam2);	
 	};
+#endif/*(MASTER_MODE) && (SLAVE_MODE)*/
 
 #endif /*I2C_H_*/

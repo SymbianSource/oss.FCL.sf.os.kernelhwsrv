@@ -1684,7 +1684,7 @@ TBool CheckForDiskSize()
 	TVolumeInfo volInfo;
 	TInt r = TheFs.Volume(volInfo, gDrive);
 	test_KErrNone(r);
-	gMediaSize = volInfo.iFree;
+	gMediaSize = volInfo.iSize;
 	gSecondFileSize = KBlockSize*92;
 	gFirstFileSize = KBlockSize*(256);
 	while(((2*gFirstFileSize)+KOneMeg) > gMediaSize )

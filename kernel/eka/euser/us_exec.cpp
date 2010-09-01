@@ -2887,18 +2887,13 @@ the locale information in the DLL, you can call TExtendedLocale::SaveSystemSetti
 after calling this function.
 
 @param aLocaleDllName The name of the locale DLL to be loaded
-@return KErrNone if successful, KErrNotSupported if the DLL name matches the pattern
-of a new-style locale library, system wide error otherwise
+@return KErrNone if successful, system wide error if not
 
 @see TExtendedLocale::SaveSystemSettings 
 */
 EXPORT_C TInt TExtendedLocale::LoadLocale(const TDesC& aLocaleDllName)
 	{
 #ifdef SYMBIAN_DISTINCT_LOCALE_MODEL
-	if (aLocaleDllName.Find(KFindLan) != KErrNotFound || aLocaleDllName.Find(KFindReg) != KErrNotFound || aLocaleDllName.Find(KFindCol) != KErrNotFound)
-		{
-		return KErrNotSupported; // Only try to load old-style locale libraries
-		}
 	TLibraryFunction data[KNumLocaleExports];
 	TInt r = DoLoadLocale(aLocaleDllName, &data[0]);
 	if(r == KErrNone)
@@ -2998,9 +2993,6 @@ stored in this TExtendedLocale. If you want to set the system wide settings with
 the locale information in the DLL, you can call TExtendedLocale::SaveSystemSettings
 after calling this function.
 
-If the function fails then it will call LoadSystemSettings() to return its members
-to a known, good state.
-
 @param aLanguageLocaleDllName The name of the language locale DLL to be loaded
 @param aRegionLocaleDllName The name of the region locale DLL to be loaded
 @param aCollationLocaleDllName The name of the collation locale DLL to be loaded
@@ -3014,16 +3006,18 @@ EXPORT_C TInt TExtendedLocale::LoadLocale(const TDesC& aLanguageLocaleDllName,
 		const TDesC& aRegionLocaleDllName, 
 		const TDesC& aCollationLocaleDllName)
 	{
+
 	TInt err = LoadLocaleAspect(aLanguageLocaleDllName);
-
-	if(err == KErrNone)
-		err = LoadLocaleAspect(aRegionLocaleDllName);
-
-	if(err == KErrNone)
-		err = LoadLocaleAspect(aCollationLocaleDllName);
-
 	if(err != KErrNone)
-		LoadSystemSettings();	
+		return err;
+	
+	err = LoadLocaleAspect(aRegionLocaleDllName);
+	if(err != KErrNone)
+		return err;
+	
+	err = LoadLocaleAspect(aCollationLocaleDllName);
+	if(err != KErrNone)
+		return err;	
 
 	return err;	
 	}
@@ -3774,59 +3768,8 @@ of how many times the thread has acquired the mutex.
 */
 EXPORT_C void RMutex::Wait()
 	{
-	Exec::MutexWait(iHandle, 0);
-	}
 
-
-
-
-/**
-Acquire the mutex if it is currently free, but don't wait for it.
-
-This function checks if the mutex is currently held. If not the mutex is marked
-as held by the current thread and the call returns immediately indicating
-success. If the mutex is held by another thread the call returns immediately
-indicating failure. If the mutex is already held by the current thread a count
-is maintained of how many times the thread has acquired the mutex.
-
-@return	KErrNone if the mutex was acquired
-		KErrTimedOut if the mutex could not be acquired
-        KErrGeneral if the semaphore is being reset, i.e the semaphore
-        is about to  be deleted.
-*/
-EXPORT_C TInt RMutex::Poll()
-	{
-	return Exec::MutexWait(iHandle, -1);
-	}
-
-
-
-
-/**
-Acquire the mutex, if necessary waiting up to a specified maximum amount of time
-for it to become free.
-
-This function checks if the mutex is currently held. If not the mutex is marked
-as held by the current thread and the call returns immediately. If the mutex is
-held by another thread the current thread will suspend until the mutex becomes
-free or until the specified timeout period has elapsed. If the mutex is already
-held by the current thread a count is maintained of how many times the thread
-has acquired the mutex.
-
-@param aTimeout The timeout value in microseconds
-
-@return KErrNone if the mutex was acquired successfully.
-        KErrTimedOut if the timeout has expired.
-        KErrGeneral if the mutex is being reset, i.e the mutex
-        is about to  be deleted.
-        KErrArgument if aTimeout is negative;
-        otherwise one of the other system wide error codes.
-*/
-EXPORT_C TInt RMutex::Wait(TInt aTimeout)
-	{
-	if (aTimeout>=0)
-		return Exec::MutexWait(iHandle, aTimeout);
-	return KErrArgument;
+	Exec::MutexWait(iHandle);
 	}
 
 
@@ -4365,6 +4308,7 @@ object.
 
 
 
+EXPORT_C void RSemaphore::Wait()
 /**
 Waits for a signal on the semaphore.
 
@@ -4380,16 +4324,19 @@ waiting on a semaphore, they are released in priority order.
 
 If the semaphore is deleted, all threads waiting on that semaphore are released.
 */
-EXPORT_C void RSemaphore::Wait()
 	{
+
 	Exec::SemaphoreWait(iHandle, 0);
 	}
 
 
+
+
+EXPORT_C TInt RSemaphore::Wait(TInt aTimeout)
 /**
 Waits for a signal on the semaphore, or a timeout.
 
-@param aTimeout The timeout value in microseconds
+@param aTimeout The timeout value in micoseconds
 
 @return KErrNone if the wait has completed normally.
         KErrTimedOut if the timeout has expired.
@@ -4398,26 +4345,12 @@ Waits for a signal on the semaphore, or a timeout.
         KErrArgument if aTimeout is negative;
         otherwise one of the other system wide error codes.
 */
-EXPORT_C TInt RSemaphore::Wait(TInt aTimeout)
 	{
-	if (aTimeout>=0)
-		return Exec::SemaphoreWait(iHandle, aTimeout);
-	return KErrArgument;
+
+	return Exec::SemaphoreWait(iHandle, aTimeout);
 	}
 
 
-/**
-Acquires the semaphore if that is possible without waiting.
-
-@return KErrNone if the semaphore was acquired successfully
-        KErrTimedOut if the semaphore could not be acquired
-        KErrGeneral if the semaphore is being reset, i.e the semaphore
-        is about to  be deleted.
-*/
-EXPORT_C TInt RSemaphore::Poll()
-	{
-	return Exec::SemaphoreWait(iHandle, -1);
-	}
 
 
 EXPORT_C void RSemaphore::Signal()
@@ -4456,54 +4389,6 @@ for any other reason, is marked as ready to run.
 
 
 
-#ifndef __CPU_ARM
-/**
-Acquire the lock, if necessary waiting up to a specified maximum amount of time
-for it to become free.
-
-This function checks if the lock is currently held. If not the lock is marked
-as held by the current thread and the call returns immediately. If the lock is
-held by another thread the current thread will suspend until the lock becomes
-free or until the specified timeout period has elapsed.
-
-@param aTimeout The timeout value in microseconds
-
-@return KErrNone if the lock was acquired successfully.
-        KErrTimedOut if the timeout has expired.
-        KErrGeneral if the lock is being reset, i.e the lock
-        is about to  be deleted.
-        KErrArgument if aTimeout is negative;
-        otherwise one of the other system wide error codes.
-*/
-EXPORT_C TInt RFastLock::Wait(TInt aTimeout)
-	{
-	if (aTimeout<=0)
-		return KErrArgument;
-	TInt orig = __e32_atomic_add_acq32(&iCount, TUint32(-1));
-	if (orig == 0)
-		return KErrNone;
-	FOREVER
-		{
-		TInt r = Exec::SemaphoreWait(iHandle, aTimeout);
-		if (r != KErrTimedOut)	// got lock OK or lock deleted
-			return r;
-		// Before we can return KErrTimedOut we must increment iCount (since we
-		// previously decremented it in anticipation of acquiring the lock.
-		// However we must not increment iCount if it would become zero, since
-		// the semaphore will have been signalled (to counterbalance the Wait()
-		// which timed out and thus never happened). This would result in two
-		// threads being able to acquire the lock simultaneously - one by
-		// decrementing iCount from 0 to -1 without looking at the semaphore,
-		// and the other by decrementing iCount from -1 to -2 and then absorbing
-		// the spurious semaphore signal.
-		orig = __e32_atomic_tas_ord32(&iCount, -1, 0, 1);	// don't release lock completely
-		if (orig < -1)
-			return KErrTimedOut;	// count corrected - don't need to touch semaphore
-		// lock is actually free at this point, try again to claim it
-		aTimeout = 1;
-		}
-	}
-#endif
 
 EXPORT_C RCriticalSection::RCriticalSection()
 	: iBlocked(1)
@@ -5442,45 +5327,6 @@ The "HighRes timer" counter stops during power-down (the same as "after timer").
 	__ASSERT_ALWAYS(aInterval.Int()>=0,::Panic(ERTimerAfterTimeNegative));
 	aStatus=KRequestPending;
 	Exec::TimerHighRes(iHandle,aStatus,aInterval.Int());
-	}
-
-
-
-
-/**
-Requests an event at a specified time after the last expiry of the this
-timer object, to a resolution of 1ms. If the last usage of this timer object
-was not via either this function or RTimer::HighRes(), this call behaves the
-same as RTimer::HighRes().
-The "HighRes timer" counter stops during power-down (the same as "after timer"). 
-
-@param aStatus    On completion, contains the status of the request.
-                  This is KErrNone if the timer completed normally at the
-                  requested time, otherwise another of the
-                  system-wide error codes. In particular KErrArgument indicates
-				  that the requested expiry time has already passed.
-
-@param aInterval  The time interval, in microseconds, after which an event
-                  is to occur, measured from the last expiry time (or intended
-				  expiry time in the case where the timer was cancelled) of this
-				  timer object.
-				  Note that the interval is allowed to be negative. To see why
-				  this might be useful consider the following sequence of timer
-				  operations:
-					1. Timer expires at time T
-					2. AgainHighRes(1000000) - timer is queued for T + 1 sec
-					3. Cancel() - timer is not queued but last scheduled expiry
-									is still at T + 1 second
-					4. AgainHighRes(-500000)
-					5. Timer expires at time T + 0.5 second
-
-@panic KERN-EXEC 15, if this function is called while a request for a timer
-       event is still outstanding.
-*/
-EXPORT_C void RTimer::AgainHighRes(TRequestStatus &aStatus,TTimeIntervalMicroSeconds32 aInterval)
-	{
-	aStatus=KRequestPending;
-	Exec::TimerAgainHighRes(iHandle,aStatus,aInterval.Int());
 	}
 
 

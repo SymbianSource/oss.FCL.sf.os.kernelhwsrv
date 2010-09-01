@@ -26,8 +26,6 @@ EXPORT_D extern const TInt KHeapShrinkHysRatio = RHeap::EShrinkRatioDflt;
 
 extern "C" {
 
-#ifndef __MEMMOVE_MACHINE_CODED__
-
 // See header file e32cmn.h for the in-source documentation.
 EXPORT_C TAny* memcpy(TAny* aTrg, const TAny* aSrc, unsigned int aLength)
 	{
@@ -76,7 +74,7 @@ EXPORT_C TAny* memmove(TAny* aTrg, const TAny* aSrc, unsigned int aLength)
 	return aTrg;
 	}
 
-#endif // ! __MEMMOVE_MACHINE_CODED__
+
 
 // See header file e32cmn.h for the in-source documentation.
 EXPORT_C TAny* memclr(TAny* aTrg, unsigned int aLength)

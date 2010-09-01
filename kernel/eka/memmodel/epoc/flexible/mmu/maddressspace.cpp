@@ -245,14 +245,14 @@ void DAddressSpace::FreeVirtualMemory(TLinAddr aAddr, TUint aSize)
 	{
 	TRACE(("DAddressSpace::FreeVirtualMemory(0x%08x,0x%08x) osAsid=%d",aAddr, aSize, iOsAsid));
 	Lock();
-	TBool global = iOsAsid==(TInt)KKernelOsAsid && UserGlobalVirtualAllocator.InRange(aAddr,aSize);
-	if(global)
+	if(iOsAsid==(TInt)KKernelOsAsid && UserGlobalVirtualAllocator.InRange(aAddr,aSize))
 		UserGlobalVirtualAllocator.Free(aAddr,aSize);
 	else
+		{
 		iVirtualAllocator.Free(aAddr,aSize);
-	Unlock();
-	if (!global)
 		AsyncClose();
+		}
+	Unlock();
 	}
 
 

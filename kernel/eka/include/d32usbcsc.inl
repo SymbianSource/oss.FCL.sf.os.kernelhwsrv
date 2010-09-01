@@ -1,4 +1,4 @@
-// Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -118,19 +118,10 @@ inline TInt TUsbcScChunkBuffersHeader::NumberOfBuffers() const
 
 /** @capability CommDD
 */
-inline TInt RDevUsbcScClient::Open(TInt aUnit, TBool aShare)
+inline TInt RDevUsbcScClient::Open(TInt aUnit)
 	{
 	_LIT(KUsbDevName, "usbcsc");
-	return (DoCreate(KUsbDevName, VersionRequired(), aUnit, NULL, NULL, EOwnerThread, aShare));
-	}
-
-inline TInt RDevUsbcScClient::Open(RMessagePtr2 aMessage,TInt aParam,TOwnerType aType)
-	{
-	iEndpointStatus = 0;
-	iAltSettingSeq = 0;
-	iAlternateSetting = 0;
-	iNewAltSetting = 0;
-	return RBusLogicalChannel::Open(aMessage,aParam,aType);
+	return (DoCreate(KUsbDevName, VersionRequired(), aUnit, NULL, NULL, EOwnerThread));
 	}
 
 
@@ -723,8 +714,6 @@ inline TInt RDevUsbcScClient::StartNextInAlternateSetting()
 	return DoControl(EControlStartNextInAlternateSetting);
 	}
 
-
-
 //Buffer Interface Layer (BIL) inline functions
 
 
@@ -740,12 +729,6 @@ inline TInt TEndpointBuffer::GetEndpointNumber()
 	{
 	return iEndpointNumber;
 	}
-
-inline TInt TEndpointBuffer::BufferNumber()
-	{
-	return iBufferNum;
-	}
-
 
 #endif // #ifndef __KERNEL_MODE__
 

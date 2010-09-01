@@ -1049,7 +1049,7 @@ static void TestFAT4G_Boundary()
 	test_KErrNone(nRes);
     for(i=0; i<MaxDummyFiles; ++i)
 	    {
-        nRes = DeleteFileX(KBaseFN, i);
+        nRes = DeleteFileX(KBaseFN, i); 
         test_KErrNone(nRes);
 		}
 	}
@@ -1082,6 +1082,7 @@ void TestRAMDriveNotification()
 	test_Value(stat.Int(), stat == KErrNone);
 	test.Printf(_L("ok\n"));
 	}
+
 
 
 //-----------------------------------------------------------------------------
@@ -1150,15 +1151,14 @@ void Test0()
 }
 
 //-----------------------------------------------------------------------------
-
-GLDEF_C void CallTestsL()
+void CallTestsL()
 //
 // Do tests relative to session path
 //
 	{
-	//-- set up console output
-	Fat_Test_Utils::SetConsole(test.Console());
-
+	//-- set up console output 
+	Fat_Test_Utils::SetConsole(test.Console()); 
+	
 	// If TESTFAST mode (for automated test builds) is set, don't run LFFS tests.
 	if ((UserSvr::DebugMask(2) & 0x00000002) && IsTestingLFFS())
 		{
@@ -1178,8 +1178,10 @@ GLDEF_C void CallTestsL()
 	r = TheFs.Drive(drv, gTestDrive);
 	test_KErrNone(r);
 
+
 	//-- print drive information
 	PrintDrvInfo(TheFs, gTestDrive);
+
 
 	// do not run the remainder of this test on RAM drive
 	if (drv.iType == EMediaRam)
@@ -1189,9 +1191,9 @@ GLDEF_C void CallTestsL()
 		return;
 		}
 
-	if (Is_SimulatedSystemDrive(TheFs, gTestDrive))
+	if (Is_Win32(TheFs, gTestDrive))
 		{
-		test.Printf(_L("Skipping T_FALSESPACE on PlatSim/Emulator drive %C:\n"), gSessionPath[0]);
+		test.Printf(_L("Skipping on emulator %C: drive\n"), gSessionPath[0]);
 		return;
 		}
 
@@ -1199,14 +1201,14 @@ GLDEF_C void CallTestsL()
 	Test1();	// General test for new APIs
 	Test2();	// Test to ensure drive and session reserve limits are not exceeded
 	Test3();
-	Test4();	// Test filling the drive and that each checked API fails
+	Test4();	// test filling the drive and that each checked API fails
 	Test5();
 	Test6();
 	Test7();
 	TestForDEF142554();
-	Test2();	// Run this test to check reserves are being cleared correctly
+	Test2();	// run this test to check reserves are being cleared correctly
 
 	TestFAT4G_Boundary();
-
+    
 	TurnAllocFailureOff();
 	}

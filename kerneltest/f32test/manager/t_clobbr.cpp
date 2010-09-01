@@ -15,7 +15,6 @@
 // 
 //
 
-#define	__E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include "t_server.h"
@@ -31,55 +30,55 @@ GLDEF_C void CallTestsL(void)
 
 	RFile file;
 	TInt r=file.Replace(TheFs,_L("test.dat"),EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	r=file.Write(0,_L8("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"));
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TBuf8<0x40> buf1;
 	r=file.Read(0,buf1);
-	test_Value(r, r == KErrNone&&buf1.Length()==36);
+	test(r==KErrNone&&buf1.Length()==36);
 	if (buf1!=_L8("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))
 		test.Printf(_L("1). *BAD*\n"));
 	
 	r=file.SetSize(511);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TBuf8<0x40> buf2;
 	r=file.Read(0,buf2);
-	test_Value(r, r == KErrNone&&buf2.Length()==0x40);
+	test(r==KErrNone&&buf2.Length()==0x40);
 	buf2.SetLength(36);
 	if (buf2!=_L8("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))
 		test.Printf(_L("2). *BAD*\n"));
 	
 	r=file.SetSize(512);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TBuf8<0x40> buf3;
 	r=file.Read(0,buf3);
-	test_Value(r, r == KErrNone&&buf3.Length()==0x40);
+	test(r==KErrNone&&buf3.Length()==0x40);
 	buf3.SetLength(36);
 	if (buf3!=_L8("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))
 		test.Printf(_L("3). *BAD*\n"));
 	
 	r=file.Write(0,_L8("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"));
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TBuf8<0x40> buf4;
 	r=file.Read(0,buf4);
-	test_Value(r, r == KErrNone&&buf4.Length()==0x40);
+	test(r==KErrNone&&buf4.Length()==0x40);
 	buf4.SetLength(36);
 	if (buf4!=_L8("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))
 		test.Printf(_L("4). *BAD*\n"));
 	r=file.SetSize(511);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TBuf8<0x40> buf5;
 	r=file.Read(0,buf5);
-	test_Value(r, r == KErrNone&&buf5.Length()==0x40);
+	test(r==KErrNone&&buf5.Length()==0x40);
 	buf5.SetLength(36);
 	if (buf5!=_L8("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))
 		test.Printf(_L("5). *BAD*\n"));
 	r=file.SetSize(512);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TBuf8<0x40> buf6;
 	r=file.Read(0,buf6);
-	test_Value(r, r == KErrNone&&buf6.Length()==0x40);
+	test(r==KErrNone&&buf6.Length()==0x40);
 	buf6.SetLength(36);
 	if (buf6!=_L8("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))
 		test.Printf(_L("6). *BAD*\n"));

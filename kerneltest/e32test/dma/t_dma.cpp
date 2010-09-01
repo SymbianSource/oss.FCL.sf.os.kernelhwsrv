@@ -348,7 +348,7 @@ CTesterThread::CTesterThread(TInt aIdx, CTest* aTest)
 	TBuf<16> name;
 	name = _L("TESTER-");
 	name.AppendNum(aIdx);
-	test(iThread.Create(name, ThreadFunction, 0x2000, NULL, this) == KErrNone);
+	test(iThread.Create(name, ThreadFunction, 0x1000, NULL, this) == KErrNone);
 	iThread.SetPriority(EPriorityLess);
 	iThread.Logon(iStatus);
 	SetActive();
@@ -466,27 +466,28 @@ TInt CFragSizeRange::DoRunTest()
 	do
 		{
 		fragSize -= step;
-
-		// Make sure size is aligned
+		// make sure size is aligned
 		fragSize = fragSize & ~Info.iMemAlignMask;
-		if(fragSize == 0)
-			break;
 
 		r = OpenChannel(iMaxFragCount, fragSize);
 		test_KErrNone(r);
 
 		for(iFragCount=1; iFragCount <= iMaxFragCount; iFragCount++)
 			{
-			test.Printf(_L("Chan %d Fragment size %d bytes, %d fragments, %d iters\n"), iChannelId, fragSize, iFragCount, iInnerIterations);
+			test.Printf(_L("Fragment size %d bytes, %d fragments\nIter: "), fragSize, iFragCount);
 			for(TInt i=0; i<iInnerIterations; i++)
 				{
+
+				test.Printf(_L("%d "), i);
 				r = Transfer(fragSize);
 				test_KErrNone(r);
+
 				}
+			test.Printf(_L("\n"));
 			}
 		iChannel.Close();
-		// Reduce frag size by a quarter each iteration
-		step = (fragSize/4);
+		// Reduce frag size by an eigth each iteration
+		step = (fragSize/8);
 		} while (step > 0);
 
 	iTimer.Close();
@@ -526,7 +527,7 @@ TInt CFragSizeRange::Transfer(TInt aFragmentSize)
 	User::WaitForRequest(rs, timerStatus);
 	if(rs.Int() == KRequestPending)
 		{
-		RDebug::Printf("Chan %d: Transfer timed out!", iChannelId);
+		RDebug::Print(_L("Transfer timed out!"));
 		// timed out
 		test(EFalse);
 		}
@@ -1187,9 +1188,9 @@ TInt E32Main()
 	// intended to find errors in PSL implmentations
 	const TInt iterPerFragSize = 1;
 #else
-	const TInt iterPerFragSize = 10;
+	const TInt iterPerFragSize = 30;
 #endif
-	const TInt rangeMaxFragCount = 5;
+	const TInt rangeMaxFragCount = 8;
 
 	test.Next(_L("sb"));
 	RunSbTest(maxchannel, new CFragSizeRange(1, rangeMaxFragCount, rangeFragSize, iterPerFragSize));

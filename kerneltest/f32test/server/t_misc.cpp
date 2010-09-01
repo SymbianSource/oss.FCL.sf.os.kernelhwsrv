@@ -15,14 +15,9 @@
 // 
 //
 
-#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include "t_server.h"
-
-#include "f32_test_utils.h"
-using namespace F32_Test_Utils;
-
 
 // If there is an NFE media driver present, then because of the way EDeleteNotify requests work,
 // the data retrieved from a deleted file will not be a buffer full of zero's, but instead a buffer
@@ -34,13 +29,11 @@ using namespace F32_Test_Utils;
     #pragma setlocale("english")
 #endif
 
-RTest test(_L("T_MISC"));
+GLDEF_D RTest test(_L("T_MISC"));
 
-
-TInt gDriveNum = -1;
 const TUint KBufLength = 0x100;
 
-static void Test1()
+LOCAL_C void Test1()
 //
 // Open, write to and read from a file
 //
@@ -48,24 +41,24 @@ static void Test1()
 
 	test.Next(_L("Open, write to and read from a file"));
 	TInt r=TheFs.SetSessionPath(gSessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	RFile file;
 	r=file.Create(TheFs,_L("Hello.Wld"),EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=file.Write(_L8("Hello World"),11);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file.Close();
 
 	r=file.Open(TheFs,_L("Hello.Wld"),EFileRead);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TBuf8<256> buf;
 	r=file.Read(buf);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(buf==_L8("Hello World"));
 	file.Close();
 	}
 
-static void Test2()
+LOCAL_C void Test2()
 //
 // Open and read from a file
 //
@@ -73,20 +66,20 @@ static void Test2()
 
 	test.Next(_L("Open and read from a file"));
 	TInt r=TheFs.SetSessionPath(gSessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	RFile file;
 	r=file.Open(TheFs,_L("Hello.Wld"),EFileRead);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TBuf8<256> buf;
 	r=file.Read(buf);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(buf==_L8("Hello World"));
 	file.Close();
 	r=TheFs.Delete(_L("HELLO.WLD"));
-	test_KErrNone(r);
+	test(r==KErrNone);
 	}
 
-static void Test3()
+LOCAL_C void Test3()
 //
 // Create nested directories
 //
@@ -94,28 +87,28 @@ static void Test3()
 
 	test.Next(_L("Create nested directories"));
 	TInt r=TheFs.SetSessionPath(gSessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TheFs.ResourceCountMarkStart();
 //
 	r=TheFs.MkDir(_L("\\F32-TST\\LEFT\\A.B"));
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	r=TheFs.MkDir(_L("\\F32-TST\\RIGHT\\"));
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 //
 	r=TheFs.MkDir(_L("\\F32-TST\\LEFT\\ONE\\"));
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	r=TheFs.MkDir(_L("\\F32-TST\\LEFT\\TWO\\"));
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	r=TheFs.MkDir(_L("\\F32-TST\\LEFT\\THREE\\"));
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	r=TheFs.MkDir(_L("\\F32-TST\\LEFT\\TWO\\BOTTOM\\"));
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 //
 	r=TheFs.MkDirAll(_L("\\F32-TST\\RIGHT\\TOP\\MID\\BOT\\"));
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	}
 
-static void Test4()
+LOCAL_C void Test4()
 //
 // Test returned error values
 //
@@ -123,62 +116,62 @@ static void Test4()
 
 	test.Next(_L("Test returned error values"));
 	TInt r=TheFs.SetSessionPath(gSessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TheFs.ResourceCountMarkStart();
 //
 	r=TheFs.MkDir(_L("\\"));
-	test_Value(r, r == KErrAlreadyExists);
+	test(r==KErrAlreadyExists);
 	r=TheFs.MkDir(_L("\\LEFT"));
-	test_Value(r, r == KErrAlreadyExists);
+	test(r==KErrAlreadyExists);
 	r=TheFs.MkDir(_L("\\F32-TST\\LEFT\\"));
-	test_Value(r, r == KErrAlreadyExists);
+	test(r==KErrAlreadyExists);
 	r=TheFs.MkDir(_L("\\F32-TST\\LEFT\\..\\NEWDIR\\"));
-	test_Value(r, r == KErrBadName);
+	test(r==KErrBadName);
 	r=TheFs.MkDir(_L("\\F32-TST\\NEWDIR\\SUBDIR\\"));
-	test_Value(r, r == KErrPathNotFound);
+	test(r==KErrPathNotFound);
 //
 	r=TheFs.RmDir(_L("\\"));
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 	r=TheFs.RmDir(_L("\\PROG"));
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 	r=TheFs.RmDir(_L("\\F32-TST\\"));
-	test_Value(r, r == KErrInUse);
+	test(r==KErrInUse);
 
 
 	RDir dir;
 	r=dir.Open(TheFs,_L("V:\\asdf"),KEntryAttNormal);
-	test_Value(r, r == KErrNone || r==KErrNotReady || r==KErrNotFound);
+	test(r==KErrNone || r==KErrNotReady || r==KErrNotFound);
 	if (r==KErrNone)
 		dir.Close();
 	r=dir.Open(TheFs,_L("L:\\asdf"),KEntryAttNormal);
-	test_Value(r, r == KErrNone || r==KErrNotReady || r==KErrNotFound);
+	test(r==KErrNone || r==KErrNotReady || r==KErrNotFound);
 	dir.Close();
 //
 	TEntry entry;
 	r=TheFs.Entry(_L("z:\\NOTEXiSTS\\file.txt"),entry);
-	test_Value(r, r == KErrPathNotFound);
+	test(r==KErrPathNotFound);
 	r=TheFs.Entry(_L("z:\\NOTEXiSTS\\"),entry);
-	test_Value(r, r == KErrNotFound);
+	test(r==KErrNotFound);
 	r=TheFs.Entry(_L("z:\\SYSTEM\\"),entry);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.Entry(PlatSec::ConfigSetting(PlatSec::EPlatSecEnforceSysBin)?_L("z:\\SYS\\BIN\\ESHELL.EXE"):_L("z:\\SYSTEM\\BIN\\ESHELL.EXE"),entry);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=dir.Open(TheFs,_L("\\*"),NULL);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TEntry dirEntry;
 	r=dir.Read(dirEntry);
-	test_Value(r, r == KErrNone || r==KErrEof);
+	test(r==KErrNone || r==KErrEof);
 	if (r==KErrNone)
 		test.Printf(_L("%S\n"),&dirEntry.iName);
 	dir.Close();
 
 	r=dir.Open(TheFs,_L("A:\\*"),NULL);
-	test_Value(r, r == KErrNotReady || r==KErrNone);
+	test(r==KErrNotReady || r==KErrNone);
 	dir.Close();
 	}
 
-static void Test5()
+LOCAL_C void Test5()
 //
 // Read files directly from the rom
 //
@@ -195,13 +188,13 @@ static void Test5()
 		{
 		RFile f;
 		r=f.Open(TheFs,KTFileCpp,EFileRead);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		r=f.Seek(ESeekAddress,pos);
 		TText8* ptrPos=*(TText8**)&pos;
-		test_KErrNone(r);
+		test(r==KErrNone);
 		TBuf8<1024> readBuf;
 		r=f.Read(readBuf);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		test(readBuf.Length()==readBuf.MaxLength());
 		TPtrC8 memBuf(ptrPos,readBuf.Length());
 		test(memBuf==readBuf);
@@ -209,10 +202,10 @@ static void Test5()
 		ptrPos+=9913;
 		pos=9913;
 		r=f.Seek(ESeekStart,pos);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		readBuf.SetLength(0);
 		r=f.Read(readBuf);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		test(readBuf.Length()==readBuf.MaxLength());
 		memBuf.Set(ptrPos,readBuf.Length());
 		test(memBuf==readBuf);
@@ -221,16 +214,16 @@ static void Test5()
 		pos=10;
 		r=f2.Open(TheFs,KTFsrvCpp,EFileRead);
 
-		test_KErrNone(r);
+		test(r==KErrNone);
 		r=f2.Seek(ESeekAddress,pos);
 		ptrPos=*(TText8**)&pos;
-		test_KErrNone(r);
+		test(r==KErrNone);
 		readBuf.SetLength(0);
 		pos=10;
 		r=f2.Seek(ESeekStart,pos);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		r=f2.Read(readBuf);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		test(readBuf.Length()==readBuf.MaxLength());
 		memBuf.Set(ptrPos,readBuf.Length());
 		test(memBuf==readBuf);
@@ -238,10 +231,10 @@ static void Test5()
 		ptrPos+=2445;
 		pos=10+2445;
 		r=f2.Seek(ESeekStart,pos);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		readBuf.SetLength(0);
 		r=f2.Read(readBuf);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		test(readBuf.Length()==readBuf.MaxLength());
 		memBuf.Set(ptrPos,readBuf.Length());
 		test(memBuf==readBuf);
@@ -249,13 +242,13 @@ static void Test5()
 		pos=0;
 		r=f.Seek(ESeekAddress,pos);
 		ptrPos=*(TText8**)&pos;
-		test_KErrNone(r);
+		test(r==KErrNone);
 		readBuf.SetLength(0);
 		pos=0;
 		r=f.Seek(ESeekStart,pos);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		r=f.Read(readBuf);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		test(readBuf.Length()==readBuf.MaxLength());
 		memBuf.Set(ptrPos,readBuf.Length());
 		test(memBuf==readBuf);
@@ -263,10 +256,10 @@ static void Test5()
 		ptrPos+=5245;
 		pos=5245;
 		r=f.Seek(ESeekStart,pos);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		readBuf.SetLength(0);
 		r=f.Read(readBuf);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		test(readBuf.Length()==readBuf.MaxLength());
 		memBuf.Set(ptrPos,readBuf.Length());
 		test(memBuf==readBuf);
@@ -276,7 +269,7 @@ static void Test5()
 		}
 	}
 
-static void Test6()
+LOCAL_C void Test6()
 //
 // Test rom return values
 //
@@ -285,17 +278,17 @@ static void Test6()
 
 	RFile f;
 	TInt r=f.Replace(TheFs,_L("Z:\\Test\\T_Fsrv.Cpp"),EFileRead);
-	test_Value(r, r == KErrAccessDenied);
+	test(r==KErrAccessDenied);
 	r=f.Create(TheFs,_L("Z:\\Test\\newT_Fsrv.Cpp"),EFileRead);
-	test_Value(r, r == KErrAccessDenied);
+	test(r==KErrAccessDenied);
 	r=f.Open(TheFs,_L("Z:\\Test\\T_Fsrv.Cpp"),EFileRead);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	f.Close();
 	r=f.Open(TheFs,_L("Z:\\Test\\T_Fsrv.Cpp"),EFileRead|EFileWrite);
-	test_Value(r, r == KErrAccessDenied);
+	test(r==KErrAccessDenied);
 	}
 
-static void Test7()
+LOCAL_C void Test7()
 //
 // Test cache
 //
@@ -309,7 +302,7 @@ static void Test7()
 
 	TEntry entry;
 	TInt r=TheFs.Entry(file1,entry);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(entry.iType==uid1);
 
 	TUidType uid2(TUid::Uid(4),TUid::Uid(5),TUid::Uid(6));
@@ -317,23 +310,23 @@ static void Test7()
 	TPtrC8 uidData((TUint8*)&checkedUid,sizeof(TCheckedUid));
 	RFile f;
 	r=f.Open(TheFs,file1,EFileRead|EFileWrite);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=f.Write(uidData);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r = f.Flush();
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.Entry(file1,entry);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(entry.iType==uid2);
 
 	f.Close();
 	r=TheFs.Entry(file1,entry);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(entry.iType==uid2);
 	}
 
-static void Test8()
+LOCAL_C void Test8()
 //
 // Test IsValidName
 //
@@ -542,7 +535,7 @@ static void Test8()
         }
 	}
 
-static void Test9()
+LOCAL_C void Test9()
 //
 // Test IsFileInRom
 //
@@ -552,7 +545,7 @@ static void Test9()
 
 	CFileMan* fMan=CFileMan::NewL(TheFs);
 	TInt r=fMan->Copy(_L("Z:\\TEST\\T_FILE.CPP"),_L("C:\\T_FILE.CPP"));
-	test_Value(r, r == KErrNone || r==KErrAccessDenied);
+	test(r==KErrNone || r==KErrAccessDenied);
 	delete fMan;
 	TUint8* addr=TheFs.IsFileInRom(_L("C:\\ESHELL.EXE"));
 	test(addr==NULL);
@@ -569,7 +562,7 @@ static void Test9()
 		}
 	}
 
-static void Test10()
+LOCAL_C void Test10()
 //
 // Test drive names
 //
@@ -581,7 +574,7 @@ static void Test10()
 	for(i=0;i<KMaxDrives;i++)
 		{
 		TInt r=TheFs.GetDriveName(i,driveName);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		if (driveName.Length())
 			test.Printf(_L("Default name of %c: == %S\n"),'A'+i,&driveName);
 		}
@@ -591,32 +584,32 @@ static void Test10()
 	TBuf<64> drive17=_L("Flibble");
 	TBuf<64> drive25=_L("RAMDRIVE");
 	TInt r=TheFs.SetDriveName(0,drive0);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.SetDriveName(4,drive4);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.SetDriveName(17,drive17);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.SetDriveName(25,drive25);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.GetDriveName(0,driveName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(driveName==drive0);
 	r=TheFs.GetDriveName(4,driveName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(driveName==drive4);
 	r=TheFs.GetDriveName(17,driveName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(driveName==drive17);
 	r=TheFs.GetDriveName(25,driveName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(driveName==drive25);
 
 	drive0=_L("askdjflsdfourewoqiuroiuaksjdvx,cvsdhwjhjhalsjhfshfkjhslj");
 	r=TheFs.SetDriveName(0,drive0);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.GetDriveName(0,driveName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(driveName==drive0);
 
 //	Test with illegal characters in drive name
@@ -626,13 +619,13 @@ static void Test10()
 	drive25=_L("RAMD//RIVE");
 
 	r=TheFs.SetDriveName(0,drive0);
-	test_Value(r, r == KErrBadName);
+	test(r==KErrBadName);
 	r=TheFs.SetDriveName(4,drive4);
-	test_Value(r, r == KErrBadName);
+	test(r==KErrBadName);
 	r=TheFs.SetDriveName(17,drive17);
-	test_Value(r, r == KErrBadName);
+	test(r==KErrBadName);
 	r=TheFs.SetDriveName(25,drive25);
-	test_Value(r, r == KErrBadName);
+	test(r==KErrBadName);
 
 //	Test that it is OK to set the name to no characters
 
@@ -642,31 +635,31 @@ static void Test10()
 	drive25=_L("");
 
 	r=TheFs.SetDriveName(0,drive0);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.SetDriveName(4,drive4);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.SetDriveName(17,drive17);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.SetDriveName(25,drive25);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=TheFs.GetDriveName(0,driveName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(driveName==drive0);
 	r=TheFs.GetDriveName(4,driveName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(driveName==drive4);
 	r=TheFs.GetDriveName(17,driveName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(driveName==drive17);
 	r=TheFs.GetDriveName(25,driveName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(driveName==drive25);
 
 
 	}
 
-static void Test11()
+LOCAL_C void Test11()
 //
 // Miscellaneous tests
 //
@@ -676,14 +669,14 @@ static void Test11()
 	TVolumeInfo vol;
 	TInt r=TheFs.Volume(vol);
 	test.Printf(_L("VolumeName = %S\n"),&vol.iName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=TheFs.RmDir(_L("\\asdfasdf.\\"));
-	test_Value(r, r == KErrBadName);
+	test(r==KErrBadName);
 	r=TheFs.MkDir(_L("\\asdfasdf.\\"));
-	test_Value(r, r == KErrBadName);
+	test(r==KErrBadName);
 	}
 
-static void Test12()
+LOCAL_C void Test12()
 //
 // Test SetNotifyUser and GetNotifyUser
 //
@@ -702,7 +695,7 @@ static void Test12()
 	test(notifyState);
 	}
 
-static void Test13()
+LOCAL_C void Test13()
 //
 // Test return values from RFs::Volume on cf-cards
 //
@@ -711,60 +704,107 @@ static void Test13()
 	test.Next(_L("Test RFs::Volume"));
 	TVolumeInfo vol;
 	TInt r=TheFs.Volume(vol,EDriveB);
-	test_Value(r, r == KErrNotReady || r==KErrNone || r == KErrPathNotFound);
+	test(r==KErrNotReady || r==KErrNone || KErrPathNotFound);
 	test.Printf(_L("RFs::Volume EDriveB returned %d\n"),r);
 
 	r=TheFs.Volume(vol,EDriveC);
-	test_Value(r, r == KErrNotReady || r==KErrNone || r == KErrPathNotFound);
+	test(r==KErrNotReady || r==KErrNone || KErrPathNotFound);
 	test.Printf(_L("RFs::Volume EDriveC returned %d\n"),r);
 
 	r=TheFs.Volume(vol,EDriveD);
-	test_Value(r, r == KErrNotReady || r==KErrNone || r == KErrPathNotFound);
+	test(r==KErrNotReady || r==KErrNone || KErrPathNotFound);
 	test.Printf(_L("RFs::Volume EDriveD returned %d\n"),r);
 
 	r=TheFs.Volume(vol,EDriveE);
-	test_Value(r, r == KErrNotReady || r==KErrNone || r == KErrPathNotFound);
+	test(r==KErrNotReady || r==KErrNone || KErrPathNotFound);
 	test.Printf(_L("RFs::Volume EDriveE returned %d\n"),r);
 
 	r=TheFs.Volume(vol,EDriveF);
-	test_Value(r, r == KErrNotReady || r==KErrNone || r == KErrPathNotFound);
+	test(r==KErrNotReady || r==KErrNone || KErrPathNotFound);
 	test.Printf(_L("RFs::Volume EDriveF returned %d\n"),r);
 	}
 
 
 void    DoTest14(TInt aDrvNum);
 TInt    CreateStuffedFile(RFs& aFs, const TDesC& aFileName, TUint aFileSize);
+TInt    CreateEmptyFile(RFs& aFs, const TDesC& aFileName, TUint aFileSize);
 TBool   CheckFileContents(RFs& aFs, const TDesC& aFileName);
 #ifndef __NFE_MEDIA_DRIVER_PRESENT__
 TBool   CheckBufferContents(const TDesC8& aBuffer, TUint aPrintBaseAddr=0);
 #endif
 
 /**
-    Testing unallocated data initialization vulnerability in RFile
-    This test is performed on RAM drives and non-removable media that supports DeleteNotify (KMediaAttDeleteNotify flag)
-    e.g. XSR NAND
+Testing unallocated data initialization vulnerability in RFile
+This test is performed on RAM drives and non-removable media that supports DeleteNotify (KMediaAttDeleteNotify flag)
+e.g. XSR NAND
 */
-static void Test14()
+LOCAL_C void Test14()
 {
+	TInt nRes;
 
 	test.Next(_L("Testing unallocated data initialization vulnerability in RFile"));
 
-    TDriveInfo driveInfo;
-	
-    //-- get drive info
-	test(TheFs.Drive(driveInfo, gDriveNum) == KErrNone);
+	TDriveList driveList;
+	TDriveInfo driveInfo;
 
-    const TBool bMediaSuitable = (driveInfo.iType == EMediaRam)     || //-- RAM drives should be tested
-                                 (driveInfo.iType == EMediaFlash)   || //-- NOR FLASH drives should be tested
-                                 (driveInfo.iType == EMediaNANDFlash && driveInfo.iMediaAtt & KMediaAttDeleteNotify); //-- NAND media with DeleteNotify support
-    
-    if(!bMediaSuitable)
+	//-- 1. get drives list
+	nRes=TheFs.DriveList(driveList);
+    test(nRes == KErrNone);
+
+	//-- 2. walk through all drives, performing the test only on suitable ones
+	for (TInt drvNum=0; drvNum<KMaxDrives; ++drvNum)
     {
-        test.Printf(_L("This test can't be performed on this type of the media! Skipping.\n"));
-        return;
-    }
-    
-    DoTest14(gDriveNum);
+	    if(!driveList[drvNum])
+	        continue;   //-- skip unexisting drive
+
+	    //-- get drive info
+	    test(TheFs.Drive(driveInfo, drvNum) == KErrNone);
+
+	    //-- select a suitable drive for the testing. It shall be RAM drive, of FLASH but not removable
+	    //-- and not read only, if it is FLASH, it shall support "Delete Notify" facility
+        switch(driveInfo.iType)
+        {
+        //-- RAM drive, OK
+        case EMediaRam:
+        break;
+
+        //-- FLASH drive, OK
+        case EMediaFlash:
+        case EMediaNANDFlash:
+            if(driveInfo.iMediaAtt & KMediaAttDeleteNotify)
+                break; //-- this type of media shall support DeleteNotify flag, otherwise this test is inconsistent
+            else continue;
+
+        //break; //unreacable
+
+        default:
+            continue;
+        }//switch(driveInfo.iType)
+
+		if (driveInfo.iDriveAtt	& KDriveAttSubsted)
+			{
+			// skip subst drives.
+			continue;
+			}
+
+        TBool readOnly = driveInfo.iMediaAtt & KMediaAttWriteProtected;
+        if(readOnly)
+            continue; //-- nothing to do, can't create any file etc.
+
+        //-- skip test on the emulator's C: drive, doesn't make any sense because
+        //-- in this case we deal with WIN32 API and filesystem.
+        #ifdef __WINS__
+        if(drvNum == 2)
+        {
+             test.Printf(_L("Skipping test on emulator's C: drive\n"));
+             continue;
+        }
+        #endif
+
+        DoTest14(drvNum);
+
+    }// for (TInt drvNum=0; ...
+
 }
 
 //--------------------------------------------------------
@@ -795,17 +835,17 @@ void DoTest14(TInt aDrvNum)
 
     //-- 1. create an empty file
     nRes = CreateEmptyFile(TheFs, fileName, KFileSize);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 
 #ifndef __NFE_MEDIA_DRIVER_PRESENT__	// can't easily check for illegitimate information if drive is encrypted
     //-- 1.1  check that this file doesn't contain illegitimate information.
     nRes = CheckFileContents(TheFs, fileName);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 #endif
 
     //-- 1.2 delete the empty file
     nRes = TheFs.Delete(fileName);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 
     //==============================
     //== Scenario 2.
@@ -818,25 +858,25 @@ void DoTest14(TInt aDrvNum)
 
     //-- 2. create file filled with some data pattern
     nRes = CreateStuffedFile(TheFs, fileName, KFileSize);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 
     //-- 2.1 delete this file
     TheFs.Delete(fileName);
 
     //-- 2.1 create an empty file on the place of just deleted one (hopefully)
     nRes = CreateEmptyFile(TheFs, fileName, KFileSize);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 
     //-- 2.2  check that this file doesn't contain illegitimate information.
     nRes = CheckFileContents(TheFs, fileName);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 
     //-- 2.3 delete this file
     TheFs.Delete(fileName);
 
 }
 
-static void Test15()
+LOCAL_C void Test15()
 //
 // Test IsValidName
 //
@@ -1133,11 +1173,11 @@ void TestGetMediaSerialNumber()
 	test.Next(_L("Test RFs::GetMediaSerialNumber"));	
     TInt theDrive;
     TInt r = TheFs.CharToDrive(gDriveToTest,theDrive);
-    test_KErrNone(r);
+    test(r == KErrNone);
     TMediaSerialNumber serNum;
     r = TheFs.GetMediaSerialNumber(serNum, theDrive);
 	if (r) test.Printf(_L("RFs::GetMediaSerialNumber returned error %d"), r);
-    test_Value(r, r == KErrNotSupported || r == KErrNotReady || r == KErrNone);
+    test(r == KErrNotSupported || r == KErrNotReady || r == KErrNone);
     if (r == KErrNotSupported)
         {
         test.Printf(_L("MediaSerialNumber: Not Supported\n"));
@@ -1169,6 +1209,32 @@ void TestGetMediaSerialNumber()
 
 //--------------------------------------------------------
 
+/**
+    Create an empty file of specified size.
+    @param  aFs		    ref. to the FS
+    @param  aFileName   name of the file
+    @param  aFileSize   size of the file to be created
+    @return    KErrNone on success, system-wide error code otherwise
+*/
+TInt CreateEmptyFile(RFs& aFs, const TDesC& aFileName, TUint aFileSize)
+{
+    RFile   file;
+	TInt    nRes;
+
+	nRes = file.Create(aFs, aFileName, EFileRead|EFileWrite);
+    if(nRes != KErrNone)
+        return nRes;
+
+	nRes = file.SetSize(aFileSize);
+    if(nRes != KErrNone)
+        return nRes;
+
+    file.Close();
+
+    return KErrNone;
+}
+
+//--------------------------------------------------------
 
 /**
     Create a file of specified size filled with some data pattern.
@@ -1238,7 +1304,7 @@ TInt   CheckFileContents(RFs& aFs, const TDesC& aFileName)
 
     //-- open the file
     nRes = file.Open(aFs, aFileName, EFileRead);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 
     //-- check file contents
     TUint nFilePos=0;
@@ -1246,7 +1312,7 @@ TInt   CheckFileContents(RFs& aFs, const TDesC& aFileName)
     {
         //-- read data from the file into the buffer
         nRes = file.Read(buffer);
-        test_KErrNone(nRes);
+        test(nRes == KErrNone);
 
         if(buffer.Length() == 0)
         {
@@ -1297,11 +1363,11 @@ TBool CheckBufferContents(const TDesC8& aBuffer, TUint aPrintBaseAddr/*=0*/)
 
     //-- check if the buffer filled with allowable data (RAM page initialisation data or something similar)
     //-- but not something meaningful.
-    //-- Actually, the buffer should be filled with uniformed bytes (most probably, 0x00)
+    //-- allowable bytes: 0x00, 0x03, 0xff, 0xcc
     for(TInt i=0; i<aBuffer.Size(); ++i)
     {
         TUint8 byte = aBuffer[i];
-        if(byte != aBuffer[0])
+        if(byte != 0x00 && byte != 0x03 && byte != 0xff && byte != 0xcc )
         {
             bRes = EFalse;
             break;
@@ -1328,368 +1394,13 @@ TBool CheckBufferContents(const TDesC8& aBuffer, TUint aPrintBaseAddr/*=0*/)
     return bRes;
 }
 
-//--------------------------------------------------------
-/**
-    Check if the drive aDriveNo is finalised or not.
-    The "CleanShutDown" is obtained by QueryVolumeInfoExt API which is FS-agnostic.
 
-    @param  aDriveNo drive number to query.
-    @return ETrue if the drive if finalised
-*/
-static TBool IsVolumeFinalised(TInt aDriveNo)
-{
-    TInt nRes;
-    TPckgBuf<TBool> boolPckg;
-
-    //-- 1. get "Finalised" state by using the API
-    nRes = TheFs.QueryVolumeInfoExt(aDriveNo, EIsDriveFinalised, boolPckg);
-    test_KErrNone(nRes);
-    
-    return boolPckg();
-}
-
-
-//--------------------------------------------------------
-/**
-    This is a file system - agnostic test that verifies RFs::FinaliseDrive() API
-    There are also file system - specific tests that check similar functionallity (see t_mount for example)
-
-*/
-void TestDriveFinalisation()
-{
-    test.Next(_L("TestDriveFinalisation(). Testing RFs::FinaliseDrives() API\n"));    
-    
-
-    if((!Is_Fat(TheFs, gDriveNum) && !Is_ExFat(TheFs, gDriveNum)) || Is_Fat12(TheFs, gDriveNum) )
-    {
-        test.Printf(_L("This test can't be performed on current file system, skipping.\n"));
-        return;
-    }
-
-    TVolumeInfo v;
-    TInt  nRes;
-
-    nRes = TheFs.Volume(v);
-    test(nRes==KErrNone);
-
-    if(v.iDrive.iMediaAtt & KMediaAttVariableSize)
-        {
-        test.Printf(_L("Skipping. RAM drive not tested.\n"));
-        return;
-        }
-
-
-    TBool bDriveFinalised;
-
-    //============= 1. finalise the drive (RW mode) and check the result
-    nRes =TheFs.FinaliseDrive(gDriveNum, RFs::EFinal_RW);
-    test_KErrNone(nRes);
-
-    bDriveFinalised = IsVolumeFinalised(gDriveNum);
-    test(bDriveFinalised);
-
-    //-- 1.1 finalise the drive second time EFinal_RW -> EFinal_RW shall work
-    nRes =TheFs.FinaliseDrive(gDriveNum, RFs::EFinal_RW);
-    test_KErrNone(nRes);
-
-    bDriveFinalised = IsVolumeFinalised(gDriveNum);
-    test(bDriveFinalised);
-
-    //============= 2. create a file. Shall succeed (EFinal_RW), the volume shall become unfinalised
-
-    RFile file;
-    _LIT(KFileName, "\\my_file1.dat");
-    _LIT8(KSomeData, "this is some data");
-
-    nRes = CreateEmptyFile(TheFs, KFileName, 128000);
-    test_KErrNone(nRes);
-
-    bDriveFinalised = IsVolumeFinalised(gDriveNum);
-    test(!bDriveFinalised); //-- the volume has become "unfinalised"
-
-    //----------------------------------------------------------------------------------
-    //-- test volume finalisation with opened objects
-
-    //-- 2.1 having opened files should be OK for volume finalisation
-    
-    //-- 2.1.1 RW finalisation; after the volume finalised it should be possible to write to the opened file
-    nRes = file.Open(TheFs, KFileName, EFileWrite | EFileWriteDirectIO);
-    test_KErrNone(nRes);
-
-    nRes =TheFs.FinaliseDrive(gDriveNum, RFs::EFinal_RW);
-    test_KErrNone(nRes);
-
-    bDriveFinalised = IsVolumeFinalised(gDriveNum);
-    test(bDriveFinalised);
-
-    nRes = file.Write(0, KSomeData);
-    test_KErrNone(nRes);
-
-    bDriveFinalised = IsVolumeFinalised(gDriveNum);
-    test(!bDriveFinalised); //-- the volume should become "unfinalised"
-
-    //-- 2.1.2 RO finalisation; after the volume finalised it shouldn't be possible to write to the opened file
-    nRes =TheFs.FinaliseDrive(gDriveNum, RFs::EFinal_RO);
-    test_KErrNone(nRes);
-
-    bDriveFinalised = IsVolumeFinalised(gDriveNum);
-    test(bDriveFinalised);
-
-    nRes = file.Write(0, KSomeData);
-    test(nRes == KErrAccessDenied);  //-- no write access to the volume
-
-    bDriveFinalised = IsVolumeFinalised(gDriveNum);
-    test(bDriveFinalised); //-- the volume should become "unfinalised"
-
-    file.Close();
-    
-    //-- remount FS, the drive shall become RW
-    nRes = RemountFS(TheFs, gDriveNum);
-    test_KErrNone(nRes);
-    
-    
-    //-- 2.2 having opened directories should be OK for volume finalisation
-    _LIT(KDirName,  "\\Dir11235tt\\");
-    MakeDir(KDirName);
-    RDir dir;
-
-    //-- 2.2.1 RW finalisation; after the volume finalised it should be possible to have write access to it
-    nRes = dir.Open(TheFs, KDirName, KEntryAttNormal);
-    test_KErrNone(nRes);
-
-    nRes =TheFs.FinaliseDrive(gDriveNum, RFs::EFinal_RW);
-    test_KErrNone(nRes);
-
-    bDriveFinalised = IsVolumeFinalised(gDriveNum);
-    test(bDriveFinalised);
-
-    nRes = CreateEmptyFile(TheFs, KFileName, 128000);
-    test_KErrNone(nRes);
-
-    bDriveFinalised = IsVolumeFinalised(gDriveNum);
-    test(!bDriveFinalised);
-
-    //-- 2.1.2 RO finalisation; after the volume finalised it shouldn't be possible to write to it
-    nRes =TheFs.FinaliseDrive(gDriveNum, RFs::EFinal_RO);
-    test_KErrNone(nRes);
-
-    bDriveFinalised = IsVolumeFinalised(gDriveNum);
-    test(bDriveFinalised);
-
-    nRes = CreateEmptyFile(TheFs, KFileName, 128000);
-    test(nRes == KErrAccessDenied);  //-- no write access to the volume
-
-    bDriveFinalised = IsVolumeFinalised(gDriveNum);
-    test(bDriveFinalised); //-- the volume should become "unfinalised"
-
-    dir.Close();
-
-    //-- remount FS, the drive shall become RW
-    nRes = RemountFS(TheFs, gDriveNum);
-    test_KErrNone(nRes);
-    
-    //-- 2.3 having opened disk access objects, like formats or raw disks makes finalisation impossible
-    RFormat  format;
-    RRawDisk rawDisk;
-    TInt     fmtCnt;
-
-    //-- 2.3.1 format
-    nRes =TheFs.FinaliseDrive(gDriveNum, RFs::EFinal_RW);
-    test_KErrNone(nRes);
-
-    nRes = format.Open(TheFs, gSessionPath, EFullFormat, fmtCnt);
-    test_KErrNone(nRes);
-
-    nRes =TheFs.FinaliseDrive(gDriveNum, RFs::EFinal_RW);
-    test(nRes == KErrInUse);  
-
-    nRes =TheFs.FinaliseDrive(gDriveNum, RFs::EFinal_RO);
-    test(nRes == KErrInUse);  
-
-    format.Close();
-
-    nRes =TheFs.FinaliseDrive(gDriveNum, RFs::EFinal_RW);
-    test_KErrNone(nRes);
-
-    //-- 2.3.2 raw disk
-    nRes = rawDisk.Open(TheFs, gDriveNum);
-    test_KErrNone(nRes);
-
-
-    nRes =TheFs.FinaliseDrive(gDriveNum, RFs::EFinal_RW);
-    test(nRes == KErrInUse);  
-
-    nRes =TheFs.FinaliseDrive(gDriveNum, RFs::EFinal_RO);
-    test(nRes == KErrInUse);  
-    
-    rawDisk.Close();
-
-    //-- 2.4 Volume finalisation and file system dismounting
-
-    //-- 2.4.1 "graceful" dismounting should finalise the drive correctly
-
-    //-- "unfinalise the volume"
-    nRes = CreateEmptyFile(TheFs, KFileName, 128000);
-    test_KErrNone(nRes);
-
-    bDriveFinalised = IsVolumeFinalised(gDriveNum);
-    test(!bDriveFinalised);
-
-    TFSDescriptor fsDesc;
-    nRes = GetFileSystemDescriptor(TheFs, gDriveNum, fsDesc);
-    test_KErrNone(nRes);
-
-    //-- gracefully dismount the file system
-    nRes = TheFs.DismountFileSystem(fsDesc.iFsName, gDriveNum);
-    test_KErrNone(nRes);
-
-    //-- mount it back
-    nRes = MountFileSystem(TheFs, gDriveNum, fsDesc);
-    test_KErrNone(nRes);
-
-    bDriveFinalised = IsVolumeFinalised(gDriveNum);
-    test(bDriveFinalised);
-
-    //-- 2.4.2 "forced" dismounting, usually happens when "graceful doesn't work, because there are files opened on the volume.
-    //-- Should also finalise the drive correctly
-
-    //-- "unfinalise the volume"
-    nRes = CreateEmptyFile(TheFs, KFileName, 128000);
-    test_KErrNone(nRes);
-
-    bDriveFinalised = IsVolumeFinalised(gDriveNum);
-    test(!bDriveFinalised);
-
-    //-- open a file on the volume, this will prevent graceful dismounting
-    nRes = file.Open(TheFs, KFileName, EFileWrite | EFileWriteDirectIO);
-    test_KErrNone(nRes);
-
-    nRes = GetFileSystemDescriptor(TheFs, gDriveNum, fsDesc);
-    test_KErrNone(nRes);
-
-    //-- try gracefully dismount the file system
-    nRes = TheFs.DismountFileSystem(fsDesc.iFsName, gDriveNum);
-    test(nRes == KErrInUse); //-- no luck, as expected
-
-    //-- now do dismounting by force
-    TRequestStatus  rqStat;
-    TheFs.NotifyDismount(gDriveNum, rqStat, EFsDismountForceDismount);
-    User::WaitForRequest(rqStat);
-    test_KErrNone(rqStat.Int());
-
-    nRes = file.Write(0, KSomeData);
-    test(nRes == KErrNotReady);    
-
-    file.Close();
-
-    //-- mount it back
-    nRes = MountFileSystem(TheFs, gDriveNum, fsDesc);
-    test_KErrNone(nRes);
-
-    bDriveFinalised = IsVolumeFinalised(gDriveNum);
-    test(bDriveFinalised);
-
-    //============= 3. test "unfinalise API"
-    nRes =TheFs.FinaliseDrive(gDriveNum, RFs::EForceUnfinalise);
-    test_KErrNone(nRes);
-
-    bDriveFinalised = IsVolumeFinalised(gDriveNum);
-    test(!bDriveFinalised); //-- the volume has become "unfinalised"
-
-    //============= 4. test finalisation into RO mode
-    nRes =TheFs.FinaliseDrive(gDriveNum, RFs::EFinal_RO); //-- the volume becomes RO
-    test_KErrNone(nRes);
-
-    //-- try to write a file on RO volume; it shall fail with KErrAccessDenied
-    nRes = CreateEmptyFile(TheFs, KFileName, 128000);
-    test(nRes == KErrAccessDenied);
-    file.Close();
-
-    //-- 4.1 try to finalise into EFinal_RW mode, shall fail with KErrAccessDenied
-    nRes =TheFs.FinaliseDrive(gDriveNum, RFs::EFinal_RW);
-    test(nRes == KErrAccessDenied);
-
-    //-- 4.2 "unfinalise" the volume, it still shall remain RO
-    nRes =TheFs.FinaliseDrive(gDriveNum, RFs::EForceUnfinalise);
-    test_KErrNone(nRes);
-
-    //-- try to write a file on RO volume; it shall fail with KErrAccessDenied
-    nRes = CreateEmptyFile(TheFs, KFileName, 128000);
-    test(nRes == KErrAccessDenied);
-    file.Close();
-
-    //-- remount FS, the drive shall become RW
-    nRes = RemountFS(TheFs, gDriveNum);
-    test_KErrNone(nRes);
-
-    bDriveFinalised = IsVolumeFinalised(gDriveNum);
-    test(bDriveFinalised);
-
-    //-- try to write a file on RW volume, shall be OK
-    nRes = CreateEmptyFile(TheFs, KFileName, 128000);
-    test(nRes == KErrNone);
-    file.Close();
-
-    bDriveFinalised = IsVolumeFinalised(gDriveNum);
-    test(!bDriveFinalised);
-
-    //============= 5. test various finalisation modes
-
-    //-- 5.1  Not finalised -> EFinal_RW (KErrNone)
-    nRes =TheFs.FinaliseDrive(gDriveNum, RFs::EFinal_RW);
-    test(nRes == KErrNone);
-    bDriveFinalised = IsVolumeFinalised(gDriveNum);
-    test(bDriveFinalised);
-
-    //-- 5.2  EFinal_RW -> EFinal_RO (KErrNone)
-    nRes =TheFs.FinaliseDrive(gDriveNum, RFs::EFinal_RO);
-    test(nRes == KErrNone);
-    bDriveFinalised = IsVolumeFinalised(gDriveNum);
-    test(bDriveFinalised);
-
-    //-- 5.2  EFinal_RO -> EFinal_RW  (KErrAccessDenied)
-    nRes =TheFs.FinaliseDrive(gDriveNum, RFs::EFinal_RW);
-    test(nRes == KErrAccessDenied);
-    bDriveFinalised = IsVolumeFinalised(gDriveNum);
-    test(bDriveFinalised);
-
-    //-- 5.3 restore
-    nRes = RemountFS(TheFs, gDriveNum);
-    test_KErrNone(nRes);
-
-
-    //============= 6. test old RFs::FinaliseDrives API
-
-    nRes = CreateEmptyFile(TheFs, KFileName, 128000);
-    test(nRes == KErrNone);
-
-    bDriveFinalised = IsVolumeFinalised(gDriveNum);
-    test(!bDriveFinalised);
-
-    TheFs.FinaliseDrives(); //-- shall work as TheFs.FinaliseDrive(gDriveNum, RFs::EFinal_RW) but for ALL drives
-
-    bDriveFinalised = IsVolumeFinalised(gDriveNum);
-    test(bDriveFinalised);
-
-    nRes = CreateEmptyFile(TheFs, KFileName, 128000);
-    test(nRes == KErrNone);
-
-
-
-}
-
-
-void CallTestsL()
+GLDEF_C void CallTestsL()
+//
+// Call tests that may leave
+//
 	{
-    //-- set up console output
-    F32_Test_Utils::SetConsole(test.Console());
 
-    TInt nRes=TheFs.CharToDrive(gDriveToTest, gDriveNum);
-    test_KErrNone(nRes);
-    
-    PrintDrvInfo(TheFs, gDriveNum);
-
-    TestDriveFinalisation();
 	Test1();
 	Test2();
 	Test3();
@@ -1706,5 +1417,4 @@ void CallTestsL()
 	Test14();
 	Test15();
     TestGetMediaSerialNumber();
-
 	}

@@ -1415,22 +1415,6 @@ EXPORT_C void NKern::ThreadSetPriority(NThread* aThread, TInt aPriority, NFastMu
 	NKern::Unlock();
 	}
 
-
-/** Changes the nominal priority of a thread.
-
-	This function is intended to be used by the EPOC layer and personality layers.
-	Do not use this function directly on a Symbian OS thread - use Kern::ThreadSetPriority().
-
-    @param aThread Thread to receive the new priority.
-    @param aPriority New inherited priority for aThread.
-    
-	@see Kern::SetThreadPriority()
-*/
-void NKern::ThreadSetNominalPriority(NThread* /*aThread*/, TInt /*aPriority*/)
-	{
-	}
-
-
 #ifndef __SCHEDULER_MACHINE_CODED__
 
 /** Signals the request semaphore of a nanothread.

@@ -470,7 +470,6 @@ void DThread::SetDefaultPriority(TInt aDefaultPriority)
 		aDefaultPriority = 1;
 #endif
 	iDefaultPriority=aDefaultPriority;
-	NKern::ThreadSetNominalPriority(&iNThread, aDefaultPriority);
 	K::PINestLevel=0;
 	SetRequiredPriority();
 	}
@@ -589,28 +588,29 @@ TInt DThread::DoCreate(SThreadCreateInfo& aInfo)
 	ni.iStackSize=iSupervisorStackSize;
 #ifdef __SMP__
 	TUint32 config = TheSuperPage().KernelConfigFlags();
-	ni.iGroup = 0;
-	ni.iCpuAffinity = KCpuAffinityAny;
 	if (iThreadType==EThreadUser)
 		{
 		// user thread
 		if ((config & EKernelConfigSMPUnsafeCPU0) && iOwningProcess->iSMPUnsafeCount)
 			{
 			ni.iCpuAffinity = 0; // compatibility mode
+			ni.iGroup = 0;
 			}
 		else
 			{
+			ni.iCpuAffinity = KCpuAffinityAny;
 			if ((config & EKernelConfigSMPUnsafeCompat) && iOwningProcess->iSMPUnsafeCount)
 				ni.iGroup = iOwningProcess->iSMPUnsafeGroup;
+			else
+				ni.iGroup = 0;
 			}
+		
 		}
 	else
 		{
-		if (config & EKernelConfigSMPLockKernelThreadsCore0) 
-			{
-			// kernel thread
-			ni.iCpuAffinity = 0;
-			}
+		// kernel thread
+		ni.iCpuAffinity = 0;
+		ni.iGroup = 0;
 		}
 #endif
 	if (iThreadType!=EThreadInitial)
@@ -652,53 +652,16 @@ TDfc* DThread::EpocThreadExitHandler(NThread* aThread)
 	return &pT->iKillDfc;	// NKERN will queue this before terminating this thread
 	}
 
-#if defined(__SMP__) && defined(KTIMING)
-TUint64 tix2us(TUint64 aTicks, TUint32 aFreq)
-	{
-	TUint64 e6(1000000);
-	aTicks *= e6;
-	aTicks += TUint64(aFreq>>1);
-	aTicks /= TUint64(aFreq);
-	TUint64 us = aTicks % e6;
-	TUint64 sec = aTicks / e6;
-	return (sec<<32)|us;
-	}
-#endif
-
 void DThread::Exit()
 //
 // This function runs in the context of the exiting thread
 // Enter and leave with system unlocked
 //
 	{
-#if defined(__SMP__) && defined(KTIMING)
-	if (KDebugNum(KTIMING))
-		{
-		TUint64 rc = iNThread.iRunCount.i64;
-		NSchedulable::SCpuStats stats;
-		NKern::Lock();
-		iNThread.GetCpuStats(NSchedulable::E_RunTime|NSchedulable::E_ActiveTime, stats);
-		NKern::Unlock();
-		TUint64 cputime = stats.iRunTime;
-		TUint64 acttime = stats.iActiveTime;
-		TUint32 f = NKern::CpuTimeMeasFreq();
-		TUint64 avgcpu = rc ? cputime / rc : 0;
-		TUint64 ratio = (acttime*100)/cputime;
-		TUint64 cpud = tix2us(cputime, f);
-		TUint64 actd = tix2us(acttime, f);
-		TUint64 avgd = tix2us(avgcpu, f);
-		Kern::Printf("Thread %O RC=%u CPU=%u.%06us ACT=%u.%06us AVG=%u.%06us RATIO=%d%%",
-						this, TUint32(rc),
-						I64HIGH(cpud), I64LOW(cpud),
-						I64HIGH(actd), I64LOW(actd),
-						I64HIGH(avgd), I64LOW(avgd),
-						TUint32(ratio));
-		}
-#endif
 #ifdef KPANIC
 	if (iExitType==EExitPanic)
 		{
-		__KTRACE_OPT2(KPANIC,KSCHED,Kern::Printf("Thread %O Panic %S %d",this,&iExitCategory,iExitReason));
+		__KTRACE_OPT2(KPANIC,KSCHED,Kern::Printf("Thread %O Panic %lS %d",this,&iExitCategory,iExitReason));
 		}
 	else if (iExitType==EExitTerminate)
 		{
@@ -829,7 +792,7 @@ void DThread::DoExit1()
 void DThread::Die(TExitType aType, TInt aReason, const TDesC& aCategory)
 	{
 	CHECK_PRECONDITIONS(MASK_SYSTEM_LOCKED,"DThread::Die");				
-	__KTRACE_OPT(KTHREAD,Kern::Printf("Thread %O Die: %d,%d,%S",this,aType,aReason,&aCategory));
+	__KTRACE_OPT(KTHREAD,Kern::Printf("Thread %O Die: %d,%d,%lS",this,aType,aReason,&aCategory));
 	SetExitInfo(aType,aReason,aCategory);
 
 	// If necessary, decrement count of running user threads in this process.  We get here if the
@@ -922,7 +885,7 @@ void DThread::SetPaging(TUint& aCreateFlags)
 
 TInt DThread::Create(SThreadCreateInfo& aInfo)
 	{
-	__KTRACE_OPT(KTHREAD,Kern::Printf("DThread::Create %S owner %O size %03x", &aInfo.iName,
+	__KTRACE_OPT(KTHREAD,Kern::Printf("DThread::Create %lS owner %O size %03x", &aInfo.iName,
 																iOwningProcess, aInfo.iTotalSize));
 
 	if (aInfo.iTotalSize < (TInt)sizeof(SThreadCreateInfo))
@@ -1267,7 +1230,7 @@ TInt DThread::Rename(const TDesC& aName)
 	TInt r=K::Containers[EThread]->CheckUniqueFullName(this,aName);
 	if (r==KErrNone)
 		{
-		__KTRACE_OPT(KTHREAD,Kern::Printf("DThread::Rename %O to %S",this,&aName));
+		__KTRACE_OPT(KTHREAD,Kern::Printf("DThread::Rename %O to %lS",this,&aName));
 		r=SetName(&aName);
 #ifdef BTRACE_THREAD_IDENTIFICATION
 		Name(n);

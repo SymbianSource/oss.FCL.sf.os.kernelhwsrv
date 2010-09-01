@@ -20,9 +20,8 @@ targettype		exe
 sourcepath		../server
 source			t_notifier.cpp
 source			t_main.cpp 
-sourcepath		../fileutils/src
-source			f32_test_utils.cpp
-source			t_chlffs.cpp
+sourcepath      ../fileutils/src
+source          t_chlffs.cpp
 library			euser.lib efsrv.lib hal.lib
 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN

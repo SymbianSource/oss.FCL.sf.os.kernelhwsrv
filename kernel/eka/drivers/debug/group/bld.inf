@@ -34,8 +34,8 @@ PRJ_EXPORTS
 ../../../debug/crashMonitor/inc/crashlogwalker.h         SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(crashlogwalker.h)
 ../../../debug/crashMonitor/inc/scmconfig.h              SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmconfig.h)
 ../../../debug/crashMonitor/inc/scmconfigitem.h          SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmconfigitem.h)
-../../../debug/crashMonitor/inc/scmdatasave.h            SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmdatasave.h)
-../../../debug/crashMonitor/inc/scmtrace.h               SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmtrace.h)
+../../../debug/crashmonitor/inc/scmdatasave.h            SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmdatasave.h)
+../../../debug/crashmonitor/inc/scmtrace.h               SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmtrace.h)
 
 PRJ_MMPFILES
 
@@ -51,7 +51,10 @@ PRJ_MMPFILES
 
 #if defined(MARM_ARMV5) || defined(MARM_ARMV4)
 
-sm_debug_kerneldriver
+
+rm_debug_kerneldriver
+rm_debug_kerneldriver_ext
+../../../debug/securityServer/group/rm_debug_svr
 
 #if defined(GENERIC_MARM) 
 ../../../debug/crashMonitor/group/scmusr_lib

@@ -120,7 +120,7 @@ const TMemory CSMPSoakThread::KMemoryTable[] =
 const TDesC* CSMPSoakThread::KDeviceTable[] =
     {
     &KDevices, &KDevLdd1, &KDevLdd1Name, &KDevLdd2, &KDevLdd2Name, &KDevLdd3, &KDevLdd3Name,
-    &KDevLdd4, &KDevLdd4Name, NULL
+    &KDevLdd4, &KDevLdd4Name, &KDevLdd5, &KDevLdd5Name, NULL
     };
 
 //Constructor
@@ -412,7 +412,6 @@ TInt CSMPSoakThread::SMPStressMemoryThread(TAny* aSmp)
 TInt CSMPSoakThread::DoSMPStressMemoryThread()
 	{
 	RTest test(_L("SMPStressMemoryThread"));
-	test.Start(_L("SMPStressMemoryThread"));
 	
 	TMemory *memoryTablePtr;
 	TChunkInfo chunkTable[KNumChunks];
@@ -478,8 +477,6 @@ TInt CSMPSoakThread::DoSMPStressMemoryThread()
 			}
 		User::After(gPeriod);
 		}
-	test.End();
-	test.Close();
 	return 0x00;
 	}
 //Device Thread : will do device associated operation
@@ -494,7 +491,6 @@ TInt CSMPSoakThread::SMPStressDeviceThread(TAny* aSmp)
 TInt CSMPSoakThread::DoSMPStressDeviceThread()
 	{
 	RTest test(_L("SMPStressDeviceThread"));
-	test.Start(_L("SMPStressDeviceThread"));
 	
 	RTimer timer;
 	RFs session;
@@ -543,11 +539,7 @@ TInt CSMPSoakThread::DoSMPStressDeviceThread()
 			RDevice device;
 
 			TInt r = User::LoadLogicalDevice(*ptrDevices[i]);
-			if (r != KErrNone && r != KErrAlreadyExists)
-				{
-				test.Printf(_L("LDD %S not present\n"), ptrDevices[i]);
-				continue;
-				}
+			test(r == KErrNone || r == KErrAlreadyExists);
 
 			test_KErrNone(device.Open(*ptrDevices[i+1]));
 
@@ -570,8 +562,6 @@ TInt CSMPSoakThread::DoSMPStressDeviceThread()
 		}
 	timer.Close();
 	PRINT((_L("SMPStressDeviceThread MyTimer.Cancel() called\n")));
-	test.End();
-	test.Close();
 	return 0x00;
 	}
 //Spin Thread : will do thread sync 
@@ -586,7 +576,6 @@ TInt CSMPSoakThread::SMPStressSpinThread(TAny* aSmp)
 TInt CSMPSoakThread::DoSMPStressSpinThread()
 	{
 	RTest test(_L("SMPStressSpinThread"));
-	test.Start(_L("SMPStressSpinThread"));
 
 	TTime startTime;
 	TTime endTime;
@@ -607,8 +596,6 @@ TInt CSMPSoakThread::DoSMPStressSpinThread()
 			break;
 		User::After(gPeriod);
 		}
-	test.End();
-	test.Close();
 	return 0x00;
 	}
 //Timer Thread : Timer operation and  thread sync 
@@ -623,7 +610,6 @@ TInt CSMPSoakThread::SMPStressTimerThread(TAny* aSmp)
 TInt CSMPSoakThread::DoSMPStressTimerThread()
 	{
 	RTest test(_L("SMPStressTimerThread"));
-	test.Start(_L("SMPStressTimerThread"));
 
 	PRINT (_L("SMPStressTimerThread\n"));
 	RTimer timer;
@@ -644,8 +630,6 @@ TInt CSMPSoakThread::DoSMPStressTimerThread()
 		}
 	timer.Cancel();
 	PRINT((_L("SMPStressTimerThread MyTimer.Cancel() called\n")));
-	test.End();
-	test.Close();
 	return 0x00;
 	}
 // CActive class to monitor KeyStrokes from User

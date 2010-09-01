@@ -107,7 +107,7 @@ EXPORTS
 	?DeclareCardAsGone@TSDCardArray@@UAEXI@Z @ 106 NONAME ; public: virtual void __thiscall TSDCardArray::DeclareCardAsGone(unsigned int)
 	?Dummy1@DSDStack@@EAEXXZ @ 107 NONAME ; private: virtual void __thiscall DSDStack::Dummy1(void)
 	?Dummy2@DSDStack@@EAEXXZ @ 108 NONAME ; private: virtual void __thiscall DSDStack::Dummy2(void)
-	?GetInterface@DSDStack@@MAEXW4TInterfaceId@DMMCStack@@AAPAVMInterface@3@@Z @ 109  NONAME ; protected: virtual void __thiscall DSDStack::GetInterface(enum DMMCStack::TInterfaceId,class DMMCStack::MInterface * &)
+	?Dummy3@DSDStack@@EAEXXZ @ 109 NONAME ; private: virtual void __thiscall DSDStack::Dummy3(void)
 	?CardType@DSDStack@@UAE?AW4TSDCardType@1@HH@Z @ 110 NONAME ; public: virtual enum DSDStack::TSDCardType __thiscall DSDStack::CardType(int,int)
 	?Init@DSDStack@@UAEHXZ @ 111 NONAME ; public: virtual int __thiscall DSDStack::Init(void)
 	?InitStackAfterUnlockSM@DSDStack@@MAEKXZ @ 112 NONAME ; protected: virtual unsigned long __thiscall DSDStack::InitStackAfterUnlockSM(void)

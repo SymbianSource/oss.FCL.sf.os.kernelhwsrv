@@ -84,21 +84,6 @@ EXPORT_C void Arm::SetFiqHandler(TLinAddr aHandler)
 	ArmInterruptInfo.iFiqHandler=aHandler;
 	}
 
-/** Register the global Idle handler
-	Called by the base port at boot time to register a handler containing a pointer to
-	a function that is called by the Kernel when each core reaches idle.
-	Should not be called at any other time.
-
-	@param	aHandler Pointer to idle handler function
-	@param	aPtr Idle handler function argument
-*/
-EXPORT_C void Arm::SetIdleHandler(TCpuIdleHandlerFn aHandler, TAny* aPtr)
-	{
-	ArmInterruptInfo.iCpuIdleHandler.iHandler = aHandler;
-	ArmInterruptInfo.iCpuIdleHandler.iPtr = aPtr;
-	ArmInterruptInfo.iCpuIdleHandler.iPostambleRequired = EFalse;
-	}
-
 extern void initialiseState();
 void Arm::Init1Interrupts()
 //

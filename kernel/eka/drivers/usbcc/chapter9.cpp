@@ -1,4 +1,4 @@
-// Copyright (c) 2000-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2000-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -23,11 +23,6 @@
 */
 
 #include <drivers/usbc.h>
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "chapter9Traces.h"
-#endif
-
 
 
 //#define ENABLE_EXCESSIVE_DEBUG_OUTPUT
@@ -66,8 +61,7 @@
 */
 TUsbcEp0State DUsbClientController::EnquireEp0NextState(const TUint8* aSetupBuf) const
 	{
-    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_ENQUIREEP0NEXTSTATE,
-            "DUsbClientController::EnquireEp0NextState()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::EnquireEp0NextState()"));
 
 	// This function may be called by the PSL from within an ISR -- so we have
 	// to take care what we do here (and also in all functions that get called
@@ -75,21 +69,17 @@ TUsbcEp0State DUsbClientController::EnquireEp0NextState(const TUint8* aSetupBuf)
 
 	if (SWAP_BYTES_16((reinterpret_cast<const TUint16*>(aSetupBuf)[3])) == 0) // iLength
 		{
-	    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_ENQUIREEP0NEXTSTATE_DUP1,
-	            "  --> EEp0StateStatusIn" );
-
+		__KTRACE_OPT(KUSB, Kern::Printf("  --> EEp0StateStatusIn"));
 		return EEp0StateStatusIn;							// No-data Control => Status_IN
 		}
 	else if ((aSetupBuf[0] & KUsbRequestType_DirMask) == KUsbRequestType_DirToDev)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_ENQUIREEP0NEXTSTATE_DUP2,
-		        "  --> EEp0StateDataOut" );
+		__KTRACE_OPT(KUSB, Kern::Printf("  --> EEp0StateDataOut"));
 		return EEp0StateDataOut;							// Control Write => Data_OUT
 		}
 	else
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_ENQUIREEP0NEXTSTATE_DUP3,
-		        "  --> EEp0StateDataIn" );
+		__KTRACE_OPT(KUSB, Kern::Printf("  --> EEp0StateDataIn"));
 		return EEp0StateDataIn;								// Control Read => Data_IN
 		}
 	}
@@ -97,8 +87,7 @@ TUsbcEp0State DUsbClientController::EnquireEp0NextState(const TUint8* aSetupBuf)
 
 TInt DUsbClientController::ProcessEp0ReceiveDone(TInt aCount)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0RECEIVEDONE,
-	        "DUsbClientController::ProcessEp0ReceiveDone()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessEp0ReceiveDone()"));
 	TInt r;
 	if (iEp0DataReceiving == EFalse)
 		{
@@ -122,8 +111,7 @@ TInt DUsbClientController::ProcessEp0ReceiveDone(TInt aCount)
 
 TInt DUsbClientController::ProcessEp0TransmitDone(TInt aCount, TInt aError)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0TRANSMITDONE,
-	        "DUsbClientController::ProcessEp0TransmitDone()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessEp0TransmitDone()"));
 	// In any case: there's now no longer a write pending
 	iEp0WritePending = EFalse;
 	// If it was a client who set up this transmission, we report to that client
@@ -139,8 +127,7 @@ TInt DUsbClientController::ProcessEp0TransmitDone(TInt aCount, TInt aError)
 			ProcessDataTransferDone(*p);
 			return KErrNone;
 			}
-	    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSEP0TRANSMITDONE_DUP1,
-		        "  Error: DUsbClientController::ProcessEpTransmitDone: Stalling Ep0" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: DUsbClientController::ProcessEpTransmitDone: Stalling Ep0"));
 		StallEndpoint(KEp0_In);								// request not found
 		return KErrNotFound;
 		}
@@ -148,10 +135,18 @@ TInt DUsbClientController::ProcessEp0TransmitDone(TInt aCount, TInt aError)
 	return KErrNone;
 	}
 
+
+#define USB_PROCESS_REQUEST(request) \
+	if (Process ## request(packet) != KErrNone) \
+		{ \
+		__KTRACE_OPT(KUSB, \
+					 Kern::Printf("  ProcessEp0SetupReceived: Stalling Ep0")); \
+		StallEndpoint(KEp0_In); \
+		}
+
 TInt DUsbClientController::ProcessEp0SetupReceived(TInt aCount)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED, 
-	        "DUsbClientController::ProcessEp0SetupReceived()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessEp0SetupReceived()"));
 
 	if (aCount > iEp0MaxPacketSize)
 		{
@@ -165,73 +160,69 @@ TInt DUsbClientController::ProcessEp0SetupReceived(TInt aCount)
 
 #if defined(_DEBUG) && defined(ENABLE_EXCESSIVE_DEBUG_OUTPUT)
 	// let's see what we've got:
-	OstTraceDef1( OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP1, 
-	        "  bmRequestType = 0x%02x", packet.iRequestType );
+	__KTRACE_OPT(KUSB, Kern::Printf("  bmRequestType = 0x%02x", packet.iRequestType));
 	if ((packet.iRequestType & KUsbRequestType_TypeMask) == KUsbRequestType_TypeStd)
 		{
 		switch (packet.iRequest)
 			{
 		case KUsbRequest_GetStatus:
-		    OstTraceDef1( OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP2, 
-		            "  bRequest      = 0x%02x (GET_STATUS)", KUsbRequest_GetStatus );
+			__KTRACE_OPT(KUSB, Kern::Printf("  bRequest      = 0x%02x (GET_STATUS)",
+											KUsbRequest_GetStatus));
 			break;
 		case KUsbRequest_ClearFeature:
-		    OstTraceDef1( OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP3, 
-		            "  bRequest      = 0x%02x (CLEAR_FEATURE)", KUsbRequest_ClearFeature );
+			__KTRACE_OPT(KUSB, Kern::Printf("  bRequest      = 0x%02x (CLEAR_FEATURE)",
+											KUsbRequest_ClearFeature));
 			break;
 		case KUsbRequest_SetFeature:
-		    OstTraceDef1( OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP4, 
-		            "  bRequest      = 0x%02x (SET_FEATURE)", KUsbRequest_SetFeature );
+			__KTRACE_OPT(KUSB, Kern::Printf("  bRequest      = 0x%02x (SET_FEATURE)",
+											KUsbRequest_SetFeature));
 			break;
 		case KUsbRequest_SetAddress:
-		    OstTraceDef1( OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP5, 
-		            "  bRequest      = 0x%02x (SET_ADDRESS)", KUsbRequest_SetAddress );
+			__KTRACE_OPT(KUSB, Kern::Printf("  bRequest      = 0x%02x (SET_ADDRESS)",
+											KUsbRequest_SetAddress));
 			break;
 		case KUsbRequest_GetDescriptor:
-		    OstTraceDef1( OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP6, 
-		            "  bRequest      = 0x%02x (GET_DESCRIPTOR)", KUsbRequest_GetDescriptor );
+			__KTRACE_OPT(KUSB, Kern::Printf("  bRequest      = 0x%02x (GET_DESCRIPTOR)",
+											KUsbRequest_GetDescriptor));
 			break;
 		case KUsbRequest_SetDescriptor:
-		    OstTraceDef1( OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP7, 
-		            "  bRequest      = 0x%02x (SET_DESCRIPTOR)", KUsbRequest_SetDescriptor );
+			__KTRACE_OPT(KUSB, Kern::Printf("  bRequest      = 0x%02x (SET_DESCRIPTOR)",
+											KUsbRequest_SetDescriptor));
 			break;
 		case KUsbRequest_GetConfig:
-		    OstTraceDef1( OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP8, 
-		            "  bRequest      = 0x%02x (GET_CONFIGURATION)", KUsbRequest_GetConfig );
+			__KTRACE_OPT(KUSB, Kern::Printf("  bRequest      = 0x%02x (GET_CONFIGURATION)",
+											KUsbRequest_GetConfig));
 			break;
 		case KUsbRequest_SetConfig:
-		    OstTraceDef1( OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP9, 
-		            "  bRequest      = 0x%02x (SET_CONFIGURATION)", KUsbRequest_SetConfig );
+			__KTRACE_OPT(KUSB, Kern::Printf("  bRequest      = 0x%02x (SET_CONFIGURATION)",
+											KUsbRequest_SetConfig));
 			break;
 		case KUsbRequest_GetInterface:
-		    OstTraceDef1( OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP10, 
-		            "  bRequest      = 0x%02x (GET_INTERFACE)", KUsbRequest_GetInterface );
+			__KTRACE_OPT(KUSB, Kern::Printf("  bRequest      = 0x%02x (GET_INTERFACE)",
+											KUsbRequest_GetInterface));
 			break;
 		case KUsbRequest_SetInterface:
-		    OstTraceDef1( OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP11, 
-		            "  bRequest      = 0x%02x (SET_INTERFACE)", KUsbRequest_SetInterface );
+			__KTRACE_OPT(KUSB, Kern::Printf("  bRequest      = 0x%02x (SET_INTERFACE)",
+											KUsbRequest_SetInterface));
 			break;
 		case KUsbRequest_SynchFrame:
-		    OstTraceDef1( OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP12, 
-		            "  bRequest      = 0x%02x (SYNCH_FRAME)", KUsbRequest_SynchFrame );
+			__KTRACE_OPT(KUSB, Kern::Printf("  bRequest      = 0x%02x (SYNCH_FRAME)",
+											KUsbRequest_SynchFrame));
 			break;
 		default:
-		    OstTraceDef1( OST_TRACE_CATEGORY_DEBUG, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP13, 
-		            "  Error: bRequest = 0x%02x (UNKNWON STANDARD REQUEST)", packet.iRequest );
+			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: bRequest = 0x%02x (UNKNWON STANDARD REQUEST)",
+											  packet.iRequest));
 			break;
 			}
 		}
 	else
 		{
-        OstTraceDef1( OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP14, 
-                "  bRequest      = 0x%02x (NON-STANDARD REQUEST)", packet.iRequest );
+		__KTRACE_OPT(KUSB, Kern::Printf("  bRequest      = 0x%02x (NON-STANDARD REQUEST)",
+										packet.iRequest));
 		}
-	OstTraceDef1( OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP15, 
-	        "  wValue        = 0x%04x", packet.iValue );
-	OstTraceDef1( OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP16, 
-	        "  wIndex        = 0x%04x", packet.iIndex );
-	OstTraceDef1( OST_TRACE_CATEGORY_DEBUG, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP17, 
-	        "  wLength       = 0x%04x", packet.iLength );
+	__KTRACE_OPT(KUSB, Kern::Printf("  wValue        = 0x%04x", packet.iValue));
+	__KTRACE_OPT(KUSB, Kern::Printf("  wIndex        = 0x%04x", packet.iIndex));
+	__KTRACE_OPT(KUSB, Kern::Printf("  wLength       = 0x%04x", packet.iLength));
 #endif // defined(_DEBUG) && defined(ENABLE_EXCESSIVE_DEBUG_OUTPUT)
 
 	// now the actual analysis
@@ -244,34 +235,18 @@ TInt DUsbClientController::ProcessEp0SetupReceived(TInt aCount)
 			switch (packet.iRequestType & KUsbRequestType_DestMask)
 				{ // Recipient
 			case KUsbRequestType_DestDevice:
-			    if (ProcessGetDeviceStatus(packet) != KErrNone)
-			        {
-                    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP18, 
-                            "ProcessEp0SetupReceived: Stalling Ep0" );
-                    StallEndpoint(KEp0_In);
-                    }
+				USB_PROCESS_REQUEST(GetDeviceStatus);
 				break;
 			case KUsbRequestType_DestIfc:
-                if (ProcessGetInterfaceStatus(packet) != KErrNone)
-                    {
-                    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP19, 
-                            "ProcessEp0SetupReceived: Stalling Ep0" );
-                    StallEndpoint(KEp0_In);
-                    }
+				USB_PROCESS_REQUEST(GetInterfaceStatus);
 				break;
 			case KUsbRequestType_DestEp:
-                if (ProcessGetEndpointStatus(packet) != KErrNone)
-                    {
-                    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP20, 
-                            "ProcessEp0SetupReceived: Stalling Ep0" );
-                    StallEndpoint(KEp0_In);
-                    }
+				USB_PROCESS_REQUEST(GetEndpointStatus);
 				break;
 			default:
-			    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP21, 
-			            "  Error: GET STATUS - Other or Unknown recipient" );
-			    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP22, 
-			            "  -> DUsbClientController::ProcessEp0SetupReceived: Stalling Ep0" );
+				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: GET STATUS - Other or Unknown recipient"));
+				__KTRACE_OPT(KPANIC, Kern::Printf("  -> DUsbClientController::ProcessEp0SetupReceived: "
+												  "Stalling Ep0"));
 				StallEndpoint(KEp0_In);
 				break;
 				}
@@ -281,107 +256,49 @@ TInt DUsbClientController::ProcessEp0SetupReceived(TInt aCount)
 			switch (packet.iRequestType & KUsbRequestType_DestMask)
 				{ // Recipient
 			case KUsbRequestType_DestDevice:
-                if (ProcessSetClearDevFeature(packet) != KErrNone)
-                    {
-                    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP23, 
-                            "ProcessEp0SetupReceived: Stalling Ep0" );
-                    StallEndpoint(KEp0_In);
-                    }
+				USB_PROCESS_REQUEST(SetClearDevFeature);
 				break;
 			case KUsbRequestType_DestIfc:
-                if (ProcessSetClearIfcFeature(packet) != KErrNone)
-                    {
-                    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP24, 
-                            "ProcessEp0SetupReceived: Stalling Ep0" );
-                    StallEndpoint(KEp0_In);
-                    }
+				USB_PROCESS_REQUEST(SetClearIfcFeature);
 				break;
 			case KUsbRequestType_DestEp:
-                if (ProcessSetClearEpFeature(packet) != KErrNone)
-                    {
-                    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP25, 
-                            "ProcessEp0SetupReceived: Stalling Ep0" );
-                    StallEndpoint(KEp0_In);
-                    }
+				USB_PROCESS_REQUEST(SetClearEpFeature);
 				break;
 			default:
-			    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP26, 
-			            "  Error: SET/CLEAR FEATURE - Other or Unknown recipient" );
-			    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP27, 
-			            "  -> Stalling Ep0" );
+				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: SET/CLEAR FEATURE - "
+												  "Other or Unknown recipient"));
+				__KTRACE_OPT(KPANIC, Kern::Printf("  -> Stalling Ep0"));
 				StallEndpoint(KEp0_In);
 				break;
 				}
 			break;
 		case KUsbRequest_SetAddress:
-            if (ProcessSetAddress(packet) != KErrNone)
-                {
-                OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP28, 
-                        "ProcessEp0SetupReceived: Stalling Ep0" );
-                StallEndpoint(KEp0_In);
-                }
+			USB_PROCESS_REQUEST(SetAddress);
 			break;
 		case KUsbRequest_GetDescriptor:
-            if (ProcessGetDescriptor(packet) != KErrNone)
-                {
-                OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP29, 
-                        "ProcessEp0SetupReceived: Stalling Ep0" );
-                StallEndpoint(KEp0_In);
-                }
+			USB_PROCESS_REQUEST(GetDescriptor);
 			break;
 		case KUsbRequest_SetDescriptor:
-            if (ProcessSetDescriptor(packet) != KErrNone)
-                {
-                OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP30, 
-                        "ProcessEp0SetupReceived: Stalling Ep0" );
-                StallEndpoint(KEp0_In);
-                }
+			USB_PROCESS_REQUEST(SetDescriptor);
 			break;
 		case KUsbRequest_GetConfig:
-            if (ProcessGetConfiguration(packet) != KErrNone)
-                {
-                OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP31, 
-                        "ProcessEp0SetupReceived: Stalling Ep0" );
-                StallEndpoint(KEp0_In);
-                }
+			USB_PROCESS_REQUEST(GetConfiguration);
 			break;
 		case KUsbRequest_SetConfig:
-            if (ProcessSetConfiguration(packet) != KErrNone)
-                {
-                OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP32, 
-                        "ProcessEp0SetupReceived: Stalling Ep0" );
-                StallEndpoint(KEp0_In);
-                }
+			USB_PROCESS_REQUEST(SetConfiguration);
 			break;
 		case KUsbRequest_GetInterface:
-            if (ProcessGetInterface(packet) != KErrNone)
-                {
-                OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP33, 
-                        "ProcessEp0SetupReceived: Stalling Ep0" );
-                StallEndpoint(KEp0_In);
-                }
+			USB_PROCESS_REQUEST(GetInterface);
 			break;
 		case KUsbRequest_SetInterface:
-            if (ProcessSetInterface(packet) != KErrNone)
-                {
-                OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP34, 
-                        "ProcessEp0SetupReceived: Stalling Ep0" );
-                StallEndpoint(KEp0_In);
-                }
+			USB_PROCESS_REQUEST(SetInterface);
 			break;
 		case KUsbRequest_SynchFrame:
-            if (ProcessSynchFrame(packet) != KErrNone)
-                {
-                OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP35, 
-                        "ProcessEp0SetupReceived: Stalling Ep0" );
-                StallEndpoint(KEp0_In);
-                }
+			USB_PROCESS_REQUEST(SynchFrame);
 			break;
 		default:
-		    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP36, 
-		            "  Error: Unknown/unsupported Std Setup Request" );
-		    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP37, 
-		            "  -> Stalling Ep0" );
+			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Unknown/unsupported Std Setup Request"));
+			__KTRACE_OPT(KPANIC, Kern::Printf("  -> Stalling Ep0"));
 			StallEndpoint(KEp0_In);
 			break;
 			}
@@ -404,8 +321,7 @@ TInt DUsbClientController::ProcessEp0SetupReceived(TInt aCount)
 		        }
 			if (iTrackDeviceState && iDeviceState < EUsbcDeviceStateConfigured)
 				{
-                OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP38, 
-                        "  Error: Invalid device state" );
+				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Invalid device state"));
 				}
 			else
 				{
@@ -418,8 +334,7 @@ TInt DUsbClientController::ProcessEp0SetupReceived(TInt aCount)
 					{
 					if (ifcset_ptr->CurrentInterface()->iNoEp0Requests)
 						{
-                        OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP39, 
-                                "  Recipient says: NoEp0RequestsPlease" );
+						__KTRACE_OPT(KUSB, Kern::Printf("  Recipient says: NoEp0RequestsPlease"));
 						}
 					else
 						{
@@ -428,8 +343,8 @@ TInt DUsbClientController::ProcessEp0SetupReceived(TInt aCount)
 					}
 				else
 					{
-                    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP40, 
-                            "  Error: Interface 0x%02x does not exist", packet.iIndex );
+					__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Interface 0x%02x does not exist",
+													  packet.iIndex));
 					}
 				}
 	        if (NKern::CurrentContext() == EThread)
@@ -445,13 +360,12 @@ TInt DUsbClientController::ProcessEp0SetupReceived(TInt aCount)
 	            }
 			if (iTrackDeviceState && iDeviceState < EUsbcDeviceStateConfigured)
 				{
-                OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP41, 
-                        "  Error: Invalid device state" );
+				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Invalid device state"));
 				}
 			else if (EndpointExists(packet.iIndex) == EFalse)
 				{
-                OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP42, 
-                        "  Error: Endpoint 0x%02x does not exist", packet.iIndex );
+				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Endpoint 0x%02x does not exist",
+												  packet.iIndex));
 				}
 			else
 				{
@@ -460,8 +374,7 @@ TInt DUsbClientController::ProcessEp0SetupReceived(TInt aCount)
 					iRealEndpoints[idx].iLEndpoint->iInterface->iInterfaceSet;
 				if (ifcset_ptr->CurrentInterface()->iNoEp0Requests)
 					{
-                    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP43, 
-                            "  Recipient says: NoEp0RequestsPlease" );
+					__KTRACE_OPT(KUSB, Kern::Printf("  Recipient says: NoEp0RequestsPlease"));
 					}
 				else
 					{
@@ -474,8 +387,7 @@ TInt DUsbClientController::ProcessEp0SetupReceived(TInt aCount)
                 }
 			break;
 		default:
-		    OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP44, 
-		            "  Error: Other or Unknown recipient" );
+			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Other or Unknown recipient"));
 			break;
 			}
 		if (client != NULL)
@@ -489,15 +401,13 @@ TInt DUsbClientController::ProcessEp0SetupReceived(TInt aCount)
 					{
 					__ASSERT_DEBUG((p->iEndpointNum == 0), Kern::Fault(KUsbPILPanicCat, __LINE__));
 					__ASSERT_DEBUG((p->iTransferDir == EControllerRead), Kern::Fault(KUsbPILPanicCat, __LINE__));
-					OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP45, 
-					        "  Found Ep0 read request" );
+					__KTRACE_OPT(KUSB, Kern::Printf("  Found Ep0 read request"));
 					if (packet.iLength != 0)
 						{
 						if ((packet.iRequestType & KUsbRequestType_DirMask) == KUsbRequestType_DirToDev)
 							{
 							// Data transfer & direction OUT => there'll be a DATA_OUT stage
-                            OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP46, 
-                                    "  Next is DATA_OUT: setting up DataOutVars" );
+							__KTRACE_OPT(KUSB, Kern::Printf("  Next is DATA_OUT: setting up DataOutVars"));
 							SetEp0DataOutVars(packet, client);
 							}
 						else if ((packet.iRequestType & KUsbRequestType_DirMask) == KUsbRequestType_DirToHost)
@@ -515,16 +425,14 @@ TInt DUsbClientController::ProcessEp0SetupReceived(TInt aCount)
 					return KErrNone;
 					}
 				}
-			OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP47, 
-			        "  Ep0 read request not found: setting RxExtra vars (Setup)" );
+			__KTRACE_OPT(KUSB, Kern::Printf("  Ep0 read request not found: setting RxExtra vars (Setup)"));
 			iEp0_RxExtraCount = aCount;
 			iEp0_RxExtraData = ETrue;
 			return KErrNotFound;
 			}
 		else // if (client == NULL)
 			{
-            OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSEP0SETUPRECEIVED_DUP48, 
-                    "  Ep0 request error: Stalling Ep0" );
+			__KTRACE_OPT(KPANIC, Kern::Printf("  Ep0 request error: Stalling Ep0"));
 			StallEndpoint(KEp0_In);
 			return KErrGeneral;
 			}
@@ -532,16 +440,18 @@ TInt DUsbClientController::ProcessEp0SetupReceived(TInt aCount)
 	return KErrNone;
 	}
 
+#undef USB_PROCESS_REQUEST
+
+
 TInt DUsbClientController::ProcessEp0DataReceived(TInt aCount)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCESSEP0DATARECEIVED, 
-	        "DUsbClientController::ProcessEp0DataReceived()" );
-	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0DATARECEIVED_DUP1, 
-	        "  : %d bytes", aCount );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessEp0DataReceived()"));
+
+	__KTRACE_OPT(KUSB, Kern::Printf("  : %d bytes", aCount));
+
 	if (aCount > iEp0MaxPacketSize)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSEP0DATARECEIVED_DUP2, 
-                "  Error: Too much data" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Too much data"));
 		aCount = iEp0MaxPacketSize;
 		}
 	iEp0DataReceived += aCount;
@@ -557,10 +467,8 @@ TInt DUsbClientController::ProcessEp0DataReceived(TInt aCount)
 			break;
 #endif
 		default:
-            OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSEP0DATARECEIVED_DUP3, 
-                    "  Error: invalid request in iSetup" );
-            OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSEP0DATARECEIVED_DUP4, 
-                    "  -> DUsbClientController::ProcessEp0DataReceived: Stalling Ep0" );
+			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: invalid request in iSetup"));
+			__KTRACE_OPT(KPANIC, Kern::Printf("  -> DUsbClientController::ProcessEp0DataReceived: Stalling Ep0"));
 			StallEndpoint(KEp0_In);
 			ResetEp0DataOutVars();
 			break;
@@ -577,8 +485,7 @@ TInt DUsbClientController::ProcessEp0DataReceived(TInt aCount)
 				{
 				__ASSERT_DEBUG((p->iEndpointNum == 0), Kern::Fault(KUsbPILPanicCat, __LINE__));
 				__ASSERT_DEBUG((p->iTransferDir == EControllerRead), Kern::Fault(KUsbPILPanicCat, __LINE__));
-	            OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0DATARECEIVED_DUP5,
-	                    "  Found Ep0 read request" );
+				__KTRACE_OPT(KUSB, Kern::Printf("  Found Ep0 read request"));
 				memcpy(p->iBufferStart, iEp0_RxBuf, aCount);
 				p->iError = KErrNone;						// if it wasn't 'KErrNone' we wouldn't be here
 				*(p->iPacketSize) = aCount;
@@ -588,8 +495,7 @@ TInt DUsbClientController::ProcessEp0DataReceived(TInt aCount)
 				goto found;
 				}
 			}
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSEP0DATARECEIVED_DUP6,
-                "  Ep0 read request not found: setting RxExtra vars (Data)" );
+		__KTRACE_OPT(KUSB, Kern::Printf("  Ep0 read request not found: setting RxExtra vars (Data)"));
 		iEp0_RxExtraCount = aCount;
 		iEp0_RxExtraData = ETrue;
 		iEp0DataReceived -= aCount;
@@ -609,18 +515,15 @@ TInt DUsbClientController::ProcessEp0DataReceived(TInt aCount)
 
 TInt DUsbClientController::ProcessGetDeviceStatus(const TUsbcSetup& aPacket)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCESSGETDEVICESTATUS, 
-	        "DUsbClientController::ProcessGetDeviceStatus()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessGetDeviceStatus()"));
 	if (iTrackDeviceState && iDeviceState < EUsbcDeviceStateAddress)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSGETDEVICESTATUS_DUP1, 
-                "  Error: Invalid device state" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Invalid device state"));
 		return KErrGeneral;
 		}
 	const TUint16 status = ((DeviceSelfPowered() ? KUsbDevStat_SelfPowered : 0) |
 					  (iRmWakeupStatus_Enabled ? KUsbDevStat_RemoteWakeup : 0));
-	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSGETDEVICESTATUS_DUP2, 
-	        "  Reporting device status: 0x%02x", status );
+	__KTRACE_OPT(KUSB, Kern::Printf("  Reporting device status: 0x%02x", status));
 	*reinterpret_cast<TUint16*>(iEp0_TxBuf) = SWAP_BYTES_16(status);
 	if (SetupEndpointZeroWrite(iEp0_TxBuf, sizeof(status)) == KErrNone)
 		{
@@ -632,23 +535,19 @@ TInt DUsbClientController::ProcessGetDeviceStatus(const TUsbcSetup& aPacket)
 
 TInt DUsbClientController::ProcessGetInterfaceStatus(const TUsbcSetup& aPacket)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCESSGETINTERFACESTATUS, 
-	        "DUsbClientController::ProcessGetInterfaceStatus()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessGetInterfaceStatus()"));
 	if (iTrackDeviceState && iDeviceState < EUsbcDeviceStateConfigured)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSGETINTERFACESTATUS_DUP1, 
-                "  Error: Invalid device state" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Invalid device state"));
 		return KErrGeneral;
 		}
 	if (InterfaceExists(aPacket.iIndex) == EFalse)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSGETINTERFACESTATUS_DUP2, 
-                "  Error: Interface does not exist" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Interface does not exist"));
 		return KErrGeneral;
 		}
 	const TUint16 status = 0x0000;							// as of USB Spec 2.0
-    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSGETINTERFACESTATUS_DUP3,
-            "  Reporting interface status: 0x%02x", status );
+	__KTRACE_OPT(KUSB, Kern::Printf("  Reporting interface status: 0x%02x", status));
 	*reinterpret_cast<TUint16*>(iEp0_TxBuf) = SWAP_BYTES_16(status);
 	if (SetupEndpointZeroWrite(iEp0_TxBuf, sizeof(status)) == KErrNone)
 		{
@@ -660,26 +559,23 @@ TInt DUsbClientController::ProcessGetInterfaceStatus(const TUsbcSetup& aPacket)
 
 TInt DUsbClientController::ProcessGetEndpointStatus(const TUsbcSetup& aPacket)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCESSGETENDPOINTSTATUS, 
-	        "DUsbClientController::ProcessGetEndpointStatus()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessGetEndpointStatus()"));
 	if (iTrackDeviceState &&
 		((iDeviceState < EUsbcDeviceStateAddress) ||
 		 (iDeviceState == EUsbcDeviceStateAddress && (aPacket.iIndex & KUsbEpAddress_Portmask) != 0)))
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSGETENDPOINTSTATUS_DUP1, 
-                "  Error: Invalid device state" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Invalid device state"));
 		return KErrGeneral;
 		}
 	if (EndpointExists(aPacket.iIndex) == EFalse)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSGETENDPOINTSTATUS_DUP2, 
-                "  Error: Endpoint does not exist" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Endpoint does not exist"));
 		return KErrGeneral;
 		}
 	const TInt ep = EpAddr2Idx(aPacket.iIndex);
 	const TUint16 status = (iRealEndpoints[ep].iHalt) ?	 KUsbEpStat_Halt : 0;
-	OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSGETENDPOINTSTATUS_DUP3, 
-	        "  Reporting endpoint status 0x%02x for real endpoint %d", status, ep );
+	__KTRACE_OPT(KUSB, Kern::Printf("  Reporting endpoint status 0x%02x for real endpoint %d",
+									status, ep));
 	*reinterpret_cast<TUint16*>(iEp0_TxBuf) = SWAP_BYTES_16(status);
 	if (SetupEndpointZeroWrite(iEp0_TxBuf, 2) == KErrNone)
 		{
@@ -691,12 +587,10 @@ TInt DUsbClientController::ProcessGetEndpointStatus(const TUsbcSetup& aPacket)
 
 TInt DUsbClientController::ProcessSetClearDevFeature(const TUsbcSetup& aPacket)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCESSSETCLEARDEVFEATURE,
-	        "DUsbClientController::ProcessSetClearDevFeature()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessSetClearDevFeature()"));
 	if (iTrackDeviceState && iDeviceState < EUsbcDeviceStateDefault)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETCLEARDEVFEATURE_DUP1,
-                "  Error: Invalid device state" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Invalid device state"));
 		return KErrGeneral;
 		}
 
@@ -709,8 +603,7 @@ TInt DUsbClientController::ProcessSetClearDevFeature(const TUsbcSetup& aPacket)
 		case KUsbFeature_RemoteWakeup:
 			if (iTrackDeviceState && iDeviceState < EUsbcDeviceStateAddress)
 				{
-                OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETCLEARDEVFEATURE_DUP2,
-                        "  Error: Invalid device state" );
+				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Invalid device state"));
 				return KErrGeneral;
 				}
 			iRmWakeupStatus_Enabled = ETrue;
@@ -718,35 +611,30 @@ TInt DUsbClientController::ProcessSetClearDevFeature(const TUsbcSetup& aPacket)
 		case KUsbFeature_TestMode:
 			if (!iHighSpeed)
 				{
-                OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETCLEARDEVFEATURE_DUP3,
-                        "  Error: Request only supported in High-Speed mode" );
+				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Request only supported in High-Speed mode"));
 				return KErrGeneral;
 				}
 			if (LowByte(aPacket.iIndex) != 0)
 				{
-                OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETCLEARDEVFEATURE_DUP4,
-                        "  Error: Lower byte of wIndex must be zero" );
+				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Lower byte of wIndex must be zero"));
 				return KErrGeneral;
 				}
 			test_sel = HighByte(aPacket.iIndex);
 			if ((test_sel < KUsbTestSelector_Test_J) || (test_sel > KUsbTestSelector_Test_Force_Enable))
 				{
-                OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETCLEARDEVFEATURE_DUP5,
-                        "  Error: Invalid test selector: %d", test_sel );
+				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Invalid test selector: %d", test_sel));
 				return KErrGeneral;
 				}
 			break;
 		case KUsbFeature_B_HnpEnable:
 			if (!iOtgSupport)
 				{
-                OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETCLEARDEVFEATURE_DUP6,
-                        "  Error: Request only supported on a OTG device" );
+				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Request only supported on a OTG device"));
 				return KErrGeneral;
 				}
 			if (!(iOtgFuncMap & KUsbOtgAttr_HnpSupp))
 				{
-                OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETCLEARDEVFEATURE_DUP7,
-                        "  Error: Request only valid if OTG device supports HNP" );
+				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Request only valid if OTG device supports HNP"));
 				return KErrGeneral;
 				}
 			iOtgFuncMap |= KUsbOtgAttr_B_HnpEnable;
@@ -755,14 +643,12 @@ TInt DUsbClientController::ProcessSetClearDevFeature(const TUsbcSetup& aPacket)
 		case KUsbFeature_A_HnpSupport:
 			if (!iOtgSupport)
 				{
-                OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETCLEARDEVFEATURE_DUP8,
-                        "  Error: Request only supported on a OTG device" );
+				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Request only supported on a OTG device"));
 				return KErrGeneral;
 				}
 			if (!(iOtgFuncMap & KUsbOtgAttr_HnpSupp))
 				{
-                OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETCLEARDEVFEATURE_DUP9,
-                        "  Error: Request only valid if OTG device supports HNP" );
+				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Request only valid if OTG device supports HNP"));
 				return KErrGeneral;
 				}
 			iOtgFuncMap |= KUsbOtgAttr_A_HnpSupport;
@@ -771,22 +657,19 @@ TInt DUsbClientController::ProcessSetClearDevFeature(const TUsbcSetup& aPacket)
 		case KUsbFeature_A_AltHnpSupport:
 			if (!iOtgSupport)
 				{
-                OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETCLEARDEVFEATURE_DUP10,
-                        "  Error: Request only supported on a OTG device" );
+				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Request only supported on a OTG device"));
 				return KErrGeneral;
 				}
 			if (!(iOtgFuncMap & KUsbOtgAttr_HnpSupp))
 				{
-                OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETCLEARDEVFEATURE_DUP11,
-                        "  Error: Request only valid if OTG device supports HNP" );
+				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Request only valid if OTG device supports HNP"));
 				return KErrGeneral;
 				}
 			iOtgFuncMap |= KUsbOtgAttr_A_AltHnpSupport;
 			OtgFeaturesNotify();
 			break;
 		default:
-		    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETCLEARDEVFEATURE_DUP12,
-		            "  Error: Unknown feature requested" );
+			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Unknown feature requested"));
 			return KErrGeneral;
 			}
 		}
@@ -797,15 +680,13 @@ TInt DUsbClientController::ProcessSetClearDevFeature(const TUsbcSetup& aPacket)
 		case KUsbFeature_RemoteWakeup:
 			if (iTrackDeviceState && iDeviceState < EUsbcDeviceStateAddress)
 				{
-                OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETCLEARDEVFEATURE_DUP13,
-                        "  Error: Invalid device state" );
+				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Invalid device state"));
 				return KErrGeneral;
 				}
 			iRmWakeupStatus_Enabled = EFalse;
 			break;
 		default:
-		    OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETCLEARDEVFEATURE_DUP14,
-		            "  Error: Unknown feature requested" );
+			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Unknown feature requested"));
 			return KErrGeneral;
 			}
 		}
@@ -816,8 +697,7 @@ TInt DUsbClientController::ProcessSetClearDevFeature(const TUsbcSetup& aPacket)
 	// after the status stage of the request."
 	if (test_sel)
 		{
-        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETCLEARDEVFEATURE_DUP15,
-                "  Entering HS Test Mode %d", test_sel );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Entering HS Test Mode %d", test_sel));
 		EnterTestMode(test_sel);
 		}
 
@@ -827,12 +707,10 @@ TInt DUsbClientController::ProcessSetClearDevFeature(const TUsbcSetup& aPacket)
 
 TInt DUsbClientController::ProcessSetClearIfcFeature(const TUsbcSetup& aPacket)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCESSSETCLEARIFCFEATURE,
-	        "DUsbClientController::ProcessSetClearIfcFeature()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessSetClearIfcFeature()"));
 	if (iTrackDeviceState && iDeviceState < EUsbcDeviceStateConfigured)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETCLEARIFCFEATURE_DUP1,
-                "  Error: Invalid device state" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Invalid device state"));
 		return KErrGeneral;
 		}
 	// No interface features defined in USB spec, thus
@@ -842,34 +720,29 @@ TInt DUsbClientController::ProcessSetClearIfcFeature(const TUsbcSetup& aPacket)
 
 TInt DUsbClientController::ProcessSetClearEpFeature(const TUsbcSetup& aPacket)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCESSSETCLEAREPFEATURE, 
-	        "DUsbClientController::ProcessSetClearEpFeature()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessSetClearEpFeature()"));
 	if (iTrackDeviceState &&
 		((iDeviceState < EUsbcDeviceStateAddress) ||
 		 (iDeviceState == EUsbcDeviceStateAddress && (aPacket.iIndex & KUsbEpAddress_Portmask) != 0)))
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETCLEAREPFEATURE_DUP1, 
-                "  Error: Invalid device state" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Invalid device state"));
 		return KErrGeneral;
 		}
 	if (aPacket.iValue != KUsbFeature_EndpointHalt)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETCLEAREPFEATURE_DUP2, 
-                "  Error: Unknown feature requested" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Unknown feature requested"));
 		return KErrGeneral;
 		}
 	if (EndpointExists(aPacket.iIndex) == EFalse)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETCLEAREPFEATURE_DUP3, 
-                "  Error: Endpoint does not exist" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Endpoint does not exist"));
 		return KErrGeneral;
 		}
 	const TInt ep = EpAddr2Idx(aPacket.iIndex);
 	if (iRealEndpoints[ep].iLEndpoint->iInfo.iType == KUsbEpTypeControl ||
 		iRealEndpoints[ep].iLEndpoint->iInfo.iType == KUsbEpTypeIsochronous)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETCLEAREPFEATURE_DUP4, 
-                "  Error: Endpoint is Control or Isochronous" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Endpoint is Control or Isochronous"));
 		return KErrGeneral;
 		}
 	SetClearHaltFeature(ep, aPacket.iRequest);
@@ -880,19 +753,16 @@ TInt DUsbClientController::ProcessSetClearEpFeature(const TUsbcSetup& aPacket)
 
 TInt DUsbClientController::ProcessSetAddress(const TUsbcSetup& aPacket)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCESSSETADDRESS,
-	        "DUsbClientController::ProcessSetAddress()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessSetAddress()"));
 	if (iTrackDeviceState && iDeviceState > EUsbcDeviceStateAddress)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETADDRESS_DUP1,
-                "  Error: Invalid device state" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Invalid device state"));
 		return KErrGeneral;
 		}
 	const TUint16 addr = aPacket.iValue;
 	if (addr > 127)
 		{
-        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETADDRESS_DUP2,
-                "  Error: Bad address value: %d (>127)", addr );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Bad address value: %d (>127)", addr));
 		return KErrGeneral;
 		}
 	if (addr == 0)
@@ -900,8 +770,7 @@ TInt DUsbClientController::ProcessSetAddress(const TUsbcSetup& aPacket)
 		// Enter Default state (from Default or Address)
 		NextDeviceState(EUsbcDeviceStateDefault);
 		}
-	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSSETADDRESS_DUP3,
-	        "  USB address: %d", addr );
+	__KTRACE_OPT(KUSB, Kern::Printf("  USB address: %d", addr));
 	// The spec says, under section 9.4.6:
 	// "Stages after the initial Setup packet assume the same device address as the Setup packet. The USB
 	// device does not change its device address until after the Status stage of this request is completed
@@ -916,12 +785,10 @@ TInt DUsbClientController::ProcessSetAddress(const TUsbcSetup& aPacket)
 
 TInt DUsbClientController::ProcessGetDescriptor(const TUsbcSetup& aPacket)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCESSGETDESCRIPTOR, 
-	        "DUsbClientController::ProcessGetDescriptor()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessGetDescriptor()"));
 	if (iTrackDeviceState && iDeviceState < EUsbcDeviceStateDefault)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSGETDESCRIPTOR_DUP1, 
-                "  Error: Invalid device state" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Invalid device state"));
 		return KErrGeneral;
 		}
 
@@ -937,18 +804,16 @@ TInt DUsbClientController::ProcessGetDescriptor(const TUsbcSetup& aPacket)
 	if ((result != KErrNone) || (size == 0))
 		{
 		// This doesn't have to be an error - protocol-wise it's OK.
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSGETDESCRIPTOR_DUP2, 
-                "  Couldn't retrieve descriptor" );
+		__KTRACE_OPT(KUSB, Kern::Printf("  Couldn't retrieve descriptor"));
 		return KErrGeneral;
 		}
 
-    OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSGETDESCRIPTOR_DUP3,
-            "  Descriptor found, size: %d (requested: %d)", size, aPacket.iLength );
+	__KTRACE_OPT(KUSB, Kern::Printf("  Descriptor found, size: %d (requested: %d)",
+									size, aPacket.iLength));
 	if (size > KUsbcBufSz_Ep0Tx)
 		{
 		// This should actually not be possible (i.e. we should never get here).
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSGETDESCRIPTOR_DUP4,
-                "  Error: Ep0_Tx buffer too small" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Ep0_Tx buffer too small"));
 		}
 	if (size > aPacket.iLength)
 		{
@@ -957,8 +822,10 @@ TInt DUsbClientController::ProcessGetDescriptor(const TUsbcSetup& aPacket)
 		}
 
 #ifdef ENABLE_EXCESSIVE_DEBUG_OUTPUT
-    OstTraceDefExt1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSGETDESCRIPTOR_DUP5,
-            "  Data: %{uint8[]}", TOstArray<TUint8>(iEp0_TxBuf, 8) );
+	__KTRACE_OPT(KUSB,
+				 Kern::Printf("  Data: 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x ...",
+							  iEp0_TxBuf[0], iEp0_TxBuf[1], iEp0_TxBuf[2], iEp0_TxBuf[3],
+							  iEp0_TxBuf[4], iEp0_TxBuf[5], iEp0_TxBuf[6], iEp0_TxBuf[7]));
 #endif
 	// If we're about to send less bytes than expected by the host AND our number is a
 	// multiple of the packet size, in order to indicate the end of the control transfer,
@@ -975,8 +842,7 @@ TInt DUsbClientController::ProcessGetDescriptor(const TUsbcSetup& aPacket)
 
 TInt DUsbClientController::ProcessSetDescriptor(const TUsbcSetup& aPacket)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCESSSETDESCRIPTOR, 
-	        "DUsbClientController::ProcessSetDescriptor()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessSetDescriptor()"));
 #ifndef USB_SUPPORTS_SET_DESCRIPTOR_REQUEST
 	return KErrGeneral;
 #else
@@ -988,8 +854,7 @@ TInt DUsbClientController::ProcessSetDescriptor(const TUsbcSetup& aPacket)
 	if (aPacket.iLength > KUsbcBufSz_Ep0Rx)
 		{
 		// Error: Our Rx buffer is too small! (Raise a defect to make it larger)
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETDESCRIPTOR_DUP1,
-	            "  Error: Ep0_Rx buffer too small" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Ep0_Rx buffer too small"));
 		return KErrGeneral;
 		}
 	SetEp0DataOutVars(aPacket);
@@ -1001,33 +866,27 @@ TInt DUsbClientController::ProcessSetDescriptor(const TUsbcSetup& aPacket)
 
 TInt DUsbClientController::ProcessGetConfiguration(const TUsbcSetup& aPacket)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCESSGETCONFIGURATION, 
-	        "DUsbClientController::ProcessGetConfiguration()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessGetConfiguration()"));
 	if (iTrackDeviceState && iDeviceState < EUsbcDeviceStateAddress)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSGETCONFIGURATION_DUP1, 
-                "  Error: Invalid device state" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Invalid device state"));
 		return KErrGeneral;
 		}
 	if (iTrackDeviceState && iDeviceState == EUsbcDeviceStateAddress && iCurrentConfig != 0)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSGETCONFIGURATION_DUP2, 
-                "  Error: DeviceState Address && Config != 0" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: DeviceState Address && Config != 0"));
 		return KErrGeneral;
 		}
 	if (iTrackDeviceState && iDeviceState == EUsbcDeviceStateConfigured && iCurrentConfig == 0)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSGETCONFIGURATION_DUP3, 
-                "  Error: DeviceState Configured && Config == 0" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: DeviceState Configured && Config == 0"));
 		return KErrGeneral;
 		}
 	if (aPacket.iLength != 1)								// "unspecified behavior"
 		{
-        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSGETCONFIGURATION_DUP4, 
-                "  Warning: wLength != 1 (= %d)", aPacket.iLength );
+		__KTRACE_OPT(KUSB, Kern::Printf("  Warning: wLength != 1 (= %d)", aPacket.iLength));
 		}
-	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSGETCONFIGURATION_DUP5, 
-	        "  Reporting configuration value %d", iCurrentConfig );
+	__KTRACE_OPT(KUSB, Kern::Printf("  Reporting configuration value %d", iCurrentConfig));
 	if (SetupEndpointZeroWrite(&iCurrentConfig, sizeof(iCurrentConfig)) == KErrNone)
 		{
 		iEp0WritePending = ETrue;
@@ -1047,36 +906,32 @@ TInt DUsbClientController::ProcessGetConfiguration(const TUsbcSetup& aPacket)
 */
 TInt DUsbClientController::ProcessSetConfiguration(const TUsbcSetup& aPacket)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCESSSETCONFIGURATION, 
-	        "DUsbClientController::ProcessSetConfiguration()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessSetConfiguration()"));
+
 	// This function may be called by the PSL from within an ISR -- so we have
 	// to take care what we do here (and also in all functions that get called
 	// from here).
 
 	if (iTrackDeviceState && iDeviceState < EUsbcDeviceStateAddress)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETCONFIGURATION_DUP1, 
-                "  Error: Invalid device state" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Invalid device state"));
 		return KErrGeneral;
 		}
 	const TUint16 value = aPacket.iValue;
 	if (value > 1)											// we support only one configuration
 		{
-        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETCONFIGURATION_DUP2, 
-                "  Error: Configuration value too large: %d", value );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Configuration value too large: %d", value));
 		return KErrGeneral;
 		}
 
-    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSSETCONFIGURATION_DUP3,
-            "  Configuration value: %d", value );
+	__KTRACE_OPT(KUSB, Kern::Printf("  Configuration value: %d", value));
 	ChangeConfiguration(value);
 
 	// In 9.4.5 under GET_STATUS we read, that after SET_CONFIGURATION the HALT feature
 	// for all endpoints is reset to zero.
 	TInt num = 0;
 	(TAny) DoForEveryEndpointInUse(&DUsbClientController::ClearHaltFeature, num);
-	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSSETCONFIGURATION_DUP4,
-	        "  Called ClearHaltFeature() for %d endpoints", num );
+	__KTRACE_OPT(KUSB, Kern::Printf("  Called ClearHaltFeature() for %d endpoints", num));
 	SendEp0ZeroByteStatusPacket();							// success: zero bytes data during status stage
 	return KErrNone;
 	}
@@ -1084,32 +939,27 @@ TInt DUsbClientController::ProcessSetConfiguration(const TUsbcSetup& aPacket)
 
 TInt DUsbClientController::ProcessGetInterface(const TUsbcSetup& aPacket)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCESSGETINTERFACE, 
-	        "DUsbClientController::ProcessGetInterface()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessGetInterface()"));
 	if (iTrackDeviceState && iDeviceState < EUsbcDeviceStateConfigured)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSGETINTERFACE_DUP1, 
-                "  Error: Invalid device state" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Invalid device state"));
 		return KErrGeneral;
 		}
 	if (iCurrentConfig == 0)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSGETINTERFACE_DUP2, 
-                "  Error: Device not configured" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Device not configured"));
 		return KErrGeneral;
 		}
 	const TInt number = aPacket.iIndex;
 	if (!InterfaceExists(number))
 		{
-        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSGETINTERFACE_DUP3, 
-                "  Error: Bad interface index: %d", number );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Bad interface index: %d", number));
 		return KErrGeneral;
 		}
 	// Send alternate setting code of iCurrentInterface of Interface(set) <number> of the current
 	// config (iCurrentConfig).
 	const TUint8 setting = InterfaceNumber2InterfacePointer(number)->iCurrentInterface;
-	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSGETINTERFACE_DUP4, 
-	        "  Reporting interface setting %d", setting );
+	__KTRACE_OPT(KUSB, Kern::Printf("  Reporting interface setting %d", setting));
 	if (SetupEndpointZeroWrite(&setting, 1) == KErrNone)
 		{
 		iEp0WritePending = ETrue;
@@ -1120,25 +970,21 @@ TInt DUsbClientController::ProcessGetInterface(const TUsbcSetup& aPacket)
 
 TInt DUsbClientController::ProcessSetInterface(const TUsbcSetup& aPacket)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCESSSETINTERFACE,
-	        "DUsbClientController::ProcessSetInterface()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessSetInterface()"));
 	if (iTrackDeviceState && iDeviceState < EUsbcDeviceStateConfigured)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETINTERFACE_DUP1,
-                "  Error: Invalid device state" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Invalid device state"));
 		return KErrGeneral;
 		}
 	if (iCurrentConfig == 0)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETINTERFACE_DUP2,
-                "  Error: Device not configured" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Device not configured"));
 		return KErrGeneral;
 		}
 	const TInt number = aPacket.iIndex;
 	if (!InterfaceExists(number))
 		{
-        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETINTERFACE_DUP3,
-                "  Error: Bad interface index: %d", number );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Bad interface index: %d", number));
 		return KErrGeneral;
 		}
 	const TInt setting = aPacket.iValue;
@@ -1146,12 +992,10 @@ TInt DUsbClientController::ProcessSetInterface(const TUsbcSetup& aPacket)
 	RPointerArray<TUsbcInterface>& ifcs = ifcset_ptr->iInterfaces;
 	if (setting >= ifcs.Count())
 		{
-        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSETINTERFACE_DUP4,
-                "  Error: Alt Setting >= bNumAltSettings: %d", setting );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Alt Setting >= bNumAltSettings: %d", setting));
 		return KErrGeneral;
 		}
-    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_PROCESSSETINTERFACE_DUP5,
-            "  Interface setting:: %d", setting );
+	__KTRACE_OPT(KUSB, Kern::Printf("  Interface setting:: %d", setting));
 	// Set iCurrentInterface of Interface(set) <number> of the current config
 	// (iCurrentConfig) to alternate setting <setting>.
 	ChangeInterface(ifcs[setting]);
@@ -1171,25 +1015,21 @@ TInt DUsbClientController::ProcessSetInterface(const TUsbcSetup& aPacket)
 
 TInt DUsbClientController::ProcessSynchFrame(const TUsbcSetup& aPacket)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCESSSYNCHFRAME, 
-	        "DUsbClientController::ProcessSynchFrame()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProcessSynchFrame()"));
 	if (iTrackDeviceState && iDeviceState < EUsbcDeviceStateConfigured)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSYNCHFRAME_DUP1, 
-                "  Error: Invalid device state" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Invalid device state"));
 		return KErrGeneral;
 		}
 	const TInt ep = aPacket.iIndex;
 	if (EndpointExists(ep) == EFalse)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSYNCHFRAME_DUP2, 
-                "  Error: Endpoint does not exist" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Endpoint does not exist"));
 		return KErrGeneral;
 		}
 	if (iRealEndpoints[EpAddr2Idx(ep)].iLEndpoint->iInfo.iType != KUsbEpTypeIsochronous)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_PROCESSSYNCHFRAME_DUP3, 
-                "  Error: Endpoint is not isochronous" );
+		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Endpoint is not isochronous"));
 		return KErrGeneral;
 		}
 	// We always send 0:
@@ -1205,8 +1045,7 @@ TInt DUsbClientController::ProcessSynchFrame(const TUsbcSetup& aPacket)
 #ifdef USB_SUPPORTS_SET_DESCRIPTOR_REQUEST
 void DUsbClientController::ProceedSetDescriptor()
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_PROCEEDSETDESCRIPTOR,
-	        "DUsbClientController::ProceedSetDescriptor()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ProceedSetDescriptor()"));
 	// iEp0DataReceived already reflects the current buffer state
 	if (iEp0DataReceived < iSetup.iLength)
 		{
@@ -1239,19 +1078,17 @@ void DUsbClientController::ProceedSetDescriptor()
 
 void DUsbClientController::SetClearHaltFeature(TInt aRealEndpoint, TUint8 aRequest)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_SETCLEARHALTFEATURE, 
-	        "DUsbClientController::SetClearHaltFeature()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::SetClearHaltFeature()"));
 	if (aRequest == KUsbRequest_SetFeature)
 		{
 		if (iRealEndpoints[aRealEndpoint].iHalt)
 			{
 			// (This condition is not really an error)
-            OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETCLEARHALTFEATURE_DUP1, 
-                    "  Warning: HALT feature already set" );
+			__KTRACE_OPT(KUSB, Kern::Printf("  Warning: HALT feature already set"));
 			return;
 			}
-		OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETCLEARHALTFEATURE_DUP2, 
-		        "  setting HALT feature for real endpoint %d", aRealEndpoint );
+		__KTRACE_OPT(KUSB, Kern::Printf("  setting HALT feature for real endpoint %d",
+										aRealEndpoint));
 		StallEndpoint(aRealEndpoint);
 		iRealEndpoints[aRealEndpoint].iHalt = ETrue;
 		}
@@ -1260,13 +1097,12 @@ void DUsbClientController::SetClearHaltFeature(TInt aRealEndpoint, TUint8 aReque
 		if (iRealEndpoints[aRealEndpoint].iHalt == EFalse)
 			{
 			// In this case, before we return, the data toggles are reset to DATA0.
-            OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETCLEARHALTFEATURE_DUP3, 
-                    "  Warning: HALT feature already cleared" );
+			__KTRACE_OPT(KUSB, Kern::Printf("  Warning: HALT feature already cleared"));
 			ResetDataToggle(aRealEndpoint);
 			return;
 			}
-		OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETCLEARHALTFEATURE_DUP4, 
-		        "  clearing HALT feature for real endpoint %d", aRealEndpoint );
+		__KTRACE_OPT(KUSB, Kern::Printf("  clearing HALT feature for real endpoint %d",
+										aRealEndpoint));
 		ResetDataToggle(aRealEndpoint);
 		ClearStallEndpoint(aRealEndpoint);
 		iRealEndpoints[aRealEndpoint].iHalt = EFalse;
@@ -1277,8 +1113,7 @@ void DUsbClientController::SetClearHaltFeature(TInt aRealEndpoint, TUint8 aReque
 
 TInt DUsbClientController::ClearHaltFeature(TInt aRealEndpoint)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_CLEARHALTFEATURE, 
-	        "DUsbClientController::ClearHaltFeature()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ClearHaltFeature()"));
 	if (iRealEndpoints[aRealEndpoint].iHalt != EFalse)
 		{
 		ClearStallEndpoint(aRealEndpoint);
@@ -1290,21 +1125,19 @@ TInt DUsbClientController::ClearHaltFeature(TInt aRealEndpoint)
 
 void DUsbClientController::ChangeConfiguration(TUint16 aValue)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_CHANGECONFIGURATION, 
-	        "DUsbClientController::ChangeConfiguration()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ChangeConfiguration()"));
 	// New configuration is the same as the old one: 0
 	if (iCurrentConfig == 0 && aValue == 0)
 		{
 		// no-op
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CHANGECONFIGURATION_DUP1, 
-                "  Configuration: New == Old == 0 --> exiting" );
+		__KTRACE_OPT(KUSB, Kern::Printf("  Configuration: New == Old == 0 --> exiting"));
 		return;
 		}
 	// New configuration is the same as the old one (but not 0)
 	if (iCurrentConfig == aValue)
 		{
-        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CHANGECONFIGURATION_DUP2, 
-                "  Configuration: New == Old == %d --> exiting", aValue );
+		__KTRACE_OPT(KUSB, Kern::Printf("  Configuration: New == Old == %d --> exiting", aValue));
+
 		// From the spec 9.1.1.5, Data toggle is reset to zero here when 
 		// setconfiguration(x->x)(x!=0) received, although we only support
 		// single configuration currently.
@@ -1312,24 +1145,21 @@ void DUsbClientController::ChangeConfiguration(TUint16 aValue)
 		TInt ret = DoForEveryEndpointInUse(&DUsbClientController::ResetDataToggle, num);
 		if(ret != KErrNone)
 			{
-            OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_CHANGECONFIGURATION_DUP3, 
-                    "  Error: Endpoint data toggle reset failed" );
+			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Endpoint data toggle reset failed"));
 			}
-		OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CHANGECONFIGURATION_DUP4, 
-		        "  Called ResetDataToggle()for %d endpoints", num );	
+		__KTRACE_OPT(KUSB, Kern::Printf("  Called ResetDataToggle()for %d endpoints", num));	
+	
 		return;
 		}
 	// Device is already configured
 	if (iCurrentConfig != 0)
 		{
-        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CHANGECONFIGURATION_DUP5, 
-                "  Device was configured: %d", iCurrentConfig );
+		__KTRACE_OPT(KUSB, Kern::Printf("  Device was configured: %d", iCurrentConfig));
 		// Tear down all interface(set)s of the old configuration
 		RPointerArray<TUsbcInterfaceSet>& ifcsets = CurrentConfig()->iInterfaceSets;
 		for (TInt i = 0; i < ifcsets.Count(); ++i)
 			{
-            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CHANGECONFIGURATION_DUP6, 
-                    "  Tearing down InterfaceSet %d", i );
+			__KTRACE_OPT(KUSB, Kern::Printf("  Tearing down InterfaceSet %d", i));
 			InterfaceSetTeardown(ifcsets[i]);
 			}
 		iCurrentConfig = 0;
@@ -1340,8 +1170,7 @@ void DUsbClientController::ChangeConfiguration(TUint16 aValue)
 	// Device gets a new configuration
 	if (aValue != 0)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CHANGECONFIGURATION_DUP7, 
-                "  Device gets new configuration..." );
+		__KTRACE_OPT(KUSB, Kern::Printf("  Device gets new configuration..."));
 		// Setup all alternate settings 0 of all interfaces
 		// (Don't separate the next two lines of code.)
 		iCurrentConfig = aValue;
@@ -1349,23 +1178,20 @@ void DUsbClientController::ChangeConfiguration(TUint16 aValue)
 		const TInt n = ifcsets.Count();
 		for (TInt i = 0; i < n; ++i)
 			{
-            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CHANGECONFIGURATION_DUP8, 
-                    "  Setting up InterfaceSet %d", i );
+			__KTRACE_OPT(KUSB, Kern::Printf("  Setting up InterfaceSet %d", i));
 			InterfaceSetup(ifcsets[i]->iInterfaces[0]);
 			}
 		// Enter Configured state (from Address or Configured)
 		NextDeviceState(EUsbcDeviceStateConfigured);
 		}
-    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CHANGECONFIGURATION_DUP9, 
-            "  New configuration: %d", iCurrentConfig );
+	__KTRACE_OPT(KUSB, Kern::Printf("  New configuration: %d", iCurrentConfig));
 	return;
 	}
 
 
 void DUsbClientController::InterfaceSetup(TUsbcInterface* aIfc)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_INTERFACESETUP, 
-	        "DUsbClientController::InterfaceSetup()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::InterfaceSetup()"));
 	const TInt num_eps = aIfc->iEndpoints.Count();
 	for (TInt i = 0; i < num_eps; i++)
 		{
@@ -1375,27 +1201,24 @@ void DUsbClientController::InterfaceSetup(TUsbcInterface* aIfc)
 		//  adjusted in its constructor.)
 		if (iHighSpeed)
 			{
-            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_INTERFACESETUP_DUP1, 
-                    "  Setting Ep info size to %d (HS)", ep->iEpSize_Hs );
+			__KTRACE_OPT(KUSB, Kern::Printf("  Setting Ep info size to %d (HS)", ep->iEpSize_Hs));
 			ep->iInfo.iSize = ep->iEpSize_Hs;
 			}
 		else
 			{
-            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_INTERFACESETUP_DUP2, 
-                    "  Setting Ep info size to %d (FS)", ep->iEpSize_Fs );
+			__KTRACE_OPT(KUSB, Kern::Printf("  Setting Ep info size to %d (FS)", ep->iEpSize_Fs));
 			ep->iInfo.iSize = ep->iEpSize_Fs;
 			}
 		const TInt idx = EpAddr2Idx(ep->iPEndpoint->iEndpointAddr);
 		if (ConfigureEndpoint(idx, ep->iInfo) != KErrNone)
 			{
-            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_INTERFACESETUP_DUP3, 
-                    "  Error: Endpoint %d configuration failed", idx );
+			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Endpoint %d configuration failed", idx));
 			continue;
 			}
 		// Should there be a problem with it then we could try resetting the ep
 		// data toggle at this point (or before the Configure) as well.
-        OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_INTERFACESETUP_DUP4, 
-                "  Connecting real ep addr 0x%02x & logical ep #%d", ep->iPEndpoint->iEndpointAddr, ep->iLEndpointNum );
+		__KTRACE_OPT(KUSB, Kern::Printf("  Connecting real ep addr 0x%02x & logical ep #%d",
+										ep->iPEndpoint->iEndpointAddr, ep->iLEndpointNum));
 		ep->iPEndpoint->iLEndpoint = ep;
 		}
 	aIfc->iInterfaceSet->iCurrentInterface = aIfc->iSettingCode;
@@ -1405,12 +1228,10 @@ void DUsbClientController::InterfaceSetup(TUsbcInterface* aIfc)
 
 void DUsbClientController::InterfaceSetTeardown(TUsbcInterfaceSet* aIfcSet)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_INTERFACESETTEARDOWN,
-	        "DUsbClientController::InterfaceSetTeardown()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::InterfaceSetTeardown()"));
 	if (aIfcSet->iInterfaces.Count() == 0)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_INTERFACESETTEARDOWN_DUP1,
-                "  No interfaces exist - returning" );
+		__KTRACE_OPT(KUSB, Kern::Printf("  No interfaces exist - returning"));
 		return;
 		}
 	RPointerArray<TUsbcLogicalEndpoint>& eps = aIfcSet->CurrentInterface()->iEndpoints;
@@ -1424,29 +1245,24 @@ void DUsbClientController::InterfaceSetTeardown(TUsbcInterfaceSet* aIfcSet)
 
 		if (!ep->iPEndpoint->iLEndpoint)
 			{
-            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_INTERFACESETTEARDOWN_DUP2,
-                    "  real ep %d not configured: skipping", idx );
+			__KTRACE_OPT(KUSB, Kern::Printf("  real ep %d not configured: skipping", idx));
 			continue;
 			}
 		if (ResetDataToggle(idx) != KErrNone)
 			{
-            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_INTERFACESETTEARDOWN_DUP3,
-                    "  Error: Endpoint %d data toggle reset failed", idx );
+			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Endpoint %d data toggle reset failed", idx));
 			}
 		if (DeConfigureEndpoint(idx) != KErrNone)
 			{
-            OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_FATAL, DUSBCLIENTCONTROLLER_INTERFACESETTEARDOWN_DUP4,
-                    "  Error: Endpoint %d de-configuration failed", idx );
+			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Endpoint %d de-configuration failed", idx));
 			}
 
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_INTERFACESETTEARDOWN_DUP5,
-                "  disconnecting real ep & logical ep" );
+		__KTRACE_OPT(KUSB, Kern::Printf("  disconnecting real ep & logical ep"));
 		ep->iPEndpoint->iLEndpoint = NULL;
 		}
 	if (aIfcSet->CurrentInterface() != 0)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_INTERFACESETTEARDOWN_DUP6,
-                "  Resetting alternate interface setting to 0" );
+		__KTRACE_OPT(KUSB, Kern::Printf("  Resetting alternate interface setting to 0"));
 		//Add this mutex to protect the interface set data structure
 		if (NKern::CurrentContext() == EThread)
 		    {
@@ -1465,18 +1281,15 @@ void DUsbClientController::InterfaceSetTeardown(TUsbcInterfaceSet* aIfcSet)
 
 void DUsbClientController::ChangeInterface(TUsbcInterface* aIfc)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_CHANGEINTERFACE, 
-	        "DUsbClientController::ChangeInterface()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::ChangeInterface()"));
 	TUsbcInterfaceSet* ifcset = aIfc->iInterfaceSet;
 	const TUint8 setting = aIfc->iSettingCode;
 	if (ifcset->iCurrentInterface == setting)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CHANGEINTERFACE_DUP1, 
-                "  New Ifc == old Ifc: nothing to do" );
+		__KTRACE_OPT(KUSB, Kern::Printf("  New Ifc == old Ifc: nothing to do"));
 		return;
 		}
-    OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_CHANGEINTERFACE_DUP2,
-            "  Setting new interface setting #%d", setting );
+	__KTRACE_OPT(KUSB, Kern::Printf("  Setting new interface setting #%d", setting));
 	InterfaceSetTeardown(ifcset);
 	InterfaceSetup(aIfc);
 	StatusNotify(static_cast<TUsbcDeviceState>(KUsbAlternateSetting | setting), ifcset->iClientId);
@@ -1488,14 +1301,12 @@ void DUsbClientController::ChangeInterface(TUsbcInterface* aIfc)
 //
 TInt DUsbClientController::DoForEveryEndpointInUse(TInt (DUsbClientController::*aFunction)(TInt), TInt& aCount)
 	{
-	OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_FLOW, DUSBCLIENTCONTROLLER_DOFOREVERYENDPOINTINUSE, 
-	        "DUsbClientController::DoForEveryEndpointInUse()" );
+	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DoForEveryEndpointInUse()"));
 	aCount = 0;
 	TUsbcConfiguration* const config = CurrentConfig();
 	if (!config)
 		{
-        OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_DOFOREVERYENDPOINTINUSE_DUP1, 
-                "  Device is not configured - returning" );
+		__KTRACE_OPT(KUSB, Kern::Printf("  Device is not configured - returning"));
 		return KErrNone;
 		}
 	RPointerArray<TUsbcInterfaceSet>& ifcsets = config->iInterfaceSets;

@@ -15,7 +15,6 @@
 // 
 //
 
-#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include <e32hal.h>
@@ -47,12 +46,12 @@ LOCAL_C void TestFileHandleClosure(TInt aDrvNum)
 	test.Next( _L("Test File Handle Closure"));
 
 	TInt r = file.Replace(TheFs, fn, EFileWrite); 
-	test_KErrNone(r); 
+	test(r == KErrNone); 
 	r = TheFs.FileSystemName(fsname,aDrvNum);
-	test_KErrNone(r); 
+	test(r == KErrNone); 
 	buf = _L8("handle test23456");
 	r = file.Write(buf); 
-	test_KErrNone(r); 
+	test(r == KErrNone); 
 	TheFs.NotifyDismount(aDrvNum, stat, EFsDismountForceDismount); 
 	User::WaitForRequest(stat);         
 	test(stat.Int() == KErrNone);
@@ -60,13 +59,13 @@ LOCAL_C void TestFileHandleClosure(TInt aDrvNum)
 	// PDEF137626 Connectivity: Phone reboots automatically when connecting to PC via USB after pl 
 	// Check that writing data to a file when the drive is dismounted doesn't upset the file server
 	r = file.Write(buf); 
-	test_Value(r, r == KErrNotReady || r == KErrDisMounted); 
+	test(r == KErrNotReady || r == KErrDisMounted); 
 
 	// PDEF091956 was a file server fault EFsDriveThreadError when the file 
 	// handle was closed
 	file.Close(); 
 	r = TheFs.MountFileSystem(fsname,aDrvNum);
-	test_KErrNone(r); 
+	test(r == KErrNone); 
 }
 
 
@@ -79,13 +78,13 @@ LOCAL_C void TestRequestCancelling(TInt aDrvNum)
 	test.Next( _L("Test Request Cancelling") );
 
 	TInt r = TheFs.FileSystemName(fsname,aDrvNum);
-	test_KErrNone(r); 
+	test(r == KErrNone); 
 	
 	//***************************************
 	// first test with an open file handle
 	//***************************************
 	r = file.Replace(TheFs, fn, EFileWrite); 
-	test_KErrNone(r); 
+	test(r == KErrNone); 
 
 	// up the priority of this thread so that we can queue 2 requests onto the drive thread - 
 	// i.e. a TFsNotifyDismount and a TFsCloseObject
@@ -107,7 +106,7 @@ LOCAL_C void TestRequestCancelling(TInt aDrvNum)
 	thisThread.SetPriority(EPriorityNormal);
 
 	r = TheFs.MountFileSystem(fsname,aDrvNum);
-	test_KErrNone(r); 
+	test(r == KErrNone); 
 
 
 	//***************************************
@@ -117,11 +116,11 @@ LOCAL_C void TestRequestCancelling(TInt aDrvNum)
 	RDir dir;
 	TFileName sessionPath;
 	r=TheFs.SessionPath(sessionPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TFileName path=_L("?:\\*");
 	path[0]=sessionPath[0];
 	r=dir.Open(TheFs,path,KEntryAttMaskSupported);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	thisThread.SetPriority(EPriorityRealTime);
 	TheFs.NotifyDismount(aDrvNum, stat, EFsDismountForceDismount); 
@@ -133,7 +132,7 @@ LOCAL_C void TestRequestCancelling(TInt aDrvNum)
 	thisThread.SetPriority(EPriorityNormal);
 
 	r = TheFs.MountFileSystem(fsname,aDrvNum);
-	test_KErrNone(r); 
+	test(r == KErrNone); 
 	}
 
 
@@ -147,25 +146,25 @@ LOCAL_C void TestFileSizeFlushing(TInt aDrvNum)
 
 	TInt size = 0;
 	TInt r = file.Replace(TheFs, fn, EFileWrite); 
-	test_KErrNone(r); 
+	test(r == KErrNone); 
 	r = TheFs.FileSystemName(fsname,aDrvNum);
-	test_KErrNone(r); 
+	test(r == KErrNone); 
 	buf = _L8("size test9123456"); 
 	r = file.Write(buf); 
-	test_KErrNone(r); 
+	test(r == KErrNone); 
 	r = file.Flush(); 
-	test_KErrNone(r); 
+	test(r == KErrNone); 
 	r = file.Write(buf); 
-	test_KErrNone(r); 
+	test(r == KErrNone); 
 	TheFs.NotifyDismount(aDrvNum, stat, EFsDismountForceDismount); 
 	User::WaitForRequest(stat);         
 	test(stat.Int() == KErrNone);
 	file.Close();
 	r = TheFs.MountFileSystem(fsname,aDrvNum);
-	test_KErrNone(r); 
+	test(r == KErrNone); 
 	file.Open(TheFs, fn, EFileWrite);
 	r = file.Size(size); 
-	test_KErrNone(r); 
+	test(r == KErrNone); 
 	// PDEF091956 was, for example, a file size of 16 rather than 32. new file sizes were
 	// not flushed for the forced dismount. this was only a problem with rugged fat off.
 	test(size == 32);
@@ -174,13 +173,13 @@ LOCAL_C void TestFileSizeFlushing(TInt aDrvNum)
 	test.Next( _L("Test File Size Flushing with EFsDismountNotifyClients") );
 	size = 0;
 	r = file.Replace(TheFs, fn, EFileWrite); 
-	test_KErrNone(r); 
+	test(r == KErrNone); 
 
 	r = file.Write(buf); 
-	test_KErrNone(r); 
+	test(r == KErrNone); 
 
 	r = file.Write(buf); 
-	test_KErrNone(r); 
+	test(r == KErrNone); 
 
 	TheFs.NotifyDismount(aDrvNum, stat, EFsDismountNotifyClients); 
 	User::WaitForRequest(stat);
@@ -189,10 +188,10 @@ LOCAL_C void TestFileSizeFlushing(TInt aDrvNum)
 	file.Close();
 
 	r = TheFs.MountFileSystem(fsname,aDrvNum);
-	test_KErrNone(r); 
+	test(r == KErrNone); 
 	file.Open(TheFs, fn, EFileWrite);
 	r = file.Size(size); 
-	test_KErrNone(r); 
+	test(r == KErrNone); 
 	test(size == 32);
 	file.Close();
 	}
@@ -229,7 +228,7 @@ GLDEF_C void CallTestsL()
 	TInt drvNum, r;
 
 	r=TheFs.CharToDrive(gDriveToTest,drvNum);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 
 	// dismounting with file system extension present doesn't seem to work
@@ -269,11 +268,11 @@ GLDEF_C void CallTestsL()
 		TUint8 isRugged;
 		TPtr8 pRugged(&isRugged,1,1);
 		r=TheFs.ControlIo(drvNum,KControlIoIsRugged,pRugged);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		if(isRugged)
 			{
 			r=TheFs.ControlIo(drvNum,KControlIoRuggedOff);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			}
 
 		TestFileSizeFlushing(drvNum);
@@ -282,7 +281,7 @@ GLDEF_C void CallTestsL()
 		if(isRugged)
 			{
 			r=TheFs.ControlIo(drvNum,KControlIoRuggedOn);
-			test_KErrNone(r);
+			test(r==KErrNone);
 			}	
 		}
 	else

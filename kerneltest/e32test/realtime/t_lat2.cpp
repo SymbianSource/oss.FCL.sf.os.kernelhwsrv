@@ -110,14 +110,13 @@ TInt LatencyThread(TAny* aStatus)
 	SLatencyResults results;
 
 	l.Start();
-	volatile TInt forever = 1;
-	while(forever)
+	FOREVER
 		{
 		User::WaitForAnyRequest();
 		l.GetResults(results);
 		Latencies.Update(results);
 		}
-	return 0;
+	return r;
 	}
 
 void GetLatencies(SFullLatencyResults& aResults)

@@ -58,7 +58,7 @@ class CFatMountCB;
 class CFatFileSystem;
 
 /**
-Represents the position of a directory entry in terms of a cluster and offset into it
+Represents the position of a directory entery in terms of a cluster and off set into it
 */
 class TEntryPos
 	{
@@ -192,7 +192,7 @@ public:
     //-- pure virtual interface
     virtual TUint32 ReadL(TUint32 aFatIndex) const = 0;
 	virtual void WriteL(TUint32 aFatIndex, TUint32 aValue) = 0;
-	virtual TInt64 DataPositionInBytes(TUint32 aCluster) const = 0;
+	virtual TInt64 DataPositionInBytesL(TUint32 aCluster) const = 0;
     virtual void MountL(const TMountParams& aMountParam) = 0;
     //-----------------------------------------------------------------
     //-- just virtual interface
@@ -266,7 +266,7 @@ protected:
     inline TBool ClusterNumberValid(TUint32 aClusterNo) const;
 
     typedef RArray<TUint> RClusterArray;
-    void DoFreedClustersNotify(RClusterArray &aFreedClusters);
+    void DoFreedClustersNotifyL(RClusterArray &aFreedClusters);
 
 
 protected:
@@ -428,7 +428,7 @@ class CLeafDirCache;
 
 
 /**
-Fat file system mount implementation, provides all that is required of a plug in
+Fat file system mount implmentation, provides all that is required of a plug in
 file system mount as well as Fat mount specific functionality 
 */
 class CFatMountCB : public CLocDrvMountCB, 
@@ -750,7 +750,6 @@ private:
     void    DoReMountL();
     void    SetFatType(TFatType aFatType);
 
-    TUint64 VolumeSizeInBytes() const;
 
 private:
 	
@@ -768,10 +767,10 @@ private:
     TBool iRamDrive         : 1;///< true if this is a RAM drive    
     TBool iMainBootSecValid : 1;///< true if the main boot sector is valid, if false, a backup boot sector may be in use. 
 
-    TFatMntState iState;            ///< this mounnt internal state
+    TFatMntState iState;        ///< this mounnt internal state
 
-    TFatType iFatType;              ///< FAT type, FAT12,16 or 32
-    TUint32  iFatEocCode;           ///< End Of Cluster Chain code, 0xff8 for FAT12, 0xfff8 for FAT16, and 0xffffff8 for FAT32 
+    TFatType iFatType;          ///< FAT type, FAT12,16 or 32
+    TUint32  iFatEocCode;       ///< End Of Cluster Chain code, 0xff8 for FAT12, 0xfff8 for FAT16, and 0xffffff8 for FAT32 
 
     CLeafDirCache* iLeafDirCache;	///< A cache for most recently visited directories, only valid when limit is set bigger than 1
 
@@ -783,7 +782,7 @@ private:
     CFatTable* iFatTable;           ///< Pointer to the volume Fat 
 	CRawDisk*  iRawDisk;            ///< Pointer to the raw data interface class
 	
-    CAsyncNotifier* iNotifier;      ///< Async notifier for notifying user of Fat error conditions 
+    CAsyncNotifier* iNotifier;  ///< Async notifier for notifying user of Fat error conditions 
 
     XDriveInterface iDriverInterface; ///< the object representing interface to the drive, provides read/write access and notifiers
 	TFatConfig      iFatConfig;       ///< FAT parametrers from estart.txt
@@ -900,10 +899,10 @@ private:
     TUint     iStartCluster;     ///< Start cluster number of file
 	TEntryPos iCurrentPos;  ///< Current position in file data
 	
-    TEntryPos iFileDosEntryPos;	///< File DOS dir. entry position
+    TEntryPos iFileDosEntryPos;  ///< File DOS dir. entry position
 	
-    TBool iFileSizeModified :1;	///< flag, indicating that file size was modified and needs to be flushed onto the media (see FlushL())
-    TBool iFileTimeModified :1;	///< flag, indicating that file modification time was modified and needs to be flushed onto the media (see FlushL())
+    TBool iFileSizeModified :1;  ///< flag, indicating that file size was modified and needs to be flushed onto the media (see FlushL())
+    TBool iFileTimeModified :1;  ///< flag, indicating that file modification time was modified and needs to be flushed onto the media (see FlushL())
 
 	};
 

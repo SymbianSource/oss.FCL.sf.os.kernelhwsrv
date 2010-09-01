@@ -16,7 +16,7 @@
 TARGET 			t_drtaeabi.dll
 
 TARGETTYPE		dll
-armfpu softvfp
+
 SOURCEPATH		../../../kernel/eka/compsupp/rvct
 
 SOURCE			aeabidiv0.cpp
@@ -44,15 +44,13 @@ LIBRARY 		euser.lib dfpaeabi.lib dfprvct2_1.lib drtrvct2_1.lib
 LIBRARY 		euser.lib dfpaeabi.lib dfprvct2_2.lib drtrvct2_2.lib
 #elif defined ARMCC_3_1
 LIBRARY 		euser.lib dfpaeabi.lib dfprvct3_1.lib drtrvct3_1.lib scppnwdl.lib
-#elif defined ARMCC_4_0
-LIBRARY 		euser.lib dfpaeabi.lib scppnwdl.lib
 #endif
 
 START ARMCC
 ARMRT // we're building a runtime support lib so suppress all the default libraries
 ARMINC
 // we want the 'pure' versions to go with softvfp
-#if defined ARMCC_3_1 || defined ARMCC_4_0
+#if defined ARMCC_3_1
     #ifdef MARM_ARMV5
     ARMLIBS     c_5.l h_5.l cpprt_5.l
     #else

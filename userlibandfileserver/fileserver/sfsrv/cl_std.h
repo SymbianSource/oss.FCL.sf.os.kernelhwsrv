@@ -26,6 +26,7 @@
 #include <f32ver.h>
 #include <e32svr.h>
 #include <f32plugin.h>
+#include <utraceefsrv.h>
 #include "f32trace.h"
 
 enum TClientPanic

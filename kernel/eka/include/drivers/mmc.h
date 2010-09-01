@@ -3014,10 +3014,6 @@ public:
 	inline void EnableDoubleBuffering(TUint32 aNumBlocks);							  /**< @internalTechnology */
 	inline void SetDataTransferCallback(TMMCCallBack& aCallback);					  /**< @internalTechnology */
 	inline void MoreDataAvailable(TUint32 aNumBlocks, TUint8* aMemoryP, TInt aError); /**< @internalTechnology */
-
-	inline void SaveCard();			/**< @internalTechnology */
-	inline void RestoreCard();		/**< @internalTechnology */
-
 public:
 	/**
     The last R1 response.
@@ -3061,9 +3057,7 @@ private:
 	
 	TMMCCallBack iDataTransferCallback;	// A callback function, used to request more data when performing double-buffering
 
-	TUint32 iSpare[21];				// Spare data (stolen from iCommand)
-
-	TMMCard* iSavedCardP;			// Saved copy of iCardP
+	TUint32 iSpare[22];				// Spare data (stolen from iCommand)
 
 	TMMCStateMachine iMachine;		// State Machine context
 #ifdef __EPOC32__
@@ -3097,8 +3091,7 @@ public:
 		KInterfaceSetBusWidth,
 		KInterfaceDemandPagingInfo,
 		KInterfaceCancelSession,
-		KInterfaceDoWakeUpSM,
-		KInterfaceAddressCard,
+		KInterfaceDoWakeUpSM
 		};
 
 	/** generic interface */
@@ -3142,17 +3135,6 @@ public:
 		{
 	public:
 		virtual TMMCErr DoWakeUpSM()=0;
-		};
-
-	/**
-	 * An optional interface implemented by the derived class. Used when the stack supports more than one 
-	 * card and the cards are individually selectable, i.e. iMultiplexedBus is true
-	 * @see KInterfaceAddressCard
-	 */
-	class MAddressCard
-		{
-	public:
-		virtual void AddressCard(TInt aCardNumber)=0;
 		};
 
 
@@ -3544,8 +3526,6 @@ private:
 
 	void DetermineBusWidthAndClock(const TMMCard& aCard, TBool aLowVoltage, TUint& aPowerClass, TBusWidthAndClock& aBusWidthAndClock);
 	TUint GetPowerClass(const TMMCard& aCard, TBusWidthAndClock aWidthAndClock, TBool aLowVoltage);
-	
-	void DoAddressCard(TInt aCardNumber);
 
 
     //	----------- Data Members -------------
@@ -3624,8 +3604,6 @@ private:
 protected:
 	/** 
 	Gets an interface from a derived class
-	N.B the derived class should call the base class's default implementation of this function
-	if it does not support the specified interface
 	replaces reserved virtual Dummy4()
 	*/
 	IMPORT_C virtual void GetInterface(TInterfaceId aInterfaceId, MInterface*& aInterfacePtr);
@@ -4129,7 +4107,6 @@ public:
 		EMMCUnblockingInWrongContext	=18,
 		EMMCInvalidCardNumber			=19,
 		EMMCNotInDfcContext				=20,
-		EMMCAddressCardNotSupported		=21,
 		};
     IMPORT_C static void Panic(TMMCPanic aPanic);
 	friend class DMMCStack;

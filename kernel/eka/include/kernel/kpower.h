@@ -1,4 +1,4 @@
-// Copyright (c) 1998-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -15,7 +15,7 @@
 // Public header for power management
 // 
 // WARNING: This file contains some APIs which are internal and are subject
-//          to change without noticed. Such APIs should therefore not be used
+//          to change without notice. Such APIs should therefore not be used
 //          outside the Kernel and Hardware Services package.
 //
 
@@ -27,7 +27,7 @@
 #include <kernel/kernel.h>
 
 /**
-@internalComponent
+@internalTechnology
 */
 #define __PM_ASSERT(aCond) \
 	__ASSERT_DEBUG( (aCond), \
@@ -37,7 +37,7 @@
 		) )
 
 /**
-@internalComponent
+@internalTechnology
 */
 #define __PM_PANIC(aMsg) \
 	(\
@@ -155,21 +155,11 @@ public:
     @see TPowerState
 	*/
 	virtual void PowerDown(TTimeK aWakeupTime) = 0;
-
-	/**
-	Registers resources of interest for Idle with Resource Manager
-
-	Function also provided for power controller to perform other operations if required.
-	*/
-	virtual TInt DoRegisterResourceController()
-		{
-		return KErrNone;
-		}
 	};
 
 #ifndef __X86__
 /**
-@internalComponent
+@internalTechnology
 @prototype 9.5
 */
 class TPowerController
@@ -182,7 +172,7 @@ public:
 #endif
 
 /**
-@internalComponent
+@internalTechnology
 */
 class DBatteryMonitor
 	{
@@ -195,7 +185,7 @@ public:
 	};
 
 /**
-@internalComponent
+@internalTechnology
 */
 class DPowerHal : public DBase
 	{

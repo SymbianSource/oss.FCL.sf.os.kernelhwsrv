@@ -16,10 +16,6 @@
 #include "cl_std.h"
 #include "cl_scan.h"
 
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "cl_scanTraces.h"
-#endif
-
 const TInt KDirStackGranularity=8;
 
 /** Replace long names in path and filename with their sohrter version (if exists). Optionally appends
@@ -119,13 +115,13 @@ to the object onto the cleanup stack.
 @return A pointer to the new directory scan object.
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_ECDIRSCANNEWLC, "sess %x", aFs.Handle());
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::ECDirScanNewLC, MODULEUID, aFs.Handle());
 
 	CDirScan* scan=new(ELeave) CDirScan(aFs);
 	CleanupStack::PushL(scan);
 	scan->iStack=CDirStack::NewL();
 
-	OstTrace1(TRACE_BORDER, EFSRV_ECDIRSCANNEWLCRETURN, "CDirScan* %x", scan);
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::ECDirScanNewLCReturn, MODULEUID, scan);
 	return scan;
 	}
 
@@ -141,12 +137,12 @@ Constructs and allocates memory for a new CDirScan object.
 @return A pointer to the new directory scan object.
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_ECDIRSCANNEWL, "sess %x", aFs.Handle());
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::ECDirScanNewL, MODULEUID, aFs.Handle());
 
 	CDirScan* scan=CDirScan::NewLC(aFs);
 	CleanupStack::Pop();
 
-	OstTrace1(TRACE_BORDER, EFSRV_ECDIRSCANNEWLRETURN, "CDirScan* %x", scan);
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::ECDirScanNewLReturn, MODULEUID, scan);
 	return scan;
 	}
 
@@ -160,11 +156,11 @@ Desctructor.
 Frees all resources owned by the object, prior to its destruction.
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_ECDIRSCANDESTRUCTOR, "this %x", this);
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::ECDirScanDestructor, MODULEUID, this);
 
 	delete iStack;
 
-	OstTrace0(TRACE_BORDER, EFSRV_ECDIRSCANDESTRUCTORRETURN, "");
+	TRACE0(UTF::EBorder, UTraceModuleEfsrv::ECDirScanDestructorReturn, MODULEUID);
 	}
 
 
@@ -218,13 +214,13 @@ This option is provided for deleting a directory structure.
 @param aScanDir       The direction of the scan. The default is downwards.
 */
 	{
-	OstTraceExt4(TRACE_BORDER, EFSRV_ECDIRSCANSETSCANDATAL, "this %x anEntryAttMask %x anEntrySortKey %d aScanDir %d", (TUint) this, (TUint) anEntryAttMask, (TUint) anEntrySortKey, (TUint) aScanDir);
-	OstTraceData(TRACE_BORDER, EFSRV_ECDIRSCANSETSCANDATAL_EFILEPATH, "FilePath %S", aMatchName.Ptr(), aMatchName.Length()<<1);
+	TRACEMULT5(UTF::EBorder, UTraceModuleEfsrv::ECDirScanSetScanDataL, MODULEUID, (TUint) 
+		this, aMatchName, anEntryAttMask, anEntrySortKey, (TUint) aScanDir);
 
 	TInt r = Fs().Parse(aMatchName,iFullPath);
 	if (r != KErrNone)
 		{
-		OstTrace1(TRACE_BORDER, EFSRV_ECDIRSCANSETSCANDATALRETURN1, "r %d", r);
+		TRACERET1(UTF::EBorder, UTraceModuleEfsrv::ECDirScanSetScanDataLReturn, MODULEUID, r);
 		User::Leave(r);
 		}
 
@@ -238,7 +234,7 @@ This option is provided for deleting a directory structure.
 	if (aScanDir==EScanDownTree)
 		iFullPath.PopDir();
 
-	OstTrace1(TRACE_BORDER, EFSRV_ECDIRSCANSETSCANDATALRETURN2, "r %d", KErrNone);
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::ECDirScanSetScanDataLReturn, MODULEUID, KErrNone);
 	}
 
 void CDirScan::UpdateAbbreviatedPath()
@@ -282,14 +278,15 @@ Notes:
                    no more directories in the structure.
 */
 	{
-	OstTrace1(TRACE_BORDER, EFSRV_ECDIRSCANNEXTL, "this %x", this);
+	TRACE1(UTF::EBorder, UTraceModuleEfsrv::ECDirScanNextL, MODULEUID, this);
 
 	if (iScanDir==EScanUpTree)
 		ScanUpTreeL(aDirEntries);
 	else
 		ScanDownTreeL(aDirEntries);
 
-	OstTraceExt2(TRACE_BORDER, EFSRV_ECDIRSCANNEXTLRETURN, "r %d DirEntries %d", (TUint) KErrNone, (TUint) aDirEntries ? (*aDirEntries).Count() : 0);
+	TRACE2(UTF::EBorder, UTraceModuleEfsrv::ECDirScanNextLReturn, MODULEUID, 
+		KErrNone, aDirEntries ? (*aDirEntries).Count() : 0);
 	}
 
 void CDirScan::ScanUpTreeL(CDir*& aDirEntries)
@@ -340,7 +337,7 @@ void CDirScan::ScanUpTreeL(CDir*& aDirEntries)
 			}
 		if (r != KErrNone)
 			{
-			OstTrace1(TRACE_BORDER, EFSRV_ECDIRSCANLEAVE1, "r %d", r);
+			TRACERET1(UTF::EBorder, UTraceModuleEfsrv::ECDirScanLeave, MODULEUID, r);
 			User::LeaveIfError(r);
 			}
 
@@ -358,7 +355,7 @@ void CDirScan::ScanUpTreeL(CDir*& aDirEntries)
 		else if (r != KErrNone)
 			{
 			iScanning = EFalse;
-			OstTrace1(TRACE_BORDER, EFSRV_ECDIRSCANLEAVE2, "r %d", r);
+			TRACERET1(UTF::EBorder, UTraceModuleEfsrv::ECDirScanLeave, MODULEUID, r);
 			User::Leave(r);
 			}
 		
@@ -396,7 +393,7 @@ void CDirScan::GetDirEntriesL(CDir*& aDirEntries)
 	TInt r = Fs().GetDir(iFullPath.FullName(),iEntryAttMask,iEntrySortMask,aDirEntries);
 	if (r != KErrNone)
 		{
-		OstTrace1(TRACE_BORDER, EFSRV_ECDIRSCANLEAVE3, "r %d", r);
+		TRACERET1(UTF::EBorder, UTraceModuleEfsrv::ECDirScanLeave, MODULEUID, r);
 		User::Leave(r);
 		}
 	}
@@ -410,8 +407,8 @@ void CDirScan::ScanDownTreeL(CDir*& aDirEntries)
 	CDir* dirEntries = NULL;
 	TInt r;
 	aDirEntries=NULL;
-	
-	if(iStack->IsEmpty())
+		
+	if(iStack && iStack->IsEmpty())
 	    return;
 	
 	CDirList* list=iStack->Peek();
@@ -432,7 +429,7 @@ void CDirScan::ScanDownTreeL(CDir*& aDirEntries)
 	r=iFullPath.AddDir(dirName);
 	if (r==KErrGeneral)	//	Adding dirName makes iFullPath>256 characters
 		{
-		OstTrace1(TRACE_BORDER, EFSRV_ECDIRSCANLEAVE4, "r %d", KErrTooBig);
+		TRACE1(UTF::EBorder, UTraceModuleEfsrv::ECDirScanLeave, MODULEUID, KErrTooBig);
 		User::Leave(KErrTooBig);
 		}
 
@@ -454,7 +451,7 @@ void CDirScan::ScanDownTreeL(CDir*& aDirEntries)
 									   iEntrySortMask,dirList);
 		if (r != KErrNone)
 			{
-			OstTrace1(TRACE_BORDER, EFSRV_ECDIRSCANLEAVE5, "r %d", r);
+			TRACERET1(UTF::EBorder, UTraceModuleEfsrv::ECDirScanLeave, MODULEUID, r);
 			User::Leave(r);
 			}
 		iStack->PushL(*dirList);
@@ -471,7 +468,7 @@ void CDirScan::ScanDownTreeL(CDir*& aDirEntries)
 	else
 		{
 		iScanning = EFalse;
-		OstTrace1(TRACE_BORDER, EFSRV_ECDIRSCANLEAVE6, "r %d", r);
+		TRACERET1(UTF::EBorder, UTraceModuleEfsrv::ECDirScanLeave, MODULEUID, r);
 		User::Leave(r);
 		}
 	}
@@ -575,7 +572,7 @@ void CDirStack::PushL(CDir& aDirContents)
 	if (r!=KErrNone)
 		{
 		delete nextLevel;
-		OstTrace1(TRACE_BORDER, EFSRV_ECDIRSCANLEAVE7, "r %d", r);
+		TRACERET1(UTF::EBorder, UTraceModuleEfsrv::ECDirScanLeave, MODULEUID, r);
 		User::Leave(r);
 		}
 	}
@@ -713,7 +710,7 @@ Gets a list of entries for the open files in the file server session.
 		TInt r = iFs->GetOpenFileList(iScanPos,iEntryListPos,theId,array);
 		if (r != KErrNone)
 			{
-			OstTrace1(TRACE_BORDER, EFSRV_ECDIRSCANLEAVE8, "r %d", r);
+			TRACERET1(UTF::EBorder, UTraceModuleEfsrv::ECDirScanLeave, MODULEUID, r);
 			User::Leave(r);
 			}
 		TInt count=array.Count();

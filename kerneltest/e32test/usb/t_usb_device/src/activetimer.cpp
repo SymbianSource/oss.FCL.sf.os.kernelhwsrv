@@ -1,4 +1,4 @@
-// Copyright (c) 2000-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2000-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -18,10 +18,6 @@
 //
 
 #include "general.h"									// CActiveControl, CActiveRW
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "activetimerTraces.h"
-#endif
 #include "activetimer.h"
 
 extern RTest test;
@@ -62,10 +58,6 @@ void CActiveTimer::ConstructL()
 CActiveTimer::~CActiveTimer()
 	{
 	TUSB_VERBOSE_PRINT("CActiveTimer::~CActiveTimer()");
-	if(gVerbose)
-	    {
-	    OstTrace0(TRACE_VERBOSE, CACTIVETIMER_DCACTIVETIMER, "CActiveTimer::~CActiveTimer()");
-	    }
 	Cancel();												// base class
 	iTimer.Close();
 	}
@@ -74,10 +66,6 @@ CActiveTimer::~CActiveTimer()
 void CActiveTimer::DoCancel()
 	{
 	TUSB_VERBOSE_PRINT("CActiveTimer::DoCancel()");
-	if(gVerbose)
-	    {
-	    OstTrace0(TRACE_VERBOSE, CACTIVETIMER_DOCANCEL, "CActiveTimer::DoCancel()");
-	    }
 	iTimer.Cancel();
 	}
 
@@ -85,10 +73,6 @@ void CActiveTimer::DoCancel()
 void CActiveTimer::RunL()
 	{
 	TUSB_VERBOSE_PRINT("CActiveTimer::RunL()");
-	if(gVerbose)
-	    {
-	    OstTrace0(TRACE_VERBOSE, CACTIVETIMER_RUNL, "CActiveTimer::RunL()");
-	    }
 	// Nothing to do here, as we call ReadCancel() after a manual WaitForRequest()
 	// (in CActiveRW::ReceiveVersion()).
 	}

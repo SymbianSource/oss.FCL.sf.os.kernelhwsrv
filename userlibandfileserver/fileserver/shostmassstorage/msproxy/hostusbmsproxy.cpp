@@ -55,10 +55,10 @@ TInt CUsbHostMsProxyDrive::InitialiseOffset(TCapsInfo& aCapsInfo)
         partitionInfo.Close();
 		return r;
         }
-	TUint8* buffer = const_cast<TUint8*>(partitionInfo.Ptr());
+	TUint8 *iIntBuf = (TUint8 *) partitionInfo.Ptr();
 
 	// Read of the first sector successful so check for a Master Boot Record
-	if (*(reinterpret_cast<TUint16*>(&buffer[KMBRSignatureOffset]))!= KMBRSignature)
+	if (*(TUint16*)(&iIntBuf[KMBRSignatureOffset])!= KMBRSignature)
 		{
 		__PXYPRINT(_L("MBR not present"));
         iMsDataMemMap.Reset();
@@ -66,16 +66,16 @@ TInt CUsbHostMsProxyDrive::InitialiseOffset(TCapsInfo& aCapsInfo)
 	else
 		{
 		// Move the partition entries to a 4 byte boundary
-		memcpy(&buffer[0],&buffer[KMBRFirstPartitionOffset],(sizeof(TMBRPartitionEntry)<<2));
+		memcpy(&iIntBuf[0],&iIntBuf[KMBRFirstPartitionOffset],(sizeof(TMBRPartitionEntry)<<2));
 		// Search for a x86 default boot partition - let this be the first
-		TMBRPartitionEntry* pe = reinterpret_cast<TMBRPartitionEntry*>(&buffer[0]);
+		TMBRPartitionEntry* pe = (TMBRPartitionEntry*)(&iIntBuf[0]);
 
 		TInt firstValidPartitionCount = -1;
 		TInt defaultPartitionNumber = -1;
 		TInt partitionCount = 0;
 		for (TInt i = 0; i < KMBRMaxPrimaryPartitions; i++, pe++)
 			{
-			if (pe->IsValidDosPartition() || pe->IsValidFAT32Partition() || pe->IsValidExFATPartition())
+			if (pe->IsValidDosPartition() || pe->IsValidFAT32Partition())
 				{
 				__PXYPRINT(_L("Found a Valid Partition"));
 				partitionCount++;
@@ -99,7 +99,7 @@ TInt CUsbHostMsProxyDrive::InitialiseOffset(TCapsInfo& aCapsInfo)
 	    if (partitionCount > 0)
 		    {
             __PXYPRINT1(_L("Using Partition %d"), partitionCount);
-			pe = reinterpret_cast<TMBRPartitionEntry*>(&buffer[0]);
+			pe = (TMBRPartitionEntry*)(&iIntBuf[0]);
             TInt partitionIndex = firstValidPartitionCount;
             if (defaultPartitionNumber > 0)
                 {

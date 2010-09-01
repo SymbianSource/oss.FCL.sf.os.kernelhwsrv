@@ -20,7 +20,6 @@ TARGETTYPE     EXE
 SOURCEPATH	../server
 SOURCE		t_localtime.cpp t_main.cpp
 SOURCEPATH     ../fileutils/src
-SOURCE         f32_test_utils.cpp
 SOURCE         t_chlffs.cpp
 
 LIBRARY        euser.lib efsrv.lib hal.lib

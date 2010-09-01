@@ -36,10 +36,10 @@ static void TestFileSystemNames()
     for(TInt i=EDriveA;i<KMaxDrives;++i)
         {
         r=TheFs.FileSystemName(name,i);
-        test_Value(r, r == KErrNone || r==KErrNotFound);
+        test(r==KErrNone || r==KErrNotFound);
         TChar c;
         r=RFs::DriveToChar(i,c);
-        test_KErrNone(r);
+        test(r==KErrNone);
         if(name.Length())       
             test.Printf(_L("File System Name on drive %c is %S\n"),(char)c,&name);
         else
@@ -55,10 +55,10 @@ static void CheckDismount(TDesC& aFs,TInt aDrive)
     TInt r;
     TFullName oldSess, newSess;
     r=TheFs.SessionPath(oldSess);
-    test_KErrNone(r);
+    test(r==KErrNone);
     TChar c;
     r=TheFs.DriveToChar(aDrive,c);
-    test_KErrNone(r);
+    test(r==KErrNone);
     newSess.Append(c);
     newSess.Append(':');
     newSess.Append('\\');
@@ -66,7 +66,7 @@ static void CheckDismount(TDesC& aFs,TInt aDrive)
     TBuf<128> b;
     TDriveInfo di;
     r=TheFs.Drive(di,aDrive);
-    test_KErrNone(r);
+    test(r==KErrNone);
     b.Format(_L("Test dismounting of test file system on %c: (DrvAtt:%x MedAtt:%x)"),(TUint)c,di.iDriveAtt,di.iMediaAtt);
     test.Next(b);
     
@@ -74,36 +74,36 @@ static void CheckDismount(TDesC& aFs,TInt aDrive)
     test.Next(_L("Test cannot dismount on Rom drive"));
     TFullName zName;
     r=TheFs.FileSystemName(zName,EDriveZ);
-    test_KErrNone(r);
+    test(r==KErrNone);
     r=TheFs.DismountFileSystem(zName,EDriveZ);
     test.Printf(_L("r=%d"),r);
     // NB if paging is enabled on a ROFS partition which is part of the composite file system then the 
     // likelihood is that there will be a at least one file clamped: in this case there error will be KErrInUse
-    test_Value(r, r == KErrAccessDenied || r==KErrInUse);
+    test(r==KErrAccessDenied || r==KErrInUse);
 
     // Test cannot dismount on wrong drive
     test.Next(_L("Test cannot dismount on wrong drive"));
     r=TheFs.DismountFileSystem(aFs,EDriveA);
-    test_Value(r, r == KErrNotReady);
+    test(r==KErrNotReady);
 
     // Test cannot dismount with wrong name
     test.Next(_L("Test cannot dismount with wrong file system name"));
     r=TheFs.DismountFileSystem(_L("abc"),aDrive);
-    test_Value(r, r == KErrNotFound);
+    test(r==KErrNotFound);
  
     // Test cannot dismount with a file open
     test.Next(_L("Test cannot dismount with a file open"));
     r=TheFs.SetSessionPath(newSess);
     RFile file;
     r=file.Replace(TheFs,_L("abc"),EFileShareAny);
-    test_KErrNone(r);
+    test(r==KErrNone);
     r=TheFs.SessionPath(newSess);
     TBool open;
     r=TheFs.IsFileOpen(_L("abc"),open);
-    test_KErrNone(r);
+    test(r==KErrNone);
     test(open);
     r=TheFs.DismountFileSystem(aFs,aDrive);
-    test_Value(r, r == KErrInUse);
+    test(r==KErrInUse);
     file.Close();
 
     // Now test dismount works
@@ -116,10 +116,10 @@ static void CheckDismount(TDesC& aFs,TInt aDrive)
         }
     TFullName n;
     r=TheFs.FileSystemName(n,aDrive);
-    test_Value(r, r == KErrNone || r==KErrNotFound);
+    test(r==KErrNone || r==KErrNotFound);
     test(!n.Length());
     r=file.Replace(TheFs,_L("abc"),EFileShareAny);
-    test_Value(r, r == KErrNotReady);
+    test(r==KErrNotReady);
     file.Close();
 
     r=TheFs.MountFileSystem(aFs,aDrive);
@@ -129,13 +129,13 @@ static void CheckDismount(TDesC& aFs,TInt aDrive)
         test(EFalse);
         }
     r=TheFs.FileSystemName(n,aDrive);
-    test_KErrNone(r);
+    test(r==KErrNone);
     test(n.Compare(aFs)==0);
     r=file.Replace(TheFs,_L("abc"),EFileShareAny); // ??? bang
-    test_KErrNone(r);
+    test(r==KErrNone);
     file.Close();
     r=TheFs.SetSessionPath(oldSess);
-    test_KErrNone(r);
+    test(r==KErrNone);
     }
 
 static void TestDismountFileSystem(TInt aDrive)
@@ -144,7 +144,7 @@ static void TestDismountFileSystem(TInt aDrive)
     TInt r;
     TFullName name;
     r=TheFs.FileSystemName(name,aDrive);
-    test_Value(r, r == KErrNone || r==KErrNotFound);
+    test(r==KErrNone || r==KErrNotFound);
     if(name.Length())
         CheckDismount(name,aDrive);
     }
@@ -158,10 +158,10 @@ static void TestFileSystem(TInt aDrive)
     TBuf<64> b;
     TChar c;
     TInt r=TheFs.DriveToChar(aDrive,c);
-    test_KErrNone(r);
+    test(r==KErrNone);
     TDriveInfo di;
     r=TheFs.Drive(di,aDrive);
-    test_KErrNone(r);
+    test(r==KErrNone);
     b.Format(_L("Test mounting of test file system on %c: (DrvAtt:%x MedAtt:%x)"),(TUint)c,di.iDriveAtt,di.iMediaAtt);
     test.Next(b);
 
@@ -177,7 +177,7 @@ static void TestFileSystem(TInt aDrive)
     r=TheFs.FileSystemName(oldFs,aDrive);
 //  TFileName oldFs;
 //  r=TheFs.FileSystemName(oldFs,aDrive);
-    test_KErrNone(r);
+    test(r==KErrNone);
     r=TheFs.DismountFileSystem(oldFs,aDrive);
     if(r!=KErrNone)
         {
@@ -185,17 +185,17 @@ static void TestFileSystem(TInt aDrive)
         test(EFalse);
         }
     r=TheFs.MountFileSystem(_L("Test"),aDrive);
-    test_KErrNone(r);
+    test(r==KErrNone);
 
     TFileName newFs;
     r=TheFs.FileSystemName(newFs,aDrive);
-    test_KErrNone(r);
+    test(r==KErrNone);
     test(newFs.Compare(_L("Test"))==0);
 
     // Check attributes
     TDriveInfo info;
     r=TheFs.Drive(info,aDrive);
-    test_KErrNone(r);
+    test(r==KErrNone);
  
     test.Printf(_L("iType=%d,iConnectionBusType=%d,iDriveAtt=%x,iMediaAtt=%x\n"),(TUint)info.iType,\
         (TUint)info.iConnectionBusType,info.iDriveAtt,info.iMediaAtt);
@@ -208,14 +208,14 @@ static void TestFileSystem(TInt aDrive)
         test(EFalse);
         }
     r=TheFs.FileSystemName(newFs,aDrive);
-    test_KErrNone(r);
+    test(r==KErrNone);
     test(newFs.Compare(_L("Test"))==0);
 
     r=TheFs.DismountFileSystem(newFs,aDrive);
-    test_KErrNone(r);
+    test(r==KErrNone);
 
     r=TheFs.MountFileSystem(oldFs,aDrive);
-    test_KErrNone(r);
+    test(r==KErrNone);
     }
 #endif
 
@@ -236,10 +236,10 @@ static void TestMountInvalidDrive()
 
     r = TheFs.AddFileSystem(KFsNm);
     test.Printf(_L("afs: r = %d\n"), r);
-    test_Value(r, r == KErrNone || r == KErrAlreadyExists);
+    test(r == KErrNone || r == KErrAlreadyExists);
     test.Next(_L("mounting FAT on drive R"));
     r = TheFs.MountFileSystem(KFileSystemName_FAT, EDriveR);
-    test_Value(r, r == KErrArgument);
+    test(r == KErrArgument);
     
     test.End();
     }
@@ -256,10 +256,10 @@ static void TestMountingBrokenMedia(TInt aDrive)
     TBuf<64> b;
     TChar c;
     TInt r=TheFs.DriveToChar(aDrive,c);
-    test_KErrNone(r);
+    test(r==KErrNone);
     TDriveInfo di;
     r=TheFs.Drive(di,aDrive);
-    test_KErrNone(r);
+    test(r==KErrNone);
     b.Format(_L("Test mounting of test file system on %c: (DrvAtt:%x MedAtt:%x)"),(TUint)c,di.iDriveAtt,di.iMediaAtt);
     test.Next(b);
 
@@ -273,7 +273,7 @@ static void TestMountingBrokenMedia(TInt aDrive)
 
     TFullName oldFs;
     r=TheFs.FileSystemName(oldFs,aDrive);
-    test_KErrNone(r);
+    test(r==KErrNone);
     r=TheFs.DismountFileSystem(oldFs,aDrive);
     if(r!=KErrNone)
         {
@@ -281,11 +281,11 @@ static void TestMountingBrokenMedia(TInt aDrive)
         test(EFalse);
         }
     r=TheFs.MountFileSystem(_L("Test2"),aDrive);
-    test_Value(r, r == KErrCorrupt);
+    test(r == KErrCorrupt);
 
     TFileName newFs;
     r=TheFs.FileSystemName(newFs,aDrive);
-    test_KErrNone(r);
+    test(r==KErrNone);
     test(newFs.Compare(_L("Test2"))==0);
 
     // Get the number of remounts by checking the volume attributes -
@@ -293,7 +293,7 @@ static void TestMountingBrokenMedia(TInt aDrive)
     TDriveInfo info;
     TInt remounts;
     r=TheFs.Drive(info,aDrive);
-    test_KErrNone(r);
+    test(r==KErrNone);
     test.Printf(_L("iType=%d,iBattery=%d,iDriveAtt=%x,iMediaAtt=%x\n"),(TUint)info.iType,\
         (TUint)info.iBattery,info.iDriveAtt,info.iMediaAtt);
     remounts = (TInt) info.iBattery;
@@ -309,10 +309,10 @@ static void TestMountingBrokenMedia(TInt aDrive)
         TEntry entry;
         _LIT(KNonExistantFilename, "NONEXISTANT_FILENAME.DLL");
         r = TheFs.Entry(KNonExistantFilename, entry);
-        test_Value(r, r == KErrCorrupt);
+        test(r == KErrCorrupt);
         }
     r=TheFs.Drive(info,aDrive);
-    test_KErrNone(r);
+    test(r==KErrNone);
     test.Printf(_L("iType=%d,iBattery=%d,iDriveAtt=%x,iMediaAtt=%x\n"),(TUint)info.iType,\
         (TUint)info.iBattery,info.iDriveAtt,info.iMediaAtt);
     remounts = (TInt) info.iBattery;
@@ -328,10 +328,10 @@ static void TestMountingBrokenMedia(TInt aDrive)
         TEntry entry;
         _LIT(KNonExistantFilename, "NONEXISTANT_FILENAME.DLL");
         r = TheFs.Entry(KNonExistantFilename, entry);
-        test_Value(r, r == KErrCorrupt);
+        test(r == KErrCorrupt);
         }
     r=TheFs.Drive(info,aDrive);
-    test_KErrNone(r);
+    test(r==KErrNone);
     test.Printf(_L("iType=%d,iBattery=%d,iDriveAtt=%x,iMediaAtt=%x\n"),(TUint)info.iType,\
         (TUint)info.iBattery,info.iDriveAtt,info.iMediaAtt);
     remounts = (TInt) info.iBattery;
@@ -341,9 +341,9 @@ static void TestMountingBrokenMedia(TInt aDrive)
 
 
     r=TheFs.DismountFileSystem(newFs,aDrive);
-    test_KErrNone(r);
+    test(r==KErrNone);
     r=TheFs.MountFileSystem(oldFs,aDrive);
-    test_KErrNone(r);
+    test(r==KErrNone);
     
     r=TheFs.RemoveFileSystem(_L("Test2"));
     if(r!=KErrNone)
@@ -366,7 +366,7 @@ static void TestSubstDriveMediaSerialNumber()
     
     TDriveInfo drvInfo;
     nRes=TheFs.Drive(drvInfo, currDrvNum);
-    test_KErrNone(nRes);
+    test(nRes==KErrNone);
 
     if(drvInfo.iDriveAtt & (KDriveAttRom | KDriveAttRedirected | KDriveAttSubsted))
     {
@@ -385,7 +385,7 @@ static void TestSubstDriveMediaSerialNumber()
             {
             // found a non-extant drive, test it...
             nRes = TheFs.GetMediaSerialNumber(serNum, drvNum);
-            test_Value(nRes, nRes == KErrNotReady);
+            test(nRes == KErrNotReady);
             break;
             }
         }
@@ -406,15 +406,15 @@ static void TestSubstDriveMediaSerialNumber()
     MakeDir(substPath);
   
     nRes = TheFs.SetSubst(substPath, KSubstDrv);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 
     //-- an attempt to obtain Media Serial Number on a substed drive shall result in KErrNotSupported
     nRes = TheFs.GetMediaSerialNumber(serNum, KSubstDrv);
-    test_Value(nRes, nRes == KErrNotSupported);
+    test(nRes == KErrNotSupported);
 
     //-- delete substed drive
     nRes = TheFs.SetSubst(_L(""), KSubstDrv);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 }
 
 
@@ -453,19 +453,19 @@ static void TestFileSystemSubTypeQuery()
             {
             test.Printf(_L("Tested on drive: %c.\n"), (char)(i+'A'));
             r=TheFs.Drive(driveInfo, i);
-            test_KErrNone(r);
+            test(r==KErrNone);
             
             if (driveInfo.iType==EMediaNotPresent)
                 {
                 test.Printf(_L("The media is not present.\n"));
                 r = TheFs.QueryVolumeInfoExt(i, EFileSystemSubType, subName);
-                test_Value(r, r == KErrNone || r == KErrNotReady);
+                test(r == KErrNone || r == KErrNotReady);
                 }
             else if (driveInfo.iType==EMediaCdRom)
                 {
                 test.Printf(_L("CD ROM with no media will report not ready!\n"));
                 r = TheFs.QueryVolumeInfoExt(i, EFileSystemSubType, subName);
-                test_Value(r, r == KErrNotReady);
+                test(r == KErrNotReady);
                 }
             else
                 {
@@ -474,7 +474,7 @@ static void TestFileSystemSubTypeQuery()
 
                 //-- test EIsDriveSync command
                 r = TheFs.QueryVolumeInfoExt(i, EIsDriveSync, fDrvSyncBuf);
-                test_KErrNone(r);
+                test(r == KErrNone);
                 if(fDrvSyncBuf())
                     test.Printf(_L("The drive is Synchronous.\n"));
                 else
@@ -485,7 +485,7 @@ static void TestFileSystemSubTypeQuery()
                 // if Fat, testing returning sub type name
                 if (fsName.CompareF(KFileSystemName_FAT)==0)
                     {
-                    test_KErrNone(r);
+                    test(r == KErrNone);
                     test(subName().CompareF(KFSSubType_FAT12)==0 ||
                          subName().CompareF(KFSSubType_FAT16)==0 ||
                          subName().CompareF(KFSSubType_FAT32)==0);
@@ -495,27 +495,27 @@ static void TestFileSystemSubTypeQuery()
                 // if Lffs, testing returning file system name
                 if (fsName.CompareF(_L("Lffs"))==0)
                     {
-                    test_KErrNone(r);
+                    test(r == KErrNone);
                     test(subName().CompareF(_L("Lffs"))==0);
                     continue;
                     }
                 // if rofs, testing returning file system name
                 if (fsName.CompareF(_L("rofs"))==0)
                     {
-                    test_KErrNone(r);
+                    test(r == KErrNone);
                     test(subName().CompareF(_L("rofs"))==0);
                     continue;
                     }
                 // if Composite, testing returning file system name
                 if (fsName.CompareF(_L("Composite"))==0)
                     {
-                    test_KErrNone(r);
+                    test(r == KErrNone);
                     test(subName().CompareF(_L("Composite"))==0);
                     continue;
                     }
 
                 // else
-                test_KErrNone(r);
+                test(r == KErrNone);
                 test(subName().Length()!=0);
                 
                 }
@@ -554,18 +554,18 @@ static void TestFileSystemClusterSizeQuery()
             test.Printf(_L("Tested on drive: %c.\n"), (char)(i+'A'));
 
             r=TheFs.Drive(driveInfo, i);
-            test_KErrNone(r);
+            test(r==KErrNone);
             // if no media present
             if (driveInfo.iType==EMediaNotPresent)
                 {
                 r = TheFs.QueryVolumeInfoExt(i, EIOParamInfo, ioInfo);
-                test_Value(r, r == KErrNone || r == KErrNotReady);
+                test(r == KErrNone || r == KErrNotReady);
                 }
             else if (driveInfo.iType==EMediaCdRom)
                 {
                 test.Printf(_L("CD ROM with no media!\n"));
                 r = TheFs.QueryVolumeInfoExt(i, EIOParamInfo, ioInfo);
-                test_Value(r, r == KErrNone || r == KErrNotReady);
+                test(r == KErrNone || r == KErrNotReady);
                 }
             else
                 {
@@ -602,7 +602,7 @@ static void TestFileSystemClusterSizeQuery()
                         }
                         TPckg<TLocalDriveCapsV7> capsPckg(DriveCapsV7);
                         r=drive.Caps(capsPckg);
-                        test_KErrNone(r);
+                        test(r==KErrNone);
                         drive.Disconnect();
                         if(DriveCapsV7.iObjectModeSize == 0)
                         {
@@ -663,18 +663,18 @@ static void TestMediaBlockSizeQuery()
             {
             test.Printf(_L("Tested on drive: %c.\n"), (char)(i+'A'));
             r=TheFs.Drive(driveInfo, i);
-            test_KErrNone(r);
+            test(r==KErrNone);
             // if no media present
             if (driveInfo.iType==EMediaNotPresent)
                 {
                 r = TheFs.QueryVolumeInfoExt(i, EIOParamInfo, ioInfo);
-                test_Value(r, r == KErrNone || r == KErrNotReady);
+                test(r == KErrNone || r == KErrNotReady);
                 }
             else if (driveInfo.iType==EMediaCdRom)
                 {
                 test.Printf(_L("CD ROM with no media will report not ready!\n"));
                 r = TheFs.QueryVolumeInfoExt(i, EIOParamInfo, ioInfo);
-                test_Value(r, r == KErrNotReady);
+                test(r == KErrNotReady);
                 }
             else
                 {
@@ -725,7 +725,7 @@ static void TestMediaBlockSizeQuery()
                         }
                     TPckg<TLocalDriveCapsV7> capsPckg(DriveCapsV7);
                     r=drive.Caps(capsPckg);
-                    test_KErrNone(r);
+                    test(r==KErrNone);
                     if ((fsName.CompareF(_L("Lffs"))==0) && (DriveCapsV7.iObjectModeSize != 0))
                         {                   
                         test(ioInfo().iBlockSize == (TInt) DriveCapsV7.iObjectModeSize);
@@ -780,7 +780,7 @@ static void TestFileSystemSubType()
             test.Printf(_L("Tested on drive: %c.\n"), (char)(i+'A'));
             r = TheFs.QueryVolumeInfoExt(i, EFileSystemSubType, subName);
             r1 = TheFs.FileSystemSubType(i, subName1);
-            test_Value(r, r == r1);
+            test(r==r1);
             if (subName().Length())
                 {
                 test(subName().CompareF(subName1)==0);
@@ -822,7 +822,7 @@ static void TestVolumeIOParam()
             test.Printf(_L("Tested on drive: %c.\n"), (char)(i+'A'));
             r = TheFs.QueryVolumeInfoExt(i, EIOParamInfo, ioInfo);
             r1 = TheFs.VolumeIOParam(i, ioInfo1);
-            test_Value(r, r == r1);
+            test(r==r1);
             test(ioInfo().iBlockSize == ioInfo1.iBlockSize);
             test(ioInfo().iClusterSize == ioInfo1.iClusterSize);
             test(ioInfo().iRecReadBufSize == ioInfo1.iRecReadBufSize);
@@ -865,7 +865,7 @@ static void TestQueryVolumeInfoExtOnTestFS(TInt aDrive)
         }
     TFSName oldFs;
     r = TheFs.FileSystemName(oldFs,aDrive);
-    test_KErrNone(r);
+    test(r==KErrNone);
     r = TheFs.DismountFileSystem(oldFs,aDrive);
     if (r != KErrNone)
         {
@@ -873,29 +873,29 @@ static void TestQueryVolumeInfoExtOnTestFS(TInt aDrive)
         test(EFalse);
         }
     r = TheFs.MountFileSystem(_L("Test3"),aDrive);
-    test_KErrNone(r);
+    test(r==KErrNone);
     TFSName newFs;
     r = TheFs.FileSystemName(newFs,aDrive);
-    test_KErrNone(r);
+    test(r==KErrNone);
     test(newFs.Compare(_L("Test3"))==0);
 
     // Sub type name query: 
     TPckgBuf<TFSName> subNameP;
     r = TheFs.QueryVolumeInfoExt(aDrive, EFileSystemSubType, subNameP);
-    test_KErrNone(r);
+    test(r==KErrNone);
     test(subNameP() == _L("Test3SubType"));
 
     // Cluster size querys:
     TPckgBuf<TVolumeIOParamInfo> ioInfoP;
     r = TheFs.QueryVolumeInfoExt(aDrive, EIOParamInfo, ioInfoP);
-    test_KErrNone(r);
+    test(r==KErrNone);
     test(ioInfoP().iClusterSize==1024);
 
     // Mount the original file system back
     r=TheFs.DismountFileSystem(newFs,aDrive);
-    test_KErrNone(r);
+    test(r==KErrNone);
     r=TheFs.MountFileSystem(oldFs,aDrive);
-    test_KErrNone(r);
+    test(r==KErrNone);
     
     r=TheFs.RemoveFileSystem(_L("Test3"));
     if(r!=KErrNone)

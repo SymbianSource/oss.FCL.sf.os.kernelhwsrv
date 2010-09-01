@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -19,10 +19,6 @@
 #include "modelleddevices.h"
 #include "testinterfacesettingbase.h"
 #include "testinterfacebase.h"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "testdevicebTraces.h"
-#endif
 #include <e32test.h>
 
 namespace NUnitTesting_USBDI
@@ -30,26 +26,21 @@ namespace NUnitTesting_USBDI
 
 RUsbDeviceB::RUsbDeviceB()
 	{
-	OstTraceFunctionEntry1( RUSBDEVICEB_RUSBDEVICEB_ENTRY, this );
-	OstTraceFunctionExit1( RUSBDEVICEB_RUSBDEVICEB_EXIT, this );
 	}
 	
 RUsbDeviceB::RUsbDeviceB(CBaseTestCase* aTestCase):RUsbTestDevice(aTestCase)
 	{
-	OstTraceFunctionEntryExt( RUSBDEVICEB_RUSBDEVICEB_ENTRY_DUP01, this );
-	OstTraceFunctionExit1( RUSBDEVICEB_RUSBDEVICEB_EXIT_DUP01, this );
+	LOG_FUNC	
 	}
 
 RUsbDeviceB::~RUsbDeviceB()
 	{
-	OstTraceFunctionEntry1( RUSBDEVICEB_RUSBDEVICEB_ENTRY_DUP02, this );
-	OstTraceFunctionExit1( RUSBDEVICEB_RUSBDEVICEB_EXIT_DUP02, this );
 	}
 
 
 void RUsbDeviceB::OpenL(const TDesC& aSerialNumber)
 	{
-	OstTraceFunctionEntryExt( RUSBDEVICEB_OPENL_ENTRY, this );
+	LOG_FUNC
 	
 	RUsbTestDevice::OpenL();
 	
@@ -87,7 +78,7 @@ void RUsbDeviceB::OpenL(const TDesC& aSerialNumber)
 	TInt err(iClientDriver.SetInterface(0,interfaceSetting));
 	if(err != KErrNone)
 		{
-		OstTrace1(TRACE_NORMAL, RUSBDEVICEB_OPENL, "<Error %d> Unable to set interface setting 0",err);
+		RDebug::Printf("<Error %d> Unable to set interface setting 0",err);
 		User::Leave(err);
 		}
 		
@@ -98,7 +89,7 @@ void RUsbDeviceB::OpenL(const TDesC& aSerialNumber)
 	err = iClientDriver.SetCSInterfaceDescriptorBlock(0,cs_interfaceDescriptor);
 	if(err != KErrNone)
 		{
-		OstTrace1(TRACE_NORMAL, RUSBDEVICEB_OPENL_DUP01, "<Error %d> Unable to set class-specific interface setting 0 descriptor",err);
+		RDebug::Printf("<Error %d> Unable to set class-specific interface setting 0 descriptor",err);
 		User::Leave(err);
 		}
 
@@ -107,21 +98,21 @@ void RUsbDeviceB::OpenL(const TDesC& aSerialNumber)
 	err = iClientDriver.SetCSEndpointDescriptorBlock(0,1,cs_endpointDescriptor);
 	if(err != KErrNone)
 		{
-		OstTrace1(TRACE_NORMAL, RUSBDEVICEB_OPENL_DUP02, "<Error %d> Unable to set class-specific endpoint 1 descriptor on setting 0",err);
+		RDebug::Printf("<Error %d> Unable to set class-specific endpoint 1 descriptor on setting 0",err);
 		User::Leave(err);
 		}
 			
 	err = iClientDriver.SetCSEndpointDescriptorBlock(0,2,cs_endpointDescriptor);
 	if(err != KErrNone)
 		{
-		OstTrace1(TRACE_NORMAL, RUSBDEVICEB_OPENL_DUP03, "<Error %d> Unable to set class-specific endpoint 2 descriptor on setting 0",err);
+		RDebug::Printf("<Error %d> Unable to set class-specific endpoint 2 descriptor on setting 0",err);
 		User::Leave(err);
 		}	
 		
 	err = iClientDriver.SetCSEndpointDescriptorBlock(0,3,cs_endpointDescriptor);
 	if(err != KErrNone)
 		{
-		OstTrace1(TRACE_NORMAL, RUSBDEVICEB_OPENL_DUP04, "<Error %d> Unable to set class-specific endpoint 3 descriptor on setting 0",err);
+		RDebug::Printf("<Error %d> Unable to set class-specific endpoint 3 descriptor on setting 0",err);
 		User::Leave(err);
 		}
 	
@@ -130,7 +121,7 @@ void RUsbDeviceB::OpenL(const TDesC& aSerialNumber)
 	err = iClientDriver.SetInterface(1,interfaceSetting);
 	if(err != KErrNone)
 		{
-		OstTrace1(TRACE_NORMAL, RUSBDEVICEB_OPENL_DUP05, "<Error %d> Unable to set interface setting 1",err);
+		RDebug::Printf("<Error %d> Unable to set interface setting 1",err);
 		User::Leave(err);
 		}
 	
@@ -141,7 +132,7 @@ void RUsbDeviceB::OpenL(const TDesC& aSerialNumber)
 	err = iClientDriver.SetCSInterfaceDescriptorBlock(1,cs_interfaceDescriptor);
 	if(err != KErrNone)
 		{
-		OstTrace1(TRACE_NORMAL, RUSBDEVICEB_OPENL_DUP06, "<Error %d> Unable to set class-specific interface setting 1 descriptor",err);
+		RDebug::Printf("<Error %d> Unable to set class-specific interface setting 1 descriptor",err);
 		User::Leave(err);
 		}
 
@@ -150,21 +141,21 @@ void RUsbDeviceB::OpenL(const TDesC& aSerialNumber)
 	err = iClientDriver.SetCSEndpointDescriptorBlock(1,1,cs_endpointDescriptor);
 	if(err != KErrNone)
 		{
-		OstTrace1(TRACE_NORMAL, RUSBDEVICEB_OPENL_DUP07, "<Error %d> Unable to set class-specific endpoint 1 descriptor on setting 1",err);
+		RDebug::Printf("<Error %d> Unable to set class-specific endpoint 1 descriptor on setting 1",err);
 		User::Leave(err);
 		}
 	
 	err = iClientDriver.SetCSEndpointDescriptorBlock(1,2,cs_endpointDescriptor);
 	if(err != KErrNone)
 		{
-		OstTrace1(TRACE_NORMAL, RUSBDEVICEB_OPENL_DUP08, "<Error %d> Unable to set class-specific endpoint 2 descriptor on setting 1",err);
+		RDebug::Printf("<Error %d> Unable to set class-specific endpoint 2 descriptor on setting 1",err);
 		User::Leave(err);
 		}
 		
 	err = iClientDriver.SetCSEndpointDescriptorBlock(1,3,cs_endpointDescriptor);
 	if(err != KErrNone)
 		{
-		OstTrace1(TRACE_NORMAL, RUSBDEVICEB_OPENL_DUP09, "<Error %d> Unable to set class-specific endpoint 3 descriptor on setting 1",err);
+		RDebug::Printf("<Error %d> Unable to set class-specific endpoint 3 descriptor on setting 1",err);
 		User::Leave(err);
 		}
 
@@ -173,7 +164,7 @@ void RUsbDeviceB::OpenL(const TDesC& aSerialNumber)
 	err = iClientDriver.SetInterface(2,interfaceSetting);
 	if(err != KErrNone)
 		{
-		OstTrace1(TRACE_NORMAL, RUSBDEVICEB_OPENL_DUP10, "<Error %d> Unable to set interface setting 2",err);
+		RDebug::Printf("<Error %d> Unable to set interface setting 2",err);
 		User::Leave(err);
 		}
 
@@ -184,7 +175,7 @@ void RUsbDeviceB::OpenL(const TDesC& aSerialNumber)
 	err = iClientDriver.SetCSInterfaceDescriptorBlock(2,cs_interfaceDescriptor);
 	if(err != KErrNone)
 		{
-		OstTrace1(TRACE_NORMAL, RUSBDEVICEB_OPENL_DUP11, "<Error %d> Unable to set class-specific interface setting 2 descriptor",err);
+		RDebug::Printf("<Error %d> Unable to set class-specific interface setting 2 descriptor",err);
 		User::Leave(err);
 		}
 
@@ -193,31 +184,29 @@ void RUsbDeviceB::OpenL(const TDesC& aSerialNumber)
 	err = iClientDriver.SetCSEndpointDescriptorBlock(2,1,cs_endpointDescriptor);
 	if(err != KErrNone)
 		{
-		OstTrace1(TRACE_NORMAL, RUSBDEVICEB_OPENL_DUP12, "<Error %d> Unable to set class-specific endpoint 1 descriptor on setting 2",err);
+		RDebug::Printf("<Error %d> Unable to set class-specific endpoint 1 descriptor on setting 2",err);
 		User::Leave(err);
 		}
 	
 	err = iClientDriver.SetCSEndpointDescriptorBlock(2,2,cs_endpointDescriptor);
 	if(err != KErrNone)
 		{
-		OstTrace1(TRACE_NORMAL, RUSBDEVICEB_OPENL_DUP13, "<Error %d> Unable to set class-specific endpoint 2 descriptor on setting 2",err);
+		RDebug::Printf("<Error %d> Unable to set class-specific endpoint 2 descriptor on setting 2",err);
 		User::Leave(err);
 		}
 		
 	err = iClientDriver.SetCSEndpointDescriptorBlock(2,3,cs_endpointDescriptor);
 	if(err != KErrNone)
 		{
-		OstTrace1(TRACE_NORMAL, RUSBDEVICEB_OPENL_DUP14, "<Error %d> Unable to set class-specific endpoint 3 descriptor on setting 2",err);
+		RDebug::Printf("<Error %d> Unable to set class-specific endpoint 3 descriptor on setting 2",err);
 		User::Leave(err);
 		}
-	OstTraceFunctionExit1( RUSBDEVICEB_OPENL_EXIT, this );
 	}
 
 
 void RUsbDeviceB::OnStateChangeL(TUsbcDeviceState aNewState)
 	{
-	OstTraceFunctionEntryExt( RUSBDEVICEB_ONSTATECHANGEL_ENTRY, this );
-	OstTraceFunctionExit1( RUSBDEVICEB_ONSTATECHANGEL_EXIT, this );
+	LOG_FUNC
 	}
 	
 	

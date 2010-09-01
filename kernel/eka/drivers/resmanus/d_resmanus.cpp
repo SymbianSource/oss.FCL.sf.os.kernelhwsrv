@@ -1,4 +1,4 @@
-// Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -473,7 +473,7 @@ TInt DChannelResManUs::SendRequest(TMessageBase* aMsg)
 	TInt r = KErrNone;
 	TTrackingBuffer *trackBuf = NULL;
 	TUint parms[4];
-	TPowerResourceCb *callBack = NULL;
+	TPowerResourceCb *callBack;
 	DPowerResourceNotification *prn;
 
 	switch(id)
@@ -482,7 +482,8 @@ TInt DChannelResManUs::SendRequest(TMessageBase* aMsg)
 			{
 			__ASSERT_ALWAYS(m.Ptr2() != NULL, RESMANUS_FAULT());
 #ifdef _DUMP_TRACKERS
-			DumpTracker(iSetStateTracker);
+			if((r=DumpTracker(iSetStateTracker))!=KErrNone)
+				break;
 #endif
 			r = GetAndInitTrackingBuffer(iSetStateTracker, trackBuf, (TUint)m.Ptr1(), pS);
 			if( r != KErrNone)
@@ -499,7 +500,8 @@ TInt DChannelResManUs::SendRequest(TMessageBase* aMsg)
 			__ASSERT_ALWAYS(m.Ptr2() != NULL, RESMANUS_FAULT());
 			umemget32(&(parms[0]), m.Ptr2(), 3*sizeof(TInt));
 #ifdef _DUMP_TRACKERS
-			DumpTracker(iGetStateTracker);
+			if((r=DumpTracker(iGetStateTracker))!=KErrNone)
+				break;
 #endif
 			r = GetStateBuffer(iGetStateTracker, trackBuf, (TUint)m.Ptr1(), (TInt*)parms[1], (TInt*)parms[2], callBack, pS);
 			if(r != KErrNone)
@@ -1267,8 +1269,10 @@ TInt DChannelResManUs::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 				if((r==KErrNone) && (stateRes[2]>0))
 					r=InitTrackingControl(iListenableTracker,ENotify,stateRes[2]);
 #ifdef _DUMP_TRACKERS
-				DumpTracker(iGetStateTracker);
-				DumpTracker(iSetStateTracker);
+			if((r=DumpTracker(iGetStateTracker))!=KErrNone)
+				break;
+			if((r=DumpTracker(iSetStateTracker))!=KErrNone)
+				break;
 #endif
 				}
 			break;
@@ -2010,16 +2014,14 @@ TInt DChannelResManUs::GetStateBuffer(TTrackingControl*& aTracker, TTrackingBuff
 	return r;
 	}
 
+
 #ifdef _DUMP_TRACKERS
-void DChannelResManUs::DumpTracker(TTrackingControl* aTracker)
+TInt DChannelResManUs::DumpTracker(TTrackingControl* aTracker)
 	{
 	Kern::Printf("\nDChannelResManUs::DumpTracker");
 	Kern::Printf("Tracker at 0x%x\n",aTracker);
-	if(!aTracker)
-		{
-		Kern::Printf("Nothing to dump..");
-		return;
-		}
+	if(NULL==aTracker)
+		return KErrGeneral;
 	Kern::Printf("iType=%d",aTracker->iType);
 	switch(aTracker->iType)
 		{
@@ -2041,14 +2043,14 @@ void DChannelResManUs::DumpTracker(TTrackingControl* aTracker)
 		buf=aTracker->iFreeQue->First();
 		while(buf!=aTracker->iFreeQue->Last())
 			{
-			Kern::Printf("iFreeQue first buffer at 0x%x\n",buf);
+			Kern::Printf("iFreeQue buffer at 0x%x\n",buf);
 			TAny* intermediatePtr = (TAny*)buf;
 			if((aTracker->iType == EGetState)||(aTracker->iType == ESetState))
 				{
-				TTrackSetStateBuf* tempBuf =(TTrackSetStateBuf*)intermediatePtr;
-				Kern::Printf("buffer control block at 0x%x\n",(TInt)&tempBuf->iCtrlBlock);
+				TTrackStateBuf* tempBuf =(TTrackStateBuf*)intermediatePtr;
+				Kern::Printf("buffer control block at 0x%x\n",tempBuf->iCtrlBlock);
 				}
-			buf = buf->iNext;
+			buf= buf->iNext;
 			};
 		}
 	Kern::Printf("iBusyQue at 0x%x\n",aTracker->iBusyQue);
@@ -2061,12 +2063,14 @@ void DChannelResManUs::DumpTracker(TTrackingControl* aTracker)
 			TAny* intermediatePtr = (TAny*)buf;
 			if((aTracker->iType == EGetState)||(aTracker->iType == ESetState))
 				{
-				TTrackSetStateBuf* tempBuf =(TTrackSetStateBuf*)intermediatePtr;
-				Kern::Printf("buffer control block at 0x%x\n", (TInt)&tempBuf->iCtrlBlock);
+				TTrackStateBuf* tempBuf =(TTrackStateBuf*)intermediatePtr;
+				Kern::Printf("buffer control block at 0x%x\n",tempBuf->iCtrlBlock);
 				}
 			buf= buf->iNext;
 			};
 		}
+
+	return KErrNone;
 	}
 #endif
 
@@ -2161,11 +2165,13 @@ void DChannelResManUs::RemoveTrackingControl(TTrackingControl*& aTracker)
     __KTRACE_OPT(KRESMANAGER, Kern::Printf("DChannelResManUs::RemoveTrackingControl()"));
 
 	// Free the resource-tracking links and their respective queues
+	TAny* buf;
 	if(aTracker->iFreeQue!=NULL)
 		{
 		while(!aTracker->iFreeQue->IsEmpty())
 			{
-			delete aTracker->iFreeQue->GetFirst(); // Dequeues the element;
+			buf = (TAny*)(aTracker->iFreeQue->GetFirst()); // Dequeues the element
+			delete buf;
 			}
 		delete aTracker->iFreeQue;
 		}
@@ -2174,7 +2180,8 @@ void DChannelResManUs::RemoveTrackingControl(TTrackingControl*& aTracker)
 		{
 		while(!aTracker->iBusyQue->IsEmpty())
 			{
-			delete aTracker->iBusyQue->GetFirst(); // Dequeues the element;
+			buf = (TAny*)(aTracker->iBusyQue->GetFirst()); // Dequeues the element
+			delete buf;
 			}
 		delete aTracker->iBusyQue;
 		}

@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -24,10 +24,6 @@
 #include "testcaseroot.h"
 #include "b2bwatchers.h"
 #include "testcase0681.h"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "testcase0681Traces.h"
-#endif
 
 #define _REPEATS (oOpenIterations*3)
 
@@ -41,10 +37,7 @@ const TTestCaseFactoryReceipt<CTestCase0681> CTestCase0681::iFactoryReceipt(KTes
 
 CTestCase0681* CTestCase0681::NewL(TBool aHost)
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0681_NEWL);
-	    }
+	LOG_FUNC
 	CTestCase0681* self = new (ELeave) CTestCase0681(aHost);
 	CleanupStack::PushL(self);
 	self->ConstructL();
@@ -56,10 +49,7 @@ CTestCase0681* CTestCase0681::NewL(TBool aHost)
 CTestCase0681::CTestCase0681(TBool aHost)
 	: CTestCaseB2BRoot(KTestCaseId, aHost, iStatus) 
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0681_CTESTCASE0681);
-	    }
+	LOG_FUNC
 		
 	} 
 
@@ -69,10 +59,7 @@ CTestCase0681::CTestCase0681(TBool aHost)
 */
 void CTestCase0681::ConstructL()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0681_CONSTRUCTL);
-	    }
+	LOG_FUNC
 
 	iDualRoleCase = ETrue;	// another back-back
 		
@@ -82,10 +69,7 @@ void CTestCase0681::ConstructL()
 
 CTestCase0681::~CTestCase0681()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0681_DCTESTCASE0681);
-	    }
+	LOG_FUNC
 	iCollector.DestroyObservers();
 	Cancel();
 	}
@@ -93,10 +77,7 @@ CTestCase0681::~CTestCase0681()
 
 void CTestCase0681::ExecuteTestCaseL()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0681_EXECUTETESTCASEL);
-	    }
+	LOG_FUNC
 	iCaseStep = EPreconditions;
 	iHNPCounter = 3;	//	To be decremented to govern the number of times we do HNP.
 	CActiveScheduler::Add(this);
@@ -106,10 +87,7 @@ void CTestCase0681::ExecuteTestCaseL()
 	
 void CTestCase0681::DoCancel()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0681_DOCANCEL);
-	    }
+	LOG_FUNC
 	// cancel our timer
 	iTimer.Cancel();
 	}
@@ -120,24 +98,16 @@ void CTestCase0681::StepB2BPreconditions()
 	if (gTestRoleMaster)
 		{ // "B" device
 		test.Printf(_L("***** Important note *****\n"));
-		OstTrace0(TRACE_NORMAL, CTESTCASE0681_STEPB2BPRECONDITIONS, "***** Important note *****\n");
 		test.Printf(_L("Before commencing test, please\n"));
-		OstTrace0(TRACE_NORMAL, CTESTCASE0681_STEPB2BPRECONDITIONS_DUP01, "Before commencing test, please\n");
 		test.Printf(_L("insert 'B'-cable end and activate\n"));
-		OstTrace0(TRACE_NORMAL, CTESTCASE0681_STEPB2BPRECONDITIONS_DUP02, "insert 'B'-cable end and activate\n");
 		test.Printf(_L("the test on the 'A' device.\n"));
-		OstTrace0(TRACE_NORMAL, CTESTCASE0681_STEPB2BPRECONDITIONS_DUP03, "the test on the 'A' device.\n");
 		test.Printf(_L("Then, press any key to continue.\n"));
-		OstTrace0(TRACE_NORMAL, CTESTCASE0681_STEPB2BPRECONDITIONS_DUP04, "Then, press any key to continue.\n");
 		test.Printf(_L("**************************\n"));
-		OstTrace0(TRACE_NORMAL, CTESTCASE0681_STEPB2BPRECONDITIONS_DUP05, "**************************\n");
 		}
 	else
 		{
 		test.Printf(KInsertACablePrompt);
-		OstTrace0(TRACE_NORMAL, CTESTCASE0681_STEPB2BPRECONDITIONS_DUP06, KInsertACablePrompt);
 		test.Printf(KPressAnyKeyToContinue);
-		OstTrace0(TRACE_NORMAL, CTESTCASE0681_STEPB2BPRECONDITIONS_DUP07, KPressAnyKeyToContinue);
 		}
 
 	RequestCharacter();	
@@ -146,10 +116,7 @@ void CTestCase0681::StepB2BPreconditions()
 // handle event completion	
 void CTestCase0681::RunStepL()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE0681_RUNSTEPL);
-	    }
+	LOG_FUNC
 	// Obtain the completion code for this CActive obj.
 	TInt completionCode(iStatus.Int()); 
 	TBuf<MAX_DSTRLEN> aDescription;
@@ -225,7 +192,6 @@ void CTestCase0681::RunStepL()
 		case EPerformSrp:
 			{
 			test.Printf(_L("Into EPerformSrp step...\n"));
-			OstTrace0(TRACE_NORMAL, CTESTCASE0681_RUNSTEPL_DUP01, "Into EPerformSrp step...\n");
 
 			if (gTestRoleMaster)
 				{
@@ -265,7 +231,6 @@ void CTestCase0681::RunStepL()
 		case EAReceivedSrp:		//	A-Device step only!
 			{
 			test.Printf(_L("Into EAReceivedSrp step...\n"));
-			OstTrace0(TRACE_NORMAL, CTESTCASE0681_RUNSTEPL_DUP02, "Into EAReceivedSrp step...\n");
 
 			if (KTestCaseWatchdogTO == iStatus.Int())
 				{
@@ -292,7 +257,6 @@ void CTestCase0681::RunStepL()
 		case ESwappedRoles:
 			{
 			test.Printf(_L("Into ESwappedRoles step...\n"));
-			OstTrace0(TRACE_NORMAL, CTESTCASE0681_RUNSTEPL_DUP03, "Into ESwappedRoles step...\n");
 			if (KTestCaseWatchdogTO == iStatus.Int())
 				{
 				iCollector.DestroyObservers();
@@ -318,7 +282,6 @@ void CTestCase0681::RunStepL()
 		case EAConfigured:	//	A-Device only step
 			{
 			test.Printf(_L("Into EAConfigured step...\n"));
-			OstTrace0(TRACE_NORMAL, CTESTCASE0681_RUNSTEPL_DUP04, "Into EAConfigured step...\n");
 			if (KTestCaseWatchdogTO == iStatus.Int())
 				{
 				iCollector.DestroyObservers();
@@ -334,7 +297,6 @@ void CTestCase0681::RunStepL()
 		case EASuspended:	//	A-Device only step
 			{
 			test.Printf(_L("Into EASuspended step...\n"));
-			OstTrace0(TRACE_NORMAL, CTESTCASE0681_RUNSTEPL_DUP05, "Into EASuspended step...\n");
 			if (KTestCaseWatchdogTO == iStatus.Int())
 				{
 				iCollector.DestroyObservers();
@@ -351,7 +313,6 @@ void CTestCase0681::RunStepL()
 		case EDefaultRoles:
 			{
 			test.Printf(_L("Into EDefaultRoles step...\n"));
-			OstTrace0(TRACE_NORMAL, CTESTCASE0681_RUNSTEPL_DUP06, "Into EDefaultRoles step...\n");
 			
 			if ( --iHNPCounter >= 0)
 				{
@@ -384,7 +345,6 @@ void CTestCase0681::RunStepL()
 		case EBConfigured:	//	A B-Device only step!
 			{
 			test.Printf(_L("Into EBConfigured step...\n"));
-			OstTrace0(TRACE_NORMAL, CTESTCASE0681_RUNSTEPL_DUP07, "Into EBConfigured step...\n");
 			if (KTestCaseWatchdogTO == iStatus.Int())
 				{
 				iCollector.DestroyObservers();
@@ -399,7 +359,6 @@ void CTestCase0681::RunStepL()
 		case EBSuspended:	
 			{
 			test.Printf(_L("Into EBSuspended step...\n"));
-			OstTrace0(TRACE_NORMAL, CTESTCASE0681_RUNSTEPL_DUP08, "Into EBSuspended step...\n");
 			if (KTestCaseWatchdogTO == iStatus.Int())
 				{
 				iCollector.DestroyObservers();
@@ -408,7 +367,6 @@ void CTestCase0681::RunStepL()
 			
 			// issue HNP
 			test.Printf(_L("VBus present, attempting a swap.\n"));
-			OstTrace0(TRACE_NORMAL, CTESTCASE0681_RUNSTEPL_DUP09, "VBus present, attempting a swap.\n");
 			iCollector.AddRequiredNotification(EWatcherState, RUsbOtgDriver::EStateBHost);
 
 			err = otgBusRequest();	//	Request the host role
@@ -416,7 +374,6 @@ void CTestCase0681::RunStepL()
 			if (KErrNone != err)
 				{
 				test.Printf(_L("BusRequest returned %d\n"),err);
-				OstTrace1(TRACE_NORMAL, CTESTCASE0681_RUNSTEPL_DUP10, "BusRequest returned %d\n",err);
 				return TestFailed(KErrAbort, _L("BusRequest() failed!"));
 				}
 		
@@ -481,7 +438,6 @@ void CTestCase0681::RunStepL()
 			
 		default:
 			test.Printf(_L("<Error> unknown test step"));
-			OstTrace0(TRACE_NORMAL, CTESTCASE0681_RUNSTEPL_DUP11, "<Error> unknown test step");
 			Cancel();
 			return (TestFailed(KErrCorrupt, _L("<Error> unknown test step")));
 		}

@@ -33,7 +33,7 @@ source         iic_client.cpp
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 
 // un-comment the following if debug printing is required
-//macro LOG_CLIENT
+macro LOG_CLIENT
 
 library spi_ctrless.lib
 library i2c_ctrless.lib

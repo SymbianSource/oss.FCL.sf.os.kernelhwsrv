@@ -23,150 +23,116 @@
 #include <e32base_private.h>
 #include <e32cmn.h>
 #include <e32cmn_private.h>
-#include "dla.h"
-#include "slab.h"
-#include "page_alloc.h"
-#include "heap_hybrid.h"
+
+
+#define __NEXT_CELL(p)				((SCell*)(((TUint8*)p)+p->len))
 
 TBool gEnableMemoryMonitor = EFalse;
 
-#ifdef _DEBUG
-const TInt KDbgHeaderSize = (TInt)RHeap::EDebugHdrSize;
-#else
-const TInt KDbgHeaderSize = 0;
-#endif
 
 /**
-Friend class of RHeapHybrid to access to hybrid heap metadata
+Test heap that will corrupt some cells to generate BTrace events.
 */
-class TestHybridHeap
+class RMyDummyHeap : public RHeap
 {
-	public:
-		TBool Init();
-		TBool Check();
-		TInt  AllocLen(TAny* aBfr);
-		void  EnableHeavyMemoryMonitoring();
-		void  CorruptFreeDLBfr(TAny* aBfr);
-		void  CorruptFreeDLBfrLth(TAny* aBfr);
-		void  CorruptAllocatedDLBfrSize(TAny* aBfr);
-		TAny* CorruptAllocatedDLMemoryAddress(TAny* aBfr);		
-
-	private:
-		RHybridHeap* iHybridHeap;
+public:
+	//EBadFreeCellAddress
+	void CorruptFreeMemory1()
+		{
+		SCell* f = (SCell*)&iFree;
+		f->next = (SCell*)iTop;
+		f->next += sizeof(TUint8);
+		}
+	
+	//EBadFreeCellSize
+	void CorruptFreeMemory2()
+		{
+		SCell* p = (SCell*)&iFree;
+		SCell* n = p->next; 
+		n->len = iMinCell-1;
+		}
+	
+	//EBadAllocatedCellAddress
+	void CorruptAllocatedMemory1()
+		{
+		SCell* c = (SCell*)iBase;
+		SCell* f = (SCell*)&iFree;
+		
+		f = f->next;
+		f = f->next;
+		c->len = (TInt)f->next - (TInt)c;
+		}
+	
+	//additional utilities
+	void CorruptAllocatedMemorySize(void* aAddress)
+		{
+		SCell* addres = GetAddress(aAddress);
+		SCell* c = (SCell*)iBase;
+		for(;;)
+			{
+			if(c == addres)
+				{
+				c->len = iMinCell-1;
+				break;
+				}
+			c = __NEXT_CELL(c);
+			}
+		}
+		
+	void CorruptAllocatedMemoryAddress(void* aAddress)
+		{
+		SCell* pF = &iFree;				// free cells
+		pF = pF->next;				// next free cell
+		if (!pF)
+			pF = (SCell*)iTop;	
+		SCell* addres = GetAddress(aAddress);
+		SCell* c = (SCell*)iBase;
+		for(;;)
+			{
+			if(c == addres)
+				{
+				c->len = (TInt)pF->next - (TInt)c;
+				break;
+				}
+			c = __NEXT_CELL(c);
+			}
+		}
+	
+	void EnableHeavyMemoryMonitoring()
+		{
+		iFlags |= EMonitorMemory;
+		}
 };
 
 
-
-TBool TestHybridHeap::Init()
-{
-	RHybridHeap::STestCommand cmd;
-	cmd.iCommand = RHybridHeap::EHeapMetaData;
-	RAllocator& heap = User::Allocator();
-	TInt ret = heap.DebugFunction(RHeap::EHybridHeap, &cmd, 0);
-	if (ret != KErrNone)
-		return EFalse;
-	iHybridHeap = (RHybridHeap*) cmd.iData;
-
-	return ETrue;
-}
-
-TBool TestHybridHeap::Check()
-{
-	if ( iHybridHeap )
-		{
-		iHybridHeap->Check();  
-		}
-
-	return EFalse;
-}
-
-TInt TestHybridHeap::AllocLen(TAny* aBfr)
-{
-	if ( iHybridHeap )
-		{
-		return iHybridHeap->AllocLen(aBfr);  
-		}
-	return 0;
-}
-
-void TestHybridHeap::EnableHeavyMemoryMonitoring()
-{
-	if ( iHybridHeap )
-		{
-		iHybridHeap->iFlags |= RAllocator::EMonitorMemory;
-		}
-
-}
-
-
-void TestHybridHeap::CorruptFreeDLBfr(TAny* aBfr)
-{
-
-	if ( aBfr )
-		{
-		mchunkptr p	= MEM2CHUNK((TUint8*)aBfr-KDbgHeaderSize);
-		p->iHead |= CINUSE_BIT;
-		}
-}
-
-void TestHybridHeap::CorruptFreeDLBfrLth(TAny* aBfr)
-{
-
-	if ( aBfr )
-		{
-		mchunkptr p	= MEM2CHUNK((TUint8*)aBfr-KDbgHeaderSize);
-		p->iHead &= INUSE_BITS; // Set zero length
-		}
-}
-
-void TestHybridHeap::CorruptAllocatedDLBfrSize(TAny* aBfr)
-{
-
-	if ( aBfr )
-		{
-		mchunkptr p	= MEM2CHUNK((TUint8*)aBfr-KDbgHeaderSize);
-		TInt size = CHUNKSIZE(p);
-		size  >>= 1;  // Set double length
-		p->iHead = size | INUSE_BITS; 
-		}
-}
-
-TAny* TestHybridHeap::CorruptAllocatedDLMemoryAddress(TAny* aBfr)
-{
-
-	if ( aBfr )
-		{
-		TUint8* p = (TUint8*)aBfr;
-		p += 3;
-		aBfr = (TAny*)p;
-		}
-	return aBfr;
-}
-
-
 /**
-Heap corruption 0:
-- Allocate (DL) buffer, corrupt it and free
+Heap corruption 2:
+- Overrunning an array using memset 
+(EHeapCorruption - EBadAllocatedCellSize)
 */
-void Memory_Corruption0(TestHybridHeap& aHeap)
+void Memory_Corruption2()
 	{
 	if(gEnableMemoryMonitor)
-		aHeap.EnableHeavyMemoryMonitoring();	
+		{
+		RMyDummyHeap* h = (RMyDummyHeap*)&User::Heap();
+		h->EnableHeavyMemoryMonitoring();	
+		}
 	
 	char* buf = new char[10];  //will be aligned to 12
 	char* buf2 = new char[10]; //will be aligned to 12
-	TInt a = aHeap.AllocLen(buf);
-	memset(buf, 0xfc, a+a); //memory corruption
+	TInt a = User::Heap().AllocLen(buf);
+	memset(buf, 255, a+1); //memory corruption
 	
 	if(!gEnableMemoryMonitor)
-		aHeap.Check(); //force 'heap walker' to check the heap
+			User::Heap().Check(); //force 'heap walker' to check the heap
 	
 	delete buf2;
-	delete buf; //when heavy monitoring is ON should send trace and panic
+	delete buf; //when heavy monitoring is ON should send trace
 	}
 
-//Corrupt free DL memory and Check()
-void Memory_Corruption1(TestHybridHeap& aHeap)
+
+//causes EBadFreeCellAddress corruption type
+void Memory_Corruption3()
 	{
 	TInt* p1 = new TInt();
 	TInt* p2 = new TInt();
@@ -178,8 +144,9 @@ void Memory_Corruption1(TestHybridHeap& aHeap)
 	delete p4;
 	delete p6;
 	
-	aHeap.CorruptFreeDLBfr(p4);
-	aHeap.Check();  // Should panic here
+	RMyDummyHeap* h = (RMyDummyHeap*)&User::Heap();
+	h->CorruptFreeMemory1();
+	User::Heap().Check();
 	
 	delete p5;
 	delete p3;
@@ -187,16 +154,17 @@ void Memory_Corruption1(TestHybridHeap& aHeap)
 	}
 
 
-//corrupt free DL buffer length 
-void Memory_Corruption2(TestHybridHeap& aHeap)
+//causes EBadFreeCellSize RHeap corruption type
+void Memory_Corruption4()
 	{
 	TInt* p1 = new TInt();
 	TInt* p2 = new TInt();
 	TInt* p3 = new TInt();
 	delete p2;
 	
-	aHeap.CorruptFreeDLBfrLth(p2);
-	aHeap.Check(); // Should panic here
+	RMyDummyHeap* h = (RMyDummyHeap*)&User::Heap();
+	h->CorruptFreeMemory2();
+	User::Heap().Check();
 	
 	delete p3;
 	
@@ -204,8 +172,8 @@ void Memory_Corruption2(TestHybridHeap& aHeap)
 	}
 
 
-//Corrupt allocated DL buffer size
-void Memory_Corruption3(TestHybridHeap& aHeap)
+//causes EBadAllocatedCellAddress corruption type
+void Memory_Corruption5()
 	{
 	TInt* p1 = new TInt;
 	TInt* p2 = new TInt;
@@ -218,8 +186,10 @@ void Memory_Corruption3(TestHybridHeap& aHeap)
 	delete p4;
 	delete p6;
 	
-	aHeap.CorruptAllocatedDLBfrSize(p7);
-	aHeap.Check();
+	RMyDummyHeap* h = (RMyDummyHeap*)&User::Heap();
+	//h->CorruptAllocatedMemory1();
+	h->CorruptAllocatedMemoryAddress((void*)p7);
+	User::Heap().Check();
 	
 	delete p7;
 	delete p5;
@@ -228,11 +198,12 @@ void Memory_Corruption3(TestHybridHeap& aHeap)
 	}
 
 
-void Memory_Corruption4(TestHybridHeap& aHeap)
+void Memory_Corruption_Special1()
 	{
 	char* buf = new char;
-	aHeap.EnableHeavyMemoryMonitoring();
-	buf = (char*)aHeap.CorruptAllocatedDLMemoryAddress((TAny*)buf);
+	RMyDummyHeap* h = (RMyDummyHeap*)&User::Heap();
+	h->EnableHeavyMemoryMonitoring();
+	h->CorruptAllocatedMemoryAddress((void*)buf);
 	delete buf;// should output EHeapCorruption trace
 	}
 
@@ -241,26 +212,23 @@ void Memory_Corruption4(TestHybridHeap& aHeap)
 //  Local Functions
 LOCAL_D TInt threadTraceHeapCorruptionTestThread(TAny* param)
 	{
-	TestHybridHeap heap;
-	heap.Init();
-	
 	TInt t = *((TInt*)param);
 	switch(t)
 		{
-		case 0:  // Corrupt allocated buffer and free it
-			Memory_Corruption0(heap);
+		case RHeap::EBadAllocatedCellSize:
+			Memory_Corruption2();
 			break;
-		case 1:
-			Memory_Corruption1(heap);
+		case RHeap::EBadFreeCellAddress:
+			Memory_Corruption3();
 			break;
-		case 2:
-			Memory_Corruption2(heap);
+		case RHeap::EBadFreeCellSize:
+			Memory_Corruption4();
 			break;
-		case 3:
-			Memory_Corruption3(heap);
+		case RHeap::EBadAllocatedCellAddress:
+			Memory_Corruption5();
 			break;
 		case 1000:
-			Memory_Corruption4(heap);
+			Memory_Corruption_Special1();
 			break;
 		default:
 			User::Invariant();
@@ -281,8 +249,8 @@ TInt ExecuteTest(TInt aTestType)
 	
 	switch(aTestType)
 		{
-		case 0: ////Corrupt allocated DL buffer and free it with heavy monitoring enabled
-			type = 0;
+		case 0: ////RHeap::EBadAllocatedCellSize with heavy monitoring enabled
+			type = RHeap::EBadAllocatedCellSize;
 			gEnableMemoryMonitor = ETrue;
 			r = thread.Create(_L("t_tbrace_heapcorruption"), threadTraceHeapCorruptionTestThread, 
 					               KDefaultStackSize, 0x2000, 0x2000, &type);
@@ -293,7 +261,7 @@ TInt ExecuteTest(TInt aTestType)
 			break;
 			
 		case 1: //RHeap::EBadFreeCellAddress:
-			type = 1;
+			type = RHeap::EBadFreeCellAddress;
 			r = thread.Create(_L("t_tbrace_heapcorruption"), threadTraceHeapCorruptionTestThread, 
 					               KDefaultStackSize, 0x2000, 0x2000, &type);
 			thread.Logon(stat);
@@ -303,7 +271,7 @@ TInt ExecuteTest(TInt aTestType)
 		break;
 		
 		case 2: //RHeap::EBadFreeCellSize:
-			type = 2;
+			type = RHeap::EBadFreeCellSize;
 			r = thread.Create(_L("t_tbrace_heapcorruption"), threadTraceHeapCorruptionTestThread, 
 			                KDefaultStackSize, 0x2000, 0x2000, &type);
 			thread.Logon(stat);
@@ -313,7 +281,7 @@ TInt ExecuteTest(TInt aTestType)
 		break;
 		
 		case 3: //RHeap::EBadAllocatedCellSize:
-			type = 0;    // Without memory monitorin this time
+			type = RHeap::EBadAllocatedCellSize;
 			r = thread.Create(_L("t_tbrace_heapcorruption"), threadTraceHeapCorruptionTestThread, 
 						               KDefaultStackSize, 0x2000, 0x2000, &type);
 			thread.Logon(stat);
@@ -323,7 +291,7 @@ TInt ExecuteTest(TInt aTestType)
 		break;
 		
 		case 4: //RHeap::EBadAllocatedCellAddress:
-			type = 3;
+			type = RHeap::EBadAllocatedCellAddress;
 			r = thread.Create(_L("t_tbrace_heapcorruption"), threadTraceHeapCorruptionTestThread, 
 						               KDefaultStackSize, 0x2000, 0x2000, &type);
 			thread.Logon(stat);

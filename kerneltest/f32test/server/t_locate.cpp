@@ -101,15 +101,15 @@ LOCAL_C void MakeLocateTestDirectoryStructure()
 	for (TInt i=0;i<5;i++)
 		{
 		TInt r=TheFs.Drive(drive);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		}
 	TInt r=TheFs.MkDirAll(_L("alskdjfl"));
-	test_Value(r, r == -47);
+	test(r==-47);
 	r=TheFs.MkDirAll(_L("alskdjfl"));
-	test_Value(r, r == -47);
+	test(r==-47);
 	TheFs.SetErrorCondition(KErrNone);
 	r=TheFs.Drive(drive);
-	test_KErrNone(r);
+	test(r==KErrNone);
 #endif
 //
 	test.Next(_L("Create LOCTEST files"));
@@ -152,7 +152,7 @@ LOCAL_C void CreateFilesInRemovableDrive()
     TDriveInfo info;
 
 	 err = TheFs.DriveList(driveList);
-    test_KErrNone(err);
+    test( err == KErrNone );
     
     for (TInt i = 0; i < KMaxDrives; i++) 
         {
@@ -160,7 +160,7 @@ LOCAL_C void CreateFilesInRemovableDrive()
         if (driveList[i]) 
             {
             err = TheFs.Drive(info, i);
-            test_KErrNone(err); 
+            test( err == KErrNone ); 
                         
             if(( info.iDriveAtt  & KDriveAttRemovable ) && !( info.iDriveAtt  & KDriveAttLogicallyRemovable ))  
             	{
@@ -198,7 +198,7 @@ LOCAL_C void CreateFilesInInternalDrive()
     TDriveInfo info;
 
 	 err = TheFs.DriveList(driveList);
-    test_KErrNone(err);
+    test( err == KErrNone );
     
     for (TInt i = 0; i < KMaxDrives; i++) 
         {
@@ -206,7 +206,7 @@ LOCAL_C void CreateFilesInInternalDrive()
         if (driveList[i]) 
             {
             err = TheFs.Drive(info, i);
-            test_KErrNone(err); 
+            test( err == KErrNone ); 
                         
             if( info.iDriveAtt  & KDriveAttInternal  ) 
             	{			
@@ -248,7 +248,7 @@ LOCAL_C void DeleteRemovableDirectory()
 		gPathRem.Append (removableDriveLetter);
 		gPathRem.Append (_L(":\\F32-TST\\") );
 		TInt r=fMan->RmDir(gPathRem);
-		test_KErrNone(r);
+		test(r==KErrNone);
 	
 		delete fMan;
 		}
@@ -269,7 +269,7 @@ LOCAL_C void DeleteInternalDirectory()
 		gPathInt.Append (internalDriveLetter);
 		gPathInt.Append (_L(":\\F32-TST\\") );
 		TInt r=fMan->RmDir(gPathInt);
-		test_KErrNone(r);
+		test(r==KErrNone);
 	
 		delete fMan;
 		}
@@ -285,7 +285,7 @@ LOCAL_C void MountRemoteFilesystem()
 	TInt r=TheFs.AddFileSystem(_L("CFAFSDLY"));
 	test.Printf(_L("Add remote file system\n"));
 	test.Printf(_L("AddFileSystem returned %d\n"),r);
-	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
+	test (r==KErrNone || r==KErrAlreadyExists);
 
 
 	r=TheFs.MountFileSystem(_L("DELAYFS"),EDriveQ);
@@ -293,7 +293,7 @@ LOCAL_C void MountRemoteFilesystem()
 	
 	test.Printf(_L("Mount remote file system\n"));
 	test.Printf(_L("MountFileSystem returned %d\n"),r);
-	test_Value(r, r == KErrNone || r==KErrCorrupt || r==KErrNotReady || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrCorrupt || r==KErrNotReady || r==KErrAlreadyExists);
 
 	
 	Mf(_L("Q:\\F32-TST\\LOCTEST\\BIN\\FINDFILE.AAA"));
@@ -311,7 +311,7 @@ LOCAL_C void DisMountRemoteFilesystem()
  	 
  	test.Printf(_L("Dismounting the Remote Drive returned %d\n"),r);
  	
- 	test_KErrNone(r);
+ 	test(r==KErrNone );
 	}
 
 
@@ -326,41 +326,41 @@ LOCAL_C void Test1()
 	
 	TAutoClose<RFs> fs;
 	TInt r=fs.iObj.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TFindFile finder(fs.iObj);
 	TPtrC path=gPath1;
 	r=finder.FindByPath(_L("file1.aaa"),&path);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TParse fileParse;
 	fileParse.Set(finder.File(),NULL,NULL);
 	test(fileParse.Path()==_L("\\F32-TST\\LOCTEST\\BIN1\\"));
 	test(fileParse.NameAndExt()==_L("file1.aaa"));
 	r=finder.Find();
-	test_Value(r, r == KErrNotFound);
+	test(r==KErrNotFound);
 
 
 	path.Set(gPath2);
 	r=finder.FindByPath(_L("file1.aaa"),&path);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	fileParse.Set(finder.File(),NULL,NULL);
 	test(fileParse.Path()==_L("\\F32-TST\\LOCTEST\\BIN1\\"));
 	test(fileParse.NameAndExt()==_L("file1.aaa"));
 	r=finder.Find();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	fileParse.Set(finder.File(),NULL,NULL);
 	test(fileParse.Path()==_L("\\F32-TST\\LOCTEST\\BIN1\\BIN4\\"));
 	test(fileParse.NameAndExt()==_L("file1.aaa"));
 	r=finder.Find();
-	test_Value(r, r == KErrNotFound);
+	test(r==KErrNotFound);
 //
 	test.Next(_L("Test FindByDir"));
 	TPtrC dir=_L("\\F32-TST\\LOCTEST\\BIN2\\");
 	r=finder.FindByDir(_L("file2.bbb"),dir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TFileName defaultPath;
 	r=TheFs.SessionPath(defaultPath);
 	defaultPath.SetLength(2);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	fileParse.Set(finder.File(),NULL,NULL);
 	test(fileParse.Drive()==defaultPath);
 	test(fileParse.Path()==_L("\\F32-TST\\LOCTEST\\BIN2\\"));
@@ -377,7 +377,7 @@ LOCAL_C void Test1()
 		test(_L("file2.bbb").MatchF(fileParse.NameAndExt())!=KErrNotFound);
 		r=finder.Find();
 		}
-	test_Value(r, r == KErrNotFound);
+	test(r==KErrNotFound);
 	}
 
 LOCAL_C void Test2()
@@ -389,36 +389,36 @@ LOCAL_C void Test2()
 	test.Next(_L("Test extremes"));
 	TAutoClose<RFs> fs;
 	TInt r=fs.iObj.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TBuf<4> temp=_L("");
 	TFindFile finder(fs.iObj);
 	r=finder.FindByPath(_L("file1.aaa"),&temp);
-	test_Value(r, r == KErrNotFound);
+	test(r==KErrNotFound);
 	r=finder.Find();
-	test_Value(r, r == KErrNotFound);
+	test(r==KErrNotFound);
 //
 	TPtrC path=_L("blarg.7");
 	r=finder.FindByPath(_L(""),&path);	
-	test_Value(r, r == KErrArgument);
+	test(r==KErrArgument);
 	r=finder.FindByPath(_L("*"),&path);
-	test_Value(r, r == KErrNotFound);
+	test(r==KErrNotFound);
 	r=finder.FindByPath(_L("xmvid"),&path);
-	test_Value(r, r == KErrNotFound);
+	test(r==KErrNotFound);
 	r=finder.Find();
-	test_Value(r, r == KErrNotFound);
+	test(r==KErrNotFound);
 //
 	path.Set(_L("C:\\F32-TST\\LOCTEST\\BIN1\\;\\F32-TST\\LOCTEST\\BIN2\\;Z:\\F32-TST\\LOCTEST\\BIN1\\BIN4\\;\\F32-TST\\LOCTEST\\BIN3\\;"));
 	r=finder.FindByPath(_L(""),&path);
-	test_Value(r, r == KErrArgument);
+	test(r==KErrArgument);
 	r=finder.FindByPath(_L("xyz.abc"),&path);
-	test_Value(r, r == KErrNotFound);
+	test(r==KErrNotFound);
 	r=finder.Find();
-	test_Value(r, r == KErrNotFound);
+	test(r==KErrNotFound);
 	
 	test.Next(_L("Test FindByDir with empty file spec"));
 	TPtrC dir2=_L("\\F32-TST\\LOCTEST\\");
 	r=finder.FindByDir(_L(""),dir2);
-	test_Value(r, r == KErrArgument);		
+	test(r==KErrArgument);		
 	
 	}
 
@@ -436,23 +436,23 @@ LOCAL_C void Test3()
 //
 	TAutoClose<RFs> fs;
 	r=fs.iObj.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TFindFile finder(fs.iObj);
 	r=finder.FindByPath(_L("file1.aaa"),&path);
-	test_Value(r, r == KErrNotFound);
+	test(r==KErrNotFound);
 	r=finder.Find();
-	test_Value(r, r == KErrNotFound);
+	test(r==KErrNotFound);
 //
 	path.Set(_L("\\F32-TST\\LOCTEST\\BIN2\\"));
 	r=finder.FindByPath(_L("file2.bbb"),&path);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TParse fileParse;
 	fileParse.Set(finder.File(),NULL,NULL);
 	test(fileParse.Drive()==defaultPath);
 	test(fileParse.Path()==_L("\\F32-TST\\LOCTEST\\BIN2\\"));
 	test(fileParse.NameAndExt()==_L("file2.bbb"));
 	r=finder.Find();
-	test_Value(r, r == KErrNotFound || r==KErrNone);
+	test(r==KErrNotFound || r==KErrNone);
 	if (r==KErrNone)
 		{
 		fileParse.Set(finder.File(),NULL,NULL);
@@ -460,23 +460,23 @@ LOCAL_C void Test3()
 		test(fileParse.Path()==_L("\\F32-TST\\LOCTEST\\BIN2\\"));
 		test(fileParse.NameAndExt()==_L("file2.bbb"));
 		r=finder.Find();
-		test_Value(r, r == KErrNotFound);
+		test(r==KErrNotFound);
 		}
 //
 	path.Set(_L("C:\\F32-TST\\LOCTEST\\BIN1\\;;\\F32-TST\\LOCTEST\\BIN2\\;Z:\\F32-TST\\LOCTEST\\BIN1\\BIN4\\;\\F32-TST\\LOCTEST\\BIN3\\;"));
 	r=finder.FindByPath(_L("xyz.abc"),&path);
-	test_Value(r, r == KErrNotFound);
+	test(r==KErrNotFound);
 	r=finder.Find();
-	test_Value(r, r == KErrNotFound);
+	test(r==KErrNotFound);
 //
 	r=finder.FindByPath(_L("file2.bbb"),&path);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	fileParse.Set(finder.File(),NULL,NULL);
 	test(fileParse.Drive()==defaultPath);
 	test(fileParse.Path()==_L("\\F32-TST\\LOCTEST\\BIN2\\"));
 	test(fileParse.NameAndExt()==_L("file2.bbb"));
 	r=finder.Find();
-	test_Value(r, r == KErrNotFound || r==KErrNone);
+	test(r==KErrNotFound || r==KErrNone);
 	if (r==KErrNone)
 		{
 		fileParse.Set(finder.File(),NULL,NULL);
@@ -484,7 +484,7 @@ LOCAL_C void Test3()
 		test(fileParse.Path()==_L("\\F32-TST\\LOCTEST\\BIN2\\"));
 		test(fileParse.NameAndExt()==_L("file2.bbb"));
 		r=finder.Find();
-		test_Value(r, r == KErrNotFound);
+		test(r==KErrNotFound);
 		}
 	}
 
@@ -502,7 +502,7 @@ LOCAL_C void Test4()
 	TFileName path;
 
 	TInt r=finder.FindWildByPath(_L("*.aaa"),&gPath3,dir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	count=dir->Count();
 	test(count==3);
 	entry=(*dir)[0];
@@ -518,7 +518,7 @@ LOCAL_C void Test4()
 	delete dir;
 
 	r=finder.FindWild(dir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	count=dir->Count();
 	test(count==2);
 	entry=(*dir)[0];
@@ -531,26 +531,26 @@ LOCAL_C void Test4()
 	delete dir;
 
 	r=finder.FindWild(dir);
-	test_Value(r, r == KErrNotFound);
+	test(r==KErrNotFound);
 	r=finder.FindWild(dir);
-	test_Value(r, r == KErrNotFound);
+	test(r==KErrNotFound);
 
 	r=finder.FindWildByPath(_L("*FILE.AAA*"), &gPath1, dir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(dir->Count()==1);
 	entry=(*dir)[0];
 	test(entry.iName.MatchF(_L("FILE.AAA"))!=KErrNotFound);
 	delete dir;
 	
 	r=finder.FindWildByPath(_L("*FILE.AAA"), &gPath1, dir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(dir->Count()==1);
 	entry=(*dir)[0];
 	test(entry.iName.MatchF(_L("FILE.AAA"))!=KErrNotFound);
 	delete dir;
 	
 	r=finder.FindWildByPath(_L("FILE.AAA*"), &gPath1, dir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(dir->Count()==1);
 	entry=(*dir)[0];
 	test(entry.iName.MatchF(_L("FILE.AAA"))!=KErrNotFound);
@@ -558,26 +558,26 @@ LOCAL_C void Test4()
 
     
 	r=finder.FindWildByPath(_L("CONFUSED.DOG"), &gPath1, dir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(dir->Count()==1);
 	entry=(*dir)[0];
 	test(entry.iName.MatchF(_L("CONFUSED.DOG"))!=KErrNotFound);
 	delete dir;
 
 	r=finder.FindWildByPath(_L("*CONFUSED.DOG"), &gPath1, dir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(dir->Count()==1);
 	entry=(*dir)[0];
 	test(entry.iName.MatchF(_L("CONFUSED.DOG"))!=KErrNotFound);
 	delete dir;
 	r=finder.FindWildByPath(_L("CONFUSED.DOG*"), &gPath1, dir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(dir->Count()==1);
 	entry=(*dir)[0];
 	test(entry.iName.MatchF(_L("CONFUSED.DOG"))!=KErrNotFound);
 	delete dir;
 	r=finder.FindWildByPath(_L("*CONFUSED.DOG*"), &gPath1, dir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(dir->Count()==1);
 	entry=(*dir)[0];
 	test(entry.iName.MatchF(_L("CONFUSED.DOG"))!=KErrNotFound);
@@ -598,7 +598,7 @@ LOCAL_C void Test5()
 	TFileName path;
 
 	TInt r=finder.FindWildByDir(_L("FILE*"),_L("\\F32-TST\\LOCTEST\\BIN3\\"),dir);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	count=dir->Count();
 	test(count==1);
 	entry=(*dir)[0];
@@ -614,7 +614,7 @@ LOCAL_C void Test5()
 	r=finder.FindWild(dir);
 	if (r==KErrNotFound)
 		return;
-	test_KErrNone(r);
+	test(r==KErrNone);
 	entry=(*dir)[0];
 	test(entry.iName.MatchF(_L("FILE3.CCC"))!=KErrNotFound);
 	fileParse.Set(finder.File(),NULL,NULL);
@@ -623,9 +623,9 @@ LOCAL_C void Test5()
 	delete dir;
 
 	r=finder.FindWild(dir);
-	test_Value(r, r == KErrNotFound);
+	test(r==KErrNotFound);
 	r=finder.FindWild(dir);
-	test_Value(r, r == KErrNotFound);
+	test(r==KErrNotFound);
 	}
 
 LOCAL_C void Test6()
@@ -637,7 +637,7 @@ LOCAL_C void Test6()
 	test.Next(_L("Test file not found"));
 	TFindFile ff(TheFs);
 	TInt r=ff.FindByDir(_L("NOEXIST.EXE"),_L("\\System\\Programs\\"));
-	test_Value(r, r == KErrNotFound);
+	test(r==KErrNotFound);
 	}
 
 
@@ -676,7 +676,7 @@ LOCAL_C void Test7()
 	
 	TAutoClose<RFs> fs;
 	TInt r=fs.iObj.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TFindFile finder(fs.iObj);
 	TPtrC path=gPath4;
 	r=finder.FindByPath(_L("findfile.aaa"),&path); 	
@@ -687,16 +687,16 @@ LOCAL_C void Test7()
 	
 	if (removableFlag == 1)
 		{
-			test_KErrNone(r); 
+			test(r==KErrNone); 
 			fileParse.Set(finder.File(),NULL,NULL);
 			test(fileParse.Path()==_L("\\F32-TST\\LOCTEST\\BIN\\"));
 			test(fileParse.NameAndExt()==_L("findfile.aaa")); //The filename.aaa in the removable Drive
 			r=finder.Find();
-			test_Value(r, r == KErrNotFound);     //remote drives are excluded by default
+			test(r==KErrNotFound);     //remote drives are excluded by default
 		
 		}
 	else
-		test_Value(r, r == KErrNotFound);
+		test(r==KErrNotFound);
 
 	
 
@@ -704,9 +704,9 @@ LOCAL_C void Test7()
 
 
 	r=finder.SetFindMask(	KDriveAttAll) ;
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=finder.FindByPath(_L("findfile.aaa"),&path);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	fileParse.Set(finder.File(),NULL,NULL);
 	test(fileParse.Path()==_L("\\F32-TST\\LOCTEST\\BIN\\"));   
 	test(fileParse.NameAndExt()==_L("findfile.aaa"));      //either the remote or removable one.
@@ -715,7 +715,7 @@ LOCAL_C void Test7()
 	
 	if (removableFlag == 1)
 		{	
-		test_KErrNone(r);
+		test(r==KErrNone);
 	
 		fileParse.Set(finder.File(),NULL,NULL);
 
@@ -723,11 +723,11 @@ LOCAL_C void Test7()
 		test(fileParse.NameAndExt()==_L("findfile.aaa"));         //either the remote or removable one.
 
 		r=finder.Find();
-		test_Value(r, r == KErrNotFound);
+		test(r==KErrNotFound);
 		}
 	else 
 		{
-		test_Value(r, r == KErrNotFound);	
+		test(r==KErrNotFound);	
 			
 		}
 		
@@ -735,30 +735,30 @@ LOCAL_C void Test7()
 	test.Next(_L("Search exclusively in remote drives \n"));
 
 	r=finder.SetFindMask(	KDriveAttExclusive| KDriveAttRemote); 
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=finder.FindByPath(_L("findfile.aaa"),&path);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	fileParse.Set(finder.File(),NULL,NULL);
 	test(fileParse.Path()==_L("\\F32-TST\\LOCTEST\\BIN\\"));
 	test(fileParse.NameAndExt()==_L("findfile.aaa"));
 	r=finder.Find();
-	test_Value(r, r == KErrNotFound);
+	test(r==KErrNotFound);
 
 	
 	test.Next(_L("Search excluding removables and remote \n"));
 
 	r=finder.SetFindMask(	KDriveAttExclude | KDriveAttRemovable |KDriveAttRemote ); 
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=finder.FindByPath(_L("findfile.aaa"),&path);   
-	test_Value(r, r == KErrNotFound);   //filename.aaa exists in the remote drive and if present to the removable one
+	test(r==KErrNotFound);   //filename.aaa exists in the remote drive and if present to the removable one
 
 
 	test.Next(_L("Search in Internal Drives \n"));
 
 	r=finder.SetFindMask(KDriveAttInternal ) ;
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=finder.FindByPath(_L("findfile.aaa"),&path);   
-	test_Value(r, r == KErrNotFound);   //filename.aaa exists only in the Removable drive and the remote one.
+	test(r==KErrNotFound);   //filename.aaa exists only in the Removable drive and the remote one.
 
 
 	}
@@ -789,16 +789,16 @@ LOCAL_C void Test8()
 	
 	TAutoClose<RFs> fs;
 	TInt r=fs.iObj.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TFindFile finder(fs.iObj);
 	TPtrC path=gPath4;	
 	TParse fileParse;
 		
 
 	r=finder.SetFindMask(KDriveAttAll) ;
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=finder.FindByPath(_L("findfile.aaa"),&path);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	fileParse.Set(finder.File(),NULL,NULL);
 	test(fileParse.Path()==_L("\\F32-TST\\LOCTEST\\BIN\\"));   
 	test(fileParse.NameAndExt()==_L("findfile.aaa"));
@@ -838,13 +838,13 @@ LOCAL_C void Test8()
 		
 		//	test.Printf(_L("\nTest mask : %d \n"),testCombinations[matchIdx].iMatchMask | testAtt );
 			
-			test_Value(r, r == (testAtt == 0 ? testCombinations[matchIdx].iExpectedResultNoAtts : testCombinations[matchIdx].iExpectedResultWithAtts) );
+			test( r == (testAtt == 0 ? testCombinations[matchIdx].iExpectedResultNoAtts : testCombinations[matchIdx].iExpectedResultWithAtts) );
 			
 			
 			if (r== KErrNone)
 				{
 				r  = finder.FindByPath(_L("findfile.aaa"),&path);
-				test_Value(r, r == KErrNone || r ==KErrNotFound);
+				test (r== KErrNone || r ==KErrNotFound);
 				}
 			
 			}
@@ -881,7 +881,7 @@ LOCAL_C void Test9()
 
 	TAutoClose<RFs> fs;
 	TInt r=fs.iObj.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	TFindFile finder(fs.iObj);
 	
@@ -899,9 +899,9 @@ LOCAL_C void Test9()
 		test.Next(_L("FindByDir with wild filenames when a find mask is specified"));
 		
 		TInt r=finder.SetFindMask(KDriveAttRemovable);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		r=finder.FindWildByDir(_L("FIND*"),_L("\\F32-TST\\LOCTEST\\BIN\\"),dir);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		count=dir->Count();
 		test(count==1);
 		entry=(*dir)[0];
@@ -909,13 +909,13 @@ LOCAL_C void Test9()
 		delete dir;	
 
 		r=finder.FindWild(dir);
-		test_Value(r, r == KErrNotFound);	
+		test(r==KErrNotFound);	
 		
 		
 		r=finder.SetFindMask(KDriveAttExclude| KDriveAttRemovable);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		r=finder.FindWildByDir(_L("FIND*"),_L("\\F32-TST\\LOCTEST\\BIN\\"),dir);
-		test_Value(r, r == KErrNotFound);
+		test(r==KErrNotFound);
 		
 		
 		test.Next(_L("Test FindByDir when a find mask is specified"));
@@ -924,12 +924,12 @@ LOCAL_C void Test9()
 		TPtrC dir2=_L("\\F32-TST\\LOCTEST\\BIN\\");
 		
 		r=finder.SetFindMask(KDriveAttExclude | KDriveAttRemote );
-		test_KErrNone(r);
+		test(r==KErrNone);
 		r=finder.FindByDir(_L("findfile.aaa"),dir2);
-		test_KErrNone(r);
+		test(r==KErrNone);
 	
 		r=finder.Find();
-		test_Value(r, r == KErrNotFound);	
+		test(r==KErrNotFound);	
 		
 
 		}
@@ -965,7 +965,7 @@ LOCAL_C void Test9()
 
 		
 		r=finder.FindWildByPath(_L("FIND*.AAA"), &gPath5, dir3);
- 		test_KErrNone(r);
+ 		test(r==KErrNone);
 		test(dir3->Count()==2);
 		
 		entry=(*dir3)[0];		
@@ -981,16 +981,16 @@ LOCAL_C void Test9()
 		
 		
 		r=finder.SetFindMask(KDriveAttExclude| KDriveAttInternal);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		r=finder.FindWildByPath(_L("FIND*.AAA"), &gPath5, dir3);	
- 		test_KErrNone(r);
+ 		test(r==KErrNone);
 		test(dir3->Count()==2);
 		
 		delete dir3;
 		
 		
 		r=finder.FindWild(dir3);
-		test_Value(r, r == KErrNotFound);
+		test(r==KErrNotFound);
 				
 				
 		}
@@ -1026,7 +1026,7 @@ void TestFailures()
     
     __UHEAP_MARK;
     nRes = finder.FindWildByPath(_L("*"), &gPath1, pDir);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
     test(pDir && pDir->Count() > 1);
     delete pDir;
 
@@ -1034,7 +1034,7 @@ void TestFailures()
     for(cnt = 0; ;cnt++)
         {
         nRes =TheFs.SetErrorCondition(KMyError, cnt);
-        test_KErrNone(nRes);
+        test(nRes == KErrNone);
 
         pDir = (CDir*)0xaabbccdd;
         nRes = finder.FindWildByPath(_L("*"), &gPath1, pDir);
@@ -1070,14 +1070,14 @@ void TestFailures()
     
    __UHEAP_MARK;
    nRes = finder.FindWildByDir(_L("*"), KPath, pDir);
-   test_KErrNone(nRes);
+   test(nRes == KErrNone);
    test(pDir && pDir->Count() > 1);
    delete pDir;
    
    for(cnt = 0; ;cnt++)
         {
         nRes =TheFs.SetErrorCondition(KMyError, cnt);
-        test_KErrNone(nRes);
+        test(nRes == KErrNone);
 
         pDir = (CDir*)0xaabbccdd;
         nRes = finder.FindWildByDir(_L("*"), KPath, pDir);

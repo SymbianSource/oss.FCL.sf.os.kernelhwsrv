@@ -11,12 +11,13 @@
 // Contributors:
 //
 // Description:
-// kernel\eka\common\alloc.cpp
+// e32\common\alloc.cpp
 // 
 //
 
 #include "common.h"
 #include <e32atomics.h>
+
 
 
 #ifndef __KERNEL_MODE__
@@ -279,8 +280,7 @@ Gets the total number of cells allocated on the heap.
 */
 EXPORT_C TInt RAllocator::Count() const
 	{
-	TInt totalAllocSize; 
-	return ((RAllocator*)this)->AllocSize(totalAllocSize);
+	return iCellCount;
 	}
 
 
@@ -461,22 +461,6 @@ UEXPORT_C void RAllocator::__DbgSetAllocFail(TAllocFail aType, TInt aRate)
 
 
 /**
-Obtains the current heap failure simulation type.
-
-After calling __DbgSetAllocFail(), this function may be called to retrieve the
-value set.  This is useful primarily for test code that doesn't know if a heap
-has been set to fail and needs to check.
-
-@return RAllocator::ENone if heap is not in failure simulation mode;
-		Otherwise one of the other RAllocator::TAllocFail enumerations
-*/
-UEXPORT_C RAllocator::TAllocFail RAllocator::__DbgGetAllocFail()
-	{
-	return((TAllocFail) DebugFunction(EGetFail));
-	}
-
-
-/**
 Simulates a burst of heap allocation failures for this heap.
 
 The failure occurs for aBurst allocations attempt via subsequent calls 
@@ -532,66 +516,7 @@ UEXPORT_C TUint RAllocator::__DbgCheckFailure()
 	return DebugFunction(ECheckFailure);
 	}
 
-/**
-Gets the current size of the heap.
 
-This is the total number of bytes committed by the host chunk, less the number
-of bytes used by the heap's metadata (the internal structures used for keeping
-track of allocated and free memory).
-
-Size = (Rounded committed size - size of heap metadata).
-
-@return The size of the heap, in bytes.
-*/		
-UEXPORT_C TInt RAllocator::Size() const	
-	{
-	return ((RAllocator*)this)->DebugFunction(EGetSize);
-	}
-
-/**
-@return The maximum length to which the heap can grow.
-
-@publishedAll
-@released
-*/
-UEXPORT_C TInt RAllocator::MaxLength() const	
-	{
-	return ((RAllocator*)this)->DebugFunction(EGetMaxLength);
-	}
-
-/**
-Gets a pointer to the start of the heap.
-
-Note that this function exists mainly for compatibility reasons.  In a modern
-heap implementation such as that present in Symbian it is not appropriate to
-concern oneself with details such as the address of the start of the heap, as
-it is not as meaningful as it was in older heap implementations.  In fact, the
-"base" might not even be the base of the heap at all!
-
-In other words, you can call this but it's not guaranteed to point to the start
-of the heap (and in fact it never really was, even in legacy implementations).
-
-@return A pointer to the base of the heap.  Maybe.
-*/
-UEXPORT_C TUint8* RAllocator::Base() const	
-	{
-	TUint8* base;
-	((RAllocator*)this)->DebugFunction(EGetBase, &base);	
-	return base;
-	}
-
-UEXPORT_C TInt RAllocator::Align(TInt a) const	
-	{
-	return ((RAllocator*)this)->DebugFunction(EAlignInteger, (TAny*)a);
-	}
-
-UEXPORT_C TAny* RAllocator::Align(TAny* a) const	
-	{
-	TAny* result;
-	((RAllocator*)this)->DebugFunction(EAlignAddr, a, &result);
-	return result;
-	}
-	
 UEXPORT_C TInt RAllocator::Extension_(TUint, TAny*& a0, TAny*)
 	{
 	a0 = NULL;

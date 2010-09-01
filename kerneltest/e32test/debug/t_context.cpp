@@ -408,7 +408,6 @@ void TestKillWFAR(TUserCallbackState aCallback)
 	// run again only after it is blocked on its request semaphore.
 	t.SetPriority(EPriorityMore);
 	t.Resume();
-	User::After(500000);
 
 	if (aCallback != ENoCallback)
 		{

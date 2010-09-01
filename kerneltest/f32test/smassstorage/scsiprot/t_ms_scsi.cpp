@@ -591,30 +591,31 @@ CProxyDrive::CProxyDrive(CMountCB* aMount)
 : iMount(aMount)
 	{}
 
-EXPORT_C TInt CProxyDrive::ControlIO(const RMessagePtr2&, TInt, TAny*, TAny*)
+TInt CProxyDrive::ControlIO(const RMessagePtr2&, TInt, TAny*, TAny*)
 	{ return KErrNone; }
 
-EXPORT_C TInt CProxyDrive::Read (TInt64 aPos, TInt aLength, const TAny* aTrg, TInt, TInt, TInt)
+TInt CProxyDrive::Read (TInt64 aPos, TInt aLength, const TAny* aTrg, TInt, TInt, TInt)
 	{ return Read(aPos, aLength, *(TDes8*)aTrg); }
 
-EXPORT_C TInt CProxyDrive::Write (TInt64 aPos, TInt, const TAny* aSrc, TInt, TInt, TInt)
+TInt CProxyDrive::Write (TInt64 aPos, TInt, const TAny* aSrc, TInt, TInt, TInt)
 	{ return Write(aPos, *(TDesC8*)aSrc); }
 
 // Implemented the GetInterface method here as this are usually 
 // exported by EFILE, but these unit tests don't link to it.
 
-EXPORT_C TInt CProxyDrive::GetInterface(TInt /*aInterfaceId*/, TAny*& /*aInterface*/, TAny* /*aInput*/)
+TInt CProxyDrive::GetInterface(TInt /*aInterfaceId*/, TAny*& /*aInterface*/, TAny* /*aInput*/)
 	{ return KErrNotSupported; }
 
 // Implemented the GetLastErrorInfo method here as this is usually 
 // exported by EFILE, but these unit tests don't link to it.
-EXPORT_C TInt CProxyDrive::GetLastErrorInfo(TDes8& /*anErrorInfo*/)
+TInt CProxyDrive::GetLastErrorInfo(TDes8& /*anErrorInfo*/)
 	{ return KErrNotSupported; }
 
 CProxyDrive::~CProxyDrive()
 	{ }
 
-EXPORT_C TInt CProxyDrive::DeleteNotify(TInt64, TInt)
+
+TInt CProxyDrive::DeleteNotify(TInt64, TInt)
 	{ return KErrNone; }
 
 

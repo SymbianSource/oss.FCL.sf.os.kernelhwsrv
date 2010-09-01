@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -100,7 +100,7 @@ namespace HCR
     	/**
         This method returns the address of the override repository that 
         provides override values for the variant. Typically this repository
-        is held in local media and shadowed in RAM by the OS loader. It is
+        is held in NAND flash and shadowed in RAM by the OS loader. It is
         a read-only settings repository. This repository is optional and may 
         be absent in which case 0 should be returned in aAddr.
          
@@ -154,7 +154,7 @@ namespace HCR
         };
 
     /** Union type used to hold either the literal value or an offset from the 
-    start of the setting repository to the setting value. Used in file and RAM
+    start if the setting repository to the setting value. Used in file and RAM
     mapped settings.   
     */
     union USettingValueF
@@ -204,7 +204,7 @@ namespace HCR
         USettingValueC  iValue;
         };
 
-    /** This structure holds a setting defined in a file or memory within a file
+    /** This structure holds a setting define in a file or memory within a file
     based repository.     
     @see SRepositoryFile
     */
@@ -266,7 +266,7 @@ namespace HCR
  
     /** This class is the root object for a file or memory based settings 
     repository. It assumes the repository has a flat contiguous layout and
-    employes offsets to data rather then C++ pointers as in compiled 
+    employees offsets to data rather then C++ pointers as in compiled 
     setting repositories.                 
     All offsets are relative to the address of &iHdr member.
     The last two members are expected to be present in the file/memory as shown
@@ -335,9 +335,7 @@ instance in the PSL compiled repository static data.
 
 /**
 Global macro for use in setting the length attribute of a SSettingC 
-instance in the PSL compiled repository static data. Used when the setting is
-a word sized setting and the size field is Not Applicable. Not to be used 
-for large data settings i.e. where size > 4bytes, i.e. type > 0xffff.
+instance in the PSL compiled repository static data.
 
 @see HCR::MVariant
 @see HCR::SRepositoryCompiled
@@ -369,7 +367,7 @@ set to one of 0xFFFF0000.
 /**
 Global macro used as last entry in a PSL compiled repository static data. 
 The main use of this is to avoid the "last entry needs no following comma" issue
-and to aid HCR initial thread testing. 
+and to aid HCR initial thead testing. 
 The Setting (0xffffffff, 0xffffffff) was choosen as it should never appear in
 a real variant as this category UID can not be allocated offically. Testers
 should also be aware of the special use of this setting so as not to use it in

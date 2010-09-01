@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -22,10 +22,6 @@
 
 #include "testdebug.h"
 #include "TestEngine.h"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "mainTraces.h"
-#endif
 
 using namespace NUnitTesting_USBDI;
 
@@ -35,7 +31,7 @@ RTest gtest(_L("USBDI Unit Testing"));
 
 static void MainL()
 	{
-	OstTraceFunctionEntry0( _MAINL_ENTRY );
+	LOG_CFUNC
 	// Leave the hooks in for platform security
 #ifdef __DATA_CAGING__
 	RProcess().DataCaging(RProcess::EDataCagingOn);
@@ -64,7 +60,7 @@ static void MainL()
 		RProcess::Rendezvous(KErrNone);
 
         User::After(150000);
-		OstTrace0(TRACE_NORMAL, MAINL_MAINL, "CActiveScheduler::Start MainL");	
+		RDebug::Print(_L("CActiveScheduler::Start MainL"));	
 		CActiveScheduler::Start();
 		
 		CleanupStack::PopAndDestroy(testEngine);
@@ -72,23 +68,20 @@ static void MainL()
 	else
 		{
 		gtest.Printf(_L("Unable to create the test engine: %d\n"),err);
-		OstTrace1(TRACE_NORMAL, MAINL_MAINL_DUP01, "Unable to create the test engine: %d\n",err);
 		}
 		
 	User::After(5000000);
 	CleanupStack::PopAndDestroy(sched);		
-	OstTraceFunctionExit0( _MAINL_EXIT );
 	}
 
 TInt E32Main()
 	{
-	OstTraceFunctionEntry0( _E32MAIN_ENTRY );
+	LOG_CFUNC
 	// Create the new trap-cleanup mechanism
 	CTrapCleanup* cleanup = CTrapCleanup::New();
 	
 	if(cleanup == NULL)
 		{
-		OstTraceFunctionExit0( _E32MAIN_EXIT );
 		return KErrNoMemory;
 		}
 		
@@ -97,13 +90,11 @@ TInt E32Main()
 	if(err != KErrNone)
 		{
 		gtest.Printf(_L("MainL error: %d\n"),err);		
-		OstTrace1(TRACE_NORMAL, E32MAIN_E32MAIN, "MainL error: %d\n",err);		
 		}
 	
 	delete cleanup;
 	
 	// Provide no error
-	OstTraceFunctionExit0( _E32MAIN_EXIT_DUP01 );
 	return KErrNone;
 	}
 

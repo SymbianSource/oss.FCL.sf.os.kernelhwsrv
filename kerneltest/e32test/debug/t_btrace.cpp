@@ -2535,8 +2535,8 @@ void TestHeapAndChunkTrace()
 				if(Body(data)[1]==(TUint)threadtest.alloc_addr)
 					{
 					found_heap_alloc=1;
-					test_Compare(Body(data)[2], >= ,4);
-					test_Equal(4, Body(data)[3]);
+					test_Equal(4, Body(data)[2]);
+					test_Compare(Body(data)[3], >= ,4);
 					}
 				}
 			if(data[BTrace::ESubCategoryIndex]==BTrace::EHeapFree)

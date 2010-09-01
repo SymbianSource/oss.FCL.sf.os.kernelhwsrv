@@ -840,7 +840,7 @@ void ExecHandler::ThreadKill(TInt aHandle, TExitType aType, TInt aReason, const 
 	TBuf<KMaxExitCategoryName> cat;
 	if (aType==EExitPanic && aCategory)
 		GetCategory(cat,*aCategory);
-	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::ThreadKill %d,%d,%S",aType,aReason,&cat));
+	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::ThreadKill %d,%d,%lS",aType,aReason,&cat));
 	K::CheckKernelUnlocked();
 	NKern::LockSystem();
 	DThread* pT=(DThread*)K::ObjectFromHandle(aHandle,EThread);
@@ -856,7 +856,7 @@ void ExecHandler::ProcessKill(TInt aHandle, TExitType aType, TInt aReason, const
 	TBuf<KMaxExitCategoryName> cat;
 	if (aType==EExitPanic && aCategory)
 		GetCategory(cat,*aCategory);
-	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::ProcessKill %d,%d,%S",aType,aReason,&cat));
+	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::ProcessKill %d,%d,%lS",aType,aReason,&cat));
 	K::CheckKernelUnlocked();
 	NKern::LockSystem();
 	DProcess* pP=(DProcess*)K::ThreadEnterCS(aHandle,EProcess);
@@ -932,7 +932,7 @@ EXPORT_C void Kern::PanicCurrentThread(const TDesC& aCategory, TInt aReason)
 	{
 	CHECK_PRECONDITIONS(MASK_THREAD_STANDARD,"Kern::PanicCurrentThread");			
 	// enter with system unlocked
-	__KTRACE_OPT(KEXEC,Kern::Printf("Kern::PanicCurrentThread %S %d",&aCategory,aReason));
+	__KTRACE_OPT(KEXEC,Kern::Printf("Kern::PanicCurrentThread %lS %d",&aCategory,aReason));
 	K::CheckKernelUnlocked();
 	NKern::LockSystem();
 	TheCurrentThread->Die(EExitPanic,aReason,aCategory);	// doesn't return

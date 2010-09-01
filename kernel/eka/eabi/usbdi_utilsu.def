@@ -37,5 +37,4 @@ EXPORTS
 	_ZN26RUsbIsocTransferDescriptor7ResultsEv @ 36 NONAME
 	_ZNK14TPacketResults2AtEi @ 37 NONAME
 	_ZNK14TPacketResultsixEi @ 38 NONAME
-	_ZN22RUsbTransferDescriptor5CloseEv @ 39 NONAME
 

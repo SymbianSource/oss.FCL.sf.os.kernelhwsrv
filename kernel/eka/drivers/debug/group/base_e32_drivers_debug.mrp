@@ -1,4 +1,4 @@
-# component name "Stop mode debugger"
+# component name "Run mode debugger"
 
 component	base_e32_drivers_debug
 

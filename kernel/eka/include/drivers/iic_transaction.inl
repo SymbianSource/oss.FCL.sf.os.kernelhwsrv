@@ -65,8 +65,7 @@ inline TIicBusTransaction::TIicBusTransaction(TDes8* aHeader, TIicBusTransfer* a
     iHeader(aHeader), iFlags(NULL), iState(EFree), iHalfDuplexTrans(aHdTrans),
     iFullDuplexTrans(NULL), iCallback(NULL)
     {
-    //Check that the requested priority is at least zero and less than KNumTrancPriorities.
-    __ASSERT_ALWAYS(((aPriority<KNumTrancPriorities)&&(aPriority>=0)),Kern::Fault("TIicBusTransaction",__LINE__));
+    __ASSERT_ALWAYS((((TUint)aPriority<(TUint)KNumTrancPriorities)&&((TUint)aPriority>=0)),Kern::Fault("TIicBusTransaction",__LINE__));
     __ASSERT_ALWAYS(aHeader && aHdTrans,Kern::Fault("TIicBusTransaction",__LINE__));
     iKey = aPriority;
     }

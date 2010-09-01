@@ -1,4 +1,4 @@
-// Copyright (c) 1998-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -81,7 +81,7 @@ exkeytemplate
 cakdtemplate
 medlffstemplate
 soundsctemplate
-soundsctemplate_v2
+camerasctemplate
 exi2s
 //epbus
 //exbusab
@@ -112,6 +112,12 @@ PRJ_EXTENSIONS
 #ifdef SBSV2 // If using SBSv2 with bootstrap FLM, MEMMODEL MUST begin with a capital letter
 
 start		extension		base.bootstrap bootstrap
+
+#ifdef SYMBIAN_OLD_EXPORT_LOCATION
+option INC_PATH   $(EPOCROOT)epoc32/include
+#else
+option INC_PATH   $(EPOCROOT)epoc32/include/platform
+#endif
 
 option		NAME			_template_bootrom
 option		CPU				arm

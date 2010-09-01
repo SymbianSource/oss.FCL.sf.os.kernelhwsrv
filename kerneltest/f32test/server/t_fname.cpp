@@ -15,7 +15,6 @@
 // 
 //
 
-#define __E32TEST_EXTENSION__
 #include <e32test.h>
 #include <f32dbg.h>
 #include <e32debug.h>
@@ -34,7 +33,7 @@ GLDEF_C TInt E32Main(void)
 	path[0] = xfn[0];
 	RLibrary lib;
 	TInt r=lib.Load(_L("t_start1.dll"), path);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TFileName name;
 	name=lib.FileName();
 	path += _L("t_start1.dll");

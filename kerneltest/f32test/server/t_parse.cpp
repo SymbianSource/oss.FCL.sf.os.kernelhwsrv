@@ -15,7 +15,6 @@
 // 
 //
 
-#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include "t_server.h"
@@ -34,7 +33,7 @@ LOCAL_C void Test1()
 	TBuf<16> defaultPath(_L("C:\\"));
 	TParse parser;
 	TInt r=parser.Set(_L("\\WWW\\XXX\\YYY\\ZZZ\\AAA"),&relatedFiles,&defaultPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("C:\\WWW\\XXX\\YYY\\ZZZ\\AAA.CCC"));
 	test(parser.Drive()==_L("C:"));
 	test(parser.Path()==_L("\\WWW\\XXX\\YYY\\ZZZ\\"));
@@ -52,7 +51,7 @@ LOCAL_C void Test1()
 	test(parser.IsNameWild()==EFalse);
 	test(parser.IsExtWild()==EFalse);
 	r=parser.SetNoWild(_L("\\WWW\\XXX\\YYY\\ZZZ\\AAA.EXT"),&relatedFiles,&defaultPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.PopDir()==KErrNone);
 	test(parser.AddDir(_L("BBB"))==KErrNone);
 	test.End();
@@ -68,21 +67,21 @@ LOCAL_C void Test2()
 	TParse parser;
 	TInt r=parser.Set(_L("\\WWW\\XXX\\YYY\\ZZZ\\"),NULL,NULL);
 //	TParsePtrC parser(_L("\\WWW\\XXX\\YYY\\ZZZ\\"));
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=parser.PopDir();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.Path()==_L("\\WWW\\XXX\\YYY\\"));
 	r=parser.PopDir();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.Path()==_L("\\WWW\\XXX\\"));
 	r=parser.PopDir();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.Path()==_L("\\WWW\\"));
 	r=parser.PopDir();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.Path()==_L("\\"));
 	r=parser.PopDir();
-	test_Value(r, r == KErrGeneral);
+	test(r==KErrGeneral);
 //
 	test(parser.Set(_L("C:\\Documents\\.TXT"),NULL,NULL)==KErrNone);
 	test(parser.PopDir()==KErrNone);
@@ -104,31 +103,31 @@ LOCAL_C void Test3()
     TPtrC x2=_L("X:\\");
     TPtrC z=_L("Z:");
 	TInt r=parser.Set(_L("Z:\\Hello"),&one,&null);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("Z:\\Hello"));
     TPtrC sht=_L("*.SHT");
     r=parser.Set(_L("Z:"),&sht,&x);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("Z:*.SHT"));
 	r=parser.Set(_L("Hello"),&z,&x2);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("Z:\\Hello"));
 	r=parser.Set(_L("W:\\Hello"),&z,&x2);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("W:\\Hello"));
     TPtrC abcdefg=_L("abcdefg");
     TPtrC onetwo=_L("X:\\ONE\\TWO\\.CCC");
 	r=parser.Set(_L("W:"),&abcdefg,&onetwo);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("W:\\ONE\\TWO\\abcdefg.CCC"));
     TPtrC y=_L("Y:");
     TPtrC xhello=_L("X:\\HELLO\\");
     r=parser.Set(_L("World"),&y,&xhello);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("Y:\\HELLO\\World"));
     TPtrC xhelloext=_L("X:\\HELLO\\.EXT");
     r=parser.Set(_L("World"),&y,&xhelloext);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("Y:\\HELLO\\World.EXT"));
 	test.End();
 	}
@@ -144,24 +143,24 @@ LOCAL_C void Test4()
     TPtrC xone=_L("X:\\ONE\\");
     TPtrC y=_L("Y:\\");
 	TInt r=parser.Set(_L("Z:\\Hello"),&xone,&y);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("Z:\\Hello"));
     TPtrC zone=_L("Z:\\ONE\\");
     TPtrC xnew=_L("X:\\NEW\\");
     r=parser.Set(_L("\\Hello"),&zone,&xnew);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("Z:\\Hello"));
     TPtrC aone=_L("A:\\ONE\\");
     TPtrC anew=_L("A:\\NEW\\");
     r=parser.Set(_L("A:Hello"),&aone,&anew);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("A:\\ONE\\Hello"));
     TPtrC a=_L("A:\\");
     r=parser.Set(_L("Hello"),&a,&xnew);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("A:\\Hello"));
 	r=parser.Set(_L("Hello"),&aone,&xnew);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("A:\\ONE\\Hello"));
 	test.End();
 	}
@@ -176,9 +175,9 @@ LOCAL_C void Test5()
 	test.Start(_L("Test errors returned by illegal paths"));
 	TParse parser;
 	TInt r=parser.Set(_L("FOO\\"),NULL,NULL);
-	test_Value(r, r == KErrBadName);
+	test(r==KErrBadName);
 	r=parser.Set(_L("C:\\FOO\\\\"),NULL,NULL);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test.End();
 	}
 
@@ -304,67 +303,67 @@ LOCAL_C void Test9()
 	TBuf<16> pathBuf=_L("\\PATH\\");
 	
 	TInt r=parser.Set(pathBuf,NULL,&nameBuf);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("\\PATH\\   name.txt"));
 	r=parser.Set(_L(""),&nameBuf,&pathBuf);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("\\PATH\\   name.txt"));
 	r=parser.Set(_L("   name.txt"),NULL,&pathBuf);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("\\PATH\\   name.txt"));
 	r=parser.Set(nameBuf,&pathBuf,NULL);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("\\PATH\\   name.txt"));
 	
 	TBuf<16> badPath=_L("   \\PATH\\");
 	r=parser.Set(_L("C:\\"),NULL,&badPath);
-	test_Value(r, r == KErrBadName);
+	test(r==KErrBadName);
 	r=parser.Set(_L("C:\\"),&badPath,NULL);
-	test_Value(r, r == KErrBadName);
+	test(r==KErrBadName);
 
 	TBuf<16> spacePath=_L("\\  PATH\\");
 	r=parser.Set(_L("C:"),&nameBuf,&spacePath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("C:\\  PATH\\   name.txt"));
 
 	TBuf<32> spacename=_L("\\  name   .   txt  ");
 	r=parser.Set(_L("C:"),&spacename,NULL);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("C:\\  name   .   txt"));
 
 // Illegal (?) values
 
 	TBuf<16> pureSpace=_L("     ");
 	r=parser.Set(_L("C:\\NAME\\"),NULL,&pureSpace);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("C:\\NAME\\")); // Trims right off name
 	r=parser.Set(_L("C:\\NAME\\   "),NULL,NULL);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("C:\\NAME\\"));
 
 	TBuf<16> spacePlusExt=_L("    .   ext  ");
 	r=parser.Set(_L("C:\\NAME\\"),NULL,&spacePlusExt);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("C:\\NAME\\    .   ext")); // Trims right off ext
 	r=parser.Set(_L("C:\\NAME\\    .   ext   "),NULL,NULL);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("C:\\NAME\\    .   ext"));
 
 	TBuf<32> pathSpace=_L("\\asdf\\zxcv\\   \\asdf\\");
 	r=parser.Set(_L("C:"),NULL,&pathSpace);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("C:\\asdf\\zxcv\\   \\asdf\\")); // Leaves spaces in path
 	r=parser.Set(_L("C:\\NAME\\ \\alt.sdf"),NULL,NULL);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("C:\\NAME\\ \\alt.sdf"));
 
 
 	TBuf<32> zeroPath=_L("\\asdf\\wqer\\\\asdf\\");
 	r=parser.Set(_L("NAME.TXT"),NULL,&zeroPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("\\asdf\\wqer\\\\asdf\\NAME.TXT")); // Leaves zerolength path
 	r=parser.Set(_L("C:\\NAME\\\\alt.sdf"),NULL,NULL);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parser.FullName()==_L("C:\\NAME\\\\alt.sdf"));
 	test.End();
 	}
@@ -384,10 +383,10 @@ LOCAL_C void Test10()
 
 	RFs fs;
 	TInt r=fs.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TParse parse;
 	r=fs.Parse(testPath,parse);
-	test_Value(r, r == KErrBadName);
+	test(r==KErrBadName);
 	fs.Close();
 
 	TFileName longFileName;
@@ -397,21 +396,21 @@ LOCAL_C void Test10()
 	longFileName[0]='\\';
 	longFileName[253]='\\';
 	r=parse.Set(longFileName,&test_string,NULL);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=parse.PopDir();
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	longFileName[123]='\\';
 	r=parse.Set(longFileName,&test_string,NULL);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=parse.PopDir();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TPtrC startPath((TText*)longFileName.Ptr(),124);
 	test(parse.Path()==startPath);
 
 	TPtrC endPath((TText*)longFileName.Ptr()+124,252-124+1);
 	r=parse.AddDir(endPath);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	test(parse.Path()==longFileName);
 	}
 

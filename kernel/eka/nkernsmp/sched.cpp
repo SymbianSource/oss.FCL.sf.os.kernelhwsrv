@@ -26,42 +26,16 @@
 
 TSpinLock	NEventHandler::TiedLock(TSpinLock::EOrderEventHandlerTied);
 
-
-const TUint8 KClassFromPriority[KNumPriorities] =
-	{
-	0,	0,	0,	0,	0,	0,	0,	0,				// priorities 0-7
-	0,	0,	0,	0,	1,	1,	1,	1,				// priorities 8-15
-	2,	2,	2,	2,	2,	2,	2,	2,				// priorities 16-23
-	2,	2,	2,	3,	3,	3,	3,	3,				// priorities 24-31
-	3,	3,	3,	3,	3,	3,	3,	3,				// priorities 32-39
-	3,	3,	3,	3,	3,	3,	3,	3,				// priorities 40-47
-	3,	3,	3,	3,	3,	3,	3,	3,				// priorities 48-55
-	3,	3,	3,	3,	3,	3,	3,	3				// priorities 56-63
-	};
-
-
 /******************************************************************************
  * TScheduler
  ******************************************************************************/
 
 // TScheduler resides in .bss so other fields are zero-initialised
 TScheduler::TScheduler()
-	:	iThreadAcceptCpus(1),	// only boot CPU for now
-		iIpiAcceptCpus(1),		// only boot CPU for now
-		iGenIPILock(TSpinLock::EOrderGenericIPIList),
-		iIdleBalanceLock(TSpinLock::EOrderEnumerate),
+	:	iActiveCpus1(1),	// only boot CPU for now
+		iActiveCpus2(1),	// only boot CPU for now
 		iIdleSpinLock(TSpinLock::EOrderIdleDFCList),
-		iCpusNotIdle(1),	// only boot CPU for now
-		iEnumerateLock(TSpinLock::EOrderEnumerate),
-		iBalanceListLock(TSpinLock::EOrderReadyList),
-		iBalanceTimer(&BalanceTimerExpired, this, 1),
-		iCCSyncIDFC(&CCSyncDone, 0),
-		iCCReactivateDfc(&CCReactivateDfcFn, this, 3),
-		iCCRequestLevel(1),		// only boot CPU for now
-		iCCRequestDfc(&CCRequestDfcFn, this, 2),
-		iCCPowerDownDfc(&CCIndirectPowerDown, this, 0),
-		iCCIpiReactIDFC(&CCIpiReactivateFn, this),
-		iFreqChgDfc(&DoFrequencyChanged, this, 6)
+		iCpusNotIdle(1)		// only boot CPU for now
 	{
 	TInt i;
 	for (i=0; i<KMaxCpus; ++i)
@@ -71,10 +45,7 @@ TScheduler::TScheduler()
 		s->iScheduler = this;
 		s->iCpuNum = TUint32(i);
 		s->iCpuMask = 1u<<i;
-		s->iLbCounter = TUint8(NSchedulable::ELbState_PerCpu + i);
 		}
-	iLbCounter = (TUint8)NSchedulable::ELbState_Global;
-	iNeedBal = 1;	// stop anyone trying to kick rebalancer before it has been created
 	}
 
 
@@ -96,75 +67,18 @@ EXPORT_C TScheduler* TScheduler::Ptr()
 
 // TSubScheduler resides in .bss so other fields are zero-initialised
 TSubScheduler::TSubScheduler()
-	:	iExIDfcLock(TSpinLock::EOrderExIDfcQ),
+	:	TPriListBase(KNumPriorities),
+		iExIDfcLock(TSpinLock::EOrderExIDfcQ),
 		iReadyListLock(TSpinLock::EOrderReadyList),
 		iKernLockCount(1),
 		iEventHandlerLock(TSpinLock::EOrderEventHandlerList)
 	{
 	}
 
-void TSubScheduler::SSAddEntry(NSchedulable* aEntry)
-	{
-	if (aEntry->iParent!=aEntry || !((NThreadBase*)aEntry)->i_NThread_Initial)
-		{
-		TInt c = KClassFromPriority[aEntry->iPriority];
-		++iPriClassThreadCount[c];
-		++iRdyThreadCount;
-		}
-	iSSList.Add(aEntry);
-	}
-
-void TSubScheduler::SSAddEntryHead(NSchedulable* aEntry)
-	{
-	if (aEntry->iParent!=aEntry || !((NThreadBase*)aEntry)->i_NThread_Initial)
-		{
-		TInt c = KClassFromPriority[aEntry->iPriority];
-		++iPriClassThreadCount[c];
-		++iRdyThreadCount;
-		}
-	iSSList.AddHead(aEntry);
-	}
-
-void TSubScheduler::SSRemoveEntry(NSchedulable* aEntry)
-	{
-	if (aEntry->iParent!=aEntry || !((NThreadBase*)aEntry)->i_NThread_Initial)
-		{
-		TInt c = KClassFromPriority[aEntry->iPriority];
-		--iPriClassThreadCount[c];
-		--iRdyThreadCount;
-		}
-	iSSList.Remove(aEntry);
-	}
-
-void TSubScheduler::SSChgEntryP(NSchedulable* aEntry, TInt aNewPriority)
-	{
-	if (aEntry->iParent!=aEntry || !((NThreadBase*)aEntry)->i_NThread_Initial)
-		{
-		TInt c0 = KClassFromPriority[aEntry->iPriority];
-		TInt c1 = KClassFromPriority[aNewPriority];
-		if (c0 != c1)
-			{
-			--iPriClassThreadCount[c0];
-			++iPriClassThreadCount[c1];
-			}
-		}
-	iSSList.ChangePriority(aEntry, aNewPriority);
-	}
-
 
 /******************************************************************************
  * NSchedulable
  ******************************************************************************/
-TUint32 NSchedulable::PreprocessCpuAffinity(TUint32 aAffinity)
-	{
-	if (!(aAffinity & NTHREADBASE_CPU_AFFINITY_MASK))
-		return aAffinity;
-	TUint32 x = aAffinity & ~NTHREADBASE_CPU_AFFINITY_MASK;
-	if (x & (x-1))
-		return aAffinity;
-	return __e32_find_ls1_32(x);
-	}
-
 void NSchedulable::AcqSLock()
 	{
 	iSSpinLock.LockOnly();
@@ -343,87 +257,6 @@ void NSchedulable::DetachTiedEvents()
 		}
 	}
 
-
-/** Return the total CPU time so far used by the specified thread.
-
-	@return The total CPU time in units of 1/NKern::CpuTimeMeasFreq().
-*/
-EXPORT_C TUint64 NKern::ThreadCpuTime(NThread* aThread)
-	{
-	NSchedulable::SCpuStats stats;
-	NKern::Lock();
-	aThread->GetCpuStats(NSchedulable::E_RunTime, stats);
-	NKern::Unlock();
-	return stats.iRunTime;
-	}
-
-void NSchedulable::GetCpuStats(TUint aMask, NSchedulable::SCpuStats& aOut)
-	{
-	AcqSLock();
-	GetCpuStatsT(aMask, aOut);
-	RelSLock();
-	}
-
-void NSchedulable::GetCpuStatsT(TUint aMask, NSchedulable::SCpuStats& aOut)
-	{
-	TSubScheduler* ss = 0;
-	NThread* t = 0;
-	TBool initial = FALSE;
-	if (!IsGroup())
-		t = (NThread*)this;
-	if (t && t->i_NThread_Initial)
-		ss = &TheSubSchedulers[iLastCpu], initial = TRUE;
-	else if (iReady)
-		{
-		if (IsGroup())
-			ss = &TheSubSchedulers[iReady & NSchedulable::EReadyCpuMask];
-		else if (iParent->iReady)
-			ss = &TheSubSchedulers[iParent->iReady & NSchedulable::EReadyCpuMask];
-		}
-	if (ss)
-		ss->iReadyListLock.LockOnly();
-	TUint64 now = NKern::Timestamp();
-	if (aMask & (E_RunTime|E_RunTimeDelta))
-		{
-		aOut.iRunTime = iTotalCpuTime.i64;
-		if (iCurrent || (initial && !ss->iCurrentThread))
-			aOut.iRunTime += (now - ss->iLastTimestamp.i64);
-		if (aMask & E_RunTimeDelta)
-			{
-			aOut.iRunTimeDelta = aOut.iRunTime - iSavedCpuTime.i64;
-			iSavedCpuTime.i64 = aOut.iRunTime;
-			}
-		}
-	if (aMask & (E_ActiveTime|E_ActiveTimeDelta))
-		{
-		aOut.iActiveTime = iTotalActiveTime.i64;
-		if (iActiveState)
-			aOut.iActiveTime += (now - iLastActivationTime.i64);
-		if (aMask & E_ActiveTimeDelta)
-			{
-			aOut.iActiveTimeDelta = aOut.iActiveTime - iSavedActiveTime.i64;
-			iSavedActiveTime.i64 = aOut.iActiveTime;
-			}
-		}
-	if (aMask & E_LastRunTime)
-		{
-		if (iCurrent)
-			aOut.iLastRunTime = 0;
-		else
-			aOut.iLastRunTime = now - iLastRunTime.i64;
-		}
-	if (aMask & E_LastActiveTime)
-		{
-		if (iActiveState)
-			aOut.iLastActiveTime = 0;
-		else
-			aOut.iLastActiveTime = now - iLastRunTime.i64;
-		}
-	if (ss)
-		ss->iReadyListLock.UnlockOnly();
-	}
-
-
 /******************************************************************************
  * NThreadGroup
  ******************************************************************************/
@@ -448,22 +281,12 @@ void NSchedulable::ReadyT(TUint aMode)
 	CHECK_PRECONDITIONS(MASK_KERNEL_LOCKED|MASK_NOT_ISR,"NSchedulable::ReadyT");
 	__KTRACE_OPT(KNKERN,DEBUGPRINT("%T nReadyT(%x)",this,aMode));
 	NThreadBase* t = (NThreadBase*)this;
-	if (iParent && !iActiveState)
-		{
-		iActiveState=1;
-		iLastActivationTime.i64 = NKern::Timestamp();
-		if (iParent!=this && ++iParent->iActiveState==1)
-			iParent->iLastActivationTime.i64 = iLastActivationTime.i64;
-		}
 #ifdef _DEBUG
 	if (!iParent)
 		t = (NThreadBase*)0xface0fff;
 #endif
-	__NK_ASSERT_DEBUG(!iReady && (!iParent || (!t->iWaitState.iWtC.iWtStFlags && !t->iSuspended)));
+	__NK_ASSERT_DEBUG(!iReady && (!iParent || (!t->iWaitState.iWtC.iWtStFlags && !t->iPauseCount && !t->iSuspended)));
 	TSubScheduler& ss0 = SubScheduler();
-	TScheduler& s = TheScheduler;
-	TBool reactivate = FALSE;
-	TBool no_ipi = FALSE;
 	NSchedulable* g = this;
 	if (iParent != this && iParent)
 		{
@@ -478,9 +301,7 @@ void NSchedulable::ReadyT(TUint aMode)
 			ss.iReadyListLock.LockOnly();
 			TInt hp = ss.HighestPriority();
 			if (iPriority>gp)
-				{
-				ss.SSChgEntryP(tg, iPriority);
-				}
+				ss.ChangePriority(tg, iPriority);
 			if (iPriority>hp || (iPriority==hp && ss.iCurrentThread && ss.iCurrentThread->iTime==0))
 				{
 				if (&ss == &ss0)
@@ -488,178 +309,84 @@ void NSchedulable::ReadyT(TUint aMode)
 				else
 					ss0.iReschedIPIs |= ss.iCpuMask;	// will kick the other CPU when this CPU reenables preemption
 				}
-			if ((aMode & ENewTimeslice) && t->iTime==0 && (iNext!=this || ss.EntryAtPriority(iPriority)) )
+			if ((aMode & ENewTimeslice) && t->iTime==0 && (iNext!=this || ss.iQueue[iPriority]))
 				t->iTime = t->iTimeslice;
 			ss.iReadyListLock.UnlockOnly();
-
-			ss0.iMadeReadyCounter++;
 			return;
 			}
 		tg->iNThreadList.Add(this);
 		tg->iPriority = iPriority;	// first in group
 		g = tg;						// fall through to add group to subscheduler
 		}
-	TInt priClass = -1;
 	TInt cpu = -1;
-	TUint32 active = TheScheduler.iThreadAcceptCpus;
-	if (g!=t || !t->i_NThread_Initial)
-		priClass = KClassFromPriority[g->iPriority];
-	if (g->iForcedCpu)
-		{
-		cpu = iForcedCpu & EReadyCpuMask;	// handles core cycling case (No.1 below)
-		if (active & (1u<<cpu))
-			goto cpu_ok;
-		else
-			goto single_cpu_reactivate;
-		}
 	if (aMode & EUnPause)
 		{
 		cpu = (g->iEventState & EThreadCpuMask)>>EThreadCpuShift;
 		if (CheckCpuAgainstAffinity(cpu, g->iCpuAffinity))
 			goto cpu_ok;
-		cpu = -1;
 		}
-	if (g->iFreezeCpu)
+	else if (g->iFreezeCpu)
 		{
 		cpu = g->iLastCpu;
-		goto cpu_ok;
+		if (!CheckCpuAgainstAffinity(cpu, g->iCpuAffinity))
+			g->iCpuChange = TRUE;
 		}
-	if (!(g->iCpuAffinity & NTHREADBASE_CPU_AFFINITY_MASK))
-		{
+	else if (!(g->iCpuAffinity & NTHREADBASE_CPU_AFFINITY_MASK))
 		cpu = g->iCpuAffinity;
-		if (!(active & (1u<<cpu)))
-			goto single_cpu_reactivate;
-		goto cpu_ok;
-		}
-	if ((aMode & EPreferSameCpu) && CheckCpuAgainstAffinity(ss0.iCpuNum, g->iCpuAffinity, active))
+	else if ((aMode & EPreferSameCpu) && (g->iCpuAffinity & ss0.iCpuMask))
 		cpu = ss0.iCpuNum;
-	else if (iTransientCpu && CheckCpuAgainstAffinity(iTransientCpu & EReadyCpuMask, g->iCpuAffinity))
-		cpu = iTransientCpu & EReadyCpuMask;
-	else if (iPreferredCpu && CheckCpuAgainstAffinity(iPreferredCpu & EReadyCpuMask, g->iCpuAffinity, active))
-		cpu = iPreferredCpu & EReadyCpuMask;
 	if (cpu < 0)
 		{
 		// pick a cpu
-		TUint32 m = g->iCpuAffinity & active;
-		TInt lastCpu = g->iLastCpu;
-		TInt i = lastCpu;
-		TInt lcp = KMaxTInt;
-		TInt lco = KMaxTInt;
-		TInt cpunp = -1;
-		TInt idle_cpu = -1;
-		do	{
-			if (m & (1u<<i))
+		TScheduler& s = TheScheduler;
+		TUint32 m = g->iCpuAffinity & s.iActiveCpus1;
+		TInt i;
+		TInt lowest_p = KMaxTInt;
+		for (i=0; i<s.iNumCpus; ++i)
+			{
+			TSubScheduler& ss = *s.iSub[i];
+			if (!(m & ss.iCpuMask))
+				continue;
+			TInt hp = ss.HighestPriority();
+			if (hp < lowest_p)
 				{
-				TSubScheduler& ss = *s.iSub[i];
-				TInt nInC = ss.iPriClassThreadCount[priClass];
-				if (nInC < lco)
-					lco=nInC, cpunp=i;
-				TInt hp = ss.HighestPriority();
-				if (idle_cpu<0 && hp<=0)
-					idle_cpu = i;
-				if (hp < iPriority)
-					{
-					if (i == lastCpu)
-						{
-						cpu = i;
-						if (hp <= 0)
-							break;
-						lcp = -1;
-						}
-					if (nInC < lcp)
-						lcp=nInC, cpu=i;
-					}
+				lowest_p = hp;
+				cpu = i;
+				continue;
 				}
-			if (++i == s.iNumCpus)
-				i = 0;
-			} while (i != lastCpu);
-		if (idle_cpu>=0 && cpu!=idle_cpu)
-			cpu = idle_cpu;
-		else if (cpu<0)
-			cpu = cpunp;
-		}
-	if (cpu<0)
-		{
-single_cpu_reactivate:
-		/*	CORE_CONTROL
-			Might have no CPU at this point due to all CPUs specified by
-			iCpuAffinity being off or in the process of shutting down.
-			There are three possibilities:
-			1.	This thread is 'core cycling'. In that case it will be
-				allowed to move to a 'shutting down' CPU. The CPU will
-				not be permitted to shut down entirely until all core cycling
-				has completed. This is already handled above.
-			2.	There are one or more CPUs which this thread could run on which
-				are shutting down. In that case, pick one, abort the shutdown
-				process and put this thread on it.
-			3.	All CPUs which this thread can run on are off. In that case,
-				assign the thread to one of them and initiate power up of that core.
-		*/
-		TUint32 affm = AffinityToMask(g->iCpuAffinity);
-		TInt irq = s.iGenIPILock.LockIrqSave();
-		if (cpu < 0)
-			{
-			if (affm & s.iCCReactivateCpus)
-				cpu = __e32_find_ls1_32(affm & s.iCCReactivateCpus);
-			else if (affm & s.iIpiAcceptCpus)
-				cpu = __e32_find_ls1_32(affm & s.iIpiAcceptCpus);
-			else
-				cpu = __e32_find_ls1_32(affm), no_ipi = TRUE;
+			if (hp > lowest_p)
+				continue;
+			if (cpu>=0 && g->iLastCpu!=i)
+				continue;
+			lowest_p = hp;
+			cpu = i;
 			}
-		TUint32 cm = 1u<<cpu;
-		if (!((s.iCCReactivateCpus|s.iThreadAcceptCpus) & cm))
-			{
-			s.iCCReactivateCpus |= (1u<<cpu);
-			reactivate = TRUE;
-			}
-		s.iGenIPILock.UnlockIrqRestore(irq);
 		}
 cpu_ok:
 	__NK_ASSERT_ALWAYS(cpu>=0);
-	if (g->iFreezeCpu && !CheckCpuAgainstAffinity(cpu, g->iCpuAffinity))
-		g->iCpuChange = TRUE;
 	if (g->TiedEventReadyInterlock(cpu))
 		{
 		__KTRACE_OPT(KSCHED2,DEBUGPRINT("ReadyT->CPU %dD",cpu));
 		++g->iPauseCount;
+//		((TDfc*)g->i_IDfcMem)->Add();
+		return;
 		}
-	else
+	__KTRACE_OPT(KSCHED2,DEBUGPRINT("ReadyT->CPU %d",cpu));
+	TSubScheduler& ss = TheSubSchedulers[cpu];
+	ss.iReadyListLock.LockOnly();
+	TInt hp = ss.HighestPriority();
+	if (g->iPriority>hp || (g->iPriority==hp && ss.iCurrentThread && ss.iCurrentThread->iTime==0))
 		{
-		__KTRACE_OPT(KSCHED2,DEBUGPRINT("ReadyT->CPU %d",cpu));
-		TSubScheduler& ss = TheSubSchedulers[cpu];
-		ss.iReadyListLock.LockOnly();
-		TInt hp = ss.HighestPriority();
-		if (g->iPriority>hp || (g->iPriority==hp && ss.iCurrentThread && ss.iCurrentThread->iTime==0))
-			{
-			if (&ss == &ss0)
-				RescheduleNeeded();					// reschedule on this processor
-			else if (!no_ipi)
-				ss0.iReschedIPIs |= ss.iCpuMask;	// will kick the other CPU when this CPU reenables preemption
-			}
-		ss.SSAddEntry(g);
-		g->iReady = TUint8(cpu | EReadyOffset);
-		if ((aMode & ENewTimeslice) && iParent && t->iTime==0 && g->iNext!=g)
-			t->iTime = t->iTimeslice;
-		if (!g->iLbLink.iNext && !(g->iParent && t->i_NThread_Initial))
-			{
-			ss.iLbQ.Add(&g->iLbLink);
-			g->iLbState = ss.iLbCounter;
-			if (!s.iNeedBal && (!g->iParent || !(t->iRebalanceAttr & 1)))
-				{
-				s.iNeedBal = 1;
-				reactivate = TRUE;
-				}
-			}
-		if (g->iForcedCpu == g->iReady)
-			{
-			g->iLastCpu = (TUint8)cpu;
-			g->iForcedCpu = 0;	// iForcedCpu has done its job - iFreezeCpu will keep the thread on the right CPU
-			}
-		ss.iReadyListLock.UnlockOnly();
-		ss0.iMadeReadyCounter++;
+		if (&ss == &ss0)
+			RescheduleNeeded();					// reschedule on this processor
+		else
+			ss0.iReschedIPIs |= ss.iCpuMask;	// will kick the other CPU when this CPU reenables preemption
 		}
-	if (reactivate)
-		s.iCCReactivateDfc.Add();
+	ss.Add(g);
+	g->iReady = TUint8(cpu | EReadyOffset);
+	if ((aMode & ENewTimeslice) && iParent && t->iTime==0 && g->iNext!=g)
+		t->iTime = t->iTimeslice;
+	ss.iReadyListLock.UnlockOnly();
 	}
 
 
@@ -693,7 +420,6 @@ NThread* TSubScheduler::SelectNextThread()
 		if (ot->iTime==0 || pfmd)
 			{
 			// ot's timeslice has expired
-			ot->iParent->iTransientCpu = 0;
 			fmd_res = ot->CheckFastMutexDefer();
 			fmd_done = TRUE;
 			if (fmd_res)
@@ -722,21 +448,12 @@ NThread* TSubScheduler::SelectNextThread()
 		TInt wtst = ot->iWaitState.DoWait();
 		if (wtst>=0 && wtst!=NThread::EWaitFastMutex)
 			ot->iTime = ot->iTimeslice;
-		if (wtst==KErrDied || ot->iSuspended || (!(ot->iWaitState.iWtC.iWtStFlags & NThreadWaitState::EWtStObstructed) && wtst>=0) )
-			{
-			ot->iActiveState = 0;
-			ot->iParent->iTransientCpu = 0;
-			if (ot->iParent != ot)
-				--ot->iParent->iActiveState;
-			}
 		ot->UnReadyT();
 		if (ot->iNewParent)
 			{
 			ot->iParent = ot->iNewParent, ++((NThreadGroup*)ot->iParent)->iThreadCount;
 			wmb();	// must make sure iParent is updated before iNewParent is cleared
 			ot->iNewParent = 0;
-			if (ot->iActiveState && ++ot->iParent->iActiveState==1)
-				ot->iParent->iLastActivationTime.i64 = NKern::Timestamp();
 			}
 		ot->iCpuChange = FALSE;
 		}
@@ -750,53 +467,41 @@ NThread* TSubScheduler::SelectNextThread()
 		++((NThreadGroup*)ot->iParent)->iThreadCount;
 		wmb();	// must make sure iParent is updated before iNewParent is cleared
 		ot->iNewParent = 0;
-		TUint64 now = NKern::Timestamp();
-		if (!ot->iParent->iCurrent)
-			ot->iParent->iLastStartTime.i64 = now;
-		if (++ot->iParent->iActiveState==1)
-			ot->iParent->iLastActivationTime.i64 = now;
 		}
-	else if (ot->iParent->iCpuChange)
+	else if (ot->iParent->iCpuChange && !ot->iParent->iFreezeCpu)
 		{
-		if (ot->iForcedCpu)
-			migrate = TRUE;
-		else if (!ot->iParent->iFreezeCpu)
+		if (!CheckCpuAgainstAffinity(iCpuNum, ot->iParent->iCpuAffinity))
 			{
-			if (ot->iParent->ShouldMigrate(iCpuNum))
+			if (ot->iParent==ot)
 				{
-				if (ot->iParent==ot)
+				if (!fmd_done)
+					fmd_res = ot->CheckFastMutexDefer(), fmd_done = TRUE;
+				if (!fmd_res)
 					{
-					if (!fmd_done)
-						fmd_res = ot->CheckFastMutexDefer(), fmd_done = TRUE;
-					if (!fmd_res)
-						migrate = TRUE;
+					__KTRACE_OPT(KSCHED2,DEBUGPRINT("Rschd<-%T A:%08x",ot,ot->iParent->iCpuAffinity));
+					ot->UnReadyT();
+					migrate = TRUE;
+					ot->iCpuChange = FALSE;
 					}
-				else
-					gmigrate = TRUE;
 				}
 			else
 				{
+				__KTRACE_OPT(KSCHED2,DEBUGPRINT("Rschd<-%T GA:%08x",ot,ot->iParent->iCpuAffinity));
+				Remove(ot->iParent);
+				ot->iParent->iReady = 0;
+				gmigrate = TRUE;
 				ot->iCpuChange = FALSE;
 				ot->iParent->iCpuChange = FALSE;
 				}
 			}
-		if (migrate)
+		else
 			{
-			__KTRACE_OPT(KSCHED2,DEBUGPRINT("Rschd<-%T A:%08x",ot,ot->iParent->iCpuAffinity));
-			ot->UnReadyT();
-			ot->iCpuChange = FALSE;
-			}
-		else if (gmigrate)
-			{
-			__KTRACE_OPT(KSCHED2,DEBUGPRINT("Rschd<-%T GA:%08x",ot,ot->iParent->iCpuAffinity));
-			SSRemoveEntry(ot->iParent);
-			ot->iParent->iReady = 0;
 			ot->iCpuChange = FALSE;
 			ot->iParent->iCpuChange = FALSE;
 			}
 		}
 no_ot:
-	NSchedulable* g = (NSchedulable*)iSSList.First();
+	NSchedulable* g = (NSchedulable*)First();
 	TBool rrcg = FALSE;
 	if (g && g->IsGroup())
 		{
@@ -810,20 +515,17 @@ no_ot:
 	if (t && t->iTime==0 && (rrcg || rrct))
 		{
 		// candidate thread's timeslice has expired and there is another at the same priority
-
-		iTimeSliceExpireCounter++; // update metric
-		
 		if (t==ot)
 			{
 			if (ot->iParent!=ot)
 				{
 				((NThreadGroup*)ot->iParent)->iNThreadList.iQueue[ot->iPriority] = ot->iNext;
-				iSSList.iQueue[ot->iParent->iPriority] = ot->iParent->iNext;
+				iQueue[ot->iParent->iPriority] = ot->iParent->iNext;
 				}
 			else
-				iSSList.iQueue[ot->iPriority] = ot->iNext;
+				iQueue[ot->iPriority] = ot->iNext;
 			ot->iTime = ot->iTimeslice;
-			NSchedulable* g2 = (NSchedulable*)iSSList.First();
+			NSchedulable* g2 = (NSchedulable*)First();
 			if (g2->IsGroup())
 				t = (NThread*)((NThreadGroup*)g2)->iNThreadList.First();
 			else
@@ -838,6 +540,14 @@ no_ot:
 				{
 				__KTRACE_OPT(KSCHED2,DEBUGPRINT("Rschd<-%T RR",ot));
 				}
+/*			if (ot->iCpuAffinity & NTHREADBASE_CPU_AFFINITY_MASK)
+				{
+				ot->UnReadyT();
+				migrate = TRUE;
+				}
+			else
+				ot->iTime = ot->iTimeslice;
+*/
 			}
 		else	// loop again since we need to lock t before round robining it
 			{
@@ -870,105 +580,17 @@ no_ot:
 		ot->iParent->ReadyT(0);	// new timeslice if it's queued behind another thread at same priority
 	if (ot)
 		{
-		TBool dead = ot->iWaitState.ThreadIsDead();
-		if (dead && ot->iLbLink.iNext)
-			ot->LbUnlink();
 		ot->RelSLock();
 
 		// DFC to signal thread is now dead
-		if (dead && ot->iWaitState.iWtC.iKillDfc && __e32_atomic_tau_ord8(&ot->iACount, 1, 0xff, 0)==1)
-			{
-			ot->RemoveFromEnumerateList();
+		if (ot->iWaitState.ThreadIsDead() && ot->iWaitState.iWtC.iKillDfc)
 			ot->iWaitState.iWtC.iKillDfc->DoEnque();
-			}
-		}
-	if (iCCSyncPending)
-		{
-		iCCSyncPending = 0;
-		iReschedIPIs |= 0x80000000u;		// update iCCSyncCpus when kernel is finally unlocked
 		}
 	__KTRACE_OPT(KSCHED,DEBUGPRINT("Rschd->%T",t));
 	__NK_ASSERT_ALWAYS(!t || t->iParent);	// must be a thread not a group
 	return t;	// could return NULL
 	}
 
-void NSchedulable::LbUnlink()
-	{
-	if (iLbState & ELbState_PerCpu)
-		{
-		TSubScheduler* ss = &TheSubSchedulers[iLbState & ELbState_CpuMask];
-		ss->iReadyListLock.LockOnly();
-		if (iLbState == ss->iLbCounter)
-			{
-			iLbLink.Deque();
-			iLbLink.iNext = 0;
-			iLbState = ELbState_Inactive;
-			}
-		ss->iReadyListLock.UnlockOnly();
-		}
-	else if ((iLbState & ELbState_CpuMask) == ELbState_Global)
-		{
-		TScheduler& s = TheScheduler;
-		s.iBalanceListLock.LockOnly();
-		if (iLbState == s.iLbCounter)
-			{
-			iLbLink.Deque();
-			iLbLink.iNext = 0;
-			iLbState = ELbState_Inactive;
-			}
-		s.iBalanceListLock.UnlockOnly();
-		}
-	if (iLbState != ELbState_Inactive)
-		{
-		// load balancer is running so we can't dequeue the thread
-		iLbState |= ELbState_ExtraRef;				// indicates extra ref has been taken
-		__e32_atomic_tau_ord8(&iACount, 1, 1, 0);	// extra ref will be removed by load balancer
-		}
-	}
-
-TBool NSchedulable::TakeRef()
-	{
-	return __e32_atomic_tau_ord8(&iACount, 1, 1, 0);
-	}
-
-TBool NSchedulable::DropRef()
-	{
-	if (__e32_atomic_tau_ord8(&iACount, 1, 0xff, 0)!=1)
-		return EFalse;
-	TDfc* d = 0;
-	AcqSLock();
-	if (iParent)
-		{
-		// it's a thread
-		NThreadBase* t = (NThreadBase*)this;
-		if (t->iWaitState.ThreadIsDead() && t->iWaitState.iWtC.iKillDfc)
-			d = t->iWaitState.iWtC.iKillDfc;
-		RelSLock();
-		t->RemoveFromEnumerateList();
-		}
-	else
-		{
-		NThreadGroup* g = (NThreadGroup*)this;
-		d = g->iDestructionDfc;
-		RelSLock();
-		g->RemoveFromEnumerateList();
-		}
-	if (d)
-		d->DoEnque();
-	return ETrue;
-	}
-
-void NSchedulable::RemoveFromEnumerateList()
-	{
-	TScheduler& s = TheScheduler;
-	s.iEnumerateLock.LockOnly();
-	if (iEnumerateLink.Next())
-		{
-		iEnumerateLink.Deque();
-		iEnumerateLink.SetNext(0);
-		}
-	s.iEnumerateLock.UnlockOnly();
-	}
 
 void NThreadBase::UnReadyT()
 	{
@@ -982,25 +604,24 @@ void NThreadBase::UnReadyT()
 			TSubScheduler& ss = TheSubSchedulers[g.iReady & EReadyCpuMask];
 			if (l.IsEmpty())
 				{
-				ss.SSRemoveEntry(&g);
+//				__KTRACE_OPT(KNKERN,DEBUGPRINT("%T UnReadyT (G=%G-)",this,&g));
+				ss.Remove(&g);
 				g.iReady = 0;
 				g.iPriority = 0;
 				}
 			else
 				{
-				TInt np = l.HighestPriority();
-				ss.SSChgEntryP(&g, np);
+//				__KTRACE_OPT(KNKERN,DEBUGPRINT("%T UnReadyT (G=%G)",this,&g));
+				ss.ChangePriority(&g, l.HighestPriority());
 				}
 			}
 		}
 	else
 		{
-		TSubScheduler& ss = TheSubSchedulers[iReady & EReadyCpuMask];
-		ss.SSRemoveEntry(this);
+//		__KTRACE_OPT(KNKERN,DEBUGPRINT("%T UnReadyT",this));
+		TheSubSchedulers[iReady & EReadyCpuMask].Remove(this);
 		}
 	iReady = 0;
-
-	SubScheduler().iMadeUnReadyCounter++;
 	}
 
 
@@ -1025,11 +646,11 @@ void NThreadBase::ChangeReadyThreadPriority()
 			{
 			TInt ngp = tg->iNThreadList.HighestPriority();
 			if (ngp!=tg->iPriority)
-				ss->SSChgEntryP(tg, ngp);
+				ss->ChangePriority(tg, ngp);
 			}
 		}
 	else
-		ss->SSChgEntryP(this, newp);
+		ss->ChangePriority(this, newp);
 	if (iCurrent)	// can't be current if parent not ready
 		{
 		TInt nhp = ss->HighestPriority();
@@ -1075,9 +696,9 @@ EXPORT_C void NThreadBase::SetPriority(TInt newp)
 	{
 	CHECK_PRECONDITIONS(MASK_KERNEL_LOCKED|MASK_NOT_IDFC|MASK_NOT_ISR,"NThreadBase::SetPriority");
 	AcqSLock();
-	__KTRACE_OPT(KNKERN,DEBUGPRINT("%T nSetPri(%d) PBNM[%d,%d,%d,%d]",this,newp,iPriority,iBasePri,iNominalPri,iMutexPri));
+	__KTRACE_OPT(KNKERN,DEBUGPRINT("%T nSetPri %d(%d)->%d(%d)",this,iPriority,iBasePri,newp,iMutexPri));
 	iBasePri = TUint8(newp);
-	if (iMutexPri > newp)
+	if (iMutexPri > iBasePri)
 		newp = iMutexPri;
 	TInt oldp = iPriority;
 	if (newp == oldp)
@@ -1138,17 +759,6 @@ EXPORT_C void NThreadBase::SetPriority(TInt newp)
 		}
 	}
 
-void NThreadBase::SetNominalPriority(TInt newp)
-	{
-	CHECK_PRECONDITIONS(MASK_KERNEL_LOCKED|MASK_NOT_IDFC|MASK_NOT_ISR,"NThreadBase::SetNominalPriority");
-	AcqSLock();
-	__KTRACE_OPT(KNKERN,DEBUGPRINT("%T nSetNPr(%d) PBNM[%d,%d,%d,%d]",this,newp,iPriority,iBasePri,iNominalPri,iMutexPri));
-	iNominalPri = TUint8(newp);
-	NominalPriorityChanged();
-	RelSLock();
-	}
-
-
 
 /** Set the inherited priority of a nanokernel thread.
 
@@ -1205,159 +815,9 @@ void NThreadBase::LoseInheritedPriorityT()
 		}
 	if (newp <= ss->HighestPriority())
 		RescheduleNeeded();
-	ss->SSChgEntryP(g, newp);
+	ss->ChangePriority(g, newp);
 out:
 	ss->iReadyListLock.UnlockOnly();
 	}
 
-
-/******************************************************************************
- * Pull threads on idle
- ******************************************************************************/
-
-const TInt KMaxTries = 4;
-
-struct SIdlePullThread
-	{
-	SIdlePullThread();
-	void Finish(TBool aDone);
-
-	NSchedulable*	iS;
-	TInt			iPri;
-	NSchedulable*	iOld[KMaxCpus];
-	};
-
-SIdlePullThread::SIdlePullThread()
-	{
-	iS = 0;
-	iPri = 0;
-	TInt i;
-	for (i=0; i<KMaxCpus; ++i)
-		iOld[i] = 0;
-	}
-
-void SIdlePullThread::Finish(TBool aComplete)
-	{
-	if (aComplete && iS)
-		{
-		iS->AcqSLock();
-		iS->SetCpuAffinityT(NKern::CurrentCpu() | KCpuAffinityTransient);
-		iS->RelSLock();
-		}
-	if (iS)
-		iS->DropRef();
-	TInt i;
-	for (i=0; i<KMaxCpus; ++i)
-		if (iOld[i])
-			iOld[i]->DropRef();
-	}
-
-void TSubScheduler::IdlePullSearch(SIdlePullThread& a, TSubScheduler* aDest)
-	{
-	NSchedulable* orig = a.iS;
-	TInt dcpu = aDest->iCpuNum;
-	volatile TUint32& flags = *(volatile TUint32*)&aDest->iRescheduleNeededFlag;
-	iReadyListLock.LockOnly();
-	if (iRdyThreadCount>1)	// if there's only 1 it'll be running so leave it alone
-		{
-		TUint64 pres = iSSList.iPresent64;
-		TInt tries = iRdyThreadCount;
-		if (tries > KMaxTries)
-			tries = KMaxTries;
-		NSchedulable* q = 0;
-		NSchedulable* p = 0;
-		TInt pri = -1;
-		for (; tries>0 && !flags; --tries)
-			{
-			if (p)
-				{
-				p = (NSchedulable*)(p->iNext);
-				if (p == q)
-					pri = -1;
-				}
-			if (pri<0)
-				{
-				pri = __e32_find_ms1_64(pres);
-				if (pri < 0)
-					break;
-				pres &= ~(TUint64(1)<<pri);
-				q = (NSchedulable*)iSSList.iQueue[pri];
-				p = q;
-				}
-			NThreadBase* t = 0;
-			if (p->iParent)
-				t = (NThreadBase*)p;
-			if (p->iCurrent)
-				continue;	// running on other CPU so leave it alone
-			if (p->iFreezeCpu)
-				continue;	// can't run on this CPU - frozen to current CPU
-			if (t && t->iCoreCycling)
-				continue;	// currently cycling through cores so leave alone
-			if (t && t->iHeldFastMutex && t->iLinkedObjType==NThreadBase::EWaitNone)
-				continue;	// can't run on this CPU - fast mutex held
-			if (p->iCpuChange)
-				continue;	// already being migrated so leave it alone
-			if (!CheckCpuAgainstAffinity(dcpu, p->iCpuAffinity))
-				continue;	// can't run on this CPU - hard affinity
-			if (p->iPreferredCpu & NSchedulable::EReadyCpuSticky)
-				continue;	// don't want to move it on idle, only on periodic balance
-			if (pri > a.iPri)
-				{
-				if (p->TakeRef())
-					{
-					a.iS = p;
-					a.iPri = pri;
-					break;
-					}
-				}
-			}
-		}
-	iReadyListLock.UnlockOnly();
-	if (orig && orig!=a.iS)
-		a.iOld[iCpuNum] = orig;
-	}
-
-void NKern::Idle()
-	{
-	TScheduler& s = TheScheduler;
-	TSubScheduler& ss0 = SubScheduler();	// OK since idle thread locked to CPU
-	ss0.iCurrentThread->iSavedSP = 0;		// will become nonzero if a reschedule occurs
-	TUint32 m0 = ss0.iCpuMask;
-	volatile TUint32& flags = *(volatile TUint32*)&ss0.iRescheduleNeededFlag;
-	if (s.iThreadAcceptCpus & m0)			// if this CPU is shutting down, don't try to pull threads
-		{
-		SIdlePullThread ipt;
-		NKern::Lock();
-		s.iIdleBalanceLock.LockOnly();
-		TUint32 active = s.iThreadAcceptCpus;
-		TUint32 srchm = active &~ m0;
-		if (srchm && srchm!=active)
-			{
-			TUint32 randomizer = *(volatile TUint32*)&s.iIdleBalanceLock;
-			TInt nact = __e32_bit_count_32(srchm);
-			while (srchm)
-				{
-				TUint32 srchm2 = srchm;
-				if (nact > 1)
-					{
-					randomizer = 69069*randomizer+41;
-					TUint32 lose = randomizer % TUint32(nact);
-					for (; lose; --lose)
-						srchm2 = srchm2 & (srchm2-1);
-					}
-				TInt cpu = __e32_find_ls1_32(srchm2);
-				TSubScheduler* ss = &TheSubSchedulers[cpu];
-				ss->IdlePullSearch(ipt, &ss0);
-				if (flags)
-					break;
-				srchm &= ~(1u<<cpu);
-				--nact;
-				}
-			}
-		s.iIdleBalanceLock.UnlockOnly();
-		ipt.Finish(!srchm);
-		NKern::Unlock();
-		}
-	DoIdle();
-	}
 

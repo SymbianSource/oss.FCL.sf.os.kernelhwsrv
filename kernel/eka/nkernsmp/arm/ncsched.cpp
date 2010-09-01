@@ -19,7 +19,6 @@
 #define __INCLUDE_NTHREADBASE_DEFINES__
 
 #include <arm.h>
-#include <arm_tmr.h>
 
 extern "C" void NewThreadTrace(NThread* a)
 	{
@@ -158,63 +157,5 @@ extern "C" void __DebugMsgNKFMFlash(NFastMutex* a)
 	__ASSERT_WITH_MESSAGE_DEBUG(a->HeldByCurrentThread(),"The calling thread holds the mutex","NKern::FMFlash");
 	}
 
-#endif
-
-#if !defined(__UTT_MACHINE_CODED__)
-void TSubScheduler::UpdateThreadTimes(NThreadBase* aOld, NThreadBase* aNew)
-	{
-	/* If necessary update local timer frequency (DVFS) */
-	SRatioInv* pNCF = iSSX.iNewCpuFreqRI;
-	if (pNCF)
-		{
-		iSSX.iCpuFreqRI = *pNCF;
-		__e32_atomic_store_rel_ptr(&iSSX.iNewCpuFreqRI, 0);
-		}
-	SRatioInv* pNTF = iSSX.iNewTimerFreqRI;
-	if (pNTF)
-		{
-		iSSX.iTimerFreqRI = *pNTF;
-		__e32_atomic_store_rel_ptr(&iSSX.iNewTimerFreqRI, 0);
-		}
-	if (!aOld)
-		aOld = iInitialThread;
-	if (!aNew)
-		aNew = iInitialThread;
-	if (aNew!=aOld || aNew->iTime<=0 || pNTF)
-		{
-		TUint32 tmrval = 0x7fffffffu;
-		if (aNew->iTime > 0)
-			{
-			tmrval = aNew->iTime;	// this will have been computed based on the old timer frequency
-			iSSX.iTimerFreqRI.iR.Mult(tmrval);
-			}
-//		iSSX.iLastTimerSet = tmrval;
-		iSSX.iLocalTimerAddr->iTimerCount = tmrval;
-		}
-	if (aNew!=aOld)
-		{
-		TUint64 now = NKern::Timestamp();
-		TUint64 delta = now - iLastTimestamp.i64;
-		iLastTimestamp.i64 = now;
-		aOld->iLastRunTime.i64 = now;
-		aOld->iTotalCpuTime.i64 += delta;
-		++iReschedCount.i64;
-		++aNew->iRunCount.i64;
-		if (!aOld->iActiveState)
-			aOld->iTotalActiveTime.i64 += (now - aOld->iLastActivationTime.i64);
-		NSchedulable* parent = aOld->iParent;
-		if (parent != aOld)
-			{
-			parent->iLastRunTime.i64 = now;
-			if (!parent->iActiveState)
-				parent->iTotalActiveTime.i64 += (now - parent->iLastActivationTime.i64);
-			if (parent != aNew->iParent)
-				parent->iTotalCpuTime.i64 += (now - parent->iLastStartTime.i64);
-			}
-		NSchedulable* np = aNew->iParent;
-		if (np!=aNew && np!=parent)
-			np->iLastStartTime.i64 = now;
-		}
-	}
 #endif
 

@@ -34,6 +34,7 @@
 #include "sf_func.h"
 #include <f32plugin.h>
 #include "f32trace.h"
+#include <utraceefile.h>
 
 #define __PRINT1TEMP_ALWAYS(t,a) {{TBuf<KMaxFileName>temp(a);RDebug::Print(t,&temp);}}
 #define __PRINT2TEMP_ALWAYS(t,a,b) {{TBuf<KMaxFileName>temp(b);RDebug::Print(t,a,&temp);}}
@@ -243,7 +244,8 @@ private:
 
 enum TFsPanic
 	{
-	ELdrImportedOrdinalDoesNotExist	
+	ELdrImportedOrdinalDoesNotExist,
+	ELdrHeapCorruptionOnRemove
 	};
 //
 enum TFsFault
@@ -451,8 +453,7 @@ enum TFsFault
 	ETraceLddLoadFailure,				//200
 	ETooManyDrivesPerSocket,
 	ENotificationFault,
-	EFsObjectOpen,
-	EContainerHeapCorruptionOnRemove
+	EFsObjectOpen
 	};
 
 
@@ -809,7 +810,7 @@ class CFsPlugin;
 NONSHARABLE_CLASS(CPluginThread) : public CRequestThread
 	{
 public:
-	CPluginThread(CFsPlugin& aPlugin, RLibrary aLibrary);
+	CPluginThread(CFsPlugin& aPlugin);
 	~CPluginThread();
 	
 	void CompleteSessionRequests(CSessionFs* aSession, TInt aValue);
@@ -821,7 +822,7 @@ public:
 	void OperationLockSignal();
 
 private:
-	static CPluginThread* NewL(CFsPlugin& aPlugin, RLibrary aLibrary);
+	static CPluginThread* NewL(CFsPlugin& aPlugin);
 	TUint StartL();
 	virtual TInt DoThreadInitialise();
 private:
@@ -830,7 +831,6 @@ private:
 	/** @prototype */
 	RSemaphore iOperationLock;
 
-	RLibrary iLib;	// contains a handle to the library	which created the plugin
 friend class FsPluginManager;
 	};
 
@@ -1716,6 +1716,7 @@ extern CServerFs* TheFileServer;
 extern HBufC* TheDriveNames[];
 extern TDrive TheDrives[KMaxDrives];
 extern TFileName TheDefaultPath;
+extern RFTrace TheFtrace;
 
 extern SCapabilitySet AllCapabilities;
 extern SCapabilitySet DisabledCapabilities;
@@ -1874,7 +1875,6 @@ private:
 	TInt iFairSchedulingLen;
 	TBool iNotifyAsyncReadersPending;
 	TBool iDeleteOnClose;
-	TDblQue<CFileShare> iShareList;	// A list containing the CFileShare objects associated with the file
 
 protected:
 	TInt iPromotedShares;
@@ -1884,14 +1884,11 @@ protected:
 
     /** 
     maximum file size supported by the filesystem that instantiates the CFileCB, associated with this object.
-    For example, FAT32 supports files not larger than 4GB-1. Other file systems can support larger files.
+    For example, FAT32 supports files not larger than 4GB-1. Other file systems can support larger files. 
     This member allows file server to know maximum allowed position in the file.
     The default value is KMaxTUint64
     */
-    TUint64 iMaxSupportedFileSize;
-    
-    TInt iNonSequentialFileModes;	// Count of clients without the 'Sequential' mode enabled
-	TBool iSequential;				// Indicates whether the file is in 'Sequential' mode
+    TUint64 iMaxSupportedFileSize; 
 
 public:
 	// Provides support for large file size ( file size > 4GB - 1)
@@ -1960,6 +1957,7 @@ class CProxyDriveBody : public CBase
 public:
 	RLibrary iLibrary;
 	};
+
 
 #include "sf_ops.h"
 #include "sf_std.inl"

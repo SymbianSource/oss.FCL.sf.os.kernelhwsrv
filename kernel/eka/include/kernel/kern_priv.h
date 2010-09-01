@@ -35,7 +35,7 @@
 #include <e32const_private.h>
 #include <e32des8_private.h>
 #include <e32event_private.h>
-#include <kernel/heap_hybrid.h>
+
 
 #ifndef __MINIMUM_MACHINE_CODE__
 #ifdef __MARM__
@@ -546,7 +546,6 @@ public:
 	TInt After(TInt aInterval, TTickCallBack aFunction, TRequestStatus& aStatus);
 	TInt At(const TTimeK& aTime, TSecondCallBack aFunction, TRequestStatus& aStatus);
 	TInt AfterHighRes(TInt aInterval, NTimerFn aFunction, TRequestStatus& aStatus);
-	TInt AgainHighRes(TInt aInterval, NTimerFn aFunction, TRequestStatus& aStatus);
 	TInt Inactivity(TInt aSeconds, TInactivityCallBack aFunction, TRequestStatus& aStatus);
 	void Cancel(DThread* aThread);
 	void Abort(DThread* aThread, TInt aTypeMask);
@@ -589,7 +588,6 @@ public:
 	TInt At(TRequestStatus& aStatus, const TTimeK& aTime);
 	TInt Lock(TRequestStatus& aStatus, TTimerLockSpec aLock);
 	void HighRes(TRequestStatus& aStatus, TInt aInterval);
-	void AgainHighRes(TRequestStatus& aStatus, TInt aInterval);
 	TInt Inactivity(TRequestStatus& aStatus, TInt aSeconds);
 	void Abort(TBool aAbortAbsolute);
 	virtual TInt RequestUserHandle(DThread* aThread, TOwnerType aType);
@@ -745,7 +743,7 @@ public:
 	void ChangePendingThreadPriority(DThread* aThread, TInt aNewPriority);
 	void WakeUpNextThread();
 public:
-	TInt Wait(TInt aTimeout=0);	// 0 means wait forever, -1 means poll, n>0 means n nanokernel ticks
+	TInt Wait();
 	void Signal();
 	void Reset();
 public:
@@ -1522,10 +1520,10 @@ public:
 		};
 	enum TMask
 		{
-		EMaskFail = TUint32 (ETypeFail) << KCSPBitsFree, 
-		EMaskCapsOnly = TUint32 (ETypeCapsOnly) << KCSPBitsFree,
-		EMaskSecureId = TUint32 (ETypeSecureId) << KCSPBitsFree,
-		EMaskVendorId = TUint32 (ETypeVendorId) << KCSPBitsFree,
+		EMaskFail = ETypeFail << KCSPBitsFree, 
+		EMaskCapsOnly = ETypeCapsOnly << KCSPBitsFree,
+		EMaskSecureId = ETypeSecureId << KCSPBitsFree,
+		EMaskVendorId = ETypeVendorId << KCSPBitsFree,
 		};
 	TInt Set(const TSecurityPolicy& aPolicy);
 #ifndef __REMOVE_PLATSEC_DIAGNOSTIC_STRINGS__
@@ -2262,7 +2260,7 @@ public:
 /********************************************
  * Kernel heap
  ********************************************/
-class RHeapK : public RHybridHeap
+class RHeapK : public RHeap
 	{
 public:
 	static RHeapK* FixedHeap(TAny* aBase, TInt aMaxLength);
@@ -2280,17 +2278,36 @@ public:
 	static void CheckThreadState();
 	static void Fault(TInt aFault);
 	inline TBool CheckForSimulatedAllocFail()
-	    { return RHybridHeap::CheckForSimulatedAllocFail(); }	
+		{ return RHeap::CheckForSimulatedAllocFail(); }
 	inline DMutex* Mutex() const; /**< @internalComponent */
 public:
 	friend class Monitor;
 	};
+
+inline void RHeap::Lock() const
+	{
+	DMutex* m = *(DMutex**)&iLock;
+	if (m)
+		Kern::MutexWait(*m);
+	}
+
+inline void RHeap::Unlock() const
+	{
+	DMutex* m = *(DMutex**)&iLock;
+	if (m)
+		Kern::MutexSignal(*m);
+	}
 
 /**
 @internalComponent
 */
 inline DMutex* RHeapK::Mutex() const
 	{ return *(DMutex**)&iLock;	}
+
+inline TInt RHeap::SetBrk(TInt aBrk)
+	{
+	return ((DChunk*)iChunkHandle)->Adjust(aBrk);
+	}
 
 enum TSecureClockStatusFlags 
 	{

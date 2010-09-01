@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -24,15 +24,10 @@
 #include "testcaseroot.h"
 #include "b2bwatchers.h"
 #include "testcase1233.h"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "testcase1233Traces.h"
-#endif
 
 #include <e32debug.h> 
 
 #define LOG_INTO_STEP(a) test.Printf(_L("\nInto Step [%S]\n\n"), &a);
-
 
 /* **************************************************************************************
  * the name below is used to add a pointer to our construction method to a pointer MAP in 
@@ -43,10 +38,7 @@ const TTestCaseFactoryReceipt<CTestCase1233> CTestCase1233::iFactoryReceipt(KTes
 
 CTestCase1233* CTestCase1233::NewL(TBool aHost)
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE1233_NEWL);
-	    }
+	LOG_FUNC
 	CTestCase1233* self = new (ELeave) CTestCase1233(aHost);
 	CleanupStack::PushL(self);
 	self->ConstructL();
@@ -58,10 +50,7 @@ CTestCase1233* CTestCase1233::NewL(TBool aHost)
 CTestCase1233::CTestCase1233(TBool aHost)
 	: CTestCaseB2BRoot(KTestCaseId, aHost, iStatus) 
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE1233_CTESTCASE1233);
-	    }
+	LOG_FUNC
 		
 	} 
 
@@ -71,10 +60,7 @@ CTestCase1233::CTestCase1233(TBool aHost)
 */
 void CTestCase1233::ConstructL()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE1233_CONSTRUCTL);
-	    }
+	LOG_FUNC
 
 	iTestVID = 0x0E22;		// Symbian
 	iTestPID = 0xF000 + 1233; // Test 1233
@@ -85,10 +71,7 @@ void CTestCase1233::ConstructL()
 
 CTestCase1233::~CTestCase1233()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE1233_DCTESTCASE1233);
-	    }
+	LOG_FUNC
 	iCollector.DestroyObservers();
 	Cancel();
 	}
@@ -96,10 +79,7 @@ CTestCase1233::~CTestCase1233()
 
 void CTestCase1233::ExecuteTestCaseL()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE1233_EXECUTETESTCASEL);
-	    }
+	LOG_FUNC
 	iCaseStep = EPreconditions;
 	CActiveScheduler::Add(this);
 	SelfComplete();
@@ -108,10 +88,7 @@ void CTestCase1233::ExecuteTestCaseL()
 	
 void CTestCase1233::DoCancel()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE1233_DOCANCEL);
-	    }
+	LOG_FUNC
 	// cancel our timer
 	iTimer.Cancel();
 	}
@@ -119,10 +96,7 @@ void CTestCase1233::DoCancel()
 
 void CTestCase1233::RunStepL()
 	{
-	if(gVerboseOutput)
-	    {
-	    OstTraceFunctionEntry0(CTESTCASE1233_RUNSTEPL);
-	    }
+	LOG_FUNC
 	
 	// Obtain the completion code for this CActive obj.
 	TInt completionCode(iStatus.Int()); 
@@ -212,7 +186,6 @@ void CTestCase1233::RunStepL()
 			if ( iTestPID > 0x0108 )
 				{
 				test.Printf(_L("All VID/PID pairs done\n"));
-				OstTrace0(TRACE_NORMAL, CTESTCASE1233_RUNSTEPL_DUP01, "All VID/PID pairs done\n");
 				
 				iCaseStep = EUnloadLdd;
 				}
@@ -222,7 +195,6 @@ void CTestCase1233::RunStepL()
 					{
 					// B
 					test.Printf(_L("Setting VID/PID of 0x%04x/0x%04x\n"),iTestVID,iTestPID);
-					OstTraceExt2(TRACE_NORMAL, CTESTCASE1233_RUNSTEPL_DUP02, "Setting VID/PID of 0x%04x/0x%04x\n",(TUint32)iTestVID,(TUint32)iTestPID);
 					
 					if (!StepChangeVidPid(iTestVID,iTestPID))
 						{
@@ -233,7 +205,6 @@ void CTestCase1233::RunStepL()
 					{
 					// A
 					test.Printf(_L("Expecting VID/PID of 0x%04x/0x%04x\n"),iTestVID,iTestPID);
-					OstTraceExt2(TRACE_NORMAL, CTESTCASE1233_RUNSTEPL_DUP03, "Expecting VID/PID of 0x%04x/0x%04x\n",(TUint32)iTestVID,(TUint32)iTestPID);
 					}
 				
 				iCollector.ClearAllEvents();
@@ -268,7 +239,6 @@ void CTestCase1233::RunStepL()
 				{ 
 				// A device
 				test.Printf(_L("Raising VBUS for VID/PID = 0x%04x/0x%04x\n"),iTestVID,iTestPID);
-				OstTraceExt2(TRACE_NORMAL, CTESTCASE1233_RUNSTEPL_DUP04, "Raising VBUS for VID/PID = 0x%04x/0x%04x\n",(TUint32)iTestVID,(TUint32)iTestPID);
 				
 				if ( otgBusRequest() != KErrNone )
 					{
@@ -297,13 +267,11 @@ void CTestCase1233::RunStepL()
 			if ( otgVbusPresent() )
 				{
 				test.Printf(_L("...VBUS is UP\n"));
-				OstTrace0(TRACE_NORMAL, CTESTCASE1233_RUNSTEPL_DUP05, "...VBUS is UP\n");
 				iCaseStep = EDropVBus;
 				}
 			else
 				{
 				test.Printf(_L("...VBUS is DOWN\n"));
-				OstTrace0(TRACE_NORMAL, CTESTCASE1233_RUNSTEPL_DUP06, "...VBUS is DOWN\n");
 				return TestFailed(KErrAbort, _L("Vbus did not rise - FAILED!"));
 				}
 
@@ -376,13 +344,11 @@ void CTestCase1233::RunStepL()
 			if ( otgVbusPresent() )
 				{
 				test.Printf(_L("...VBUS is UP\n"));
-				OstTrace0(TRACE_NORMAL, CTESTCASE1233_RUNSTEPL_DUP07, "...VBUS is UP\n");
 				return TestFailed(KErrAbort, _L("Vbus did not rise - FAILED!"));
 				}
 			else
 				{
 				test.Printf(_L("...VBUS is DOWN\n"));
-				OstTrace0(TRACE_NORMAL, CTESTCASE1233_RUNSTEPL_DUP08, "...VBUS is DOWN\n");
 				iCaseStep = ELoopToNextPID;
 				}
 

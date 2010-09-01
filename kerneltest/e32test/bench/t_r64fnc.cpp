@@ -33,24 +33,15 @@ TReal64 AntiOptimization[16] = {0.1,	1,	3.14159265358979323846,		10.01,
 								76.1,	9,	56.1,	1/9,
 								1/3,	22,	99.7,	42};
 
-GLREF_D volatile TUint Count;
-
-#include <e32btrace.h>
-
-void Step()
-	{
-	if (++Count & 0xffff)
-		return;
-	BTrace4(BTrace::ETest1, 0, Count);
-	}
+GLREF_D volatile TUint count;
 
 TInt TReal64Addition(TAny*)
     {
-	Count=0;
+	count=0;
 
     FOREVER
         {
-		r=AntiOptimization[Count & 0xf];
+		r=AntiOptimization[count & 0xf];
 		r+=One;
 		r+=One;
 		r+=One;
@@ -61,17 +52,17 @@ TInt TReal64Addition(TAny*)
 		r+=One;
 		r+=One;
 		r+=One;
-        Step();
+        count++;
         }
     }
 
 TInt TReal64Subtraction(TAny*)
     {
-	Count=0;
+	count=0;
 
     FOREVER
         {
-		r=AntiOptimization[Count & 0xf];
+		r=AntiOptimization[count & 0xf];
 		r-=Ten;
 		r-=Ten;
 		r-=Ten;
@@ -82,16 +73,16 @@ TInt TReal64Subtraction(TAny*)
 		r-=Ten;
 		r-=Ten;
 		r-=Ten;
-        Step();
+        count++;
         }
     }
 
 TInt TReal64Multiplication(TAny*)
     {
-	Count=0;
+	count=0;
     FOREVER
         {
-		r=AntiOptimization[Count & 0xf];
+		r=AntiOptimization[count & 0xf];
 		r*=Pi;
 		r*=Pi;
 		r*=Pi;
@@ -102,17 +93,17 @@ TInt TReal64Multiplication(TAny*)
 		r*=Pi;
 		r*=Pi;
 		r*=Pi;
-        Step();
+        count++;
         }
     }
 
 TInt TReal64Division(TAny*)
     {
-	Count=0;
+	count=0;
 	
     FOREVER
         {
-		r=AntiOptimization[Count & 0xf];
+		r=AntiOptimization[count & 0xf];
 		r/=Ten;
 		r/=Ten;
 		r/=Ten;
@@ -123,13 +114,12 @@ TInt TReal64Division(TAny*)
 		r/=Ten;
 		r/=Ten;
 		r/=Ten;
-        Step();
+        count++;
         }
     }
 
 TInt TRealSqrt(TAny*)
     {
-	Count=0;
 
 	TReal r;
 
@@ -145,13 +135,12 @@ TInt TRealSqrt(TAny*)
 		Math::Sqrt(r,1.414213562373);
 		Math::Sqrt(r,1.7320508078);
 		Math::Sqrt(r,299792458.0);
-        Step();
+        count++;
         }
     }
 
 TInt TRealSin(TAny*)
     {
-	Count=0;
 
 	TReal r=7;
 
@@ -167,13 +156,12 @@ TInt TRealSin(TAny*)
 		Math::Sin(r,8.0);
 		Math::Sin(r,9.0);
 		Math::Sin(r,-1.0);
-        Step();
+        count++;
         }
     }
 
 TInt TRealLn(TAny*)
     {
-	Count=0;
 
 	TReal r=7;
 
@@ -189,13 +177,12 @@ TInt TRealLn(TAny*)
 		Math::Ln(r,11.0);
 		Math::Ln(r,13.0);
 		Math::Ln(r,17.0);
-        Step();
+        count++;
         }
     }
 
 TInt TRealExp(TAny*)
     {
-	Count=0;
 
 	TReal r=7;
 
@@ -211,13 +198,12 @@ TInt TRealExp(TAny*)
 		Math::Exp(r,-2.0);
 		Math::Exp(r,11.0);
 		Math::Exp(r,-11.0);
-        Step();
+        count++;
         }
     }
 
 TInt TRealAsin(TAny*)
     {
-	Count=0;
 
 	TReal r=7;
 
@@ -233,13 +219,12 @@ TInt TRealAsin(TAny*)
 		Math::ASin(r,0.8);
 		Math::ASin(r,0.9);
 		Math::ASin(r,-0.9);
-        Step();
+        count++;
         }
     }
 
 TInt TRealAtan(TAny*)
     {
-	Count=0;
 
 	TReal r=7;
 
@@ -255,13 +240,12 @@ TInt TRealAtan(TAny*)
 		Math::ATan(r,1.5);
 		Math::ATan(r,1.7);
 		Math::ATan(r,2.9);
-        Step();
+        count++;
         }
     }
 
 TInt TRealTan(TAny*)
     {
-	Count=0;
 
 	TReal r=7;
 
@@ -277,13 +261,12 @@ TInt TRealTan(TAny*)
 		Math::Tan(r,8.0);
 		Math::Tan(r,9.0);
 		Math::Tan(r,-1.0);
-        Step();
+        count++;
         }
     }
 
 TInt TRealPower(TAny*)
     {
-	Count=0;
 
 	TReal r=7;
 
@@ -299,7 +282,7 @@ TInt TRealPower(TAny*)
 		Math::Pow(r,95.4,1.57079);
 		Math::Pow(r,317.9,0.3333333333333333);
 		Math::Pow(r,299792458,-2.718281828459045235);
-        Step();
+        count++;
         }
     }
 

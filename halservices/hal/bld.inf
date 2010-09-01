@@ -41,6 +41,9 @@ PRJ_TESTEXPORTS
 rom/haltests.iby		/epoc32/rom/include/haltests.iby
 rom/haltests.auto.bat	/epoc32/rom/include/haltests.auto.bat
 
+rom/tshell_haltests.oby	 ../../kernel/eka/rombuild/tshell_haltests.oby
+
+
 
 PRJ_MMPFILES
 src/hal_lib

@@ -158,7 +158,7 @@ TInt DDemandPagingTestChannel::Request(TInt aFunction, TAny* a1, TAny* a2)
 	case RDemandPagingTestLdd::ESetRealtimeTrace:
 		{
 #if defined(_DEBUG)
-		TUint32 bit = TUint32(1U<<(KREALTIME&31));
+		TUint32 bit = TUint32(1<<(KREALTIME&31));
 		__e32_atomic_axo_ord32(&Kern::SuperPage().iDebugMask[KREALTIME>>5], ~bit, a1?bit:0);
 #if 0 // can enable this to help debugging
 		bit = (1<<(KPAGING&31));

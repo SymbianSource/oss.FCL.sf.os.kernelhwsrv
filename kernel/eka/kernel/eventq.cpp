@@ -18,7 +18,6 @@
 #include <kernel/kern_priv.h>
 #include "execs.h"
 #include <e32btrace.h>
-#include <kerncorestats.h>
 /******************************************************
  * Event Queue
  ******************************************************/
@@ -116,7 +115,6 @@ EXPORT_C TInt Kern::AddEvent(const TRawEvent& aEvent, TBool aResetUserActivity)
 	BTraceContext4(BTrace::ERawEvent, BTrace::EKernelAddEvent ,(TUint32)aEvent.Type());
 #endif
 	NKern::FMWait(&K::EventQueueMutex);
-	KernCoreStats::AddEvent();
     TInt r=KErrOverflow;
 	TRawEvent *pE=K::EventHeadPtr+1;
 	if (pE>=K::EventBufferEnd)

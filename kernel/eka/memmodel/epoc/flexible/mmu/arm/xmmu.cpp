@@ -298,8 +298,7 @@ void Mmu::Init1()
 			// we have an L1 data cache...
 			TUint32 csir = InternalCache::SizeIdRegister(0,0);
 			TUint sets = ((csir>>13)&0x7fff)+1;
-			TUint ways = ((csir>>3)&0x3ff);
-			ways+=1;
+			TUint ways = ((csir>>3)&0x3ff)+1;
 			TUint lineSizeShift = (csir&7)+4;
 			// assume L1 data cache is VIPT and alias checks broken and so we need data cache colouring...
 			dColourCount = (sets<<lineSizeShift)>>KPageShift;
@@ -313,8 +312,7 @@ void Mmu::Init1()
 			// we have a separate L1 instruction cache...
 			TUint32 csir = InternalCache::SizeIdRegister(1,0);
 			TUint sets = ((csir>>13)&0x7fff)+1;
-			TUint ways = ((csir>>3)&0x3ff);
-			ways+=1;
+			TUint ways = ((csir>>3)&0x3ff)+1;
 			TUint lineSizeShift = (csir&7)+4;
 			iColourCount = (sets<<lineSizeShift)>>KPageShift;
 			TRACEB(("L1ICache = 0x%x,0x%x,%d colourCount=%d",sets,ways,lineSizeShift,(sets<<lineSizeShift)>>KPageShift));
@@ -904,15 +902,6 @@ TInt DMemModelThread::Alias(TLinAddr aAddr, DMemModelProcess* aProcess, TInt aSi
 	if(TUint(aAddr^KIPCAlias)<TUint(KIPCAliasAreaSize))
 		return KErrBadDescriptor; // prevent access to alias region
 
-#ifdef _DEBUG
-	if (KDebugNum(KFORCEKUPAGEFAULTS))
-		{
-		TInt r = ThePager.FlushRegion(aProcess, aAddr, aSize);
-		if (r != KErrNone)
-			return r;
-		}
-#endif
-	
 	// Grab the mmu lock before opening a reference on os asid so that this thread 
 	// is in an implicit critical section and therefore can't leak the reference by
 	// dying before iAliasLinAddr is set.

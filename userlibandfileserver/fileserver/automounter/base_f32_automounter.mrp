@@ -1,4 +1,4 @@
-# component name "Automounter File System"
+# component name "exFAT File System"
 
 component   base_f32_automounter
 

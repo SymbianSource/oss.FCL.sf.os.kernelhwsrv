@@ -39,7 +39,7 @@ files=
 #include <rom\hal\hal.iby>
 #include <rom\f32\f32.iby>
 
-data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\nand_test_erase_autoexec.bat				\autoexec.bat
+data=nand_test_erase_autoexec.bat				\autoexec.bat
 
 #if defined(LMNAND2)
 data=\epoc32\rom\LMNAND2\nandtest_erase_autoexec.bat			\test\nandtest_erase_autoexec.bat

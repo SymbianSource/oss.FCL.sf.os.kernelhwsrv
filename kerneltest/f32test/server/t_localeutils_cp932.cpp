@@ -43,7 +43,7 @@ void ReadBootSector(TFatBootSector& aBootSector)
 	{
 
     TInt nRes = ReadBootSector(TheFs, CurrentDrive(), KBootSectorNum<<KDefaultSectorLog2, aBootSector);
-    test_KErrNone(nRes);
+    test(nRes == KErrNone);
 
     if(!aBootSector.IsValid())
         {
@@ -254,7 +254,7 @@ void TestUnicodeVolumeLabel()
 	_LIT(KVolumeLabelOverflow,		"\x65B0\x65B0\x65B0\x65B0\x65B0\x65B0");
 	r = TheFs.SetVolumeLabel(KVolumeLabelOverflow, driveNum);
 	// locale dll and codepage dll both return diff retrun values so check against both cases.
-	test_Value(r, (r == KErrBadName) || (r == KErrOverflow));
+	test((r == KErrBadName) || (r == KErrOverflow));
 
 	r = TheFs.Volume(vInfo, driveNum);
 	test_KErrNone(r);
@@ -702,12 +702,12 @@ void TestCompatibility()
 	TFileName fn = _L("\\ABCD");
 	
 	TInt r=file.Create(TheFs,fn,EFileRead);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file.Close();
 
 	//	Assume this file is the first entry in the root directory
 	r=TheDisk.Open(TheFs,CurrentDrive());
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
     //-- read the 1st dir entry, it should be a DOS entry 
     const TInt posEntry1=gBootSector.RootDirStartSector() << KDefaultSectorLog2; //-- dir entry1 position
@@ -747,9 +747,9 @@ void TestCompatibility()
 	
 	TEntry entry;
 	TInt err = TheFs.Entry(fn, entry);
-	test_KErrNone(err);
+	test(err==KErrNone);
 	err = TheFs.Delete(fn);
-	test_KErrNone(err);
+	test(err==KErrNone);
 #else
 	test.Printf(_L("Test only runs on DEBUG builds, see test logs of debug builds for details."));
 #endif  // _DEBUG) || _DEBUG_RELEASE
@@ -779,13 +779,13 @@ void TestINC126563()
 	
 	test.Next(_L("create file \"AB\" under root directory"));
 	TInt r=file.Create(TheFs,fn,EFileRead);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file.Close();
 
 	test.Next(_L("manually change file name to \"0x7F0x450x7F0x45\" via raw disk accessing"));
 	//	Assume this file is the first entry in the root directory
 	r=TheDisk.Open(TheFs,CurrentDrive());
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
     //-- read the first dir entry, it should be a DOS entry 
     const TInt posEntry1=gBootSector.RootDirStartSector() << KDefaultSectorLog2; //-- dir entry1 position
@@ -870,15 +870,15 @@ void TestINC127905()
 	_LIT(KShortName, "\x3055\x307E\x3056~1");
 	TFileName sn;
 	r = TheFs.GetShortName(fn, sn);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r = sn.Compare(KShortName);
-	test_Value(r, r == 0);
+	test(r==0);
 	
 	r = TheFs.ScanDrive(_L("gSessionPath"));
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r = TheFs.Delete(fn);
-	test_KErrNone(r);
+	test(r == KErrNone);
 #else
 	test.Printf(_L("Test only runs on DEBUG builds, see test logs of debug builds for details."));
 #endif  // _DEBUG) || _DEBUG_RELEASE

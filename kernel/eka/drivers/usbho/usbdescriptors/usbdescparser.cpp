@@ -49,18 +49,16 @@ EXPORT_C /*static*/ TInt UsbDescriptorParser::Parse(const TDesC8& aUsbDes, TUsbG
 
 	// First we must find the top level descriptor (the one we will return to the caller).
 	TRAP(ret, aDesc = FindParserAndParseAndCheckL(des, NULL));
+	if(ret == KErrNone && !aDesc)
+		{
+		ret = KErrNotFound;
+		}
+
 	if(ret == KErrNone)
 		{
-		if(!aDesc)
-			{
-			ret = KErrNotFound;
-			}
-		else
-			{
-			// Now we have a top level descriptor - we now try to build up the descriptor
-			// tree if there are more descriptors available.
-			TRAP(ret, ParseDescriptorTreeL(des, *aDesc));
-			}
+		// Now we have a top level descriptor - we now try to build up the descriptor
+		// tree if there are more descriptors available.
+		TRAP(ret, ParseDescriptorTreeL(des, *aDesc));
 		}
 
 	// Ensure that all the data has been parsed if successful.
@@ -69,13 +67,6 @@ EXPORT_C /*static*/ TInt UsbDescriptorParser::Parse(const TDesC8& aUsbDes, TUsbG
 		// If no parser was found for some data then we should have been errored with KErrNotFound.
 		__ASSERT_DEBUG(EFalse, UsbDescFault(UsbdiFaults::EUsbDescSuccessButDataLeftUnparsed));
 		ret = KErrUnknown;
-		}
-
-	// release the allocated descriptor if there was an error
-	if(ret != KErrNone && aDesc)
-		{
-		delete aDesc;
-		aDesc = NULL;
 		}
 
 	return ret;

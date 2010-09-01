@@ -16,7 +16,6 @@
 //
 
 #include <e32svr.h>
-#define __E32TEST_EXTENSION__
 #include <e32test.h>
 #include "handshare.h"
 
@@ -152,9 +151,9 @@ void CFHSession::ServiceL(const RMessage2& aMessage)
 			// stop server2
 			RFileHandleSharer2 handsvr2;
 			TInt r=handsvr2.Connect();
-			test_KErrNone(r);
+			test(r==KErrNone);
 			r = handsvr2.Exit();
-			test_Value(r, r ==KErrNone || r == KErrServerTerminated);
+			test(r==KErrNone || r == KErrServerTerminated);
 			handsvr2.Close();
 
 			aMessage.Complete(KErrNone);	
@@ -191,29 +190,29 @@ void CFHSession::GetFileHandle(const RMessage2& aMsg)
 	RFs fs;
 	TInt r=fs.Connect();
 	r=fs.CreatePrivatePath(gTestDrive);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=fs.SetSessionToPrivate(gTestDrive);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=fs.ShareProtected();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	RFile file1;
 	r=file1.Create(fs,KSvrFileName,EFileWrite);
-	test_Value(r, r ==KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 	if (r==KErrAlreadyExists)
 		{
 		r=file1.Open(fs,KSvrFileName, EFileWrite);
-		test_KErrNone(r);
+		test(r==KErrNone);
 		}
 	r=file1.Write(KTestData1());
-	test_KErrNone(r);
+	test(r==KErrNone);
 	file1.Close();
 
 	r=file1.Open(fs,KSvrFileName, fileMode);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	TInt fssh=file1.SubSessionHandle();
 	r=aMsg.Write(0, TPckgC<TInt>(fssh));
-	test_KErrNone(r);
+	test(r==KErrNone);
 	aMsg.Complete(fs);
 	fs.Close();
 	}
@@ -233,32 +232,32 @@ void CFHSession::GetFileHandle2(const RMessage2& aMsg)
 
 	RFileHandleSharer2 handsvr2;
 	TInt r = handsvr2.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	TInt ssh;
 	TInt fsh = handsvr2.GetFileHandle(ssh, TFileMode(fileMode));
-	test_Value(fsh, fsh >= 0);
+	test(fsh >= 0);
 
 	// adopt the file from FHServer2
 	RFile file;
 	r=file.AdoptFromServer(fsh, ssh);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	test.Next(_L("RFile::TransferToClient()"));
 
 	// transfer the file to the client
 	r = file.TransferToClient(aMsg, 0);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	// test we can still use the file
 	TInt pos = 0;
 	r = file.Seek(ESeekStart, pos);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	TBuf8<100> rbuf;
 	r=file.Read(0,rbuf);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=rbuf.CompareF(KTestData1());
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	handsvr2.Close();
 
@@ -278,28 +277,28 @@ void CFHSession::PassFileHandle(const RMessage2& aMsg)
 	// connect to FHServer2
 	RFileHandleSharer2 handsvr2;
 	TInt r = handsvr2.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	RFile file;
 
 	// Message slot 0 is a RFs handle
 	// Message slot 1 is a RFile Subsession handle (RFile::SubSessionHandle())
 	r = file.AdoptFromClient(aMsg, 0, 1);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 
 
 	TBuf8<100> rbuf;
 	r=file.Read(0,rbuf);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=rbuf.CompareF(KTestData());
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=file.Write(KTestData1());
-	test_Value(r, r ==KErrAccessDenied);
+	test(r==KErrAccessDenied);
 	r=file.ChangeMode(EFileWrite);
-	test_Value(r, r ==KErrArgument);
+	test(r==KErrArgument);
 	r=file.Rename(_L("\\newname.txt"));
-	test_Value(r, r ==KErrPermissionDenied || r==KErrAccessDenied);
+	test(r==KErrPermissionDenied || r==KErrAccessDenied);
 //	should try a delete
 
 	// pass the file handle to FHServer2
@@ -308,15 +307,15 @@ void CFHSession::PassFileHandle(const RMessage2& aMsg)
 	TIpcArgs ipcArgs;
 	file.TransferToServer(ipcArgs, 0, 1);
 	r = handsvr2.PassFileHandle(ipcArgs);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	TInt pos = 0;
 	r = file.Seek(ESeekStart, pos);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=file.Read(0,rbuf);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=rbuf.CompareF(KTestData());
-	test_KErrNone(r);
+	test(r==KErrNone);
 	
 	file.Close();
 
@@ -335,33 +334,33 @@ void CFHSession::PassFileHandleProcess(const RMessage2& aMsg)
 
 	RFile file;
 	TInt r = file.AdoptFromCreator(1, 2);
-	test_KErrNone(r);
+	test(r == KErrNone);
 
 	TBuf8<100> rbuf;
 	r=file.Read(0,rbuf);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=rbuf.CompareF(KTestData());
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	test.Next(_L("RFile::Rename()"));
 
 	// define a filename in our private path
 	RFs fs;
 	r=fs.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	TFileName sessionp;
 	fs.SessionPath(sessionp);
 	r = fs.MkDirAll(sessionp);
-	test_Value(r, r ==KErrNone || r==KErrAlreadyExists);
+	test(r==KErrNone || r==KErrAlreadyExists);
 
 	r=fs.ShareProtected();
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	r=fs.CreatePrivatePath(gTestDrive);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=fs.SetSessionToPrivate(gTestDrive);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	TPath newPath;
 	fs.PrivatePath(newPath);
@@ -371,10 +370,10 @@ void CFHSession::PassFileHandleProcess(const RMessage2& aMsg)
 	
 	// delete the file before we try to rename anything to it
 	r = fs.Delete(newFileName);
-	test_Value(r, r  == KErrNone || r == KErrNotFound);
+	test(r == KErrNone || r == KErrNotFound);
 
 	r=file.Rename(newFileName);
-	test_KErrNone(r);
+	test(r==KErrNone);
 
 	file.Close();
 
@@ -382,7 +381,7 @@ void CFHSession::PassFileHandleProcess(const RMessage2& aMsg)
 	// have been moved to our private directory)
 	test.Next(_L("RFs::Delete()"));
 	r = fs.Delete(newFileName);
-	test_KErrNone(r);
+	test(r == KErrNone);
 
 	fs.Close();
 
@@ -403,7 +402,7 @@ void CFHSession::PassInvalidFileHandle(const RMessage2& aMsg)
 	// Message slot 0 is a RFs handle
 	// Message slot 1 is a RFile Subsession handle (RFile::SubSessionHandle())
 	TInt r = file.AdoptFromClient(aMsg, 0, 1);
-	test_Value(r, r ==KErrBadHandle);
+	test(r==KErrBadHandle);
 
 
 	aMsg.Complete(r);
@@ -648,10 +647,10 @@ LOCAL_C TInt FHServer2(TAny * /*anArg*/)
 	// Sanity check for open handles
 	TInt end_thc, end_phc;
 	RThread().HandleCount(end_phc, end_thc);
-	test_Value(start_thc, start_thc == end_thc);
+	test(start_thc == end_thc);
 //	test(start_phc == end_phc);
 	// and also for pending requests ...
-	test_Value(RThread().RequestCount(), RThread().RequestCount() == 0);
+	test(RThread().RequestCount() == 0);
 
 	
 	return KErrNone;
@@ -690,7 +689,7 @@ GLDEF_C TInt E32Main()
 	// start server2 in a seperate thread
 	RThread server2Thread;
 	TInt r = server2Thread.Create(_L("FHServer2"), FHServer2, KDefaultStackSize, KHeapSize, KHeapSize, NULL);	
-	test_KErrNone(r);	
+	test(r==KErrNone);	
 	TRequestStatus statq;
 	server2Thread.Logon(statq);
 	server2Thread.Resume();
@@ -700,17 +699,17 @@ GLDEF_C TInt E32Main()
 
 	// wait for server2's thread to end gracefully
 	User::WaitForRequest(statq);
-	test_KErrNone(statq.Int());
+	test(statq == KErrNone);
 
 	server2Thread.Close();
 
 	RFs cleanupfs;
 	r = cleanupfs.Connect();
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=cleanupfs.SetSessionToPrivate(gTestDrive);
-	test_KErrNone(r);
+	test(r==KErrNone);
 	r=cleanupfs.Delete(KSvrFileName);
-	test_Value(r, r ==KErrNone || r==KErrNotFound);
+	test(r==KErrNone || r==KErrNotFound);
 	cleanupfs.Close();
 
 
@@ -723,9 +722,9 @@ GLDEF_C TInt E32Main()
 	// Sanity check for open handles and pending requests
 	TInt end_thc, end_phc;
 	RThread().HandleCount(end_phc, end_thc);
-	test_Value(start_thc, start_thc == end_thc);
-	test_Value(start_phc, start_phc == end_phc);
-	test_Value(RThread().RequestCount(), RThread().RequestCount() == 0);
+	test(start_thc == end_thc);
+	test(start_phc == end_phc);
+	test(RThread().RequestCount() == 0);
 	
 	return 0;
 	}

@@ -629,9 +629,9 @@ TInt DLogicalDevice::FindPhysicalDevice(DLogicalChannelBase* aChannel, TChannelC
 			r=pdev.FindByFullName(h,n,fn);
 			if (r!=KErrNone)
 				break;
-			__KTRACE_OPT(KDEVICE,Kern::Printf("Found PDD %S",&fn));
+			__KTRACE_OPT(KDEVICE,Kern::Printf("Found PDD %lS",&fn));
 			pP=(DPhysicalDevice *)pdev.At(h);
-			__KTRACE_OPT(KDEVICE,{TBuf<16> verBuf(iVersion.Name()); Kern::Printf("unit=%d, info=%08x, ver=%S",aInfo.iUnit,aInfo.iInfo,&verBuf);});
+			__KTRACE_OPT(KDEVICE,{TBuf<16> verBuf(iVersion.Name()); Kern::Printf("unit=%d, info=%08x, ver=%lS",aInfo.iUnit,aInfo.iInfo,&verBuf);});
 			r=pP->Validate(aInfo.iUnit,aInfo.iInfo,iVersion);
 			__KTRACE_OPT(KDEVICE,Kern::Printf("DPhysicalDevice::Validate returns %d",r));
 			if (r!=KErrNotSupported)
@@ -692,7 +692,7 @@ TInt ExecHandler::ChannelCreate(const TDesC8& aLogicalDevice, TChannelCreateInfo
 		info.iPhysicalDevice=&pddName;
 		}
 
-	__KTRACE_OPT(KDEVICE,Kern::Printf("Exec::ChannelCreate LDD %S PDD %S Unit %d",&lddName,info.iPhysicalDevice,info.iUnit));
+	__KTRACE_OPT(KDEVICE,Kern::Printf("Exec::ChannelCreate LDD %lS PDD %lS Unit %d",&lddName,info.iPhysicalDevice,info.iUnit));
 
 	TInt r=Kern::ValidateName(lddName);
 	if (r<0)

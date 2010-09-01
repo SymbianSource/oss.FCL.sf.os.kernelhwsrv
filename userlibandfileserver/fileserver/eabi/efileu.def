@@ -313,6 +313,5 @@ EXPORTS
 	_Z12GetDriveInfoR10TDriveInfoi @ 312 NONAME
 	_ZNK11CFileSystem9DriveInfoER10TDriveInfoi @ 313 NONAME
 	_ZNK9RFsPlugin6VolumeER11TVolumeInfoi @ 314 NONAME
-	_ZNK7CFileCB16IsSequentialModeEv @ 315 NONAME
-	_ZN7CFileCB12DirectIOModeERK12RMessagePtr2 @ 316 NONAME
+	_ZN7CFileCB12DirectIOModeERK12RMessagePtr2 @ 315 NONAME
 
