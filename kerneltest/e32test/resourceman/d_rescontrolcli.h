@@ -88,6 +88,7 @@ private:
 		ECheckPostBootLevelNotifications,
 		ECancelNotification, 
 		EGetControllerVersion,
+		ERegisterResourceController,
 #ifdef PRM_ENABLE_EXTENDED_VERSION
 		ERegisterDynamicResource,
 		EDeRegisterDynamicResource,
@@ -134,6 +135,7 @@ public:
 	TInt DeRegisterClientLevelFromResource(TInt aClientId, TUint aResId);
 	TInt CheckPostBootLevelNotifications();
 	TInt GetResourceControllerVersion(TUint aClientId, TUint& aVersion);
+	TInt CheckResourceControllerRegistration();
 #ifdef PRM_ENABLE_EXTENDED_VERSION
 	TInt RegisterDynamicResource(TUint aClientId, TUint& aResourceId);
 	TInt DeRegisterDynamicResource(TUint aClientId, TUint aResourceId, TInt *aLevel);
@@ -505,6 +507,11 @@ TInt RTestResMan::CheckPostBootLevelNotifications()
 TInt RTestResMan::GetResourceControllerVersion(TUint aClientId, TUint& aVersion)
 	{
 	return DoControl(EGetControllerVersion, (TAny*)aClientId, (TAny*)&aVersion);
+	}
+
+TInt RTestResMan::CheckResourceControllerRegistration()
+	{
+	return DoControl(ERegisterResourceController, (TAny*)NULL, (TAny*)NULL);
 	}
 
 #ifdef PRM_ENABLE_EXTENDED_VERSION

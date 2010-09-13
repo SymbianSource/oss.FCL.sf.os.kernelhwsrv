@@ -624,6 +624,30 @@ TInt RogueThread4(TAny*)
 	return KErrNone;
 	}
 
+TInt RogueThread5(TAny*)
+	{
+	// try to masquerade as the WindowServer
+	UserSvr::WsRegisterThread();			// this should panic the thread
+	return KErrNone;
+	}
+
+TInt RogueThread6(TAny*)
+	{
+	// try to masquerade as the FileServer
+	UserSvr::FsRegisterThread();			// this should panic the thread
+	return KErrNone;
+	}
+
+TInt RogueThread7(TAny*)
+	{
+	// try to masquerade as the FileServer
+	RChunk myChunk;
+	TInt err = myChunk.CreateLocal(4096, 8192);
+	if (err == KErrNone)
+		UserSvr::RegisterTrustedChunk(myChunk.Handle());	// this should panic the thread
+	return err;
+	}
+
 void DisplayThreadExitInfo(const RThread& aThread)
 	{
 	TFullName fn=aThread.FullName();
@@ -674,6 +698,33 @@ void RogueThreadTest()
 	DisplayThreadExitInfo(thread);
 	test(thread.ExitType()==EExitPanic);
 	test(thread.ExitReason()==EBadMessageHandle);
+	thread.Close();
+
+	test.Next(_L("Rogue thread test 5"));
+	r=thread.Create(_L("Rogue5"),RogueThread5,KDefaultStackSize,KHeapSize,KHeapSize,NULL);
+	test_KErrNone(r);
+	RunPanicThread(thread);	// wait for rogue thread to die
+	DisplayThreadExitInfo(thread);
+	test(thread.ExitType()==EExitPanic);
+	test(thread.ExitReason()==EAccessDenied);
+	thread.Close();
+
+	test.Next(_L("Rogue thread test 6"));
+	r=thread.Create(_L("Rogue6"),RogueThread6,KDefaultStackSize,KHeapSize,KHeapSize,NULL);
+	test_KErrNone(r);
+	RunPanicThread(thread);	// wait for rogue thread to die
+	DisplayThreadExitInfo(thread);
+	test(thread.ExitType()==EExitPanic);
+	test(thread.ExitReason()==EAccessDenied);
+	thread.Close();
+
+	test.Next(_L("Rogue thread test 7"));
+	r=thread.Create(_L("Rogue7"),RogueThread7,KDefaultStackSize,KHeapSize,KHeapSize,NULL);
+	test_KErrNone(r);
+	RunPanicThread(thread);	// wait for rogue thread to die
+	DisplayThreadExitInfo(thread);
+	test(thread.ExitType()==EExitPanic);
+	test(thread.ExitReason()==EAccessDenied);
 	thread.Close();
 	}
 

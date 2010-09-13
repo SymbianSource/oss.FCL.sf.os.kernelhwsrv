@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2000 Nokia Corporation and/or its subsidiary(-ies). 
+* Copyright (c) 2000-2010 Nokia Corporation and/or its subsidiary(-ies). 
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of the License "Eclipse Public License v1.0"
@@ -21,15 +21,15 @@
 #define __SHIFTJIS_H__
 
 #if !defined(__E32STD_H__)
-#include <E32STD.H>
+#include <e32std.h>
 #endif
 
 #if !defined(__CHARCONV_H__)
-#include "T_TLOCL32_CHARCONV.H"
+#include "t_tlocl32_charconv.h"
 #endif
 
 #if !defined(__CONVUTILS_H__)
-#include "T_TLOCL32_CONVUTILS.H"
+#include "t_tlocl32_convutils.h"
 #endif
 
 class CnvShiftJis 

@@ -63,9 +63,13 @@ void CFatCacheBase::InitialiseL(CFatMountCB* aOwner)
     iFatSecSzLog2   = (TUint16)aOwner->SectorSizeLog2(); 
     iFatClustSzLog2 = (TUint16)aOwner->ClusterSizeLog2();
 
+    //-- obtain maximal number of entries in the FAT table, count FAT[0] and FAT[1] as well, though they must not be accessed via cache
+    iMaxFatEntries  = aOwner->UsableClusters()+KFatFirstSearchCluster; 
+
     __ASSERT_ALWAYS(iNumFATs >=1, User::Leave(KErrCorrupt));
 
     __PRINT3(_L("#-CFatCacheBase::InitialiseL() FatStart:%u, FatSz:%d, drv:%d"),iFatStartPos, iFatSize, aOwner->DriveNumber());
+    
     }
 
 //-----------------------------------------------------------------------------
@@ -394,7 +398,7 @@ void CFat16FixedCache::Close(TBool aDiscardDirtyData)
 TUint32 CFat16FixedCache::ReadEntryL(TUint32 aIndex)
     {
     //__PRINT1(_L("#-CFat16FixedCache::ReadEntryL() FAT idx:%d"), aIndex);
-    ASSERT(aIndex >= KFatFirstSearchCluster &&  aIndex < (FatSize() >> KFat16EntrySzLog2));
+    ASSERT(FatIndexValid(aIndex));
 
     //-- calculate page index in the array. Theoretically, aIndex can't be wrong because it is checked by the caller;
     //-- but in some strange situations (malformed volume ?) aIndex might get bigger than number of usable clusters.
@@ -441,7 +445,7 @@ void CFat16FixedCache::WriteEntryL(TUint32 aIndex, TUint32 aEntry)
     {
     //__PRINT2(_L("#-CFat16FixedCache::WriteEntryL() FAT idx:%d, val:%d"), aIndex, aEntry);
 
-    ASSERT(aIndex >= KFatFirstSearchCluster &&  aIndex < (FatSize() >> KFat16EntrySzLog2));
+    ASSERT(FatIndexValid(aIndex));
 
     SetDirty(ETrue);
 
@@ -561,7 +565,8 @@ TInt CFat16FixedCache::Invalidate()
 TInt CFat16FixedCache::InvalidateRegion(TUint32 aStartIndex, TUint32 aNumEntries)
     {
     __PRINT2(_L("#-CFat16FixedCache::InvalidateRegion() startIndex:%d, entries:%d"),aStartIndex, aNumEntries);
-    ASSERT(aStartIndex >= KFatFirstSearchCluster &&  aStartIndex < (FatSize() >> KFat16EntrySzLog2));
+    ASSERT(FatIndexValid(aStartIndex));
+    ASSERT(FatIndexValid(aStartIndex+aNumEntries-1));
 
     if(!aNumEntries)
         {
@@ -905,7 +910,7 @@ void CFat12Cache::Close(TBool aDiscardDirtyData)
 TUint32 CFat12Cache::ReadEntryL(TUint32 aIndex)
     {
     //__PRINT1(_L("#-CFat12Cache::ReadEntryL() FAT idx:%d"), aIndex);
-    ASSERT(aIndex >= KFatFirstSearchCluster &&  aIndex <  (FatSize() + FatSize()/2)); //-- FAT12 entry is 1.5 bytes long
+    ASSERT(FatIndexValid(aIndex));
 
     TUint32 entry;
 
@@ -938,7 +943,7 @@ TUint32 CFat12Cache::ReadEntryL(TUint32 aIndex)
 void CFat12Cache::WriteEntryL(TUint32 aIndex, TUint32 aEntry)
     {
     //__PRINT2(_L("#-CFat12Cache::WriteEntryL() FAT idx:%d, entry:%u"), aIndex, aEntry);
-    ASSERT(aIndex >= KFatFirstSearchCluster &&  aIndex <  (FatSize() + FatSize()/2)); //-- FAT12 entry is 1.5 bytes long
+    ASSERT(FatIndexValid(aIndex));
 
     aEntry &= KFat12EntryMask; 
  
@@ -1079,7 +1084,10 @@ TInt CFat12Cache::Invalidate()
 TInt CFat12Cache::InvalidateRegion(TUint32 aStartIndex, TUint32 aNumEntries)
     {
     __PRINT2(_L("#-CFat12Cache::InvalidateRegion() startIndex:%d, entries:%d"),aStartIndex, aNumEntries);
-    ASSERT(aStartIndex >= KFatFirstSearchCluster &&  aStartIndex <  (FatSize() + FatSize()/2)); //-- FAT12 entry is 1.5 bytes long
+    
+    ASSERT(FatIndexValid(aStartIndex));
+    ASSERT(FatIndexValid(aStartIndex+aNumEntries-1));
+    
     (void)aStartIndex;
     (void)aNumEntries;
 

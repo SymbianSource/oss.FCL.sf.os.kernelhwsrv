@@ -254,21 +254,24 @@ GLDEF_C TInt FManBaseThreadFunction(TAny* aPtr)
 // Initialise New thread
 //
 	{
-
+	TInt r = KErrNoMemory;	// return value if a trap harness cannot be created
 	CTrapCleanup* cleanup=CTrapCleanup::New();
-	if (cleanup==NULL)
-		return(KErrNoMemory);
 	CFileBase& fMan=*(CFileBase*)aPtr;
-	fMan.iSynchronizer.Wait();
-	TRAPD(ret,DoFManBaseOperationL(aPtr));
-	if (ret==KErrNone)
-		ret=fMan.iLastError;
-	delete cleanup;
+
+	if (cleanup != NULL)
+		{
+		fMan.iSynchronizer.Wait();
+		TRAP(r,DoFManBaseOperationL(aPtr));
+		if (r == KErrNone)
+			r = fMan.iLastError;
+		delete cleanup;
+		}
+
 	fMan.iSwitches=0;
 	fMan.iFs=fMan.iFsOld;
 	fMan.iStatus=NULL;
 	fMan.iFManThread.Close();
-	return(ret);
+	return (r);
 	}
 
 
@@ -281,9 +284,6 @@ Creates a separate thread to run the command.
 @param aThreadFunction The thread function.
 */
 	{
-	iSwitches|=KFManBusyFlag;
-	User::LeaveIfError(iFManThread.Create(KNullDesC,aThreadFunction,KDefaultStackSize,NULL,this));
-	iFManThread.SetPriority(EPriorityMuchLess);
 	TFileName sessionPath;
 	User::LeaveIfError(iFs.SessionPath(sessionPath));
 	if (iSessionPath==NULL)
@@ -291,6 +291,14 @@ Creates a separate thread to run the command.
 	else if (iSessionPath->Des().MaxLength()<sessionPath.Length())
 		iSessionPath=iSessionPath->ReAllocL(IncPathLength(sessionPath.Length()));
 	iSessionPath->Des()=sessionPath;
+
+	User::LeaveIfError(iFManThread.Create(KNullDesC,aThreadFunction,KDefaultStackSize,NULL,this));
+
+	// The code won't leave anymore after this.
+	// The effect of any further state changes to this instance
+	// should be undone / completed by the thread function.
+	iFManThread.SetPriority(EPriorityMuchLess);
+	iSwitches|=KFManBusyFlag;
 	iFsOld=iFs;
 	iLastError=KErrNone;
 	iFManThread.Logon(*iStatus);

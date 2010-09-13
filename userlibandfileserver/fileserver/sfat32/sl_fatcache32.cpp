@@ -120,8 +120,6 @@ void  CFat32LruCache::InitialiseL(CFatMountCB* aOwner, TUint32 aMaxMemSize, TUin
         User::Leave(KErrCorrupt);
         }
 
-    iMaxFatEntries = aOwner->UsableClusters()+KFatFirstSearchCluster; //-- FAT[0] & FAT[1] are not in use
-
     //-- create FAT bit supercache if it is enabled in config
     ASSERT(!iBitCache);
     if(aOwner->FatConfig().FAT32_UseBitSupercache())
@@ -307,7 +305,7 @@ TUint32 CFat32LruCache::ReadEntryL(TUint32 aIndex)
     {
 //    __PRINT1(_L("#-CFat32LruCache::ReadEntryL() FAT idx:%d"), aIndex);
 
-    ASSERT(aIndex >= KFatFirstSearchCluster &&  aIndex < (FatSize() >> KFat32EntrySzLog2));
+    ASSERT(FatIndexValid(aIndex));
 
     //-- firstly try to locate required entry in cache
     TFat32Entry entry;
@@ -335,7 +333,7 @@ void CFat32LruCache::WriteEntryL(TUint32 aIndex, TUint32 aEntry)
     {
     //__PRINT2(_L("#-CFat32LruCache::WriteEntryL() FAT idx:%d, val:%d"), aIndex, aEntry);
 
-    ASSERT(aIndex >= KFatFirstSearchCluster &&  aIndex < (FatSize() >> KFat32EntrySzLog2));
+    ASSERT(FatIndexValid(aIndex));
 
     SetDirty(ETrue);
 
@@ -457,7 +455,9 @@ TInt CFat32LruCache::Invalidate()
 TInt CFat32LruCache::InvalidateRegion(TUint32 aStartIndex, TUint32 aNumEntries)
     {
     __PRINT2(_L("#-CFat32LruCache::InvalidateRegion() startIndex:%d, entries:%d"),aStartIndex, aNumEntries);
-    ASSERT(aStartIndex >= KFatFirstSearchCluster &&  aStartIndex < (FatSize() >> KFat32EntrySzLog2));
+    ASSERT(FatIndexValid(aStartIndex));
+    ASSERT(FatIndexValid(aStartIndex+aNumEntries-1));
+
 
     if(!aNumEntries)
         {
@@ -524,7 +524,7 @@ TBool CFat32LruCache::FindFreeEntryInCacheSectorL(TUint32& aFatEntryIndex)
         }
 
     //-- actual number of usable FAT entries can be less than deducted from number of FAT sectors.
-    MaxIdx = Min(MaxIdx, iMaxFatEntries-1);
+    MaxIdx = Min(MaxIdx, MaxFatEntries()-1);
 
     //-- look in both directions starting from the aFatEntryIndex
     //-- but in one FAT cache page sector only

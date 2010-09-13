@@ -1,4 +1,4 @@
-// Copyright (c) 1996-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1996-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -31,7 +31,7 @@
 #include <e32svr.h>
 #include "t_server.h"
 #include "t_file64bit.h"
-#include "..\\fileshare\\handshare64bit.h"
+#include "../fileshare/handshare64bit.h"
 #include <f32pluginutils.h>
 #include <massstorage.h>
 #include <e32math.h>

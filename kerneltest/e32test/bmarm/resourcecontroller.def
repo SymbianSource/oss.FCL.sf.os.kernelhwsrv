@@ -28,4 +28,5 @@ EXPORTS
 	AllocReserve__20PowerResourceManagerUiUcUc @ 27 NONAME R3UNUSED ; PowerResourceManager::AllocReserve(unsigned int, unsigned char, unsigned char)
 	InitController__24DPowerResourceController @ 28 NONAME R3UNUSED ; DPowerResourceController::InitController(void)
 	RegisterArrayOfStaticResources__24DPowerResourceControllerUiRPP20DStaticPowerResourceUi @ 29 NONAME R3UNUSED ; DPowerResourceController::RegisterArrayOfStaticResources(unsigned int, DStaticPowerResource **&, unsigned int)
+	ResourceControllerRegistration__33DSimulatedPowerResourceController @ 30 NONAME R3UNUSED ; DSimulatedPowerResourceController::ResourceControllerRegistration(void)
 

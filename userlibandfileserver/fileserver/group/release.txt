@@ -1,3 +1,33 @@
+Version 2.00.3061
+=================
+(Made by fadhliM 31/08/2010)
+
+1.	h14jiang
+	1.	ou1cimx1#536014 [MCL] ENV : SIROCCO - Vasco - T_FMAN Fails when Removing a Directory
+
+2.	fagortz
+	1.	ou1cimx1#547797 "No such file or directory" breaks in f32test Linux build
+	2.	ou1cimx1#551018 [GCCE] deprecated conversion from string constant to 'char*' in f32test build
+
+
+Version 2.00.3060
+=================
+(Made by fadhliM 26/08/2010)
+
+1.	niccox
+	1.	ou1cimx1#538290 t_gml_tur fails on BRIDGE
+
+2.	h14jiang
+	1.	ou1cimx1#485508 ENV T_DSPACE X test failure investigation (t_dspace.cpp:268)
+
+3.	frhofman
+	1.	ou1cimx1#538308 IT_BITO_SSS_SD - TB9.2 wk29 - sf/os/kernelhwsrv - Resource Leak for objects of handle-based R classes 
+
+4.	dlyokhin
+	1.	ou1cimx1#529927 ENV : SIROCCO - Vasco - T_FSYS Fails with -20
+	2.	ou1cimx1#531477 EI FAT implementation needs more stricter checks of volume geometry
+
+
 Version 2.00.3059
 =================
 (Made by fadhliM 23/08/2010)

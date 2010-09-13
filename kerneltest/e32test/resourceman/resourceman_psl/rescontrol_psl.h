@@ -71,6 +71,7 @@ public:
     TInt ProcessEventResources(TPowerRequest& req, TInt& aClientLevel, TInt aMaxLevel, TInt aMinLevel, TInt aDefaultLevel, TInt aBlockTime = 0);
     IMPORT_C static TInt CaptureIdleResourcesInfo(TUint aControllerId, TUint aNumResources, TPtr* aPtr);
 	IMPORT_C static TInt CompleteResourceControllerInitialisation();
+	IMPORT_C static TInt ResourceControllerRegistration();
 #ifdef PRM_ENABLE_EXTENDED_VERSION
 	TInt DoRegisterStaticResourcesDependency(RPointerArray <DStaticPowerResourceD> & aStaticResourceDArray);
 	TInt CreateResourceDependency(RPointerArray <DStaticPowerResourceD> & pResArray);

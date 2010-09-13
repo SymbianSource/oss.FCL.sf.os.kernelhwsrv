@@ -24,6 +24,7 @@
 #include "t_usblib.h"
 #include <e32svr.h>
 #include "u32std.h"
+#include "d32otgdi.h"
 #include "OstTraceDefinitions.h"
 #ifdef OST_TRACE_COMPILER_IN_USE
 #include "t_usbcscTraces.h"
@@ -37,7 +38,14 @@
 #define DEBUGPRINT(a) {}
 #endif
 
+void OpenStackIfOtg();
+void CloseStackIfOtg();
+
 LOCAL_D RTest test(_L("T_USBCSC"));
+
+_LIT(KOtgdiLddFilename, "otgdi");
+static TBool gSupportsOtg;
+static RUsbOtgDriver gOtgPort;
 
 _LIT(KLddName, "eusbcsc");
 _LIT(KUsbDeviceName, "Usbcsc");
@@ -309,7 +317,9 @@ void TestBufferConstruction(TAltSetConfig* aAltSetConfig)
 	test.Next(_L("Buffer Construction"));
 	r = gPort.RealizeInterface(gChunk);
 	test_KErrNone(r);
-
+	
+	OpenStackIfOtg();
+	
 	TUsbcScChunkHeader chunkHeader(gChunk);
 
 	DEBUGPRINT(test.Printf(_L("iBuffers at 0x%x, iAltSettings at 0x%x\n"),chunkHeader.iBuffers, chunkHeader.iAltSettings));
@@ -872,6 +882,8 @@ void TestBufferHandling()
 	TInt r = gPort.RealizeInterface(gChunk);
 	test_KErrNone(r);
 
+	OpenStackIfOtg();
+
 	if (gRealHardware)
 		{
 		TUsbcScChunkHeader chunkHeader(gChunk);
@@ -1024,6 +1036,7 @@ void TestBufferHandling()
 		}
 	delete altSetConfig;
 	
+	CloseStackIfOtg();
 	CloseChannel();
 	UnloadDriver();
 	}
@@ -1477,6 +1490,8 @@ static void TestCancel()
 	r = gPort.RealizeInterface(gChunk);
 	test_KErrNone(r);
 
+	OpenStackIfOtg();
+
 	const TInt timeOut = 5000; //5 millisec
 	TUsbcScChunkHeader chunkHeader(gChunk);
 		
@@ -1549,6 +1564,7 @@ static void TestCancel()
 		
 	}//grealhardware
 
+	CloseStackIfOtg();
 	CloseChannel();
 	UnloadDriver();
 
@@ -1566,6 +1582,8 @@ static void TestInvalidAPI()
 
 	r = gPort.RealizeInterface(gChunk);
 	test_KErrNone(r);
+	
+	OpenStackIfOtg();
 
 	TInt out_buf = 0;
 	TInt in_buf = 0; 
@@ -1644,6 +1662,7 @@ static void TestInvalidAPI()
 	User::WaitForRequest(status);
 	test_Compare(status.Int(), ==, KErrArgument);
 	
+	CloseStackIfOtg();
 	CloseChannel();
 	UnloadDriver();	
 	
@@ -1694,6 +1713,7 @@ static void TestSetInterface()
 	OstTrace1(TRACE_NORMAL, TESTSETINTERFACE_TESTSETINTERFACE_DUP02, "Release Interface %d \n", altSetNo);
 	r = gPort.ReleaseInterface(altSetNo);
 	test_Compare(r, ==, KErrUsbAlreadyRealized);	
+	CloseStackIfOtg();
 	CloseChannel();
 	UnloadDriver();	
 
@@ -1721,6 +1741,7 @@ static void TestSetInterface()
 	r = gPort.RealizeInterface(tmpChunk);			//TO do Uncomment to test Realize interface call twice
 	test_Equal(KErrUsbAlreadyRealized, r);
 
+	CloseStackIfOtg();
 	CloseChannel();
 	TestMultipleChannels();
 	UnloadDriver();			
@@ -1743,6 +1764,7 @@ static void TestSetInterface()
 
 	TestBufferConstruction(altSetConfig);
 
+	CloseStackIfOtg();
 	CloseChannel();
 	UnloadDriver();	
 
@@ -1766,6 +1788,7 @@ static void TestSetInterface()
 	OstTrace0(TRACE_NORMAL, TESTSETINTERFACE_TESTSETINTERFACE_DUP03, "Check chunk still populated with one interface\n"); 
 	TestBufferConstruction(altSetConfig);
 
+	CloseStackIfOtg();
 	CloseChannel();
 	UnloadDriver();		
 
@@ -1785,6 +1808,7 @@ static void TestSetInterface()
 	OstTrace0(TRACE_NORMAL, TESTSETINTERFACE_TESTSETINTERFACE_DUP04, "Check chunk still populated with one interface \n"); 
 	TestBufferConstruction(altSetConfig);
 
+	CloseStackIfOtg();
 	CloseChannel();
 	UnloadDriver();
 
@@ -1803,6 +1827,7 @@ static void TestSetInterface()
 	OstTrace0(TRACE_NORMAL, TESTSETINTERFACE_TESTSETINTERFACE_DUP05, "Check chunk not populated with any valid data as all interfaces would be destroyed \n"); 
 	TestBufferConstruction(altSetConfig);
 
+	CloseStackIfOtg();
 	CloseChannel();
 	UnloadDriver();	
 	test.Next(_L("Test Release Interface, No interface set but call Release interface and test Chunk construction \n")); 
@@ -1815,6 +1840,7 @@ static void TestSetInterface()
 
 	TestBufferConstruction(altSetConfig);
 	
+	CloseStackIfOtg();
 	CloseChannel();
 	UnloadDriver();			
 	UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, (TAny*)5000, 0);
@@ -1837,6 +1863,7 @@ static void TestSetInterface()
 
 	TestBufferConstruction(altSetConfig);
 
+	CloseStackIfOtg();
 	CloseChannel();
 	UnloadDriver();			
 	UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, (TAny*)5000, 0);
@@ -3298,7 +3325,29 @@ void OpenChannel()
 	test.Next(_L("Open Channel"));
 
 	TInt r = gPort.Open(0);
-	test_KErrNone(r);
+	test_KErrNone(r);	
+	}
+
+void OpenStackIfOtg()
+	{
+	// On an OTG device we have to start the OTG driver, otherwise the Client
+	// stack will remain disabled forever.
+	if (gSupportsOtg)
+		{
+		test.Start(_L("Running on OTG device: loading OTG driver\n"));
+		test.Next(_L("Load OTG LDD"));
+		TInt r = User::LoadLogicalDevice(KOtgdiLddFilename);
+		test((r == KErrNone) || (r == KErrAlreadyExists));
+
+		test.Next(_L("Open OTG channel"));
+		r = gOtgPort.Open();
+		test(r == KErrNone);
+
+		test.Next(_L("Start OTG stack"));
+		r = gOtgPort.StartStacks();
+		test(r == KErrNone);
+		test.End();
+		}
 	}
 
 void TestMultipleChannels()
@@ -3328,8 +3377,24 @@ void TestMultipleChannels()
 	lPort3.Close();
 	}
 
-void CloseChannel()
+void CloseStackIfOtg()
 	{
+	if (gSupportsOtg)
+		{
+		test.Start(_L("Close OTG stack\n"));
+		test.Next(_L("Stop OTG stack"));
+		gOtgPort.StopStacks();
+		test.Next(_L("Close OTG Channel"));
+		gOtgPort.Close();
+		test.Next(_L("Free OTG LDD"));
+		TInt r = User::FreeLogicalDevice(RUsbOtgDriver::Name());
+		test(r == KErrNone);
+		test.End();
+		}
+	}
+
+void CloseChannel()
+	{	
 	test.Next(_L("Close Chunk Handle"));
 	gChunk.Close();
 
@@ -3684,6 +3749,7 @@ void TestBILReadWrite()
 	test.Printf(_L("Finalize Interface\n"));
 	OstTrace0(TRACE_NORMAL, TESTBILREADWRITE_TESTBILREADWRITE_DUP02, "Finalize Interface\n");
 	gPort.FinalizeInterface(tChunk);
+	OpenStackIfOtg();
 
 	if(gRealHardware)
 		{
@@ -3716,6 +3782,7 @@ void TestBILReadWrite()
 			OstTrace0(TRACE_NORMAL, TESTBILREADWRITE_TESTBILREADWRITE_DUP09, "!!warning- compare buffers found discrepancies!\n");
 			}
 		}
+	CloseStackIfOtg();
 	gChunk.Close();
 	test.Printf(_L("Close global USB channel\n"));
 	OstTrace0(TRACE_NORMAL, TESTBILREADWRITE_TESTBILREADWRITE_DUP10, "Close global USB channel\n");
@@ -3743,6 +3810,7 @@ void TestBILAlternateSettingChange()
 	test.Printf(_L("Finalize Interface\n"));
 	OstTrace0(TRACE_NORMAL, TESTBILALTERNATESETTINGCHANGE_TESTBILALTERNATESETTINGCHANGE_DUP03, "Finalize Interface\n");
 	gPort.FinalizeInterface(tChunk);
+	OpenStackIfOtg();
 
 	if(gRealHardware)
 		{
@@ -3751,6 +3819,7 @@ void TestBILAlternateSettingChange()
 		test.Printf(_L("Enumerated. status = %d\n"), status.Int());
 		OstTrace1(TRACE_NORMAL, TESTBILALTERNATESETTINGCHANGE_TESTBILALTERNATESETTINGCHANGE_DUP04, "Enumerated. status = %d\n", status.Int());
 		}
+	CloseStackIfOtg();
 	gChunk.Close();
 	test.Printf(_L("Close global USB channel\n"));
 	OstTrace0(TRACE_NORMAL, TESTBILALTERNATESETTINGCHANGE_TESTBILALTERNATESETTINGCHANGE_DUP05, "Close global USB channel\n");
@@ -3776,6 +3845,7 @@ void TestBILEp0()
 	SetupBulkInterfaces(0,1,1);
 	RChunk *tChunk = &gChunk;
 	test_KErrNone(gPort.FinalizeInterface(tChunk));
+	OpenStackIfOtg();
 
 	if(gRealHardware)
 		{
@@ -3967,6 +4037,7 @@ void TestBILEp0()
 		//		data/setup data.  
 			test.Getch();
 		} // end if-real-hardware
+	CloseStackIfOtg();
 	gChunk.Close();
 	test.Printf(_L("Close global USB channel\n"));
 	OstTrace0(TRACE_NORMAL, TESTBILEP0_TESTBILEP0_DUP16, "Close global USB channel\n");
@@ -4256,13 +4327,15 @@ void ProcessCommandLineOptions(void)
 	TBuf8<KUsbDescSize_Otg> otg_desc;
 	r = gPort.GetOtgDescriptor(otg_desc);
 	test(r == KErrNotSupported || r == KErrNone);
-	TInt supportsOtg = (r != KErrNotSupported) ? ETrue : EFalse;
-
+	gSupportsOtg = (r != KErrNotSupported) ? ETrue : EFalse;
+		
+	OpenStackIfOtg();
+	
 	// We turn on UDC here explicitly. This is done only once and just to test the API as such
 	test.Next(_L("Powering up UDC"));
 	r = gPort.PowerUpUdc();
 
-	if (!supportsOtg)
+	if (!gSupportsOtg)
 		{
 		test_KErrNone(r);
 		}
@@ -4271,8 +4344,10 @@ void ProcessCommandLineOptions(void)
 		test((r == KErrNone) || (r == KErrNotReady));
 		}
 
+	CloseStackIfOtg();
 	CloseChannel();
 	UnloadDriver();
+		
 	if (gSpecTest == EAll)
 		{
 		for (TInt i = 1; i <= 7; i++)

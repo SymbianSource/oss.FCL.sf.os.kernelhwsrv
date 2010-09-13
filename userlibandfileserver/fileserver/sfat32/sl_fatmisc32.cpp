@@ -18,22 +18,7 @@
 #include "sl_std.h"
 #include "sl_cache.h"
 
-/**
-@return ETrue if it is Fat32
-*/
-TBool CFatFormatCB::Is32BitFat() const
-	{
-	return(iFileSystemName==KFileSystemName32);
-	}
-
-/**
-@return ETrue if it is Fat16
-*/
-TBool CFatFormatCB::Is16BitFat() const
-	{
-    return(iFileSystemName==KFileSystemName16);
-    }
-
+//-------------------------------------------------------------------------------------------------------------------
 /**
 Calculate the FAT size in sectors for a Fat32 volume
 
@@ -68,128 +53,6 @@ void Dump_TLDFormatInfo(const TLDFormatInfo& aInfo)
 }
 
 //-------------------------------------------------------------------------------------------------------------------
-
-/**
-Initialize the format parameters for a normal fixed sized disk
-Setting set to adhere to Rules of Count of clusters for FAT type
-
-@param  aDiskSizeInSectors Size of volume in sectors
-@return system-wide error code
-*/
-TInt  CFatFormatCB::InitFormatDataForFixedSizeDiskNormal(TUint aDiskSizeInSectors, const TLocalDriveCapsV6& aCaps)
-	{
-	__PRINT1(_L("CFatFormatCB::InitFormatDataForFixedSizeDiskNormal() sectors:%d"), aDiskSizeInSectors);
-    
-    if( Drive().IsRemovable() )
-		iNumberOfFats = KNumberOfFatsExternal;
-	else
-		iNumberOfFats = KNumberOfFatsInternal;	
- 	
-	iReservedSectors=KDefFatResvdSec;		
-	if (aDiskSizeInSectors <=4084*1)	// 2MB
-		{
-		iRootDirEntries=128;
-		iSectorsPerCluster=1;
-		iFileSystemName=KFileSystemName12;
-		iSectorsPerFat=MaxFat12Sectors();
-   		}
-	else if (aDiskSizeInSectors<4084*2) // < 4MB (8168 sectors)
-		{
-		iRootDirEntries=256; 
-		iSectorsPerCluster=2;
-		iFileSystemName=KFileSystemName12;
-		iSectorsPerFat=MaxFat12Sectors();
-		}
-	else if (aDiskSizeInSectors<4084*4) // < 8MB (16336 sectors)
-		{
-		iRootDirEntries=512;
-		iSectorsPerCluster=4;
-		iFileSystemName=KFileSystemName12;
-		iSectorsPerFat=MaxFat12Sectors();
-		}
-	else if (aDiskSizeInSectors<4084*8) // < 16MB (32672 sectors)
-		{
-		iRootDirEntries=512;
-		iSectorsPerCluster=8;
-		iFileSystemName=KFileSystemName12;
-		iSectorsPerFat=MaxFat12Sectors();
-		}
-	else if(aDiskSizeInSectors<1048576) // >= 16Mb - FAT16   < (1048576) 512MB
-		{
-		iFileSystemName=KFileSystemName16;
-		TUint minSectorsPerCluster=(aDiskSizeInSectors+KMaxFAT16Entries-1)/KMaxFAT16Entries;
-		iRootDirEntries=512;
-		iSectorsPerCluster=1;
-		
-		while (minSectorsPerCluster>iSectorsPerCluster)
-			iSectorsPerCluster<<=1;
-
-		iSectorsPerFat=MaxFat16Sectors();
-		}
-	else	//use FAT32
-		{
-		iFileSystemName=KFileSystemName32;
-		iRootDirEntries=0;						//this is always the case for fat32
-		if(aDiskSizeInSectors < 16777216)		//8GB in 512byte sectors
-			iSectorsPerCluster=8;
-		else if(aDiskSizeInSectors < 33554432)	//16GB in 512byte sectors
-			iSectorsPerCluster=16;
-		else if(aDiskSizeInSectors < 67108864)	//32GB in 512byte sectors 
-			iSectorsPerCluster=32;
-		else
-			iSectorsPerCluster=64;				//Anything >= 32GB uses a 32K cluster size
-		iReservedSectors=KDefFat32ResvdSec;
-		iRootClusterNum=2;						//As recomended in the document
-		iSectorsPerFat=MaxFat32Sectors();
-		
-		}
-
-	const TFatType fatType = SuggestFatType();
-
-	// Ensure cluster size is a multiple of the block size
-	TInt blockSizeInSectors = aCaps.iBlockSize >> iSectorSizeLog2;
-	__PRINT1(_L("blockSizeInSectors: %d"),blockSizeInSectors);
-	ASSERT(blockSizeInSectors == 0 || IsPowerOf2(blockSizeInSectors));
-	if (blockSizeInSectors != 0 && IsPowerOf2(blockSizeInSectors))
-		{
-		__PRINT1(_L("iSectorsPerCluster    (old): %d"),iSectorsPerCluster);
-		AdjustClusterSize(blockSizeInSectors);
-		__PRINT1(_L("iSectorsPerCluster    (new): %d"),iSectorsPerCluster);
-		}
-
-
-	for (; iSectorsPerCluster>1; iSectorsPerCluster>>= 1)
-		{
-		// Align first data sector on an erase block boundary if
-		// (1) the iEraseBlockSize is specified
-		// (2) the start of the partition is already aligned to an erase block boundary, 
-		//     i.e. iHiddenSectors is zero or a multiple of iEraseBlockSize
-		__PRINT1(_L("iHiddenSectors: %d"),iHiddenSectors);
-		TInt eraseblockSizeInSectors = aCaps.iEraseBlockSize >> iSectorSizeLog2;
-		__PRINT1(_L("eraseblockSizeInSectors: %d"),eraseblockSizeInSectors);
-		ASSERT(eraseblockSizeInSectors == 0 || IsPowerOf2(eraseblockSizeInSectors));	
-		ASSERT(eraseblockSizeInSectors == 0 || eraseblockSizeInSectors >= blockSizeInSectors);
-		if ((eraseblockSizeInSectors != 0) &&
-			(iHiddenSectors % eraseblockSizeInSectors == 0) &&	
-			(IsPowerOf2(eraseblockSizeInSectors)) &&
-			(eraseblockSizeInSectors >= blockSizeInSectors))
-			{
-			TInt r = AdjustFirstDataSectorAlignment(eraseblockSizeInSectors);
-			ASSERT(r == KErrNone);
-			(void) r;
-			}
-		__PRINT1(_L("iReservedSectors: %d"),iReservedSectors);
-		__PRINT1(_L("FirstDataSector: %d"), FirstDataSector());
-
-		// If we've shrunk the number of clusters by so much that it's now invalid for this FAT type
-		// then we need to decrease the cluster size and try again, otherwise we're finshed.
-		if (SuggestFatType() == fatType)
-			break;
-		}
-	__PRINT1(_L("iSectorsPerCluster  (final): %d"),iSectorsPerCluster);
-
-    return KErrNone;
-	}
 
 TInt CFatFormatCB::FirstDataSector() const
 	{
@@ -267,7 +130,11 @@ void CFatFormatCB::CreateBootSectorL()
 	{
 	__PRINT1(_L("CFatFormatCB::CreateBootSector() drive:%d"),DriveNumber());
 
-	
+    _LIT8(KName_Fat12,"FAT12   ");    ///< Name in BPB given to a Fat12 volume
+    _LIT8(KName_Fat16,"FAT16   ");    ///< Name in BPB given to a Fat16 volume
+    _LIT8(KName_Fat32,"FAT32   ");    ///< Name in BPB given to a Fat32 volume
+    _LIT8(KDefaultVendorID, "EPOC");  ///< Vendor Name for BPB for any volume formated using a Symbian OS device
+
     const TBool bFat32 = Is32BitFat();
     
     TFatBootSector bootSector;
@@ -286,11 +153,32 @@ void CFatFormatCB::CreateBootSectorL()
 
 	bootSector.SetReservedByte(0);
 	TTime timeID;
-	timeID.HomeTime();						//	System time in future?
-	bootSector.SetUniqueID(I64LOW(timeID.Int64()));	//	Generate UniqueID from time
+	timeID.HomeTime();
+	bootSector.SetUniqueID(I64LOW(timeID.Int64()));	//	Generate Volume UniqueID from time
 	bootSector.SetVolumeLabel(_L8(""));
-	bootSector.SetFileSysType(iFileSystemName);
-// Floppy specific info:
+	
+    //-- set a text string in BPB that corresponds to the FS type
+    switch(FatType())
+        {
+        case EFat12:
+            bootSector.SetFileSysType(KName_Fat12);
+        break;
+        
+        case EFat16:
+            bootSector.SetFileSysType(KName_Fat16);
+        break;
+        
+        case EFat32:
+            bootSector.SetFileSysType(KName_Fat32);
+        break;
+
+        default:
+            ASSERT(0);
+            User::Leave(KErrArgument);
+        };
+
+
+
 	bootSector.SetJumpInstruction();
 	bootSector.SetMediaDescriptor(KBootSectorMediaDescriptor);
 	bootSector.SetNumberOfHeads(iNumberOfHeads);
@@ -566,221 +454,6 @@ void CFatFormatCB::DoFormatStepL()
 
 //-------------------------------------------------------------------------------------------------------------------
 
-/**
-    Initialize the user specific format parameters for fixed sized disk.
-    
-    @param  aDiskSizeInSectors disk size in sectors
-    @return system-wide error code
-*/
-TInt CFatFormatCB::InitFormatDataForFixedSizeDiskUser(TUint aDiskSizeInSectors)
-	{
-    __PRINT1(_L("CFatFormatCB::InitFormatDataForFixedSizeDiskUser() sectors:%d"), aDiskSizeInSectors);
-    Dump_TLDFormatInfo(iSpecialInfo());
-
-    //-- KErrArgument will be returned if iSpecialInfo().iFATBits isn't one of EFB32, EFB16, EFB32
-
-    if(iSpecialInfo().iFlags & TLDFormatInfo::EOneFatTable)
-		iNumberOfFats = 1;
-    else if(iSpecialInfo().iFlags & TLDFormatInfo::ETwoFatTables)
-		iNumberOfFats = 2;
-    else if(Drive().IsRemovable())
-		iNumberOfFats = KNumberOfFatsExternal;
-	else
-		iNumberOfFats = KNumberOfFatsInternal;
-
-
-    if(iSpecialInfo().iReservedSectors == 0)
-        iReservedSectors = KDefFatResvdSec; //-- user hasn't specified reserved sectors count, use default (FAT12/16)
-    else
-        iReservedSectors = iSpecialInfo().iReservedSectors;
-
-
-    const TUint KMaxSecPerCluster    = 64; 
-	const TUint KDefaultSecPerCluster= 8;   //-- default value, if the iSpecialInfo().iSectorsPerCluster isn't specified
-
-    iSectorsPerCluster = iSpecialInfo().iSectorsPerCluster;
-    if(iSectorsPerCluster <= 0)
-        {//-- default value, user hasn't specified TLDFormatInfo::iSectorsPerCluster
-        iSectorsPerCluster = KDefaultSecPerCluster; //-- will be adjusted later
-        }
-    else
-        {
-        iSectorsPerCluster = Min(1<<Log2(iSectorsPerCluster), KMaxSecPerCluster);
-	    }
-
-    //-----------------------------------------
-
-    if (aDiskSizeInSectors < 4096) // < 2MB
-        {
-        iSectorsPerCluster = 1;
-		iRootDirEntries = 128;
-        }
-	else if (aDiskSizeInSectors < 8192) // < 4MB
-        {
-        iSectorsPerCluster = Min((TUint32)iSectorsPerCluster, (TUint32)2);
-		iRootDirEntries = 256;
-        }
-	else if (aDiskSizeInSectors < 32768) // < 16MB
-        {
-        iSectorsPerCluster = Min((TUint32)iSectorsPerCluster, (TUint32)4);
-		iRootDirEntries = 512;
-        }
-	else if (aDiskSizeInSectors < 1048576) // < 512MB
-        {
-        iSectorsPerCluster = Min((TUint32)iSectorsPerCluster, (TUint32)8);
-		iRootDirEntries = 512;
-        }
-    else // FAT32
-		{
-        iRootDirEntries = 512;
-        iSectorsPerCluster = Min((TUint32)iSectorsPerCluster, (TUint32)KMaxSecPerCluster);
-        }
-
-
-    //-----------------------------------------
-
-	TLDFormatInfo::TFATBits fatBits = iSpecialInfo().iFATBits;
-	if (fatBits == TLDFormatInfo::EFBDontCare)
-		{
-        const TFatType fatType = SuggestFatType();
-		switch(fatType)
-			{
-			case EFat12:
-				fatBits = TLDFormatInfo::EFB12;
-				break;
-			case EFat16:
-				fatBits = TLDFormatInfo::EFB16;
-				break;
-			case EFat32:
-				fatBits = TLDFormatInfo::EFB32;
-				break;
-			case EInvalid:
-				ASSERT(0);
-			}
-		}
-
-    TFatType reqFatType(EInvalid); //-- requested FAT type
-
-    switch (fatBits)
-		{
-		case TLDFormatInfo::EFB12:
-			iFileSystemName=KFileSystemName12;
-			iSectorsPerFat=MaxFat12Sectors();
-			reqFatType = EFat12;
-            break;
-
-		case TLDFormatInfo::EFB16:
-			iFileSystemName=KFileSystemName16;
-			iSectorsPerFat=MaxFat16Sectors();
-			reqFatType = EFat16;
-            break;
-
-		case TLDFormatInfo::EFB32:
-			iFileSystemName=KFileSystemName32;
-			iSectorsPerFat=MaxFat32Sectors();
-	        
-			iRootDirEntries = 0;
-			iRootClusterNum = 2;
-			
-            if(iSpecialInfo().iReservedSectors == 0)
-                iReservedSectors = KDefFat32ResvdSec; //-- user hasn't specified reserved sectors count, use default (FAT32)
-            else
-                iReservedSectors = iSpecialInfo().iReservedSectors;
-
-			reqFatType = EFat32;
-            break;
-
-        default:
-            __PRINT(_L("CFatFormatCB::InitFormatDataForFixedSizeDiskUser() Incorrect FAT type specifier!"));
-            return KErrArgument;
-		}
-	
-        //-- check if we can format the volume with requested FAT type
-        const TFatType fatType = SuggestFatType();
-        if(fatType != reqFatType)
-			{
-			//-- volume metrics don't correspond to the requested FAT type
-            __PRINT(_L("CFatFormatCB::InitFormatDataForFixedSizeDiskUser() FAT type mismatch!"));
-            return KErrArgument;
-			}
-
-        return KErrNone;
-    }
-
-/**
-    Initialize the format parameters for a custom fixed sized disk
-
-    @param  aFormatInfo The custom format parameters
-    @return system-wide error code
-*/
-TInt CFatFormatCB::InitFormatDataForFixedSizeDiskCustom(const TLDFormatInfo& aFormatInfo)
-	{
-    __PRINT(_L("CFatFormatCB::InitFormatDataForFixedSizeDiskCustom()"));
-    Dump_TLDFormatInfo(aFormatInfo);
-
-	if(aFormatInfo.iFlags & TLDFormatInfo::EOneFatTable)
-		iNumberOfFats = 1;
-    else if(aFormatInfo.iFlags & TLDFormatInfo::ETwoFatTables)
-		iNumberOfFats = 2;
-    else if(Drive().IsRemovable())
-		iNumberOfFats = KNumberOfFatsExternal;
-	else
-		iNumberOfFats = KNumberOfFatsInternal;	
-
-	iRootDirEntries=512;
-
-	iSectorsPerCluster = aFormatInfo.iSectorsPerCluster;
-	iSectorsPerTrack   = aFormatInfo.iSectorsPerTrack;
-	iNumberOfHeads	   = aFormatInfo.iNumberOfSides;
-	iReservedSectors   = aFormatInfo.iReservedSectors ? aFormatInfo.iReservedSectors : KDefFatResvdSec;
-	
-    switch (aFormatInfo.iFATBits)
-		{
-		case TLDFormatInfo::EFB12:
-			iFileSystemName = KFileSystemName12;
-			iSectorsPerFat  = MaxFat12Sectors();
-			break;
-
-		case TLDFormatInfo::EFB16:
-			iFileSystemName = KFileSystemName16;
-			iSectorsPerFat  = MaxFat16Sectors();
-            break;
-
-		case TLDFormatInfo::EFB32:
-			iFileSystemName  = KFileSystemName32;
-			iReservedSectors = aFormatInfo.iReservedSectors ? aFormatInfo.iReservedSectors : KDefFat32ResvdSec;
-			iSectorsPerFat   = MaxFat32Sectors();
-			iRootDirEntries  = 0;
-			iRootClusterNum  = 2;
-            break;
-
-		default:
-			{
-			TInt64 clusters64 = (aFormatInfo.iCapacity / KDefaultSectorSize) / iSectorsPerCluster;
-			TInt clusters = I64LOW(clusters64);
-			if (clusters < 4085)
-				{
-				iFileSystemName = KFileSystemName12;
-				iSectorsPerFat  = MaxFat12Sectors();
-				}
-			else if(clusters < 65525)
-				{
-				iFileSystemName = KFileSystemName16;
-				iSectorsPerFat  = MaxFat16Sectors();
-                }
-			else
-				{
-				iFileSystemName  = KFileSystemName32;
-				iReservedSectors = aFormatInfo.iReservedSectors ? aFormatInfo.iReservedSectors : KDefFat32ResvdSec;
-				iSectorsPerFat   = MaxFat32Sectors();
-				iRootDirEntries  = 0;
-				iRootClusterNum  = 2;
-				}
-			}
-		}
-
-    return KErrNone;
-	}
 
 void CFatFormatCB::RecordOldInfoL()
     {
@@ -819,7 +492,8 @@ void CFatFormatCB::RecordOldInfoL()
 TInt CFatFormatCB::BadSectorToCluster()
     {
     TInt sizeofFatAndRootDir;
-    if (iFileSystemName != KFileSystemName32)
+    
+    if(!Is32BitFat())
 		sizeofFatAndRootDir = iSectorsPerFat*iNumberOfFats + ((iRootDirEntries*KSizeOfFatDirEntry+(1<<iSectorSizeLog2)-1)>>iSectorSizeLog2);
     else
         sizeofFatAndRootDir = (iRootClusterNum-2) * iSectorsPerCluster;
@@ -838,8 +512,10 @@ TInt CFatFormatCB::BadSectorToCluster()
             {
             if (badSector == 0) // Boot sector corrupt
                 return KErrCorrupt;
-            if (iFileSystemName==KFileSystemName32 && badSector==1) // FSInfo corrupt
+            
+            if (Is32BitFat() && badSector==1) // FSInfo corrupt
                 return KErrCorrupt;
+
             if (badSector < iReservedSectors) // Harmless in reserved area
                 continue;
             // Extend reserved area to cover bad sector
@@ -854,7 +530,8 @@ TInt CFatFormatCB::BadSectorToCluster()
             {
             if ((r=iBadClusters.Append(cluster)) != KErrNone)
                 return r;
-            if (iFileSystemName==KFileSystemName32 && iRootClusterNum==cluster)
+
+            if (Is32BitFat() && iRootClusterNum==cluster)
                 iRootClusterNum++;
             }
         }
@@ -907,6 +584,401 @@ void CFatFormatCB::CreateReservedBootSectorL()
 	User::LeaveIfError(FatMount().DoWriteBootSector(KReservedBootSectorNum*KDefaultSectorSize, bootSector));
 	User::LeaveIfError(FatMount().DoWriteBootSector(KBkReservedBootSectorNum*KDefaultSectorSize, bootSector));    
 	}
+
+
+//-------------------------------------------------------------------------------------------------------------------
+
+/**
+    Initialize the user-specific format parameters
+    Tries to figure out number of FATs, SPC, etc. values passed from the user side.
+    This method is called if the user has specified some formatting parameters, like SPC
+*/
+TInt CFatFormatCB::ProcessVolParam_User(const TLocalDriveCapsV6& /*aCaps*/)
+{
+    __PRINT1(_L("CFatFormatCB::ProcessVolParam_User() sectors:%d"), iMaxDiskSectors);
+    Dump_TLDFormatInfo(iSpecialInfo());
+
+    //-- KErrArgument will be returned if iSpecialInfo().iFATBits isn't one of EFB32, EFB16, EFB32
+
+    if(iSpecialInfo().iFlags & TLDFormatInfo::EOneFatTable)
+		iNumberOfFats = 1;
+    else if(iSpecialInfo().iFlags & TLDFormatInfo::ETwoFatTables)
+		iNumberOfFats = 2;
+    else if(Drive().IsRemovable())
+		iNumberOfFats = KNumberOfFatsExternal;
+	else
+		iNumberOfFats = KNumberOfFatsInternal;
+
+    
+    if(iSpecialInfo().iReservedSectors)
+        iReservedSectors = iSpecialInfo().iReservedSectors; 
+    else
+        iReservedSectors = KDefFatResvdSec; //-- the user hasn't specified reserved sectors count, use default (FAT12/16)
+
+    //-----------------------------------------
+
+
+    const TUint KMaxSecPerCluster    = 64; 
+	const TUint KDefaultSecPerCluster= 8;   //-- default value, if the iSpecialInfo().iSectorsPerCluster isn't specified
+
+    iSectorsPerCluster = iSpecialInfo().iSectorsPerCluster;
+    if(iSectorsPerCluster <= 0)
+        {//-- default value, user hasn't specified TLDFormatInfo::iSectorsPerCluster
+        iSectorsPerCluster = KDefaultSecPerCluster; //-- will be adjusted later
+        }
+    else
+        {
+        iSectorsPerCluster = Min(1<<Log2(iSectorsPerCluster), KMaxSecPerCluster);
+	    }
+
+    //-----------------------------------------
+
+    if (iMaxDiskSectors < 4096) // < 2MB
+        {
+        iSectorsPerCluster = 1;
+		iRootDirEntries = 128;
+        }
+	else if (iMaxDiskSectors < 8192) // < 4MB
+        {
+        iSectorsPerCluster = Min((TUint32)iSectorsPerCluster, (TUint32)2);
+		iRootDirEntries = 256;
+        }
+	else if (iMaxDiskSectors < 32768) // < 16MB
+        {
+        iSectorsPerCluster = Min((TUint32)iSectorsPerCluster, (TUint32)4);
+		iRootDirEntries = 512;
+        }
+	else if (iMaxDiskSectors < 1048576) // < 512MB
+        {
+        iSectorsPerCluster = Min((TUint32)iSectorsPerCluster, (TUint32)8);
+		iRootDirEntries = 512;
+        }
+    else // FAT32
+		{
+        iRootDirEntries = 512;
+        iSectorsPerCluster = Min((TUint32)iSectorsPerCluster, (TUint32)KMaxSecPerCluster);
+        }
+
+
+    //-----------------------------------------
+
+	TLDFormatInfo::TFATBits fatBits = iSpecialInfo().iFATBits;
+	if (fatBits == TLDFormatInfo::EFBDontCare)
+		{//-- the user hasn't specified FAT type, need to work it out according to volume geometry
+        const TFatType fatType = SuggestFatType();
+		switch(fatType)
+			{
+			case EFat12:
+				fatBits = TLDFormatInfo::EFB12;
+				break;
+			case EFat16:
+				fatBits = TLDFormatInfo::EFB16;
+				break;
+			case EFat32:
+				fatBits = TLDFormatInfo::EFB32;
+				break;
+			case EInvalid:
+				ASSERT(0);
+			}
+		}
+
+    TFatType reqFatType(EInvalid); //-- requested FAT type
+
+    switch (fatBits)
+		{
+		case TLDFormatInfo::EFB12:
+            SetFatType(EFat12);
+			iSectorsPerFat=MaxFat12Sectors();
+			reqFatType = EFat12;
+            break;
+
+		case TLDFormatInfo::EFB16:
+            SetFatType(EFat16);
+			iSectorsPerFat=MaxFat16Sectors();
+			reqFatType = EFat16;
+            break;
+
+		case TLDFormatInfo::EFB32:
+            SetFatType(EFat32);
+			iSectorsPerFat=MaxFat32Sectors();
+	        
+			iRootDirEntries = 0;
+			iRootClusterNum = 2;
+			
+            if(iSpecialInfo().iReservedSectors == 0)
+                iReservedSectors = KDefFat32ResvdSec; //-- user hasn't specified reserved sectors count, use default (FAT32)
+            else
+                iReservedSectors = iSpecialInfo().iReservedSectors;
+
+			reqFatType = EFat32;
+            break;
+
+        default:
+            __PRINT(_L("CFatFormatCB::InitFormatDataForFixedSizeDiskUser() Incorrect FAT type specifier!"));
+            return KErrArgument;
+		}
+	
+        //-- check if we can format the volume with requested FAT type
+        const TFatType fatType = SuggestFatType();
+        if(fatType != reqFatType)
+			{
+			//-- volume metrics don't correspond to the requested FAT type
+            __PRINT(_L("CFatFormatCB::InitFormatDataForFixedSizeDiskUser() FAT type mismatch!"));
+            return KErrArgument;
+			}
+
+        return KErrNone;
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+/**
+    Initialize format parameters from the information provided by the media driver.
+    This method is mostly called for SD cards formatting
+*/
+TInt CFatFormatCB::ProcessVolParam_Custom(const TLocalDriveCapsV6& aCaps)
+{
+    __PRINT(_L("CFatFormatCB::ProcessVolParam_Custom()"));
+    
+    //-- TLDFormatInfo structure is filled by the media driver, it decides the media formatting parameters
+    const TLDFormatInfo& fmtInfo = aCaps.iFormatInfo;
+    Dump_TLDFormatInfo(fmtInfo);
+
+	if(fmtInfo.iFlags & TLDFormatInfo::EOneFatTable)
+		iNumberOfFats = 1;
+    else if(fmtInfo.iFlags & TLDFormatInfo::ETwoFatTables)
+		iNumberOfFats = 2;
+    else if(Drive().IsRemovable())
+		iNumberOfFats = KNumberOfFatsExternal;
+	else
+		iNumberOfFats = KNumberOfFatsInternal;	
+
+	iRootDirEntries=512;
+
+	iSectorsPerCluster = fmtInfo.iSectorsPerCluster;
+	iSectorsPerTrack   = fmtInfo.iSectorsPerTrack;
+	iNumberOfHeads	   = fmtInfo.iNumberOfSides;
+	iReservedSectors   = fmtInfo.iReservedSectors ? fmtInfo.iReservedSectors : KDefFatResvdSec;
+	
+    switch (fmtInfo.iFATBits)
+		{
+		case TLDFormatInfo::EFB12:
+            SetFatType(EFat12);
+			iSectorsPerFat  = MaxFat12Sectors();
+			break;
+
+		case TLDFormatInfo::EFB16:
+            SetFatType(EFat16);
+			iSectorsPerFat  = MaxFat16Sectors();
+            break;
+
+		case TLDFormatInfo::EFB32:
+            SetFatType(EFat32);
+			iReservedSectors = fmtInfo.iReservedSectors ? fmtInfo.iReservedSectors : KDefFat32ResvdSec;
+			iSectorsPerFat   = MaxFat32Sectors();
+			iRootDirEntries  = 0;
+			iRootClusterNum  = 2;
+            break;
+
+		default:
+			{
+			TInt64 clusters64 = (fmtInfo.iCapacity / KDefaultSectorSize) / iSectorsPerCluster;
+			TInt clusters = I64LOW(clusters64);
+			if (clusters < 4085)
+				{
+                SetFatType(EFat12);
+				iSectorsPerFat  = MaxFat12Sectors();
+				}
+			else if(clusters < 65525)
+				{
+                SetFatType(EFat16);
+				iSectorsPerFat  = MaxFat16Sectors();
+                }
+			else
+				{
+                SetFatType(EFat32);
+				iReservedSectors = fmtInfo.iReservedSectors ? fmtInfo.iReservedSectors : KDefFat32ResvdSec;
+				iSectorsPerFat   = MaxFat32Sectors();
+				iRootDirEntries  = 0;
+				iRootClusterNum  = 2;
+				}
+			}
+		}
+
+    return KErrNone;
+
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+/**
+    Initialize format parameters by defult.
+    This method is called if the used has not specified any formatting parameters (all default)
+*/
+TInt CFatFormatCB::ProcessVolParam_Default(const TLocalDriveCapsV6& aCaps)
+{
+	__PRINT1(_L("CFatFormatCB::ProcessVolParam_Default sectors:%d"), iMaxDiskSectors);
+    
+    if( Drive().IsRemovable() )
+		iNumberOfFats = KNumberOfFatsExternal;
+	else
+		iNumberOfFats = KNumberOfFatsInternal;	
+ 	
+	iReservedSectors=KDefFatResvdSec;		
+	if (iMaxDiskSectors <=4084*1)	// 2MB
+		{
+		iRootDirEntries=128;
+		iSectorsPerCluster=1;
+        SetFatType(EFat12);
+		iSectorsPerFat=MaxFat12Sectors();
+   		}
+	else if (iMaxDiskSectors<4084*2) // < 4MB (8168 sectors)
+		{
+		iRootDirEntries=256; 
+		iSectorsPerCluster=2;
+        SetFatType(EFat12);
+		iSectorsPerFat=MaxFat12Sectors();
+		}
+	else if (iMaxDiskSectors<4084*4) // < 8MB (16336 sectors)
+		{
+		iRootDirEntries=512;
+		iSectorsPerCluster=4;
+        SetFatType(EFat12);
+		iSectorsPerFat=MaxFat12Sectors();
+		}
+	else if (iMaxDiskSectors<4084*8) // < 16MB (32672 sectors)
+		{
+		iRootDirEntries=512;
+		iSectorsPerCluster=8;
+        SetFatType(EFat12);
+		iSectorsPerFat=MaxFat12Sectors();
+		}
+	else if(iMaxDiskSectors<1048576) // >= 16Mb - FAT16   < (1048576) 512MB
+		{
+        SetFatType(EFat16);
+		TUint minSectorsPerCluster=(iMaxDiskSectors+KMaxFAT16Entries-1)/KMaxFAT16Entries;
+		iRootDirEntries=512;
+		iSectorsPerCluster=1;
+		
+		while (minSectorsPerCluster>iSectorsPerCluster)
+			iSectorsPerCluster<<=1;
+
+		iSectorsPerFat=MaxFat16Sectors();
+		}
+	else	//use FAT32
+		{
+        SetFatType(EFat32);
+		iRootDirEntries=0;						//this is always the case for fat32
+		
+        if(iMaxDiskSectors < 16777216)		//8GB in 512byte sectors
+			iSectorsPerCluster=8;
+		else if(iMaxDiskSectors < 33554432)	//16GB in 512byte sectors
+			iSectorsPerCluster=16;
+		else if(iMaxDiskSectors < 67108864)	//32GB in 512byte sectors 
+			iSectorsPerCluster=32;
+		else
+			iSectorsPerCluster=64;				//Anything >= 32GB uses a 32K cluster size
+
+		iReservedSectors=KDefFat32ResvdSec;
+		iRootClusterNum=2;						//As recomended in the document
+		iSectorsPerFat=MaxFat32Sectors();
+		
+		}
+
+	const TFatType fatType = SuggestFatType();
+
+	// Ensure cluster size is a multiple of the block size
+	TInt blockSizeInSectors = aCaps.iBlockSize >> iSectorSizeLog2;
+	__PRINT1(_L("blockSizeInSectors: %d"),blockSizeInSectors);
+	ASSERT(blockSizeInSectors == 0 || IsPowerOf2(blockSizeInSectors));
+	if (blockSizeInSectors != 0 && IsPowerOf2(blockSizeInSectors))
+		{
+		__PRINT1(_L("iSectorsPerCluster    (old): %d"),iSectorsPerCluster);
+		AdjustClusterSize(blockSizeInSectors);
+		__PRINT1(_L("iSectorsPerCluster    (new): %d"),iSectorsPerCluster);
+		}
+
+
+	for (; iSectorsPerCluster>1; iSectorsPerCluster>>= 1)
+		{
+		// Align first data sector on an erase block boundary if
+		// (1) the iEraseBlockSize is specified
+		// (2) the start of the partition is already aligned to an erase block boundary, 
+		//     i.e. iHiddenSectors is zero or a multiple of iEraseBlockSize
+		__PRINT1(_L("iHiddenSectors: %d"),iHiddenSectors);
+		TInt eraseblockSizeInSectors = aCaps.iEraseBlockSize >> iSectorSizeLog2;
+		__PRINT1(_L("eraseblockSizeInSectors: %d"),eraseblockSizeInSectors);
+		ASSERT(eraseblockSizeInSectors == 0 || IsPowerOf2(eraseblockSizeInSectors));	
+		ASSERT(eraseblockSizeInSectors == 0 || eraseblockSizeInSectors >= blockSizeInSectors);
+		if ((eraseblockSizeInSectors != 0) &&
+			(iHiddenSectors % eraseblockSizeInSectors == 0) &&	
+			(IsPowerOf2(eraseblockSizeInSectors)) &&
+			(eraseblockSizeInSectors >= blockSizeInSectors))
+			{
+			TInt r = AdjustFirstDataSectorAlignment(eraseblockSizeInSectors);
+			ASSERT(r == KErrNone);
+			(void) r;
+			}
+		__PRINT1(_L("iReservedSectors: %d"),iReservedSectors);
+		__PRINT1(_L("FirstDataSector: %d"), FirstDataSector());
+
+		// If we've shrunk the number of clusters by so much that it's now invalid for this FAT type
+		// then we need to decrease the cluster size and try again, otherwise we're finshed.
+		if (SuggestFatType() == fatType)
+			break;
+		}
+	__PRINT1(_L("iSectorsPerCluster  (final): %d"),iSectorsPerCluster);
+
+    return KErrNone;
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+/**
+    Initialize the format parameters for a variable sized disk (RAM drive)
+    
+    @param  aDiskSizeInSectors volume size in sectors
+    @return standard error code
+*/
+TInt CFatFormatCB::ProcessVolParam_RamDisk()
+	{
+	__PRINT1(_L("CFatFormatCB::ProcessVolParam_RamDisk() sectors:%d"), iMaxDiskSectors);
+
+    iNumberOfFats   = 2; // 1 FAT 1 Indirection table (FIT)
+	iReservedSectors= 1;
+	iRootDirEntries = 2*(4*KDefaultSectorSize)/sizeof(SFatDirEntry);
+	TUint minSectorsPerCluster=(iMaxDiskSectors+KMaxFAT16Entries-1)/KMaxFAT16Entries;
+	iSectorsPerCluster=1;
+
+	while(minSectorsPerCluster > iSectorsPerCluster)
+		iSectorsPerCluster<<=1;
+
+	
+	iSectorsPerFat=MaxFat16Sectors();
+	__PRINT1(_L("iSectorsPerCluster = %d"),iSectorsPerCluster);
+    __PRINT1(_L("iSectorsPerFat = %d"),iSectorsPerFat);
+	
+    SetFatType(EFat16);
+
+	return KErrNone;
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -175,6 +175,22 @@ EXPORT_C TInt DSimulatedPowerResourceController::CompleteResourceControllerIniti
 	return(TheController.InitResources());
 	}
 
+/** This function is used only for testing purpose. Test default implementation DPowerController::DoRegisterResourceController() 
+	*/
+EXPORT_C TInt DSimulatedPowerResourceController::ResourceControllerRegistration()
+	{
+	Kern::Printf("DSimulatedPowerResourceController::ResourceControllerRegistration()\n");
+	TInt r = KErrNone;
+    if(TPowerController::PowerController())
+		{
+		r =	TPowerController::PowerController()->DoRegisterResourceController();
+		}
+	else 
+		r = KErrNotFound;
+
+	return r;
+	}
+
 /** This function changes the state of the resource to appropriate value */
 TInt DSimulatedPowerResourceController::ChangeResource(TPowerRequest& req, TInt& aCurrentLevel, TInt aMaxLevel, TInt aMinLevel)
 	{

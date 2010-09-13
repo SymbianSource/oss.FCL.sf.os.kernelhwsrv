@@ -72,6 +72,17 @@ TUint CFatCacheBase::FAT_ClusterSzLog2() const
     return iFatClustSzLog2;
     }
     
+TUint32 CFatCacheBase::MaxFatEntries() const 
+    {
+    return iMaxFatEntries;
+    }
+
+TBool CFatCacheBase::FatIndexValid(TUint32 aIndex) const 
+    {
+    return (aIndex >= KFatFirstSearchCluster &&  aIndex < iMaxFatEntries);
+    }
+
+    
 
 //-----------------------------------------------------------------------------
 

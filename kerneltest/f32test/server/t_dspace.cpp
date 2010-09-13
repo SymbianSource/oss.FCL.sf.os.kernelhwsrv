@@ -265,6 +265,8 @@ LOCAL_C TInt64 FillDisk(RFile& aFile,TInt64 aNewSpace,TInt aDrive)
 //
 	{
 	TInt64 space=FreeDiskSpace(aDrive);
+	RDebug::Print(_L("Filling drive till %lu bytes left, current freespace is %lu."), aNewSpace, space);
+	
 	test(space>aNewSpace);
 	while(space>aNewSpace)
 		{
@@ -730,6 +732,7 @@ void TestDiskNotify()
 // format,scandrive, media change
 //
 	{
+    test.Next(_L("test Disk Notify"));
 	// make default directory
 	_LIT(defaultDir,"C:\\F32-TST\\");
 	TInt r=TheFs.MkDirAll(defaultDir);

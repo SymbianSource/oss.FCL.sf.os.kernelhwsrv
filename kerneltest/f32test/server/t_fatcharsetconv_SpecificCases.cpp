@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of the License "Eclipse Public License v1.0"
@@ -16,14 +16,14 @@
 */
 #define __E32TEST_EXTENSION__
 
-#include "T_Fatcharsetconv_aux.h"
+#include "t_fatcharsetconv_aux.h"
 #include <f32file.h>
 #include <e32test.h>
 #include <e32svr.h>
-#include <HAL.H>
+#include <hal.h>
 #include <f32fsys.h>
 #include <f32dbg.h>
-#include "..\server\t_server.h"
+#include "../server/t_server.h"
 
 //#include "fat_utils.h"
 
@@ -572,15 +572,9 @@ void DoSymbianSpecificCases()
 	gLogFailureData.iTCTypeName = KSymbianFATSpecific;
 	gLogFailureData.iAPIName= KNone;
 
-	// Store current file name
-	TFileName fileName;
-	TInt i=0;
-	while(__FILE__[i]!='\0')
-		{
-		fileName.SetLength(i+1);
-		fileName[i] = __FILE__[i++];
-		}
-	gFileName = fileName;
+	// the preprocessor macro gives a C/C++ zero-terminated string; use overloaded ::Copy()
+	// Why oh why does TPtrC8 not have a "char *" constructor ...
+	gFileName.Copy(TPtrC8((const TUint8*)__FILE__));
 
 	gLogFailureData.iFuncName = KTestLeadingE5Handling;
 	TestLeadingE5Handling();

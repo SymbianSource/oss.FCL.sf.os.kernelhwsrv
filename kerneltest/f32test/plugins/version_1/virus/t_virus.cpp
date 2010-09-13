@@ -1,4 +1,4 @@
-// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2005-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -21,13 +21,13 @@
 #include <f32dbg.h>
 #include "t_server.h"
 
-GLREF_C void TestIfEqual( TInt aValue, TInt aExpected, TInt aLine, char aFileName[]);
+GLREF_C void TestIfEqual( TInt aValue, TInt aExpected, TInt aLine, const char aFileName[]);
 
 #define TEST_FOR_ERROR( r )	TestIfEqual( r, KErrNone, __LINE__, __FILE__)
 #define TEST_FOR_VALUE( r, expected ) TestIfEqual( r, expected, __LINE__, __FILE__)
 
 _LIT( KValueTestFailMsg, "ERROR Got %d expected %d" );
-GLDEF_C void TestIfEqual( TInt aValue, TInt aExpected, TInt aLine, char aFileName[])
+GLDEF_C void TestIfEqual( TInt aValue, TInt aExpected, TInt aLine, const char aFileName[])
 	{
 	if( aExpected != aValue )
 		{

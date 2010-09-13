@@ -33,4 +33,5 @@ EXPORTS
 	?RequestNotification@PowerResourceManager@@SAHIIAAVDPowerResourceNotification@@@Z @ 32 NONAME ; public: static int __cdecl PowerResourceManager::RequestNotification(unsigned int,unsigned int,class DPowerResourceNotification &)
 	?RequestNotification@PowerResourceManager@@SAHIIAAVDPowerResourceNotification@@HH@Z @ 33 NONAME ; public: static int __cdecl PowerResourceManager::RequestNotification(unsigned int,unsigned int,class DPowerResourceNotification &,int,int)
 	?RegisterArrayOfStaticResources@DPowerResourceController@@SAHIAAPAPAVDStaticPowerResource@@I@Z @ 34 NONAME ; public: static int __cdecl DPowerResourceController::RegisterArrayOfStaticResources(unsigned int,class DStaticPowerResource * * &,unsigned int)
+	?ResourceControllerRegistration@DSimulatedPowerResourceController@@SAHXZ @ 35 NONAME ; int DSimulatedPowerResourceController::ResourceControllerRegistration(void)
 

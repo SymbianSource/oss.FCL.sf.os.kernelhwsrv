@@ -24,6 +24,7 @@
 #include "activecontrol.h"
 #include "apitests.h"
 #include "activerw.h"
+#include "d32otgdi.h"
 #ifdef USB_SC
 #include "tranhandleserver.h"
 #endif
@@ -36,6 +37,12 @@
 
 void StartMassStorage(RDEVCLIENT* aPort);
 void StopMassStorage(RDEVCLIENT* aPort);
+void OpenStackIfOtg();
+void CloseStackIfOtg();
+
+_LIT(KOtgdiLddFilename, "otgdi");
+static TBool gSupportsOtg;
+static RUsbOtgDriver gOtgPort;
 
 enum Ep0Requests
 	{
@@ -287,6 +294,19 @@ void CActiveControl::ConstructL()
 				}
 			}
 
+		// Check for OTG support
+		TBuf8<KUsbDescSize_Otg> otg_desc;
+		r = iPort[0].GetOtgDescriptor(otg_desc);
+		if (!(r == KErrNotSupported || r == KErrNone))
+			{
+			OstTrace1(TRACE_NORMAL, CACTIVECONTROL_CONSTRUCTL_DUP08, "Error %d while fetching OTG descriptor", r);
+			User::Leave(-1);
+			return;
+			}
+		gSupportsOtg = (r != KErrNotSupported) ? ETrue : EFalse;
+
+		OpenStackIfOtg();
+		
 		iTotalChannels += lddPtr->iNumChannels;
 		nextPort += lddPtr->iNumChannels;
 		lddPtr = lddPtr->iPtrNext;
@@ -1030,7 +1050,9 @@ TInt CActiveControl::ProcessEp0ControlPacket()
 						{
 						PrintHostLog();
 						}
-
+						
+					CloseStackIfOtg();
+					
 					for (TInt portNumber = 0; portNumber < iTotalChannels; portNumber++)
 						{
 						// base class cancel -> calls our DoCancel
@@ -1372,6 +1394,8 @@ TInt CActiveControl::ProcessEp0ControlPacket()
 					r = iPort[0].SendEp0StatusPacket();
 					test_KErrNone(r);
 
+					CloseStackIfOtg();
+					
 					for (TInt portNumber = 0; portNumber < iTotalChannels; portNumber++)
 						{
 						delete iDeviceStateNotifier[portNumber];
@@ -1415,6 +1439,8 @@ TInt CActiveControl::ProcessEp0ControlPacket()
 					SetupDescriptors(iLddPtr, &iPort[0],value);
 					StartMassStorage(&iPort[0]);
 
+					OpenStackIfOtg();
+					
 					test.Next (_L("Enumeration..."));
 					r = ReEnumerate();
 					test_KErrNone(r);
@@ -1533,6 +1559,7 @@ TInt CActiveControl::ProcessEp0ControlPacket()
 
 void CActiveControl::PrintHostLog()
 	{
+#ifdef OST_TRACE_COMPILER_IN_USE
 	TRequestStatus status = 0;
 	wchar_t lineBuf[128];
 	TUint j = 0;
@@ -1551,76 +1578,78 @@ void CActiveControl::PrintHostLog()
 	TUint readSize;
 	TBool readZlp = EFalse;
 
-	r = iPort->OpenEndpoint(scReadBuf,firstBulkOutEndpoint);
-	test_KErrNone(r);
-	do
-		{
-		r = scReadBuf.GetBuffer (scReadData,readSize,readZlp,status);
-		// The following line can be reinstated once the shared chunk failure is fixed
-		// that prevents the readZlp flag from being set
-		// test_Value(r, (r == KErrNone) || (r == KErrCompletion) || (r == KErrEof));
-		if (r == KErrCompletion)
-			{
-			TUSB_VERBOSE_PRINT1("Host log file %d bytes read\n",readSize);
-			if(gVerbose)
-			    {
-			    OstTrace1(TRACE_VERBOSE, CACTIVECONTROL_PRINTHOSTLOG_DUP01, "Host log file %d bytes read\n",readSize);
-			    }
-			scCharPtr = (TUint8 *)scReadData;
-			// Print the host log file
-			for (TUint i = 0; i < readSize; i++)
-				{
-				if (* scCharPtr == '\r')
-					{
-					lineBuf[j++] = '\0';
-					OstTraceExt1(TRACE_NORMAL, CACTIVECONTROL_PRINTHOSTLOG_DUP02, "%S",*lineBuf);
-					j = 0;
-					}
-				else
-					{
-					if (* scCharPtr != '\n')
-						{
-						lineBuf[j++] = * scCharPtr;
-						}
-					}
-				scCharPtr++;
-				}
-			}
-		if (r == KErrNone)
-			{
-			User::WaitForRequest(status);
-			test_KErrNone(status.Int());
-			}
-		}
-	while (r >= KErrNone && !readZlp);
-	#else
-	TPtr8 readBuf((TUint8 *)User::Alloc(KHostLogFileSize),KHostLogFileSize,KHostLogFileSize);
-	iPort[0].ReadUntilShort(status, (TEndpointNumber)firstBulkOutEndpoint, readBuf);
-	User::WaitForRequest(status);
-	test_KErrNone(status.Int());
-	TUSB_VERBOSE_PRINT1("Host log file %d bytes read\n",readBuf.Length());
-	if(gVerbose)
-	    {
-	    OstTrace1(TRACE_VERBOSE, CACTIVECONTROL_PRINTHOSTLOG_DUP03, "Host log file %d bytes read\n",readBuf.Length());
-	    }
-	for (TUint i = 0; i < readBuf.Length(); i++)
-		{
-		if (readBuf[i] == '\r')
-			{
-			lineBuf[j++] = '\0';
-			OstTraceExt1(TRACE_NORMAL, CACTIVECONTROL_PRINTHOSTLOG_DUP04, "%s",*lineBuf);
-			j = 0;
-			}
-		else
-			{
-			if (readBuf[i] != '\n')
-				{
-				lineBuf[j++] = readBuf[i];
-				}
-			}
-		}
-	User::Free ((TAny *)readBuf.Ptr());
-	#endif
+    r = iPort->OpenEndpoint(scReadBuf,firstBulkOutEndpoint);
+    test_KErrNone(r);
+    do
+        {
+        r = scReadBuf.GetBuffer (scReadData,readSize,readZlp,status);
+        // The following line can be reinstated once the shared chunk failure is fixed
+        // that prevents the readZlp flag from being set
+        // test_Value(r, (r == KErrNone) || (r == KErrCompletion) || (r == KErrEof));
+        if (r == KErrCompletion)
+            {
+            TUSB_VERBOSE_PRINT1("Host log file %d bytes read\n",readSize);
+            if(gVerbose)
+                {
+                OstTrace1(TRACE_VERBOSE, CACTIVECONTROL_PRINTHOSTLOG_DUP01, "Host log file %d bytes read\n",readSize);
+                }
+            scCharPtr = (TUint8 *)scReadData;
+            // Print the host log file
+            for (TUint i = 0; i < readSize; i++)
+                {
+                if (* scCharPtr == '\r')
+                    {
+                    lineBuf[j++] = '\0';
+                    OstTraceExt1(TRACE_NORMAL, CACTIVECONTROL_PRINTHOSTLOG_DUP02, "%S",*lineBuf);
+                    j = 0;
+                    }
+                else
+                    {
+                    if (* scCharPtr != '\n')
+                        {
+                        lineBuf[j++] = * scCharPtr;
+                        }
+                    }
+                scCharPtr++;
+                }
+            }
+        if (r == KErrNone)
+            {
+            User::WaitForRequest(status);
+            test_KErrNone(status.Int());
+            }
+        }
+    while (r >= KErrNone && !readZlp);
+    #else
+    TPtr8 readBuf((TUint8 *)User::Alloc(KHostLogFileSize),KHostLogFileSize,KHostLogFileSize);
+    iPort[0].ReadUntilShort(status, (TEndpointNumber)firstBulkOutEndpoint, readBuf);
+    User::WaitForRequest(status);
+    test_KErrNone(status.Int());
+    TUSB_VERBOSE_PRINT1("Host log file %d bytes read\n",readBuf.Length());
+    if(gVerbose)
+        {
+        OstTrace1(TRACE_VERBOSE, CACTIVECONTROL_PRINTHOSTLOG_DUP03, "Host log file %d bytes read\n",readBuf.Length());
+        }
+    for (TUint i = 0; i < readBuf.Length(); i++)
+        {
+        if (readBuf[i] == '\r')
+            {
+            lineBuf[j++] = '\0';
+            OstTraceExt1(TRACE_NORMAL, CACTIVECONTROL_PRINTHOSTLOG_DUP04, "%s",*lineBuf);
+            j = 0;
+            }
+        else
+            {
+            if (readBuf[i] != '\n')
+                {
+                lineBuf[j++] = readBuf[i];
+                }
+            }
+        }
+    User::Free ((TAny *)readBuf.Ptr());
+    #endif
+    
+#endif // OST_TRACE_COMPILER_IN_USE
 	}
 
 void CActiveControl::QueryUsbClientL(LDDConfigPtr aLddPtr, RDEVCLIENT* aPort)
@@ -2360,4 +2389,43 @@ void CActiveControl::ConstructLOnSharedLdd(const RMessagePtr2& aMsg)
 	}
 
 #endif
+
+void OpenStackIfOtg()
+	{
+	// On an OTG device we have to start the OTG driver, otherwise the Client
+	// stack will remain disabled forever.
+	if (gSupportsOtg)
+		{
+		test.Start(_L("Running on OTG device: loading OTG driver\n"));
+		test.Next(_L("Load OTG LDD"));
+		TInt r = User::LoadLogicalDevice(KOtgdiLddFilename);
+		test((r == KErrNone) || (r == KErrAlreadyExists));
+
+		test.Next(_L("Open OTG channel"));
+		r = gOtgPort.Open();
+		test(r == KErrNone);
+
+		test.Next(_L("Start OTG stack"));
+		r = gOtgPort.StartStacks();
+		test(r == KErrNone);
+		test.End();
+		}
+	}
+
+void CloseStackIfOtg()
+	{
+	if (gSupportsOtg)
+		{
+		test.Start(_L("Close OTG stack\n"));
+		test.Next(_L("Stop OTG stack"));
+		gOtgPort.StopStacks();
+		test.Next(_L("Close OTG Channel"));
+		gOtgPort.Close();
+		test.Next(_L("Free OTG LDD"));
+		TInt r = User::FreeLogicalDevice(RUsbOtgDriver::Name());
+		test(r == KErrNone);
+		test.End();
+		}
+	}
+	
 // -eof-

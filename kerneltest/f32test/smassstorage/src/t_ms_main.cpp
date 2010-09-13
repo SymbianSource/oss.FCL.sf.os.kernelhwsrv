@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -38,7 +38,7 @@ LOCAL_C void DoTests()
 
 
 _LIT( KValueTestFailMsg, "ERROR Got %d expected %d" );
-GLDEF_C void TestIfEqual( TInt aValue, TInt aExpected, TInt aLine, char aFileName[])
+GLDEF_C void TestIfEqual( TInt aValue, TInt aExpected, TInt aLine, const char aFileName[])
 	{
 	if( aExpected != aValue )
 		{

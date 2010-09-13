@@ -26,51 +26,51 @@
 // arbitrary limit upon the WINS ramdisk.
 //
 static TInt64 GetRamDiskSizeInBytes()
-	{
+    {
 
 #if defined(__EPOC32__)
-	TMemoryInfoV1Buf memInfo;
-	UserHal::MemoryInfo(memInfo);
-	TUint max = memInfo().iTotalRamInBytes; // not really the correct max
-	return max;
+    TMemoryInfoV1Buf memInfo;
+    UserHal::MemoryInfo(memInfo);
+    TUint max = memInfo().iTotalRamInBytes; // not really the correct max
+    return max;
 #else
     const TInt KArbitraryWinsRamDiskSize=0x400000;  //-- Default size for a Ram drive, 4MB
-	return(KArbitraryWinsRamDiskSize);
+    return(KArbitraryWinsRamDiskSize);
 #endif
-	}
+    }
 
 CFatFormatCB::CFatFormatCB()
-	{
-	__PRINT1(_L("CFatFormatCB::CFatFormatCB() [%x]"),this);
+    {
+    __PRINT1(_L("CFatFormatCB::CFatFormatCB() [%x]"),this);
     }
 
 CFatFormatCB::~CFatFormatCB()
-	{
-	__PRINT1(_L("CFatFormatCB::~CFatFormatCB() [%x]"),this);
+    {
+    __PRINT1(_L("CFatFormatCB::~CFatFormatCB() [%x]"),this);
     iBadSectors.Close();
-	iBadClusters.Close();
-	}
+    iBadClusters.Close();
+    }
 
 /**
     Calculate the size of a 16 bit FAT
 */
 TUint CFatFormatCB::MaxFat16Sectors() const
-	{
-	const TUint32 fatSizeInBytes=(2*iMaxDiskSectors)/iSectorsPerCluster+(iBytesPerSector-1);
-	return(fatSizeInBytes/iBytesPerSector);
-	}
+    {
+    const TUint32 fatSizeInBytes=(2*iMaxDiskSectors)/iSectorsPerCluster+(iBytesPerSector-1);
+    return(fatSizeInBytes/iBytesPerSector);
+    }
 
 
 /**
     Calculate the size of a 12 bit FAT
 */
 TUint CFatFormatCB::MaxFat12Sectors() const
-	{
-	const TUint32 maxDiskClusters=iMaxDiskSectors/iSectorsPerCluster;
-	const TUint32 fatSizeInBytes=maxDiskClusters+(maxDiskClusters>>1)+(iBytesPerSector-1);
-	
-	return(fatSizeInBytes/iBytesPerSector);
-	}
+    {
+    const TUint32 maxDiskClusters=iMaxDiskSectors/iSectorsPerCluster;
+    const TUint32 fatSizeInBytes=maxDiskClusters+(maxDiskClusters>>1)+(iBytesPerSector-1);
+    
+    return(fatSizeInBytes/iBytesPerSector);
+    }
 
 //-------------------------------------------------------------------------------------------------------------------
 /**
@@ -112,15 +112,16 @@ void CFatFormatCB::DoZeroFillMediaL(TInt64 aStartPos, TInt64 aEndPos)
 
 //-------------------------------------------------------------------------------------------------------------------
 
-static TInt DiskSizeInSectorsL(TInt64 aSizeInBytes)
-	{
+static TUint32 DiskSizeInSectorsL(TInt64 aSizeInBytes)
+    {
     const TInt64 totalSectors64=aSizeInBytes>>KDefSectorSzLog2;
-	const TInt   totalSectors32=I64LOW(totalSectors64);
-    __PRINT2(_L("Disk size:%LU, max disk sectors:%d"),aSizeInBytes, totalSectors32);
+    const TUint32   totalSectors32=I64LOW(totalSectors64);
+    ASSERT(!I64HIGH(totalSectors64));
+    //__PRINT2(_L("Disk size:%LU, max disk sectors:%d"),aSizeInBytes, totalSectors32);
     return totalSectors32;
-	}
+    }
 
-
+//-------------------------------------------------------------------------------------------------------------------
 /**
     suggest FAT type according to the FAT volume metrics
     @return calculated FAT type
@@ -140,89 +141,70 @@ TFatType CFatFormatCB::SuggestFatType() const
         return EFat32;
 }
 
+//-------------------------------------------------------------------------------------------------------------------
 /**
     Initialize format data.
 */
 void CFatFormatCB::InitializeFormatDataL()
-	{
+    {
       
-	__PRINT1(_L("CFatFormatCB::InitializeFormatDataL() drv:%d"), Drive().DriveNumber());
-	TLocalDriveCapsV6Buf caps;
-	User::LeaveIfError(LocalDrive()->Caps(caps));
-	iVariableSize=((caps().iMediaAtt)&KMediaAttVariableSize) ? (TBool)ETrue : (TBool)EFalse;
-
-	iBytesPerSector=KDefaultSectorSize;
-	iSectorSizeLog2 = Log2(iBytesPerSector);
-	iHiddenSectors=caps().iHiddenSectors;	
-	iNumberOfHeads=2;
-	iSectorsPerTrack=16;
-	
-    if (iVariableSize)
-		{// Variable size implies ram disk
-		iMaxDiskSectors=DiskSizeInSectorsL(GetRamDiskSizeInBytes());
-		InitFormatDataForVariableSizeDisk(iMaxDiskSectors);
-		}
-	else
-		{//-- fixed-size media
-        iMaxDiskSectors=DiskSizeInSectorsL(caps().iSize);
-		
-        __PRINT3(_L("::InitializeFormatDataL() iMode:0x%x, ilen:%d, extrai:%d"), iMode, iSpecialInfo.Length(), caps().iExtraInfo);
-
-        if(iMode & ESpecialFormat)
-		    {
-		    if(iSpecialInfo.Length())
-			    {
-                if (caps().iExtraInfo)  // conflict between user and media
-                    User::Leave(KErrNotSupported);
-			    else  // User-specified
-                    User::LeaveIfError(InitFormatDataForFixedSizeDiskUser(iMaxDiskSectors));
-                }
-    		else
-    		    {
-                if (caps().iExtraInfo)
-                    User::LeaveIfError(InitFormatDataForFixedSizeDiskCustom(caps().iFormatInfo));
-                else
-    			    User::LeaveIfError(InitFormatDataForFixedSizeDiskNormal(iMaxDiskSectors, caps()));
-                }
-		    }
-        else //if(iMode & ESpecialFormat)
-            {
-            // Normal format with default values
-            //  - Media with special format requirements will always use them
-            //    even without the ESpecialFormat option.
-            if(caps().iExtraInfo)
-	            User::LeaveIfError(InitFormatDataForFixedSizeDiskCustom(caps().iFormatInfo));
-            else
-	            User::LeaveIfError(InitFormatDataForFixedSizeDiskNormal(iMaxDiskSectors, caps()));
-		    }
-        
-        } //else(iVariableSize)
-	}
-
-/**
-    Initialize the format parameters for a variable sized disk
+    __PRINT1(_L("CFatFormatCB::InitializeFormatDataL() drv:%d"), Drive().DriveNumber());
     
-    @param  aDiskSizeInSectors volume size in sectors
-    @return standard error code
-*/
-TInt  CFatFormatCB::InitFormatDataForVariableSizeDisk(TUint aDiskSizeInSectors)
-	{
-	iNumberOfFats=2; // 1 FAT 1 Indirection table (FIT)
-	iReservedSectors=1;
-	iRootDirEntries=2*(4*KDefaultSectorSize)/sizeof(SFatDirEntry);
-	TUint minSectorsPerCluster=(aDiskSizeInSectors+KMaxFAT16Entries-1)/KMaxFAT16Entries;
-	iSectorsPerCluster=1;
+    TLocalDriveCapsV6Buf capsBuf;
+    const TLocalDriveCapsV6& caps = capsBuf();
+    User::LeaveIfError(LocalDrive()->Caps(capsBuf));
 
-	while (minSectorsPerCluster>iSectorsPerCluster)
-		iSectorsPerCluster<<=1;
+    iVariableSize   = (caps.iMediaAtt & KMediaAttVariableSize);
+    iBytesPerSector=KDefaultSectorSize;
+    iSectorSizeLog2 = Log2(iBytesPerSector);
+    iHiddenSectors  = caps.iHiddenSectors;  
+    iNumberOfHeads=2;
+    iSectorsPerTrack=16;
+    
+    TInt nRes=KErrUnknown;
 
-	__PRINT1(_L("iSectorsPerCluster = %d"),iSectorsPerCluster);
-	iSectorsPerFat=MaxFat16Sectors();
-	__PRINT1(_L("iSectorsPerFat = %d"),iSectorsPerFat);
-	iFileSystemName=KFileSystemName16;
+    if (iVariableSize)
+        {// Variable size implies ram disk
+        iMaxDiskSectors=DiskSizeInSectorsL(GetRamDiskSizeInBytes());
+        nRes = ProcessVolParam_RamDisk();
+        }
+    else
+        {//-- fixed-size media
+        iMaxDiskSectors=DiskSizeInSectorsL(caps.iSize);
+        __PRINT3(_L("::InitializeFormatDataL() iMode:0x%x, ilen:%d, extrai:%d"), iMode, iSpecialInfo.Length(), caps.iExtraInfo);
 
-	return KErrNone;
-	}
+        //-----------------------------------------------------------------------------------------
+        //-- find out if there are volume parameters specified by the user or media driver.
+
+        //-- meaning: the user has specified its own settings for the volume parameters
+        const TBool bUserFormat = (iMode & ESpecialFormat) && iSpecialInfo.Length();
+    
+        //-- meaning: the media driver has its own settings regarding the volume parameters
+        const TBool bCustomFormat = caps.iExtraInfo; 
+
+        if(bUserFormat && bCustomFormat)
+            {
+            nRes = KErrNotSupported; //-- conflict between user settings and media driver's
+            }
+            else
+            {
+            if(bUserFormat)
+                nRes = ProcessVolParam_User(caps);
+            else if(bCustomFormat)
+                nRes = ProcessVolParam_Custom(caps);
+                else
+                nRes = ProcessVolParam_Default(caps); 
+            }
+        } //else(iVariableSize)
+    
+    if(nRes != KErrNone)
+    {
+        __PRINT1(_L(" ::InitializeFormatDataL() err:%d"), nRes);
+        User::Leave(nRes);
+        }
+
+    }
+
 
 TInt CFatFormatCB::HandleCorrupt(TInt aError)
 //
@@ -232,10 +214,10 @@ TInt CFatFormatCB::HandleCorrupt(TInt aError)
 // @see TErrorInfo
 //
     {
-	__PRINT2(_L("CFatFormatCB::HandleCorrupt(%d) drv:%d"), aError, Drive().DriveNumber());
+    __PRINT2(_L("CFatFormatCB::HandleCorrupt(%d) drv:%d"), aError, Drive().DriveNumber());
 
     TPckgBuf<TErrorInfo> info;
-	TInt r = LocalDrive()->GetLastErrorInfo(info);
+    TInt r = LocalDrive()->GetLastErrorInfo(info);
     
     if(r != KErrNone)
         {
@@ -243,15 +225,15 @@ TInt CFatFormatCB::HandleCorrupt(TInt aError)
         }
 
     if (r == KErrNotSupported)
-		return KErrCorrupt;
+        return KErrCorrupt;
     else if (r != KErrNone)
         return r;
 
     __PRINT3(_L("....TErrorInfo iReasonCode:%d, iErrorPos:%LU, iOtherInfo:%d"), info().iReasonCode, info().iErrorPos, info().iOtherInfo);
-	
+    
     // if no error reported by GetLastErrorInfo(), return the original error
-	if (info().iReasonCode == KErrNone)
-		return aError;
+    if (info().iReasonCode == KErrNone)
+        return aError;
 
     if (info().iReasonCode!=KErrNone && info().iReasonCode!=TErrorInfo::EBadSector)
         return info().iReasonCode;

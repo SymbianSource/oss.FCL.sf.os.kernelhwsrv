@@ -45,4 +45,5 @@ EXPORTS
 	_ZTV21DStaticPowerResourceD @ 44 NONAME
 	_ZTV22DDynamicPowerResourceD @ 45 NONAME
 	_ZN24DPowerResourceController30RegisterArrayOfStaticResourcesEjRPP20DStaticPowerResourcej @ 46 NONAME
+	_ZN33DSimulatedPowerResourceController30ResourceControllerRegistrationEv @ 47 NONAME
 

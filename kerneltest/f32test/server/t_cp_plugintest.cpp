@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2007 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of the License "Eclipse Public License v1.0"
@@ -12,17 +12,17 @@
 * Contributors:
 *
 * Description:
-*
+* /sf/os/kernelhwsrv/kerneltest/f32test/server/t_cp_plugintest.cpp
 */
 
 
 #define __E32TEST_EXTENSION__
 
 #include <e32test.h>
-#include <HAL.H>
+#include <hal.h>
 #include <f32fsys.h>
 #include <f32dbg.h>
-#include "..\server\t_server.h"
+#include "../server/t_server.h"
 #include "fat_utils.h"
 
 	

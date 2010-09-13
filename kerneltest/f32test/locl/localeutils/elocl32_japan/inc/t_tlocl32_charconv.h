@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1997-2008 Nokia Corporation and/or its subsidiary(-ies). 
+* Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies). 
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of the License "Eclipse Public License v1.0"
@@ -21,11 +21,11 @@
 #define __CHARCONV_H__
 
 #if !defined(__E32STD_H__)
-#include <E32STD.H>
+#include <e32std.h>
 #endif
 
 #if !defined(__E32BASE_H__)
-#include <E32BASE.H>
+#include <e32base.h>
 #endif
 
 /** 

@@ -1314,8 +1314,7 @@ for example, releasing access to some shared resource.
 */
 	{
 public:
-	inline TCleanupItem(TCleanupOperation anOperation);
-	inline TCleanupItem(TCleanupOperation anOperation,TAny* aPtr);
+	inline TCleanupItem(TCleanupOperation anOperation, TAny* aPtr = 0);
 private:
 	TCleanupOperation iOperation;
 	TAny* iPtr;

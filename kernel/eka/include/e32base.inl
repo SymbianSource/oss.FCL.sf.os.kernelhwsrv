@@ -2970,21 +2970,7 @@ a debug build or a release build.
 
 
 // Class TCleanupItem
-inline TCleanupItem::TCleanupItem(TCleanupOperation anOperation)
-	: iOperation(anOperation)
-/**
-Constructs the object with a cleanup operation.
-
-@param anOperation  A cleanup operation which will be invoked by the pop and
-                    destroy action resulting from a subsequent call to
-					CleanupStack::PopAndDestroy().
-*/
-	{}
-
-
-
-
-inline TCleanupItem::TCleanupItem(TCleanupOperation anOperation,TAny *aPtr)
+inline TCleanupItem::TCleanupItem(TCleanupOperation anOperation, TAny *aPtr)
 	: iOperation(anOperation), iPtr(aPtr)
 /**
 Constructs the object with a cleanup operation and a pointer to the object
@@ -2995,7 +2981,7 @@ to be cleaned up.
 				   CleanupStack::PopAndDestroy().
 
 @param aPtr        A pointer to an object which is the target of the
-                   cleanup operation.
+                   cleanup operation. Defaults to NULL if not supplied.
 */
 	{}
 

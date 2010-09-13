@@ -27,6 +27,8 @@ LOCAL_D CFileMan* gFileMan=NULL;
 LOCAL_D TBool gAsynch=EFalse;
 LOCAL_D TRequestStatus gStat;
 LOCAL_D TBool testingInvalidPathLengths;
+LOCAL_D TChar gSecDrive;        // a second drive for inter-drive tests
+LOCAL_D TBool gSecDriveReady;
 
 class CFileManObserver : public CBase, public MFileManObserver
 	{
@@ -65,6 +67,30 @@ MFileManObserver::TControl CFileManObserver::NotifyFileManEnded()
 		}
 	return(MFileManObserver::EContinue);
 	}
+
+LOCAL_C TBool GetSecondDrive(TChar& aDrive) // Get the drive that is ready.
+    {
+    TDriveList list;
+    TheFs.DriveList(list);
+    if (list[EDriveD] != 0)
+        {
+        aDrive = 'D';
+        return ETrue;
+        }
+    
+    TInt drv;
+    // In minibsp rom(sirocco) there is no D drive
+    for(drv = EDriveE; drv < EDriveZ; drv++)
+        {
+        if (list[drv] != 0) 
+            {
+            aDrive = 'A' + drv;
+            return ETrue;
+            }
+        }
+    aDrive = '?';
+    return EFalse;
+    }
 
 LOCAL_C void WaitForSuccess()
 //
@@ -175,6 +201,7 @@ LOCAL_C void SetupDirectories(TBool aCreateFiles, TFileName* aDestOtherDrive)
 		{
 #if !defined(__WINS__)
 		*aDestOtherDrive = gSessionPath[0] == 'C' ? _L("D:\\F32-TST\\TFMAN\\dest\\") : _L("C:\\F32-TST\\TFMAN\\dest\\");
+        (*aDestOtherDrive)[0] = (TText) gSecDrive;
 #else
 		*aDestOtherDrive = gSessionPath[0] == 'C' ? _L("Y:\\F32-TST\\TFMAN\\dest\\") : _L("C:\\F32-TST\\TFMAN\\dest\\");
 #endif
@@ -2163,10 +2190,15 @@ LOCAL_C void TestINC108401()
    	
 	TFileName trgPath = _L("?:\\F32-TST\\");
 
-	if (gSessionPath[0]!='D'&& gSessionPath[0]!='Y')
+	if (gSessionPath[0]!='D'&& gSessionPath[0]!='Y' && gSessionPath[0]!='I')
 		{
 #if !defined(__WINS__)
-		trgPath[0] = 'D';
+        if (!gSecDriveReady)
+            {
+            test.Printf(_L("Second drive not available for test, skip..."));
+            return;
+            }
+		trgPath[0] = (TText) gSecDrive;
 #else
 		trgPath[0] = 'Y';
 #endif
@@ -2793,8 +2825,15 @@ LOCAL_C void TestRecursiveMoveAcrossDrives()
 	if (gSessionPath[0]=='C')
 		{
 #if !defined(__WINS__)
-		trgDir	   = _L("D:\\F32-TST\\TFMAN\\RECMOVE2\\");
-		trgSpec	   = _L("D:\\F32-TST\\TFMAN\\RECMOVE2\\*");
+        if (!gSecDriveReady)
+            {
+            test.Printf(_L("Second drive not available for test, skip..."));
+            return;
+            }
+		trgDir	   = _L("?:\\F32-TST\\TFMAN\\RECMOVE2\\");
+		trgSpec	   = _L("?:\\F32-TST\\TFMAN\\RECMOVE2\\*");     
+        trgDir[0] = (TText) gSecDrive;;
+        trgSpec[0] = (TText) gSecDrive;;
 #else
 		trgDir     = _L("Y:\\F32-TST\\TFMAN\\RECMOVE2\\");
 		trgSpec    = _L("Y:\\F32-TST\\TFMAN\\RECMOVE2\\*");
@@ -2825,24 +2864,30 @@ LOCAL_C void TestRecursiveMoveAcrossDrives()
 	RmDir(_L("C:\\F32-TST\\TFMAN\\AFTER\\"));
 	RmDir(_L("C:\\F32-TST\\TFMAN\\RECMOVE\\"));
 	
+    TFileName destOtherDrive;
 	//
 	// Test moving empty directories (DEF073924)
 	//
 	test.Next(_L("Test moving empty directories"));
-
-	TFileName destOtherDrive;
-	SetupDirectories(EFalse, &destOtherDrive);
-
-	err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\source\\"), destOtherDrive, CFileMan::ERecurse);
-	test_Equal(KErrNotFound, err);	// Expected - directory is empty
-
-	// Test that all directories are still present
-	TEntry entry;
-	err = TheFs.Entry(_L("\\F32-TST\\TFMAN\\source\\"), entry);
-	test_KErrNone(err);
-	err = TheFs.Entry(destOtherDrive, entry);
-	test_KErrNone(err);
-
+	
+	if (gSecDriveReady)
+	    {
+        SetupDirectories(EFalse, &destOtherDrive);
+    
+        err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\source\\"), destOtherDrive, CFileMan::ERecurse);
+        test_Equal(KErrNotFound, err);	// Expected - directory is empty
+    
+        // Test that all directories are still present
+        TEntry entry;
+        err = TheFs.Entry(_L("\\F32-TST\\TFMAN\\source\\"), entry);
+        test_KErrNone(err);
+        err = TheFs.Entry(destOtherDrive, entry);
+        test_KErrNone(err);
+	    }
+	else
+	    {
+        test.Printf(_L("Second drive not available for test, skip..."));
+	    }
 	//--------------------------------------------- 
 	//! @SYMTestCaseID			PBASE-T_FMAN-0571
 	//! @SYMTestType			UT
@@ -2882,13 +2927,19 @@ LOCAL_C void TestRecursiveMoveAcrossDrives()
 	//
 	test.Next(_L("Test moving a directory containing subdirectories"));
 
-	SetupDirectories(ETrue, &destOtherDrive);
-	err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\source\\"), destOtherDrive, CFileMan::ERecurse | CFileMan::EOverWrite);
-	test_KErrNone(err);
-
-	destOtherDrive.Append(_L("*"));
-	Compare(_L("\\F32-TST\\TFMAN\\compare\\*"), destOtherDrive);
-
+    if (gSecDriveReady)
+        {
+        SetupDirectories(ETrue, &destOtherDrive);
+        err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\source\\"), destOtherDrive, CFileMan::ERecurse | CFileMan::EOverWrite);
+        test_KErrNone(err);
+        
+        destOtherDrive.Append(_L("*"));
+        Compare(_L("\\F32-TST\\TFMAN\\compare\\*"), destOtherDrive);
+        }
+    else
+        {
+        test.Printf(_L("Second drive not available for test, skip..."));
+        }
 	//--------------------------------------------- 
 	//! @SYMTestCaseID			PBASE-T_FMAN-0161
 	//! @SYMTestType			UT 
@@ -2900,41 +2951,48 @@ LOCAL_C void TestRecursiveMoveAcrossDrives()
 	//! @SYMTestStatus			Implemented 
 	//--------------------------------------------- 	
 	test.Next(_L("Test moving when the target directory does not exist"));
-
-	SetupDirectories(ETrue, &destOtherDrive);
-	
-	RmDir(destOtherDrive);
-
-	err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\source\\"), destOtherDrive, CFileMan::ERecurse);
-	test_KErrNone(err);
-
-	Compare(_L("\\F32-TST\\TFMAN\\compare\\*"), destOtherDrive);
-
-	SetupDirectories(ETrue, &destOtherDrive);
-	
-	RmDir(destOtherDrive);
-
-	err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\source"), destOtherDrive, CFileMan::ERecurse);
-	test_KErrNone(err);
-
-	MakeDir(_L("\\F32-TST\\TFMAN\\compare\\subdir\\"));
-	destOtherDrive.Append(_L("source\\"));
-	Compare(_L("\\F32-TST\\TFMAN\\compare\\*"), destOtherDrive);
-	RmDir(_L("\\F32-TST\\TFMAN\\compare\\subdir\\"));
-
-	SetupDirectories(ETrue, &destOtherDrive);
-
-	RmDir(destOtherDrive);
-
-	err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\source\\File1.TXT"), destOtherDrive, CFileMan::ERecurse);
-	test_KErrNone(err);
-
-	CheckFileExists(_L("\\F32-TST\\TFMAN\\source\\File1.TXT"), KErrNotFound, ETrue);
-	destOtherDrive.Append(_L("File1.TXT"));
-	CheckFileExists(destOtherDrive, KErrNone, ETrue);
-
-	RmDir(destOtherDrive);
-	RmDir(_L("\\F32-TST\\TFMAN\\source\\"));
+    
+	if (gSecDriveReady)
+        {
+        SetupDirectories(ETrue, &destOtherDrive);
+        
+        RmDir(destOtherDrive);
+    
+        err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\source\\"), destOtherDrive, CFileMan::ERecurse);
+        test_KErrNone(err);
+    
+        Compare(_L("\\F32-TST\\TFMAN\\compare\\*"), destOtherDrive);
+    
+        SetupDirectories(ETrue, &destOtherDrive);
+        
+        RmDir(destOtherDrive);
+    
+        err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\source"), destOtherDrive, CFileMan::ERecurse);
+        test_KErrNone(err);
+    
+        MakeDir(_L("\\F32-TST\\TFMAN\\compare\\subdir\\"));
+        destOtherDrive.Append(_L("source\\"));
+        Compare(_L("\\F32-TST\\TFMAN\\compare\\*"), destOtherDrive);
+        RmDir(_L("\\F32-TST\\TFMAN\\compare\\subdir\\"));
+    
+        SetupDirectories(ETrue, &destOtherDrive);
+    
+        RmDir(destOtherDrive);
+    
+        err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\source\\File1.TXT"), destOtherDrive, CFileMan::ERecurse);
+        test_KErrNone(err);
+    
+        CheckFileExists(_L("\\F32-TST\\TFMAN\\source\\File1.TXT"), KErrNotFound, ETrue);
+        destOtherDrive.Append(_L("File1.TXT"));
+        CheckFileExists(destOtherDrive, KErrNone, ETrue);
+    
+        RmDir(destOtherDrive);
+        RmDir(_L("\\F32-TST\\TFMAN\\source\\"));
+        }
+    else
+        {
+        test.Printf(_L("Second drive not available for test, skip..."));
+        }
 
 	//
 	// Test recursive move of complex directory structure into itself (INC078759)
@@ -3777,10 +3835,19 @@ LOCAL_C void TestMoveAcrossDrives()
 	if (gSessionPath[0]=='C')
 		{
 #if !defined(__WINS__)
-		trgDrive   = _L("D:\\");
-		trgFile    = _L("D:\\Sketch");
-		trgDir     = _L("D:\\DRIVEMOVE\\");
-		trgDirFile = _L("D:\\DRIVEMOVE\\Sketch");
+        if (!gSecDriveReady)
+            {
+            test.Printf(_L("Second drive not available for test, skip..."));
+            return;
+            }
+		trgDrive   = _L("?:\\");
+		trgFile    = _L("?:\\Sketch");
+		trgDir     = _L("?:\\DRIVEMOVE\\");
+		trgDirFile = _L("?:\\DRIVEMOVE\\Sketch");
+		trgDrive[0] = (TText) gSecDrive;;
+        trgFile[0]  = (TText) gSecDrive;
+        trgDir[0]   = (TText) gSecDrive;
+        trgDirFile[0]  = (TText) gSecDrive;		
 #else
 		trgDrive   = _L("Y:\\");
 		trgFile    = _L("Y:\\Sketch");
@@ -3885,9 +3952,17 @@ LOCAL_C void TestAbortedMoveAcrossDrives()
 	if (gSessionPath[0]=='C')
 		{
 #if !defined(__WINS__)
-		trgDirRoot = _L("D:\\F32-TST\\TFMAN\\");
-		trgDirFull = _L("D:\\F32-TST\\TFMAN\\CANCELMOVE\\");
-        trgDirFile = _L("D:\\F32-TST\\TFMAN\\CANCELMOVE\\FILE");
+        if (!gSecDriveReady)
+            {
+            test.Printf(_L("Second drive not available for test, skip..."));
+            return;
+            }
+		trgDirRoot = _L("?:\\F32-TST\\TFMAN\\");
+		trgDirFull = _L("?:\\F32-TST\\TFMAN\\CANCELMOVE\\");
+        trgDirFile = _L("?:\\F32-TST\\TFMAN\\CANCELMOVE\\FILE");
+        trgDirRoot[0] = (TText) gSecDrive;
+        trgDirFull[0] = (TText) gSecDrive;
+        trgDirFile[0] = (TText) gSecDrive;
 #else
 		trgDirRoot = _L("Y:\\F32-TST\\TFMAN\\");
 		trgDirFull = _L("Y:\\F32-TST\\TFMAN\\CANCELMOVE\\");
@@ -3969,7 +4044,13 @@ LOCAL_C void TestMoveEmptyDirectory()
 	test.Next(_L("Test move empty directory"));
 
 #if !defined(__WINS__)
-	TFileName trgDrive=_L("D:\\");
+    if (!gSecDriveReady)
+        {
+        test.Printf(_L("Second drive not available for test, skip..."));
+        return;
+        }
+	TFileName trgDrive=_L("?:\\");
+	trgDrive[0] = (TText) gSecDrive;
 #else
 	if (gSessionPath[0]!='C')
 		return;
@@ -4114,6 +4195,7 @@ LOCAL_C void InitialiseL()
 	gFileMan=CFileMan::NewL(TheFs);
 	gObserver=new(ELeave) CFileManObserver(gFileMan);
 	gFileMan->SetObserver(gObserver);
+	gSecDriveReady = GetSecondDrive(gSecDrive);
 	}
 
 LOCAL_C void Cleanup()

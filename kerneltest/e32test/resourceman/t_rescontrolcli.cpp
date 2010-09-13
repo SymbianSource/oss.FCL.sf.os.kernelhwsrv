@@ -4355,6 +4355,11 @@ GLDEF_C TInt E32Main()
 	//Check whether the notifications recieved as a result of postboot level setting is as expected.
 	r = lddChan.CheckPostBootLevelNotifications();
 	test(r == KErrNone);
+	
+	//Test resource controller registration
+	r = lddChan.CheckResourceControllerRegistration();
+	test(r == KErrNone);
+
 	TBool regressionTesting = EFalse;
 	//Parse the command line arguments.
 	TBuf<0x50> cmd;

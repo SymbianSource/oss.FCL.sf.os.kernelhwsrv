@@ -33,87 +33,87 @@ TBool RunClient(RUsbOtgDriver& aOtg, TInt event);
 TBool RunHost(RUsbOtgDriver& aOtg, TInt event);
 
 TInt E32Main()
-	{
-	OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN, "---> Main OTG Sub-Process");
+    {
+    OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN, "---> Main OTG Sub-Process");
 
-	CTrapCleanup* trapHandler = CTrapCleanup::New();
+    CTrapCleanup* trapHandler = CTrapCleanup::New();
 
-	if(!trapHandler)
-		{
-		return KErrNoMemory;
-		}
+    if(!trapHandler)
+        {
+        return KErrNoMemory;
+        }
 
-	TBool clientFlag = EFalse; // default to host
-	
-	// Process the command line option for role
-	TInt cmdLineLength(User::CommandLineLength());
+    TBool clientFlag = EFalse; // default to host
+    
+    // Process the command line option for role
+    TInt cmdLineLength(User::CommandLineLength());
 
-	if(cmdLineLength != 0)
-		{
-		HBufC* cmdLine = HBufC::NewMax(cmdLineLength);	
-		TPtr cmdLinePtr = cmdLine->Des();
-		User::CommandLine(cmdLinePtr);
-		TLex args(*cmdLine);
-		args.SkipSpace();
-		
-		// Obtain the role of this test module
-		TPtrC firstToken = args.NextToken(); // e.g. client ??
+    if(cmdLineLength != 0)
+        {
+        HBufC* cmdLine = HBufC::NewMax(cmdLineLength);    
+        TPtr cmdLinePtr = cmdLine->Des();
+        User::CommandLine(cmdLinePtr);
+        TLex args(*cmdLine);
+        args.SkipSpace();
+        
+        // Obtain the role of this test module
+        TPtrC firstToken = args.NextToken(); // e.g. client ??
 
-		if(firstToken.Compare(KArgClient) == 0)
-			{
-			clientFlag = ETrue;
+        if(firstToken.Compare(KArgClient) == 0)
+            {
+            clientFlag = ETrue;
             OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN_DUP01, "usbhost_usbman running as a Client");
-			}
-		else
-			{
-			clientFlag = EFalse;
+            }
+        else
+            {
+            clientFlag = EFalse;
             OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN_DUP02, "usbhost_usbman running as a Host");
-			}
+            }
 
-		delete cmdLine;
-		}			
+        delete cmdLine;
+        }            
 
-	TInt r = User::LoadLogicalDevice(KOtgdiLddFileName);
+    TInt r = User::LoadLogicalDevice(KOtgdiLddFileName);
 
-	if(r != KErrNone && r != KErrAlreadyExists) // persistent loading since process will be killed while it is in the loop below and doesnt unload it
-		{
-		OstTrace1(TRACE_NORMAL, E32MAIN_E32MAIN_DUP03, "   LoadLogicalDevice(KOtgdiLddFileName) error = %d", r);
-		delete trapHandler;
-		return r;		
-		}
+    if(r != KErrNone && r != KErrAlreadyExists) // persistent loading since process will be killed while it is in the loop below and doesnt unload it
+        {
+        OstTrace1(TRACE_NORMAL, E32MAIN_E32MAIN_DUP03, "   LoadLogicalDevice(KOtgdiLddFileName) error = %d", r);
+        delete trapHandler;
+        return r;        
+        }
 
-	
-	RUsbOtgDriver otg;
-	RProperty wordofdeath;
-	TRequestStatus waiting_for_death;
-	TRequestStatus status;
-	RUsbOtgDriver::TOtgEvent event;
-	TBool running = ETrue;
-	
-	OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN_DUP04, "   opening otg driver");
-	
-	r = otg.Open();
-	if(r != KErrNone)
-		{
-		OstTrace1(TRACE_NORMAL, E32MAIN_E32MAIN_DUP05, "   otg.Open fails %d", r);
+    
+    RUsbOtgDriver otg;
+    RProperty wordofdeath;
+    TRequestStatus waiting_for_death;
+    TRequestStatus status;
+    RUsbOtgDriver::TOtgEvent event;
+    TBool running = ETrue;
+    
+    OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN_DUP04, "   opening otg driver");
+    
+    r = otg.Open();
+    if(r != KErrNone)
+        {
+        OstTrace1(TRACE_NORMAL, E32MAIN_E32MAIN_DUP05, "   otg.Open fails %d", r);
         goto Abort;
-		}
+        }
 
-	OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN_DUP06, "   otg driver successfully opened");
+    OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN_DUP06, "   otg driver successfully opened");
 
-	OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN_DUP07, "   otg : starting stacks now");
-	
-	r = otg.StartStacks();
+    OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN_DUP07, "   otg : starting stacks now");
+    
+    r = otg.StartStacks();
 
-	if(r != KErrNone)
-		{
-		OstTrace1(TRACE_NORMAL, E32MAIN_E32MAIN_DUP08, "   otg.StartStacks fails %d", r);
+    if(r != KErrNone)
+        {
+        OstTrace1(TRACE_NORMAL, E32MAIN_E32MAIN_DUP08, "   otg.StartStacks fails %d", r);
         goto Abort;
-		}	
+        }    
 
-	OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN_DUP09, "   otg stacks successfully started");
+    OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN_DUP09, "   otg stacks successfully started");
 
-//	RProcess::Rendezvous(KErrNone);
+//    RProcess::Rendezvous(KErrNone);
 
     // attach to the word of deathproperty
     r = wordofdeath.Attach(KWordOfDeathCat, KWordOfDeathKey, EOwnerThread);
@@ -126,8 +126,8 @@ TInt E32Main()
     wordofdeath.Subscribe(waiting_for_death);
     while(running)
         {
-		otg.QueueOtgEventRequest(event, status);
-		User::WaitForRequest(status, waiting_for_death);
+        otg.QueueOtgEventRequest(event, status);
+        User::WaitForRequest(status, waiting_for_death);
 
         OstTrace1(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP01, "waiting_for_death= %d", waiting_for_death.Int());
         OstTrace1(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP02, "Otg Event        = %d", status.Int());
@@ -144,7 +144,7 @@ TInt E32Main()
             {
             // Run client or host modes against this otg event
             if(clientFlag)
-                {		
+                {        
                 running = RunClient(otg, event);
                 }
             else
@@ -154,7 +154,7 @@ TInt E32Main()
             }
         }
 
-	// Shut down nicely
+    // Shut down nicely
 
     OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP03, "StopStacks()");
 
@@ -176,7 +176,7 @@ Abort:
 
     return KErrNone;
     }
-	
+    
 
 
 
@@ -205,14 +205,18 @@ TBool RunClient(RUsbOtgDriver& aOtg, TInt event)
 
 TBool RunHost(RUsbOtgDriver& aOtg, TInt event)
     {
-    TInt r;
     switch(event)
         {
     case RUsbOtgDriver::EEventAPlugInserted:
-        OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP11, "Host side otg got APlugInserted Event");
-        r = aOtg.BusRequest();
-        OstTrace1(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP12, "BusRequest() made - returned %d", r);
-        break;
+            {
+            OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP11, "Host side otg got APlugInserted Event");
+#ifdef OST_TRACE_COMPILER_IN_USE
+            TInt r = 
+#endif
+            aOtg.BusRequest();
+            OstTrace1(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP12, "BusRequest() made - returned %d", r);
+            }
+            break;
 
     case RUsbOtgDriver::EEventAPlugRemoved:
         OstTrace0(TRACE_NORMAL, RPROCESS_RENDEZVOUS_DUP13, "Host side otg got APlugRemoved Event - shutting down");

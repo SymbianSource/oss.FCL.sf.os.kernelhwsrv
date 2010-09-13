@@ -1,3 +1,58 @@
+Version 2.00.3119
+=================
+(Made by fadhliM 31/08/2010)
+
+1.	vfebvre
+	1.	ou1cimx1#545656 ENV Generic base system build extensions must be moved to kernelhwsrv
+	2.	ou1cimx1#545743 ENV Compilation warnings in the boardsupport area
+
+2.	gayarama
+	1.	ou1cimx1#550692 DEV Registration of resources for idle is not complete - Test
+
+3.	haifeyan
+	1.	ou1cimx1#550516 Build warnings of e32test in BTB build for OST submission
+
+4.	dogunjum
+	1.	ou1cimx1#547410 MCL - Domain Manager2 - Bad use of RArray::Append()  
+
+5.	davegord
+	1.	ou1cimx1#543672 [mcl] Problem with ExecHandler::FsRegisterThread()
+
+
+Version 2.00.3118
+=================
+(Made by fadhliM 26/08/2010)
+
+1.	daniezho
+	1.	ou1cimx1#512548 [kernelhwsrvmcl] tb101 crash when loading OTGDI stack
+
+2.	t30zhang
+	1.	ou1cimx1#520171 [kernelhwsrv-mcl] Mutex order issue in USB host stack
+
+3.	cnotton
+	1.	ou1cimx1#526643 ENV Mem::CompareF generates 100s of calls to lower level functions, some of which could be inlined
+	2.	ou1cimx1#532068 ENV ExecHandler::MathSecureRandom() allocates a large amount of stack space
+	3.	ou1cimx1#540085 ENV E32TEST T_THREAD test failure investigation (SMP, t_thread.cpp:605)
+
+4.	paconway
+	1.	ou1cimx1#536356 "#include <OpenSystemTrace.h>" is a case-violation on Linux
+
+5.	ahiron
+	1.	ou1cimx1#533006 ENV E32TEST T_SHBUF_CLIENT test failure investigation
+
+6.	elzou
+	1.	ou1cimx1#516380 Assertion failure in USB PDD with udeb kernel
+
+7.	jcoppear
+	1.	ou1cimx1#530455 EChangesOutOfMemory is prone to misuse
+
+8.	s40li
+	1.	ou1cimx1#520062 Panic when excute t_otgdi OPT test case
+
+9.	davegord
+	1.	ou1cimx1#526359 ENV Compilation warning in kerneltest\e32test\system\t_ctrap.cpp:1305
+
+
 Version 2.00.3117
 =================
 (Made by fadhliM 26/08/2010)

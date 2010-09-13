@@ -1,4 +1,4 @@
-// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -314,17 +314,29 @@ TInt InstructionThread(TAny* anInstruction)
 	return(KErrNone);
 	}
 
-TInt StartInstructionThread(RThread& aT, const TDesC& aName, TInt aInstruction, TOwnerType aOwnerType, TRequestStatus* aL, TRequestStatus* aR)
+TInt StartInstructionThread(RThread& aT, const TDesC& aName, TInt aInstruction, RAllocator* aAllocator, TOwnerType aOwnerType, TRequestStatus* aL, TRequestStatus* aR)
 	{
-	TInt r = aT.Create(aName, &InstructionThread, KDefaultStackSize, KHeapSize, KHeapSize, (TAny*)aInstruction, aOwnerType);
+	TInt r;
+	
+	if (aAllocator == NULL)
+		{
+		r = aT.Create(aName, &InstructionThread, KDefaultStackSize, KHeapSize, KHeapSize, (TAny*)aInstruction, aOwnerType);
+		}
+	else
+		{
+		r = aT.Create(aName, &InstructionThread, KDefaultStackSize, aAllocator, (TAny*)aInstruction, aOwnerType);
+		}
+
 	if (r!=KErrNone)
 		return r;
+
 	if (aL)
 		{
 		aT.Logon(*aL);
 		TInt s = aL->Int();
 		test_Equal(s, KRequestPending);
 		}
+
 	if (aR)
 		{
 		aT.Rendezvous(*aR);
@@ -335,6 +347,7 @@ TInt StartInstructionThread(RThread& aT, const TDesC& aName, TInt aInstruction, 
 		s = aR->Int();
 		test_KErrNone(s);
 		}
+
 	return r;
 	}
 
@@ -404,7 +417,7 @@ LOCAL_D void test1()
 	thread.Close();
 	
 	test.Next(_L("Create ENormal"));
-	r = StartInstructionThread(thread, _L("Thread"), ENormal, EOwnerProcess, 0, 0);
+	r = StartInstructionThread(thread, _L("Thread"), ENormal, NULL, EOwnerProcess, 0, 0);
 	test_KErrNone(r);
 
 	test.Next(_L("Test priorities"));
@@ -547,7 +560,7 @@ LOCAL_D void test2(TOwnerType anOwnerType)
 	for (TInt xx=0;xx<10;xx++)
 		{
 		test.Printf(_L("\r%02d"),xx);
-		r = StartInstructionThread(thread, _L("Thread1"), ENormal, anOwnerType, &stat, 0);
+		r = StartInstructionThread(thread, _L("Thread1"), ENormal, NULL, anOwnerType, &stat, 0);
 		test_KErrNone(r);
 		thread.Resume();
 		User::WaitForRequest(stat);
@@ -556,7 +569,7 @@ LOCAL_D void test2(TOwnerType anOwnerType)
 	test.Printf(_L("\n"));
 
 	test.Next(_L("Panic within thread"));
-	r = StartInstructionThread(thread, _L("Thread2"), EInstrPanic, anOwnerType, &stat, 0);
+	r = StartInstructionThread(thread, _L("Thread2"), EInstrPanic, NULL, anOwnerType, &stat, 0);
 	test_KErrNone(r);
 	test(thread.ExitType()==EExitPending);
 	thread.Resume();
@@ -570,11 +583,27 @@ LOCAL_D void test2(TOwnerType anOwnerType)
 	TInt ijk;
 	TUint seed[2] = { 0xadf85458, 0 };
 	TUint maxcount = 0;
+	RHeap* temporaryHeap = User::ChunkHeap(NULL, KHeapSize*8192, KHeapSize*8192);
+	test(temporaryHeap != NULL);
 	for (ijk=0; ijk<8192; ++ijk)
 		{
 		if (!(ijk&255))
 			test.Printf(_L("%d\n"), ijk);
-		r = StartInstructionThread(thread, _L("Thread3"), EWait, anOwnerType, &stat, 0);
+
+		//
+		// For this test we need to use a temporary heap created in advance as we
+		// will be panicking the thread at any point during its creation and since
+		// the heap would have been allocated by the user side thread, it is
+		// possible that if we let it allocate its own heap, the kernel may not
+		// be able to close it in the temporary states of creation or when
+		// TLocalThreadData::DllSetTls() grabs a temporary handle on the heap.
+		// In those cases RTest::CloseHandleAndWaitForDestruction() would timeout
+		// and the test would fail.
+		//
+		// In addition, if we shared the creating thread's heap allocations may
+		// be left behind and cause the heap mark test to fail on this thread.
+		//
+		r = StartInstructionThread(thread, _L("Thread3"), EWait, temporaryHeap, anOwnerType, &stat, 0);
 		test_KErrNone(r);
 		__e32_atomic_store_ord32(&IFLAG, 0);
 		thread.Resume();
@@ -604,9 +633,10 @@ LOCAL_D void test2(TOwnerType anOwnerType)
 		r = RTest::CloseHandleAndWaitForDestruction(thread);
 		test_KErrNone(r);
 		}
+	temporaryHeap->Close();
 	
 	test.Next(_L("Internal exit"));
-	r = StartInstructionThread(thread, _L("Thread4"), ENormal, anOwnerType, &stat, 0);
+	r = StartInstructionThread(thread, _L("Thread4"), ENormal, NULL, anOwnerType, &stat, 0);
 	test_KErrNone(r);
 	test(thread.ExitType()==EExitPending);
 	thread.Resume();
@@ -617,7 +647,7 @@ LOCAL_D void test2(TOwnerType anOwnerType)
 	CLOSE_AND_WAIT(thread);
 
 	test.Next(_L("External terminate"));
-	r = StartInstructionThread(thread, _L("Thread5"), EWait, anOwnerType, &stat, &rstat);
+	r = StartInstructionThread(thread, _L("Thread5"), EWait, NULL, anOwnerType, &stat, &rstat);
 	test_KErrNone(r);
 	test.Next(_L("Terminate"));
 	thread.Terminate(KTerminationReason);
@@ -630,7 +660,7 @@ LOCAL_D void test2(TOwnerType anOwnerType)
 	CLOSE_AND_WAIT(thread);
   
 	test.Next(_L("External kill"));
-	r = StartInstructionThread(thread, _L("Thread6"), EWait, anOwnerType, &stat, &rstat);
+	r = StartInstructionThread(thread, _L("Thread6"), EWait, NULL, anOwnerType, &stat, &rstat);
 	test_KErrNone(r);
 	thread.Suspend();
 	thread.Resume();

@@ -526,6 +526,7 @@ TInt DTestResManLdd::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		&& (aFunction != RTestResMan::EDeRegisterClientLevelFromResource) 
 		&& (aFunction != RTestResMan::ECheckPostBootLevelNotifications)
 		&& (aFunction != RTestResMan::EGetControllerVersion)
+		&& (aFunction != RTestResMan::ERegisterResourceController)
 #ifdef PRM_ENABLE_EXTENDED_VERSION
 		   && (aFunction != RTestResMan::ERegisterDynamicResource))
 #else
@@ -1002,6 +1003,11 @@ TInt DTestResManLdd::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 				if(r != KErrNone)
 					Kern::Printf("RTestResMan::EGetControllerVersion ThreadRawWrite failed with %d", r);
 				}
+			break;
+			}
+		case RTestResMan::ERegisterResourceController:
+			{
+			r = DSimulatedPowerResourceController::ResourceControllerRegistration();
 			break;
 			}
 #ifdef PRM_ENABLE_EXTENDED_VERSION

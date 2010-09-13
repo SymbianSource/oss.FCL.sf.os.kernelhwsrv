@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -11,7 +11,7 @@
 // Contributors:
 //
 // Description:
-// f32test\server\T_Fatcharsetconv_Cases.h
+// f32test\server\t_fatcharsetconv_cases.h
 // 
 //
 
@@ -19,7 +19,7 @@
 #ifndef T_FATCHARSETCONV_CASES_H
 #define T_FATCHARSETCONV_CASES_H
 
-#include "T_Fatcharsetconv_Aux.h"
+#include "t_fatcharsetconv_aux.h"
 
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)
 extern CFileMan* gFileman;

@@ -2336,10 +2336,98 @@ void TTestPoolModel::DisplayCounters()
 	test.Printf(_L("%-6u%-6u%-6u%-6u%-6u\n"), iAllocated, iFree, iAllocated + iFree, iGrowTrigger, iShrinkTrigger);
 	}
 
+const TInt KMaxCountAlignmentRetries = 4;
+#define CHECK_COUNT_ALIGNMENT(a,b) CheckCountAlignmentWithTimeout(a,b,(TUint)__LINE__)
+#define RETRY_BUF_ALLOC(a,b,c,d,e) RetryBufAlloc(a,b,c,d,e,(TUint)__LINE__)
+#define RETRY_BUF_FREE(a,b,c,d) RetryBufFree(a,b,c,d,(TUint)__LINE__)
+
+TInt CheckCountAlignmentWithTimeout(TTestPoolModel& aModel, RShPool& aPool, const TUint aLineNum)
+	{
+	// Allow a maximum time for the model and pool counts to align
+	// Return the period remaining after they align (zero if alignement is not reached)
+	TInt timeout = KTestFreeCountTimeOut / KTestWaitBeforeRetry;
+	while (aModel.FreeCount() != aPool.FreeCount())
+		{
+		User::After(KTestWaitBeforeRetry);
+		if(--timeout == 0)
+			{
+			test.Printf(_L("Timeout: Free==%u (expected %u, line %d)\n"), aPool.FreeCount(), aModel.FreeCount(), aLineNum);
+			aModel.DisplayCounters();
+			return timeout;
+			}
+		if ((timeout * KTestWaitBeforeRetry) % 1000000 == 0)
+			{
+			test.Printf(_L("Time out in %d seconds! (line %d)\n"), timeout * KTestWaitBeforeRetry / 1000000, aLineNum);
+			}
+		--timeout;
+		};
+	return timeout;
+	}
+
+TInt RetryBufAlloc(RArray<RShBuf>& aBufarray, TTestPoolModel& aModel, RShPool& aPool, RShBuf& aBuf, TUint aBufferFlags, const TUint aLineNum)
+	{
+	// Free a buffer, then alloc
+	TShPoolInfo info;
+	aPool.GetInfo(info);
+
+	aBufarray[aBufarray.Count() - 1].Close();
+	aBufarray.Remove(aBufarray.Count() - 1);
+	aModel.Free();		
+	//
+	TInt r = aBuf.Alloc(aPool, aBufferFlags);
+	if (r)
+		{
+		test.Printf(_L("Line %d, Re-Alloc fail, after %d of %d; Free==%u (expected %u)\n"),
+			aLineNum, aBufarray.Count(), info.iMaxBufs, aPool.FreeCount(), aModel.FreeCount());
+		}
+	else
+		{
+		aModel.Alloc();
+		if (!(aBufferFlags & EShPoolAllocNoMap))
+			{
+			TPtr8 ptr(aBuf.Ptr(), aBuf.Size(),aBuf.Size());
+			ptr.Fill(aBufarray.Count() % 256);
+			}
+		aBufarray.Append(aBuf);
+		}
+
+	return r;
+	}
+
+TInt RetryBufFree(RArray<RShBuf>& aBufarray, TTestPoolModel& aModel, RShPool& aPool, TUint aBufferFlags, const TUint aLineNum)
+	{
+	// Allocate a buffer, then free it
+	TShPoolInfo info;
+	aPool.GetInfo(info);
+	RShBuf buf;
+	TInt r = buf.Alloc(aPool, aBufferFlags);
+	if (r)
+		{
+		test.Printf(_L("Line %d, Re-Alloc fail, after %d of %d; Free==%u (expected %u)\n"),
+			aLineNum, aBufarray.Count(), info.iMaxBufs, aPool.FreeCount(), aModel.FreeCount());
+		}
+	else
+		{
+		aModel.Alloc();
+		if (!(aBufferFlags & EShPoolAllocNoMap))
+			{
+			TPtr8 ptr(buf.Ptr(), buf.Size(),buf.Size());
+			ptr.Fill(aBufarray.Count() % 256);
+			}
+		aBufarray.Append(buf);
+		//
+		aBufarray[aBufarray.Count() - 1].Close();
+		aBufarray.Remove(aBufarray.Count() - 1);
+		aModel.Free();		
+		}
+	return r;
+	}
+
+
+
 void PoolGrowingTestRoutine(const TShPoolCreateInfo& aInfo, TUint aBufferFlags = 0)
 	{
 	TInt r;
-	TInt timeout;
 	RShPool pool;
 	r = pool.Create(aInfo, KDefaultPoolHandleFlags);
 	test_KErrNone(r);
@@ -2359,21 +2447,9 @@ void PoolGrowingTestRoutine(const TShPoolCreateInfo& aInfo, TUint aBufferFlags =
 	test_Equal(info.iInitialBufs, pool.FreeCount());
 
 	// Buffer allocation
+	TInt retriesRemaining = KMaxCountAlignmentRetries;
 	do
 		{
-		timeout = KTestFreeCountTimeOut / KTestWaitBeforeRetry;
-		while (model.FreeCount() != pool.FreeCount())
-			{
-			User::After(KTestWaitBeforeRetry);
-			test_Assert(--timeout,
-				test.Printf(_L("Timeout: Free==%u (expected %u)\n"), pool.FreeCount(), model.FreeCount());
-				model.DisplayCounters();
-				);
-			if ((timeout * KTestWaitBeforeRetry) % 1000000 == 0)
-				{
-				test.Printf(_L("Time out in %d seconds! (line %d)\n"), timeout * KTestWaitBeforeRetry / 1000000, __LINE__);
-				}
-			}
 		RShBuf buf;
 		r = buf.Alloc(pool, aBufferFlags);
 		if (r == KErrNoMemory)
@@ -2404,7 +2480,24 @@ void PoolGrowingTestRoutine(const TShPoolCreateInfo& aInfo, TUint aBufferFlags =
 				ptr.Fill(bufarray.Count() % 256);
 				}
 			bufarray.Append(buf);
+
+			while ((!CHECK_COUNT_ALIGNMENT(model,pool)) && retriesRemaining--)
+				{
+				// Count mismatch. Due to the operation of this test (single Alloc, then wait and check)
+				// it is possible for a count mis-match to occur. This is not a problem in normal operation
+				// as the kernel-side count will increase on the next Alloc call, triggering the pool growth.
+				// For now, remove the just-added buffer then repeat the  Alloc
+				// (but only do this for a maximum number of times, to preclude getting stuck in an infinite loop).
+				test_Assert(retriesRemaining,
+					test.Printf(_L("Timeout: Free==%u (expected %u), retries remaining: %d\n"), pool.FreeCount(), model.FreeCount(), retriesRemaining);
+					model.DisplayCounters();
+					);
+				//
+				r = RETRY_BUF_ALLOC(bufarray, model, pool, buf, aBufferFlags);
+				};
+			retriesRemaining = KMaxCountAlignmentRetries;
 			}
+
 		}
 	while (r == KErrNone);
 
@@ -2423,39 +2516,25 @@ void PoolGrowingTestRoutine(const TShPoolCreateInfo& aInfo, TUint aBufferFlags =
 			}
 		bufarray[bufarray.Count() - 1].Close();
 		bufarray.Remove(bufarray.Count() - 1);
-		model.Free();
+		model.Free();		
 		
-		timeout = KTestFreeCountTimeOut / KTestWaitBeforeRetry;
-		while (model.FreeCount() != pool.FreeCount())
+		while ((!CHECK_COUNT_ALIGNMENT(model,pool)) && retriesRemaining--)
 			{
-			User::After(KTestWaitBeforeRetry);
-			test_Assert(--timeout,
-				test.Printf(_L("Timeout: Free==%u (expected %u)\n"), pool.FreeCount(), model.FreeCount());
+			// Count mismatch. Re-add the buffer then repeat the Free.
+			// (but only do this for a maximum number of times, to preclude getting stuck in an infinite loop).
+			test_Assert(retriesRemaining,
+				test.Printf(_L("Timeout: Free==%u (expected %u), retries remaining: %d\n"), pool.FreeCount(), model.FreeCount(), retriesRemaining);
 				model.DisplayCounters();
 				);
-			if ((timeout * KTestWaitBeforeRetry) % 1000000 == 0)
-				{
-				test.Printf(_L("Time out in %d seconds! (line %d)\n"), timeout * KTestWaitBeforeRetry / 1000000, __LINE__);
-				}
-			}
+			//
+			r = RETRY_BUF_FREE(bufarray, model, pool, aBufferFlags);
+			};
+		retriesRemaining = KMaxCountAlignmentRetries;		
 		}
 
 	// ... and re-allocate them
 	do
 		{
-		timeout = KTestFreeCountTimeOut / KTestWaitBeforeRetry;
-		while (model.FreeCount() != pool.FreeCount())
-			{
-			User::After(KTestWaitBeforeRetry);
-			test_Assert(--timeout,
-				test.Printf(_L("Timeout: Free==%u (expected %u)\n"), pool.FreeCount(), model.FreeCount());
-				model.DisplayCounters();
-				);
-			if ((timeout * KTestWaitBeforeRetry) % 1000000 == 0)
-				{
-				test.Printf(_L("Time out in %d seconds! (line %d)\n"), timeout * KTestWaitBeforeRetry / 1000000, __LINE__);
-				}
-			}
 		RShBuf buf;
 		r = buf.Alloc(pool, aBufferFlags);
 		if (r == KErrNoMemory)
@@ -2486,6 +2565,19 @@ void PoolGrowingTestRoutine(const TShPoolCreateInfo& aInfo, TUint aBufferFlags =
 				ptr.Fill(bufarray.Count() % 256);
 				}
 			bufarray.Append(buf);
+
+			while ((!CHECK_COUNT_ALIGNMENT(model,pool)) && retriesRemaining--)
+				{
+				// Count mismatch. Remove the just-added buffer then repeat the  Alloc
+				// (but only do this for a maximum number of times, to preclude getting stuck in an infinite loop).
+				test_Assert(retriesRemaining,
+					test.Printf(_L("Timeout: Free==%u (expected %u), retries remaining: %d\n"), pool.FreeCount(), model.FreeCount(), retriesRemaining);
+					model.DisplayCounters();
+					);
+				//
+				r = RETRY_BUF_ALLOC(bufarray, model, pool, buf, aBufferFlags);
+				};
+			retriesRemaining = KMaxCountAlignmentRetries;
 			}
 		}
 	while (r == KErrNone);
@@ -2505,21 +2597,20 @@ void PoolGrowingTestRoutine(const TShPoolCreateInfo& aInfo, TUint aBufferFlags =
 			}
 		bufarray[bufarray.Count() - 1].Close();
 		bufarray.Remove(bufarray.Count() - 1);
-		model.Free();
+		model.Free();	
 		
-		timeout = KTestFreeCountTimeOut / KTestWaitBeforeRetry;
-		while (model.FreeCount() != pool.FreeCount())
+		while ((!CHECK_COUNT_ALIGNMENT(model,pool)) && retriesRemaining--)
 			{
-			User::After(KTestWaitBeforeRetry);
-			test_Assert(--timeout,
-				test.Printf(_L("Timeout: Free==%u (expected %u)\n"), pool.FreeCount(), model.FreeCount());
+			// Count mismatch. Re-add the buffer then repeat the Free.
+			// (but only do this for a maximum number of times, to preclude getting stuck in an infinite loop).
+			test_Assert(retriesRemaining,
+				test.Printf(_L("Timeout: Free==%u (expected %u), retries remaining: %d\n"), pool.FreeCount(), model.FreeCount(), retriesRemaining);
 				model.DisplayCounters();
 				);
-			if ((timeout * KTestWaitBeforeRetry) % 1000000 == 0)
-				{
-				test.Printf(_L("Time out in %d seconds! (line %d)\n"), timeout * KTestWaitBeforeRetry / 1000000, __LINE__);
-				}
-			}
+			//
+			r = RETRY_BUF_FREE(bufarray, model, pool, aBufferFlags);
+			};
+		retriesRemaining = KMaxCountAlignmentRetries;		
 		}
 
 	// Pool should have shrunk back to its initial size

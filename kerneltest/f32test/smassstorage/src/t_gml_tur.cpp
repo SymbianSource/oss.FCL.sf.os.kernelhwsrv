@@ -13,12 +13,13 @@
 // Description:
 //
 
+#define __E32TEST_EXTENSION__
 #include <e32std.h>
-#include <e32std_private.h>
 #include <e32test.h>
 #include <testusbc.h>
 #include "t_gml_tur_protocol.h"
 #include "t_gml_tur_controller.h"
+#include "protocol.h"
 #include "cbulkonlytransport.h"
 
 LOCAL_D RTest test(_L("t_gml_tur"));
@@ -96,7 +97,7 @@ LOCAL_C TInt TransportThreadEntry(TAny* aPtr)
 	gController = controller;
 	controller->CreateL(0);
 	
-	CBulkOnlyTransport* transport = NULL;
+	MTransportBase* transport = NULL;
 	TRAP(err, transport = CBulkOnlyTransport::NewL(numDrives, *controller));
 	if (err != KErrNone)
 		{
@@ -217,14 +218,15 @@ GLDEF_C TInt E32Main()
 	//Wait for thread to die
 	test.Printf(_L("Waiting for controller thread to die\n"));
 	User::WaitForRequest(logonStatus);
-	transportThread.Close();
+    transportThread.Close();
+
 	test.Printf(_L("The thread is dead, long live the thread\n"));
-	
+
 	ldd.Close();
 	
 	test.Printf(_L("Unloading ldd"));
 	err = User::FreeLogicalDevice(KLddName);
-	test(err == KErrNone);
+	test_KErrNone(err);
 	
     test.End();
     

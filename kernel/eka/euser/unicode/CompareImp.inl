@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -52,6 +52,30 @@ inline void SkipCombiningCharacters(TUTF32Iterator& aUTF32It)
 		aUTF32It.Next();
 		}
 	}
+
+/**
+@internalComponent
+*/
+inline TChar UTF16ToChar(const TText16* a)
+	{
+	if (0xD800 <= a[0])
+		{
+		if (a[0] < 0xE000)
+			{
+            if (a[0] < 0xDC00 && ::IsLowSurrogate(a[1]))
+				{
+                TChar c = ::PairSurrogates(a[0], a[1]);
+				if ((c & 0xFFFE) != 0xFFFE)
+					return c;
+				}
+			return 0xFFFF;
+			}
+		if (a[0] == 0xFFFE)
+			return 0xFFFF;
+		}
+	return a[0];
+	}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // TUTF32Iterator
@@ -161,6 +185,20 @@ inline TChar TUTF32Iterator::Current() const
 /**
 @internalComponent
 */
+inline void TUTF32Iterator::Next()
+	{
+	ASSERT(iStart != iEnd);
+	while (++iStart != iEnd)
+		{
+        iCurrent = ::UTF16ToChar(iStart);
+		if (iCurrent != 0xFFFF)
+			return;
+		}
+	}
+
+/**
+@internalComponent
+*/
 inline const TText16* TUTF32Iterator::CurrentPosition() const
 	{
 	return iStart;
@@ -212,10 +250,27 @@ inline void TFoldedDecompIterator::Set(const TUTF32Iterator& a)
 /**
 @internalComponent
 */
+TBool TFoldedDecompIterator::AtEnd() const
+    {
+    return iOriginal.AtEnd();
+    }
+
+/**
+@internalComponent
+*/
 inline TBool TFoldedDecompIterator::IsInFoldedSequence() const
 	{
 	return !iFolded.AtEnd();
 	}
+
+/**
+@internalComponent
+*/
+inline TChar TFoldedDecompIterator::Current() const
+    {
+    ASSERT(!AtEnd());
+    return IsInFoldedSequence()? iFolded.Current() : iOriginal.Current();
+    }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // TFoldedSortedDecompIterator
@@ -228,6 +283,44 @@ inline TFoldedSortedDecompIterator::TFoldedSortedDecompIterator()
 	{
 	}
 
+/** 
+@internalComponent
+*/
+inline TBool TFoldedSortedDecompIterator::AtEnd() const
+    {
+    return iRemaining == 0;
+    }
+
+/** 
+@internalComponent
+*/
+inline TChar TFoldedSortedDecompIterator::Current() const
+    {
+    ASSERT(!AtEnd());
+    return iCurrent.Current();
+    }
+
+////////////////////////////////////////////////////////////////////////////////////////////
+// TFoldedCanonicalIterator
+////////////////////////////////////////////////////////////////////////////////////////////
+
+/** 
+@internalComponent
+*/
+inline TBool TFoldedCanonicalIterator::AtEnd() const
+    {
+    return iSorted.AtEnd() && iBase.AtEnd();
+    }
+
+/** 
+@internalComponent
+*/
+inline TChar TFoldedCanonicalIterator::Current() const
+    {
+    ASSERT(!iBase.AtEnd() || !iSorted.AtEnd());
+    return iSorted.AtEnd() ? iBase.Current() : iSorted.Current();
+    }
+
 ////////////////////////////////////////////////////////////////////////////////////////////
 // TDecompositionIterator
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -239,6 +332,22 @@ inline TDecompositionIterator::TDecompositionIterator()
 	{
 	}
 
+/** 
+@internalComponent
+*/
+inline TBool TDecompositionIterator::AtEnd() const
+    {
+    return iBase.AtEnd();
+    }
+
+/** 
+@internalComponent
+*/
+inline TChar TDecompositionIterator::Current() const
+    {
+    return iDecomposition.Current();
+    }
+
 ////////////////////////////////////////////////////////////////////////////////////////////
 // TCanonicalDecompositionIterator
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -249,4 +358,34 @@ inline TDecompositionIterator::TDecompositionIterator()
 inline TCanonicalDecompositionIterator::TCanonicalDecompositionIterator() 
 	{
 	}
+
+/** 
+@internalComponent
+*/
+inline TBool TCanonicalDecompositionIterator::AtEnd() const
+    {
+    return iBase.AtEnd();
+    }
+
+/** 
+@internalComponent
+*/
+inline TChar TCanonicalDecompositionIterator::Current() const
+    {
+    return iCurrentCombiningClass? iCurrent.Current() : iBase.Current();
+    }
+
+////////////////////////////////////////////////////////////////////////////////////////////
+// TCanonicalDecompositionIteratorCached
+////////////////////////////////////////////////////////////////////////////////////////////
+
+/** 
+@internalComponent
+*/
+inline TBool TCanonicalDecompositionIteratorCached::AtEnd() const
+    {
+    return iCacheSize == 0 && iBase.AtEnd();
+    }
+
+
 

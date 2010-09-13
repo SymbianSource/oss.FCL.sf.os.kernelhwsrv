@@ -18,8 +18,10 @@
 TARGET        t_usb_scdevice.exe
 TARGETTYPE    EXE
 
-UID         0x0 0x20031631
 VENDORID    0x70000001
+
+// 0x101fe1db to pretend to be USB Manager (needed for the OTG drivers)
+UID 0x0 0x101fe1db
 
 MACRO		USB_SC
 

@@ -1078,9 +1078,11 @@ EXPORT_C TInt DUsbClientController::SetupReadBuffer(TUsbcRequestCallback& aCallb
 			{
 	        OstTraceDef0(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, DUSBCLIENTCONTROLLER_SETUPREADBUFFER_DUP11, "  iEp0_RxExtraData: trying again...");
 			const TBool rx_data = iEp0DataReceiving;
-		    const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
+			
+			//Note:  Currently, ProcessEp0ReceiveDone() is only called in the thread context, 
+			//       but in the future, if this ProcessEp0ReceiveDone() is called in IRQ context, 
+			//       we have to notice that ProcessEp0ReceiveDone() has hold a fast mutex already.
 			err = ProcessEp0ReceiveDone(iEp0_RxExtraCount);
-	        __SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 			if (err == KErrNone)
 				{
 				iEp0_RxExtraData = EFalse;

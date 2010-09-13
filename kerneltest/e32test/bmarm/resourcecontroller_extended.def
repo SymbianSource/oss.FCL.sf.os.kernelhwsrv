@@ -33,4 +33,5 @@ EXPORTS
 	__21DDynamicPowerResourceRC6TDesC8i @ 32 NONAME R3UNUSED ; DDynamicPowerResource::DDynamicPowerResource(TDesC8 const &, int)
 	AllocReserve__20PowerResourceManagerUiUcUc @ 33 NONAME R3UNUSED ; PowerResourceManager::AllocReserve(unsigned int, unsigned char, unsigned char)
 	RegisterArrayOfStaticResources__24DPowerResourceControllerUiRPP20DStaticPowerResourceUi @ 34 NONAME R3UNUSED ; DPowerResourceController::RegisterArrayOfStaticResources(unsigned int, DStaticPowerResource **&, unsigned int)
+	ResourceControllerRegistration__33DSimulatedPowerResourceController @ 35 NONAME R3UNUSED ; DSimulatedPowerResourceController::ResourceControllerRegistration(void)
 

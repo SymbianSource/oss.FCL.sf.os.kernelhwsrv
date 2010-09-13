@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2000 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2000-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of the License "Eclipse Public License v1.0"
@@ -21,7 +21,7 @@
 #define __COMPLOCL_H__
 
 #if !defined(__E32STD_H__)
-#include <E32std.h>
+#include <e32std.h>
 #endif
 
 class LLocaleData

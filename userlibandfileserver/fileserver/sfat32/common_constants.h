@@ -97,10 +97,6 @@ typedef TUint32 TFat32Entry;
 typedef TUint16 TFat16Entry;
 
 _LIT8(KLit8ReplacementForUnconvertibleUnicodeCharacters, "_");
-_LIT8(KFileSystemName12,"FAT12   ");    ///< Name in BPB given to a Fat12 volume
-_LIT8(KFileSystemName16,"FAT16   ");    ///< Name in BPB given to a Fat16 volume
-_LIT8(KFileSystemName32,"FAT32   ");    ///< Name in BPB given to a Fat32 volume
-_LIT8(KDefaultVendorID, "EPOC");        ///< Vendor Name for BPB for any volume formated using a Symbian OS device
 
 const TInt KMaxFatFileNameExt=3;		///< Maximum Fat file system file/directory name extension length
 const TInt KNumberOfFatsInternal=1;     ///< Number of FATs for an internal drive

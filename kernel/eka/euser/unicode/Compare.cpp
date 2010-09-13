@@ -1,4 +1,4 @@
-// Copyright (c) 2001-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2001-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -24,29 +24,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Global functions
 ////////////////////////////////////////////////////////////////////////////////////////////
-
-/**
-@internalComponent
-*/
-TChar UTF16ToChar(const TText16* a)
-	{
-	if (0xD800 <= a[0])
-		{
-		if (a[0] < 0xE000)
-			{
-            if (a[0] < 0xDC00 && ::IsLowSurrogate(a[1]))
-				{
-                TChar c = ::PairSurrogates(a[0], a[1]);
-				if ((c & 0xFFFE) != 0xFFFE)
-					return c;
-				}
-			return 0xFFFF;
-			}
-		if (a[0] == 0xFFFE)
-			return 0xFFFF;
-		}
-	return a[0];
-	}
 
 /**
 Is a character a base character (ETrue) or a combiner (EFalse)?
@@ -152,20 +129,6 @@ static TInt GetClass(TFoldedDecompIterator& a)
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
-@internalComponent
-*/
-void TUTF32Iterator::Next()
-	{
-	ASSERT(iStart != iEnd);
-	while (++iStart != iEnd)
-		{
-        iCurrent = ::UTF16ToChar(iStart);
-		if (iCurrent != 0xFFFF)
-			return;
-		}
-	}
-
-/**
 Locates a base character in a string using a folded comparision. Will not find combining 
 characters, nor will it consider Korean combining Jamo to be equivalent to Hangul.
 @internalComponent
@@ -204,14 +167,6 @@ TBool TUTF32Iterator::LocateFoldedBaseCharacter(TChar aChar)
 TFoldedDecompIterator::TFoldedDecompIterator(const TUTF32Iterator& a)
 	{
 	Set(a);
-	}
-
-/**
-@internalComponent
-*/
-TBool TFoldedDecompIterator::AtEnd() const
-	{
-	return iOriginal.AtEnd();
 	}
 
 /**
@@ -277,15 +232,6 @@ TBool TFoldedDecompIterator::CurrentIsBaseFoldedFromCombiner() const
 	ASSERT(0 <= index);
 	TUTF32Iterator folded = ::GetFoldedDecomposition(index);
 	return folded.Current() != 0x3B9;
-	}
-
-/**
-@internalComponent
-*/
-TChar TFoldedDecompIterator::Current() const
-	{
-	ASSERT(!AtEnd());
-	return IsInFoldedSequence()? iFolded.Current() : iOriginal.Current();
 	}
 
 /** 
@@ -426,23 +372,6 @@ void TFoldedSortedDecompIterator::Set()
 /** 
 @internalComponent
 */
-TBool TFoldedSortedDecompIterator::AtEnd() const
-	{
-	return iRemaining == 0;
-	}
-
-/** 
-@internalComponent
-*/
-TChar TFoldedSortedDecompIterator::Current() const
-	{
-	ASSERT(!AtEnd());
-	return iCurrent.Current();
-	}
-
-/** 
-@internalComponent
-*/
 void TFoldedSortedDecompIterator::Next()
 	{
 	ASSERT(!AtEnd());
@@ -493,23 +422,6 @@ TFoldedCanonicalIterator::TFoldedCanonicalIterator(const TUTF32Iterator& a)
 		    iSorted.Set(iBase);
             }
         }
-	}
-
-/** 
-@internalComponent
-*/
-TBool TFoldedCanonicalIterator::AtEnd() const
-	{
-	return iSorted.AtEnd() && iBase.AtEnd();
-	}
-
-/** 
-@internalComponent
-*/
-TChar TFoldedCanonicalIterator::Current() const
-	{
-	ASSERT(!iBase.AtEnd() || !iSorted.AtEnd());
-	return iSorted.AtEnd()? iBase.Current() : iSorted.Current();
 	}
 
 /** 
@@ -1144,22 +1056,6 @@ TDecompositionIterator::TDecompositionIterator(const TUTF32Iterator& a)
 /** 
 @internalComponent
 */
-TBool TDecompositionIterator::AtEnd() const
-	{
-	return iBase.AtEnd();
-	}
-
-/** 
-@internalComponent
-*/
-TChar TDecompositionIterator::Current() const
-	{
-	return iDecomposition.Current();
-	}
-
-/** 
-@internalComponent
-*/
 void TDecompositionIterator::Next()
 	{
 	ASSERT(!iBase.AtEnd() && !iDecomposition.AtEnd());
@@ -1244,22 +1140,6 @@ void TCanonicalDecompositionIterator::Set(const TUTF32Iterator& a)
 /** 
 @internalComponent
 */
-TBool TCanonicalDecompositionIterator::AtEnd() const
-	{
-	return iBase.AtEnd();
-	}
-
-/** 
-@internalComponent
-*/
-TChar TCanonicalDecompositionIterator::Current() const
-	{
-	return iCurrentCombiningClass? iCurrent.Current() : iBase.Current();
-	}
-
-/** 
-@internalComponent
-*/
 void TCanonicalDecompositionIterator::Next()
 	{
 	iLastPosition = iBase.CurrentPosition();
@@ -1316,14 +1196,6 @@ void TCanonicalDecompositionIteratorCached::Set(const TUTF32Iterator& a)
 	iBase.Set(a);
 	iCacheStart = 0;
 	iCacheSize = 0;
-	}
-
-/** 
-@internalComponent
-*/
-TBool TCanonicalDecompositionIteratorCached::AtEnd() const
-	{
-	return iCacheSize == 0 && iBase.AtEnd();
 	}
 
 /** 

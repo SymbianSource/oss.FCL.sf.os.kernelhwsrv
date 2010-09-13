@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -28,7 +28,7 @@ class TUTF32Iterator;
 // Global functions
 //////////////////////////////////////////////////////////////////////////////////////////////
 
-TChar UTF16ToChar(const TText16* a);
+inline TChar UTF16ToChar(const TText16* a);
 TBool IsBaseCharacter(TChar);
 
 TBool MatchSectionFolded(TUTF32Iterator& aCandidateString, TUTF32Iterator& aSearchTerm);
@@ -67,7 +67,7 @@ public:
 
 	inline TUTF32Iterator CurrentAsIterator() const;
 	inline TBool AtEnd() const;
-	void Next();
+	inline void Next();
 	inline TChar Current() const;
 	TBool LocateFoldedBaseCharacter(TChar aChar);
 	inline const TText16* CurrentPosition() const;
@@ -93,13 +93,13 @@ public:
 	inline TFoldedDecompIterator();
 	explicit TFoldedDecompIterator(const TUTF32Iterator&);
 	inline void Set(const TUTF32Iterator&);
-	TBool AtEnd() const;
+	inline TBool AtEnd() const;
 	TBool AtEndOrWildcard() const;
 	TBool EnterFoldedSequence();
 	TBool StrictEnterFoldedSequence();
 	inline TBool IsInFoldedSequence() const;
 	TBool CurrentIsBaseFoldedFromCombiner() const;
-	TChar Current() const;
+	inline TChar Current() const;
 	TBool Match(TChar aCode);
 	TBool Match(TFoldedDecompIterator& aThat);
 	void Next();
@@ -120,8 +120,8 @@ public:
 	inline TFoldedSortedDecompIterator();
 	TInt Set(TFoldedDecompIterator &aBase);
 	void Set();
-	TBool AtEnd() const;
-	TChar Current() const;
+	inline TBool AtEnd() const;
+	inline TChar Current() const;
 	void Next();
 
 private:
@@ -143,8 +143,8 @@ class TFoldedCanonicalIterator
 	{
 public:
 	TFoldedCanonicalIterator(const TUTF32Iterator&);
-	TBool AtEnd() const;
-	TChar Current() const;
+	inline TBool AtEnd() const;
+	inline TChar Current() const;
 	void Next(const TUnicodeDataSet* aCharDataSet);
 private:
 	TFoldedDecompIterator iBase;
@@ -165,8 +165,8 @@ public:
 	inline TDecompositionIterator();
 	void Set(const TUTF32Iterator&);
 	explicit TDecompositionIterator(const TUTF32Iterator&);
-	TBool AtEnd() const;
-	TChar Current() const;
+	inline TBool AtEnd() const;
+	inline TChar Current() const;
 	void Next();
 	const TText16* CurrentPosition() const;
 private:
@@ -182,8 +182,8 @@ class TCanonicalDecompositionIterator
 public:
 	inline TCanonicalDecompositionIterator();
 	void Set(const TUTF32Iterator&);
-	TBool AtEnd() const;
-	TChar Current() const;
+	inline TBool AtEnd() const;
+	inline TChar Current() const;
 	void Next();
 	const TText16* CurrentPositionIfAtCharacter() const;
 	TBool IsInOpenSequence() const;
@@ -213,7 +213,7 @@ class TCanonicalDecompositionIteratorCached
 	{
 public:
 	void Set(const TUTF32Iterator&);
-	TBool AtEnd() const;
+	inline TBool AtEnd() const;
 	// Advance aOffset characters.
 	void Next(TInt aOffset);
 	// Get the character at the position of the iterator plus aOffset steps.

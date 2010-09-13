@@ -935,9 +935,9 @@ private:
 	TBool        iMatchUid;    ///< Flag to indicate if UID matches
 	};
 
+//---------------------------------------------------------------------------------------------------------------------------------
 /**
-    Fat file system Format subsession implmentation, provides all that is required of a plug in
-    file system format as well as Fat specific functionality
+    FAT Format Control Block class, responsible for FAT volumes formatting
 */
 class CFatFormatCB : public CFormatCB
 	{
@@ -963,10 +963,11 @@ private:
 	void InitializeFormatDataL();
 	void DoZeroFillMediaL(TInt64 aStartPos, TInt64 aEndPos);
 
-    TInt InitFormatDataForVariableSizeDisk(TUint aDiskSizeInSectors);
-	TInt InitFormatDataForFixedSizeDiskNormal(TUint aDiskSizeInSectors, const TLocalDriveCapsV6& aCaps);
-	TInt InitFormatDataForFixedSizeDiskCustom(const TLDFormatInfo& aFormatInfo);
-    TInt InitFormatDataForFixedSizeDiskUser(TUint aDiskSizeInSectors);
+    TInt ProcessVolParam_User(const TLocalDriveCapsV6& aCaps);
+    TInt ProcessVolParam_Custom(const TLocalDriveCapsV6& aCaps);
+    TInt ProcessVolParam_Default(const TLocalDriveCapsV6& aCaps);
+    TInt ProcessVolParam_RamDisk();
+    
 	void AdjustClusterSize(TUint aRecommendedSectorsPerCluster);
 	TInt AdjustFirstDataSectorAlignment(TUint aBlockSize);
 	TInt FirstDataSector() const;
@@ -981,15 +982,22 @@ private:
 	TUint MaxFat16Sectors() const;
 	TUint MaxFat32Sectors() const;
 	
-	inline TBool Is16BitFat() const;
-	inline TBool Is32BitFat() const;
 	inline CFatMountCB& FatMount();
 	inline CProxyDrive* LocalDrive();
     TFatType SuggestFatType() const;
 
+    
+    inline TBool FatTypeValid() const;
+    inline TFatType FatType() const;
+    inline void SetFatType(TFatType aType);
+
+    inline TBool Is16BitFat() const;
+    inline TBool Is32BitFat() const;
+
+
 private:
 	
-    TBool   iVariableSize;      ///< Flag to indicat if we are dealing with a variable size volume
+    TBool       iVariableSize;      ///< Flag to indicate if we are dealing with a variable size volume (RAM drive)
 	
     TUint16 iBytesPerSector;    ///< Byte per sector of media
     TInt    iSectorSizeLog2;    ///< Sector size in log2
@@ -1000,12 +1008,14 @@ private:
 	TUint   iSectorsPerFat;     ///< Number of sectors the Fat uses
 	TUint32 iMaxDiskSectors;    ///< number of sectors the volume has
 	TFormatInfo iFormatInfo;    ///< format information for a custom format
-	TBuf8<16>   iFileSystemName;///< Buffer to contain the volume name 
+    TFatType    iFatType;           ///< FAT type
+
 	TInt    iHiddenSectors;     ///< Number of hidden sectors in the volume
 	TUint16 iNumberOfHeads;     ///< Number of heads the media device has, not used so far as only used on solid state media.
 	TUint16 iSectorsPerTrack;   ///< Number of sectors the media device has, not used so far as only used on solid state media.
 	TUint32 iRootClusterNum;    ///< cluster number used for root directory, Fat32 specific
 	TUint32 iCountOfClusters;   ///< Count of clusters on the media
+    
     RArray<TInt> iBadClusters;  ///< Array of bad cluster numbers
     RArray<TInt> iBadSectors;   ///< Array of bad sector numbers
     TBool   iDiskCorrupt;       ///< Disk is corrupt when format or not

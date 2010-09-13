@@ -83,7 +83,6 @@ class CFat32LruCache : public CFatPagedCacheBase
     typedef TDblQue<CFat32LruCachePage> TPageList;
     typedef TDblQueIter<CFat32LruCachePage> TPageIterator;
 
-    TUint32   iMaxFatEntries;       ///< maximal number of FAT entries in FAT table
     TUint     iNumPagesAllocated;   ///< number of pages currently allocated
     TUint     iMaxPages;            ///< maximal pages allowed to allocate
     TPageList iPageList;            ///< LRU list of cache pages.

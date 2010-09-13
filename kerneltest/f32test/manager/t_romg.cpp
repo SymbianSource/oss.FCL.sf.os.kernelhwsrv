@@ -1,4 +1,4 @@
-// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -11,7 +11,7 @@
 // Contributors:
 //
 // Description:
-// f32test\manager\t_romg.cpp
+// f32test/manager/t_romg.cpp
 // 
 //
 
@@ -19,7 +19,7 @@
 #include <f32file.h>
 #include <e32test.h>
 #include <e32rom.h>
-#include "..\server\t_server.h"
+#include "../server/t_server.h"
 
 const TInt KBufSize=0x10000;
 const TInt KFillerSize=0x100;

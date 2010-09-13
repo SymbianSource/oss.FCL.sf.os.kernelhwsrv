@@ -28,8 +28,10 @@ LIBRARY       EUSER.LIB HAL.LIB usbcsc_bil.lib
 
 CAPABILITY    all
 
-UID      0x0 0x20031634
 VENDORID 0x70000001
+
+// 0x101fe1db to pretend to be USB Manager (needed for the OTG drivers)
+UID 0x0 0x101fe1db
 
 unpaged
 SMPSAFE

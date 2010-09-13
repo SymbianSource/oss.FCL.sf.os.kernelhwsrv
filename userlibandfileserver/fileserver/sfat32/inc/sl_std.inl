@@ -471,14 +471,48 @@ void CFatMountCB::SetWriteFailError(TInt aErrorValue)
 
 /** @return pointer to the owning mount object */
 CFatMountCB& CFatFormatCB::FatMount()
-	{return *(CFatMountCB*)&Mount();}
+    {
+    return *(CFatMountCB*)&Mount();
+    }
 
 /**
 Returns the local drive used by the file systems from the owning mount
 @return Pointer to the local drive 
 */
 CProxyDrive* CFatFormatCB::LocalDrive()
-	{return(FatMount().LocalDrive());}
+	{
+    return(FatMount().LocalDrive());
+    }
+
+
+TBool CFatFormatCB::FatTypeValid() const  
+    {
+    return (iFatType == EFat12 || iFatType == EFat16 || iFatType == EFat32);
+    }
+    
+TFatType CFatFormatCB::FatType() const
+    {
+    ASSERT(FatTypeValid()); 
+    return iFatType;
+    }
+
+void CFatFormatCB::SetFatType(TFatType aType) 
+    {
+    ASSERT(aType != EInvalid); 
+    iFatType = aType;
+    }
+
+TBool CFatFormatCB::Is16BitFat() const
+    {
+    ASSERT(FatTypeValid()); 
+    return iFatType == EFat16;
+    }
+
+TBool CFatFormatCB::Is32BitFat() const  
+    {
+    ASSERT(FatTypeValid());
+    return iFatType == EFat32;
+    }
 
 
 //---------------------------------------------------------------------------------------------------------------------------------

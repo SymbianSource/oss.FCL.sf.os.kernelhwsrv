@@ -30,4 +30,5 @@ EXPORTS
 	_ZTV20DStaticPowerResource @ 29 NONAME
 	_ZN24DPowerResourceController14InitControllerEv @ 30 NONAME
 	_ZN24DPowerResourceController30RegisterArrayOfStaticResourcesEjRPP20DStaticPowerResourcej @ 31 NONAME
+	_ZN33DSimulatedPowerResourceController30ResourceControllerRegistrationEv @ 32 NONAME
 

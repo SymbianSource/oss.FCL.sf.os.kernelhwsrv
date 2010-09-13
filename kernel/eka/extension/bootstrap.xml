@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<build xmlns="http://symbian.com/xml/build" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://symbian.com/xml/build build/2_0.xsd">
+
+<!-- Extension interfaces : replacements for Template Extension Makefiles 
+-->
+
+<interface name="base.bootstrap" extends="Symbian.KernelFLM" flm="bootstrap.flm">
+		<param name="E32PATH" />
+		<param name="NAME" />
+		<param name="MEMMODEL" />
+		<param name="EXTRA_INC_PATH" default=''/>
+		<param name="EXTRA_EPOC32_INC_PATH" default=''/>
+		<param name="SOURCES" />
+		<param name="INCLUDES" />
+		<param name="ASM_MACROS" default='' />
+		<param name="GENINCLUDES_HEADERS" default=''/>
+		<param name="CPU" default='arm'/>
+		<param name="SMP" default=''/>
+		<param name="LINKBASE" default='0x00000000'/>
+		<param name="BASESOURCES_NAMES" default="bootmain.s bootcpu.s bootutils.s"/>
+		<param name="INC_PATH" default=''/>
+	</interface>
+</build>

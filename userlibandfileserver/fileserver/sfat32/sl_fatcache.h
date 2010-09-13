@@ -78,6 +78,10 @@ class CFatCacheBase : public CBase
     inline TUint FAT_SectorSz() const; 
     inline TUint FAT_ClusterSzLog2() const;
 
+    inline TUint32 MaxFatEntries() const;
+    inline TBool FatIndexValid(TUint32 aIndex) const;
+
+
  protected:
     
     enum {KInvalidFatNo = 0xFF}; ///< used to invalidate current FAT no.
@@ -87,6 +91,7 @@ class CFatCacheBase : public CBase
     //-- values cached from owning mount.
     TUint32     iFatStartPos;   ///< media position of FAT1 start 
     TUint32     iFatSize;       ///< size of FAT in bytes
+    TUint32     iMaxFatEntries; ///< maximal number of FAT entries in FAT table, FAT[0] & FAT [1] included
     TUint16     iNumFATs;       ///< number of FATs on the volume
     TUint16     iFatSecSzLog2;  ///< Log2(FAT Sector size)
     TUint16     iFatClustSzLog2;///< Log2(FAT cluster size)

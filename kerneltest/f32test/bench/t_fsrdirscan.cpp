@@ -1,4 +1,4 @@
-// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2006-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -18,7 +18,7 @@
 #include <f32file.h>
 #include <e32test.h>
 #include "t_select.h"
-#include "..\server\t_server.h"
+#include "../server/t_server.h"
 #include "t_benchmain.h"
 
 GLDEF_D RTest test(_L("File Server Benchmarks, DirScan"));
