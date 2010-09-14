@@ -2198,10 +2198,10 @@ void ExecHandler::FsRegisterThread()
 	__KTRACE_OPT(KBOOT,Kern::Printf("File server thread registered"));
 	DThread* pT = TheCurrentThread;
 	DProcess* pP = pT->iOwningProcess;
-	pP->iFlags |= (KThreadFlagProcessCritical | KProcessFlagSystemPermanent);
-	pT->iFlags |= KThreadFlagSystemPermanent;
 	if (K::TheFileServerProcess && K::TheFileServerProcess!=pP)
 		K::PanicCurrentThread(EAccessDenied);
+	pP->iFlags |= (KThreadFlagProcessCritical | KProcessFlagSystemPermanent);
+	pT->iFlags |= KThreadFlagSystemPermanent;
 	K::TheFileServerProcess=pP;
 	K::ThreadEnterCS();
 	pP->SetPriority(EPriorityFileServer);

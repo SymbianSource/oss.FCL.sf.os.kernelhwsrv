@@ -1,3 +1,21 @@
+Version 2.00.2657
+=================
+(Made by fadhliM 06/08/2010)
+
+1.	jimhofe
+	1.	MINOR_CHANGE Removing author names from documentation
+
+2.	davegord
+	1.	ou1cimx1#506836  Problem with ExecHandler::FsRegisterThread()
+
+Version 2.00.2656
+=================
+(Made by fadhliM 29/07/2010)
+
+1.	h14jiang
+	1.	ou1cimx1#504401 [92] Disk full notification pops up
+
+
 Version 2.00.2655
 =================
 (Made by fadhliM 27/07/2010)
@@ -14,7 +32,7 @@ Version 2.00.2654
 (Made by fadhliM 19/07/2010)
 
 1.	gcochran
-	1.	DEF144551 t_svrpinning, _P,_UP test fails with unexpected thread exit type on Vasco/TB9.2
+	1.	ou1cimx1#498818/DEF144551 t_svrpinning, _P,_UP test fails with unexpected thread exit type on Vasco/TB9.2
 
 2.	martai
 	1.	ou1cimx1#494023 E32TEST T_SHADOW Fails during testMultipleReadFile()
