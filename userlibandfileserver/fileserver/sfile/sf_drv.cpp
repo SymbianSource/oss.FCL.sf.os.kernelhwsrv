@@ -2221,8 +2221,9 @@ EXPORT_C TBool TDrive::GetNotifyUser()
 
 
 /**
-Dismounts the current mount. This is method is called from outside, so do some finalisation work on mount.
+    Gracefully dismounts the current mount. This is method is called from outside, so do some finalisation work on mount.
 After calling this function there is no current mount on the drive.
+
 */
 EXPORT_C void TDrive::Dismount()
 	{
@@ -2232,10 +2233,12 @@ EXPORT_C void TDrive::Dismount()
 	if (!iCurrentMount)
 		return;
 
+    //-- try to do the best flushing file caches
     TRAP_IGNORE(FlushCachedFileInfoL());
 
     //-- try our best to finalise the mount (the mount can decide to do some job during finalisation, e.g. write some data)
-    TRAP_IGNORE(iCurrentMount->FinaliseMountL());
+    //-- finalise the mount in RO mode, we are dismounting the FS anyway
+    TRAP_IGNORE(iCurrentMount->FinaliseMountL(RFs::EFinal_RO));
     
     DoDismount();
 	}
@@ -2244,8 +2247,7 @@ EXPORT_C void TDrive::Dismount()
 
 
 /**
-Forcibly dismounts the current mount and prevents it being remounted.
-After calling this function there is no current mount on the drive.
+    Dismounts the current mount by force.
 */
 void TDrive::ForceDismount()
 	{
@@ -2257,7 +2259,15 @@ void TDrive::ForceDismount()
 		return;
   
 	TRAP_IGNORE(FlushCachedFileInfoL());
-	iCurrentMount->SetDismounted(); //! this affects TDrive::ReMount()
+
+    //-- try our best to finalise the mount (the mount can decide to do some job during finalisation, e.g. write some data)
+    //-- finalise the mount in RO mode, we are dismounting the FS anyway
+    TRAP_IGNORE(iCurrentMount->FinaliseMountL(RFs::EFinal_RO));
+
+    //-- mark the mount as 'Dismounted'; this invalidates all object handles until the mount is successfully "remounted". 
+    //-- if there are still some objects opened on this mount, CMountCB::Close() won't destroy it until all objects are closed.
+    iCurrentMount->SetDismounted(); 
+    
     DoDismount();
 	}
 

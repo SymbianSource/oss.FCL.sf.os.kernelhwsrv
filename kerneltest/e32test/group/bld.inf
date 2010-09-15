@@ -69,7 +69,6 @@ platsec.settings        /epoc32/data/defaulttest.ini
 ../dll/oe/eabi/urel/t_oeexport1.exe     /epoc32/release/armv5/urel/t_oeexport1.exe
 
 ../demandpaging/d_pagestress.h		/epoc32/include/
-../pci/t_pci.h						/epoc32/include/e32test/t_pci.h
 
 ../iic/iic_psl/i2c.h			/epoc32/include/e32test/
 ../iic/iic_psl/spi.h			/epoc32/include/e32test/
@@ -1045,8 +1044,5 @@ t_camera_gen		manual
 d_mmcsc			support
 
 #include "../hcr/hcr.inf"
-
-//pci tests
-t_pci
 
 sdapctest

@@ -3306,7 +3306,7 @@ EFSRV_EXPORT_C TInt RFs::SetLocalDriveMapping(const TDesC8& aMapping)
 
     @return KErrNone on success,
             KErrArgument if the function arguments are invalid
-            KErrInUse    if the drive has opened objects (files, directories etc.) and therefore can not be finalised
+            KErrInUse    if the drive has opened disk access objects (format, raw disk access, etc) and therefore can not be finalised
             KErrCorrupt  if the drive is corrupt.
             System wide error codes otherwise.
 

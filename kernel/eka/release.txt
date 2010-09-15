@@ -1,3 +1,42 @@
+Version 2.00.2660
+=================
+(Made by fadhliM 24/08/2010)
+
+1.	cnotton
+	1.	ou1cimx1#532041 ENV ExecHandler::MathSecureRandom() allocates a large amount of stack space
+
+
+Version 2.00.2659
+=================
+(Made by fadhliM 23/08/2010)
+
+1.	jimhofe
+	1.	ou1cimx1#526275 [System Build] Dummy MPR files cause build break in TB92SF_1229
+
+
+Version 2.00.2658
+=================
+(Made by fadhliM 16/08/2010)
+
+1.	jimhofe
+	1.	MINOR_CHANGE Removing names from documentation
+
+2.	t30zhang
+	1.	ou1cimx1#521838 Mutex order issue in USB host stack
+
+3.	jcoppear
+	1.	ou1cimx1#524810 EChangesOutOfMemory is prone to misuse
+
+4.	fagortz
+	1.	ou1cimx1#522998 LocDrv::RegisterPagingDevice() assumes iblockSize is non-zero
+
+5.	mmoate
+	1.	ou1cimx1#462350 DEV TB92 CBR issues affecting component delivery to foundation for Symbian^3
+
+6.	jukwak
+	1.	ou1cimx1#516021 [DEV] t_pci has dependency on naviengine. Propagated from MCL.
+
+
 Version 2.00.2657
 =================
 (Made by fadhliM 06/08/2010)

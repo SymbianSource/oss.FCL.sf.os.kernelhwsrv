@@ -11,6 +11,7 @@ source	\sf\os\kernelhwsrv\kerneltest\e32utils\d_exc
 source	\sf\os\kernelhwsrv\kerneltest\e32utils\demandpaging
 source	\sf\os\kernelhwsrv\kerneltest\e32utils\group
 source	\sf\os\kernelhwsrv\kerneltest\e32utils\netcards
+source	\sf\os\kernelhwsrv\kerneltest\e32utils\nistsecurerng
 source	\sf\os\kernelhwsrv\kerneltest\e32utils\profiler
 source	\sf\os\kernelhwsrv\kerneltest\e32utils\setcap
 source	\sf\os\kernelhwsrv\kerneltest\e32utils\testusbcldd

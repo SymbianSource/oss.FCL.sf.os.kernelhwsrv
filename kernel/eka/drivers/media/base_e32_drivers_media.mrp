@@ -54,9 +54,3 @@ notes_source	\component_defs\release.src
 
 
 ipr E
-
-ipr E \sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard
-# Access to SD Card PIL and PSL Software Source Code and Documentation 
-# is subject to the relevant party entering into the necessary
-# agreement(s) with SD-3C LLC and/or 4C LLC.
-

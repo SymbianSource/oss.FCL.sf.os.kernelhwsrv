@@ -42,6 +42,7 @@ CCacheMemoryManager::~CCacheMemoryManager()
 		delete iRegisteredClients[i];
 		}
 	iRegisteredClients.Close();
+	iChunk.Close();
 	}
 
 /**

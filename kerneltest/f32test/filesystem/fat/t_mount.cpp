@@ -629,12 +629,12 @@ static void TestFinaliseFS()
     bDriveFinalised = DoCheckVolumeFinalised(gDriveNum);
     test(!bDriveFinalised); //-- the volume has become "unfinalised"
 
-    //-- 2.1 open a file, try to finalise; Shall dail with KErrInUse
+    //-- 2.1 open a file, try to finalise; This should be OK
     nRes = file.Replace(TheFs, KFileName, EFileWrite | EFileRead);
     test_KErrNone(nRes);
 
     nRes =TheFs.FinaliseDrive(gDriveNum, RFs::EFinal_RW);
-    test(nRes==KErrInUse); //-- can't finalise drives with opened objects
+    test_KErrNone(nRes);
 
     file.Close();
 

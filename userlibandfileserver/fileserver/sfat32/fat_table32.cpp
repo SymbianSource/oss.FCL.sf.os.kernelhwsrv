@@ -1036,10 +1036,16 @@ void CAtaFatTable::MountL(const TMountParams& aMountParam)
             //-- create helper thread object and start the thread
             ipHelperThread = CFat32BitCachePopulator::NewL(*this);
 
-            ipHelperThread->Launch(); 
+            if(ipHelperThread->Launch() != KErrNone)
+                {//-- failed for some reason
+                DestroyHelperThread();
+                }
+                else
+                {
             //-- background FAT bit cache populating thread is running now.
             //-- the result of thread start up and completion isn't very interesting: If it fails to 
             //-- properly populate the cache, nothing fatal will happen.
+            }
             }
 
         //-- CFat32BitCachePopulator doesn't affect FAT table state. 
@@ -1472,7 +1478,7 @@ void CAtaFatTable::CountFreeClustersL()
                 {//-- test property for this drive is defined
                     if(nMntDebugFlags & KMntDisable_FatBkGndScan)
                     {
-                    __PRINT(_L("#- FAT32 BkGnd scan is disabled is disabled by debug interface."));
+                    __PRINT(_L("#- FAT32 BkGnd scan is disabled by debug interface."));
                     bFat32BkGndScan = EFalse;
                     }
             
@@ -1536,7 +1542,8 @@ void CAtaFatTable::DoLaunchFat32FreeSpaceScanThreadL()
     
     SetState(EFreeClustersScan);
     
-    ipHelperThread->Launch(); 
+    User::LeaveIfError(ipHelperThread->Launch()); 
+    
     //-- background FAT scanning thread is running now
     }
 
@@ -1978,7 +1985,8 @@ CFat32ScanThread::CFat32ScanThread(CAtaFatTable& aOwner)
 
 /**
     Launches the FAT32_ScanThread scaner thread.
-    @return  standard error code
+    @return  KErrNone if the thread launched OK
+             standard error code otherwise
 */
 TInt CFat32ScanThread::Launch()
     {
@@ -2540,9 +2548,15 @@ TInt FAT32_ScanThread(TAny* apHostObject)
             //-- allow this thread to be preempted by another one that wants to access the media driver.
             //-- without this wait we will have priority inversion, because this (low priority) thread continiously reads data by big chunks 
             //-- and doesn't allow others to access the driver.
-            //-- On the other hand, if the thread's priority is boosted, there is no reason to be polite.
+            //-- On the other hand, if the thread's priority is boosted, there is no reason to be so polite.
             if(!pSelf->IsPriorityBoosted())
-                User::After(K1mSec); //-- User::After() granularity can be much coarser than 1ms
+                {//-- User::After() granularity can be much coarser than 1ms, e.g. 1/64 Sec. This will add up to the scanning time
+                User::After(K1mSec); 
+                }
+            else
+                {//-- use much less coarse granularity to allow this thread to be preempted even if its priority is boosted.
+                User::AfterHighRes(128); 
+                }
 
             //-------------------------------------------
             mediaPos += bytesToRead;

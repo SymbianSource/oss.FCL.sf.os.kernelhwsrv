@@ -539,7 +539,7 @@ void CFatMountCB::FinaliseMountL(TInt aOperation, TAny* /*aParam1*/, TAny* /*aPa
             User::Leave(KErrAccessDenied); //-- can't override RO flag
             }
 
-		(void)LocalDrive()->Finalise(ETrue);
+        (void)LocalDrive()->Finalise(ETrue);
 
         if(aOperation == RFs::EFinal_RO)
             {
@@ -550,10 +550,8 @@ void CFatMountCB::FinaliseMountL(TInt aOperation, TAny* /*aParam1*/, TAny* /*aPa
         return;
         }
 
-    if(LockStatus() != 0)
-        {//-- can't finalise the volume if it has opened objects and not in the consistent state.
-         //-- Theoretically, we can finalise the mount if we have files opened only for read, but at present,
-         //-- it's impossible to detect such situation.
+    if(Locked())
+        {//-- can't finalise the volume if it has opened disk access objects, like Format or RawAccess
         User::Leave(KErrInUse);
         }
 
@@ -600,6 +598,8 @@ void CFatMountCB::FinaliseMountL(TInt aOperation, TAny* /*aParam1*/, TAny* /*aPa
     //-- finally, put the volume into RO mode if required
     if(aOperation == RFs::EFinal_RO)
         SetReadOnly(ETrue);
+
+    (void)LocalDrive()->Finalise(ETrue);
 
     SetState(EFinalised);
     }
