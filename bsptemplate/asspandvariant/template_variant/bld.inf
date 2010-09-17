@@ -109,6 +109,7 @@ hal/hal
 
 PRJ_EXTENSIONS
 
+#if 0 // Removing changes associated with introduction of bootstrap.flm - see Bug 2149
 #ifdef SBSV2 // If using SBSv2 with bootstrap FLM, MEMMODEL MUST begin with a capital letter
 
 start		extension		base.bootstrap bootstrap
@@ -130,6 +131,9 @@ option		E32PATH			../../../kernel/eka/../.
 end
 
 #else // !SBSV2
+#endif // more workaround - close the #ifdef SBSV2 here, to regain the other bit
+#endif // first part of workaround - close the #ifdef 0
+
 
 start		extension		base/bootstrap bootstrap
 
@@ -149,4 +153,5 @@ option		E32PATH			$(EXTENSION_ROOT)/../../../kernel/eka/../.
 
 end
 
+#if 0  // second part of workaround - avoid dangling #endif
 #endif // !SBSV2
