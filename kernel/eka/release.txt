@@ -1,3 +1,48 @@
+Version 2.00.4001
+=================
+(Made by vfebvre 14/09/2010)
+
+1.	maxxu
+	1.	ou1cimx1#570754 t_usb_device can't run on vasco
+
+
+Version 2.00.4000
+=================
+(Made by vfebvre 09/09/2010)
+
+1.	maxxu
+	1.	ou1cimx1#539523 Some usb driver tests can run on Vasco
+		add comments to t_usb_device scripts
+
+2.	vinjose
+	1.	ou1cimx1#533208 Improve the EventQ  CodeCoverage to 100%
+
+3.	marisood
+	1.	ou1cimx1#556625 Improve code coverage for resmanus to 95% or more
+
+4.	gcochran
+	1.	ou1cimx1#544949 Kernel - TB 10.1 the landscape mode doesn’t work on 10.1 emulator
+
+5.	shubmurt
+	1.	ou1cimx1#550808 Supervisor page fault crash
+
+6.	fagortz
+	1.	ou1cimx1#562537 Linux build problem with kernelhwsrv
+
+7.	paconway
+	1.	ou1cimx1#517481 Coverity errors - media#2
+
+8.	ricoles
+	1.	ou1cimx1#560671 [MCL] Current thread id should be cached in user side local data
+
+9.	mmoate
+	1.	ou1cimx1#467795 MCL Test Code Coverage Improvement Phase 2
+
+10.	davegord
+	1.	ou1cimx1#553101 coverity defects - Kernel - TB101 wk24 - /sf/os/kernelhwsrv/ -
+	2.	ou1cimx1#543315 ENV - SIROCCO - Vasco - T_TIME fails when Setting Secure time
+
+
 Version 2.00.3119
 =================
 (Made by fadhliM 31/08/2010)

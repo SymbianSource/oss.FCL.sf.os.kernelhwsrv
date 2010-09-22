@@ -1,4 +1,4 @@
-// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -22,18 +22,22 @@
 LOCAL_D	TBuf<KMaxLocaleMessageText>* localeBufs[ELocaleMessages_LastMsg];
 
 RTest test(_L("T_MSGTXT"));
+	
+const TUint KTimeOut=5000000; // 5 seconds timeout for the notifier
 
 LOCAL_C void DisplayMessages()
 //
 // Display the locale messages
 //
 	{
-
 	RNotifier notifier;
 	TInt r=notifier.Connect();
 	test(r==KErrNone);
 	TRequestStatus status;
+	TRequestStatus timerStatus;
 	TInt buttonVal=0;
+	RTimer timer;
+	timer.CreateLocal();
 
 	test.Next(_L("Test File Server Error Dialogs"));
 	TLocaleMessageText msgTxt;
@@ -42,37 +46,80 @@ LOCAL_C void DisplayMessages()
 	msgTxt.Set(EFileServer_Button2);
 	TBuf<KMaxLocaleMessageText> button2(msgTxt);
 
-	test.Next(_L("DIALOG1: Displayed if a disk is removed during a write"));
-	User::After(300000);
-	test.Printf(_L("***Press SHIFT+R or SHIFT+S to confim dialogue***\n"));
+	test.Next(_L("DIALOG1: Displayed if a disk is removed during a write (will timeout in 5 seconds)"));
 	TInt count=2;
 	msgTxt.Set((TLocaleMessage)count++);
 	TBuf<KMaxLocaleMessageText> line1=msgTxt;
 	msgTxt.Set((TLocaleMessage)count++);
 	TBuf<KMaxLocaleMessageText> line2=msgTxt;
 	notifier.Notify(line1,line2,button1,button2,buttonVal,status);
-	User::WaitForRequest(status);
-	User::After(300000);
+	timer.After(timerStatus,KTimeOut);
+	User::WaitForRequest(status,timerStatus);
+	if (status==KRequestPending)
+		{
+		test.Printf(_L("Timeout in waiting for keypress, continuing\n"));
+		// make the notifier to disappear
+		TRawEvent eventDown;
+		eventDown.Set(TRawEvent::EKeyDown,EStdKeyEnter);
+		TRawEvent eventUp;
+		eventUp.Set(TRawEvent::EKeyUp,EStdKeyEnter);
+		UserSvr::AddEvent(eventDown);
+		UserSvr::AddEvent(eventUp);
+		}
+	else
+		{
+		timer.Cancel();
+		}
 
-	test.Next(_L("DIALOG2: Write failed due to low power"));
-	User::After(300000);
+	test.Next(_L("DIALOG2: Write failed due to low power (will timeout in 5 seconds)"));
 	msgTxt.Set((TLocaleMessage)count++);
 	line1=msgTxt;
 	msgTxt.Set((TLocaleMessage)count++);
 	line2=msgTxt;
 	notifier.Notify(line1,line2,button1,button2,buttonVal,status);
-	User::WaitForRequest(status);
-	User::After(300000);
+	timer.After(timerStatus,KTimeOut);
+	User::WaitForRequest(status,timerStatus);
+	if (status==KRequestPending)
+		{
+		test.Printf(_L("Timeout in waiting for keypress, continuing\n"));
+		// make the notifier to disappear
+		TRawEvent eventDown;
+		eventDown.Set(TRawEvent::EKeyDown,EStdKeyEnter);
+		TRawEvent eventUp;
+		eventUp.Set(TRawEvent::EKeyUp,EStdKeyEnter);
+		UserSvr::AddEvent(eventDown);
+		UserSvr::AddEvent(eventUp);
+		}
+	else
+		{
+		timer.Cancel();
+		}
 
-	test.Next(_L("DIALOG3: General error message - disk write failed"));
-	User::After(300000);
+	test.Next(_L("DIALOG3: General error message - disk write failed (will timeout in 5 seconds)"));
 	msgTxt.Set((TLocaleMessage)count++);
 	line1=msgTxt;
 	msgTxt.Set((TLocaleMessage)count++);
 	line2=msgTxt;
 	notifier.Notify(line1,line2,button1,button2,buttonVal,status);
-	User::WaitForRequest(status);
-	User::After(300000);
+	timer.After(timerStatus,KTimeOut);
+	User::WaitForRequest(status,timerStatus);
+	if (status==KRequestPending)
+		{
+		test.Printf(_L("Timeout in waiting for keypress, continuing\n"));
+		// make the notifier to disappear
+		TRawEvent eventDown;
+		eventDown.Set(TRawEvent::EKeyDown,EStdKeyEnter);
+		TRawEvent eventUp;
+		eventUp.Set(TRawEvent::EKeyUp,EStdKeyEnter);
+		UserSvr::AddEvent(eventDown);
+		UserSvr::AddEvent(eventUp);
+		}
+	else
+		{
+		timer.Cancel();
+		}
+
+	timer.Close();
 	test.Printf(_L("***End***\n\n"));
 
 	msgTxt.Set((TLocaleMessage)count++);
@@ -81,8 +128,6 @@ LOCAL_C void DisplayMessages()
 	test.Printf(_L("ALARMNAME: 'Rings' - %S\n"),&msgTxt);
 	msgTxt.Set((TLocaleMessage)count++);
 	test.Printf(_L("ALARMNAME: 'Signal' - %S\n"),&msgTxt);
-	test.Printf(_L("***Press any key***\n\n"));
-	test.Getch();
 
 	msgTxt.Set((TLocaleMessage)count++);
 	test.Printf(_L("DISKNAME: 'Internal' - %S\n"),&msgTxt);
@@ -102,8 +147,6 @@ LOCAL_C void DisplayMessages()
 	test.Printf(_L("DISKNAME: 'External7' - %S\n"),&msgTxt);
 	msgTxt.Set((TLocaleMessage)count++);
 	test.Printf(_L("DISKNAME: 'External8' - %S\n"),&msgTxt);
-	test.Printf(_L("***Press any key***\n\n"));
-	test.Getch();
 	
 	msgTxt.Set((TLocaleMessage)count++);
 	test.Printf(_L("SOCKETNAME0: - %S\n"),&msgTxt);
@@ -123,9 +166,8 @@ TInt E32Main()
 	{
 
 	test.Title();
-//	TBuf<KMaxLocaleMessageText>* localeBufs[ELocaleMessages_LastMsg];    {Too big for local decleration}
-																	   															
 	test.Start(_L("Constructor"));
+
 	TLocaleMessageText msgTxt;
 	msgTxt.Set((TLocaleMessage)4);
 	TInt count=0;

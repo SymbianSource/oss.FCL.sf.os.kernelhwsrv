@@ -1906,14 +1906,17 @@ void TestTTime::Test11()
 	// The platform may or may not support SecureTime, and even if it does,
 	// it may not have a secure time set. So we start this test by making
 	// sure that the NonSecureOffset is set (which may fail, if it's not
-	// supported OR if it's already set); then read and write the secure
-	// time, to make sure that it's supported and we have permission.
+	// supported OR if it's already set); then read and write and reread
+	// secure time, to make sure that it's supported and we have permission.
+	//
+	test.Next(_L("Test absolute timers with secure time change"));
 	User::SetUTCTime(now);
 	HAL::Set(HAL::ETimeNonSecureOffset, 0);
-	test.Next(_L("Test absolute timers with secure time change"));
 	TTime securetime;
-	if ((r = securetime.UniversalTimeSecure()) == KErrNone)
-		r = User::SetUTCTimeSecure(securetime);
+	if ((r = securetime.UniversalTimeSecure()) != KErrNone)
+		securetime = now;
+	if ((r = User::SetUTCTimeSecure(securetime)) == KErrNone)
+		r = securetime.UniversalTimeSecure();
 	if (r != KErrNone)
 		{
 		RDebug::Printf("WARNING: Secure clock change test skipped because secure time could not be changed!");

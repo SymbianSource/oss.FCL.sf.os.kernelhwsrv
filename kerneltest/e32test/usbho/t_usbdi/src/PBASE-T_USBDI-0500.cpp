@@ -30,13 +30,13 @@
 
 namespace NUnitTesting_USBDI
 	{
-const TInt KBulkMaxINTransferSize = 600;
-const TInt KDeviceNumWriteBytesPreHalt = 256;
-const TUint KHostNumReadBytesPreHalt1 = 512;
-const TUint KHostNumReadBytesPreHalt2 = 512;
-const TUint KHostNumReadBytesPostHalt1 = 256;
-const TUint KHostNumReadBytesPostHalt2 = 257;
-const TInt KDeviceNumWriteBytesPostHalt = 512;
+const TInt KBulkMaxINTransferSize = 1200;
+const TInt KDeviceNumWriteBytesPreHalt = 512;
+const TUint KHostNumReadBytesPreHalt1 = 1024;
+const TUint KHostNumReadBytesPreHalt2 = 1024;
+const TUint KHostNumReadBytesPostHalt1 = 512;
+const TUint KHostNumReadBytesPostHalt2 = 513;
+const TInt KDeviceNumWriteBytesPostHalt = 1024;
 
 
 //Make these single bit values ... 

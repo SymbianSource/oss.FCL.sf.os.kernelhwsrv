@@ -122,5 +122,7 @@ const TUid KConsoleDllUid8={KConsoleDllUidValue8};
 
 const TUint KSystemStartupModeKey=0x10204BB5;
 
+const TUint KSystemEmulatorOrientationKey=0x10204BB6;
+
 #endif
 

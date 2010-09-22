@@ -19,7 +19,9 @@
 */
 #include "cbulkonlytransport.h"
 #include "cbulkonlytransportusbcldd.h"
+#if !defined(__WINS__) && !defined(__X86__)
 #include "cbulkonlytransportusbcscldd.h"
+#endif
 #include "usbmsshared.h"
 #include "massstoragedebug.h"
 #include "cusbmassstorageserver.h"
@@ -52,7 +54,6 @@ LOCAL_D const TInt KCswStatusOffset 			= 12;
  @return Error.
  */
 TInt TUsbRequestHdr::Decode(const TDesC8& aBuffer)
-
 	{
 	if (aBuffer.Length() < static_cast<TInt>(KRequestHdrSize))
 		{
@@ -113,19 +114,23 @@ CBulkOnlyTransport* CBulkOnlyTransport::NewL(TInt aNumDrives,CUsbMassStorageCont
 		User::Leave(KErrArgument);
 		}
 
+#if !defined(__WINS__) && !defined(__X86__)
 	CBulkOnlyTransportUsbcScLdd* scTransport;
+#endif
 	CBulkOnlyTransportUsbcLdd* nonscTransport;
 	switch (aTransportLddFlag)
 		{
 		case 1: 
-				nonscTransport = new(ELeave) CBulkOnlyTransportUsbcLdd(aNumDrives, aController);
-				return nonscTransport;
-
+			nonscTransport = new(ELeave) CBulkOnlyTransportUsbcLdd(aNumDrives, aController);
+			return nonscTransport;
+#if !defined(__WINS__) && !defined(__X86__)
 		case 2: 
-				scTransport = new(ELeave) CBulkOnlyTransportUsbcScLdd(aNumDrives, aController);
-				return scTransport;
-		default:
-				return NULL;
+			scTransport = new(ELeave) CBulkOnlyTransportUsbcScLdd(aNumDrives, aController);
+			return scTransport;
+#endif
+        default:
+            __ASSERT_DEBUG(EFalse, User::Panic(KUsbMsSvrPncCat, EMsCBulkOnlyTransportNull));		    
+			return NULL;
 
 		}
 	}
@@ -139,6 +144,7 @@ TInt CBulkOnlyTransport::InitialiseTransportL(TInt aTransportLddFlag)
 	iController.GetTransport(transport);
 	switch (aTransportLddFlag)
 		{
+#if !defined(__WINS__) && !defined(__X86__)
 		case 2: 
 				ret = ((CBulkOnlyTransportUsbcScLdd*) transport)->Ldd().Open(0);
 				if (ret != KErrNone)
@@ -153,6 +159,7 @@ TInt CBulkOnlyTransport::InitialiseTransportL(TInt aTransportLddFlag)
 					CleanupStack::Pop(transport);
 					return ret;
 					}
+#endif
 		case 1:
 				ret = ((CBulkOnlyTransportUsbcLdd*) transport)->Ldd().Open(0);
 				if (ret != KErrNone)
@@ -753,7 +760,7 @@ TBool CBulkOnlyTransport::CheckCBW()
 	TInt8 lun = static_cast<TUint8>(iCbwBufPtr[KCbwLunOffset] & 0x0f);
 	if (iMaxLun < lun)
 		{
-		__PRINT1(_L("bad lun: %d"), lun);
+		RDebug::Print(_L("bad lun: %d"), lun);
 		return EFalse;
 		}
 

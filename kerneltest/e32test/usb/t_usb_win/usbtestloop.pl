@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+# Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 # All rights reserved.
 # This component and the accompanying materials are made available
 # under the terms of the License "Eclipse Public License v1.0"
@@ -24,11 +24,11 @@ print "USBTESTLOOP starts\n";
 print localtime()."\n";
 print "======================================\n";
 
-unless (-e "h4testsusbcv.bat")
-	{
-	print "Cannot find h4testsusbcv.bat\n";
-	exit 0;
-	}
+# unless (-e "h4testsusbcv.bat")
+# 	{
+# 	print "Cannot find h4testsusbcv.bat\n";
+# 	exit 0;
+# 	}
 unless (-e "h4tests.bat")
 	{
 	print "Cannot find h4tests.bat\n";

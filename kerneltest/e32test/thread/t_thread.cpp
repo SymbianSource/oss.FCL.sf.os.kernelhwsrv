@@ -1342,7 +1342,17 @@ void testId()
 	User::WaitForRequest(stat);
 	test(stat==88863);
 	CLOSE_AND_WAIT(thread);
-	
+
+	test.Next(_L("Test getting own thread ID"));
+	id=RThread().Id();
+	id2=RThread().Id();
+	test(id==id2);
+	r=thread.Open(id);
+	test(r==KErrNone);
+	id2=thread.Id();
+	test(id==id2);
+	thread.Close();
+
 	test.End();
 	}
 

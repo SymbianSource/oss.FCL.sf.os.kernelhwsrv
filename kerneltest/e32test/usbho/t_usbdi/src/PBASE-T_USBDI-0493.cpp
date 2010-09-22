@@ -30,16 +30,18 @@
 
 namespace NUnitTesting_USBDI
 	{
-const TInt  KLiteralEnglish8Length = KLiteralEnglish8().Length(); 
-const TUint KBulkTransferMaxSize = 320;
-const TUint KHostNumWriteBytes = 256;
-const TUint KHostNumReadBytes = 256;
-const TUint KHostFinalNumReadBytes = 300;
+const TInt  KLiteralEnglish16Length = KLiteralEnglish16().Length(); 
+// High speed peripheral vasco max packet size is 512. 
+// Size for reading/writing shall be multiple of endpoint max packet size to prevent the return of RDevUsbcClient::ReadUntilShort.
+const TUint KBulkTransferMaxSize = 640;
+const TUint KHostNumWriteBytes = 512;
+const TUint KHostNumReadBytes = 512;
+const TUint KHostFinalNumReadBytes = 600;
 
-const TUint KStartNumTransferBytes = 1023;
-const TUint KFinishNumTransferBytes = 1025;
+const TUint KStartNumTransferBytes = 2047;
+const TUint KFinishNumTransferBytes = 2049;
 
-const TUint KClientNumReadBytes = 2000;
+const TUint KClientNumReadBytes = 4000;
 
 //Make these single bit values ... 
 // ... so that their completion can be easily recorded in a bit mask!
@@ -134,13 +136,13 @@ void CUT_PBASE_T_USBDI_0493::Ep0TransferCompleteL(TInt aCompletionCode)
 		case ETransferOut:
 			OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_0493_EP0TRANSFERCOMPLETEL_DUP02, "Try to send %d bytes of data", iNumTransferBytes);
 			{
-			    const TPtrC8& midKLiteralEnglish = KLiteralEnglish8().Mid(0*KHostNumWriteBytes, KHostNumWriteBytes);
+			    const TPtrC8& midKLiteralEnglish = KLiteralEnglish16().Mid(0*KHostNumWriteBytes, KHostNumWriteBytes);
                 OstTraceData(TRACE_NORMAL, CUT_PBASE_T_USBDI_0493_EP0TRANSFERCOMPLETEL_DUP52, "", midKLiteralEnglish.Ptr(), midKLiteralEnglish.Length());
 			}
-			iOutTransfer[0]->TransferOut(KLiteralEnglish8().Mid(0*KHostNumWriteBytes, KHostNumWriteBytes), EFalse);
-			iOutTransfer[1]->TransferOut(KLiteralEnglish8().Mid(1*KHostNumWriteBytes, KHostNumWriteBytes), EFalse);
-			iOutTransfer[2]->TransferOut(KLiteralEnglish8().Mid(2*KHostNumWriteBytes, KHostNumWriteBytes), EFalse);
-			iOutTransfer[3]->TransferOut(KLiteralEnglish8().Mid(3*KHostNumWriteBytes, iNumTransferBytes - 3*KHostNumWriteBytes), ETrue);
+			iOutTransfer[0]->TransferOut(KLiteralEnglish16().Mid(0*KHostNumWriteBytes, KHostNumWriteBytes), EFalse);
+			iOutTransfer[1]->TransferOut(KLiteralEnglish16().Mid(1*KHostNumWriteBytes, KHostNumWriteBytes), EFalse);
+			iOutTransfer[2]->TransferOut(KLiteralEnglish16().Mid(2*KHostNumWriteBytes, KHostNumWriteBytes), EFalse);
+			iOutTransfer[3]->TransferOut(KLiteralEnglish16().Mid(3*KHostNumWriteBytes, iNumTransferBytes - 3*KHostNumWriteBytes), ETrue);
 			break;
 		
 		case ETransferIn:
@@ -238,25 +240,25 @@ void CUT_PBASE_T_USBDI_0493::TransferCompleteL(TInt aTransferId,TInt aCompletion
 				TPtrC8 data2(iInTransfer[1]->DataPolled());		
 				TPtrC8 data3(iInTransfer[2]->DataPolled());		
 				TPtrC8 data4(iInTransfer[3]->DataPolled());		
-				if(ValidateData(data1, KLiteralEnglish8().Mid(0*KHostNumReadBytes, KHostNumReadBytes)) == EFalse)
+				if(ValidateData(data1, KLiteralEnglish16().Mid(0*KHostNumReadBytes, KHostNumReadBytes)) == EFalse)
 					{
 					err = KErrCompletion; //indicates data validation failure
 					break; //switch(iCaseStep)
 					}
 
-				if(ValidateData(data2, KLiteralEnglish8().Mid(1*KHostNumReadBytes, KHostNumReadBytes)) == EFalse)
+				if(ValidateData(data2, KLiteralEnglish16().Mid(1*KHostNumReadBytes, KHostNumReadBytes)) == EFalse)
 					{
 					err = KErrCompletion; //indicates data validation failure
 					break; //switch(iCaseStep)
 					}
 
-				if(ValidateData(data3, KLiteralEnglish8().Mid(2*KHostNumReadBytes, KHostNumReadBytes)) == EFalse)
+				if(ValidateData(data3, KLiteralEnglish16().Mid(2*KHostNumReadBytes, KHostNumReadBytes)) == EFalse)
 					{
 					err = KErrCompletion; //indicates data validation failure
 					break; //switch(iCaseStep)
 					}
 
-				if(ValidateData(data4, KLiteralEnglish8().Mid(3*KHostNumReadBytes, iNumTransferBytes - 3*KHostNumReadBytes)) == EFalse)
+				if(ValidateData(data4, KLiteralEnglish16().Mid(3*KHostNumReadBytes, iNumTransferBytes - 3*KHostNumReadBytes)) == EFalse)
 					{
 					err = KErrCompletion; //indicates data validation failure
 					break; //switch(iCaseStep)
@@ -315,7 +317,7 @@ void CUT_PBASE_T_USBDI_0493::DeviceInsertedL(TUint aDeviceHandle)
 	{
 	OstTraceFunctionEntryExt( CUT_PBASE_T_USBDI_0493_DEVICEINSERTEDL_ENTRY, this );
 	Cancel();
-	OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_0493_DEVICEINSERTEDL, "****** Father William Pattern Length is %d bytes! *********", KLiteralEnglish8Length);
+	OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_0493_DEVICEINSERTEDL, "****** Father William Pattern Length is %d bytes! *********", KLiteralEnglish16Length);
 	if(BaseBulkDeviceInsertedL(aDeviceHandle) == EDeviceConfigurationError)
 		// Prepare for response from control transfer to client
 		{

@@ -137,6 +137,15 @@ class XStringArray
 
 //-----------------------------------------------------------------------------
 
+
+/**
+    A min. number of the child file systems supported by the automounter. 
+    using less than 2 child fs doesn't make much sense, though can be useful in some circumstances.
+    The shild FS names must be set in config.
+*/
+const TUint KMinChildFsNum = 1;
+
+
 /**
     File system class definition
 */
@@ -185,6 +194,7 @@ private:
         {
         EInvalid = 0,       ///< initial, invalid
         ENotInitialised,
+        EInitialising,
         EInitialised, 
         };
 
@@ -192,7 +202,7 @@ private:
     inline void SetState(TState aState) {iState = aState;}
 
     
-    /** "default child" file system name index in the child names container. "default child" is used in some weir cases, when
+    /** "default child" file system name index in the child names container. "default child" is used in some weird cases, when
         it doesn't matter which particular child FS to use, e.g. getting access to the media driver for media unlocking. */
     enum {KDefaultFSNo = 0}; 
 
@@ -200,13 +210,18 @@ private:
     CFileSystem* GetChildFileSystem(TUint aIndex) const;
     CFileSystem* GetChildFileSysteByNameHash(TUint32 aFsNameHash) const;
 
+    TUint ChildFsNum() const {ASSERT(State() == EInitialised); return iFSNames.Count();} ///< @return Number of supported Child file systems
+
     void InitialiseFileSystem();
     TInt DoProcessProxyDriveSupport();
+    void ParseConfig();
+    void DoParseChildNames(const TDesC8& aList);
 
 private:
     
     TState       iState;    ///< this object current state
     XStringArray iFSNames;  ///< child file system names container.
+    TInt            iChildFsForDefFmt;  ///< child FS number for formatting "unrecognised" media by default. value <0, means "not specified" 
 
     };
 

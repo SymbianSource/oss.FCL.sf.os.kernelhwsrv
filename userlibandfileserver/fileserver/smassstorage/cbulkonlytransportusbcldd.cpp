@@ -474,6 +474,7 @@ void CBulkOnlyTransportUsbcLdd::CancelControlInterface()
 
 void CBulkOnlyTransportUsbcLdd::ActivateDeviceStateNotifier()
 	{
+    __ASSERT_DEBUG(iDeviceStateNotifier, User::Panic(KUsbMsSvrPncCat, EMsCDeviceStateNotifierNull));
 	iDeviceStateNotifier->Activate();
 	}
 

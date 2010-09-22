@@ -426,164 +426,171 @@ void RUsbTestDevice::SoftwareDisconnect()
 
 
 void RUsbTestDevice::RemoteWakeup()
-    {
-    OstTraceFunctionEntry1( RUSBTESTDEVICE_REMOTEWAKEUP_ENTRY, this );
-    if(iDeviceCaps().iConnect) 
-        {
-        TInt err(iClientDriver.SignalRemoteWakeup());
-        if(err != KErrNone)
-            {
-            OstTrace1(TRACE_NORMAL, RUSBTESTDEVICE_REMOTEWAKEUP, "<Error %d> Unable to perform a remote wakeup",err);
-            ReportError(err);
-            }
-        }
-    else
-        {
-        OstTrace0(TRACE_NORMAL, RUSBTESTDEVICE_REMOTEWAKEUP_DUP01, "remote wakeup not supported");
-        }
-    OstTraceFunctionExit1( RUSBTESTDEVICE_REMOTEWAKEUP_EXIT, this );
-    }
+	{
+	OstTraceFunctionEntry1( RUSBTESTDEVICE_REMOTEWAKEUP_ENTRY, this );
+	if(iDeviceCaps().iConnect) 
+		{
+		TInt err(iClientDriver.SignalRemoteWakeup());
+		if(err != KErrNone)
+			{
+			OstTrace1(TRACE_NORMAL, RUSBTESTDEVICE_REMOTEWAKEUP, "<Error %d> Unable to perform a remote wakeup",err);
+			ReportError(err);
+			}
+		}
+	else
+		{
+		OstTrace0(TRACE_NORMAL, RUSBTESTDEVICE_REMOTEWAKEUP_DUP01, "remote wakeup not supported");
+		}
+	OstTraceFunctionExit1( RUSBTESTDEVICE_REMOTEWAKEUP_EXIT, this );
+	}
 
 
 TInt RUsbTestDevice::ProcessRequestL(TUint8 aRequest,TUint16 aValue,TUint16 aIndex,
-    TUint16 aDataReqLength,const TDesC8& aPayload)
-    {
-    OstTraceFunctionEntryExt( RUSBTESTDEVICE_PROCESSREQUESTL_ENTRY, this );
-    
-    if(aRequest == KVendorEmptyRequest)
-        {
-        // Handle an empty request (i.e. do nothing)
-        
-        AcknowledgeRequestReceived();
-        }
-    else if(aRequest == KVendorReconnectRequest)
-        {
-        // Handle a reconnect requests from the host
-        
-        AcknowledgeRequestReceived();
-        iConnectTimer->SoftwareReConnect(aValue);
-        }
-    else if(aRequest == KVendorDisconnectDeviceAThenConnectDeviceCRequest)
-        {
-        OstTrace1(TRACE_NORMAL, RUSBTESTDEVICE_PROCESSREQUESTL, "**aRequest == KVendorDisconnectDeviceAThenConnectDeviceCRequest, this = 0x%08x", this);
-        // Handle a reconnect requests from the host        
-        AcknowledgeRequestReceived();            
-        
-        SoftwareDisconnect();    
-        User::After(1000000);
-        //    connect device C now    
-        CUT_PBASE_T_USBDI_0486* iTestCaseT_USBDI_0486 = reinterpret_cast<CUT_PBASE_T_USBDI_0486*>(iTestCase);
-        Close();         
-        
-        User::After(3000000);
-        iTestCaseT_USBDI_0486->TestDeviceC()->OpenL(KTestDeviceC_SN);        
-        // Connect the device to the host    
-        iTestCaseT_USBDI_0486->TestDeviceC()->SoftwareConnect();
-        OstTraceFunctionExitExt( RUSBTESTDEVICE_PROCESSREQUESTL_EXIT, this, KErrAbort );
-        return KErrAbort;
-        }
-    else if(aRequest == KVendorDisconnectDeviceCThenConnectDeviceARequest)
-        {
-        OstTrace1(TRACE_NORMAL, RUSBTESTDEVICE_PROCESSREQUESTL_DUP01, "**aRequest == KVendorDisconnectDeviceCThenConnectDeviceARequest, this = 0x%08x", this);
-        // Handle a reconnect requests from the host        
-        AcknowledgeRequestReceived();        
-         
-        SoftwareDisconnect();    
-        User::After(1000000); 
-         
-        //    connect device A now    
-        CUT_PBASE_T_USBDI_0486* iTestCaseT_USBDI_0486 = reinterpret_cast<CUT_PBASE_T_USBDI_0486*>(iTestCase);
-        
-        
-        Close();        
-        User::After(3000000);         
-        iTestCaseT_USBDI_0486->Cancel();
-        iTestCaseT_USBDI_0486->HandleDeviceDConnection();
-        iTestCaseT_USBDI_0486->TestDeviceD()->OpenL(iTestCaseT_USBDI_0486->TestCaseId());    
-        
-        // Connect the device to the host    
-        iTestCaseT_USBDI_0486->TestDeviceD()->SoftwareConnect();    
-        OstTraceFunctionExitExt( RUSBTESTDEVICE_PROCESSREQUESTL_EXIT_DUP01, this, KErrAbort );
-        return KErrAbort;
-        }        
-    else if(aRequest == KVendorTestCasePassed)
-        { 
-        // Test case has completed successfully 
-        // so report to client test case that host is happy        
-        
-        AcknowledgeRequestReceived();
-        ReportError(KErrNone);
-        }
-    else if(aRequest == KVendorTestCaseFailed)
-        {
-        // The test case has failed, so report to client test case
-        // and display/log the error message
-        
-        AcknowledgeRequestReceived();
-        
-        HBufC16* msg = HBufC16::NewL(aPayload.Length());
-        msg->Des().Copy(aPayload);
-        OstTraceExt1(TRACE_NORMAL, RUSBTESTDEVICE_PROCESSREQUESTL_DUP02, "<Host> Test case failed: %S",*msg);
-        delete msg;
-        msg = 0;
-        ReportError(-aValue);
-        }
-    else if(aRequest == KVendorRemoteWakeupRequest)
-        {
-        // Handle a remote wakeup request
+	TUint16 aDataReqLength,const TDesC8& aPayload)
+	{
+	OstTraceFunctionEntryExt( RUSBTESTDEVICE_PROCESSREQUESTL_ENTRY, this );
+	
+	if(aRequest == KVendorEmptyRequest)
+		{
+		// Handle an empty request (i.e. do nothing)
+		
+		AcknowledgeRequestReceived();
+		}
+	else if(aRequest == KVendorReconnectRequest)
+		{
+		// Handle a reconnect requests from the host
+		
+		AcknowledgeRequestReceived();
+		iConnectTimer->SoftwareReConnect(aValue);
+		}
+	else if(aRequest == KVendorDisconnectDeviceAThenConnectDeviceCRequest)
+		{
+		OstTrace1(TRACE_NORMAL, RUSBTESTDEVICE_PROCESSREQUESTL, "**aRequest == KVendorDisconnectDeviceAThenConnectDeviceCRequest, this = 0x%08x", this);
+		// Handle a reconnect requests from the host		
+		AcknowledgeRequestReceived();			
+		
+		SoftwareDisconnect();	
+		User::After(1000000);
+		//	connect device C now	
+		CUT_PBASE_T_USBDI_0486* iTestCaseT_USBDI_0486 = reinterpret_cast<CUT_PBASE_T_USBDI_0486*>(iTestCase);
+		Close(); 		
+		
+		User::After(3000000);
+		iTestCaseT_USBDI_0486->TestDeviceC()->OpenL(KTestDeviceC_SN);		
+		// Connect the device to the host	
+		iTestCaseT_USBDI_0486->TestDeviceC()->SoftwareConnect();
+		OstTraceFunctionExitExt( RUSBTESTDEVICE_PROCESSREQUESTL_EXIT, this, KErrAbort );
+		return KErrAbort;
+		}
+	else if(aRequest == KVendorDisconnectDeviceCThenConnectDeviceARequest)
+		{
+		OstTrace1(TRACE_NORMAL, RUSBTESTDEVICE_PROCESSREQUESTL_DUP01, "**aRequest == KVendorDisconnectDeviceCThenConnectDeviceARequest, this = 0x%08x", this);
+		// Handle a reconnect requests from the host		
+		AcknowledgeRequestReceived();		
+		 
+		SoftwareDisconnect();	
+		User::After(1000000); 
+		 
+		//	connect device A now	
+		CUT_PBASE_T_USBDI_0486* iTestCaseT_USBDI_0486 = reinterpret_cast<CUT_PBASE_T_USBDI_0486*>(iTestCase);
+		
+		
+		Close();		
+		User::After(3000000); 		
+		iTestCaseT_USBDI_0486->Cancel();
+		iTestCaseT_USBDI_0486->HandleDeviceDConnection();
+		iTestCaseT_USBDI_0486->TestDeviceD()->OpenL(iTestCaseT_USBDI_0486->TestCaseId());	
+		
+		// Connect the device to the host	
+		iTestCaseT_USBDI_0486->TestDeviceD()->SoftwareConnect();	
+		OstTraceFunctionExitExt( RUSBTESTDEVICE_PROCESSREQUESTL_EXIT_DUP01, this, KErrAbort );
+		return KErrAbort;
+		}		
+	else if(aRequest == KVendorTestCasePassed)
+		{ 
+		// Test case has completed successfully 
+		// so report to client test case that host is happy		
+		
+		AcknowledgeRequestReceived();
+		
+		// allow time for host side t_usbdi.exe so that CloseInterface/Pipe happen after CloseDevice
+		User::After(1000*5); 
+		
+		ReportError(KErrNone);
+		}
+	else if(aRequest == KVendorTestCaseFailed)
+		{
+		// The test case has failed, so report to client test case
+		// and display/log the error message
+		
+		AcknowledgeRequestReceived();
+		
+		// allow time for host side t_usbdi.exe so that CloseInterface/Pipe happen after CloseDevice
+		User::After(1000*5); 
+		
+		HBufC16* msg = HBufC16::NewL(aPayload.Length());
+		msg->Des().Copy(aPayload);
+		OstTraceExt1(TRACE_NORMAL, RUSBTESTDEVICE_PROCESSREQUESTL_DUP02, "<Host> Test case failed: %S",*msg);
+		delete msg;
+		msg = 0;
+		ReportError(-aValue);
+		}
+	else if(aRequest == KVendorRemoteWakeupRequest)
+		{
+		// Handle a remote wakeup request
 
-        AcknowledgeRequestReceived();
-        iWakeupTimer->WakeUp(aValue);
-        }
-    else if(aRequest == KVendorPutPayloadRequest)
-        {
-        // Handle a payload request from the host
+		AcknowledgeRequestReceived();
+		iWakeupTimer->WakeUp(aValue);
+		}
+	else if(aRequest == KVendorPutPayloadRequest)
+		{
+		// Handle a payload request from the host
 
-        AcknowledgeRequestReceived();
-        OstTrace0(TRACE_NORMAL, RUSBTESTDEVICE_PROCESSREQUESTL_DUP03, "Put payload");
-        if(aPayload.Compare(_L8("DEADBEEF")) != 0)
-            {
-            OstTrace1(TRACE_NORMAL, RUSBTESTDEVICE_PROCESSREQUESTL_DUP04, "<Error %d> Payload not as expected",KErrCorrupt);
-            ReportError(KErrCorrupt);
-            }
-        }
-    else if(aRequest == KVendorGetPayloadRequest)
-        {
-        // Handle a payload request to the host
+		AcknowledgeRequestReceived();
+		OstTrace0(TRACE_NORMAL, RUSBTESTDEVICE_PROCESSREQUESTL_DUP03, "Put payload");
+		if(aPayload.Compare(_L8("DEADBEEF")) != 0)
+			{
+			OstTrace1(TRACE_NORMAL, RUSBTESTDEVICE_PROCESSREQUESTL_DUP04, "<Error %d> Payload not as expected",KErrCorrupt);
+			ReportError(KErrCorrupt);
+			}
+		}
+	else if(aRequest == KVendorGetPayloadRequest)
+		{
+		// Handle a payload request to the host
 
-        OstTrace0(TRACE_NORMAL, RUSBTESTDEVICE_PROCESSREQUESTL_DUP05, "Get payload");
-        __ASSERT_DEBUG(iAuxBuffer, User::Panic(_L("Trying to write non-allocated buffer"), KErrGeneral));
-        OstTrace0(TRACE_NORMAL, RUSBTESTDEVICE_PROCESSREQUESTL_DUP06, "iAuxBuffer = ....");
+		OstTrace0(TRACE_NORMAL, RUSBTESTDEVICE_PROCESSREQUESTL_DUP05, "Get payload");
+		__ASSERT_DEBUG(iAuxBuffer, User::Panic(_L("Trying to write non-allocated buffer"), KErrGeneral));
+		OstTrace0(TRACE_NORMAL, RUSBTESTDEVICE_PROCESSREQUESTL_DUP06, "iAuxBuffer = ....");
         OstTraceData(TRACE_NORMAL, RUSBTESTDEVICE_PROCESSREQUESTL_DUP56, "", iAuxBuffer->Ptr(), iAuxBuffer->Length());
-        OstTrace0(TRACE_NORMAL, RUSBTESTDEVICE_PROCESSREQUESTL_DUP07, "\n");
-        
-        //Perform synchronous write to EP0
-        //This allows the subsequent 'Read' request to
-        //take place
-        TInt ret = iDeviceEp0->SendDataSynchronous(*iAuxBuffer);
-        OstTrace1(TRACE_NORMAL, RUSBTESTDEVICE_PROCESSREQUESTL_DUP08, "Write (from device callback) executed with error %d", ret);
-        }
-    else if(aRequest == KVendorUnrespondRequest)
-        {
-        // Do not acknowledge this request
-        
-        OstTrace0(TRACE_NORMAL, RUSBTESTDEVICE_PROCESSREQUESTL_DUP09, "Unrespond request: continually NAK the host");
-        }
-    else if(aRequest == KVendorStallRequest)
-        {
-        // Stall the specified endpoint
-        
-        AcknowledgeRequestReceived();
-        OstTrace1(TRACE_NORMAL, RUSBTESTDEVICE_PROCESSREQUESTL_DUP10, "Stalling endpoint %d",aValue);
-                        
-        }
-    else
-        {
-        // Maybe forward to derived classes
-        }
-    OstTraceFunctionExitExt( RUSBTESTDEVICE_PROCESSREQUESTL_EXIT_DUP02, this, KErrNone );
-    return KErrNone;
-    }
+		OstTrace0(TRACE_NORMAL, RUSBTESTDEVICE_PROCESSREQUESTL_DUP07, "\n");
+		
+		//Perform synchronous write to EP0
+		//This allows the subsequent 'Read' request to
+		//take place
+		TInt ret = iDeviceEp0->SendDataSynchronous(*iAuxBuffer);
+		OstTrace1(TRACE_NORMAL, RUSBTESTDEVICE_PROCESSREQUESTL_DUP08, "Write (from device callback) executed with error %d", ret);
+		}
+	else if(aRequest == KVendorUnrespondRequest)
+		{
+		// Do not acknowledge this request
+		
+		OstTrace0(TRACE_NORMAL, RUSBTESTDEVICE_PROCESSREQUESTL_DUP09, "Unrespond request: continually NAK the host");
+		}
+	else if(aRequest == KVendorStallRequest)
+		{
+		// Stall the specified endpoint
+		
+		AcknowledgeRequestReceived();
+		OstTrace1(TRACE_NORMAL, RUSBTESTDEVICE_PROCESSREQUESTL_DUP10, "Stalling endpoint %d",aValue);
+						
+		}
+	else
+		{
+		// Maybe forward to derived classes
+		}
+	OstTraceFunctionExitExt( RUSBTESTDEVICE_PROCESSREQUESTL_EXIT_DUP02, this, KErrNone );
+	return KErrNone;
+	}
 
 
 void RUsbTestDevice::StateChangeL(TUsbcDeviceState aNewState,TInt aChangeCompletionCode)

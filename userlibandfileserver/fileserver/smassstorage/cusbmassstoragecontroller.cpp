@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -44,7 +44,11 @@ Creates the drive manager, transport, protocol and server
 void CUsbMassStorageController::CreateL(RArray<TInt>& aDriveMapping)
 	{
 	__PRINT(_L("CUsbMassStorageController::CreateL In"));
+#if !defined(__WINS__) && !defined(__X86__)
 	iTransportLddFlag = EUsbcsc; // Create transport object using SC Ldd By default
+#else
+	iTransportLddFlag = EUsbc;
+#endif
 	//Save this value for use in the Reset method.
 	iMaxDrives = aDriveMapping.Count();
 	//Create and init drive manager

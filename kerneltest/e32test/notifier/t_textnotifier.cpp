@@ -1,4 +1,4 @@
-// Copyright (c) 2003-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2003-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -24,8 +24,9 @@
 // - For IPC Ver. 1 and IPC Ver 2, using MNotifierManager, connect to and 
 // start anotifier server. Perform a variety of tests including CancelNotifier, 
 // StartNotifier, UpdateNotifier, UpdateNotifierAndGetResponse, 
-// StartNotifierAndGetResponse. Verify results are as expected. 
-// Check for memory leaks and cleanup.
+// StartNotifierAndGetResponse, Notify and NotifyCancnel.
+// Verify results are as expected. Check for memory leaks and cleanup.
+// - Tests also removed but exported methods that they return expected values
 // - Do interactive tests as requested.
 // Platforms/Drives/Compatibility:
 // Hardware (Automatic).
@@ -40,8 +41,12 @@
 #include <e32test.h>
 #include "textnotifier.h"
 #include <e32debug.h>
+#include <e32event.h>
+#include <e32svr.h>
 
 LOCAL_D RTest test(_L("T_TEXTNOTIFIER"));
+
+const TUint KTimeOut=3000000; // 3 seconds
 
 void DoMemoryLeakTests(TUid aUid,TBool aCheckMNotifierManager)
 	{
@@ -188,7 +193,7 @@ void DoTests(TUid aUid,TBool aCheckMNotifierManager)
 	User::WaitForRequest(updateStat);
 	test(updateStat==KErrNone);
 	test(response==KResponseData);
-
+	
 	test.Next(_L("CancelNotifier"));
 	r = n.CancelNotifier(aUid);
 	test(r==KErrNone);
@@ -218,6 +223,121 @@ void DoTests(TUid aUid,TBool aCheckMNotifierManager)
 
 	test.End();
 	}
+
+
+void TestNotify()
+//
+// Test Notify by launching a simple notifier. Gets closed
+// using timer and simulated keypress.
+//
+	{
+	TInt r;
+	test.Start(_L("Connect to notifier server"));
+	RNotifier n;
+	r = n.Connect();
+	test(r==KErrNone);
+	TInt button=0;
+	TRequestStatus status;
+	TRequestStatus timerStatus;
+	RTimer timer;
+	timer.CreateLocal();
+
+	test.Next(_L("Launching simple notifier"));
+	_LIT(KLine1,"Line1 - Select Button2");
+	_LIT(KLine2,"Line2 - or press enter");
+	_LIT(KButton1,"Button1");
+	_LIT(KButton2,"Button2");
+
+	n.Notify(KLine1,KLine2,KButton1,KButton2,button,status);
+	timer.After(timerStatus,KTimeOut); // launch timer for getting control back after timeout
+	User::WaitForRequest(status, timerStatus);
+	if (status==KRequestPending)
+		{
+		test.Printf(_L("Timeout in waiting for keypress, continuing\n"));
+
+		// make the notifier to disappear
+		TRawEvent eventDown;
+		eventDown.Set(TRawEvent::EKeyDown,EStdKeyEnter);
+		TRawEvent eventUp;
+		eventUp.Set(TRawEvent::EKeyUp,EStdKeyEnter);
+		UserSvr::AddEvent(eventDown);
+		UserSvr::AddEvent(eventUp);
+		User::WaitForRequest(status); // wait again
+		}
+	else
+		{
+		timer.Cancel();
+		}
+	
+	timer.Close();
+
+	test(status.Int()==KErrNone);
+
+	test.Next(_L("Close connection to notifier server"));
+	n.Close();
+
+	test.End();
+	}
+
+void TestNotifyCancel()
+//
+// Simple test to just call NotifyCancel. Just sends a message
+// which goes to window server. Window server ignores the cancel event
+// and because of this, no notification to be canceled is started.
+//
+	{
+	TInt r;
+	test.Start(_L("Connect to notifier server"));
+	RNotifier n;
+	r = n.Connect();
+	test(r==KErrNone);
+
+	test.Next(_L("Call NotifyCancel"));
+	n.NotifyCancel();
+
+	test.Next(_L("Close connection to notifier server"));
+	n.Close();
+
+	test.End();
+	}
+
+
+void TestRemovedMethods()
+//
+// Test deprecated but exported methods
+//
+	{
+	test.Start(_L("Test removed methods of RNotifier class"));
+	
+	// connect to server
+	RNotifier n;
+	TInt r = n.Connect();
+	test(r==KErrNone);
+
+	test.Next(_L("StartNotifierAndGetResponse (5-params with dllUid)"));
+	TBuf8<128> response;
+	response.SetMax();
+	response.FillZ();
+	response.Zero();
+	TRequestStatus stat;
+	n.StartNotifierAndGetResponse(stat,KUidTestTextNotifier1,KUidTestTextNotifier2,*&KStartData,response);
+	User::WaitForRequest(stat);
+	test(stat==KErrNotSupported);
+
+	test.Next(_L("StartNotifier (4-params with dllUid)"));
+	test(n.StartNotifier(KUidTestTextNotifier2,KUidTestTextNotifier1,*&KStartData,response)==KErrNotSupported);
+	
+	test.Next(_L("Test removed method LoadNotifiers()"));
+	test(n.LoadNotifiers(KUidTestTextNotifier1)==KErrNotSupported);
+	
+	test.Next(_L("Test removed method UnloadNotifiers()"));
+	test(n.UnloadNotifiers(KUidTestTextNotifier1)==KErrNotSupported);
+
+	test.Next(_L("Close connection to notifier server"));
+	n.Close();
+	test.End();
+	}
+
 
 void DoInteractiveTests()
 	{
@@ -271,6 +391,16 @@ GLDEF_C TInt E32Main()
 		DoTests(KUidTestTextNotifier2,ETrue);
 	else
 		test.Printf(_L("FIX ME! - Can't run because IPC V1 not supported\n"));
+
+	
+	test.Next(_L("TestNotify"));
+	TestNotify();
+	
+	test.Next(_L("TestNotifyCancel"));
+	TestNotifyCancel();
+
+	test.Next(_L("Test removed methods"));
+	TestRemovedMethods();
 
 	test.Next(_L("Interactive Tests"));
 	test.Printf(_L("  Do you want to test notifiers interactively? y/n\n"));

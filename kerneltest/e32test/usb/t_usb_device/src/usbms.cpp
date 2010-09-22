@@ -392,7 +392,7 @@ static TChar DriveNumberToLetter(TInt driveNumber)
 static TBool IsDriveInMountList(TUint driveLetter)
 	{
 	TUint16 driveLetter16 = static_cast<TUint16>(driveLetter);
-	return(!mountList.Length() || KErrNotFound != mountList.Find(&driveLetter16, 1));
+	return KErrNotFound != mountList.Find(&driveLetter16, 1);
 	}
 
 void CUsbWatch::RunL()
@@ -621,6 +621,11 @@ void PropertyHandlers::DriveStatus(RProperty& aProperty)
 			if (driveStatus == EUsbMsDriveState_Disconnected)
 				{
 				gActiveControl->SetMSFinished(ETrue);
+				}
+			if ((driveStatus == EUsbMsDriveState_Connecting) && (mountList.Length() < 1))
+				{ // If there are more than one drive in the device, only mount one to test. 
+                  // For the usb test purpose, it is enough.
+                mountList.Append(static_cast<TChar>(driveLetter));
 				}
 			if(IsDriveInMountList(driveLetter))
 				{

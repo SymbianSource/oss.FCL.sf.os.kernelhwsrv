@@ -858,15 +858,7 @@ TInt CDriveThread::FinaliseTimerEvent(TAny* aSelfP)
 	TDrive& drive = TheDrives[self.iDriveNumber];
 	if(drive.IsMounted())
         {
-        if (drive.CurrentMount().LockStatus() == 0)
-            {
-            // Ignore the error here, as there's nothing we can do about it...
-            (void)drive.FinaliseMount(RFs::EFinal_RW);
-            }
-        else
-            {
-            self.StartFinalisationTimer();
-            }
+        (void)drive.FinaliseMount(RFs::EFinal_RW);
         }
 
 	return KErrNone;

@@ -1,4 +1,4 @@
-// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -41,6 +41,8 @@
 // - Create a thread with its own heap and test that timers are scheduled in the order of
 // their expiration time, priority and order of addition to the scheduler
 // - Check the heap is not corrupted by all the tests
+// - Test replacing the scheduler and also check stack depths
+// - Call deprecated dummy functions
 // Platforms/Drives/Compatibility:
 // All
 // Assumptions/Requirement/Pre-requisites:
@@ -71,6 +73,7 @@ public:
 	void Test2();
 	void Test3();
 	void Test4();
+	void Test5();
 	};
 
 class MyManager : public CActiveScheduler
@@ -793,6 +796,28 @@ void TSecdulerTester::Test4()
 	User::After(100000);
 	}
 
+void TSecdulerTester::Test5()
+//
+// Replace scheduler and check depth
+//
+	{
+	MyManager* pManager=(MyManager*)CActiveScheduler::Current(); // get current
+
+	test.Next(_L("Test scheduler replace"));
+	TInt depthOld = pManager->StackDepth(); // get stack depth
+	MyManager* pManager2=new MyManager;
+	test(pManager2!=NULL);
+	// replace active scheduler and check the old one was pManager
+	test(CActiveScheduler::Replace(pManager2)==pManager);
+	test(CActiveScheduler::Current()==pManager2);
+	
+	test.Next(_L("Test stack depth of the new scheduler"));
+	TInt depthNew = pManager2->StackDepth(); // get stack depth
+	test(depthOld==depthNew); // compare
+
+	delete pManager2;
+	}
+
 GLDEF_C TInt E32Main()
     {
 
@@ -848,6 +873,10 @@ GLDEF_C TInt E32Main()
 	sched.Test4();
 	delete gTimer;
 	User::Check();
+//
+	test.Next(_L("Test5"));
+	sched.Test5();
+
 	delete pManager;
 	delete pLowest;
 	delete pLow;

@@ -966,7 +966,7 @@ private:
     TInt ProcessVolParam_User(const TLocalDriveCapsV6& aCaps);
     TInt ProcessVolParam_Custom(const TLocalDriveCapsV6& aCaps);
     TInt ProcessVolParam_Default(const TLocalDriveCapsV6& aCaps);
-    TInt ProcessVolParam_RamDisk();
+    TInt ProcessVolParam_RamDisk(const TLocalDriveCapsV6& aCaps);
     
 	void AdjustClusterSize(TUint aRecommendedSectorsPerCluster);
 	TInt AdjustFirstDataSectorAlignment(TUint aBlockSize);

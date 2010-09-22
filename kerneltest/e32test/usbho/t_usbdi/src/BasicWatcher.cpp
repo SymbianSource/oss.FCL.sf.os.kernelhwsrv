@@ -86,5 +86,47 @@ TInt CBasicWatcher::RunError(TInt aError)
 	return KErrNone;
 	}
 
+
+CInterfaceWatcher::CInterfaceWatcher(RUsbInterface& aInterface,const TCallBack& aCallBack)
+:	CActive(EPriorityUserInput),
+	iUsbInterface(aInterface),
+	iResumeCallBack(aCallBack),
+	iCompletionCode(KErrNone)
+	{
+	CActiveScheduler::Add(this);
+	}
+
+CInterfaceWatcher::~CInterfaceWatcher()
+	{
+	Cancel();
+	}
+
+void CInterfaceWatcher::SuspendAndWatch()
+	{
+	iUsbInterface.PermitSuspendAndWaitForResume(iStatus);
+	SetActive();
+	}
+
+TInt CInterfaceWatcher::CompletionCode() const
+	{
+	return iCompletionCode;
+	}
+
+void CInterfaceWatcher::DoCancel()
+	{
+	iUsbInterface.CancelPermitSuspend();
+	}
+
+void CInterfaceWatcher::RunL()
+	{
+	iCompletionCode = iStatus.Int();
+	User::LeaveIfError(iResumeCallBack.CallBack());
+	}
+	
+TInt CInterfaceWatcher::RunError()
+	{
+	return KErrNone;
+	}		
+									
 	}
 	

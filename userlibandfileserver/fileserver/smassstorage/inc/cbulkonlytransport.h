@@ -23,8 +23,10 @@
 #ifndef __CBULKONLYTRANSPORT_H__
 #define __CBULKONLYTRANSPORT_H__
 
-#include <e32std.h> 
+#include <e32std.h>
+#if !defined(__WINS__) && !defined(__X86__) 
 #include <d32usbcsc.h>
+#endif
 #include <d32usbc.h>
 #include "protocol.h"  
 #include "cusbmassstoragecontroller.h"
@@ -92,7 +94,7 @@ public:
 	static CBulkOnlyTransport* NewL(TInt aNumDrives,CUsbMassStorageController& aController); 
 
 protected:
-    ~CBulkOnlyTransport() = 0;
+    ~CBulkOnlyTransport();
 	CBulkOnlyTransport(TInt aNumDrives,CUsbMassStorageController& aController);
 
 public:

@@ -25,8 +25,10 @@ const TUint KMaxDeviceNumber=10;
 TUint 	gDeviceNumber=1;					// Device Number
 TUint	gRegisteredDeviceNumber;			// Represents the registered Hal Entry
 TBool	gHalEntryRegistered; 				// States HAL Entry Successfully registered or not
-static	TDigitiserInfoV02 gDigitserHalData;	// Buffer to  hold the HAL data; 
-static	TUint gPointer3DSupported;			// States whether the pointing device supports 3rd dimension.
+static TDigitiserInfoV02 gDigitserHalData;	// Buffer to  hold the HAL data; 
+static TUint gPointer3DSupported;			// States whether the pointing device supports 3rd dimension.
+static TRawEvent   kEvent;	
+
 
 class DDigitiserLDDTestFactory : public DLogicalDevice
 //
@@ -34,7 +36,6 @@ class DDigitiserLDDTestFactory : public DLogicalDevice
 //
 	{
 public:
-	DDigitiserLDDTestFactory();
 	virtual TInt Install(); 								//overriding pure virtual
 	virtual void GetCaps(TDes8& aDes) const;				//overriding pure virtual
 	virtual TInt Create(DLogicalChannelBase*& aChannel); 	//overriding pure virtual
@@ -50,7 +51,7 @@ public:
 protected:
 	virtual TInt DoCreate(TInt aUnit, const TDesC8* anInfo, const TVersion& aVer);
 	virtual TInt Request(TInt aReqNo, TAny* a1, TAny* a2);
-	};
+	};			
 
 // Initialise Digitiser HAL Data
 void initialiseDigitiserHalData()
@@ -150,12 +151,6 @@ DECLARE_STANDARD_LDD()
 	}
 #endif
 
-//
-// Constructor
-//
-DDigitiserLDDTestFactory::DDigitiserLDDTestFactory()
-	{
-	}
 
 TInt DDigitiserLDDTestFactory::Create(DLogicalChannelBase*& aChannel)
 	{
@@ -180,6 +175,7 @@ void DDigitiserLDDTestFactory::GetCaps(TDes8& /*aDes*/) const
 	{
 	}
 
+
 TInt DDigitiserLDDTestChannel::DoCreate(TInt /*aUnit*/, const TDesC8* /*aInfo*/, const TVersion& /*aVer*/)
 //
 // Create channel
@@ -198,6 +194,11 @@ DDigitiserLDDTestChannel::~DDigitiserLDDTestChannel()
 TInt DDigitiserLDDTestChannel::Request(TInt aReqNo, TAny* a1, TAny* /*a2*/)
 	{
 	TInt r=KErrNone;
+	TUsrEventBuf eventBuf;
+	TPoint3D point3D;
+	TPoint   point2D;
+	TAngle3D angle3D;
+
 	switch(aReqNo)
 		{
 		case (RLddDigitiserTest::EADDHALENTRY):
@@ -311,8 +312,124 @@ TInt DDigitiserLDDTestChannel::Request(TInt aReqNo, TAny* a1, TAny* /*a2*/)
 			r=gDigitserHalData.iPressureStep;
 			break;
 		case (RLddDigitiserTest::ESET_EPOINTER3DPRESSURESTEP):
-			gDigitserHalData.iPressureStep=(TInt)a1;
+			gDigitserHalData.iPressureStep=(TInt)a1; 		
 			break;
+		
+		//Testing TRawEvents;
+
+
+		case  (RLddDigitiserTest::ESET_TRAWEVENT_EVENTTYPE): 
+			  kEvent.Set(static_cast<TRawEvent::TType>((TInt)a1));			
+			  break;
+
+		case  (RLddDigitiserTest::EGET_TRAWEVENT_EVENTTYPE):   
+			    r=kEvent.Type();				 
+				break;
+
+		case  (RLddDigitiserTest::ESET_TRAWEVENT_TILT): 			   
+			   kumemget32(&eventBuf,a1,sizeof(eventBuf));
+			   kEvent.SetTilt(static_cast<TRawEvent::TType>(eventBuf().iType),eventBuf().iPhi,eventBuf().iTheta);
+			   break;
+
+				
+		case  (RLddDigitiserTest::EGET_TRAWEVENT_TILT): 				
+				angle3D=kEvent.Tilt();
+				eventBuf().iPhi =	angle3D.iPhi;
+				eventBuf().iTheta =	angle3D.iTheta;	
+				kumemput32(a1,&eventBuf,sizeof(eventBuf));
+			   break;
+
+
+		case  (RLddDigitiserTest::ESET_TEVENT_DNMBR):   
+			
+			   kEvent.SetDeviceNumber((TInt)a1);			   
+			   break;
+		case  (RLddDigitiserTest::EGET_TEVENT_DNMBR): 
+				r=kEvent.DeviceNumber();				
+				break;
+
+		case  (RLddDigitiserTest::ESET_TRAWEVENT_ROTATION): 				    			    
+				kumemget32(&eventBuf,a1,sizeof(eventBuf));
+				kEvent.SetRotation(static_cast<TRawEvent::TType>(eventBuf().iType),eventBuf().iAlpha);				
+				break;
+
+		case  (RLddDigitiserTest::EGET_TRAWEVENT_ROTATION):  
+			    r=kEvent.Rotation();				
+				break;
+
+		case  (RLddDigitiserTest::ESET_TRAWEVENT_REPEAT): 
+			   kumemget32(&eventBuf,a1,sizeof(eventBuf));
+			   kEvent.SetRepeat(static_cast<TRawEvent::TType>(eventBuf().iType),eventBuf().iScanCode,eventBuf().iRepeats);
+			   break;
+
+		case  (RLddDigitiserTest::EGET_TRAWEVENT_REPEAT): 
+				r=kEvent.Repeats();
+				break;
+	
+		case  (RLddDigitiserTest::ESET_TRAWEVENT_SCANCODE):				    
+				kumemget32(&eventBuf,a1,sizeof(eventBuf));
+				kEvent.Set(static_cast<TRawEvent::TType>(eventBuf().iType),eventBuf().iScanCode);				
+				break;
+		case  (RLddDigitiserTest::EGET_TRAWEVENT_SCANCODE): 			 
+				r=kEvent.ScanCode();				
+				break;
+
+		case  (RLddDigitiserTest::ESET_TRAWEVENT_POS2D):				
+				kumemget32(&eventBuf,a1,sizeof(eventBuf));
+				kEvent.Set(static_cast<TRawEvent::TType>(eventBuf().iType),eventBuf().iX,eventBuf().iY);
+				break;
+		case  (RLddDigitiserTest::EGET_TRAWEVENT_POS2D): 
+				point2D=kEvent.Pos();
+				eventBuf().iX =	point2D.iX;
+				eventBuf().iY =	point2D.iY;	  			 				
+				kumemput32(a1,&eventBuf,sizeof(eventBuf));
+				break;
+
+		
+		case  (RLddDigitiserTest::ESET_TRAWEVENT_PTRNMBR): 
+				kEvent.SetPointerNumber(static_cast<TUint8>((TInt)a1));		
+				break;
+
+		case  (RLddDigitiserTest::ESET_TRAWEVENT_3DNPTRNMBR):				
+				kumemget32(&eventBuf,a1,sizeof(eventBuf));
+				//IMPORT_C void Set (TType aType, TInt aX, TInt aY, TInt aZ, TUint8 aPointerNumbe
+				kEvent.Set(static_cast<TRawEvent::TType>(eventBuf().iType),eventBuf().iX,eventBuf().iY,eventBuf().iZ,eventBuf().iPointerNumber);
+				break;
+		case  (RLddDigitiserTest::EGET_TRAWEVENT_PTRNMBR): 
+				r=kEvent.PointerNumber();				
+				break;
+ 
+		case  (RLddDigitiserTest::EGET_TRAWEVENT_TICKS): 
+				r=kEvent.Ticks();
+				break;
+	
+		case  (RLddDigitiserTest::ESET_TRAWEVENT_TIP): 
+				kEvent.SetTip(static_cast<TBool>((TInt)a1));			   
+				break;
+		case  (RLddDigitiserTest::EGET_TRAWEVENT_TIP):
+				r=kEvent.IsTip();
+				break;
+
+		case  (RLddDigitiserTest::ESET_TRAWEVENT_POS3D):								
+			kumemget32(&eventBuf,a1,sizeof(eventBuf));
+			kEvent.Set(static_cast<TRawEvent::TType>(eventBuf().iType),eventBuf().iX,eventBuf().iY,eventBuf().iZ);
+			break;
+			
+		case  (RLddDigitiserTest::EGET_TRAWEVENT_POS3D):
+
+			point3D=kEvent.Pos3D();	
+			eventBuf().iX =	point3D.iX;
+			eventBuf().iY =	point3D.iY;	  
+			eventBuf().iZ =	point3D.iZ;	  			
+			kumemput32(a1,&eventBuf,sizeof(eventBuf));
+			break;
+
+			
+		case  (RLddDigitiserTest::ESET_TRAWEVENT_ALL):								
+			kumemget32(&eventBuf,a1,sizeof(eventBuf));
+			kEvent.Set(static_cast<TRawEvent::TType>(eventBuf().iType),eventBuf().iX,eventBuf().iY,eventBuf().iZ,eventBuf().iPhi,eventBuf().iTheta,eventBuf().iAlpha);
+			break;
+			
 		default:
 			r=KErrNotSupported;
 			break;

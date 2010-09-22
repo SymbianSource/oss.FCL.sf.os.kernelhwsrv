@@ -265,7 +265,7 @@ void CUT_PBASE_T_USBDI_0477::DeviceInsertedL(TUint aDeviceHandle)
 	RUsbInterface::TDeviceSpeed deviceSpeed;
 	CHECK(iUsbInterface1.GetDeviceSpeed(deviceSpeed) == KErrNone);
 	OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_0477_DEVICEINSERTEDL_DUP07, "GetDeviceSpeed = %d", deviceSpeed);
-	CHECK(deviceSpeed == RUsbInterface::EFullSpeed);	
+	CHECK(deviceSpeed == RUsbInterface::EHighSpeed);	
 		
 	OstTrace1(TRACE_NORMAL, CUT_PBASE_T_USBDI_0477_DEVICEINSERTEDL_DUP08, "Number of alternate interface settings available: %d",iUsbInterface1.GetAlternateInterfaceCount());
 	gtest(iUsbInterface1.GetAlternateInterfaceCount() == 2);

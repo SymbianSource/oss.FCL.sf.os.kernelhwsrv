@@ -186,12 +186,11 @@ GLDEF_C TBool CreateMBRAfterFormat(const TMMCard* aCardP)
 	return EFalse;
 	}
 
-GLDEF_C TInt GetCardFormatInfo(const TMMCard* /*aCardP*/, TLDFormatInfo& /*aFormatInfo*/)
 /**
- * Returns the preferred format parameters for the primary partition.
- * @return Standard Symbian OS error code.
- */
+    Returns the preferred format parameters for the primary partition.
+    @return Standard Symbian OS error code.
+*/
+TInt GetCardFormatInfo(const TMMCard* /*aCardP*/, TLocalDriveCapsV5& /*aCaps*/)
 	{
 	return KErrNotSupported;
 	}
-

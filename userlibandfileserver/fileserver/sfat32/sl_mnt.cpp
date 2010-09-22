@@ -600,6 +600,8 @@ void CFatMountCB::FinaliseMountL(TInt aOperation, TAny* /*aParam1*/, TAny* /*aPa
     if(aOperation == RFs::EFinal_RO)
         SetReadOnly(ETrue);
 
+    (void)LocalDrive()->Finalise(ETrue);
+
     SetState(EFinalised);
     }
 

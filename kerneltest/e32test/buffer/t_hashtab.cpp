@@ -1,4 +1,4 @@
-// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2005-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -1491,6 +1491,46 @@ void TestPtrHashMap()
 	map.ResetAndDestroy();
 	}
 
+void TestInsertL()
+    {
+    TInt i;
+    TInt count=50;
+    const TInt KMaxBufferSize=256;
+    // Array used to hold test data to store in the hash objects
+    RPointerArray<TDesC16> iPointerArray;
+    
+    for (i=0; i<count; ++i)
+        {
+        HBufC* hbuf = HBufC::NewLC(KMaxBufferSize);
+        TPtr buf = hbuf->Des();
+        TTestName number(NumberInWords(i));
+        buf.Copy(number);
+		// Append "one" "two" "three" .....
+        iPointerArray.AppendL(hbuf);
+        CleanupStack::Pop(hbuf);
+        }
+        
+    // Creates an object ptrHashMap using the template class RPtrHashMap
+    RPtrHashMap<TDesC16, TDesC16> ptrHashMap;
+    // Push object on to the cleanup stack
+    CleanupClosePushL(ptrHashMap);
+    // Expand the array with the number of key-value pairs for which space should be allocated
+    ptrHashMap.ReserveL(count);
+    
+    // Insert a key-value pairs into the array
+    for (i=0; i<count; ++i)
+        {
+        // "zero"-"forty nine" 
+        // "one"-"forty eight" .....
+        ptrHashMap.InsertL(iPointerArray[i], iPointerArray[count-1-i]);
+        }
+    
+    // Close and Cleanup
+    CleanupStack::PopAndDestroy(&ptrHashMap);
+    iPointerArray.ResetAndDestroy();
+    }
+                                       
+
 void TestOOM()
 	{
 	// Max out memory and check it still works
@@ -2425,7 +2465,17 @@ TInt E32Main()
 	TestOOM();
 	Benchmark();
 	TestSmallReserve();
-
+	
+	// Get cleanup stack
+	CTrapCleanup* cleanup = CTrapCleanup::New();
+	TInt result = KErrNoMemory;
+	if (cleanup)
+	    {
+	    TRAP(result, TestInsertL());
+	    // Destroy the cleanup stack
+	    delete cleanup;
+	    }
+		
 	test.End();
 
 	__UHEAP_MARKEND;

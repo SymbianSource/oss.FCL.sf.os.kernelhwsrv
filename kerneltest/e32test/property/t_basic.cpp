@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -50,6 +50,14 @@ void CPropDefine::Run(TUint aCount)
 		r = prop.Define(mySid, iKey, iType, KFailPolicy, KFailPolicy);
 		TF_ERROR(r, r == KErrAlreadyExists);
 		r = prop.Delete(mySid, iKey);
+		TF_ERROR(r, r == KErrNone);
+
+		// Test deprecated method without policies
+		r = prop.Define(iCategory, iKey, iType);
+		TF_ERROR(r, r == KErrNone);
+		r = prop.Define(iCategory, iKey, iType);
+		TF_ERROR(r, r == KErrAlreadyExists);
+		r = prop.Delete(iCategory, iKey);
 		TF_ERROR(r, r == KErrNone);
 
 		// Test re-definition doesn't change security settings

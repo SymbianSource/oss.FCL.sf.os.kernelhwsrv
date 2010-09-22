@@ -148,7 +148,7 @@ TInt SCMDataSave::LogThreadSupervisorStack(DThread* aThread, TBool aFullStack, T
 	{	
 	LOG_CONTEXT
 	aSizeDumped = 0;
-	TUint memDumped;	
+	TUint memDumped = 0;
 	
 	TUint svSp, usrSp;
 	iMonitor->GetStackPointers(&(aThread->iNThread), svSp, usrSp );
@@ -165,7 +165,7 @@ TInt SCMDataSave::LogThreadSupervisorStack(DThread* aThread, TBool aFullStack, T
 		TUint8* svrStackPointer = (TUint8*)svSp;
 		
 		//size of stack we are to dump
-		svrStack.iStackSize = aFullStack || (svrStackPointer == svrStart) ? svrEnd - svrStart  : svrEnd - svrStackPointer;					
+		svrStack.iStackSize = aFullStack ? svrEnd - svrStart  : svrEnd - svrStackPointer;					
 		
 		if(svrStart)
 			{
@@ -176,13 +176,13 @@ TInt SCMDataSave::LogThreadSupervisorStack(DThread* aThread, TBool aFullStack, T
 				}
 
 			//write struct to flash
-			aSizeDumped+=svrStack.GetSize();
+			aSizeDumped += svrStack.GetSize();
 			svrStack.Serialize(*iWriter);
 			
 			//now we dump the actual stack
 			//if there is a memErr when we read, there isnt much we can do - possibly a bit in the struct to say available/not available?
 			MTRAPD(memErr, LogMemory(svrStart, svrStack.iStackSize, aThread, memDumped));
-			aSizeDumped+=memDumped;
+			aSizeDumped += memDumped;
 			
 			if(KErrNone != memErr)
 				{
@@ -192,7 +192,7 @@ TInt SCMDataSave::LogThreadSupervisorStack(DThread* aThread, TBool aFullStack, T
 		else
 			{
 			//write the struct
-			aSizeDumped+=svrStack.GetSize();
+			aSizeDumped += svrStack.GetSize();
 			svrStack.Serialize(*iWriter);
 			}
 		}

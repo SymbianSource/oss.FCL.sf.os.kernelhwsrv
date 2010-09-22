@@ -1,4 +1,4 @@
-// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -30,8 +30,7 @@
 //
 
 #include <e32test.h>
-
-const TInt KNumTVersions=1+3*3*3;
+#include "d_version.h"
 
 class RTvTest : public RTest
     {
@@ -40,8 +39,12 @@ public:
     void TestName();
     void TestQVS();
     void Start(const TDesC &aHeading) {Printf(aHeading);Push();}
+    TInt LoadDeviceDriver();
+    TInt UnloadDeviceDriver();
 private:
     TBool QVS(TInt i,TInt j);
+public:
+    RVersionTest gLdd;
 private:
     TVersion* iTV[KNumTVersions];
     TVersion iDefTV;     // tests default constructor
@@ -78,6 +81,38 @@ LOCAL_D const TText* Names[]=
     _S("99.99(1)"),
     _S("99.99(999)")
     };
+
+TInt RTvTest::LoadDeviceDriver()
+//
+// Load device driver for kernel side test
+//
+    {
+    TInt r=KErrNone;
+    r=User::LoadLogicalDevice(KVersionTestLddName);
+    if(r!=KErrNone)
+        {
+        return r;
+        }
+    r=gLdd.Open();
+    return r;
+    }
+
+TInt RTvTest::UnloadDeviceDriver()
+//
+// Unload device driver
+//
+    {
+    TInt r=KErrNone;
+    gLdd.Close();
+
+    r = User::FreeLogicalDevice(KVersionTestLddName);
+    if(r!=KErrNone)
+        {
+        return r;
+        }
+    User::After(100000);
+    return r;
+    }
 
 RTvTest::RTvTest()
 //
@@ -117,8 +152,7 @@ void RTvTest::TestName()
 // Test the version name
 //
     {
- 
-	Next(_L("Testing TVersion::Name()"));
+ 	Next(_L("Testing TVersion::Name()"));
     for (TInt i=0; i<KNumTVersions; i++)
         {
         TPtrC Name=(TPtrC)Names[i];
@@ -132,7 +166,6 @@ TBool RTvTest::QVS(TInt aCurrent,TInt aRequested)
 // An independent calculation of what QueryVersionSupported should return
 //
     {
-
     if (aCurrent)
         aCurrent--;
     if (aRequested)
@@ -147,8 +180,7 @@ void RTvTest::TestQVS()
 // Check QueryVersionSupported()
 //
     {
- 
-   Next(_L("Testing User::QueryVersionSupported()"));
+    Next(_L("Testing User::QueryVersionSupported()"));
     for (TInt i=0; i<KNumTVersions; i++)
         {
         for (TInt j=0; j<KNumTVersions; j++)
@@ -164,15 +196,25 @@ GLDEF_C TInt E32Main()
 // Test TVersion class.
 //
     {
-
     RTvTest test;
 	test.Title();
 	test.Start(_L("Testing TVersion\n"));
+	
+	test.LoadDeviceDriver();
+
+	test.Printf(_L("Testing kernel side TVersion::Name()"));
+	TInt r = test.gLdd.VersionTestName();
+	test(r==KErrNone);
+
+	test.Printf(_L("Testing Kern::QueryVersionSupported()"));
+	test.gLdd.VersionTestQVS();
+	
+	test.UnloadDeviceDriver();
+	
     test.TestName();
     test.TestQVS();
     test.Printf(_L("TVersion passed testing\n"));
 	test.End();
 	return(0);
     }
-
 

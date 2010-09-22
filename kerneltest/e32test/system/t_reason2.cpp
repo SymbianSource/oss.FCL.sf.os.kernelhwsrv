@@ -67,7 +67,7 @@ void GetSysStartupReason()
 	test.Next(_L("Get system startup reason using HAL::Get()"));
 	r=HAL::Get(HAL::ESystemStartupReason,gSysReason);
 #if defined(__WINS__)
-	test(r=KErrNotSupported);
+	test_Equal(KErrNotSupported,r);
 #else
 	test_KErrNone(r);
 	switch (gSysReason)

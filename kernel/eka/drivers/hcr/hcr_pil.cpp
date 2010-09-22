@@ -524,6 +524,7 @@ TInt HCR::HCRInternal::GetWordSettings(TInt aNum, const SSettingId aIds[],
     if(aNum == 1)
         {
         TSettingRef sref(0,0);
+		TSettingType types[1];
         TSettingType* pTypes;
                 
         //aTypes array is optional and user may not provided it for us. So we
@@ -532,7 +533,6 @@ TInt HCR::HCRInternal::GetWordSettings(TInt aNum, const SSettingId aIds[],
             {
             //If this is a null pointer then just create our own element and 
             //assign it to the pTypes pointer
-            TSettingType types[1];
             pTypes = types;
             }
         else

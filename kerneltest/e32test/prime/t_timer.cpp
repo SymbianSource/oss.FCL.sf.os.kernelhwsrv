@@ -1,4 +1,4 @@
-// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -515,6 +515,7 @@ LOCAL_C void testLock()
 	t.Lock(stat, ETwelveOClock);
 	User::WaitForRequest(stat);
 	test(stat==KErrNone);
+	test(User::LockPeriod()==ETwelveOClock);
 	time2.UniversalTime();
 	test(time<time2);
 	User::After(500000);
@@ -712,6 +713,7 @@ void testInactivity()
 	test.Start(_L("Test User::ResetInactivityTime()"));
 	RTimer t,t2;
 	TRequestStatus stat,stat2;
+	TTimeIntervalSeconds inact;
 	t.CreateLocal();
 	t2.CreateLocal();
 	User::ResetInactivityTime();
@@ -747,6 +749,10 @@ void testInactivity()
 	test(stat==KRequestPending);
 	User::After(5000000);
 	test(stat!=KRequestPending);
+	inact=User::InactivityTime();
+	test.Printf(_L("User inactivity after 5 secs, reports %d secs\n"),inact.Int());
+	test(inact > TTimeIntervalSeconds(3)); // test that inactivity lasted more than 3 seconds
+	test(inact < TTimeIntervalSeconds(7)); // test that inactivity lasted less than 7 seconds
 	test.End();
 	}
 

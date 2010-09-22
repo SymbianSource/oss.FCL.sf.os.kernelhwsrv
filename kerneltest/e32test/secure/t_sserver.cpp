@@ -1,4 +1,4 @@
-// Copyright (c) 2001-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2001-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -590,6 +590,8 @@ public:
 		{ RSubSessionBase::SendReceive(aFunction,aStatus); }
 	inline void Send(TInt aFunction,const TIpcArgs& aArgs,TRequestStatus& aStatus)
 		{ RSubSessionBase::SendReceive(aFunction,aArgs,aStatus); }
+	inline TInt BlindSend(TInt aFunction)
+		{ return RSubSessionBase::Send(aFunction); }
 	};
 
 
@@ -963,6 +965,10 @@ void TestSubSessions()
 	test.Next(_L("Sending empty message"));
 	r = sub.Send(ETestEmptySubSessionMessage);
 	test(r==KSubSessionHandle);
+
+	test.Next(_L("Sending empty message blindly"));
+	r = sub.BlindSend(ETestEmptySubSessionMessage);
+	test(r==KErrNone);
 
 	test.Next(_L("Closing subsession"));
 	sub.CloseSubSession(ETestCloseSubSession);	

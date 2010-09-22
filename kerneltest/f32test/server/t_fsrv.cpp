@@ -65,7 +65,7 @@ struct SParseServer
 	const TText* ext;
 	};
 
-LOCAL_D SParse parse[KMaxParses] =
+static SParse parse[KMaxParses] =
 	{
 	{_S("A:\\PATH\\NAME.EXT"),NULL,NULL,_S("A:\\PATH\\NAME.EXT"),_S("A:"),_S("\\PATH\\"),_S("NAME"),_S(".EXT")},
 	{_S("A:\\PATH\\NAME"),NULL,NULL,_S("A:\\PATH\\NAME"),_S("A:"),_S("\\PATH\\"),_S("NAME"),_S("")},
@@ -76,7 +76,7 @@ LOCAL_D SParse parse[KMaxParses] =
 	{_S("NAME"),_S(".YYY"),_S("A:\\PATH\\"),_S("A:\\PATH\\NAME.YYY"),_S("A:"),_S("\\PATH\\"),_S("NAME"),_S(".YYY")}
 	};
 
-LOCAL_D SParseServer parseServer[KMaxParses] =
+static SParseServer parseServer[KMaxParses] =
 	{
 	{_S("A:\\PATH\\NAME.EXT"),NULL,_S("A:\\PATH\\NAME.EXT"),_S("A:"),_S("\\PATH\\"),_S("NAME"),_S(".EXT")},
 	{_S("A:\\PATH\\NAME"),NULL,_S("A:\\PATH\\NAME"),_S("A:"),_S("\\PATH\\"),_S("NAME"),_S("")},
@@ -87,7 +87,7 @@ LOCAL_D SParseServer parseServer[KMaxParses] =
 	{_S("NAME"),_S(".YYY"),_S("C:\\ABCDEF\\NAME.YYY"),_S("C:"),_S("\\ABCDEF\\"),_S("NAME"),_S(".YYY")}
 	};
 
-LOCAL_C TInt pathTestThread(TAny*)
+static TInt pathTestThread(TAny*)
 //
 // The entry point for the producer thread.
 //
@@ -107,7 +107,7 @@ LOCAL_C TInt pathTestThread(TAny*)
 	return(KErrNone);
 	}
 
-LOCAL_C void printDriveAtt(TInt aDrive,TUint anAtt)
+static void printDriveAtt(TInt aDrive,TUint anAtt)
 //
 // Print a drive attribute.
 //
@@ -134,7 +134,7 @@ LOCAL_C void printDriveAtt(TInt aDrive,TUint anAtt)
 	test.Printf(_L("\n"));
 	}
 
-LOCAL_C void printDriveInfo(TInt aDrive,TDriveInfo& anInfo)
+static void printDriveInfo(TInt aDrive,TDriveInfo& anInfo)
 //
 // Print a drive info.
 //
@@ -181,7 +181,7 @@ LOCAL_C void printDriveInfo(TInt aDrive,TDriveInfo& anInfo)
 	
 			
 	
-LOCAL_C void MountRemoteFilesystem()
+static void MountRemoteFilesystem()
 	{
 	test.Next(_L("Mount Remote Drive simulator on Q:"));
 
@@ -200,7 +200,7 @@ LOCAL_C void MountRemoteFilesystem()
 	}	
 
 
-LOCAL_C void DisMountRemoteFilesystem()	
+static void DisMountRemoteFilesystem()	
 	{
 
 	test.Printf(_L("Dismounting the remote Drives \n"));
@@ -213,7 +213,7 @@ LOCAL_C void DisMountRemoteFilesystem()
 	}
 
 
-LOCAL_C void CreateSubstDrive()
+static void CreateSubstDrive()
 	{
 	test.Printf(_L("Create Substitute Drive \n"));
 
@@ -261,7 +261,7 @@ LOCAL_C void CreateSubstDrive()
 	}
 
 		
-LOCAL_C void RemoveSubstDrive()
+static void RemoveSubstDrive()
 	{
 	 	if( substDrive)
 	 		{
@@ -274,7 +274,7 @@ LOCAL_C void RemoveSubstDrive()
 
 
 
-LOCAL_C void testDriveInfo(TInt aDrive,TDriveInfo& anInfo)
+static void testDriveInfo(TInt aDrive,TDriveInfo& anInfo)
 //
 // Test the drive info is reasonable
 //
@@ -336,7 +336,7 @@ Why assume certain drive letters can only refer to certain drive types?
 */
 
 
-LOCAL_C void testDriveList()
+static void testDriveList()
 //
 // Test the drive list.
 //
@@ -901,7 +901,7 @@ LOCAL_C void testDriveList()
 
 
 
-LOCAL_C void testDriveInfo()
+static void testDriveInfo()
 //
 // Test the drive info.
 //
@@ -928,7 +928,7 @@ LOCAL_C void testDriveInfo()
 	test.End();
 	}
 
-LOCAL_C void testVolumeInfo()
+static void testVolumeInfo()
 //
 // Test volume info.
 //
@@ -971,7 +971,7 @@ LOCAL_C void testVolumeInfo()
 	test.End();
 	}
 
-LOCAL_C void testClientParse()
+static void testClientParse()
 //
 // Test the client side parse.
 //
@@ -1012,7 +1012,7 @@ LOCAL_C void testClientParse()
 	test.End();
 	}
 
-LOCAL_C void testPath()
+static void testPath()
 //
 // Test the path handling.
 //
@@ -1050,7 +1050,7 @@ LOCAL_C void testPath()
 	test.End();
 	}
 
-LOCAL_C void testServerParse()
+static void testServerParse()
 //
 // Test the client side parse.
 //
@@ -1086,7 +1086,7 @@ LOCAL_C void testServerParse()
 	test.End();
 	}
 
-LOCAL_C void testSubst()
+static void testSubst()
 //
 // Test the substitute functions.
 //
@@ -1267,7 +1267,7 @@ LOCAL_C void testSubst()
 	test_Value(d.iDriveAtt, d.iDriveAtt==0);
 	}
 
-LOCAL_C void testSetVolume()
+static void testSetVolume()
 //
 // Test setting the volume info.
 //
@@ -1377,21 +1377,22 @@ LOCAL_C void testSetVolume()
 	test.Printf(_L("VOL=\"%S\"\n"),&v.iName);
 	test(v.iName==_L(""));
 
-	// test volume label after remount (for removable media only)
+	
+    //-- test volume label after remount (for FAT FS only on removable drives)
 	test.Next(_L("Test volume label after remount"));
 
 	TDriveInfo info;
 	r = TheFs.Drive(info, driveNum);
 	test_KErrNone(r);
 
-	if((info.iDriveAtt & KDriveAttRemovable) != 0)
+	if(Is_Fat(TheFs, gDrive) && (info.iDriveAtt & KDriveAttRemovable))
 		{
 		// 1. set volume label
-		r = TheFs.SetVolumeLabel(_L("XXX"), driveNum);
+		r = TheFs.SetVolumeLabel(_L("XXX"), gDrive);
 		test_KErrNone(r);
 
-		// 2. change bootsector volume label
-		const TInt	offset = IsFileSystemFAT32(TheFs, driveNum)? 
+		// 2. hack volume label in the boot sector directly
+		const TInt	offset = Is_Fat32(TheFs, gDrive)? 
 			71 /*KFat32VolumeLabelPos*/ 
 			: 
 			43 /*KFat16VolumeLabelPos*/;	// both from sfat32\inc\sl_bpb.h
@@ -1406,18 +1407,18 @@ LOCAL_C void testSetVolume()
 		rdisk.Close();
 
 		// 3. remount the drive
-		r = TheFs.RemountDrive(driveNum);
+		r = TheFs.RemountDrive(driveNum); //-- won't work on non-removable drives
 		test_KErrNone(r);
 
-		// 4. check volume label
+		// 4. check volume label; it should nopt change, because "Volume label" entry in the root dir. was used 
 		r = TheFs.Volume(v, driveNum);
 		test_KErrNone(r);
 		test.Printf(_L("VOL=\"%S\"\n"),&v.iName);
 		test(v.iName == _L("XXX"));
 		test.Printf(_L("- Passed.\n"));
 		}
-	else
-		test.Printf(_L("- Skipped (drive is not removable).\n"));
+
+
 
 	// clean up
 	test.Next(_L("Set volume label to original"));
@@ -1431,7 +1432,7 @@ LOCAL_C void testSetVolume()
 	test.End();
 	}
 
-LOCAL_C void testModified()
+static void testModified()
 //
 // Test the Modified/SetModified functions.
 //
@@ -1514,7 +1515,7 @@ LOCAL_C void testModified()
 	test.End();
 	}
 
-LOCAL_C void testName()
+static void testName()
 //
 // Test the Modified/SetModified functions.
 //
@@ -1555,7 +1556,7 @@ LOCAL_C void testName()
 	test.End();
 	}
 	
-LOCAL_C TInt CreateFileX(const TDesC& aBaseName,TInt aX)
+static TInt CreateFileX(const TDesC& aBaseName,TInt aX)
 //
 // Create a large file. Return KErrEof or KErrNone
 //
@@ -1599,7 +1600,7 @@ LOCAL_C TInt CreateFileX(const TDesC& aBaseName,TInt aX)
 	return(KErrNone);
 	}
 
-LOCAL_C TInt DeleteFileX(TBuf<128>& aBaseName,TInt aX)
+static TInt DeleteFileX(TBuf<128>& aBaseName,TInt aX)
 //
 // Delete a file.
 //
@@ -1619,7 +1620,7 @@ LOCAL_C TInt DeleteFileX(TBuf<128>& aBaseName,TInt aX)
 	return(KErrNone);
 	}
 
-LOCAL_C void MakeAndDeleteFiles()
+static void MakeAndDeleteFiles()
 //
 // Create and delete large files in a randomish order
 //
@@ -1661,7 +1662,7 @@ LOCAL_C void MakeAndDeleteFiles()
 	test.End();
 	}
 
-LOCAL_C void FillUpDisk()
+static void FillUpDisk()
 //
 // Test that a full disk is ok
 //
@@ -1698,7 +1699,7 @@ LOCAL_C void FillUpDisk()
 	test.End();
 	}
 
-LOCAL_C void CopyFileToTestDirectory()
+static void CopyFileToTestDirectory()
 //
 // Make a copy of the file in ram
 //

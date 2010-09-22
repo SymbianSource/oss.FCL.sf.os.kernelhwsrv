@@ -369,4 +369,10 @@ EXPORTS
 	RequestNotifications__9CFsNotifyR14TRequestStatus @ 368 NONAME R3UNUSED ; CFsNotify::RequestNotifications(TRequestStatus &)
 	"_._9CFsNotify" @ 369 NONAME R3UNUSED ; CFsNotify::~CFsNotify(void)
 	SupportedFileSystemName__C3RFsR6TDes16ii @ 370 NONAME ; RFs::SupportedFileSystemName(TDes16 &, int, int) const
+	Close__14CFsMountHelper @ 371 NONAME R3UNUSED ; CFsMountHelper::Close(void)
+	DismountFileSystem__C14CFsMountHelper @ 372 NONAME R3UNUSED ; CFsMountHelper::DismountFileSystem(void) const
+	DismountFileSystem__C14CFsMountHelperR14TRequestStatusQ214CFsMountHelper15TFsDismountMode @ 373 NONAME R3UNUSED ; CFsMountHelper::DismountFileSystem(TRequestStatus &, CFsMountHelper::TFsDismountMode) const
+	GetMountProperties__14CFsMountHelper @ 374 NONAME R3UNUSED ; CFsMountHelper::GetMountProperties(void)
+	MountFileSystem__C14CFsMountHelper @ 375 NONAME R3UNUSED ; CFsMountHelper::MountFileSystem(void) const
+	New__14CFsMountHelperR3RFsi @ 376 NONAME R3UNUSED ; CFsMountHelper::New(RFs &, int)
 

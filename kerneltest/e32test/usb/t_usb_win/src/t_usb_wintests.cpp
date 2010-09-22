@@ -1,4 +1,4 @@
-// Copyright (c) 2001-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2001-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -1156,6 +1156,7 @@ static void SendLogFile()
 	logStream = fopen (gLogfileName, "rb");
 	if (logStream == NULL)
 		{
+		PRINT_TIME "fopen failed  ");
 		return;
 		}
 
@@ -1170,28 +1171,36 @@ static void SendLogFile()
 	// Create the bulk OUT pipe
 	epAddress = gEndpointMap[0][0][1];
 	dwRC = outPipePtr->Bind(gDevNumber, epAddress, gDevList, &gUsbioID);
+	
 	if (dwRC != USBIO_ERR_SUCCESS)
 		{
+		PRINT_TIME "bind failed  ");
 		return;
 		}
 
 	bytesRead = fread ( logBuffer, sizeof(char), KHostLogFileSize, logStream );
 	if (bytesRead > 0)
 		{
+		PRINT_TIME "fread success. %d bytes read", bytesRead);
 		bufPtr.NumberOfBytesToTransfer = bytesRead;
 		outPipePtr->Write(&bufPtr);
 		dwRC = outPipePtr->WaitForCompletion(&bufPtr, gReadWriteTimeOut);
+		PRINT_TIME "write completes with %l",dwRC);
 		if (dwRC != USBIO_ERR_SUCCESS)
 			{
 			return;
 			}
 		}
-
-
-	bufPtr.NumberOfBytesToTransfer = 0;
-	outPipePtr->Write(&bufPtr);
-	dwRC = outPipePtr->WaitForCompletion(&bufPtr, gReadWriteTimeOut);
-
+	
+	// The sending of empty buffer is removed because mobile receives only one packet 
+	// (in CActiveControl::PrintHostLog function) from PC in both non-shared chunk 
+	// and shared chunk implementation, and then mobile exits the application.
+	// PC may be dead if PC sends this redundant packet while mobile is exiting 
+	//CUsbIoBuf bufPtrEnd((VOID*) logBuffer, 0);
+	//bufPtrEnd.NumberOfBytesToTransfer = 0;
+	//outPipePtr->Write(&bufPtrEnd);
+	//dwRC = outPipePtr->WaitForCompletion(&bufPtrEnd, gReadWriteTimeOut);
+	
 	return;
 	}
 

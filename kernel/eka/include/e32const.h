@@ -1363,6 +1363,15 @@ Identifies a non-file system.  That is a partition without any file system layer
 const TUint KDriveFileNone=0x05;
 
 
+/**
+@internalComponent
+Identifies exFAT file system
+*/
+const TUint KDriveFileSysExFAT=0x06;
+
+
+
+
 
 
 /**

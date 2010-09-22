@@ -1579,7 +1579,7 @@ See MkDirAll(), which may also create intermediate directories.
              not specified here will be taken from the session path.
 			 The directory name shall not contain wild cards ('?' or '*' characters) 
 			 and illegal characters like '<', '>', ':', '"', '/', '|' and '\000'.
-			 The directory name containing only whilte space characters 
+			 The directory name containing only white space characters 
 			 (See TChar::IsSpace()) is also illegal. 
 
 @return KErrNone if successful, otherwise one of the other

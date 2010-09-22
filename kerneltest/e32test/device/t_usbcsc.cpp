@@ -89,7 +89,7 @@ TInt gInterruptInEpFound = 0;
 //Command Line parameters 
 TBool gRealHardware = EFalse;
 TInt gVerbose = 0;
-enum TSpecTestType {EAll=0,EBufRead,EBufWrite,EEp0, EAltSet, EInterface, ECancel, EInvalidApi, EDescriptor, /*insert new non-bil here*/ EBilRw=100, EBilEp0, EBilAlt};
+enum TSpecTestType {EAll=0,EBufRead,EBufWrite,EEp0, EAltSet, EInterface, ECancel, EInvalidApi, EDescriptor,EHaltEndpoint, /*insert new non-bil here*/ EBilRw=100, EBilEp0, EBilAlt};
 TSpecTestType gSpecTest = EAll;
 
 RChunk gChunk;
@@ -1539,6 +1539,7 @@ static void TestCancel()
 			DEBUGPRINT(OstTraceExt2(TRACE_NORMAL, TESTCANCEL_TESTCANCEL_DUP02, "header->iTail 0x%x header->iHead 0x%x\n", header->iTail, header->iHead));
 			transfer = (TUsbcScTransferHeader*) (header->iTail + base);
 			header->iTail = transfer->iNext;
+			header->iBilTail = transfer->iNext; 
 			}
 		while (r != KErrNone);	
 
@@ -1562,7 +1563,7 @@ static void TestCancel()
 		test_KErrNone(WaitUntilTimeout(timeOut, status));	
 		test_Equal(status.Int(), KErrCancel);
 		
-	}//grealhardware
+		}//grealhardware
 
 	CloseStackIfOtg();
 	CloseChannel();
@@ -3129,30 +3130,59 @@ static void TestEndpointStallStatus()
 		}
 
 	test.Next(_L("Endpoint stall status"));
-	TEndpointState epState = EEndpointStateUnknown;
-	test_Equal(EEndpointStateNotStalled, QueryEndpointState(1));
-	test_Equal(EEndpointStateNotStalled, QueryEndpointState(2));
+	
+	LoadDriver();
+	OpenChannel();
+	
+	TInt r; 
+	r = SettingOne(0);  
+	test_KErrNone(r);
+ 
+	r = gPort.RealizeInterface(gChunk);
+	test_KErrNone(r);
+    
+	OpenStackIfOtg();
+    
+	if (gRealHardware)
+		{       
+		test.Printf(_L("\n\n Trying hardware\nPlease start the Host side application...\n"));
+		OstTrace0(TRACE_NORMAL, TESTENDPOINTSTALLSTATUS_TESTENDPOINTSTALLSTATUS_DUP01, "\n \n Trying hardware\nPlease start the Host side application...\n");
+    
+		TRequestStatus status;
+		gPort.ReEnumerate(status);
+		User::WaitForRequest(status);
+		test.Printf(_L("Enumerated status = %d\n"), status.Int());
+		OstTrace1(TRACE_NORMAL, TESTENDPOINTSTALLSTATUS_TESTENDPOINTSTALLSTATUS_DUP02, "Enumerated status = %d\n", status.Int());
+        
+		TEndpointState epState = EEndpointStateUnknown;
+		test_Equal(EEndpointStateNotStalled, QueryEndpointState(1));
+		test_Equal(EEndpointStateNotStalled, QueryEndpointState(2));
+    
+		test.Next(_L("Stall Ep1"));
+		gPort.HaltEndpoint(1);
+		epState = QueryEndpointState(1);
+		test(epState == EEndpointStateStalled);
+    
+		test.Next(_L("Clear Stall Ep1"));
+		gPort.ClearHaltEndpoint(1);
+		epState = QueryEndpointState(1);
+		test(epState == EEndpointStateNotStalled);
+    
+		test.Next(_L("Stall Ep2"));
+		gPort.HaltEndpoint(2);
+		epState = QueryEndpointState(2);
+		test(epState == EEndpointStateStalled);
+    
+		test.Next(_L("Clear Stall Ep2"));
+		gPort.ClearHaltEndpoint(2);
+		epState = QueryEndpointState(2);
+		test(epState == EEndpointStateNotStalled);
+		}
 
-	test.Next(_L("Stall Ep1"));
-	gPort.HaltEndpoint(1);
-	epState = QueryEndpointState(1);
-	test(epState == EEndpointStateStalled);
-
-	test.Next(_L("Clear Stall Ep1"));
-	gPort.ClearHaltEndpoint(1);
-	epState = QueryEndpointState(1);
-	test(epState == EEndpointStateNotStalled);
-
-	test.Next(_L("Stall Ep2"));
-	gPort.HaltEndpoint(2);
-	epState = QueryEndpointState(2);
-	test(epState == EEndpointStateStalled);
-
-	test.Next(_L("Clear Stall Ep2"));
-	gPort.ClearHaltEndpoint(2);
-	epState = QueryEndpointState(2);
-	test(epState == EEndpointStateNotStalled);
-
+	CloseStackIfOtg();
+	CloseChannel();
+	UnloadDriver();  
+	
 	test.End();
 	}
 
@@ -3302,8 +3332,6 @@ static void TestDescriptorManipulation()
 	TestExtendedEndpointDescriptor();
 
 	TestArbitraryStringDescriptors();
-	
-	TestEndpointStallStatus();
 
 	TestEndpointStatusNotify();
 
@@ -4294,6 +4322,13 @@ void StartTests(void)
 		test.End();
 		break;
 		}
+	case EHaltEndpoint:
+		{
+		test.Start(_L("Halt Endpoint Tests \n"));
+		TestEndpointStallStatus();
+		test.End();
+		break;
+		}
 	default:
 		if (gSpecTest>=EBilRw)
 			TestBIL();
@@ -4350,7 +4385,7 @@ void ProcessCommandLineOptions(void)
 		
 	if (gSpecTest == EAll)
 		{
-		for (TInt i = 1; i <= 7; i++)
+		for (TInt i = 1; i <= 9; i++)
 			{
 			gSpecTest = (TSpecTestType) i;
 			StartTests();
@@ -4395,8 +4430,8 @@ TInt ParseCommandLine()
 				OstTrace0(TRACE_NORMAL, PARSECOMMANDLINE_PARSECOMMANDLINE, "\nThis tests the Shared chunk version of the USBC driver.  It focuses on the elements specific to this driver and should be used in conjuntion with other USBC tests in order to validate the driver.\n\n");
 				test.Printf(_L("\n -h : Help.\n -r : test on Real hardware\n -v : Verbose\n -V : Very verbose\n-t <test> : Run a specific test.\n"));   
 				OstTrace0(TRACE_NORMAL, PARSECOMMANDLINE_PARSECOMMANDLINE_DUP01, "\n -h : Help.\n -r : test on Real hardware\n -v : Verbose\n -V : Very verbose\n-t <test> : Run a specific test.\n");   
-				test.Printf(_L("\nAvailable tests:  buf_read, buf_write, ep0, altset, interface, cancel, api, descriptor, bil_rw, bil_ep0, bil_alt\n"));
-				OstTrace0(TRACE_NORMAL, PARSECOMMANDLINE_PARSECOMMANDLINE_DUP02, "\nAvailable tests:  buf_read, buf_write, ep0, altset, interface, cancel, api, descriptor, bil_rw, bil_ep0, bil_alt\n");
+				test.Printf(_L("\nAvailable tests:  buf_read, buf_write, ep0, altset, interface, cancel, api, descriptor, bil_rw, bil_ep0, bil_alt, halt_endpoint\n"));
+				OstTrace0(TRACE_NORMAL, PARSECOMMANDLINE_PARSECOMMANDLINE_DUP02, "\nAvailable tests:  buf_read, buf_write, ep0, altset, interface, cancel, api, descriptor, bil_rw, bil_ep0, bil_alt, halt_endpoint\n");
 				err=KErrCancel;
 				}
 			else
@@ -4435,7 +4470,10 @@ TInt ParseCommandLine()
 						else if (subtoken==_L("interface"))
 								gSpecTest=EInterface;
 						else if (subtoken==_L("cancel"))
+								{
 								gSpecTest=ECancel;
+								gRealHardware = ETrue;
+								}
 						else if (subtoken==_L("api"))
 								gSpecTest=EInvalidApi;
 						else if (subtoken==_L("bil_rw"))
@@ -4457,6 +4495,11 @@ TInt ParseCommandLine()
 								{
 								gRealHardware = ETrue;
 								gSpecTest=EAltSet;
+								}
+						else if (subtoken==_L("halt_endpoint"))
+								{
+								gRealHardware = ETrue;
+								gSpecTest=EHaltEndpoint;
 								}
 						else
 							{

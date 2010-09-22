@@ -235,7 +235,9 @@ TInt StartServer()
 	{
 	CTrapCleanup* cleanupStack = CTrapCleanup::New();
 	if(!cleanupStack)
+		{
 		return KErrNoMemory;
+		}
 	TRAPD(leaveError,DoStartServer())
 	delete cleanupStack;
 	return leaveError;
@@ -272,7 +274,9 @@ void CheckCapabilitySetEqual(const TCapabilitySet& a1,const TCapabilitySet& a2)
 	{
 	TInt i;
 	for(i=0; i<ECapability_Limit; i++)
+		{
 		test((!a1.HasCapability((TCapability)i))==(!a2.HasCapability((TCapability)i)));
+		}
 	}
 
 TBuf8<1024> CapabilityNameBuffer;
@@ -293,9 +297,13 @@ TPtrC16 CapabilityList(const TCapabilitySet& aCaps)
 			if(allCaps.HasCapability((TCapability)i))
 				{
 				if(i&1)
+					{
 					odd = EFalse;
+					}
 				else
+					{
 					even = EFalse;
+					}
 				}
 			continue;
 			}
@@ -305,11 +313,17 @@ TPtrC16 CapabilityList(const TCapabilitySet& aCaps)
 		CapabilityNameBuffer.Append((TChar)' ');
 		}
 	if(!CapabilityNameBuffer.Length())
+		{
 		CapabilityNameBuffer.Append(_L8("NONE"));
+		}
 	if(even)
+		{
 		CapabilityNameBuffer.Append(_L8("(These are all EVEN numbered capabilities)"));
+		}
 	if(odd)
+		{
 		CapabilityNameBuffer.Append(_L8("(These are all ODD numbered capabilities)"));
+		}
 	return CapabilityNameBuffer.Expand();
 }
 
@@ -343,10 +357,16 @@ void TestPlatSecDisabledCaps()
 	TCapabilitySet notEnforced;
 	notEnforced.SetEmpty();
 	for(TInt i=0; i<ECapability_HardLimit; i++)
+		{
 		if(!PlatSec::IsCapabilityEnforced((TCapability)i))
+			{
 			notEnforced.AddCapability((TCapability)i);
+			}
+		}	
 	if(!PlatSec::ConfigSetting(PlatSec::EPlatSecEnforcement))
+		{
 		disabled.SetAllSupported();
+		}
 	CheckCapabilitySetEqual(notEnforced,disabled);
 
 	test.End();
@@ -377,15 +397,22 @@ void TestPlatSecEnforcement()
 	test(process.ExitType()==EExitKill);
 	r=logon.Int();
 	CLOSE_AND_WAIT(process);
+
 	if(PlatSecEnforcement)
+		{
 		test(r==KErrPermissionDenied);
+		}
 	else
+		{
 		test(r==KErrNone);
+		}
 
 	test.Next(_L("Check static linkage without required capabilities"));
 	r=process.Create(_L("T_PSC_STATIC"),_L(""));
 	if(PlatSecEnforcement)
+		{
 		test(r==KErrPermissionDenied);
+		}	
 	else
 		{
 		test(r==KErrNone);
@@ -394,6 +421,23 @@ void TestPlatSecEnforcement()
 		}
 
 	test.End();
+	}
+
+/**
+Do simple test of diagnostic function without parameters (EmitDiagnostic())
+*/
+void TestPlatSecDiagnostic()
+	{
+	TInt r;
+	r=PlatSec::EmitDiagnostic();
+	if(PlatSecEnforcement)
+		{
+		test(r==KErrPermissionDenied);
+		}
+	else
+		{
+		test(r==KErrNone);
+		}
 	}
 
 #include <e32svr.h>
@@ -446,6 +490,9 @@ GLDEF_C TInt E32Main()
 	test.Next(_L("Test PlatSecEnforcement"));
 	TestPlatSecEnforcement();
 
+	test.Next(_L("Test PlatSecDiagnostic()"));
+	TestPlatSecDiagnostic();
+
 	test.Next(_L("Closing server session"));
 	Session.Send(CTestSession::EShutdown);
 	Session.Close();
@@ -474,7 +521,9 @@ GLDEF_C TInt E32Main()
 	timer.After(timerStat,20*1000000);
 	User::WaitForRequest(timerStat,keyStat);
 	if(keyStat!=KRequestPending)
+		{
 		(void)test.Console()->KeyCode();
+		}
 	timer.Cancel();
 	test.Console()->ReadCancel();
 	User::WaitForAnyRequest();

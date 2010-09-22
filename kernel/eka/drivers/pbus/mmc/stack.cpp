@@ -1,4 +1,4 @@
-// Copyright (c) 1999-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1999-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -3448,7 +3448,8 @@ EXPORT_C TMMCErr DMMCStack::InitStackAfterUnlockSM()
 			// update the Extended CSD to reflect this			
 			memset( s.CardP()->iExtendedCSD.Ptr()+TExtendedCSD::EEraseGroupDefIndex, TExtendedCSD::EEraseGrpDefEnableHighCapSizes, 1);
 			}
-	
+
+	// Fall through to the next state
 	SMF_STATE(EStDetermineBusWidthAndClock)
 	
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_INITSTACKAFTERUNLOCKSM16, "EStDetermineBusWidthAndClock" );
@@ -3470,6 +3471,7 @@ EXPORT_C TMMCErr DMMCStack::InitStackAfterUnlockSM()
 
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_INITSTACKAFTERUNLOCKSM18, "EStNoMoreCards" );
 
+	// Fall through to the next state
 	SMF_STATE(EStExit)
 	
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_INITSTACKAFTERUNLOCKSM19, "EStExit" );
@@ -3934,7 +3936,8 @@ TMMCErr DMMCStack::ExecAwakeCommandSM()
 			}
 
 		s.PopCommandStack();	
-
+	
+	// Fall through to the next state
 	SMF_STATE(EStDone)
 	
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECAWAKECOMMANDSM7, "EStDone" );
@@ -5160,6 +5163,7 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 		s.FillCommandDesc( ECmdSelectCard, 0 );		// Deselect - RCA=0
 		iCxDeselectCount=iDeselectsToIssue;
 
+	// Fall through to the next state
 	SMF_STATE(EStDeselectLoop)
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECCOMMANDSM5, "EStDeselectLoop" );
 		SMF_INVOKES(IssueCommandCheckResponseSMST,EStDeselectEndCheck)	
@@ -5181,6 +5185,7 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 		s.PopCommandStack();
 		iStackState &= ~KMMCStackStateDoDeselect;
 
+	// Fall through to the next state
 	SMF_STATE(EStAnalyseCommand)
 
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECCOMMANDSM7, "EStAnalyseCommand" );
@@ -6486,7 +6491,8 @@ inline TMMCErr DMMCStack::CIMAutoUnlockSM()
 		DoAddressCard(iAutoUnlockIndex); 	// Address the card
 		TMMCard* cd = iCardArray->CardP(iAutoUnlockIndex);
 		s.SetCard(cd);
-
+	
+	// Fall through to the next state
 	SMF_STATE(EStSendStatus)
 		        
 		s.FillCommandDesc(ECmdSendStatus, 0);
@@ -6500,11 +6506,13 @@ inline TMMCErr DMMCStack::CIMAutoUnlockSM()
 			{
 			SMF_GOTOS(EStNextIndex);
 		    }
-		                        
+
+	// Fall through to the next state	                        
 	SMF_STATE(EStUnlock)
 		                        
 		const TMapping *mp = NULL;
 		mp = iSocket->iPasswordStore->FindMappingInStore(iCardArray->CardP(iAutoUnlockIndex)->CID());
+		__ASSERT_DEBUG(mp, DMMCSocket::Panic(DMMCSocket::EMMCMachineState));
 
 		OstTrace1( TRACE_INTERNALS, DMMCSTACK_CIMAUTOUNLOCKSM4, "Attempting to unlock card %d", iCardArray->CardP(iAutoUnlockIndex)->Number() );
 		
@@ -7429,8 +7437,6 @@ TInt DMMCSocket::Init()
 	{
 	OstTraceFunctionEntry1( DMMCSOCKET_INIT_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf(">MMC:Init"));
-	
-	GetMachineInfo();
 
 	// We need to make sure the stack is initialised,
 	// as DPBusSocket::Init() will initiate a power up sequence
@@ -7439,6 +7445,8 @@ TInt DMMCSocket::Init()
 		OstTraceFunctionExitExt( DMMCSOCKET_INIT_EXIT1, this, KErrNotReady );
 		return KErrNotReady;
 	    }
+
+	GetMachineInfo();
 
 	TInt r = iStack->Init();
 	if (r!=KErrNone)

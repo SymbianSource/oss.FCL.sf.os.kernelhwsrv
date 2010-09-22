@@ -1,4 +1,4 @@
-// Copyright (c) 2003-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2003-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -428,6 +428,12 @@ void TestDynamic(TUint aMask, TInt aTN)
 	test.Printf(_L("Ord 1 returns %08x\n"), result);
 	test(result == DllVersion[expected]);
 	CheckExports(expected, l);
+
+	TInt codeSize=0;
+	TInt constDataSize=0;
+	test(KErrNone==l.GetRamSizes(codeSize, constDataSize));
+	test.Printf(_L("Code size: 0x%x, const data size:0x%x\n"),codeSize,constDataSize);
+	test(codeSize>0);
 	l.Close();
 	}
 

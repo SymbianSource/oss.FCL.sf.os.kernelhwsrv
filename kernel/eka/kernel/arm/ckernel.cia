@@ -92,6 +92,14 @@ __NAKED__ void DThread::EpocThreadFunction(TAny*)
 	USER_MEMORY_GUARD_ON(,r2,r2);
 	asm("teq r0, r1 ");
 	asm("bne 1b ");
+	
+	// Save thread id in the local data
+	asm("ldr r3, [r4, #%a0]" : : "i" _FOFF(DThread, iId));
+	asm("sub r0, r1, #%a0 " : : "i" ((TInt)KLocalThreadDataSize - _FOFF(TLocalThreadData, iThreadId)));
+	USER_MEMORY_GUARD_OFF(,r2,r2);
+	asm("strt r3, [r0]");
+	USER_MEMORY_GUARD_ON(,r2,r2);
+
 	asm("sub r1, r1, #%a0 " : : "i" (KLocalThreadDataSize + 4));
 	asm("orr r8, r8, #%a0 " : : "i" ((TInt)KThreadFlagLocalThreadDataValid));
 	asm("str r8, [r4, #%a0]" : : "i" _FOFF(DThread, iFlags));

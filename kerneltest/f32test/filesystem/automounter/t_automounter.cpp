@@ -47,6 +47,14 @@ static TInt     gDriveNum=-1; ///< drive number we are dealing with
 //-------------------------------------------------------------------
 //-- the debug test property string can be used to control automounter in debug mode.
 const TUid KThisTestSID={0x10210EB3}; ///< this EXE SID
+const TUint KPropKey = 0; //-- property key
+
+//-------------------------------------------------------------------
+/** strings for the test property that will override estart.txt setting for the automounter */
+//_LIT8(KSection,  "AutoMounter");        ///< section name
+_LIT8(KKey_ChildFsList, "AM_FSNames");     ///< a key for the CSV list of child file system names
+_LIT8(KProp_DefFmtFsIdx, "AM_DefFmtFsIdx");///< a key for the optional parameter that specifies the child file system index, which will be used for formatting unrecognised media
+
 
 //-------------------------------------------------------------------
 //-- Actually, for testing autoounter, it is neccessary to have at least 3 filesystems:
@@ -123,6 +131,9 @@ void CheckFsOperations()
     nRes = TheFs.Delete(KTestFile);
     test_KErrNone(nRes);
 
+    nRes = TheFs.CheckDisk(gSessionPath);
+    test_KErrNone(nRes);
+
 }
 
 //-------------------------------------------------------------------
@@ -157,7 +168,7 @@ void CheckSubtype_FS2(const TDesC& aFsSubtype)
 */
 static TInt DoDismountFS()
 {
-    TBuf<40> fsName(0);
+    TFSName fsName;
     TInt nRes;
    
     nRes = TheFs.FileSystemName(fsName, gDriveNum);
@@ -190,7 +201,7 @@ static void ForceDismountFS()
     TRequestStatus stat;
     TheFs.NotifyDismount(gDriveNum, stat, EFsDismountForceDismount); 
     User::WaitForRequest(stat);         
-    test(stat.Int() == KErrNone);
+    //test(stat.Int() == KErrNone);
 }
 
 
@@ -348,7 +359,7 @@ TBool InitGlobals()
     //-- automounter must be able to parse this string.
     //-- The property key is a drive number being tested
     {
-        const TUint KPropKey = 0; //-- property key
+        
         _LIT_SECURITY_POLICY_PASS(KTestPropPolicy);
         
         nRes = RProperty::Define(KThisTestSID, KPropKey, RProperty::EText, KTestPropPolicy, KTestPropPolicy);
@@ -356,8 +367,13 @@ TBool InitGlobals()
 
         //-- set the propery, it will override automounter config from estart.txt. 
         //-- the config string has following format: "<fs_name1>,<fsname2>"
+        //-- and this looks like: 'FSNames fat, exfat'
+        
     
         TBuf8<50> cfgBuf(0);
+        cfgBuf.Append(KKey_ChildFsList);
+
+        cfgBuf.Append(_L(" "));
         cfgBuf.Append(KFSName1);
         cfgBuf.Append(_L(" , "));
         cfgBuf.Append(KFSName2);
@@ -429,7 +445,7 @@ void DestroyGlobals()
     {//-- the original file system had been dismounted during test initialisation; dismount whatever we have now
         test.Printf(_L("Mounting back the original FS:%S, PExt:%S \n"), &orgFsDescriptor.iFsName, &orgFsDescriptor.iPExtName);
         
-        TBuf<40> fsName;
+        TFSName fsName;
 
         nRes = TheFs.FileSystemName(fsName, gDriveNum);
         if(nRes == KErrNone && fsName.CompareF(orgFsDescriptor.iFsName) != KErrNone)
@@ -526,8 +542,8 @@ void TestAutomounterBasics()
     test.Next(_L("Testing automounter basic functionality \n"));
 
     TVolumeInfo v;
-    TBuf<40> fsName(0);
-    TBuf<40> fsSubType(0);
+    TFSName fsName(0);
+    TFSName fsSubType(0);
     TInt nRes;
    
     //================================================================================
@@ -759,8 +775,8 @@ void TestDismounting()
     test.Next(_L("Testing media dismounting/remounting with automounter FS \n"));
 
     TInt nRes;
-    TBuf<40>    fsName(0);
-    TBuf<40>    fsSubType(0);
+    TFSName    fsName(0);
+    TFSName    fsSubType(0);
     TBuf8<40>   buf;
 
     //================================================================================
@@ -869,8 +885,8 @@ void TestAutomounterDefaultFormatting()
     test.Next(_L("Testing media formatting with default parameters. Automounter FS\n"));
 
     TInt nRes;
-    TBuf<40>    fsName(0);
-    TBuf<40>    fsSubType(0);
+    TFSName    fsName(0);
+    TFSName    fsSubType(0);
 
 
     //================================================================================
@@ -1034,8 +1050,8 @@ void TestAutomounterFormatting_FsNameSpecified()
 
 
     TInt nRes;
-    TBuf<40>    fsName(0);
-    TBuf<40>    fsSubType(0);
+    TFSName    fsName(0);
+    TFSName    fsSubType(0);
     
     TBuf<10>    drivePath;
     drivePath.Format(_L("%C:\\"), gDriveNum+'A');
@@ -1269,7 +1285,7 @@ void TestFixedFsFormatting_FsNameSpecified()
     test.Next(_L("Testing RFormat API that allows specifying particular FS name for fixed FS.\n"));
 
     TInt nRes;
-    TBuf<40>    fsName(0);
+    TFSName    fsName(0);
    
     TBuf<10>    drivePath;
     drivePath.Format(_L("%C:\\"), gDriveNum+'A');
@@ -1416,7 +1432,7 @@ void TestFormatting_FsName_Parameters_FAT()
     test.Next(_L("Testing TVolFormatParam_FAT formatting API\n"));
 
     TInt nRes;
-    TBuf<40>    fsName(0);
+    TFSName    fsName(0);
    
     TBuf<10>    drivePath;
     drivePath.Format(_L("%C:\\"), gDriveNum+'A');
@@ -1527,7 +1543,7 @@ void TestFormatting_FsName_Parameters_exFAT()
     test.Next(_L("Testing TVolFormatParam_exFAT formatting API\n"));
 
     TInt nRes;
-    TBuf<40>    fsName(0);
+    TFSName    fsName(0);
    
     TBuf<10>    drivePath;
     drivePath.Format(_L("%C:\\"), gDriveNum+'A');
@@ -1615,11 +1631,220 @@ void TestFormatting_FsName_Parameters_exFAT()
 }
 
 //-------------------------------------------------------------------
+/**
+    A helper method. Unloads and loads back automounter FSY plugin.
+    This makes it re-parse its config either from estart.txt or from the debug property if it is set.
+*/
+void  MakeAutomounterReparseConfig()
+{
+    //-- make automounter re-parse the config property
+    ForceDismountFS();
+
+    TInt nRes = TheFs.RemoveFileSystem(KAutoMounterFSName);
+    test(nRes == KErrNone);
+
+    nRes = TheFs.AddFileSystem(KAutoMounterFsy);
+    test(nRes == KErrNone);
+}
+
+
+//-------------------------------------------------------------------
+/**
+    Test how the automounter supports only 1 child FS configured.
+    Everything should be the same as in the case with multiple childs, apart from the use case
+    of formatting the unrecognisable media.
+
+    In this case such formatting should succeed, because the one and only child FS will be used for this        
+*/
+void TestHandlingOneChildFS()
+{
+    test.Next(_L("Testing automounter with the only 1 Child FS bound\n"));
+
+    TInt nRes;
+    TBuf8<50> cfgBuf(0);
+    
+    //================================================================================
+    //-- make automounter configuration property that has only one child FS 
+    //-- and this looks like: 'FSNames fat'
+    
+    cfgBuf.Append(KKey_ChildFsList);
+
+    cfgBuf.Append(_L(" "));
+    cfgBuf.Append(KFSName1);
+  
+    nRes = RProperty::Set(KThisTestSID, KPropKey, cfgBuf);
+    test_KErrNone(nRes);
+
+    //-- make automounter re-parse the config property
+    MakeAutomounterReparseConfig();
+
+    //================================================================================
+    //-- 1. prepare the volume
+    Mount_FileSystem1();    
+    FormatVolume(); 
+
+    TFSName    fsName;
+    TFSName    fsSubType;
+
+
+    //================================================================================
+    //-- 2. mount "automounter", previous FS must be recognised and set as an active child
+    Mount_AutomounterFS();
+   
+    //-- check file system name / subtype etc.
+    nRes = TheFs.FileSystemName(fsName, gDriveNum);
+    test(fsName.CompareF(KAutoMounterFSName) == 0); //-- the file system name shall be "automounter" - it is a root FS
+    test_KErrNone(nRes);
+
+    //-- the FS Subtype must be the subtype of the recognised child FS
+    nRes = TheFs.FileSystemSubType(gDriveNum, fsSubType);   
+    test_KErrNone(nRes);
+    CheckSubtype_FS1(fsSubType);
+
+    //================================================================================
+    //-- 3. check the list of supported file system names
+    nRes = TheFs.SupportedFileSystemName(fsName, gDriveNum, RFs::KRootFileSystem); //-- "root" filesystem
+    test(nRes == KErrNone && fsName.CompareF(KAutoMounterFSName) == 0);
+    test.Printf(_L("Root FS:'%S'\n"), &fsName);
+
+    fsName.SetLength(0);
+    nRes = TheFs.SupportedFileSystemName(fsName, gDriveNum, 0); //-- 1st "child" filesystem
+    test(nRes == KErrNone && fsName.CompareF(KFSName1) == 0);
+
+    fsName.SetLength(0);
+    nRes = TheFs.SupportedFileSystemName(fsName, gDriveNum, 1); //-- 2nd "child" filesystem can't be found, it doesn't exist in config
+    test(nRes == KErrNotFound);
+
+    //================================================================================
+    //-- 4. corrupt the media, check that FS is not recognised.
+    CorruptDrive(); 
+
+    //-- check file system name / subtype etc.
+    nRes = TheFs.FileSystemName(fsName, gDriveNum);
+    test(fsName.CompareF(KAutoMounterFSName) == 0); //-- the file system name shall be "automounter" - it is a root FS
+    test_KErrNone(nRes);
+
+    //-- the FS Subtype query requires mounted and recognised file system. this shall fail
+    nRes = TheFs.FileSystemSubType(gDriveNum, fsSubType);   
+    test(nRes == KErrCorrupt);
+
+    //================================================================================
+    //-- 5. format the volume, this must be OK, because there is only 1 child file system
+    FormatVolume();
+    CheckFsOperations();
+
+    //-- the FS Subtype must be the subtype of the recognised child FS
+    nRes = TheFs.FileSystemSubType(gDriveNum, fsSubType);   
+    test_KErrNone(nRes);
+    CheckSubtype_FS1(fsSubType);
+
+
+
+}
+
+//-------------------------------------------------------------------
+/**
+    A helper method that does the real job:
+         - makes automounter config in a test property, specifying child FS for formatting unrecognisable media
+         - corrupts the drive
+         - format the drive w/o specifying the child FS
+         - check that the child FS from the config had been used for formatting
+
+
+*/
+void DoTestDefaultChildForFormatting(TInt aChildIdx)
+{
+
+    TInt nRes;
+    TBuf8<50> cfgBuf(0);
+    
+    //================================================================================
+    //-- make automounter configuration property that 2 child FS and explicitly specifies a child FS for formatting unrecognisable media
+    //-- and this looks like: 'FSNames fat, exfat'
+    //--                       DefFmtFsIdx 1 
+
+    cfgBuf.Append(KKey_ChildFsList);
+
+    cfgBuf.Append(_L(" "));
+    cfgBuf.Append(KFSName1);
+    cfgBuf.Append(_L(" , "));
+    cfgBuf.Append(KFSName2);
+
+    cfgBuf.AppendFormat(_L8("\n%S %d"), &KProp_DefFmtFsIdx(), aChildIdx);
+    
+    nRes = RProperty::Set(KThisTestSID, KPropKey, cfgBuf);
+    test_KErrNone(nRes);
+
+    //-- make automounter re-parse the config property
+    MakeAutomounterReparseConfig();
+
+
+    //================================================================================
+    //-- 1. mount "automounter"
+    Mount_AutomounterFS();
+
+    TFSName    fsName;
+    TFSName    fsSubType;
+
+    //================================================================================
+    //-- 2. corrupt the media, check that FS is not recognised.
+    CorruptDrive(); 
+
+    //-- check file system name / subtype etc.
+    nRes = TheFs.FileSystemName(fsName, gDriveNum);
+    test(fsName.CompareF(KAutoMounterFSName) == 0); //-- the file system name shall be "automounter" - it is a root FS
+    test_KErrNone(nRes);
+
+    //-- the FS Subtype query requires mounted and recognised file system. this shall fail
+    nRes = TheFs.FileSystemSubType(gDriveNum, fsSubType);   
+    test(nRes == KErrCorrupt);
+
+
+    //================================================================================
+    //-- 3. format the volume, this must be OK, because the child FS for corrupting unrecognised media is specified 
+    FormatVolume();
+    CheckFsOperations();
+
+    //-- the FS Subtype must be the subtype of the recognised child FS
+    nRes = TheFs.FileSystemSubType(gDriveNum, fsSubType);   
+    test_KErrNone(nRes);
+    
+    if(aChildIdx == 0)  //-- child idx=0, see cfgBuf
+        CheckSubtype_FS1(fsSubType);
+    else if(aChildIdx == 1) //-- child idx=1, see cfgBuf1
+        CheckSubtype_FS2(fsSubType);
+    else 
+        test(0);
+        
+
+
+
+}
+
+//-------------------------------------------------------------------
+/**
+    test a special case of formatting unrecognisable media, when automounter is configured to use 
+    some explicit child FS for this
+*/
+void TestDefaultChildForFormatting()
+{
+    test.Next(_L("Test automounter formatting unrecognisable media when child FS is explicitly specified\n"));
+
+    const TInt KDefFmtChild_FAT   = 0; //-- child FS#0 FAT
+    const TInt KDefFmtChild_ExFAT = 1; //-- child FS#1 exFAT
+
+    DoTestDefaultChildForFormatting(KDefFmtChild_FAT);
+    DoTestDefaultChildForFormatting(KDefFmtChild_ExFAT);
+
+    //-- do this test to check that this particular config hasn't broken automounter functionality
+    TestFixedFsFormatting_FsNameSpecified();
+}
+
+//-------------------------------------------------------------------
 
 void CallTestsL()
     {
 
-    
     //-- set up console output
     Fat_Test_Utils::SetConsole(test.Console());
 
@@ -1668,8 +1893,14 @@ void CallTestsL()
           TestFormatting_FsName_Parameters_FAT();
           TestFormatting_FsName_Parameters_exFAT();
         
+        //-- these 2 tests must be the last ones before calling DestroyGlobals()
+        //-- they fiddle with the automounter config and may affect following tests.
+        TestHandlingOneChildFS();    
+        TestDefaultChildForFormatting();
+
         }
     //-------------------------------------
+
     DestroyGlobals();
 #endif
     }

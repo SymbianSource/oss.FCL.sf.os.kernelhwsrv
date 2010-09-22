@@ -1,4 +1,4 @@
-// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -38,6 +38,7 @@
 // the expected notifications.
 // - Test finding a global chunk by name and verify results are as expected.
 // - Check read-only global chunks cannot be written to by other processes.
+// - Test Top and Bottom API with DoubleEnded chunk
 // Platforms/Drives/Compatibility:
 // All.
 // Assumptions/Requirement/Pre-requisites:
@@ -1341,6 +1342,41 @@ void TestReadOnly()
 	User::SetJustInTime(jit);
 	}
 
+
+void TestTopBottom()
+//
+// test chunk top and bottom exec calls and check size
+//
+	{
+	RChunk chunk;
+	TInt r;
+	TInt init_bottom = 0x1000;
+	TInt init_top = 0x5000;
+	TInt max=0x10000;
+
+	TInt top;
+	TInt bottom;
+
+	r=chunk.CreateDoubleEndedLocal(init_bottom,init_top,max);
+	test_KErrNone(r);
+
+	top=chunk.Top();
+	bottom=chunk.Bottom();
+	test_Equal(top, init_top);
+	test_Equal(bottom, init_bottom);
+	
+	r=chunk.AdjustDoubleEnded(init_bottom+0x1000, init_top-0x1000);
+	test_KErrNone(r);
+
+	top=chunk.Top();
+	bottom=chunk.Bottom();
+	test_Equal(top, init_top-0x1000);
+	test_Equal(bottom, init_bottom+0x1000);
+	
+	chunk.Close();
+	}
+
+
 TInt E32Main()
 //
 //	Test RChunk class
@@ -1428,6 +1464,10 @@ TInt E32Main()
 		TestClosure();
 		test.Next(_L("Read-only chunks"));
 		TestReadOnly();
+
+		test.Next(_L("Test chunk top and bottom"));
+		TestTopBottom();
+
 		test.End();
 		__KHEAP_MARKEND;
 		}

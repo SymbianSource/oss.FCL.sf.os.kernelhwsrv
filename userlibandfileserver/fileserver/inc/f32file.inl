@@ -221,7 +221,7 @@ void TVolFormatParam::Init()
     Calculates the file system name hash. For use in conjunction with this class only
     The file system name hash is a standard CRC32 on the up-cased name.
     
-    @param  aFsName given name.
+    @param  aFsName given name. Its length should not exceed KMaxFSNameLength
     @return CRC32 name hash value
 
 */    
@@ -231,7 +231,7 @@ TUint32 TVolFormatParam::CalcFSNameHash(const TDesC& aFsName)
         
     if(aFsName.Length() > 0)
         {
-        TFullName fsName;
+        TFSName fsName;
         fsName.Copy(aFsName);
         fsName.UpperCase();
         Mem::Crc32(nameHash, fsName.Ptr(), fsName.Length());
@@ -281,8 +281,18 @@ TUint32 TVolFormatParam::GetVal(TUint aIndex) const
     return iData[aIndex];
     }
 
+//-------------------------------------------------------------------------------------------------------------------
+
+CFsMountHelper::~CFsMountHelper() 
+    {
+    Close();
+    } 
 
 
+CFsMountHelper::CFsMountHelper() 
+    {}; 
+
+//-------------------------------------------------------------------------------------------------------------------
 
 
 

@@ -1,4 +1,4 @@
-// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -27,6 +27,8 @@
 // - Send pointers as message arguments from client and test that the server receives the
 // same pointers. 
 // - Test Client() method of RMessage2 and verify it opened a handle to the client thread
+// - Test ClientProcessFlags() method of RMessagePtr2 and verify it matches to a known flag
+// - Test ClientIsRealtime() method of RMessagePtr2 and check that it isn't true
 // - Complete several messages using RMessage2::Complete and verify the client gets the
 // error codes back correctly.
 // - Complete several messages using RMessagePtr2::Complete and verify the client gets the
@@ -48,6 +50,7 @@
 //
 
 #include <e32std.h>
+#include <u32std.h>
 #include <e32std_private.h>
 #include <e32test.h>
 #include <e32ver.h>
@@ -66,7 +69,8 @@ public:
 		EInt0Error=1, EInt1Error, EInt2Error, EInt3Error,
 		EPtr0Error, EPtr1Error, EPtr2Error, EPtr3Error,
 		ECreateNameError, ENewSessionError,
-		EClientError
+		EClientError, EClientProcessFlagsError,
+		EClientIsRealtimeError
 		};
 	static void Panic(TPanicType aReason);
 protected:
@@ -78,7 +82,7 @@ protected:
 class CTestSession : public CSession2
 	{
 public:
-	enum {EStop,ETestInt,ETestPtr,ETestClient,ETestComplete,ETestPtrComplete,ETestCompletePanic,ETestOtherSession,ETestCompleteAfter,ETestMessageConstruction, 
+	enum {EStop,ETestInt,ETestPtr,ETestClient,ETestClientProcessFlags,ETestClientIsRealtime,ETestComplete,ETestPtrComplete,ETestCompletePanic,ETestOtherSession,ETestCompleteAfter,ETestMessageConstruction, 
 		ETestRMessagePtr2LeavingInterface, ETestKillCompletePanic};
 //Override pure virtual
 	IMPORT_C virtual void ServiceL(const RMessage2& aMessage);
@@ -86,6 +90,8 @@ private:
 	void TestInt(const RMessage2& aMessage);
 	void TestPtr(const RMessage2& aMessage);
 	void TestClient(const RMessage2& aMessage);
+	void TestClientProcessFlags(const RMessage2& aMessage);
+	void TestClientIsRealtime(const RMessage2& aMessage);
 	void TestComplete(const RMessage2& aMessage);
 	void TestPtrComplete(const RMessage2& aMessage);
 	void TestCompletePanic();
@@ -212,6 +218,40 @@ void CTestSession::TestClient(const RMessage2& aMessage)
 	t.Close();
 	}
 
+
+void CTestSession::TestClientProcessFlags(const RMessage2& aMessage)
+//
+// Tests ClientProcessFlags()
+//
+	{
+	TBool justInTime=User::JustInTime();
+	TUint flags=aMessage.ClientProcessFlags();
+
+	if ((flags&KProcessFlagJustInTime) && justInTime)
+		{
+		return; //OK
+		}
+	else if ((flags&KProcessFlagJustInTime) || justInTime)
+		{
+		//mismatch
+		clientThread.Kill(0);
+		CTestServer::Panic(CTestServer::EClientProcessFlagsError);
+		}
+	}
+
+void CTestSession::TestClientIsRealtime(const RMessage2& aMessage)
+//
+// Tests ClientIsRealtime()
+//
+	{
+	if(aMessage.ClientIsRealtime())
+		{
+		clientThread.Kill(0);
+		CTestServer::Panic(CTestServer::EClientIsRealtimeError);
+		}
+	}
+
+
 void CTestSession::TestComplete(const RMessage2& aMessage)
 //
 // Stores messages up then Completes in reverse order 
@@ -304,6 +344,12 @@ EXPORT_C void CTestSession::ServiceL(const RMessage2& aMessage)
 		case ETestClient:
 			TestClient(aMessage);
 			break;
+		case ETestClientProcessFlags:
+			TestClientProcessFlags(aMessage);
+			break;
+		case ETestClientIsRealtime:
+			TestClientIsRealtime(aMessage);
+			break;
 		case ETestComplete:
 			TestComplete(aMessage);
 			return;
@@ -375,6 +421,14 @@ TInt ClientThread(TAny*)
 
 	test.Next(_L("Signal to test Client()"));
 	r=session.PublicSendReceive(CTestSession::ETestClient, TIpcArgs());
+	test(r==KErrNone);
+
+	test.Next(_L("Signal to test ClientProcessFlags()"));
+	r=session.PublicSendReceive(CTestSession::ETestClientProcessFlags, TIpcArgs());
+	test(r==KErrNone);
+	
+	test.Next(_L("Signal to test ClientIsRealtime()"));
+	r=session.PublicSendReceive(CTestSession::ETestClientIsRealtime, TIpcArgs());
 	test(r==KErrNone);
 
 	test.Next(_L("Test RMessage2::Complete()"));

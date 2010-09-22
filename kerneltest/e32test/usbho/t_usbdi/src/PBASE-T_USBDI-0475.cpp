@@ -97,7 +97,7 @@ void CUT_PBASE_T_USBDI_0475::ExecuteHostTestCaseL()
 	err	= UsbDescriptorParser::Parse(KConfigurationDescriptorInsufficientDataTestCase2, parsed);
 	configDesc = TUsbConfigurationDescriptor::Cast(parsed);
 
-	CHECK(configDesc != 0) // tree should be kept, even if there is a parse error at the end
+	CHECK(configDesc == 0) // tree is freed if there are errors, refer to source code
 	CHECK(err == KErrCorrupt) // KErrCorrupt
 	
 	// Parse Configuration Descriptor ---------- Case 3

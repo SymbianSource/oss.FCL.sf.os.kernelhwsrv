@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -1209,6 +1209,8 @@ public:
 	TInt Subscribe(TRequestStatus* aStatus);
 	inline void Cancel();
 
+	TInt Close(TAny* /*aPtr*/);
+
 	inline TInt GetI(TInt* aValue);
 	inline TInt GetB(TUint8* aBuf, TInt* aSize, TBool aUser);
 	inline TInt SetI(TInt aValue);
@@ -1324,12 +1326,37 @@ void DPropertyRef::CompleteFn(TAny* ptr, TInt aReason)
 	client->Close(NULL);
 	}
 
+
+TInt DPropertyRef::Close(TAny* /*aPtr*/)
+	{
+	TInt error = KErrNone;
+	if (Dec()==1)
+		{
+		NKern::LockSystem();
+		iProp->Cancel(&iSubs); //Releases System Lock
+		K::ObjDelete(this);
+		return EObjectDeleted;
+		}
+
+	return error;
+	}
+
+
 // Enter system locked.
 // Return system unlocked.
 inline void DPropertyRef::Cancel()
 	{
 	__ASSERT_SYSTEM_LOCK;
+	
+	if (Open() != KErrNone) 
+		{ // Too late - destruction in progress ....
+		NKern::UnlockSystem();
+		return;
+		}
+	
 	iProp->Cancel(&iSubs);
+
+	Close(NULL);
 	}
 
 // Enter system locked.
@@ -1401,8 +1428,6 @@ DPropertyRef::~DPropertyRef()
 	__ASSERT_CRITICAL;
 	if (iProp)
 		{
-		NKern::LockSystem();
-		Cancel();
 		iProp->Close();
 		iProp = NULL;
 		}
@@ -1455,7 +1480,9 @@ void ExecHandler::PropertySubscribe(DPropertyRef* aRef, TRequestStatus* aStatus)
 // Return system unlocked.
 void ExecHandler::PropertyCancel(DPropertyRef* aRef)
 	{
+	NKern::ThreadEnterCS();
 	aRef->Cancel();
+	NKern::ThreadLeaveCS();
 	}
 
 // Enter system locked.
@@ -2027,5 +2054,13 @@ EXPORT_C TBool RPropertyRef::GetStatus(TPropertyStatus& aStatus)
 	aStatus.iType			= iProp->Type();
 	aStatus.iAttr			= 0;
 	aStatus.iOwner			= iProp->Owner();
+	if (iProp->Type() == RProperty::EByteArray || iProp->Type() == RProperty::ELargeByteArray)
+		{
+		aStatus.iSize		= TUint16(iProp->BufSize());
+		}
+	else
+		{
+		aStatus.iSize		= 0;
+		}
 	return iProp->IsDefined();
 	}

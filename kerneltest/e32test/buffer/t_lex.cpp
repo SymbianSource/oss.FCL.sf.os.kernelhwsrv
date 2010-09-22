@@ -1,4 +1,4 @@
-// Copyright (c) 1994-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1994-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -24,7 +24,7 @@
 // - Test assignment operator of TLex, by initializing with TLex reference, string, 
 // TBuf reference and check it is as expected.
 // - Check that Eos, Inc, Mark, Get, Peek, UnGet, SkipSpace, SkipSpaceAndMark, 
-// SkipCharacters, TokenLength, MarkedToken methods are as expected.
+// SkipAndMark, SkipCharacters, TokenLength, MarkedToken methods are as expected.
 // - Initialize Lex string, assign different values, Parse to extract signed, 
 // unsigned integer of different lengths, using specified radix and verify 
 // that the return value is KErrNone when a valid string is parsed, KErrGeneral 
@@ -184,6 +184,7 @@ GLDEF_C void TestTLex<TDesType, TLexType, TLexMarkType, TBufType, DumpType, Mark
 	c.Mark(mark);
 	c.Mark();
 	c.Inc();
+	c.Inc(2);
 	c.Get();
 	(S)c.Peek();
 	c.UnGet();
@@ -192,6 +193,7 @@ GLDEF_C void TestTLex<TDesType, TLexType, TLexMarkType, TBufType, DumpType, Mark
 	c.SkipSpace();
 	c.SkipSpaceAndMark(mark);
 	c.SkipSpaceAndMark();
+	c.SkipAndMark(2,mark);
 	c.SkipCharacters();
 	c.TokenLength(mark);
 	c.TokenLength();
@@ -220,6 +222,7 @@ GLDEF_C void TestTLex<TDesType, TLexType, TLexMarkType, TBufType, DumpType, Mark
 	c.Val(TU);
 	TReal32 TR32=1.0F;
 	c.Val(TR32);
+	c.Val(TR32,'.');
 	TReal64 TR64=1.0;
 	c.Val(TR64);
 	TUint8 TU8='a';
@@ -388,6 +391,17 @@ GLDEF_C void TestTLex<TDesType, TLexType, TLexMarkType, TBufType, DumpType, Mark
 	test((S)c.Peek()==String[1]);
 	c.Inc();
 	test((S)c.Peek()==String[2]);
+	
+	test.Next(_L("Inc(aNumber)"));    // Inc(aNumber) increments iNext
+	_LL(&String[0], (TText8*)"mno");
+	TLexType c1(&String[0]);
+	c1.__DbgTest(&dump1);
+
+	TestDes(dump1.iNext, dump1.iEnd, &String[0]);
+	c1.Inc(1);
+	test((S)c1.Peek()==String[1]);
+	c1.Inc(1);
+	test((S)c1.Peek()==String[2]);
 
 	test.Next(_L("Mark()"));		//	Mark() sets iMark=iNext
 	_LL(&String[0], (TText8*)"pqr");
@@ -459,6 +473,17 @@ GLDEF_C void TestTLex<TDesType, TLexType, TLexMarkType, TBufType, DumpType, Mark
 	j1.SkipSpaceAndMark(jm);
 	j1.__DbgTest(&dump1);
 	jm.__DbgTest(&mDump);
+	_LL(&String[0], (TText8*)"aaa");
+	TestDes(dump1.iNext, dump1.iEnd, &String[0]);
+	TestDes(mDump.iPtr, dump1.iEnd, &String[0]);
+	
+	test.Next(_L("SkipAndMark(4, aMark)"));  // Skips number of characters
+	_LL(&String[0], (TText8*)"abcdaaa");
+	TLexType j2(&String[0]);
+	TLexMarkType jmt;
+	j2.SkipAndMark(4, jmt);
+	j2.__DbgTest(&dump1);
+	jmt.__DbgTest(&mDump);
 	_LL(&String[0], (TText8*)"aaa");
 	TestDes(dump1.iNext, dump1.iEnd, &String[0]);
 	TestDes(mDump.iPtr, dump1.iEnd, &String[0]);
@@ -714,20 +739,67 @@ GLDEF_C void TestTLex<TDesType, TLexType, TLexMarkType, TBufType, DumpType, Mark
 
 	////////////////////					
 	// Test Val(TReal32)
+	// 32-bit floating point number.
 	/////////////////////
-//	test.Next(_L("Val(TReal32)"));
-//	TReal32 TR32;
-//	test((ret=Lex.Val(TR32))==KErrNotSupported);
-
-
+	test.Next(_L("Val(TReal32)"));
+	TReal32 TR32 = 0;
+	
+	_LL(&String[0], (TText8*)"92.2337203685477");
+	Lex=&String[0];
+	test((ret=Lex.Val(TR32))==KErrNone);
+				
+	_LL(&String[0], (TText8*)"92.2337203685477");
+	Lex=&String[0];
+	test((ret=Lex.Val(TR32,'.'))==KErrNone);
+			
+	_LL(&String[0], (TText8*)"0.2337285477");
+	Lex=&String[0];
+	test((ret=Lex.Val(TR32,'.'))==KErrNone);
+		
+	_LL(&String[0], (TText8*)"23");
+	Lex=&String[0];
+	test((ret=Lex.Val(TR32,'.'))==KErrNone);
+		
+	_LL(&String[0], (TText8*)"0");
+	Lex=&String[0];
+	test((ret=Lex.Val(TR32,'.'))==KErrNone);
+		
+	_LL(&String[0], (TText8*)"-324.27890");
+	Lex=&String[0];
+	test((ret=Lex.Val(TR32,'.'))==KErrNone);
+	
 	////////////////////
-	// Test Val(TReal64)
+	// Test Val(TReal)
+	// 64-bit floating point number. Identical to TReal64.
 	///////////////////
-//	test.Next(_L("Val(TReal64)"));
-//	TReal64 TR64;
-//	test((ret=Lex.Val(TR64))==KErrNotSupported);
+	test.Next(_L("Val(TReal)"));
+	TReal TR64 = 0;
 
-
+	_LL(&String[0], (TText8*)"92.2337203685477");
+	Lex=&String[0];
+	test((ret=Lex.Val(TR64))==KErrNone);
+		            
+	_LL(&String[0], (TText8*)"92.2337203685477");
+	Lex=&String[0];
+	test((ret=Lex.Val(TR64,'.'))==KErrNone);
+		       
+	_LL(&String[0], (TText8*)"0.2337285477");
+	Lex=&String[0];
+	test((ret=Lex.Val(TR64,'.'))==KErrNone);
+		    
+	_LL(&String[0], (TText8*)"23");
+	Lex=&String[0];
+	test((ret=Lex.Val(TR64,'.'))==KErrNone);
+		    
+	_LL(&String[0], (TText8*)"0");
+	Lex=&String[0];
+	test((ret=Lex.Val(TR64,'.'))==KErrNone);
+		    
+	_LL(&String[0], (TText8*)"-324.27890");
+	Lex=&String[0];
+	test((ret=Lex.Val(TR64,'.'))==KErrNone);
+	
+	
 	///////////////////////////
 	// Test Val(TUint8, TRadix)
 	///////////////////////////

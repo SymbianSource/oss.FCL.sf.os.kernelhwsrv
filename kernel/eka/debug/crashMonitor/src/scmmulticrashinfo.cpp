@@ -106,8 +106,8 @@ namespace Debug
 		while(p)
 			{
 			SCMCrashBlockEntry* tmp = p;
-			delete tmp;
 			p = p->iNext;
+			delete tmp;
 			}
 		
 		iFirstBlock = iCurrentBlock = NULL;

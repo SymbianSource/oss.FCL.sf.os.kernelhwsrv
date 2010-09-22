@@ -1,4 +1,4 @@
-// Copyright (c) 2001-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2001-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -25,7 +25,7 @@ static char THIS_FILE[]=__FILE__;
 #endif
 
 // define the CreateProcess strings for Perl
-#define APPNAME "C:\\Apps\\Perl\\Bin\\Perl.exe"
+#define APPNAME "C:\\Apps\\actperl\\bin\\perl.exe"
 #define APPTITLE "Perl Script"
 
 #define WAIT_SLEEP 1000			// checks for for perl script completion every second		
@@ -43,8 +43,7 @@ DWORD PerlScript(char * scriptName)
     ZeroMemory( &pi, sizeof(pi) );
 
 	if (!CreateProcess (APPNAME,scriptName,NULL,NULL,FALSE,0,NULL,NULL,&si,&pi))
-		return USBIO_ERR_INVALID_PROCESS;
-
+	return USBIO_ERR_FAILED;
 	for (int i = 0; i < EXIT_WAIT && exitCode == STILL_ACTIVE; i++)
 		{
 		Sleep (WAIT_SLEEP);

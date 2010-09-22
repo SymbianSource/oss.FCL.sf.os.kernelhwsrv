@@ -142,6 +142,22 @@ TFatType CFatFormatCB::SuggestFatType() const
 }
 
 //-------------------------------------------------------------------------------------------------------------------
+void Dump_LocalDrvCaps(const TLocalDriveCapsV6& aCaps)
+{
+    (void)aCaps;
+#ifdef _DEBUG
+    __PRINT(_L("----- TLocalDriveCapsV6 dump:"));
+    __PRINT1(_L("iSize:%LU"), aCaps.iSize);
+    __PRINT4(_L("iType:%d, iDriveAtt:0x%x, iMediaAtt:0x%x, iConnectionBusType:%d"), aCaps.iType, aCaps.iDriveAtt, aCaps.iMediaAtt, aCaps.iConnectionBusType);
+    __PRINT2(_L("iFileSystemId:%d, iPartitionType:%d"), aCaps.iFileSystemId, aCaps.iPartitionType);
+    __PRINT2(_L("iHiddenSectors:%d, iEraseBlockSize:%d"), aCaps.iHiddenSectors, aCaps.iEraseBlockSize);
+    __PRINT4(_L("iExtraInfo:%d, iNumberOfSectors:%d, iSectorSizeInBytes:%d, iBlockSize:%d"), aCaps.iExtraInfo, aCaps.iNumberOfSectors, aCaps.iSectorSizeInBytes, aCaps.iBlockSize);
+    __PRINT(_L("-----"));
+#endif
+}
+
+
+//-------------------------------------------------------------------------------------------------------------------
 /**
     Initialize format data.
 */
@@ -153,6 +169,8 @@ void CFatFormatCB::InitializeFormatDataL()
     TLocalDriveCapsV6Buf capsBuf;
     const TLocalDriveCapsV6& caps = capsBuf();
     User::LeaveIfError(LocalDrive()->Caps(capsBuf));
+
+    Dump_LocalDrvCaps(caps);
 
     iVariableSize   = (caps.iMediaAtt & KMediaAttVariableSize);
     iBytesPerSector=KDefaultSectorSize;
@@ -166,7 +184,7 @@ void CFatFormatCB::InitializeFormatDataL()
     if (iVariableSize)
         {// Variable size implies ram disk
         iMaxDiskSectors=DiskSizeInSectorsL(GetRamDiskSizeInBytes());
-        nRes = ProcessVolParam_RamDisk();
+        nRes = ProcessVolParam_RamDisk(caps);
         }
     else
         {//-- fixed-size media
@@ -192,13 +210,13 @@ void CFatFormatCB::InitializeFormatDataL()
                 nRes = ProcessVolParam_User(caps);
             else if(bCustomFormat)
                 nRes = ProcessVolParam_Custom(caps);
-                else
+            else
                 nRes = ProcessVolParam_Default(caps); 
             }
         } //else(iVariableSize)
     
     if(nRes != KErrNone)
-    {
+        {
         __PRINT1(_L(" ::InitializeFormatDataL() err:%d"), nRes);
         User::Leave(nRes);
         }

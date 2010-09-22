@@ -43,6 +43,28 @@
 #endif
 
 
+//-------------------------------------------------------------------------------------------------------------------
+/*
+    A brief description of the structure of paths and filenames in the Symbian OS.
+
+    A full file or directory name consists of four components:
+        - the drive: a single letter followed by a colon.
+        - the path, starting with a backslash and ending with the final backslash in the name. The backslashes divide the path into components.
+        - the file name: everything from the character following the last backslash to the character preceding the final dot.
+        - optional extension, which consists of everything after the final dot. 
+
+    A directory is identified by a trailing slash: thus, 'c:\\wrd\\' indicates a directory, but 'c:\\wrd' indicates a file with no extension. 
+
+    There are some restrictions that apply to the file or directory names.
+        - full name should not contain wild cards ('?' or '*' characters)
+        - file or directory name should not contain illegal characters like '<', '>', ':', '"', '/', '|' and '\000'. 
+        - file or directory name containing only white space characters is illegal.
+        - white space characters are those one that are identified by TChar::IsSpace(). ASCII and all UNICODE white space characters
+          are considered equivalent. E.g. characters with codes 0x20, U+0020, U+3000, U+2009, etc. considered as equivalent white spaces.
+*/
+//-------------------------------------------------------------------------------------------------------------------
+
+
 /**
 @publishedAll
 @released
@@ -3206,6 +3228,60 @@ private:
 
 
 
+//-------------------------------------------------------------------------------------------------------------------
+/*
+    This is a helper class intended to make it easier to dismount and re-mount a file system
+    The purpose of this class is to gather and encapsulate all the necessary file system parameters such
+    as the file system name, the extensions name(s), etc. ;
+    these parameters are then retrieved & restored when mounting the file system back again
+    
+    The typical scenario:
+        1. some client dismounts an existing file system (FS1) from the drive
+        2. then the client mounts another file system (FS2) on to the drive to do some work
+        3. Dismounts FS2
+        4. Mounts FS1 back again with exactly the same parameters as they were there before it was dismounted.
+*/
+class TFsMntHelperImpl;
+NONSHARABLE_CLASS(CFsMountHelper) : public CBase
+    {
+ public:
+
+    inline ~CFsMountHelper();
+    
+    IMPORT_C static CFsMountHelper* New(RFs& aFs, TInt aDrvNum);
+    IMPORT_C void Close();
+
+    /** file system dismounting options. Used by DismountFileSystem(). RFs::NotifyDismount(), RFs::DismountFileSystem()*/
+    enum TFsDismountMode
+        {
+        ENormal,            ///< normal graceful attempt to dismount the file system. Usual call to RFs::DismountFileSystem().
+        EForceImmediate,    ///< immediate force dismount without respect to opened objects like files, directories etc. The same as call to RFs::NotifyDismount(,,EFsDismountForceDismount); 
+        
+        /** 
+        an attempt dismount FS with notifying clients before. The same as call to RFs::NotifyDismount(,,EFsDismountNotifyClients); 
+        Note that in this case the API user might need to call RFs::NotifyDismountCancel()
+        */
+        ENotifyClients      
+        };
+
+
+    IMPORT_C TInt GetMountProperties();
+    IMPORT_C TInt MountFileSystem() const;
+    IMPORT_C void DismountFileSystem(TRequestStatus& aStat, TFsDismountMode aDismountMode=ENormal) const;
+    IMPORT_C TInt DismountFileSystem() const;
+
+ protected:
+    inline CFsMountHelper(); 
+    CFsMountHelper(const CFsMountHelper&);
+    CFsMountHelper& operator=(const CFsMountHelper&);
+
+ private:
+    TFsMntHelperImpl*  ipImpl; 
+    };
+
+
+
+//-------------------------------------------------------------------------------------------------------------------
 
 /**
 @publishedAll

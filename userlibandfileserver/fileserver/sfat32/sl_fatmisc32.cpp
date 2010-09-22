@@ -593,8 +593,10 @@ void CFatFormatCB::CreateReservedBootSectorL()
     Tries to figure out number of FATs, SPC, etc. values passed from the user side.
     This method is called if the user has specified some formatting parameters, like SPC
 */
-TInt CFatFormatCB::ProcessVolParam_User(const TLocalDriveCapsV6& /*aCaps*/)
+TInt CFatFormatCB::ProcessVolParam_User(const TLocalDriveCapsV6& aCaps)
 {
+    (void)aCaps;
+
     __PRINT1(_L("CFatFormatCB::ProcessVolParam_User() sectors:%d"), iMaxDiskSectors);
     Dump_TLDFormatInfo(iSpecialInfo());
 
@@ -738,6 +740,17 @@ TInt CFatFormatCB::ProcessVolParam_User(const TLocalDriveCapsV6& /*aCaps*/)
 TInt CFatFormatCB::ProcessVolParam_Custom(const TLocalDriveCapsV6& aCaps)
 {
     __PRINT(_L("CFatFormatCB::ProcessVolParam_Custom()"));
+    
+    ASSERT(aCaps.iExtraInfo);
+
+    //-- the driver may have decided which file system should be used on the media.
+    //-- E.g. for SD cards > 32GB exFAT must be used.
+    if(aCaps.iFileSystemId != KDriveFileSysFAT)
+        {//-- the media driver decides that other than FAT FS must be used on the media.
+        __PRINT1(_L(" the media driver required other than FAT FS:%d"), aCaps.iFileSystemId);
+        return KErrNotSupported;
+        }
+    
     
     //-- TLDFormatInfo structure is filled by the media driver, it decides the media formatting parameters
     const TLDFormatInfo& fmtInfo = aCaps.iFormatInfo;
@@ -934,12 +947,18 @@ TInt CFatFormatCB::ProcessVolParam_Default(const TLocalDriveCapsV6& aCaps)
 /**
     Initialize the format parameters for a variable sized disk (RAM drive)
     
-    @param  aDiskSizeInSectors volume size in sectors
     @return standard error code
 */
-TInt CFatFormatCB::ProcessVolParam_RamDisk()
+TInt CFatFormatCB::ProcessVolParam_RamDisk(const TLocalDriveCapsV6& aCaps)
 	{
 	__PRINT1(_L("CFatFormatCB::ProcessVolParam_RamDisk() sectors:%d"), iMaxDiskSectors);
+
+    if(aCaps.iFileSystemId != KDriveFileSysFAT)
+        {//-- RAM media driver must set this value correctly.
+        __PRINT1(_L("RAM media driver required other than FAT FS:%d"), aCaps.iFileSystemId);
+        ASSERT(0);
+        return KErrNotSupported;
+        }
 
     iNumberOfFats   = 2; // 1 FAT 1 Indirection table (FIT)
 	iReservedSectors= 1;

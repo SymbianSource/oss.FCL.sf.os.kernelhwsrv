@@ -96,6 +96,7 @@ d_lddpowerseqtest			support
 ../power/d_powermisctest					support
 #endif
 d_ldddigitisertest			support
+d_kerneldigitisertest	        support
 d_lddturnaroundtimertest	support
 d_newldd					support
 d_ipccpy					support
@@ -124,6 +125,7 @@ d_shbuf_own					support
 d_asid						support
 d_entropysources			support
 d_khal						support
+d_version					support
 
 #ifdef GENERIC_MARM
 d_schedhook					support
@@ -216,6 +218,8 @@ d_smpsoak					support
 #if !defined(WINS) && !defined(X86)
 d_crazyints support
 #endif
+
+d_keyrepeat    support
 
 /******************************************************************************
  User side code here - builds a single variant for both SMP and non-SMP.
@@ -410,6 +414,7 @@ t_lddpowerseqtest
 t_ldddigitisertest
 t_userdigitisertest
 t_userdigitisernocaps
+t_kerneldigitisertest
 t_persistrestart	manual
 halsettings	support
 
@@ -560,7 +565,7 @@ load9660        support
 loadntfs        support
 
 // /E32TEST/LOCALE tests
-t_msgtxt    manual
+t_msgtxt
 t_names 
 t_currencyformat
 
@@ -778,6 +783,8 @@ t_kucopy
 t_condvar
 t_condvar2  support
 
+t_console
+
 t_tick      manual
 t_tock
 
@@ -836,7 +843,7 @@ t_dispchan
 // /E32TEST/WINDOW tests
 
 t_calib     support
-t_colour    manual
+t_colour
 t_wjpwin    support
 t_wsimp     support
 t_wwins     manual
@@ -844,6 +851,8 @@ t_mmcpw     manual
 
 refkeymap   support //Reference template keyboard look-up tables for T_KEYS test 
 t_keys
+
+t_keyrepeat
 
 // /E32TEST/Y2K tests
 t_y2k

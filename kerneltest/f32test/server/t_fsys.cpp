@@ -55,6 +55,197 @@ void DestroyGlobals()
 {
 }
 
+
+//---------------------------------------------------
+/**
+    Test CFsMountHelper class functionality
+*/
+void TestFsMountHelper()
+{
+    test.Next(_L("Test CFsMountHelper class functionality\n"));
+
+    if(Is_SimulatedSystemDrive(TheFs, CurrentDrive()))
+    {
+        test.Printf(_L("Can't test on a simulated drive, skipping!\n"));
+        return;
+    }
+
+    TInt    nRes;
+    TFSName fsName;
+    TFSName fsName1;
+
+    CFsMountHelper* pHelper1 = CFsMountHelper::New(TheFs, CurrentDrive());
+    test(pHelper1 !=0);
+
+    CFsMountHelper* pHelper2 = CFsMountHelper::New(TheFs, CurrentDrive());
+    test(pHelper2 !=0);
+
+
+    //-- 1. store the original file system state
+    nRes = pHelper1->GetMountProperties();
+    test_KErrNone(nRes);
+
+    //-- 1.1 simple case. dismount the file system and mount it back
+    nRes = TheFs.FileSystemName(fsName, CurrentDrive());
+    test_KErrNone(nRes);
+    
+    nRes = pHelper1->DismountFileSystem();
+    test_KErrNone(nRes);
+
+    nRes = pHelper1->MountFileSystem();
+    test_KErrNone(nRes);
+
+    nRes = TheFs.FileSystemName(fsName1, CurrentDrive());
+    test_KErrNone(nRes);
+    test(fsName1 == fsName);
+
+    //-- 1.2 attempts to dismount FS that has files opened
+    _LIT(KFileName, "\\myfile");
+    _LIT8(KFileData, "\\this is the file data");
+    RFile file;
+
+    nRes = file.Replace(TheFs, KFileName, EFileWrite);
+    test_KErrNone(nRes);
+
+    //-- 1.2.1 simplistic API
+    nRes = pHelper1->DismountFileSystem();
+    test_Value(nRes, nRes == KErrInUse);
+
+    //-- 1.2.1 more advanced asynchronous API
+    
+    TRequestStatus stat;
+    
+    //-- 1.2.1.1 simple normal dismounting, Rfs::DismountFileSystem() analog
+    pHelper1->DismountFileSystem(stat, CFsMountHelper::ENormal);
+    User::WaitForRequest(stat);
+    test_Value(stat.Int(), stat.Int() == KErrInUse);
+
+    //-- 1.2.1.2 dismount with notifying clients (no clients, so it should succeed)
+    //-- this will be a kind of forced dismounting
+    pHelper1->DismountFileSystem(stat, CFsMountHelper::ENotifyClients);
+    User::WaitForRequest(stat);
+    test_KErrNone(stat.Int());
+
+    nRes = file.Write(KFileData);
+    test_Value(nRes, nRes == KErrNotReady); //-- no file system on the drive
+
+    //-- mount the file system back
+    nRes = pHelper1->MountFileSystem();
+    test_KErrNone(nRes);
+
+    nRes = file.Write(KFileData);
+    test_Value(nRes, nRes == KErrDisMounted);
+    file.Close();
+    
+    //-- 1.2.1.3 forced dismounting
+    nRes = file.Replace(TheFs, KFileName, EFileWrite);
+    test_KErrNone(nRes);
+
+    pHelper1->DismountFileSystem(stat, CFsMountHelper::ENormal);
+    User::WaitForRequest(stat);
+    test_Value(stat.Int(), stat.Int() == KErrInUse);
+
+
+    pHelper1->DismountFileSystem(stat, CFsMountHelper::EForceImmediate);
+    User::WaitForRequest(stat);
+    test_KErrNone(stat.Int());
+
+    nRes = file.Write(KFileData);
+    test_Value(nRes, nRes == KErrNotReady); //-- no file system on the drive
+    
+    file.Close();
+
+    //-- there is no file system on the drive. 
+    
+    //-- test weird use cases 
+    nRes = pHelper2->GetMountProperties();
+    test_Value(nRes, nRes == KErrNotFound)
+    
+    //nRes = pHelper2->MountFileSystem(); //-- this will trigger an assert in debug mode
+
+    //-- 2. test extensions
+    
+    //-- 2.1 mount the file system back
+    nRes = pHelper1->MountFileSystem();
+    test_KErrNone(nRes);
+    
+    //-- 2.2 install secondary extension
+    _LIT(KExtensionLog,"T_LOGEXT");     //-- test secondary extension module name *.fxt
+    _LIT(KExtensionLogName,"Logger");   //-- extension name
+
+    nRes = TheFs.AddExtension(KExtensionLog);
+    test_KErrNone(nRes);
+
+    nRes = TheFs.MountExtension(KExtensionLogName, CurrentDrive());
+    test_KErrNone(nRes);
+
+    nRes = TheFs.ExtensionName(fsName1, CurrentDrive(), 0); //-- extension slot 0
+    test(nRes == KErrNone);
+    test(fsName1 == KExtensionLogName);
+
+    nRes = TheFs.ExtensionName(fsName1, CurrentDrive(), 1); //-- extension slot 1
+    test_Value(nRes, nRes == KErrNotFound)
+
+
+    //-- 2.3 dismount the file system, it has now different set of properties comparing to ones stored in the pHelper1
+    nRes = pHelper2->GetMountProperties();
+    test(nRes == KErrNone);
+
+    nRes = pHelper2->DismountFileSystem();
+    test_KErrNone(nRes);
+
+    //-- 2.3.1 mount the original FS (without extension)
+    nRes = pHelper1->MountFileSystem();
+    test_KErrNone(nRes);
+
+    nRes = TheFs.ExtensionName(fsName1, CurrentDrive(), 0); //-- extension slot 0
+    test_Value(nRes, nRes == KErrNotFound)
+
+    nRes = TheFs.ExtensionName(fsName1, CurrentDrive(), 1); //-- extension slot 1
+    test_Value(nRes, nRes == KErrNotFound)
+
+    nRes = pHelper1->DismountFileSystem();
+    test_KErrNone(nRes);
+
+    //-- 2.3.2 mount back the FS with extension
+    nRes = pHelper2->MountFileSystem();
+    test_KErrNone(nRes);
+
+    nRes = TheFs.ExtensionName(fsName1, CurrentDrive(), 0); //-- extension slot 0
+    test(nRes == KErrNone);
+    test(fsName1 == KExtensionLogName);
+
+    //-- 2.4 remove the extensions and dismount the file system with properties stored in pHelper2
+    nRes = TheFs.ExtensionName(fsName1, CurrentDrive(), 1); //-- extension slot 1
+    test_Value(nRes, nRes == KErrNotFound)
+
+    nRes = pHelper2->DismountFileSystem();
+    test_KErrNone(nRes);
+
+    nRes = TheFs.RemoveExtension(KExtensionLogName);
+    test_KErrNone(nRes);
+
+
+    //-- 2.4 restore the original file system
+    nRes = pHelper1->MountFileSystem();
+    test_KErrNone(nRes);
+
+    nRes = TheFs.ExtensionName(fsName1, CurrentDrive(), 0); //-- extension slot 0
+    test_Value(nRes, nRes == KErrNotFound)
+
+    nRes = TheFs.ExtensionName(fsName1, CurrentDrive(), 1); //-- extension slot 1
+    test_Value(nRes, nRes == KErrNotFound)
+
+    nRes = TheFs.FileSystemName(fsName1, CurrentDrive());
+    test_KErrNone(nRes);
+    test(fsName1 == fsName);
+
+    pHelper1->Close(); //-- just for testing
+
+    delete pHelper1;
+    delete pHelper2;
+}
+
 //---------------------------------------------------
 
 /**
@@ -138,11 +329,14 @@ void TestFileSystemNameLength()
     
     //====================================================
     //-- dismount original file system from the drive
-    TFSDescriptor orgFSDesc;
-    nRes = GetFileSystemDescriptor(TheFs, CurrentDrive(), orgFSDesc);
+    
+    CFsMountHelper* pHelper = CFsMountHelper::New(TheFs, CurrentDrive());
+    test(pHelper !=0);
+
+    nRes = pHelper->GetMountProperties();
     test_KErrNone(nRes);
 
-    nRes = TheFs.DismountFileSystem(orgFSDesc.iFsName, CurrentDrive());
+    nRes = pHelper->DismountFileSystem();
     test_KErrNone(nRes);
 
     //-- 2. try to mount a FS/extension with the invalid name
@@ -182,8 +376,10 @@ void TestFileSystemNameLength()
     
     
     //-- mount original file system back to the drive
-    nRes = MountFileSystem(TheFs, CurrentDrive(), orgFSDesc);
+    nRes = pHelper->MountFileSystem();
     test_KErrNone(nRes);
+
+    delete pHelper;
 }
 
 //---------------------------------------------------
@@ -1260,6 +1456,8 @@ void CallTestsL()
     InitGlobals();
     
     //---------------------------------------
+
+    TestFsMountHelper();
     TestFileSystemNames();
     TestFileSystemNameLength();
     TestDismountFileSystem(CurrentDrive());

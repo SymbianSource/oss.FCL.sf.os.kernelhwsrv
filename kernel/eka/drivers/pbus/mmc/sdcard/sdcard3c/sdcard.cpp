@@ -1621,7 +1621,7 @@ TMMCErr DSDStack::SwitchToHighSpeedModeSM()
 	  		OstTraceExt2( TRACE_INTERNALS, DSDSTACK_SWITCHTOHIGHSPEEDMODESM18, "SD Switch[0x%x]=0x%x", (TUint) i, (TUint) iPSLBuf[i]);
 			}
 #endif
-
+	// Fall through to the next state
 	SMF_STATE(EStDone)
 	
         OstTrace0( TRACE_INTERNALS, DSDSTACK_SWITCHTOHIGHSPEEDMODESM19, "EStSwitchFunctionSent");

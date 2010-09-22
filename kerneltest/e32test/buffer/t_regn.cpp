@@ -1,4 +1,4 @@
-// Copyright (c) 1994-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1994-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -15,7 +15,7 @@
 // Overview:
 // Test fixed and variable clipping regions.
 // API Information:
-// TRegionFix, RRegion .
+// TRegion, TRegionFix, RRegion .
 // Details:
 // - Construct some expandable clipping regions, add some rectangles, check the region 
 // matches the rectangles, clear the region, add some rectangles to the region and 
@@ -55,6 +55,9 @@
 // - Construct some regions with pre-allocated buffer (RRegionBuf), add some rectangles, 
 // get a pointer to the array of rectangles defining this region and check the 
 // rectangles are as expected.
+// - Test IsContainedBy method to check whether some rects cover the region used
+// as reference or are outside or overlapping
+// - Test Destroy method for a heap allocated object
 // Platforms/Drives/Compatibility:
 // All 
 // Assumptions/Requirement/Pre-requisites:
@@ -89,6 +92,8 @@ public:
 	void TestSort();
 	void doTestRegionBuf(RRegion &aRegion);
 	void TestRegionBuf();
+	void TestIsContainedBy();
+	void TestDestroy();
 private:
 	void DoTestSet(TRegion** rgn,TInt rgnArraySize);
 	void CheckRectRegion(const TRegion& region,const TRect& rect);
@@ -793,6 +798,37 @@ void TestRRegion::TestRegionBuf()
 	doTestRegionBuf(rgn10);
 	}
 
+void TestRRegion::TestIsContainedBy()
+	{
+	TRect reference(5,5,90,90); // this is the one to compare against
+	TRect outer1(5,5,91,91);   // ref fits inside
+	TRect outer2(8,8,91,91); // reference is overlapping
+	TRect inner1(6,6,89,89); // this is inside ref
+
+	RRegion rRgn[1];
+	TRegion* tRgn[1]={&rRgn[0]};
+	
+	tRgn[0]->AddRect(reference);
+
+	test(tRgn[0]->IsContainedBy(outer1));
+	test(tRgn[0]->IsContainedBy(outer2)==EFalse);
+	test(tRgn[0]->IsContainedBy(inner1)==EFalse);
+	tRgn[0]->Clear();
+	rRgn[0].Close();
+	}
+
+void TestRRegion::TestDestroy()
+	{
+	TInt count=1;
+	// allocate from heap
+	TRect* pList = new TRect(1,2,3,4);
+	RRegion* rgnPtr = new RRegion(count, pList, 5 /*EDefaultGranularity*/ );
+	test(rgnPtr->Count()==count);
+	
+	// destroy the heap based object
+	rgnPtr->Destroy();
+	}
+
 // Top level test code
 LOCAL_C void test_region(TestRRegion t)
 	{
@@ -828,6 +864,10 @@ LOCAL_C void test_region(TestRRegion t)
 	t.TestSort();
 	test.Next(_L("RegionBuf"));
 	t.TestRegionBuf();
+	test.Next(_L("IsContainedBy"));
+	t.TestIsContainedBy();
+	test.Next(_L("Destroy"));
+	t.TestDestroy();
 	test.End();
 	}
 

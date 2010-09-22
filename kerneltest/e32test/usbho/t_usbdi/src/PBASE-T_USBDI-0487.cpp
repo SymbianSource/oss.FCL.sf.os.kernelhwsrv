@@ -411,6 +411,7 @@ void CUT_PBASE_T_USBDI_0487::TransferCompleteL(TInt aTransferId,TInt aCompletion
 			TTestCaseFailed request(KErrCompletion,msg);
 			return iControlEp0->SendRequest(request,this);
 			}
+		User::After(2000000); // so that interrupt transfer 2 complete on peripheral side			
 		// Comparison is a match, continue
 		TEndpointWriteRequest request(1,1,KDataPayload1);
 		return iControlEp0->SendRequest(request,this);		

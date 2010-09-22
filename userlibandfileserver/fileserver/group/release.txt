@@ -1,3 +1,28 @@
+Version 2.00.4001
+=================
+(Made by vfebvre 14/09/2010)
+
+1.	niccox
+	1.	ou1cimx1#554000 Vasco to Vasco connection can freeze the USB/Connectivity UI
+	2.	ou1cimx1#436063 Increase CUsbHostMsDeviceThread priority
+	3.	ou1cimx1#544601 SPPR_PERF: USB not suspended
+	4.	ou1cimx1#558741 smassstorage tests
+	5.	ou1cimx1#554478 Remove unused code in smassstorage
+	6.	ou1cimx1#553937 smassstorage tests can run under WINSCW
+
+
+Version 2.00.4000
+=================
+(Made by vfebvre 09/09/2010)
+
+1.	dlyokhin
+	1.	ou1cimx1#473244 SD stack, FAT, exFAT FS should be compliant with SD specs v3.00
+	2.	ou1cimx1#545727 t_fsrv test corrupts exFAT volume
+
+2.	fagortz
+	1.	ou1cimx1#540214 [GCCE] Terminal backslashes in comments are parsed as line-continuations in f32test
+
+
 Version 2.00.3061
 =================
 (Made by fadhliM 31/08/2010)

@@ -410,4 +410,10 @@ EXPORTS
 	_ZTV19CFsNotificationList @ 409 NONAME
 	_ZTV9CFsNotify @ 410 NONAME
 	_ZNK3RFs23SupportedFileSystemNameER6TDes16ii @ 411 NONAME
+	_ZN14CFsMountHelper18GetMountPropertiesEv @ 412 NONAME
+	_ZN14CFsMountHelper3NewER3RFsi @ 413 NONAME
+	_ZN14CFsMountHelper5CloseEv @ 414 NONAME
+	_ZNK14CFsMountHelper15MountFileSystemEv @ 415 NONAME
+	_ZNK14CFsMountHelper18DismountFileSystemER14TRequestStatusNS_15TFsDismountModeE @ 416 NONAME
+	_ZNK14CFsMountHelper18DismountFileSystemEv @ 417 NONAME
 

@@ -129,7 +129,6 @@ m)	END...
    	test.Printf(_L("Testing Derived Attributes using a test Driver for Digitiser\n"));
 	r=User::LoadLogicalDevice(KLddFileName);
 	test(r==KErrNone);
-
 	r=gLDD.Open();
 	test(r==KErrNone);
 
@@ -269,8 +268,7 @@ m)	END...
 	
 	r=HAL::Get(testDeviceNumber,HALData::EPointer3DPressureStep,halApiVal);
 	test(r==KErrNone);
-	test(halApiVal == newPointer3DPressureStep);  
-	
+	test(halApiVal == newPointer3DPressureStep);  	
 	r=gLDD.removeHalHandler();
     test(r == KErrNone);
 
@@ -376,6 +374,382 @@ void DoTestNonDerivedAtributes()
 	__UHEAP_MARKEND;
 	}
 
+
+
+
+void  DoTestTEvntTypes()
+	{
+	TInt r;
+	TRawEvent::TType firstEvent=TRawEvent::ENone;
+	TRawEvent::TType lastEvent=TRawEvent::ERestartSystem;
+    for(int i=firstEvent;i<=lastEvent;++i)
+		{
+		gLDD.setTEvntType(i);			
+		r=gLDD.getTEvntType();
+		test(r == i);
+		}   	
+
+	}
+
+
+void  DoTestTEvntDNum()
+	{
+	TInt r;
+	TInt aDvcNum1=2;
+	TInt aDvcNum2=100;
+
+
+	 
+	gLDD.setTEvntDNum(aDvcNum1);
+	r=gLDD.getTEvntDNum();
+	test(r == aDvcNum1);
+
+	gLDD.setTEvntDNum(aDvcNum2);
+	r=gLDD.getTEvntDNum();
+	test(r == aDvcNum2);
+		
+	}
+
+
+
+void  DoTestTEvntScanCode()
+	{
+
+	TInt r;
+    TInt aScanCode1=0;
+	TInt aScanCode2=235;
+	gLDD.setTEvntScanCode(TRawEvent::EPointer3DInRange, aScanCode1);
+	r=gLDD.getTEvntScanCode();
+	test(r == aScanCode1);
+
+
+	gLDD.setTEvntScanCode(TRawEvent::EPointer3DRotation, aScanCode2);
+	r=gLDD.getTEvntScanCode();
+	test(r == aScanCode2);
+
+	}
+	
+
+void  DoTestTEvnTilt()
+	{
+	TInt aPhi1 =0, aTheta1=3;
+	TInt aPhi2 =20, aTheta2=45;
+	TInt r;
+	TUsrEventBuf  eventBuf;
+	
+
+	r=gLDD.setTEvntTilt(TRawEvent::EPointerMove,aPhi1,aTheta1);
+	test(r==KErrNone);
+	r=gLDD.getTEvntTilt(eventBuf);
+	test(r==KErrNone);
+	test((eventBuf().iPhi == aPhi1) && (eventBuf().iTheta == aTheta1));
+
+
+	r=gLDD.setTEvntTilt(TRawEvent::EPointer3DInRange,aPhi2,aTheta2);
+	test(r==KErrNone);
+
+	r=gLDD.getTEvntTilt(eventBuf);
+	test(r==KErrNone);
+	test((eventBuf().iPhi == aPhi2) && (eventBuf().iTheta == aTheta2));	
+	
+	}
+
+
+
+
+
+void  DoTestTEvntRotation()
+	{
+	TInt r;
+    TInt  aRotation1 =12, aRotation2=323;
+
+	r=gLDD.setTEvntRotation(TRawEvent::EPointerMove,aRotation1);
+	test(r==KErrNone);
+	r=gLDD.getTEvntRotation();
+	test(r == aRotation1);
+
+
+	r=gLDD.setTEvntRotation(TRawEvent::EPointerMove,aRotation2);
+	test(r==KErrNone);
+	r=gLDD.getTEvntRotation();
+	test(r == aRotation2);
+	
+	}
+
+void  DoTestTEvntPtr()
+	{
+	TInt r;
+	TUint8 aPointerNumber1=123;
+	TUint8 aPointerNumber2=2;
+	TUint8 aPointerNumber3=3;
+	TUint8 aPointerNumber4=125;
+
+	TPoint3D tPoint3D1(-23 ,-85 ,-93);
+	TPoint3D tPoint3D2(-23 ,0 ,100);
+	TUsrEventBuf  eventBuf;
+
+
+    r=gLDD.setTEvnt3DnPntr(TRawEvent::EPointerMove,tPoint3D1.iX,tPoint3D1.iY,tPoint3D1.iZ,aPointerNumber1);
+	test(r==KErrNone);			 
+	r=gLDD.getTEvntPntr();
+	test(r == aPointerNumber1);	 
+	r=gLDD.getTEventPos3D(eventBuf);
+	test(r==KErrNone);
+	test((eventBuf().iX == tPoint3D1.iX) && (eventBuf().iY == tPoint3D1.iY)  && (eventBuf().iZ == tPoint3D1.iZ) );
+
+ 	
+	gLDD.setTEvntPntr(aPointerNumber2);
+	r=gLDD.getTEvntPntr();
+	test(r == aPointerNumber2);
+
+	r=gLDD.setTEvnt3DnPntr(TRawEvent::EPointerMove,tPoint3D2.iX,tPoint3D2.iY,tPoint3D2.iZ,aPointerNumber3);
+	test(r==KErrNone);			 
+	r=gLDD.getTEvntPntr();
+	test(r == aPointerNumber3);	 
+	r=gLDD.getTEventPos3D(eventBuf);
+	test(r==KErrNone);
+	test((eventBuf().iX == tPoint3D2.iX) && (eventBuf().iY == tPoint3D2.iY)  && (eventBuf().iZ == tPoint3D2.iZ) );	  
+
+	gLDD.setTEvntPntr(aPointerNumber4);
+	r=gLDD.getTEvntPntr();
+	test(r == aPointerNumber4);
+	
+	}
+
+
+
+void  DoTestTEvntTicksNTips()
+	{
+	TInt r;
+	TBool aTip=true;
+
+	gLDD.setTEvntTip(aTip);
+	r=gLDD.TEvntTicksIsTip();
+	test(r == aTip);
+	
+	aTip=false;
+    gLDD.setTEvntTip(aTip);
+	r=gLDD.TEvntTicksIsTip();
+	test(r == aTip);
+
+	r=gLDD.getTEvntTicks();
+	test(r > 0             );
+	
+	}
+
+
+	
+
+
+
+void  DoTestTEvntPOS2D()
+	{
+	TInt r;		
+	TPoint tPoint1(0,0);
+	TPoint tPoint2(323232,45454);
+	TPoint tPoint3(-85 ,-93);
+	TPoint tPoint4 (0 ,100);
+	TUsrEventBuf  eventBuf;
+
+
+    r=gLDD.setTEvntPos(TRawEvent::EPointerMove,tPoint1.iX,tPoint1.iY);
+	test(r==KErrNone);
+	r=gLDD.getTEvntPos(eventBuf);
+	test(r==KErrNone);
+	test((eventBuf().iX == tPoint1.iX) && (eventBuf().iY == tPoint1.iY) );
+
+
+	r=gLDD.setTEvntPos(TRawEvent::EPointerMove,tPoint2.iX,tPoint2.iY);
+	test(r==KErrNone);
+	r=gLDD.getTEvntPos(eventBuf);
+	test(r==KErrNone);
+	test((eventBuf().iX == tPoint2.iX) && (eventBuf().iY == tPoint2.iY) );
+
+
+
+	r=gLDD.setTEvntPos(TRawEvent::EPointerMove,tPoint3.iX,tPoint3.iY);
+	test(r==KErrNone);
+	r=gLDD.getTEvntPos(eventBuf);
+	test(r==KErrNone);
+	test((eventBuf().iX == tPoint3.iX) && (eventBuf().iY == tPoint3.iY) );
+
+
+	r=gLDD.setTEvntPos(TRawEvent::EPointerMove,tPoint4.iX,tPoint4.iY);
+	test(r==KErrNone);
+	r=gLDD.getTEvntPos(eventBuf);
+	test(r==KErrNone);
+	test((eventBuf().iX == tPoint4.iX) && (eventBuf().iY == tPoint4.iY) );
+
+	}
+		
+
+
+
+void  DoTestTEvntRepeat()
+	{
+	TInt r;
+
+	TInt aType=TRawEvent::EPointerMove;
+	 TInt aScanCode=20;
+	 TInt aRepeats1=1;
+	 TInt aRepeats2=13430;
+	 TInt aRepeats3=0;
+
+	 r=gLDD.setTEvntRepeat(aType,aScanCode,aRepeats1);
+	 test(r==KErrNone);
+	 r=gLDD.getTEvntRepeat();
+	 test( r== aRepeats1);
+
+	 r=gLDD.setTEvntRepeat(aType,aScanCode,aRepeats2);
+	 test(r==KErrNone);
+	 r=gLDD.getTEvntRepeat();
+	 test( r== aRepeats2);
+
+
+	 r=gLDD.setTEvntRepeat(aType,aScanCode,aRepeats3);
+	 test(r==KErrNone);
+	 r=gLDD.getTEvntRepeat();
+	 test( r== aRepeats3);
+	
+	}
+		
+
+
+
+void  DoTestTEvntPos3D()
+	{
+	
+	TPoint3D tPoint3D1(0,0,0);
+	TPoint3D tPoint3D2(23232,323232,45454);
+	TPoint3D tPoint3D3(-23 ,-85 ,-93);
+	TPoint3D tPoint3D4(-23 ,0 ,100);
+	TUsrEventBuf  eventBuf;
+	TInt r;
+
+     r=gLDD.setTEvntPos3D(TRawEvent::EPointerMove,tPoint3D1.iX,tPoint3D1.iY,tPoint3D1.iZ);
+	test(r==KErrNone);
+	r=gLDD.getTEventPos3D(eventBuf);
+	test(r==KErrNone);
+	test((eventBuf().iX == tPoint3D1.iX) && (eventBuf().iY == tPoint3D1.iY)  && (eventBuf().iZ == tPoint3D1.iZ) );
+
+
+	r=gLDD.setTEvntPos3D(TRawEvent::EPointer3DInRange,tPoint3D2.iX,tPoint3D2.iY,tPoint3D2.iZ);
+	test(r==KErrNone);
+	r=gLDD.getTEventPos3D(eventBuf);
+	test(r==KErrNone);
+	test((eventBuf().iX == tPoint3D2.iX) && (eventBuf().iY == tPoint3D2.iY)  && (eventBuf().iZ == tPoint3D2.iZ) );
+
+
+	r=gLDD.setTEvntPos3D(TRawEvent::EPointer3DRotation,tPoint3D3.iX,tPoint3D3.iY,tPoint3D3.iZ);
+	test(r==KErrNone);
+	r=gLDD.getTEventPos3D(eventBuf);
+	test(r==KErrNone);
+	test((eventBuf().iX == tPoint3D3.iX) && (eventBuf().iY == tPoint3D3.iY)  && (eventBuf().iZ == tPoint3D3.iZ) );
+
+
+	r=gLDD.setTEvntPos3D(TRawEvent::EPointer3DTiltAndMove,tPoint3D4.iX,tPoint3D4.iY,tPoint3D4.iZ);
+	test(r==KErrNone);
+	r=gLDD.getTEventPos3D(eventBuf);
+	test(r==KErrNone);
+	test((eventBuf().iX == tPoint3D4.iX) && (eventBuf().iY == tPoint3D4.iY)  && (eventBuf().iZ == tPoint3D4.iZ) );
+	
+	}
+
+
+
+
+
+void  DoTestTEvntPos3DAll()
+	{
+	TInt r;
+	TPoint3D tPoint3D1(0,322,45454);
+	TPoint3D tPoint3D2(-23 ,0 ,-93);
+
+    TInt aPhi1 =0, aTheta1=3, alpha1=10;
+	TInt aPhi2 =20, aTheta2=45,alpha2=126;
+
+	TRawEvent::TType event1 =TRawEvent::EPointerMove;
+	TRawEvent::TType event2= TRawEvent::EPointer3DRotation;
+
+	TUsrEventBuf  eventBuf;
+		
+    r=gLDD.setTEvntAll(event1,tPoint3D1.iX,tPoint3D1.iY,tPoint3D1.iZ,aPhi1,aTheta1,alpha1);
+	test(r==KErrNone);
+
+	r=gLDD.getTEvntType();
+    test(r == event1);
+
+	r=gLDD.getTEventPos3D(eventBuf);
+	test(r==KErrNone);
+	test((eventBuf().iX == tPoint3D1.iX) && (eventBuf().iY == tPoint3D1.iY)  && (eventBuf().iZ == tPoint3D1.iZ) );
+    
+
+	r=gLDD.getTEvntRotation();
+	test(r == alpha1);
+    r=gLDD.getTEvntTilt(eventBuf);
+	test(r==KErrNone);
+	test((eventBuf().iPhi == aPhi1) && (eventBuf().iTheta == aTheta1));
+
+
+  
+
+	r=gLDD.setTEvntAll(event2,tPoint3D2.iX,tPoint3D2.iY,tPoint3D2.iZ,aPhi2,aTheta2,alpha2);
+	test(r==KErrNone);
+
+	r=gLDD.getTEvntType();
+    test(r == event2);
+
+	r=gLDD.getTEventPos3D(eventBuf);
+	test(r==KErrNone);
+	test((eventBuf().iX == tPoint3D2.iX) && (eventBuf().iY == tPoint3D2.iY)  && (eventBuf().iZ == tPoint3D2.iZ) );
+    
+
+	r=gLDD.getTEvntRotation();
+	test(r == alpha2);
+    r=gLDD.getTEvntTilt(eventBuf);
+	test(r==KErrNone);
+	test((eventBuf().iPhi == aPhi2) && (eventBuf().iTheta == aTheta2));
+
+	}
+
+
+
+void DoTestKernelTrawEvents()
+	{
+	__UHEAP_MARK;
+	TInt r;
+	test.Printf(_L("Testing KernelSide TrawEvents \n"));
+	r=User::LoadLogicalDevice(KLddFileName);	
+	test(r==KErrNone);
+	r=gLDD.Open();
+	test(r==KErrNone);
+
+	//Test Kernel Side TRawevents
+
+	DoTestTEvntTypes();
+	DoTestTEvntDNum();	
+	DoTestTEvntScanCode();
+	DoTestTEvnTilt();
+	DoTestTEvntRotation();
+	DoTestTEvntPtr();
+	DoTestTEvntTicksNTips();
+	DoTestTEvntPOS2D();
+	DoTestTEvntRepeat();
+	DoTestTEvntPos3D();
+	DoTestTEvntPos3DAll();
+	
+	gLDD.Close();
+	r = User::FreeLogicalDevice(KLddFileName);;
+	test(r==KErrNone);
+	User::After(100000);
+
+	// Finished Testing Derived attributes
+   	test.Printf(_L("Successully Finished Testing KernelSide TrawEvents \n"));
+   	__UHEAP_MARKEND;
+
+	}
+
+
 GLDEF_C TInt E32Main()
 //
 // Test Digitiser LDD
@@ -397,9 +771,11 @@ GLDEF_C TInt E32Main()
 			{
 			 DoTestOnUnregisteredDevice(); 
 			 DoTestDerivedeAtributes();	
+			 DoTestKernelTrawEvents();			
 			}
 		}
 	test.End();
 	test.Close();
  	return(KErrNone);
     }
+

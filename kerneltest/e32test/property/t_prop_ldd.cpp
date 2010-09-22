@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -135,6 +135,7 @@ TBool DPropLChannel::Basic(RPropChannel::TBasicInfo* aInfo)
 	for (TUint i = 0; i < count; ++i)
 		{
 		RPropertyRef prop;
+		TPropertyStatus propStatus;
 		TInt r = prop.Open(category, key);
 		BASIC_ERROR(r, r == KErrNotFound);
 		r = prop.Attach(category, key);
@@ -146,8 +147,20 @@ TBool DPropLChannel::Basic(RPropChannel::TBasicInfo* aInfo)
 
 		TSecurityPolicy policy;
 
+		NKern::LockSystem();
+		TBool defined = prop.GetStatus(propStatus);
+		NKern::UnlockSystem();
+		BASIC_ERROR(defined, !defined); // should be EFALSE when not defined
+		
 		r = prop.Define(type, policy, policy);
 		BASIC_ERROR(r, r == KErrNone);
+
+		NKern::LockSystem();
+		defined = prop.GetStatus(propStatus);
+		NKern::UnlockSystem();
+		BASIC_ERROR(defined, defined);  // should be ETRUE, when defined
+		BASIC_ERROR(propStatus.iType, propStatus.iType==type);
+
 		r = prop.Define(type, policy, policy);
 		BASIC_ERROR(r, r == KErrAlreadyExists);
 		r = prop.Delete();
@@ -339,6 +352,12 @@ TBool DPropLChannel::Basic(RPropChannel::TBasicInfo* aInfo)
 			TPtr8 optr((TUint8*) obuf.Ptr(), 0, 15);
 			r = prop.Set(ibuf);
 			BASIC_ERROR(r, r == KErrNone);
+
+			NKern::LockSystem();
+			defined = prop.GetStatus(propStatus);
+			NKern::UnlockSystem();
+			BASIC_ERROR(propStatus.iSize, propStatus.iSize == ibuf.Length());
+
 			r = prop.Get(optr);
 			BASIC_ERROR(r, r == KErrOverflow);
 			BASIC_ERROR(optr.Length(), optr.Length() == 15); 

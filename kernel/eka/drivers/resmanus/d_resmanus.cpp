@@ -59,6 +59,24 @@ const TInt KResManCallBackPriority = 5; // Arbitrary! Can be 0-7, 7 is highest
 		request = ((TTrackNotifyBuf*)buffer)->iRequest;				\
 	}
 
+//Macro to call the correct destructor for the tracking buffer deletion
+#define DELETE_TRACKING_BUFFER(tracker,buf)							\
+	{																\
+	switch(tracker->iType)											\
+		{															\
+		case EGetState:												\
+			delete (TTrackGetStateBuf *)(buf);						\
+			break;													\
+		case ESetState:												\
+			delete (TTrackSetStateBuf *)(buf);						\
+			break;													\
+		case ENotify:												\
+			delete (TTrackNotifyBuf *)(buf);						\
+			break;													\
+		default:													\
+			__ASSERT_ALWAYS(0,RESMANUS_FAULT());					\
+		}															\
+	}
 /***************************************************************************************
 	class TTrackGetStateBuf
  ***************************************************************************************/
@@ -2165,7 +2183,8 @@ void DChannelResManUs::RemoveTrackingControl(TTrackingControl*& aTracker)
 		{
 		while(!aTracker->iFreeQue->IsEmpty())
 			{
-			delete aTracker->iFreeQue->GetFirst(); // Dequeues the element;
+			TTrackingBuffer *buf = (TTrackingBuffer *)aTracker->iFreeQue->GetFirst(); //Dequeues the element
+			DELETE_TRACKING_BUFFER(aTracker,buf)
 			}
 		delete aTracker->iFreeQue;
 		}
@@ -2174,7 +2193,8 @@ void DChannelResManUs::RemoveTrackingControl(TTrackingControl*& aTracker)
 		{
 		while(!aTracker->iBusyQue->IsEmpty())
 			{
-			delete aTracker->iBusyQue->GetFirst(); // Dequeues the element;
+			TTrackingBuffer *buf = (TTrackingBuffer *)aTracker->iBusyQue->GetFirst(); //Dequeues the element
+			DELETE_TRACKING_BUFFER(aTracker,buf)
 			}
 		delete aTracker->iBusyQue;
 		}

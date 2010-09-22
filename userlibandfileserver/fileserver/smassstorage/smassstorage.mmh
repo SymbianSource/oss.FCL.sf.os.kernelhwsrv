@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -33,7 +33,9 @@ SOURCEPATH	../smassstorage
 SOURCE		scsiprot.cpp
 SOURCE		cbulkonlytransport.cpp
 SOURCE		cbulkonlytransportusbcldd.cpp
+#if !defined(WINS) && !defined(GENERIC_X86)
 SOURCE		cbulkonlytransportusbcscldd.cpp
+#endif
 SOURCE		cactivedevicestatenotifierbase.cpp
 SOURCE		rwdrivethread.cpp
 SOURCE		cmassstoragefilesystem.cpp
@@ -41,11 +43,13 @@ SOURCE		cmassstoragemountcb.cpp
 SOURCE		cusbmassstoragecontroller.cpp
 SOURCE		cusbmassstorageserver.cpp
 SOURCE		cusbmassstoragesession.cpp
-SOURCE		massstorageutil.cpp
 SOURCE		drivemanager.cpp
 SOURCE		drivepublisher.cpp
 
-LIBRARY		efile.lib efsrv.lib euser.lib usbcsc_bil.lib
+LIBRARY		efile.lib efsrv.lib euser.lib 
+#if !defined(WINS) && !defined(GENERIC_X86)
+LIBRARY	usbcsc_bil.lib
+#endif
 
 
 SOURCEPATH	.

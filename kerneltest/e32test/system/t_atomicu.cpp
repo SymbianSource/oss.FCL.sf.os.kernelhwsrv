@@ -1,4 +1,4 @@
-// Copyright (c) 2003-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2003-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -47,9 +47,9 @@ void TestSafeIncAndSafeDec()
 	{
 	gValue=0;
 	// increasing when 0, should return 0
-	test(User::SafeInc(gValue)==0);
+	test_Equal(0,User::SafeInc(gValue));
 	// value also should be 0
-	test(gValue==0);
+	test_Equal(0,gValue);
 	
 	gValue=1;
 	TInt expected=0;
@@ -57,37 +57,37 @@ void TestSafeIncAndSafeDec()
 	for (TInt i=0; i<KMaxOps; i++)
 		{
 		expected=User::SafeInc(gValue)+1;
-		test(expected==User::SafeDec(gValue));
+		test_Equal(expected,User::SafeDec(gValue));
 		}
 
 	// after running these, it should be 1
-	test(gValue==1);
+	test_Equal(1,gValue);
 	
 	// should stay zero after decreasing from 1 multiple times
-	test(User::SafeDec(gValue)==1);
-	test(User::SafeDec(gValue)==0);
-	test(User::SafeDec(gValue)==0);
-	test(gValue==0);
+	test_Equal(1,User::SafeDec(gValue));
+	test_Equal(0,User::SafeDec(gValue));
+	test_Equal(0,User::SafeDec(gValue));
+	test_Equal(0,gValue);
 	}
 
 void TestLockedIncAndLockedDec()
 	{
 	gValue=0;
 	// increasing when 0, should return 0 as old value
-	test(User::LockedInc(gValue)==0);
+	test_Equal(0,User::LockedInc(gValue));
 	// new value should be 1
-	test(gValue==1);
+	test_Equal(1,gValue);
 
 	gValue=-1;
 
 	// gValue should vary only between 1 and 2
 	for (TInt i=0; i<KMaxOps; i++)
 		{
-		test((User::LockedInc(gValue)+1)==User::LockedDec(gValue));
+		test_Equal((User::LockedInc(gValue)+1),User::LockedDec(gValue));
 		}
 
 	// after running these, it should be back in -1
-	test(gValue==-1);
+	test_Equal(-1,gValue);
 	}
 
 TInt MultiThreadSafeIncAndSafeDec_FUNC(TAny*)
@@ -128,7 +128,9 @@ void MultiThreadSafeIncAndSafeDec()
 
 	test.Printf(_L("Resuming threads...\n"));
 	for(i=0; i<KNumThreads; i++)
+		{
 		threads[i].Resume();
+		}
 
 	for(i=0; i<KNumThreads; i++)
 		{
@@ -143,7 +145,7 @@ void MultiThreadSafeIncAndSafeDec()
 	RThread().SetPriority(EPriorityNormal);
 
 	// test that we returned to the startvalue
-	test(gValue==1);
+	test_Equal(1,gValue);
 	}
 
 void MultiThreadLockedIncAndLockedDec()
@@ -164,7 +166,9 @@ void MultiThreadLockedIncAndLockedDec()
 
 	test.Printf(_L("Resuming threads...\n"));
 	for(i=0; i<KNumThreads; i++)
+		{
 		threads[i].Resume();
+		}
 
 	for(i=0; i<KNumThreads; i++)
 		{
@@ -179,7 +183,7 @@ void MultiThreadLockedIncAndLockedDec()
 	RThread().SetPriority(EPriorityNormal);
 
 	// test that we returned to the startvalue
-	test(gValue==-1);
+	test_Equal(-1,gValue);
 	}
 
 

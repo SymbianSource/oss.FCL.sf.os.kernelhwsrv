@@ -69,6 +69,7 @@ CAutoMounterFileSystem::CAutoMounterFileSystem()
     {
     __PRINT1(_L("#<<- CAutoMounterFileSystem::CAutoMounterFileSystem() [0x%x]"), this);
 
+    iChildFsForDefFmt = KErrNotFound;
     SetState(EInvalid);
     }   
 
@@ -187,11 +188,11 @@ TBool CAutoMounterFileSystem::IsExtensionSupported() const
     {
     __PRINT1(_L("#<<- CAutoMounterFileSystem::IsExtensionSupported() [0x%x]"), this);
     
-    ASSERT(State() == EInitialised && iFSNames.Count() > 1);
+    ASSERT(State() == EInitialised && ChildFsNum() >= KMinChildFsNum);
 
 
     //-- in debug mode check file systems compatibility: ALL childs must support this feature
-    for(TUint i=0; i<iFSNames.Count(); ++i)
+    for(TUint i=0; i<ChildFsNum(); ++i)
         {
         if( !(GetChildFileSystem(i)->IsExtensionSupported()))
             {
@@ -258,7 +259,10 @@ TInt CAutoMounterFileSystem::GetInterface(TInt aInterfaceId, TAny*& aInterface, 
 //-----------------------------------------------------------------------------
 
 /**
-    Find out if _all_ child file systems support the proxy drive. All childs shall behave exactly the same way.
+    Find out if _all_ child file systems support the proxy drive. All child file systems shall behave exactly the same way.
+    This is mostly for the USB host drives support. All child file systems should either support this feature or do not.
+    Otherwise, it may lead to very obscured cases of susystem misbehaviour.
+    
     @return KErrNone if all child file systems support proxy drives, or KErrNotSupported if all of them do not.
 */
 TInt CAutoMounterFileSystem::DoProcessProxyDriveSupport()
@@ -266,9 +270,8 @@ TInt CAutoMounterFileSystem::DoProcessProxyDriveSupport()
     __PRINT1(_L("#<<- CAutoMounterFileSystem::DoProcessProxyDriveSupport[0x%x]"), this);
     ASSERT(State() == EInitialised);
 
-    const TUint cnt = iFSNames.Count();
-    ASSERT(cnt > 1);
-
+    const TUint cnt = ChildFsNum();
+    ASSERT(cnt >= KMinChildFsNum);
     
     //-- query the default filesystem #0
     const TBool bRes = GetChildFileSystem(KDefaultFSNo)->IsProxyDriveSupported();
@@ -307,7 +310,7 @@ TInt CAutoMounterFileSystem::GetSupportedFileSystemName(TInt aFsNumber, TDes& aF
         }
     
     //-- this is a query for one of the child filesystems
-    if((TUint)aFsNumber < iFSNames.Count())
+    if((TUint)aFsNumber < ChildFsNum())
         {
         aFsName = iFSNames[aFsNumber]; 
         return KErrNone;
@@ -324,8 +327,8 @@ TInt CAutoMounterFileSystem::GetSupportedFileSystemName(TInt aFsNumber, TDes& aF
     In this method the automounter sequentially tries to mount every child and on success produces the corresponding CMountCB object.
 
     @param  apDrive         pointer to the TDrive, child FS will need this to access media.
-    @param  apFileSystem    on return will contain the pointer to the CFileSystem that has produced the proped CMountCB if 
-                            one of the child file system has recognised the volume.
+    @param  apFileSystem    on return will contain the pointer to the CFileSystem that has produced the proper CMountCB if 
+                            one of the child file system has recognised the volume layout.
     @param  aForceMount     if ETrue the appropriate child FS (designated by aFsNameHash) will be forcedly mounted on the volume. for volume formatting purposes.
     @param  aFsNameHash     if !=0 specifies the file system name, see TVolFormatParam::CalcFSNameHash(). 0 means "file system name is not specified"
 
@@ -344,42 +347,61 @@ CMountCB* CAutoMounterFileSystem::NewMountExL(TDrive* apDrive, CFileSystem** apF
     if(apDrive->IsSynchronous())
         Fault(EWrongDriveAttributes);
 
-    if(iFSNames.Count() < 2)
+    if(ChildFsNum() < KMinChildFsNum)
         Fault(EWrongConfiguration);
 
 
     //-- if aForceMount is true, this means that the TDrive tries mount the filesystem by force for formatting because normal mounting has failed before. 
     //-- in our case it means that the file system on the volume hadn't been recognised by any child FS.
     //-- aFsNameHash shall designate the file system to be forcedly mounted. Depending on this the appropriat CMounCB object will be produced.
-    //-- if aFsNameHash is 0, i.e. not provided, this method will fail with KErrNotFound because it is impossible to select appropriat child FS.
+    //-- if aFsNameHash is 0, i.e. not provided, this method will fail with KErrNotFound if it can't to select appropriate child FS to be used.
     if(aForceMount)
         {
+        CFileSystem *pFS = NULL; //-- the FS selected to produce CMountCB for media formatting
+
         if(aFsNameHash == 0)
             {//-- the file system to mount forcedly is not specified
+             //-- 1. check if we have only 1 child FS supported. Quite a weird case, but an easy choice.
+             if(ChildFsNum() == 1)
+                {//-- use the single known child FS
+                __PRINT1(_L("#<<- only 1 child FS available for formatting: %S"), &iFSNames[KDefaultFSNo]);
+                pFS = GetChildFileSystem(KDefaultFSNo);
+                }
+             else if(iChildFsForDefFmt >= 0)
+                {//-- the parameter "child fs for default formatting" is defined. try using this
+                __PRINT1(_L("#<<- using the default child FS for formatting: %S"), &iFSNames[iChildFsForDefFmt]);
+                pFS = GetChildFileSystem(iChildFsForDefFmt);
+                }
+             else
+                {
             __PRINT(_L("#<<- Unable to select appropriate child FS for formatting!"));
             User::Leave(KErrNotFound);
             }
-        else
-            {//-- try to find appropriate child FS by its name hash
-            CFileSystem *pFS = GetChildFileSysteByNameHash(aFsNameHash);
+            }
+        else //if(aFsNameHash == 0)
+            {//-- try to find appropriate child FS by its name hash provided by the upper level
+            pFS = GetChildFileSysteByNameHash(aFsNameHash);
             if(!pFS)
                 {
                 __PRINT(_L("#<<- no child FS found by its name hash!"));
                 ASSERT(0);
                 User::Leave(KErrNotFound);
                 }
+            }
 
+        //-- ask the selected FS to produce us a mount for media formating
+        ASSERT(pFS);
             CMountCB* pMount = pFS->NewMountL();
             ASSERT(pMount);
 
             *apFileSystem = pFS; 
             return pMount;
-            }
         }//if(aForceMount)
 
 
 
     //-- try instantiate a new CMountCB depending on the file system on the media
+    ASSERT(!aForceMount);
 
     CMountCB* pMatchedMount;
     TInt nRes = TryMountFilesystem(apDrive, &pMatchedMount, apFileSystem);
@@ -391,63 +413,30 @@ CMountCB* CAutoMounterFileSystem::NewMountExL(TDrive* apDrive, CFileSystem** apF
         }
 
 
-
     User::Leave(nRes);
     return NULL;
     }
 
+
 //-----------------------------------------------------------------------------
 /**
-    Initialise this file system. Reads and processes configuration, fills in file system names container, etc. 
+    Parse the string with child file system names. These names come from config, which can be either 
+    estart.txt or a text debug property that can override it.
+
+    @param  aList string descriptor with contents like "fat,exfat" i.e. it is comma separated file system names
 */
-void CAutoMounterFileSystem::InitialiseFileSystem()
+void CAutoMounterFileSystem::DoParseChildNames(const TDesC8& aList)
     {
-    __PRINT1(_L("#<<- CAutoMounterFileSystem::InitialiseFileSystem() [0x%x]"), this);
+    ASSERT(State() == EInitialising);
 
-    ASSERT(State() == ENotInitialised);
-
-    TInt nRes;
-    
-
-    //-- 1. initialise the array of file system names. These names shall be listed in a config string.
-    //-- the config string is taken from estart.txt usually and its format is like this: 
-    //-- section: [AutoMounter] and property "FSNames fat,exfat"
-    //-- in debug version a special text property can override the config string. This allows controlling automounter from
-    //-- the test environment.
-
-    TBuf8<0x100> buf(0);   
     TBuf<0x100>  fsName;   
 
-
-#ifdef _DEBUG
-    const TUid KSID_Test1={0x10210EB3}; //-- SID of the test that will define and set test property to control volume mounting
-    const TUint KPropKey = 0; //-- property key
-
-    //-- in debug mode the property will override the estart.txt config
-    if(RProperty::Get(KSID_Test1, KPropKey, buf) == KErrNone)
-        {
-        __PRINT(_L("#<<- reading config from the debug propery..."));
-        }
-    else
-#endif
-        {
-        __PRINT(_L("#<<- reading config from estart.txt..."));
-        _LIT8(KSection,  "AutoMounter");
-        _LIT8(KProperty, "FSNames");
-
-        nRes = F32Properties::GetString(KSection, KProperty, buf);
-        if(!nRes)
-            Fault(EPluginInitialise);
-        }
-
-
-    fsName.Copy(buf);
-    __PRINT1(_L("#<<- config:'%S'"), &fsName);
+    fsName.Copy(aList);
+    __PRINT1(_L("#<<- childFS list:'%S'"), &fsName);
 
     //-- parse CSV config line and fill in the file system names array
     const TChar chDelim = ','; //-- token delimiter, comma
-    buf.Trim();
-    TPtrC8 ptrCurrLine(buf);
+    TPtrC8 ptrCurrLine(aList);
     for(TInt i=0; ;++i)
         {
         const TInt delimPos = ptrCurrLine.Locate(chDelim);
@@ -478,7 +467,8 @@ void CAutoMounterFileSystem::InitialiseFileSystem()
             }
         
         
-        nRes = iFSNames.Append(fsName);
+        TInt nRes = iFSNames.Append(fsName);
+        (void)nRes;
         ASSERT(nRes ==KErrNone);
         
         if(delimPos <=0 )
@@ -487,14 +477,203 @@ void CAutoMounterFileSystem::InitialiseFileSystem()
         ptrCurrLine.Set(ptrCurrLine.Ptr()+delimPos+1, ptrCurrLine.Length()-delimPos-1);
         }
 
+    }
+
+//-----------------------------------------------------------------------------
+
+//-- if this macro is defined, the automounter will use a default hard-coded list of child file systems if it is not found in the estart.txt
+//-- and this list will consist of one filesystem "FAT".
+//-- otherwise automounter will panic if it can't find appropriate config in estart.txt
+#define ALLOW_CONFIGLESS
+
+/**
+    Process Automounter configuration
+*/
+void CAutoMounterFileSystem::ParseConfig()
+    {
+
+
+    ASSERT(State() == ENotInitialised);
+
+    SetState(EInitialising);
+
+    
+
+    //-- 1. initialise the array of file system names. These names shall be listed in a config string.
+    //-- the config string is taken from estart.txt usually and its format is like this: 
+    //-- section: [AutoMounter] and property "AM_FSNames fat,exfat"
+    //-- in debug version a special text property can override the config string. This allows controlling automounter from
+    //-- the test environment.
+
+    TBuf8<0x100> buf(0);   
+
+    _LIT8(KSection,  "AutoMounter");        ///< section name
+    _LIT8(KKey_ChildFsList, "AM_FSNames");     ///< a key for the CSV list of child file system names
+    _LIT8(KProp_DefFmtFsIdx, "AM_DefFmtFsIdx");///< a key for the optional parameter that specifies the child file system index, which will be used for formatting unrecognised media
+
+    TBool bUseEstart= ETrue;
+
+#ifdef _DEBUG
+    
+    TInt nRes;
+
+    const TUid KSID_Test1={0x10210EB3}; //-- SID of the test that will define and set test property to control volume mounting
+    const TUint KPropKey = 0; //-- property key
+
+    //-- in debug mode the property will override the estart.txt config
+    if(RProperty::Get(KSID_Test1, KPropKey, buf) == KErrNone)
+        {
+        __PRINT(_L("#<<- reading config from the debug propery:"));
+        TBuf<0x100> buf16(0);   
+        buf16.Copy(buf);
+        __PRINT(buf16);
+        
+        bUseEstart = EFalse;
+        }
+#endif //_DEBUG
+
+    if(bUseEstart)
+        {//-- need to read data from the estart.txt, section [AutoMounter]
+        __PRINT(_L("#<<- reading config from estart.txt..."));
+
+        //-- 1. read and parse a CSV list of child file system names
+        //-- this is a mandatory parameter
+        TBool bFound = F32Properties::GetString(KSection, KKey_ChildFsList, buf);
+        if(!bFound)
+            {
+            __PRINT(_L("#<<- child FS list isn't found in config !"));
+
+    #ifdef ALLOW_CONFIGLESS
+            //-- let's use a default list of child file systems (consisting of only one: "FAT")
+            //-- if it is allowed. FAT FS is suggested to be available and already loaded by file server.
+            //-- otherwise it will panic later
+
+            _LIT(KDefChildFS_Config, "fat"); //-- default list
+            __PRINT1(_L("#<<- Using a default list:'%S'"), &KDefChildFS_Config());
+            buf.Copy(KDefChildFS_Config);
+    
+    #else //ALLOW_CONFIGLESS
+    
+            Fault(EPluginInitialise);
+    
+    #endif //ALLOW_CONFIGLESS
+            }
+
+        DoParseChildNames(buf);    
+        
+        ASSERT(iFSNames.Count());
+
+        //-- 2. read a child FS index that can be used for unrecognisable media default formatting
+        //-- this is an optional parameter. If we have just 1 Child FS, this parameter doesn't make much sense.
+        if(iFSNames.Count() > 1)
+            {
+            TInt32 nVal;
+            bFound = F32Properties::GetInt(KSection, KProp_DefFmtFsIdx, nVal);
+
+            if(!bFound) 
+                iChildFsForDefFmt = KErrNotFound;
+            else                    
+                {//-- check the index validity
+                if(nVal <0 || nVal >= (TInt)iFSNames.Count())
+                    {
+                    __PRINT1(_L("#<<- Bad DefFmtFsIdx value:%d"), nVal);
+                    Fault(EPluginInitialise);    
+                    }
+                else
+                    {
+                    iChildFsForDefFmt = nVal;
+                    }
+                }    
+            }
+        else//if(iFSNames.Count() > 1)
+            {//-- it looks like we have a weird case when the automounter is configured with just 1 child file system
+            iChildFsForDefFmt = KDefaultFSNo;
+            }
+
+        }//if(bUseEstart)
+    else
+        {
+#ifdef _DEBUG        
+
+        //-- it looks like there is a test property that overrides the estart.txt settings. This property should contain 
+        //-- a representation of a whole [AutoMounter] section in estart.txt and can have "multiple lines" separated by 0x0d,0x0a
+        buf.TrimAll();
+        
+        TInt nPos1;
+        TInt nPos2;
+
+        //-- 1. process "AM_FSNames" key
+        nPos1 = buf.FindF(KKey_ChildFsList);
+        if(nPos1 < 0)
+            {
+            __PRINT(_L("#<<- child FS list isn't found!"));
+            Fault(EPluginInitialise);
+            }
+        
+        TPtrC8  ptr(buf.Mid(nPos1));
+        nPos2 = ptr.Locate('\n');
+        if(nPos2 > 0)
+            ptr.Set(ptr.Left(nPos2));    
+
+        TLex8 lex(ptr);
+        
+        lex.NextToken();
+        lex.SkipSpace();
+        ptr.Set(lex.Remainder());
+
+        DoParseChildNames(ptr);    
+        ASSERT(iFSNames.Count());
+
+
+        //-- 2. process "DefFmtFsIdx" key
+        nPos1 = buf.FindF(KProp_DefFmtFsIdx);
+        if(nPos1 > 0 && iFSNames.Count() > 1)
+            {
+            ptr.Set(buf.Mid(nPos1));
+            nPos2 = ptr.Locate('\n');
+            if(nPos2 > 0)
+                ptr.Set(ptr.Left(nPos2));    
+
+            lex.Assign(ptr);
+            lex.NextToken();
+            lex.SkipSpace();
+            
+            nRes = lex.Val(nPos1);
+            ASSERT(nRes == KErrNone);
+            ASSERT(nPos1 >= 0 && nPos1 < (TInt)iFSNames.Count());
+            
+            iChildFsForDefFmt = nPos1;
+            }
+         else
+            {
+            iChildFsForDefFmt = KErrNotFound;
+            }
+        
+#endif //_DEBUG
+        }
+
+    }
+
+
+//-----------------------------------------------------------------------------
+/**
+    Initialise this file system. Reads and processes configuration, fills in file system names container, etc. 
+*/
+void CAutoMounterFileSystem::InitialiseFileSystem()
+    {
+    __PRINT1(_L("#<<- CAutoMounterFileSystem::InitialiseFileSystem() [0x%x]"), this);
+
+    ASSERT(State() == ENotInitialised);
+
+    ParseConfig();
 
     SetState(EInitialised);
 
     //-- 2. check that the file server has all filesystems we need instantiated and stored in a global container
-    TUint cnt = iFSNames.Count();
-    if(cnt < 2)
+    TUint cnt = ChildFsNum();
+    if(cnt < KMinChildFsNum)
         {
-        __PRINT(_L("#<<- ::InitialiseFileSystem(): too few File Systems bound!"));
+        __PRINT1(_L("#<<- ::InitialiseFileSystem(): too few File Systems bound: %d!"), cnt);
         Fault(EPluginInitialise);
         }
 
@@ -523,9 +702,8 @@ TInt CAutoMounterFileSystem::TryMountFilesystem(TDrive* apDrive, CMountCB** apMo
     {
     __PRINT1(_L("#<<- CAutoMounterFileSystem::TryMountFilesystem()[0x%x]"), this);
 
-    const TInt KNumFS = iFSNames.Count();
-  
-    ASSERT(State() == EInitialised && (KNumFS >1));
+    const TUint KNumFS = ChildFsNum(); //-- number of child file systems supported
+    ASSERT(State() == EInitialised && (KNumFS >= KMinChildFsNum));
 
 
     *apMount = NULL;
@@ -533,7 +711,7 @@ TInt CAutoMounterFileSystem::TryMountFilesystem(TDrive* apDrive, CMountCB** apMo
     
     
     TInt nRes;
-    TInt cntFS;
+    TUint cntFS;
     CMountCB*       pMountCB = NULL;
     CFileSystem*    pMatchedFS = NULL;
 
@@ -550,7 +728,7 @@ TInt CAutoMounterFileSystem::TryMountFilesystem(TDrive* apDrive, CMountCB** apMo
         TRAP(nRes, pMountCB = pFS->NewMountL());
         if(nRes != KErrNone)
             {
-            return KErrNoMemory;
+            return nRes;
             }
 
         ASSERT(pMountCB);
@@ -626,7 +804,7 @@ TInt CAutoMounterFileSystem::TryMountFilesystem(TDrive* apDrive, CMountCB** apMo
 */
 CFileSystem* CAutoMounterFileSystem::GetChildFileSystem(TUint aIndex) const
     {
-    ASSERT(State() == EInitialised && (iFSNames.Count() >1) && aIndex < iFSNames.Count());
+    ASSERT(State() == EInitialised && (ChildFsNum() >= KMinChildFsNum) && aIndex < ChildFsNum());
 
     const TDesC& fsName = iFSNames[aIndex]; //-- registered child file system name
     CFileSystem* pFS = GetFileSystem(fsName); //-- Find filesystem object in the FileServer's global container
@@ -648,9 +826,10 @@ CFileSystem* CAutoMounterFileSystem::GetChildFileSystem(TUint aIndex) const
 */
 CFileSystem* CAutoMounterFileSystem::GetChildFileSysteByNameHash(TUint32 aFsNameHash) const
     {
-    ASSERT(State() == EInitialised && (iFSNames.Count() >1) && aFsNameHash);
+    ASSERT(State() == EInitialised && (ChildFsNum() >= KMinChildFsNum) && aFsNameHash);
     
-    for(TUint i=0; i<iFSNames.Count(); ++i)
+    const TUint cnt = ChildFsNum(); 
+    for(TUint i=0; i<cnt; ++i)
         {
         if(aFsNameHash == iFSNames.GetStringHash(i))
             {

@@ -150,6 +150,193 @@ inline TInt RLddDigitiserTest::setPointer3DPressureStep(TUint aPointer3DPressure
 	{
     return DoControl(ESET_EPOINTER3DPRESSURESTEP, (TAny *)aPointer3DPressureStep);
 	}
+
+
+	
+
+//TrawEvents
+inline TInt RLddDigitiserTest::setTEvntType(TInt aType)
+	{
+	return 	DoControl(ESET_TRAWEVENT_EVENTTYPE, (TAny *)aType);
+	}
+
+inline TInt RLddDigitiserTest::getTEvntType()
+	{
+	return 	DoControl(EGET_TRAWEVENT_EVENTTYPE);
+	}
+
+inline	TInt RLddDigitiserTest::setTEvntDNum(TInt aDNum)
+	{	
+		return DoControl(ESET_TEVENT_DNMBR, (TAny *)aDNum);
+	    
+	}
+
+inline	TInt RLddDigitiserTest::getTEvntDNum()
+	{
+	return DoControl(EGET_TEVENT_DNMBR);
+	}
+
+	
+
+inline TInt RLddDigitiserTest::setTEvntScanCode(TInt aType,TInt aScanCode)
+
+	{
+	TUsrEventBuf  eventBuf;
+	eventBuf().iType=aType;
+	eventBuf().iScanCode=aScanCode;		
+	return DoControl(ESET_TRAWEVENT_SCANCODE, (TAny *)&eventBuf);
+
+	
+	}
+													 
+inline TInt RLddDigitiserTest::getTEvntScanCode()
+
+	{
+	return 	DoControl(EGET_TRAWEVENT_SCANCODE);
+	}
+
+
+inline TInt RLddDigitiserTest::setTEvntRotation(TInt aType,TInt aAlpha)
+
+	{
+		
+	TUsrEventBuf  eventBuf;
+	eventBuf().iType=aType;	
+	eventBuf().iAlpha=aAlpha;
+	return DoControl(ESET_TRAWEVENT_ROTATION, (TAny *)&eventBuf);
+	}
+
+inline TInt RLddDigitiserTest::getTEvntRotation()
+
+	{
+	return 	DoControl(EGET_TRAWEVENT_ROTATION);
+	}
+
+
+inline	TInt RLddDigitiserTest::setTEvntPntr(TInt aPointerNumber)
+	{ 
+	return 	DoControl(ESET_TRAWEVENT_PTRNMBR, (TAny *)aPointerNumber);
+	}   
+inline	TInt RLddDigitiserTest::getTEvntPntr()
+	{ 
+	return 	DoControl(EGET_TRAWEVENT_PTRNMBR);
+	}
+
+inline	TInt RLddDigitiserTest::getTEvntTicks()
+	{
+	return 	DoControl(EGET_TRAWEVENT_TICKS);
+	}
+	 
+inline	TBool RLddDigitiserTest::TEvntTicksIsTip()
+	{
+	return 	DoControl(EGET_TRAWEVENT_TIP);
+	}		
+inline	TInt RLddDigitiserTest::setTEvntTip(TBool aTip)
+	{
+	return 	DoControl(ESET_TRAWEVENT_TIP, (TAny *)aTip);
+	}
+
+
+													 
+inline TInt RLddDigitiserTest::setTEvnt3DnPntr (TInt aType, TInt aX, TInt aY, TInt aZ, TUint8 aPointerNumber)
+	{
+
+	
+	TUsrEventBuf  eventBuf;
+
+	eventBuf().iType=aType;
+	eventBuf().iX=aX;		 
+	eventBuf().iY=aY;	
+	eventBuf().iZ=aZ;		 
+	eventBuf().iPointerNumber=aPointerNumber;
+	return DoControl(ESET_TRAWEVENT_3DNPTRNMBR, (TAny *)&eventBuf);
+
+
+	}
+
+inline TInt RLddDigitiserTest::setTEvntPos(TInt aType,TInt aX,TInt aY)
+	{
+
+	TUsrEventBuf  eventBuf;
+	eventBuf().iType=aType;
+	eventBuf().iX=aX;		 
+	eventBuf().iY=aY;	
+	return DoControl(ESET_TRAWEVENT_POS2D, (TAny *)&eventBuf);
+	}
+
+
+inline TInt RLddDigitiserTest::getTEvntPos(TUsrEventBuf& eventBuf)
+	{		
+	return DoControl(EGET_TRAWEVENT_POS2D,(TAny *)&eventBuf);
+	}
+								 
+
+  inline TInt RLddDigitiserTest::setTEvntPos3D(TInt aType,TInt aX,TInt aY,TInt aZ)
+	{
+	TUsrEventBuf  eventBuf;
+	eventBuf().iType=aType;
+	eventBuf().iX=aX;		 
+	eventBuf().iY=aY;
+	eventBuf().iZ=aZ;		   	
+	return DoControl(ESET_TRAWEVENT_POS3D, (TAny *)&eventBuf);
+	}						
+
+
+TInt RLddDigitiserTest::getTEventPos3D(TUsrEventBuf& eventBuf)
+	{		   	
+	return DoControl(EGET_TRAWEVENT_POS3D,(TAny *)&eventBuf);
+	}
+
+
+
+inline TInt RLddDigitiserTest::setTEvntAll(TInt aType,TInt aX,TInt aY,TInt aZ,TInt aPhi,TInt aTheta,TInt aAlpha)
+	{
+	TUsrEventBuf  eventBuf;
+	eventBuf().iType=aType;
+	eventBuf().iX=aX;		 
+	eventBuf().iY=aY;
+	eventBuf().iZ=aZ;		   
+	eventBuf().iPhi=aPhi;	   
+	eventBuf().iTheta=aTheta;
+	eventBuf().iAlpha=aAlpha;	
+	return DoControl(ESET_TRAWEVENT_ALL, (TAny *)&eventBuf);
+	}
+
+ inline TInt RLddDigitiserTest::setTEvntTilt(TInt aType,TInt aPhi,TInt aTheta)
+
+	{
+	 TUsrEventBuf  eventBuf;
+	eventBuf().iType=aType;
+	eventBuf().iPhi=aPhi;	   
+	eventBuf().iTheta=aTheta;
+	return DoControl(ESET_TRAWEVENT_TILT, (TAny *)&eventBuf);
+	}
+
+
+  inline TInt RLddDigitiserTest::getTEvntTilt(TUsrEventBuf& eventBuf)
+
+	{
+	return DoControl(EGET_TRAWEVENT_TILT,(TAny *)&eventBuf);
+	}
+
+
+inline TInt RLddDigitiserTest::setTEvntRepeat(TInt aType,TInt aScanCode,TInt aRepeats)
+	{
+	TUsrEventBuf  eventBuf;
+	eventBuf().iType=aType;
+	eventBuf().iScanCode=aScanCode;	
+	eventBuf().iRepeats=aRepeats;		   	
+	return DoControl(ESET_TRAWEVENT_REPEAT, (TAny *)&eventBuf);
+	}
+
+inline TInt RLddDigitiserTest::getTEvntRepeat()
+	{
+	return DoControl(EGET_TRAWEVENT_REPEAT);
+	}
+
+
+
 #endif
+
 
 

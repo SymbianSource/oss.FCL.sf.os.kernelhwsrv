@@ -776,6 +776,7 @@ public:
 	RAllocator* iHeap;				///< The thread's current heap
 	CActiveScheduler* iScheduler;	///< The thread's current active scheduler
 	TTrapHandler* iTrapHandler;		///< The thread's current trap handler
+	TUint iThreadId;                ///< The thread's id
 private:
 	RAllocator* iTlsHeap; 			///< The heap that the DLL TLS data is stored on
 	RArray<STls> iTls; 				///< DLL TLS data

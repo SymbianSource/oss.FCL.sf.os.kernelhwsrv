@@ -30,12 +30,13 @@
 
 namespace NUnitTesting_USBDI
 	{
-const TInt KBulkMaxTransferSize = 40000;
-const TUint KHostNumWriteBytes1 = 32000;
-const TUint KHostNumWriteBytes2 = 32000;
-const TInt KDeviceNumReadBytes = 64000;
-const TUint KHostNumReadBytes1 = 32000;
-const TUint KHostNumReadBytes2 = 32001; //allow or ZLP
+// write/read size shall be a multiple of endpoint.MaxPacketSize(Hight speed == 512)		
+const TInt KBulkMaxTransferSize = 80000;
+const TUint KHostNumWriteBytes1 = 64000;
+const TUint KHostNumWriteBytes2 = 64000;
+const TInt KDeviceNumReadBytes = 128000;
+const TUint KHostNumReadBytes1 = 64000;
+const TUint KHostNumReadBytes2 = 64001; //allow or ZLP
 
 
 //Make these single bit values ... 

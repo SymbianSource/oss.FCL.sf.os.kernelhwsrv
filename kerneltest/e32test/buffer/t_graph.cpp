@@ -1,4 +1,4 @@
-// Copyright (c) 1994-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1994-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -769,6 +769,13 @@ void TestTPoint3D::TestSet()
 	test(p3D3.AsPoint()==aPoint);
 	test(p3D5.AsPoint()==p3D3.AsPoint());
 	
+	aPoint.iX=iX2;
+	aPoint.iY=iY2;
+	TInt z = p3D5.iZ;
+	p3D5.SetPoint(aPoint);
+	test(p3D5.iX==iX2);
+	test(p3D5.iY==iY2);
+	test(p3D5.iZ==z);
 
 	p3D4.SetXYZ(iX4,iY4,iZ4);
 	test(p3D4.iX==iX4 && p3D4.iY==iY4);

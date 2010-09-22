@@ -1,0 +1,48 @@
+// Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// vasco-usbtest.iby
+// 
+//
+
+#ifndef VASCO_USBTEST_IBY
+#define VASCO_USBTEST_IBY
+
+REM the autoexec file and the list of tests to run
+
+data=\sf\os\kernelhwsrv\kerneltest\e32test\usb\t_usb_device\configs\usbtest.testlist.vasco.bat				test\usbtest.bat
+
+REM The test applications
+
+file=EPOCROOT##epoc32\release\armv5\udeb\t_usbapi.exe			sys\bin\t_usbapi.exe
+file=EPOCROOT##epoc32\release\armv5\udeb\t_usb_scdevice.exe			sys\bin\t_usb_scdevice.exe
+file=EPOCROOT##epoc32\release\armv5\udeb\t_usbcsc.exe				sys\bin\t_usbcsc.exe
+file=EPOCROOT##epoc32\release\armv5\udeb\t_usb.exe					sys\bin\t_usb.exe
+file=EPOCROOT##epoc32\release\armv5\udeb\t_usb_device.exe			sys\bin\t_usb_device.exe
+
+file=EPOCROOT##epoc32\release\armv5\udeb\t_usb_transfersrv.dll			sys\bin\t_usb_transfersrv.dll
+file=EPOCROOT##epoc32\release\armv5\udeb\t_usb_transfersrv.exe			sys\bin\t_usb_transfersrv.exe
+file=EPOCROOT##epoc32\release\armv5\udeb\t_usb_tranhandlesrv.dll			sys\bin\t_usb_tranhandlesrv.dll
+
+REM t_usb_device xml configuration files
+
+data=\sf\os\kernelhwsrv\kerneltest\e32test\usb\t_usb_device\configs\scvascoif0.xml				test\scvascoif0.xml
+data=\sf\os\kernelhwsrv\kerneltest\e32test\usb\t_usb_device\configs\scvascoif0a3.xml				test\scvascoif0a3.xml
+data=\sf\os\kernelhwsrv\kerneltest\e32test\usb\t_usb_device\configs\scvascoif0a3if1a2if2.xml		test\scvascoif0a3if1a2if2.xml
+data=\sf\os\kernelhwsrv\kerneltest\e32test\usb\t_usb_device\configs\scvascobm.xml				test\scvascobm.xml
+data=\sf\os\kernelhwsrv\kerneltest\e32test\usb\t_usb_device\configs\vascoif0.xml				test\vascoif0.xml
+data=\sf\os\kernelhwsrv\kerneltest\e32test\usb\t_usb_device\configs\vascoif0a3.xml				test\vascoif0a3.xml
+data=\sf\os\kernelhwsrv\kerneltest\e32test\usb\t_usb_device\configs\vascoif0a3if1a2if2.xml		test\vascoif0a3if1a2if2.xml
+data=\sf\os\kernelhwsrv\kerneltest\e32test\usb\t_usb_device\configs\vascobm.xml				test\vascobm.xml
+
+#endif

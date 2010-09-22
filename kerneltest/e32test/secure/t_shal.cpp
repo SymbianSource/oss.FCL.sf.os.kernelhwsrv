@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -30,6 +30,7 @@
 // 
 //
 
+#define __E32TEST_EXTENSION__
 #define __INCLUDE_CAPABILITY_NAMES__
 
 #include <e32test.h>
@@ -82,6 +83,21 @@ LOCAL_C void GetSetCheck(const char* aText,HALData::TAttribute aAttribute,TCapab
 	}
 
 #define SET_CHECK(a,c) 	GetSetCheck(#a,a,c);
+
+LOCAL_C void TestUnusedFunctions()
+    {
+    TAny * mem = 0;
+    TInt ret=0;
+    ret=UserSvr::HalGet(HALData::EMemoryRAMFree, mem);
+    test_Equal(KErrNotSupported, ret);
+    ret=UserSvr::HalSet(HALData::EMemoryRAMFree, mem);
+    test_Equal(KErrNotSupported, ret);
+    ret=UserSvr::ResetMachine(EStartupCold);
+    test_Equal(KErrNotSupported, ret);
+    UserSvr::WsSwitchOnScreen();
+    ret=User::Beep(220,1000000);
+	test_Equal(KErrNotSupported, ret);
+    }
 
 LOCAL_C TInt DoTests()
 	{
@@ -194,6 +210,8 @@ GLDEF_C TInt E32Main()
 
 	test.Title();
 
+	TestUnusedFunctions();
+	
 	if(User::CommandLineLength())
 		{
 		TBuf<128> message;

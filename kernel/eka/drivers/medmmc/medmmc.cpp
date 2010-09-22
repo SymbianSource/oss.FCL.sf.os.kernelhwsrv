@@ -56,7 +56,8 @@ GLREF_C TBool MBRMandatory(const TMMCard* aCardP);
 GLREF_C TBool CreateMBRAfterFormat(const TMMCard* aCardP);
 GLREF_C TInt BlockSize(const TMMCard* aCardP);
 GLREF_C TInt EraseBlockSize(const TMMCard* aCardP);
-GLREF_C TInt GetCardFormatInfo(const TMMCard* aCardP, TLDFormatInfo& aFormatInfo);
+extern  TInt GetCardFormatInfo(const TMMCard* aCardP, TLocalDriveCapsV5& aCaps);
+
 
 const TInt KStackNumber = 0;
 
@@ -2793,12 +2794,12 @@ TInt DMmcMediaDriverFlash::Caps(TLocDrv& aDrive, TLocalDriveCapsV6& aInfo)
 	if (iCard->IsLocked())
 		aInfo.iMediaAtt |= KMediaAttLocked;
 
-	aInfo.iFileSystemId = KDriveFileSysFAT;
+	aInfo.iFileSystemId = KDriveFileSysFAT; //-- note, it may be overridden by GetCardFormatInfo()
 
 	// Format is performed in multiples of the erase sector (or multiple block) size
 	aInfo.iMaxBytesPerFormat = iEraseInfo.iPreferredEraseUnitSize;
 
-	if ((!iInternalSlot) && (GetCardFormatInfo(iCard,aInfo.iFormatInfo) == KErrNone))
+    if ((!iInternalSlot) && (GetCardFormatInfo(iCard, aInfo) == KErrNone))
 		{
 		TUint16 reservedSectors;
 		TMBRPartitionEntry dummy;	// Not used here
@@ -2810,7 +2811,9 @@ TInt DMmcMediaDriverFlash::Caps(TLocDrv& aDrive, TLocalDriveCapsV6& aInfo)
 		    }
 
 		aInfo.iFormatInfo.iReservedSectors = reservedSectors;
-		aInfo.iExtraInfo = ETrue;
+
+        //-- indicates that the driver wishes to dictate how the volume should be formatted
+        aInfo.iExtraInfo = ETrue;
 		}
 
     // Set serial number to CID

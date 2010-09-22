@@ -4596,6 +4596,10 @@ Gets the Id of this thread.
 @return The Id of this thread.
 */
 	{
+#ifdef __USERSIDE_THREAD_DATA__
+	if(iHandle==KCurrentThreadHandle)
+		return TThreadId( LocalThreadData()->iThreadId );
+#endif // __USERSIDE_THREAD_DATA__
 
 	return TThreadId( (TUint)Exec::ThreadId(iHandle) );
 	}

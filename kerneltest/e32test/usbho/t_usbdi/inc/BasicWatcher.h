@@ -68,66 +68,41 @@ public:
 	@param aInterface the usb interface to suspend  
 	@param aCallBack the call back object to call once a resumption signal has happened
 	*/
-	CInterfaceWatcher(RUsbInterface& aInterface,const TCallBack& aCallBack)
-	:	CActive(EPriorityUserInput),
-		iUsbInterface(aInterface),
-		iResumeCallBack(aCallBack),
-		iCompletionCode(KErrNone)
-		{
-		CActiveScheduler::Add(this);
-		}
+	CInterfaceWatcher(RUsbInterface& aInterface,const TCallBack& aCallBack);
 
 	/**
 	Destructor
 	*/
-	~CInterfaceWatcher()
-		{
-		Cancel();
-		}
+	~CInterfaceWatcher();
 
 	/**
 	Suspend the interface and watch for resumtions
 	*/
-	void SuspendAndWatch()
-		{
-		iUsbInterface.PermitSuspendAndWaitForResume(iStatus);
-		SetActive();
-		}
+	void SuspendAndWatch();
+
 
 	/**
 	Obtains the most recent completion code for the interface resumption
 	asynchronous action
 	@return the completion error code
 	*/
-	TInt CompletionCode() const
-		{
-		return iCompletionCode;
-		}
+	TInt CompletionCode() const;
+
 
 protected: // From CActive
 
 	/**
 	*/
-	void DoCancel()
-		{
-		iUsbInterface.CancelPermitSuspend();
-		}
+	void DoCancel();
 
 	
 	/**
 	*/
-	void RunL()
-		{
-		iCompletionCode = iStatus.Int();
-		User::LeaveIfError(iResumeCallBack.CallBack());
-		}
+	void RunL();
 	
 	/**
 	*/
-	TInt RunError()
-		{
-		return KErrNone;
-		}
+	TInt RunError();
 
 private:
 

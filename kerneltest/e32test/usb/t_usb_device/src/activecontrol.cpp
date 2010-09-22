@@ -1079,6 +1079,10 @@ TInt CActiveControl::ProcessEp0ControlPacket()
 						    OstTrace1 (TRACE_VERBOSE, CACTIVECONTROL_PROCESSEP0CONTROLPACKET_DUP09, "Closing USB channel number %d",portNumber);
 						    }
 #ifdef USB_SC
+						if (0 == portNumber)
+							{
+							iEp0Buf.Close();
+							}
 						RChunk* commChunk;
 						User::LeaveIfError(iPort[portNumber].GetDataTransferChunk(commChunk));
 						commChunk->Close(); 
@@ -1421,6 +1425,10 @@ TInt CActiveControl::ProcessEp0ControlPacket()
 						    OstTrace1 (TRACE_VERBOSE, CACTIVECONTROL_PROCESSEP0CONTROLPACKET_DUP34, "Closing USB channel number %d",portNumber);
 						    }
 #ifdef USB_SC
+						if (0 == portNumber)
+							{
+							iEp0Buf.Close();
+							}
 						RChunk* commChunk;
 						User::LeaveIfError(iPort[portNumber].GetDataTransferChunk(commChunk));
 						commChunk->Close();	
@@ -1440,7 +1448,6 @@ TInt CActiveControl::ProcessEp0ControlPacket()
 					StartMassStorage(&iPort[0]);
 
 					OpenStackIfOtg();
-					
 					test.Next (_L("Enumeration..."));
 					r = ReEnumerate();
 					test_KErrNone(r);
