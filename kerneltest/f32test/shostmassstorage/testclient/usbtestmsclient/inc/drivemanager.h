@@ -39,7 +39,10 @@ class CProxyDrive;
 class TMediaParams
     {
 public:
-    const TUint32 KDefaultBlockSize = 0x200;  //default block size for FAT
+	enum
+		{
+		KDefaultBlockSize = 0x200
+		};
 
     void Init(TLocalDriveCapsV4& aCaps);
 

@@ -143,7 +143,10 @@ public:
         EDeferredErrors = 0x71
         };
 
-    static const TUint KCommandLength = 18;
+	enum
+		{
+		KCommandLength = 18
+		};
 
     TScsiServerRequestSenseResp() {};
 
@@ -189,7 +192,11 @@ public:
 class TScsiServerInquiryResp: public MScsiServerResp
     {
 public:
-    static const TUint KResponseLength = 36;
+
+	enum
+		{
+		KResponseLength = 36
+		};
 
     TScsiServerInquiryResp(const TMassStorageConfig& aConfig);
     void Encode(TDes8& aBuffer) const;
@@ -240,7 +247,11 @@ public:
 class TScsiServerModeSense6Resp: public MScsiServerResp
     {
 public:
-    static const TUint KCommandLength = 4;
+
+	enum
+		{
+		KCommandLength = 4
+		};
 
     TScsiServerModeSense6Resp();
     void SetWp(TBool aWp);
@@ -305,7 +316,11 @@ private:
 class TScsiServerReadFormatCapacitiesResp: public MScsiServerResp
     {
 public:
-    static const TUint KResponseLength = 12;
+
+	enum
+		{
+		KResponseLength = 12
+		};
     TScsiServerReadFormatCapacitiesResp(TAllocationLength aAllocationLength);
     void SetNumberBlocks(TUint32 aNumberBlocks) {iNumberBlocks = aNumberBlocks;}
     void Encode(TDes8& aBuffer) const;
@@ -336,7 +351,12 @@ public:
 class TScsiServerReadCapacity10Resp: public MScsiServerResp
     {
 public:
-    static const TUint KCommandLength = 8;
+
+	enum
+		{
+		KCommandLength = 8
+		};
+
     TScsiServerReadCapacity10Resp() {};
     void Set(TUint aBlockSize, const TInt64& aNumberBlocks);
     void Encode(TDes8& aBuffer) const;
