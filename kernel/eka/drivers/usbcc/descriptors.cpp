@@ -603,8 +603,11 @@ TInt TUsbcOtgDescriptor::Construct(TBool aHnpSupport, TBool aSrpSupport)
 	SetBufferPointer(iBuf);
 	iBuf[0] = iBuf.Size();									// bLength
 	iBuf[1] = KUsbDescType_Otg;								// bDescriptorType
-	iBuf[2] = (aHnpSupport ? KUsbOtgAttr_HnpSupp : 0) |
-		(aSrpSupport ? KUsbOtgAttr_SrpSupp : 0);			// bmAttributes
+  // B HNP not supported which is temporarily hard coded here. 
+	iBuf[2] = ( aHnpSupport ? 0 : 0 ) | ( aSrpSupport ? KUsbOtgAttr_SrpSupp : 0 );			// bmAttributes			
+	iBuf[3] = KUsbOtgDesc_bcdOTG & 0x00ff;
+  iBuf[4] = ( KUsbOtgDesc_bcdOTG >> 8 ) & 0x00ff;
+		
 	return KErrNone;
     }
 

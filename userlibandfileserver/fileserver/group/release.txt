@@ -1,3 +1,19 @@
+Version 2.00.4003
+=================
+(Made by vfebvre 21/09/2010)
+
+1.	paconway
+	1.	ou1cimx1#581599 [MCL][BRIDGE] F32tests T_VIRUS fails
+
+
+Version 2.00.4002
+=================
+(Made by vfebvre 20/09/2010)
+
+1.	migubarr
+	1.	ou1cimx1#558675 Inefficiencies in File Server session disconnection
+
+
 Version 2.00.4001
 =================
 (Made by vfebvre 14/09/2010)

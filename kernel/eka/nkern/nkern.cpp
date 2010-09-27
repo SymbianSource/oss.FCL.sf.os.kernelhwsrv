@@ -1,4 +1,4 @@
-// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1998-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -201,6 +201,7 @@ EXPORT_C void NKern::UnlockSystem()
 	NKern::Lock();
 	TheScheduler.iLock.Signal();
 	NKern::Unlock();
+	CHECK_PRECONDITIONS(MASK_THREAD_STANDARD,"NKern::UnlockSystem");
 	}
 
 
@@ -446,6 +447,7 @@ EXPORT_C void NKern::WaitForAnyRequest()
 	NKern::Lock();
 	pC->iRequestSemaphore.Wait();
 	NKern::Unlock();
+	CHECK_PRECONDITIONS(MASK_THREAD_STANDARD,"NKern::WaitForAnyRequest");
 	}
 #endif
 
@@ -508,6 +510,7 @@ EXPORT_C void NKern::FSSignal(NFastSemaphore* aSem)
 	NKern::Lock();
 	aSem->Signal();
 	NKern::Unlock();
+	CHECK_PRECONDITIONS(MASK_INTERRUPTS_ENABLED|MASK_NOT_ISR,"NKern::FSSignal(NFastSemaphore*)");
 	}
 
 
@@ -524,6 +527,7 @@ EXPORT_C void NKern::FSSignal(NFastSemaphore* aSem)
  */
 EXPORT_C void NKern::FSSignal(NFastSemaphore* aSem, NFastMutex* aMutex)
 	{
+	CHECK_PRECONDITIONS(MASK_INTERRUPTS_ENABLED|MASK_NOT_ISR,"NKern::FSSignal(NFastSemaphore*, NFastMutex*)");
 	if (!aMutex)
 		aMutex=&TheScheduler.iLock;
 	__KTRACE_OPT(KNKERN,DEBUGPRINT("NKern::FSSignal %m +FM %M",aSem,aMutex));
@@ -531,6 +535,7 @@ EXPORT_C void NKern::FSSignal(NFastSemaphore* aSem, NFastMutex* aMutex)
 	aSem->Signal();
 	aMutex->Signal();
 	NKern::Unlock();
+	CHECK_PRECONDITIONS(MASK_INTERRUPTS_ENABLED|MASK_NOT_ISR,"NKern::FSSignal(NFastSemaphore*, NFastMutex*)");
 	}
 
 
@@ -555,6 +560,7 @@ EXPORT_C void NKern::FSSignalN(NFastSemaphore* aSem, TInt aCount)
 	NKern::Lock();
 	aSem->SignalN(aCount);
 	NKern::Unlock();
+	CHECK_PRECONDITIONS(MASK_INTERRUPTS_ENABLED|MASK_NOT_ISR,"NKern::FSSignalN(NFastSemaphore*, TInt)");
 	}
 
 
@@ -572,6 +578,7 @@ EXPORT_C void NKern::FSSignalN(NFastSemaphore* aSem, TInt aCount)
  */
 EXPORT_C void NKern::FSSignalN(NFastSemaphore* aSem, TInt aCount, NFastMutex* aMutex)
 	{
+	CHECK_PRECONDITIONS(MASK_INTERRUPTS_ENABLED|MASK_NOT_ISR,"NKern::FSSignalN(NFastSemaphore*, TInt, NFastMutex*)");
 	if (!aMutex)
 		aMutex=&TheScheduler.iLock;
 	__KTRACE_OPT(KNKERN,DEBUGPRINT("NKern::FSSignalN %m %d + FM %M",aSem,aCount,aMutex));
@@ -579,6 +586,7 @@ EXPORT_C void NKern::FSSignalN(NFastSemaphore* aSem, TInt aCount, NFastMutex* aM
 	aSem->SignalN(aCount);
 	aMutex->Signal();
 	NKern::Unlock();
+	CHECK_PRECONDITIONS(MASK_INTERRUPTS_ENABLED|MASK_NOT_ISR,"NKern::FSSignalN(NFastSemaphore*, TInt, NFastMutex*)");
 	}
 
 

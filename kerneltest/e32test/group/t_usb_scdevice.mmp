@@ -56,7 +56,8 @@ LIBRARY     EFSRV.LIB t_usb_transfersrv.lib
 
 CAPABILITY    ALL
 
-
+// stack size 32KB
+EPOCSTACKSIZE 0x8000
 // Larger user heap than default: maximum = 16MB
 EPOCHEAPSIZE  0x1000 0x01000000
 

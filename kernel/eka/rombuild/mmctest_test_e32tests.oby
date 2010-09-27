@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of the License "Eclipse Public License v1.0"
@@ -36,7 +36,7 @@
 files=
 
 #ifdef PAGED_ROM
-data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\gentestpaged.txt			Test\test_paged.cpp paging_unmovable
+data=gentestpaged.txt			Test\test_paged.cpp paging_unmovable
 #endif
 
 #include <rom\##VARIANT##\kernel.iby>
@@ -56,7 +56,7 @@ data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\gentestpaged.txt			Test\test_pa
 data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_ldrtst.exe			sys\bin\t_ldrtst.exe
 
 
-data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\gentestpaged.txt			Test\test_paged1.cpp paging_unmovable
+data=gentestpaged.txt			Test\test_paged1.cpp paging_unmovable
 
 // scripts
 #if !defined(MANUALROM)
@@ -73,7 +73,7 @@ data=EPOCROOT##epoc32\rom\##VARIANT##\mmcdemandpagingf32tests.bat				\test\mmcde
 
 #ifdef WITH_COMP
 #ifdef PAGED_ROM
-data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\gentestnonpaged.txt			Test\test_unpaged.cpp	unpaged paging_unmovable
+data=gentestnonpaged.txt			Test\test_unpaged.cpp	unpaged paging_unmovable
 #endif
 
 rofsname = dir.rofs
@@ -100,7 +100,7 @@ data=EPOCROOT##epoc32\Release\##KMAIN##\##BUILD##\minkda.ldd			\sys\bin\minkda.l
 
 #ifndef WITH_COMP
 #ifdef PAGED_ROM
-data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\gentestnonpaged.txt			Test\test_unpaged.cpp	unpaged paging_unmovable
+data=gentestnonpaged.txt			Test\test_unpaged.cpp	unpaged paging_unmovable
 #endif
 #endif
 

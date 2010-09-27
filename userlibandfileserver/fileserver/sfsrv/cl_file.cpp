@@ -246,6 +246,7 @@ EFSRV_EXPORT_C TInt RFile::Duplicate(const RFile& aFile, TOwnerType aType)
 	r = aFile.DuplicateHandle(dupSubSessionHandle);
 	if (r != KErrNone)
 		{
+		fs.Close();
 		OstTrace1(TRACE_BORDER, EFSRV_EFILEDUPLICATERETURN2, "r %d", r);
 		return r;
 		}

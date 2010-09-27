@@ -31,8 +31,6 @@ const TInt KFinaliseTimerPeriod = 10 * 1000 * 1000;	// default 10S finalisation 
 
 TFsDriveThread FsThreadManager::iFsThreads[KMaxDrives];
 TUint FsThreadManager::iMainId=0;
-CDisconnectThread* FsThreadManager::iDisconnectThread=NULL;
-TUint FsThreadManager::iDisconnectThreadId=0;
 
 TFsDriveThread::TFsDriveThread()
 //
@@ -53,34 +51,6 @@ TFsPluginThread::TFsPluginThread()
 	TInt r=iPluginLock.CreateLocal();
 	iDriveNumber= KMaxDrives+1;
 	__ASSERT_ALWAYS(r==KErrNone,Fault(EFsThreadConstructor));
-	}
-
-TInt FsThreadManager::CreateDisconnectThread()
-//
-// Called just once at startup
-//
-	{
-	__PRINT(_L("Create disconnect thread"));
-	TRAPD(r,iDisconnectThread=CDisconnectThread::NewL());
-	if(r!=KErrNone)
-		return(r);
-	TRAP(r,iDisconnectThreadId=iDisconnectThread->StartL());
-	if(r!=KErrNone)
-		{
-		delete(iDisconnectThread);
-		iDisconnectThread=NULL;
-		iDisconnectThreadId=0;
-		}
-	__THRD_PRINT2(_L("iDisconnectThread=0x%x id=0x%x"),iDisconnectThread,iDisconnectThreadId);
-	return(r);
-	}
-
-TBool FsThreadManager::IsDisconnectThread()
-//
-// Return ETrue if the calling thread is the disconnect thread
-//
-	{
-	return(iDisconnectThreadId==RThread().Id());
 	}
 
 
@@ -726,31 +696,6 @@ TInt CDriveThread::DoThreadInitialise()
 	return(RThread::RenameMe(name));
 	}
 
-void CDriveThread::CompleteSessionRequests(CSessionFs* aSession, TInt aValue)
-//
-//
-//
-	{
-	__THRD_PRINT1(_L("CDriveThread::CompleteSessionReqeusts() drive=%d"),iDriveNumber);
-	iListLock.Wait();
-	TDblQueIter<CFsRequest> q(iList);
-	CFsRequest* pR;
-	while((pR=q++)!=NULL)
-		{
-		if(pR->Session()==aSession)
-			{
-			pR->iLink.Deque();
-			iListLock.Signal();
-			pR->Complete(aValue);
-			iListLock.Wait();
-			// set iterator back to head of queue in case Complete() has itself removed requests from the queue
-			q.SetToFirst();
-			}
-		}
-	iListLock.Signal();
-	__THRD_PRINT(_L("session requests completed"));
-	}
-
 
 void CDriveThread::CompleteReadWriteRequests()
 	{
@@ -865,57 +810,6 @@ TInt CDriveThread::FinaliseTimerEvent(TAny* aSelfP)
 	}
 
 
-CDisconnectThread::~CDisconnectThread()
-//
-//
-//
-	{
-	if(iRequest)
-		delete(iRequest);
-	}
-
-
-CDisconnectThread* CDisconnectThread::NewL()
-//
-//
-//
-	{
-	__THRD_PRINT(_L("CDisconnectThread::NewL()"));
-	CDisconnectThread* pT=new(ELeave) CDisconnectThread;
-	TInt r=pT->Initialise();
-	if(r!=KErrNone)
-		{
-		delete(pT);
-		User::Leave(r);
-		}
-	return(pT);
-	}
-
-TUint CDisconnectThread::StartL()
-//
-//
-//
-	{
-	__PRINT(_L("CDisconnectThread::StartL()"));
-	iRequest = new(ELeave) CFsInternalRequest;
-	__THRD_PRINT1(_L("internal request = 0x%x"),iRequest);
-	iRequest->Set(CancelSessionOp,NULL);	
-	
-	RThread t;
-	TInt r=DoStart(t);
-	if(r!=KErrNone)
-		{
-		delete(iRequest);
-		iRequest=NULL;
-		User::Leave(r);
-		}
-	iRequest->SetThreadHandle(t.Handle());
-	__THRD_PRINT1(_L("CDisconnect::StartL() handle=%d"),t.Handle());
-	iRequest->SetAllocated();
-	TUint id=t.Id();
-	return(id);
-	}
-
 
 CPluginThread::CPluginThread(CFsPlugin& aPlugin, RLibrary aLibrary)
   : iPlugin(aPlugin), iLib(aLibrary)
@@ -966,23 +860,6 @@ TUint CPluginThread::StartL()
 	return(id);
 	}
 
-void CPluginThread::CompleteSessionRequests(CSessionFs* aSession, TInt aValue)
-	{
-	__THRD_PRINT(_L("CPluginThread::CompleteSessionRequests()"));
-	iListLock.Wait();
-	TDblQueIter<CFsRequest> q(iList);
-	CFsRequest* pR;
-	while((pR=q++)!=NULL)
-		{
-		if(pR->Session()==aSession)
-			{
-			pR->iLink.Deque();
-			pR->Complete(aValue);
-			}
-		}
-	iListLock.Signal();
-	__THRD_PRINT(_L("session requests completed"));
-	}
 
 TInt CPluginThread::DoThreadInitialise()
 	{

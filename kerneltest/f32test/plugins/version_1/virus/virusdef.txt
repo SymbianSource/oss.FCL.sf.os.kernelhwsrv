@@ -1,7 +1,1 @@
-startdef:virus:enddef
-startdef:potato:enddef
-startdef:carrot:enddef
-startdef:infected:enddef
-startdef:blahblah:enddef
-startdef:fish:enddef
-
+:virus;:potato;:carrot;:infected;:blahblah;:fish;

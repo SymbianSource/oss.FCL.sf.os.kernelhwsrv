@@ -729,13 +729,6 @@ public:
 	static TInt Complete(CFsRequest* aRequest);
 	};
 
-class TFsCancelSession
-	{
-public:
-	static TInt Initialise(CFsRequest* aRequest);
-	static TInt DoRequestL(CFsRequest* aRequest);
-	};
-
 class TFsFlushDirtyData
 	{
 public:

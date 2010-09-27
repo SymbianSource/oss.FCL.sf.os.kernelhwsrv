@@ -1447,6 +1447,11 @@ TInt CActiveControl::ProcessEp0ControlPacket()
 					SetupDescriptors(iLddPtr, &iPort[0],value);
 					StartMassStorage(&iPort[0]);
 
+#ifdef USB_SC
+					r = iPort[0].OpenEndpoint(iEp0Buf,0);
+					test_KErrNone(r);
+#endif
+
 					OpenStackIfOtg();
 					test.Next (_L("Enumeration..."));
 					r = ReEnumerate();

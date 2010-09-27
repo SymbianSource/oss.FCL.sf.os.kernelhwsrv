@@ -92,4 +92,4 @@ EXPORTS
 	_ZNK17TUsbOTGDescriptor10AttributesEv @ 91 NONAME
 	_ZNK17TUsbOTGDescriptor12HNPSupportedEv @ 92 NONAME
 	_ZNK17TUsbOTGDescriptor12SRPSupportedEv @ 93 NONAME
-
+        _ZNK17TUsbOTGDescriptor6BcdOTGEv @ 94 NONAME

@@ -22,10 +22,13 @@
 #include "sf_notifier.h"
 #endif //SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION	
 
+TInt CancelAsyncRequests(CSessionFs* aSession);
+
+
 CSessionFs::CSessionFs()
 	       :iSessionFlags((TInt)EFsSessionFlagsAll), 
           iReservedDriveAccess(KReservedDriveAccessArrayGranularity, _FOFF(TReservedDriveAccess, iDriveNumber)),
-	       iId(0)
+	       iId(0), iAccessCount(1)
 	{
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)
     __e32_atomic_add_ord32(&SessionCount, 1);
@@ -41,6 +44,13 @@ CSessionFs::~CSessionFs()
 	{
 	__PRINT1(_L("CSessionFs::~CSessionFs() deleting... = 0x%x"),this);
 		
+	FsNotify::CancelSession(this);
+
+#ifdef SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION
+	FsNotificationManager::RemoveNotificationRequest(this);
+#endif //SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION
+
+
 	//take out all the reserved space set by this session
 	while(iReservedDriveAccess.Count())
 		{
@@ -65,12 +75,40 @@ CSessionFs::~CSessionFs()
 	
 	delete iPath;
 	iSessionFlagsLock.Close();
-	if(iDisconnectRequest)
-		delete(iDisconnectRequest);
 
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)
     __e32_atomic_add_ord32(&SessionCount, (TUint32) -1);
 #endif
+	}
+
+void CSessionFs::Close()
+	{
+	TheFileServer->SessionQueueLockWait();
+
+	if (iAccessCount == 1)
+		{
+		// close the objects owned by this session 
+		// NB closing a CFileShare may allocate a request to flush dirty data which will
+		// in turn increment iAccessCount on this session
+		if (iHandles)
+			{
+			// Cancel any ASYNC requests belonging to this session BEFORE 
+			// CSessionFs is deleted to avoid a KERN-EXEC 44 (EBadMessageHandle)
+			CancelAsyncRequests(this);
+			delete iHandles;
+			iHandles = NULL;
+			}
+		}
+
+	if (__e32_atomic_tas_ord32(&iAccessCount, 1, -1, 0) == 1)
+		{
+		RMessage2 message = iMessage;
+		delete this;
+		// NB Must complete the message AFTER the session has been deleted...
+		message.Complete(KErrNone);
+		}
+
+	TheFileServer->SessionQueueLockSignal();
 	}
 
 void CSessionFs::CreateL()
@@ -83,12 +121,6 @@ void CSessionFs::CreateL()
 	iHandles=CFsObjectIx::NewL();
 	TInt r = iSessionFlagsLock.CreateLocal();
 	User::LeaveIfError(r);
-	RMessage2 m;
-
-	iDisconnectRequest=new(ELeave) CFsDisconnectRequest;
-	iDisconnectRequest->Set(m,SessionDisconnectOp,this);
-
-
 	}
 
 TInt CSessionFs::CurrentDrive()
@@ -144,9 +176,10 @@ void CSessionFs::Disconnect(const RMessage2& aMessage)
 	__THRD_PRINT1(_L("CSessionFs::Disconnect() 0x%x"),this);
 
 	iHandles->CloseMainThreadObjects();
-	iDisconnectRequest->SetMessage((RMessage2&)aMessage);
+	iMessage = aMessage;
 
-	iDisconnectRequest->Dispatch();
+	// close the session - if there are no requests using this session then the session will be freed
+	Close();
 	}
 
 
@@ -477,107 +510,6 @@ TInt CancelAsyncRequests(CSessionFs* aSession)
 	}
 
 
-
-TInt TFsCancelSession::DoRequestL(CFsRequest* aRequest)
-	{
-	__CHECK_DRIVETHREAD(aRequest->DriveNumber());
-
-	// Cancel any outstanding requests
-	CDriveThread* pT=NULL;
-	TInt r=FsThreadManager::GetDriveThread(aRequest->DriveNumber(), &pT);
-	if(r==KErrNone)
-		pT->CompleteSessionRequests(aRequest->Session(),KErrCancel);
-	// We must also cancel any ASYNC requests belonging to this session BEFORE 
-	// ~CSessionFs() is called to avoid a KERN-EXEC 44 (EBadMessageHandle)
-	CancelAsyncRequests(aRequest->Session());
-	return(r);
-	}
-
-TInt TFsCancelSession::Initialise(CFsRequest* /*aRequest*/)
-	{
-	return(KErrNone);
-	}
-
-TInt TFsSessionDisconnect::DoRequestL(CFsRequest* aRequest)
-	{
-	__PRINT(_L("TFsSessionDisconnect::DoRequestL()"));
-	__ASSERT_DEBUG(FsThreadManager::IsDisconnectThread(),Fault(ESessionDisconnectThread1));
-	CDisconnectThread* pT=FsThreadManager::GetDisconnectThread();
-	
-	// Complete requests on all plugins
-	CFsInternalRequest* pR=pT->GetRequest();
-	FsPluginManager::CompleteSessionRequests(aRequest->Session(), KErrCancel, pR);
-
-	// ...and on all drives
-	for(TInt i=0;i<KMaxDrives;++i)
-		{
-		FsThreadManager::LockDrive(i);
-		if(!FsThreadManager::IsDriveAvailable(i,EFalse)||FsThreadManager::IsDriveSync(i,EFalse))
-			{
-			FsThreadManager::UnlockDrive(i);
-			continue;
-			}
-		pR->Set(CancelSessionOp,aRequest->Session());
-		pR->SetDriveNumber(i);
-		pR->Status()=KRequestPending;
-		pR->Dispatch();
-		FsThreadManager::UnlockDrive(i);
-		User::WaitForRequest(pR->Status());
-		// check request completed or cancelled (by file system dismount which completes requests with KErrNotReady)
-		__ASSERT_ALWAYS(pR->Status().Int()==KErrNone||pR->Status().Int()==KErrNotReady,Fault(ESessionDisconnectThread2));
-		__THRD_PRINT2(_L("cancel session requests on drive %d r=%d"),i,pR->Status().Int());
-
-		if (TFileCacheSettings::Flags(i) & (EFileCacheWriteEnabled | EFileCacheWriteOn))
-			{
-			FsThreadManager::LockDrive(i);
-			if(!FsThreadManager::IsDriveAvailable(i,EFalse)||FsThreadManager::IsDriveSync(i,EFalse))
-				{
-				FsThreadManager::UnlockDrive(i);
-				continue;
-				}
-
-			// Flush dirty data
-			pR->Set(FlushDirtyDataOp,aRequest->Session());
-			pR->SetDriveNumber(i);
-			pR->Status()=KRequestPending;
-			pR->Dispatch();
-			FsThreadManager::UnlockDrive(i);
-			User::WaitForRequest(pR->Status());
-			// check request completed or cancelled (by file system dismount which completes requests with KErrNotReady)
-			__ASSERT_ALWAYS(pR->Status().Int()==KErrNone||pR->Status().Int()==KErrNotReady,Fault(ESessionDisconnectThread2));
-			__THRD_PRINT2(_L("Flush dirty data on drive %d r=%d"),i,pR->Status().Int());
-			}
-
-		}
-	FsNotify::CancelSession(aRequest->Session());
-	
-#ifdef SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION
-	FsNotificationManager::RemoveNotificationRequest(aRequest->Session());
-#endif //SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION
-
-
-	// don't delete session here, will be done in CFsDisconnectRequest::Complete()
-	return(KErrNone);
-	}
-
-TInt TFsSessionDisconnect::Initialise(CFsRequest* /*aRequest*/)
-	{
-	return(KErrNone);
-	}
-
-TInt TFsCancelPlugin::DoRequestL(CFsRequest* aRequest)
-	{
-	//__ASSERT_DEBUG(FsPluginManager::IsPluginThread(),Fault(EFsPluginThreadError));
-	FsPluginManager::CancelPlugin(aRequest->iCurrentPlugin,aRequest->Session());
-	TInt err = aRequest->iCurrentPlugin->SessionDisconnect(aRequest->Session());
-	return(err);
-	}
-
-TInt TFsCancelPlugin::Initialise(CFsRequest* /*aRequest*/)
-	{
-	// Notify plugin of session disconnect
-	return(KErrNone);
-	}
 
 TInt TFsSetSessionFlags::DoRequestL(CFsRequest* aRequest)
 	{

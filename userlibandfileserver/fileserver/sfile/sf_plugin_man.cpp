@@ -205,28 +205,6 @@ void FsPluginManager::DismountPlugin(CFsPluginFactory& aPluginFactory,TInt aPos)
 	aPluginFactory.DecrementMounted();
 	}
 
-/*
- * This will iterate through a plugins request queue and 
- * search for the first occurance it finds of a CancelPluginOp
- * request.
- */
-void FsPluginManager::GetNextCancelPluginOpRequest(CPluginThread* aPluginThread, CFsRequest*& aCancelPluginRequest)
-    {
-    __THRD_PRINT(_L("FsPluginManager::GetNextCancelPluginOpRequest"));
-    
-    TDblQueIter<CFsRequest> iter(aPluginThread->iList);
-    CFsRequest* request = NULL;
-
-    while((request=iter++)!=NULL)
-        {
-        if(request->Operation()->iFunction == KCancelPlugin)
-            {
-            aCancelPluginRequest = request;
-            break;
-            }
-        }
-    }
- 
 
 
 
@@ -248,100 +226,51 @@ void FsPluginManager::TransferRequests(CPluginThread* aPluginThread)
 	 * We are transferring requests up and down the chain
 	 * because this plugin is being removed.
 	 * 
-	 * There is a potential problem when one of the outstanding requests
-	 * is CancelPluginOp which is called when the Session is being closed.
-	 * The CancelPluginOp will try to cancel all of the requests on a plugin's
-	 * queue which is associated with that session.
-	 * DismountPlugin(and thus TransferRequests) is trying to preserve the requests
-	 * by passing them along to the Next/Previous plugins. 
-	 * 
-	 * If there is a cancel in the chain we must NOT pass any requests to Previous Plugins 
-	 * as these have already had their chains emptied.
-	 * We should also be wary of passing requests up the chain as they will simply be cancelled 
-	 * somewhere closer to the drive [thread].
-	 * 
-	 * Therefore, we shall check whether there is a KCancelPlugin op in the 
-	 * chain first. 
-     * If there is a cancelPluginOp in the chain, we will cancel of the requests 
-     * that are associated with that session.
-     * 
-     * After that is out of the way we preserve the remaining requests for different sessions by
-     * passing them on.
+	 * ToDo: This next 'while' might be able to be replaced with a call to
+	 * DispatchToPlugin/DispatchToDrive instead.
 	 */
-	if(!aPluginThread->iList.IsEmpty())
+	while(!aPluginThread->iList.IsEmpty())
 	    {
-	    CFsRequest* cancelRequest = NULL;
-	    //For every CancelPluginOp 
-	    while(FsPluginManager::GetNextCancelPluginOpRequest(aPluginThread, cancelRequest), cancelRequest!=NULL)
+	    CFsRequest* pR=aPluginThread->iList.First();
+	    CFsMessageRequest& mR = *(CFsMessageRequest*) pR;
+	    pR->iLink.Deque();
+	    pR->iCurrentPlugin=NULL;
+
+	    if(pR->IsPluginSpecific())
 	        {
-	        RDebug::Print(_L("Transferring Plugin Requests - CancelPluginOp"));
-	        TDblQueIter<CFsRequest> iter(aPluginThread->iList);
-	        CFsRequest* request = NULL;
-	        //For every request
-	        while((request=iter++)!=NULL)
-	            {
-	            if(request->Session() == cancelRequest->Session() && request != cancelRequest)
-	                {
-	                request->iLink.Deque();
-	                request->Complete(KErrCancel);
-	                }
-	            }
-	        cancelRequest->iLink.Deque();
-	        cancelRequest->Complete(KErrNone);
-	        cancelRequest = NULL;
+	        pR->Complete(KErrCancel);
+	        continue;
 	        }
 
-	    /*
-	     * Now that all requests that were to be cancelled have been cancelled,
-	     * we can now go about moving the remaining ones on to , or back to, 
-	     * the appropriate next or previous plugins.
-	     * 
-	     * ToDo: This next 'while' might be able to be replaced with a call to
-	     * DispatchToPlugin/DispatchToDrive instead.
-	     */
-	    while(!aPluginThread->iList.IsEmpty())
+	    if(pR->IsPostOperation())
 	        {
-	        CFsRequest* pR=aPluginThread->iList.First();
-	        CFsMessageRequest& mR = *(CFsMessageRequest*) pR;
-	        pR->iLink.Deque();
-	        pR->iCurrentPlugin=NULL;
+	        //[set the plugin to] pass the request backwards in the chain
+	        PrevPlugin(pR->iCurrentPlugin, &mR);
+	        }
+	    else //IsPreOperations
+	        {
+	        //[set the plugin to] pass the request forwards in the chain
+	        NextPlugin(pR->iCurrentPlugin, &mR);
+	        }
 
-	        if(pR->IsPluginSpecific())
+	    if(pR->iCurrentPlugin)
+	        {
+	        pR->iCurrentPlugin->iThreadP->DeliverBack(pR);
+	        }
+	    else
+	        {
+	        if(!pR->IsPostOperation() && (pR->DriveNumber()>=EDriveA && pR->DriveNumber()<=EDriveZ))
 	            {
-	            pR->Complete(KErrCancel);
-	            continue;
-	            }
-
-	        if(pR->IsPostOperation())
-	            {
-	            //[set the plugin to] pass the request backwards in the chain
-	            PrevPlugin(pR->iCurrentPlugin, &mR);
-	            }
-	        else //IsPreOperations
-	            {
-	            //[set the plugin to] pass the request forwards in the chain
-	            NextPlugin(pR->iCurrentPlugin, &mR);
-	            }
-
-	        if(pR->iCurrentPlugin)
-	            {
-	            pR->iCurrentPlugin->iThreadP->DeliverBack(pR);
+	            //Deliver to drive thread
+	            CDriveThread* dT=NULL;
+	            TInt r=FsThreadManager::GetDriveThread(pR->DriveNumber(),&dT);
+	            __ASSERT_ALWAYS(r==KErrNone && dT,Fault(EFsDriveThreadError));
+	            CRequestThread* pT = (CRequestThread*)dT;
+	            pT->DeliverBack(pR);
 	            }
 	        else
 	            {
-	            if(!pR->IsPostOperation() && (pR->DriveNumber()>=EDriveA && pR->DriveNumber()<=EDriveZ))
-	                {
-	                //Deliver to drive thread
-	                CDriveThread* dT=NULL;
-	                TInt r=FsThreadManager::GetDriveThread(pR->DriveNumber(),&dT);
-	                __ASSERT_ALWAYS(r==KErrNone && dT,Fault(EFsDriveThreadError));
-	                CRequestThread* pT = (CRequestThread*)dT;
-	                pT->DeliverBack(pR);
-	                }
-	            else
-	                {
-	                pR->Complete(KErrCancel);
-	                }
+	            pR->Complete(KErrCancel);
 	            }
 	        }
 	    }
@@ -624,13 +553,6 @@ TInt FsPluginManager::InitPlugin(CFsPlugin& aPlugin, RLibrary aLibrary)
 	aPlugin.iThreadId = aPlugin.iThreadP->StartL();
 	return err;
 	}
-/**
-Cancels plugin requests
-*/
-void FsPluginManager::CancelPlugin(CFsPlugin* aPlugin,CSessionFs* aSession)
-	{
-	aPlugin->iThreadP->CompleteSessionRequests(aSession,KErrCancel);
-	}
 
 /**
 Gets number of plugins in the plugin stack
@@ -725,48 +647,6 @@ void FsPluginManager::DispatchSync(CFsRequest* aRequest)
 		{
 		aRequest->Process();
 		}
-	}
-
-void FsPluginManager::CompleteSessionRequests(CSessionFs* aSession, TInt aValue, CFsInternalRequest* aRequest)
-/**
- * Complete outstanding requests for the specified session
- */
-	{
-	__PRINT2(_L("FsPluginManager::CompleteSessionRequests(%08x, %d)"), aSession, aValue);
-
-	// Iterate through all plugins, cancelling outstanding session requests
-	aRequest->Set(CancelPluginOp, aSession);
-
-	FsPluginManager::ReadLockChain();
-	TInt count = FsPluginManager::ChainCount();
-	TInt oldCount = count;
-	TInt i;
-	for(i=0; i<count; i++)
-	    {
-	    CFsPlugin* plugin = NULL;
-	    (void) FsPluginManager::Plugin(plugin, i); // (void) as chain is locked.
-	    __ASSERT_DEBUG(plugin, User::Leave(KErrNotFound));
-	    aRequest->iCurrentPlugin = plugin;
-	    aRequest->Status() = KRequestPending;
-	    aRequest->Dispatch();
-	    //Cancel is delivered to the front of the request queue
-	    //so hopefully this wont take too long.
-	    FsPluginManager::UnlockChain();
-	    User::WaitForRequest(aRequest->Status());
-	    FsPluginManager::ReadLockChain();
-	    __ASSERT_ALWAYS(aRequest->Status().Int()==KErrNone||aRequest->Status().Int()==KErrCancel,Fault(ESessionDisconnectThread2));
-	    count = FsPluginManager::ChainCount();
-	    //If a plugin was removed whilst the chain was unlocked we need to make sure we don't skip any plugins
-	    if(count != oldCount)
-	        {
-	        i=0;
-	        oldCount = count;
-	        }
-	    }
-	FsPluginManager::UnlockChain();
-	
-//	RDebug::Print(_L("FsPluginManager::CompleteSessionRequests - CSRs"));
-	iScheduler->CompleteSessionRequests(aSession, aValue);
 	}
 
 

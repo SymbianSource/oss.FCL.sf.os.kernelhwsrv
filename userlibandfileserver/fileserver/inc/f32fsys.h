@@ -251,6 +251,7 @@ public:
 	IMPORT_C TName Name() const;
 	IMPORT_C virtual TBool IsCorrectThread();
 	inline CFsObjectCon* Container() const;
+	inline TInt AccessCount() const;
 protected:
 	void DoClose();
 	TInt UniqueID() const;
@@ -2038,7 +2039,10 @@ public:
 	void InitL();
 	inline CFileCB& File();
 
-	// For serialising async requests 
+	// override CFsDispatchObject::Close() so that we can flush dirty data
+	void Close();
+
+	// For serialising aync requests 
 	TBool RequestStart(CFsMessageRequest* aRequest);
 	void RequestEnd(CFsMessageRequest* aRequest);
 	TBool RequestInProgress() const;

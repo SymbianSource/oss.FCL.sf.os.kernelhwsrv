@@ -73,15 +73,6 @@ TInt CFsObjectCon::UniqueID() const
 TInt CFsObjectCon::Count() const 
 	{return(iCount);}
 
-// class CDisconnectThread
-CFsInternalRequest* CDisconnectThread::GetRequest() 
-	{return(iRequest);}
-
-
-
-
-
-
 
 
 // class CServerFs
@@ -112,6 +103,11 @@ void CSessionFs::SetThreadId(const TThreadId& aId)
 	iId = aId; 
 	}
 
+inline void CSessionFs::Open()
+	{
+	TInt oldCount = __e32_atomic_tas_ord32(&iAccessCount, 1, 1, 0);
+	__ASSERT_ALWAYS(oldCount, Fault(ESessionOpenError));
+	}
 
 // class TReservedDriveAccess
 TReservedDriveAccess::TReservedDriveAccess(TInt aDriveNumber)
@@ -181,11 +177,11 @@ void CFsRequest::SetCompleted(TBool aIsCompleted)
 TUint CFsRequest::ScratchValue() 
 	{return I64LOW(iScratchValue);}
 void CFsRequest::SetScratchValue(const TUint aValue) 
-	{SetAndOpenScratchValue(aValue);}
+	{OpenDispatchObject(aValue);}
 TInt64 CFsRequest::ScratchValue64() 
 	{return(iScratchValue);}
 void CFsRequest::SetScratchValue64(const TInt64& aValue) 
-	{SetAndOpenScratchValue(aValue);}
+	{OpenDispatchObject(aValue);}
 TBool CFsRequest::IsSeparateThread() 
 	{return(!iOperation->IsSync());}
 TBool CFsRequest::IsPostOperation() const
@@ -217,10 +213,6 @@ void CFsRequest::SetState(TReqStates aReqState)
 TBool CFsRequest::DirectToDrive() 
 	{ return(iDirectToDrive); }
 
-TBool CFsRequest::IsFsObjectOpen()
-	{ return iFlags & EFsObjectOpen;}
-void CFsRequest::SetFsObjectOpen(TBool aSet)
-	{aSet? iFlags |= EFsObjectOpen : iFlags &= ~EFsObjectOpen;}
 
 /**
 Returns ETrue if the IPC Message Argument slot is packed with descriptor data for

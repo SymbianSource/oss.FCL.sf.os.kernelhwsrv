@@ -1,4 +1,4 @@
-// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1998-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -12,7 +12,7 @@
 //
 // Description:
 // e32\include\nkern\win32\nk_plat.h
-// 
+//
 // WARNING: This file contains some APIs which are internal and are subject
 //          to change without notice. Such APIs should therefore not be used
 //          outside the Kernel and Hardware Services package.
@@ -23,20 +23,20 @@
  @internalComponent
 */
 
-#ifndef __NK_WIN32_H__
-#define __NK_WIN32_H__
+#ifndef	__NK_WIN32_H__
+#define	__NK_WIN32_H__
 
-#define _CRTIMP			// we want to use the win32 static runtime library
+#define	_CRTIMP			// we want to use the win32 static runtime library
 
-#define WIN32_LEAN_AND_MEAN
-#define _WIN32_WINNT 0x0400
+#define	WIN32_LEAN_AND_MEAN
+#define	_WIN32_WINNT	0x0400
 #include <windows.h>
 
-typedef void (*TExcHandler)(TAny*,TAny*);
+typedef void (*TExcHandler)(TAny*, TAny*);
 
 struct TWin32ExcInfo
 	{
-	enum {EExcInKernel = 0x1};
+	enum { EExcInKernel = 0x1 };
 public:
 	TExcHandler iHandler;
 	TAny* iParam[2];
@@ -67,20 +67,21 @@ public:
 enum TEmulThreadType
 	{
 	EThreadEvent,	// an 'interrupt' thread, interacts with Win32 events
-	EThreadNKern	// a nKern thread, identified by a NThread control block
+	EThreadNKern	// an nKern thread, identified by an NThread control block
 	};
 
 class NThread : public NThreadBase
 	{
 public:
 	typedef void (*TDivert)();
-	enum TWakeup {ERelease,EResume,EResumeLocked,EIdle,EEscaped,EResumeDiverted};
-	enum TSelectCpu {ECpuAll=-1,ECpuSingle=-2};
+	enum TWakeup { ERelease, EResume, EResumeLocked, EIdle, EEscaped, EResumeDiverted };
+	enum TSelectCpu { ECpuAll = -1, ECpuSingle = -2 };
+
 public:
 	TInt Create(SNThreadCreateInfo& aInfo, TBool aInitial);
 	void Stillborn();
 	void DoForceExit();
-//
+
 	IMPORT_C static void Idle();
 	IMPORT_C static void SetProperties(TBool aTrace, TInt aCpu);
 	TBool WakeUp();
@@ -90,10 +91,10 @@ public:
 
 private:
 	static DWORD WINAPI StartThread(LPVOID aParam);
-//
+
 	static void ExitSync();
 	static void ExitAsync();
-//
+
 	static void Exception();
 	static LONG WINAPI ExceptionFilter(EXCEPTION_POINTERS* aExc);
 
@@ -105,74 +106,75 @@ public:
 public:
 	HANDLE iWinThread;
 	DWORD iWinThreadId;
-	HANDLE iScheduleLock;	// event used for scheduling interlock
-	TBool iDiverted;		// flag to indicate that the thread is being diverted
-	TDivert iDivert;		// function to invoke after reschedule, may be null
-	TAny* iDivertReturn;    // return address from diversion
-	TInt iInKernel;			// flag to indicate if the thread is running 'in' the kernel
-	TWakeup iWakeup;		// indicates how to wake up the thread
+	HANDLE iScheduleLock;		// event used for scheduling interlock
+	volatile TInt iInKernel;	// flag to indicate if the thread is running 'in' the kernel
+	TWakeup iWakeup;			// indicates how to wake up the thread
+	TBool iDiverting;			// flag to indicate that the thread is being diverted
+	TDivert iDivertFn;			// function to invoke after reschedule, may be null
+	TAny* iDivertReturn;    	// return address from diversion
 	TLinAddr iUserStackBase;
 	};
 
 IMPORT_C HANDLE CreateWin32Thread(TEmulThreadType aType, LPTHREAD_START_ROUTINE aThreadFunc, LPVOID aPtr, TBool aRun);
-IMPORT_C void StartOfInterrupt();
-IMPORT_C void EndOfInterrupt();
 
 void SchedulerInit(NThread& aInit);
 void SchedulerRegister(NThread& aSelf);
-NThread* SchedulerThread();
-NThread& CheckedCurrentThread();
 void SchedulerLock();
 void SchedulerUnlock();
 void SchedulerEscape();
 void SchedulerReenter();
-void Win32FindNonPreemptibleFunctions();
+NThread* RunningThread();
+NThread& CheckedCurrentThread();
 
-inline void EnterKernel(TBool aCheck=TRUE)
-	{
-	if (++CheckedCurrentThread().iInKernel==1 && aCheck)
-		{
-		NThread& t = CheckedCurrentThread();
-		__NK_ASSERT_ALWAYS(t.iCsCount==0);
-		__NK_ASSERT_ALWAYS(t.iHeldFastMutex==0);
-		__NK_ASSERT_ALWAYS(TheScheduler.iKernCSLocked==0);
-		}
-	}
-
+void EnterKernel(TBool aDiversion = FALSE);
 void LeaveKernel();
+IMPORT_C void StartOfInterrupt();
+IMPORT_C void EndOfInterrupt();
+
+void Win32FindNonPreemptibleFunctions();
 
 IMPORT_C TInt __fastcall Dispatch(TInt aFunction, TInt* aArgs);
 
-typedef TInt (__cdecl *TExecHandler)(TInt,TInt,TInt,TInt);
-typedef void (__cdecl *TPreprocessHandler)(TInt*,TUint32);
+typedef TInt (__cdecl* TExecHandler)(TInt, TInt, TInt, TInt);
+typedef void (__cdecl* TPreprocessHandler)(TInt*, TUint32);
 
 // Emulator nKern scheduling data
 class Win32Interrupt
 	{
 public:
 	void Init();
-	TInt Mask();
-	void Restore(TInt aLevel);
-	void Begin();
-	void End();
-	inline TBool InInterrupt() const
-		{return iInterrupted!=0;}	
+	void BeginInterrupt();
+	void EndInterrupt();
+	TInt MaskInterrupts(TBool aPreempt);
+	void RestoreInterruptMask(TInt aLevel);
 	void ForceReschedule();
+
+	inline TBool InInterrupt() const
+		{
+		return iInterrupted != 0;
+		}
 	inline TBool InterruptsStatus(TBool aRequest) const
-	{return aRequest?(iLevel==0):(iLevel!=0);}
+		{
+		return aRequest ? (iLevel == 0) : (iLevel != 0);
+		}
+
 private:
-	static void Reschedule(TAny*);
+	static void SchedulerThreadFunction(TAny*);
+
 private:
-	TInt iLock;
-	HANDLE iQ;
-	DWORD iOwner;
-	TInt iLevel;
+	CRITICAL_SECTION iCS;			// protects data below
+	HANDLE iQ;						// semaphore to wait on
+
+	DWORD iOwner;					// controller of the mask
+	TInt iLevel;					// owner's recursion count
+	TInt iWaiting;					// number of waiters
+
 	TBool iRescheduleOnExit;
-	NThread* iInterrupted;
-	NThread iScheduler;
+	NThread* iInterrupted;			// the thread preempted by Begin()
+	NThread iScheduler;				// the dedicated scheduler thread
 	};
 
-extern TBool Win32AtomicSOAW;	// flag to indicate availability of SignalObjectAndWait() API
+extern TBool Win32AtomicSOAW;		// flag to indicate availability of SignalObjectAndWait() API
 extern TBool Win32TraceThreadId;
 extern TInt Win32SingleCpu;
 extern Win32Interrupt Interrupt;
@@ -184,4 +186,60 @@ extern TUint Win32ExcCode;
 
 void FastCounterInit();
 
-#endif
+// Wrappers round Win32 thread control & synchronisation functions ...
+inline void CheckedSuspendThread(HANDLE aWinThread)
+	{
+	TInt suspLevel = (TInt)SuspendThread(aWinThread);
+	__NK_ASSERT_ALWAYS(suspLevel >= 0);
+	}
+
+inline void CheckedResumeThread(HANDLE aWinThread, BOOL once = EFalse)
+	{
+	TInt suspLevel = (TInt)ResumeThread(aWinThread);
+	__NK_ASSERT_ALWAYS(once ? suspLevel == 1 : suspLevel > 0);				// check thread was previously suspended
+	}
+
+inline void CheckedGetThreadContext(HANDLE aWinThread, CONTEXT* aContext)
+	{
+	DWORD r = GetThreadContext(aWinThread, aContext);
+	__NK_ASSERT_ALWAYS(r != 0);
+	}
+
+inline void CheckedSetThreadContext(HANDLE aWinThread, CONTEXT* aContext)
+	{
+	DWORD r = SetThreadContext(aWinThread, aContext);
+	__NK_ASSERT_ALWAYS(r != 0);
+	}
+
+inline void CheckedSetThreadPriority(HANDLE aWinThread, TInt aPriority)
+	{
+	DWORD r = SetThreadPriority(aWinThread, aPriority);
+	__NK_ASSERT_ALWAYS(r != 0);
+	}
+
+inline void CheckedWaitForSingleObject(HANDLE aWaitObject)
+	{
+	DWORD r = WaitForSingleObject(aWaitObject, INFINITE);
+	__NK_ASSERT_ALWAYS(r == WAIT_OBJECT_0);
+	}
+
+inline void CheckedSignalObjectAndWait(HANDLE aToWake, HANDLE aToWaitOn)
+	{
+	DWORD r = SignalObjectAndWait(aToWake, aToWaitOn, INFINITE, FALSE);
+	__NK_ASSERT_ALWAYS(r == WAIT_OBJECT_0);
+	}
+
+inline void CheckedSetEvent(HANDLE aWaitObject)
+	{
+	DWORD r = SetEvent(aWaitObject);
+	__NK_ASSERT_ALWAYS(r != 0);
+	}
+
+inline void CheckedReleaseSemaphore(HANDLE aSemaphore)
+	{
+	DWORD r = ReleaseSemaphore(aSemaphore, 1, NULL);
+	__NK_ASSERT_ALWAYS(r != 0);
+	}
+
+
+#endif	// __NK_WIN32_H__

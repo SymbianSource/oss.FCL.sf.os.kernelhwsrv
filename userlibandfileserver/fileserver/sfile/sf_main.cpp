@@ -78,8 +78,7 @@ void CServerFs::RunL()
 	TInt fn = Message().Function();
 
 	// CServer2::DoConnectL() manipulates iSessionQ & so does CSession2::~CSession2().
-	// Unfortunately the session is deleted from a seperate thread (the disconnect 
-	// thread) so we need a lock to protect it.
+	// Unfortunately the session may be deleted from a drive thread so we need a lock to protect it.
 	if (fn == RMessage2::EConnect)
 		{
 		SessionQueueLockWait();		// lock
@@ -459,8 +458,6 @@ void commonInitialize()
 	DisabledCapabilities=*(SCapabilitySet*)&caps;
 
 	FsThreadManager::SetMainThreadId();
-	r=FsThreadManager::CreateDisconnectThread();
-	__ASSERT_ALWAYS(r==KErrNone,Fault(EMainDisconnectThread));
 
 
 	//

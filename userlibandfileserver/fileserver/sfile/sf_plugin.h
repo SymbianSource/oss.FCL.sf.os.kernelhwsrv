@@ -68,7 +68,6 @@ public:
 
 	static TInt InitPlugin(CFsPlugin& aPlugin, RLibrary aLibrary);
 	static void TransferRequests(CPluginThread* aPluginThread);
-	static void CancelPlugin(CFsPlugin* aPlugin,CSessionFs* aSession);
 	static TInt ChainCount();
 	static TInt Plugin(CFsPlugin*& aPlugin, TInt aPos);
 
@@ -82,11 +81,11 @@ public:
 	static TBool IsPluginConnThread(TThreadId tid, CFsPlugin* aPlugin);
 
 	static void DispatchSync(CFsRequest* aRequest);
-	static void CompleteSessionRequests(CSessionFs* aSession, TInt aValue, CFsInternalRequest* aRequest);
 
 private:
 	static TInt UpdateMountedDrive(CFsPlugin* aPlugin, CFsPluginFactory* aFactory,TInt aDrive);
-	static void GetNextCancelPluginOpRequest(CPluginThread* aPluginThread, CFsRequest*& aCancelPluginRequest);
+
+
 private:
 	static CFsObjectCon* iPluginFactories;
 	static CFsObjectCon* iPluginConns;

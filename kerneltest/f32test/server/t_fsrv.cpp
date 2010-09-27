@@ -210,6 +210,9 @@ static void DisMountRemoteFilesystem()
  	test.Printf(_L("Dismounting the Remote Drive returned %d\n"),r);
  	
  	test_Value(r, r == KErrNone );
+	
+	r=TheFs.RemoveFileSystem(_L("DELAYFS"));
+   	test_KErrNone(r);
 	}
 
 

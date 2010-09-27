@@ -35,6 +35,7 @@
 #include <f32plugin.h>
 #include "f32trace.h"
 
+
 #define __PRINT1TEMP_ALWAYS(t,a) {{TBuf<KMaxFileName>temp(a);RDebug::Print(t,&temp);}}
 #define __PRINT2TEMP_ALWAYS(t,a,b) {{TBuf<KMaxFileName>temp(b);RDebug::Print(t,a,&temp);}}
 #define __PRINT3TEMP_ALWAYS(t,a,b,c) {{TBuf<KMaxFileName>temp(c);RDebug::Print(t,a,b,&temp);}}
@@ -452,7 +453,8 @@ enum TFsFault
 	ETooManyDrivesPerSocket,
 	ENotificationFault,
 	EFsObjectOpen,
-	EContainerHeapCorruptionOnRemove
+	EContainerHeapCorruptionOnRemove,
+	ESessionOpenError,
 	};
 
 
@@ -546,7 +548,6 @@ public:
 	void DoCancel();
 	void RunL();
 	void Dispatch(CFsRequest* aRequest);
-	void CompleteSessionRequests(CSessionFs* aSession, TInt aValue);
 private:
 	CFsSyncMessageScheduler();
 	void ConstructL();
@@ -769,7 +770,6 @@ NONSHARABLE_CLASS(CDriveThread) : public CRequestThread
 	{
 public:
 	void CompleteReadWriteRequests();
-	void CompleteSessionRequests(CSessionFs* aSession, TInt aValue);
 	void CompleteClientRequests(TInt aValue);
 	TBool IsRequestWriteable();
 	TBool IsSessionNotifyUser();
@@ -792,19 +792,6 @@ friend class FsThreadManager;
 
 class CFsInternalRequest;
 
-NONSHARABLE_CLASS(CDisconnectThread) : public CRequestThread
-	{
-public:
-	inline CFsInternalRequest* GetRequest();
-private:
-	static CDisconnectThread* NewL();
-	TUint StartL();
-	~CDisconnectThread();	
-private:
-	CFsInternalRequest* iRequest;
-friend class FsThreadManager;
-	};
-
 class CFsPlugin;
 NONSHARABLE_CLASS(CPluginThread) : public CRequestThread
 	{
@@ -812,8 +799,6 @@ public:
 	CPluginThread(CFsPlugin& aPlugin, RLibrary aLibrary);
 	~CPluginThread();
 	
-	void CompleteSessionRequests(CSessionFs* aSession, TInt aValue);
-
 	/** @prototype */
 	void OperationLockWait();
 
@@ -852,9 +837,6 @@ public:
 class FsThreadManager
 	{
 public:
-	static TInt CreateDisconnectThread();
-	static inline CDisconnectThread* GetDisconnectThread() {return(iDisconnectThread);}
-	static TBool IsDisconnectThread();
 //
 	static void SetMainThreadId();
 	static TBool IsMainThread();
@@ -879,7 +861,6 @@ private:
 private:
 	static TFsDriveThread iFsThreads[KMaxDrives];
 	static TUint iMainId;
-	static CDisconnectThread* iDisconnectThread;
 	static TUint iDisconnectThreadId;
 	};
 
@@ -905,8 +886,11 @@ NONSHARABLE_CLASS(CSessionFs) : public CSession2
 	{
 public:
 	static CSessionFs* NewL();
-	~CSessionFs();
 	virtual void CreateL();
+
+	inline void Open();
+	void Close();
+
 	TInt CurrentDrive();
 	void ServiceL(const RMessage2& aMessage);
 	TInt CountResources();
@@ -937,6 +921,7 @@ public:
 	void SetReservedAccess(const TInt aDriveNumber, const TBool aReservedAccess);
 private:
 	CSessionFs();
+	~CSessionFs();
 
 private:
 	TInt iResourceCountMark;
@@ -945,11 +930,11 @@ private:
 	RFastLock iSessionFlagsLock;
 	CFsObjectIx* iHandles;
 	HBufC* iPath;
-	CFsMessageRequest* iDisconnectRequest;
 	RArray<TReservedDriveAccess> iReservedDriveAccess;
 	TThreadId iId;
 	TInt iCloseRequestCount;	// number of close requests owned by this sessions on the RequestAllocator close queue
-friend class CFsDisconnectRequest;
+	TInt iAccessCount;
+	RMessage2 iMessage;		// message passed to CSessionFs::Disconnect()
 	};
 
 NONSHARABLE_CLASS(CServerFs) : public CServer2
@@ -1011,7 +996,8 @@ enum TOperationFlags
 		EInternalRequest = 0x02,	// NB Not really used!
 		EParseSrc = 0x04, 
 		EParseDst = 0x08,
-		EFileShare = 0x10,			// Operates on an open file share
+		EFileShare = 0x10,			// Operates on an open file share. NB not currently used
+		EFsDspObj = 0x20,			// Bottom 32 bits of scratch value is a CFsDispatchObject
 		};
 
 class TOperation
@@ -1221,6 +1207,7 @@ public:
 	inline TBool DirectToDrive();
 	inline TBool IsDescData(TInt aMsgNum);
 	inline TInt FsFunction();
+	void Close();	// close the session & dispatch object this request is using
 
 public:
 	CFsRequest();
@@ -1231,9 +1218,11 @@ protected:
 	inline TInt GetError() const;
 	inline void SetPostOperation(TBool aSet);
 
-	inline TBool IsFsObjectOpen();
-	inline void SetFsObjectOpen(TBool aSet);
-	void SetAndOpenScratchValue(const TInt64& aValue);
+
+	void OpenDispatchObject(const TInt64& aValue);	// open the dispatch object this request is using
+	void CloseDispatchObject();
+	void OpenSession(CSessionFs* aSession);			// open the session this request is using
+	void CloseSession();
 
 private:
 	TInt GetSlot(TFsPluginRequest::TF32ArgType aType);
@@ -1260,7 +1249,7 @@ protected:
 		EFreeChanged			= 0x02,		// valid only for EFsFileWrite
 		EPostInterceptEnabled	= 0x04,
 		EPostOperation			= 0x08,
-		EFsObjectOpen			= 0x10,
+		EFsDspObjOpen			= 0x10,		// scratch value (a CFsDispatchObject) has been opened
 		};
 	TUint iFlags;
 
@@ -1379,14 +1368,6 @@ public:
 protected:
 	TParsePool* iPoolSrc;
 	TParsePool* iPoolDest;
-	};
-
-NONSHARABLE_CLASS(CFsDisconnectRequest) : public CFsMessageRequest
-	{
-public:
-	virtual void Process();
-	virtual void Dispatch();
-	virtual void Complete(TInt aError);
 	};
 
 NONSHARABLE_CLASS(CFsInternalRequest) : public CFsRequest
@@ -1721,18 +1702,14 @@ extern SCapabilitySet AllCapabilities;
 extern SCapabilitySet DisabledCapabilities;
 
 const TInt KDispatchObjectClose=KMaxTInt-1;
-const TInt KSessionDisconnect=KMaxTInt-2;
-const TInt KCancelSession=KMaxTInt-3;
-const TInt KCancelPlugin=KMaxTInt-4;
+const TInt KSessionInternalReserved2=KMaxTInt-2;	// not used any more - placeholder
+const TInt KSessionInternalReserved3=KMaxTInt-3;	// not used any more - placeholder
+const TInt KSessionInternalReserved4=KMaxTInt-4;	// not used any more - placeholder
 const TInt KFileShareClose=KMaxTInt-5;
 const TInt KFlushDirtyData=KMaxTInt-6;
 
 const TOperation DispatchObjectCloseOp=	{KDispatchObjectClose,	EInternalRequest,	&TFsCloseObject::Initialise,		NULL,	&TFsCloseObject::DoRequestL			};
-const TOperation SessionDisconnectOp=	{KSessionDisconnect,	EInternalRequest,	&TFsSessionDisconnect::Initialise,	NULL,	&TFsSessionDisconnect::DoRequestL	};
-const TOperation CancelSessionOp=		{KCancelSession,		EInternalRequest,	&TFsCancelSession::Initialise,		NULL,	&TFsCancelSession::DoRequestL		};
-const TOperation CancelPluginOp=		{KCancelPlugin,			EInternalRequest,	&TFsCancelPlugin::Initialise,		NULL,	&TFsCancelPlugin::DoRequestL		};
 const TOperation FileShareCloseOp=		{KFileShareClose,		EInternalRequest,	&TFsCloseFileShare::Initialise,		NULL,	&TFsCloseFileShare::DoRequestL		};
-const TOperation FlushDirtyDataOp=		{KFlushDirtyData,		EInternalRequest,	&TFsFlushDirtyData::Initialise,		NULL,	&TFsFlushDirtyData::DoRequestL		};
 
 extern TBool OpenOnDriveZOnly;
 extern TBool LocalFileSystemInitialized;

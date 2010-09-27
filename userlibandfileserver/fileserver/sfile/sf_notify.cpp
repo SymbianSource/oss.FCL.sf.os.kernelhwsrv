@@ -49,7 +49,7 @@ void CNotifyInfo::Complete(TInt aError)
 //
 	{
 	__PRINT2(_L("CNotifyInfo::Complete 0x%x error=%d"),this,aError);
-	if (iType != EDismount || !iMessage.IsNull())	// Dismount notifiers may be completed but remain in the list
+	if (!iMessage.IsNull())				// Dismount notifiers may be completed but remain in the list
 		{											// until handled by the client or the session is closed.
 		iMessage.Complete(aError);
 		}

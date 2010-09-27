@@ -1,3 +1,29 @@
+Version 2.00.4003
+=================
+(Made by vfebvre 21/09/2010)
+
+1.	jinmowan
+	1.	ou1cimx1#578547 USB e32test code are not smpsafe
+
+2.	y102chen
+	1.	ou1cimx1#563014 MCL NCP build Critical warnings in kerneltest/e32test/device
+
+
+Version 2.00.4002
+=================
+(Made by vfebvre 20/09/2010)
+
+1.	vfebvre
+	1.	ou1cimx1#551193 ENV nandtest_load ROMs cannot be built from outside eka/rombuild
+	2.	ou1cimx1#582734 ENV Extension makefiles cannot be exported and used from the same bld.inf on SBSv1
+
+2.	genwei
+	1.	ou1cimx1#561220 mcl otg2.0 descriptor support, and B HNP not supported
+
+3.	davegord
+	1.	ou1cimx1#532104 Emulator panics with kernel precondition failure
+
+
 Version 2.00.4001
 =================
 (Made by vfebvre 14/09/2010)

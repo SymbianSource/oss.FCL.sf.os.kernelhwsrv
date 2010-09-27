@@ -2772,6 +2772,24 @@ CFileShare::~CFileShare()
 	iFile->Close();
 	}
 
+void CFileShare::Close()
+	{
+	
+	// Flush the write cache before closing the file share
+	// NB If there is any dirty data, then a new request will be allocated which will increase
+	// the reference count on this file share, thus preventing it from being deleted untill all 
+	// data has been flushed
+	if (AccessCount() == 1)
+		{
+		CFileCache* fileCache = File().FileCache();
+		if (fileCache)
+			fileCache->FlushDirty();
+		}
+
+	CFsDispatchObject::Close();
+	}
+
+
 /**
 Check that the media is still mounted.
 

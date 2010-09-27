@@ -150,27 +150,26 @@ TInt CTestVirusHook::ReadVirusDefinitionFile()
 		{
 		ptr.Set(defBuf->Des());
 		ptr.Set(&ptr[bytesParsed], fileSize-bytesParsed, fileSize-bytesParsed);
-		stringBeginPos = ptr.MatchF(_L8("startdef:*:enddef*"));
+		stringBeginPos = ptr.MatchF(_L8(":*;*"));
 
 		if (stringBeginPos < 0)
 			{
 			break;
 			}
 
-		stringBeginPos += 9; //stardef:
+		stringBeginPos += 1; //:
 		stringBeginPos += bytesParsed;
 		ptr.Set(defBuf->Des());
 		ptr.Set(&ptr[stringBeginPos], fileSize-stringBeginPos, fileSize-stringBeginPos);
-		stringEndPos = ptr.MatchF(_L8("*:enddef*"));
+		stringEndPos = ptr.MatchF(_L8("*;*"));
 
 		if (stringEndPos < 0)
 			{
 			break;
 			}
 
-		stringEndPos += 9; //stardef:
 		stringEndPos += bytesParsed;
-		stringLength = stringEndPos - stringBeginPos;
+		stringLength = stringEndPos - stringBeginPos + 1;
 
 		ptr.Set(defBuf->Des());
 		TRAP(r,signatureBuf = HBufC8::NewL(stringLength));
@@ -182,9 +181,9 @@ TInt CTestVirusHook::ReadVirusDefinitionFile()
 		iKnownSignatures[iSignaturesLoaded] = signatureBuf;
 		iSignaturesLoaded++;
 
-		bytesParsed += 9; //startdef:
+		bytesParsed += 1; //:
 		bytesParsed += stringLength;
-		bytesParsed += 9; //:enddef\n
+		bytesParsed += 1; //;
 		}
 
 	//Cleanup

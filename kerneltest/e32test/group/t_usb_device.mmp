@@ -51,6 +51,9 @@ VENDORID      0x70000001
 // 0x101fe1db to pretend to be USB Manager (needed for the OTG drivers)
 UID 0x0 0x101fe1db
 
+// stack size 32KB
+EPOCSTACKSIZE 0x8000
+
 // Larger user heap than default: maximum = 16MB
 EPOCHEAPSIZE  0x1000 0x01000000
 

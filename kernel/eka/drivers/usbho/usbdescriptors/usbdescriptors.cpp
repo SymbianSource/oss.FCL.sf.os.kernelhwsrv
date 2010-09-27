@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -1130,7 +1130,7 @@ EXPORT_C /*static*/ TUsbOTGDescriptor* TUsbOTGDescriptor::Cast(TUsbGenericDescri
 	// Only cast if correctly indentified as otg descriptor
 	if(	aOriginal &&
 		aOriginal->ibDescriptorType == EOTG &&
-		aOriginal->ibLength == TUsbOTGDescriptor::KSizeInOctets &&
+		TUsbOTGDescriptor::IsValidOTGDescriptorLength( aOriginal->ibLength ) &&
 		aOriginal->iRecognisedAndParsed == ERecognised)
 		{
 		ret = static_cast<TUsbOTGDescriptor*>(aOriginal);
@@ -1157,7 +1157,17 @@ EXPORT_C TBool TUsbOTGDescriptor::SRPSupported() const
     // the TPL.
     return (ParseTUint8(iBlob, EbmAttributes) & 0x01) == 0x01;
     }
-	
+
+EXPORT_C TUint16 TUsbOTGDescriptor::BcdOTG() const
+	{
+    TUint16 bcdOTG = 0x0000;
+    if ( iBlob[EbmLength] > TUsbOTGDescriptor::KSizeInOctets )
+	    {
+        bcdOTG = ( iBlob[EbcdOTG] ) | ( iBlob[EbcdOTG + 1] << 8 );
+	    }
+    return bcdOTG;
+	}
+
 /**
 The parsing routine for OTG descriptors.
 
@@ -1167,13 +1177,14 @@ The parsing routine for OTG descriptors.
 	{
 	TUsbOTGDescriptor* endDes = NULL;
 
+	TUint8 descriptorLength = aUsbDes[KbLengthOffset];
 	const TInt KMinOTGDesDecisionLength = 2;
 	if(	aUsbDes.Length() >= KMinOTGDesDecisionLength &&
 		aUsbDes[KbDescriptorTypeOffset] == EOTG &&
-		aUsbDes[KbLengthOffset] == TUsbOTGDescriptor::KSizeInOctets)
+		TUsbOTGDescriptor::IsValidOTGDescriptorLength( descriptorLength ) )
 		{
 		// Robustness check - check the length field is valid, and that we have enough data.
-		if(aUsbDes.Length() < TUsbOTGDescriptor::KSizeInOctets)
+		if(aUsbDes.Length() < descriptorLength)
 			{
 			User::Leave(KErrCorrupt);
 			}
@@ -1181,10 +1192,10 @@ The parsing routine for OTG descriptors.
 		// Looks ok to be an OTG descriptor.
 		endDes = new(ELeave) TUsbOTGDescriptor;
 		// Set the standard fields
-		endDes->ibLength = TUsbOTGDescriptor::KSizeInOctets;
+		endDes->ibLength = descriptorLength;
 		endDes->ibDescriptorType = EOTG;
 		// Set the blob appropriately
-		endDes->iBlob.Set(aUsbDes.Left(TUsbOTGDescriptor::KSizeInOctets));
+		endDes->iBlob.Set(aUsbDes.Left(descriptorLength));
 
 		// Null the pointers
 		endDes->iFirstChild = NULL;
@@ -1194,7 +1205,7 @@ The parsing routine for OTG descriptors.
 		endDes->iRecognisedAndParsed = ERecognised;
 
 		// Update the data-left-to-parse Symbian descriptor
-		aUsbDes.Set(aUsbDes.Mid(TUsbOTGDescriptor::KSizeInOctets));
+		aUsbDes.Set(aUsbDes.Mid(descriptorLength));
 		}
 
 	return endDes;
@@ -1232,6 +1243,20 @@ The parsing routine for OTG descriptors.
 		}
 	}
 
+/**
+@internalComponent
+*/
+/*static*/ TBool TUsbOTGDescriptor::IsValidOTGDescriptorLength(TUint8 aLength)
+	{
+    TBool ret = EFalse;
+    const TUint8 KOTG13DescriptorLength = 3; //OTG1.3 
+    const TUint8 KOTG20DescriptorLength = 5; //OTG2.0
+    if ( ( aLength == KOTG13DescriptorLength ) || ( aLength == KOTG20DescriptorLength ) )
+        {
+        ret = ETrue;
+        }
+    return ret;
+	}
 
 // ----------------------
 // TUsbStringDescriptor

@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -84,7 +84,7 @@ const TUint KUsbDescSize_Device               = 18;
 const TUint KUsbDescSize_Config               = 9;
 const TUint KUsbDescSize_Interface            = 9;
 const TUint KUsbDescSize_Endpoint             = 7;
-const TUint KUsbDescSize_Otg                  = 3;
+const TUint KUsbDescSize_Otg                  = 5;
 const TUint KUsbDescSize_DeviceQualifier      = 10;
 const TUint KUsbDescSize_OtherSpeedConfig     = 9;
 const TUint KUsbDescSize_InterfaceAssociation = 8;
@@ -137,6 +137,7 @@ const TUint8 KUsbOtgAttr_HnpSupp         = 0x02;
 const TUint8 KUsbOtgAttr_B_HnpEnable     = 0x04;
 const TUint8 KUsbOtgAttr_A_HnpSupport    = 0x08;
 const TUint8 KUsbOtgAttr_A_AltHnpSupport = 0x10;
+const TUint16 KUsbOtgDesc_bcdOTG         = 0x0200;
 
 //
 // Feature Settings

@@ -369,7 +369,9 @@ CFsRequest::~CFsRequest()
 //
 //
 //
-	{}
+	{
+	Close();
+	}
 
 void CFsRequest::Set(const TOperation& aOperation,CSessionFs* aSession)
 //
@@ -380,16 +382,7 @@ void CFsRequest::Set(const TOperation& aOperation,CSessionFs* aSession)
 	SetState(EReqStateInitialise);
 
 	iOperation     = const_cast<TOperation*>(&aOperation);
-	iSession       = aSession;
-	iIsCompleted   = aOperation.IsCompleted();
-	iError         = KErrNone;
-	iDriveNumber   = KDriveInvalid;
-	iCurrentPlugin = NULL;
-	iOwnerPlugin   = NULL;
-	iDirectToDrive = EFalse;
-	iClientThreadId= 0;
-	iFlags &= ~(EFreeChanged | EPostInterceptEnabled | EPostOperation | EFsObjectOpen);
-	iScratchValue = 0;
+	Set(aSession);
 	}
 
 void CFsRequest::Set(CSessionFs* aSession)
@@ -401,7 +394,6 @@ void CFsRequest::Set(CSessionFs* aSession)
 
 	SetState(EReqStateInitialise);
 
-	iSession       = aSession;
 	iIsCompleted   = iOperation->IsCompleted();
 	iError         = KErrNone;
 	iDriveNumber   = KDriveInvalid;
@@ -409,8 +401,11 @@ void CFsRequest::Set(CSessionFs* aSession)
 	iOwnerPlugin   = NULL;
 	iDirectToDrive = EFalse;
 	iClientThreadId= 0;
-	iFlags &= ~(EFreeChanged | EPostInterceptEnabled | EPostOperation | EFsObjectOpen);
+	iFlags &= ~(EFreeChanged | EPostInterceptEnabled | EPostOperation | EFsDspObjOpen);
+
 	iScratchValue = 0;
+
+	OpenSession(aSession);
 	}
 
 
@@ -643,21 +638,50 @@ TInt CFsRequest::Read(TFsPluginRequest::TF32ArgType aType, TInt64& aVal)
 	return KErrNotSupported;
 	}
 
-void CFsRequest::SetAndOpenScratchValue(const TInt64& aValue)
+void CFsRequest::OpenDispatchObject(const TInt64& aValue)
 	{
-	if (IsFsObjectOpen())
-		{
-		((CFsDispatchObject*) I64LOW(iScratchValue))->Close();
-		SetFsObjectOpen(EFalse);
-		}
-	if (I64LOW(aValue) && iOperation && (iOperation->iFlags & EFileShare))
-		{
-		((CFsDispatchObject*) I64LOW(aValue))->Open();
-		SetFsObjectOpen(ETrue);
-		}
+	CloseDispatchObject();
+
 	iScratchValue = aValue;
+
+	if (I64LOW(iScratchValue) && iOperation && (iOperation->iFlags & EFsDspObj))
+		{
+		((CFsDispatchObject*) I64LOW(iScratchValue))->Open();
+		iFlags |= EFsDspObjOpen;
+		}
 	}
 
+void CFsRequest::CloseDispatchObject()
+	{
+	if (iFlags & EFsDspObjOpen)
+		{
+		((CFsDispatchObject*) I64LOW(iScratchValue))->Close();
+		iFlags &= ~EFsDspObjOpen;
+		}
+	}
+
+void CFsRequest::OpenSession(CSessionFs* aSession)
+	{
+	CloseSession();
+	iSession = aSession;
+	if (iSession)
+		iSession->Open();
+	}
+
+void CFsRequest::CloseSession()
+	{
+	if (iSession)
+		{
+		iSession->Close();
+		iSession = NULL;
+		}
+	}
+
+void CFsRequest::Close()
+	{
+	SetScratchValue(0);	// this should close the CFsObject
+	CloseSession();
+	}
 
 TInt CFsRequest::Read(TFsPluginRequest::TF32ArgType aType, TDes8& aDes, TInt aOffset)
 	{
@@ -1358,7 +1382,7 @@ void CFsMessageRequest::Free()
 	{
 	__THRD_PRINT1(_L("CFsMessageRequest::Free() isAllocated=%d"), IsAllocated());
 
-	SetScratchValue(0);	// this should close the CFsObject
+	Close();
 
 	if(!IsAllocated())
 		delete(this);
@@ -1962,7 +1986,8 @@ void CFsClientMessageRequest::Free()
 		iPoolDest = 0;
 		}
 
-	SetScratchValue(0);	// this should close the CFsObject
+	Close();
+
 	iOperation = NULL;
 	RequestAllocator::FreeRequest(this);
 	}
@@ -2170,16 +2195,7 @@ void CFsInternalRequest::Complete(TInt aError)
 	{
 	__PRINT1(_L("CFsInternalRequest::Complete() with %d"),aError);
 	TInt func = Operation()->Function();
-	if(func==KCancelSession || func==KCancelPlugin || func==KFlushDirtyData)
-		{
-		__ASSERT_DEBUG(ThreadHandle()!=0 && !FsThreadManager::IsDisconnectThread(),Fault(EInternalRequestComplete1));
-		RThread t;
-		t.SetHandle(ThreadHandle());
-		TRequestStatus* s=&Status();
-		t.RequestComplete(s,aError);
-		Free();
-		}
-	else if(func == KDispatchObjectClose)
+	if(func == KDispatchObjectClose)
 		{
 		TFsCloseObject::Complete(this);
 		Free();
@@ -2208,30 +2224,21 @@ void CFsInternalRequest::Dispatch()
 	__THRD_PRINT(_L("CFsInternalRequest::Dispatch()"));
 	__ASSERT_ALWAYS(Initialise()==KErrNone,Fault(EInternalRequestDispatch1));
 
-	if(iCurrentPlugin && Operation()->Function() == KCancelPlugin)
-		{
-		TFsPluginRequest request(this);
-		TInt r = iCurrentPlugin->Deliver(request);
-		__ASSERT_ALWAYS(r == KErrNone, Fault(EInternalRequestDispatchCancelPlugin));
-		}
+	TInt drivenumber = DriveNumber();
+	FsThreadManager::LockDrive(drivenumber);
+	// shouldn't dispath if no drive available
+	__ASSERT_ALWAYS(FsThreadManager::IsDriveAvailable(drivenumber,EFalse) && !FsThreadManager::IsDriveSync(drivenumber,EFalse),Fault(EInternalRequestDispatch2));
+	CDriveThread* dT=NULL;
+	TInt r=FsThreadManager::GetDriveThread(drivenumber,&dT);
+	__THRD_PRINT2(_L("deliver to thread 0x%x, drive number %d"),dT,drivenumber);
+	__ASSERT_ALWAYS(r==KErrNone && dT,Fault(EInternalRequestDispatch3));
+	CRequestThread* pT = (CRequestThread*)dT;
+	TInt func = Operation()->Function();
+	if(func == KDispatchObjectClose || func == KFileShareClose || func == KFlushDirtyData)
+		pT->DeliverBack(this);
 	else
-		{
-		TInt drivenumber = DriveNumber();
-		FsThreadManager::LockDrive(drivenumber);
-		// shouldn't dispath if no drive available
-		__ASSERT_ALWAYS(FsThreadManager::IsDriveAvailable(drivenumber,EFalse) && !FsThreadManager::IsDriveSync(drivenumber,EFalse),Fault(EInternalRequestDispatch2));
-		CDriveThread* dT=NULL;
-		TInt r=FsThreadManager::GetDriveThread(drivenumber,&dT);
-		__THRD_PRINT2(_L("deliver to thread 0x%x, drive number %d"),dT,drivenumber);
-		__ASSERT_ALWAYS(r==KErrNone && dT,Fault(EInternalRequestDispatch3));
-		CRequestThread* pT = (CRequestThread*)dT;
-		TInt func = Operation()->Function();
-		if(func == KDispatchObjectClose || func == KFileShareClose || func == KFlushDirtyData)
-			pT->DeliverBack(this);
-		else
-			pT->DeliverFront(this);
-		FsThreadManager::UnlockDrive(drivenumber);
-		}
+		pT->DeliverFront(this);
+	FsThreadManager::UnlockDrive(drivenumber);
 	}
 
 void CFsInternalRequest::Free()
@@ -2241,56 +2248,10 @@ void CFsInternalRequest::Free()
 	{
 	__THRD_PRINT1(_L("CFsInternalRequest::Free() isAllocated=%d"),IsAllocated());
 
-	SetScratchValue(0);	// this should close the CFsObject
+	Close();
 
 	if(!IsAllocated())
 		delete(this);
-	}
-
-void CFsDisconnectRequest::Dispatch()
-//
-//
-//
-	{
-	__THRD_PRINT(_L("CFsDisconnectRequest::Dispatch()"));
-	// no need to lock
-	TInt r=Initialise();
-	__ASSERT_ALWAYS(r==KErrNone,Fault(EDisconnectRequestDispatch1));
-	CRequestThread* pT=FsThreadManager::GetDisconnectThread();
-	__ASSERT_ALWAYS(pT,Fault(EDisconnectRequestDispatch2));
-	pT->DeliverBack(this);
-	}
-
-void CFsDisconnectRequest::Process()
-//
-//
-//
-	{
-	__THRD_PRINT(_L("CFsDisconnectRequest::Process()"));
-	TInt r=KErrNone;
-	TRAPD(leaveValue,r=iOperation->DoRequestL(this));
-	leaveValue=leaveValue; // just to make compiler happy
-	__ASSERT_DEBUG(leaveValue==KErrNone && r==KErrNone,Fault(EDisonncectRequestProcess));
-	Complete(r);
-	}
-
-void CFsDisconnectRequest::Complete(TInt aError)
-//
-//
-//
-	{
-	__PRINT1(_L("CFsDisconnectRequest::Complete() with %d"),aError);
-	__ASSERT_ALWAYS(aError==KErrNone,Fault(EDisconnectRequestComplete));
-	// set session disconnect reqeust to NULL
-	// will be freed in CFsMessageRequest::Free()
-	Session()->iDisconnectRequest=NULL;
-	// now delete session
-	TheFileServer->SessionQueueLockWait();
-	delete(Session());
-	TheFileServer->SessionQueueLockSignal();
-	// NB Must complete the message AFTER the session has been deleted...
-	Message().Complete(aError);
-	delete(this);	
 	}
 
 
@@ -2409,25 +2370,4 @@ void CFsSyncMessageScheduler::Dispatch(CFsRequest* aRequest)
 		}
 	}
 
-
-/**
-Complete outstanding requests for the specified session
-*/
-void CFsSyncMessageScheduler::CompleteSessionRequests(CSessionFs* aSession, TInt aValue)
-	{
-	__PRINT2(_L("FsPluginManager::CompleteSessionRequests(%08x, %d)"), aSession, aValue);
-	
-	iLock.Wait();
-	TDblQueIter<CFsRequest> q(iList);
-	CFsRequest* pR;
-	while((pR=q++)!=NULL)
-		{
-		if(pR->Session()==aSession)
-			{
-			pR->iLink.Deque();
-			pR->Complete(aValue);
-			}
-		}
-	iLock.Signal();
-	}
 

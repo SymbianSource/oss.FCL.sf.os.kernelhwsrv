@@ -282,6 +282,7 @@ t_timerduration
 t_dtim      
 t_idle      
 t_messge    
+t_schedrace
 
 // /E32TEST/BENCH tests
 #ifdef GENERIC_MARM

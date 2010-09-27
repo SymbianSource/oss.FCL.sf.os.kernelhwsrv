@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -528,20 +528,24 @@ public:
 	IMPORT_C static TUsbOTGDescriptor* Cast(TUsbGenericDescriptor* aOriginal);
 
 public:
-	static const TInt KSizeInOctets = 3;
+	static const TInt KSizeInOctets = 3; //OTG1.3 otg descriptor length
 	enum TFieldOffsets
 		{
-		EbmAttributes		= 2
+	  EbmLength       = 0,
+		EbmAttributes		= 2,
+		EbcdOTG         = 3
 		};
 
 public:
 	IMPORT_C TUint8 Attributes() const;
     IMPORT_C TBool HNPSupported() const;
     IMPORT_C TBool SRPSupported() const;
+    IMPORT_C TUint16 BcdOTG() const;
 public:
 	static TUsbOTGDescriptor* ParseL(TPtrC8& aUsbDes, TUsbGenericDescriptor* aPreviousDesc);
 	virtual TBool IsParent(TUsbGenericDescriptor& aPotentialParent);
 	virtual TBool IsPeer(TUsbGenericDescriptor& aPotentialPeer);
+	static TBool IsValidOTGDescriptorLength(TUint8 aLength);
 	};
 
 
