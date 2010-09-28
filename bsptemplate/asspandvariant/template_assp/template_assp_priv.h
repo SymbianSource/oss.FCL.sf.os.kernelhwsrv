@@ -151,5 +151,11 @@ public:
 	static TPhysAddr VideoRamPhys;
 	NTimerQ* iTimerQ;
 	};
+	
+class RtClockTemplate : public RtClock
+	{
+	public:
+	IMPORT_C TInt SetSystemTimeCalibration(TInt aCalibration);
+	};
 
 #endif

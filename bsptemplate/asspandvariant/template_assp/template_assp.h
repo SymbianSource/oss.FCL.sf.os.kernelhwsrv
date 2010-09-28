@@ -26,6 +26,7 @@
 #include <e32hal.h>
 #include <assp.h>
 #include <kernel/kern_priv.h>
+#include <drivers/rtclock.h>
 
 //----------------------------------------------------------------------------
 // Constant conventions:

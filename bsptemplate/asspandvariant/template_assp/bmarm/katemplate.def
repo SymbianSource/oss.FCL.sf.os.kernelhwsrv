@@ -31,4 +31,5 @@ EXPORTS
 	Modify8__12AsspRegisterUlUcUc @ 30 NONAME R3UNUSED ; AsspRegister::Modify8(unsigned long, unsigned char, unsigned char)
 	Read64__12AsspRegisterUl @ 31 NONAME R3UNUSED ; AsspRegister::Read64(unsigned long)
 	Write64__12AsspRegisterUlUx @ 32 NONAME R3UNUSED ; AsspRegister::Write64(unsigned long)
+	SetSystemTimeCalibration__15RtClockTemplatei @ 33 NONAME R3UNUSED ; RtClockTemplate::SetSystemTimeCalibration(int)
 

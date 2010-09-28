@@ -172,4 +172,9 @@ EXPORT_C TPhysAddr TTemplate::VideoRamPhys()
 //
 	{
 	return TemplateAssp::VideoRamPhys;
+	}	
+	
+EXPORT_C TInt RtClockTemplate::SetSystemTimeCalibration(TInt aCalibration)
+	{
+	return KErrNotSupported;
 	}

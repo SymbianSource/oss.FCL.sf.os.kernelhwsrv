@@ -267,6 +267,9 @@ include/drivers/i2s.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 						//
 include/drivers/display.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 
+// Real Time Clock SHAI API
+include/drivers/rtclock.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+
 // Example RTOS personality layer
 personality/example/personality.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(personality/example/)
 personality/example/personality_int.h			SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(personality/example/)
@@ -406,6 +409,18 @@ include/e32shbuf.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32shbuf.h)
 include/e32shbufcmn.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32shbufcmn.h)
 include/e32shbuf_priv.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32shbuf_priv.h)
 
+// Build system extensions
+extension/base_rvct_common.mk					/epoc32/tools/makefile_templates/base/
+extension/bootstrap.flm							/epoc32/tools/makefile_templates/base/
+extension/bootstrap.meta						/epoc32/tools/makefile_templates/base/
+extension/bootstrap.mk							/epoc32/tools/makefile_templates/base/
+extension/bootstrap.xml							/epoc32/tools/makefile_templates/base/
+extension/config.meta							/epoc32/tools/makefile_templates/base/
+extension/config.mk								/epoc32/tools/makefile_templates/base/
+extension/copy_default.meta						/epoc32/tools/makefile_templates/base/
+extension/copy_default.mk						/epoc32/tools/makefile_templates/base/
+extension/genexec.meta							/epoc32/tools/makefile_templates/base/
+extension/genexec.mk							/epoc32/tools/makefile_templates/base/
 
 PRJ_MMPFILES
 
