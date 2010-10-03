@@ -606,7 +606,8 @@
 
 // Causes undefined instruction exception on both ARM and THUMB
 #define __ASM_CRASH()					asm(".word 0xe7ffdeff ")
-#if defined(__GNUC__)  
+// Bug 2742 - beware armcc run with the --gnu option to enable gnu extensions!
+#if defined(__GNUC__) && !defined(__ARMCC__)  
 #define	__crash()						asm(".word 0xe7ffdeff " : : : "memory")
 #elif defined(__GCCXML__)
 #define __crash()						(*((TInt *) 0x0) = 0xd1e)
