@@ -422,6 +422,10 @@ extension/copy_default.mk						/epoc32/tools/makefile_templates/base/
 extension/genexec.meta							/epoc32/tools/makefile_templates/base/
 extension/genexec.mk							/epoc32/tools/makefile_templates/base/
 
+extension/rom.flm						/epoc32/tools/makefile_templates/base/
+extension/rom.meta						/epoc32/tools/makefile_templates/base/
+extension/rom.xml						/epoc32/tools/makefile_templates/base/
+
 PRJ_MMPFILES
 
 #if defined(GENERIC_MARM) || defined(WINS) || defined(GENERIC_X86)

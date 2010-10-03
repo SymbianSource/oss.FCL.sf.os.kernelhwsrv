@@ -1,0 +1,56 @@
+#
+# Copyright (c) 2009-2010 Symbian.  All rights reserved.
+# All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+
+# macro for all the rules
+define rom
+
+FINAL::	
+ifeq ($(OSTYPE),unix)
+	$(call startrule,rom) \
+	echo "This is not supported currently"; \
+	$(call endrule,rom)
+else
+	$(call startrule,rom) \
+	$(PERL) $(EPOCROOT)/sf/os/kernelhwsrv/kernel/eka/rombuild/rom_sbs.pl --variant=$(REE_TARGET) --inst=$(REE_PLATFORM) --build=$(CFG) --type=$(TYPE) --clean $(ROM_OPTIONS) --name=$(FULL_ROM_NAME).img \
+	$(call endrule,rom)
+endif
+
+	$(call startrule,copy) \
+	mv rom.oby $(EPOCROOT)/epoc32/rom/$(REE_TARGET)/$(FULL_ROM_NAME)_rom.oby; \
+	mv ROMBUILD.LOG $(EPOCROOT)/epoc32/rom/$(REE_TARGET)/$(FULL_ROM_NAME)_ROMBUILD.LOG; \
+	mv $(FULL_ROM_NAME).img $(EPOCROOT)/epoc32/rom/$(FULL_ROM_NAME).img; \
+	$(call endrule,copy)
+
+endef
+
+# expand
+ROM_OPTIONS:=$(foreach macro,$(REE_DEFINES), -d $(macro))
+REE_PLATFORM:=$(PLATFORM)
+ifneq ($(findstring SMP,$(REE_PLATFORM)),)
+  # SMP target, so select underlying instruction set
+  ROM_OPTIONS:=$(ROM_OPTIONS) --xabi=$(PLATFORM)
+  REE_PLATFORM:=$(subst SMP,,$(REE_PLATFORM))
+endif
+
+ifeq "$(ROM_NAME)" ""
+ROM_NAME:=$(REE_TARGET)
+endif
+FULL_ROM_NAME:=$(ROM_NAME)_$(TYPE)_$(PLATFORM)_$(CFG)
+
+$(eval $(rom))
+
+# The items produced by this FLM:
+RELEASEABLES:=$(EPOCROOT)/epoc32/rom/$(REE_TARGET)/$(FULL_ROM_NAME)_rom.oby $(EPOCROOT)/epoc32/rom/$(REE_TARGET)/$(FULL_ROM_NAME)_ROMBUILD.LOG $(EPOCROOT)/epoc32/rom/$(FULL_ROM_NAME).img
+
+## What targets -- declare the files produced here
+$(eval $(call whatmacro, $(RELEASEABLES)))
+## Clean up
+$(eval $(call GenerateStandardCleanTarget, $(RELEASEABLES)))
+
+
+

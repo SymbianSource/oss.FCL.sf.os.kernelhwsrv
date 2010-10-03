@@ -25,3 +25,7 @@ copy_default.meta					/epoc32/tools/makefile_templates/base/
 copy_default.mk						/epoc32/tools/makefile_templates/base/
 genexec.meta						/epoc32/tools/makefile_templates/base/
 genexec.mk							/epoc32/tools/makefile_templates/base/
+
+rom.flm						/epoc32/tools/makefile_templates/base/
+rom.meta						/epoc32/tools/makefile_templates/base/
+rom.xml						/epoc32/tools/makefile_templates/base/
