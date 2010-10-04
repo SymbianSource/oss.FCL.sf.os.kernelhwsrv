@@ -18,17 +18,26 @@
 #define __DM_TEST_IBY__
 
 
-file=\Epoc32\Release\##MAIN##\##BUILD##\t_domain.exe				\sys\bin\t_domain.exe
-file=\Epoc32\Release\##MAIN##\##BUILD##\t_domain_slave.exe			\sys\bin\t_domain_slave.exe
-file=\Epoc32\Release\##MAIN##\##BUILD##\domainpolicy99.dll			\sys\bin\domainpolicy99.dll
+file=\Epoc32\Release\##MAIN##\##BUILD##\t_domain.exe			\sys\bin\t_domain.exe
+file=\Epoc32\Release\##MAIN##\##BUILD##\t_domain_monitor.exe	\sys\bin\t_domain_monitor.exe
+file=\Epoc32\Release\##MAIN##\##BUILD##\t_domain_manual.exe		\sys\bin\t_domain_manual.exe
+file=\Epoc32\Release\##MAIN##\##BUILD##\t_domain_slave.exe		\sys\bin\t_domain_slave.exe
+file=\Epoc32\Release\##MAIN##\##BUILD##\domainpolicy94.dll		\sys\bin\domainpolicy94.dll
+file=\Epoc32\Release\##MAIN##\##BUILD##\domainpolicy95.dll		\sys\bin\domainpolicy95.dll
+file=\Epoc32\Release\##MAIN##\##BUILD##\domainpolicy96.dll		\sys\bin\domainpolicy96.dll
+file=\Epoc32\Release\##MAIN##\##BUILD##\domainpolicy97.dll		\sys\bin\domainpolicy97.dll
+file=\Epoc32\Release\##MAIN##\##BUILD##\domainpolicy98.dll		\sys\bin\domainpolicy98.dll
+file=\Epoc32\Release\##MAIN##\##BUILD##\domainpolicy99.dll		\sys\bin\domainpolicy99.dll
+file=\Epoc32\Release\##MAIN##\##BUILD##\t_dmslave_nocaps.exe	\sys\bin\t_dmslave_nocaps.exe
+file=\Epoc32\Release\##MAIN##\##BUILD##\t_dmslave_wdd.exe		\sys\bin\t_dmslave_wdd.exe
+file=\Epoc32\Release\##MAIN##\##BUILD##\t_dmslave_protsrv.exe	\sys\bin\t_dmslave_protsrv.exe
 
-
-data=\epoc32\rom\include\dmtest.auto.bat				\test\dm.auto.bat
+data=\epoc32\rom\include\dmtest.auto.bat	\test\dm.auto.bat
+data=\epoc32\rom\include\dmtest.all.bat		\test\dm.all.bat
 
 #if defined(DM_AUTO_ROM)
-data=\epoc32\rom\include\dm_autoexec.bat				\autoexec.bat
+data=\epoc32\rom\include\dm_autoexec.bat  \autoexec.bat
 #endif
-
 
 
 #endif // __DM_TEST_IBY__

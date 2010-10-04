@@ -120,6 +120,7 @@ d_kern_msg					support
 d_gobble					support
 d_nanowait					support
 d_medch						support
+d_mmctest					support
 d_shbuf_client				support
 d_shbuf_own					support
 d_asid						support
@@ -717,6 +718,7 @@ t_pccdsk    support
 t_pccdsr    support
 t_mmcdrv    manual
 t_med_writebm   manual
+t_mmcinfo
 
 #ifdef EPOC32
 t_crrdrv    support

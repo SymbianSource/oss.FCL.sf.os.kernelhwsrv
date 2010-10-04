@@ -443,15 +443,16 @@ void NThread::Diverted()
 // This function is called in the context of a thread that is being diverted.
 // This can be for either of two reasons: if iDivertFn has been set, that
 // function will be called and is not expected to return i.e.  it should force
-// the thread to exit. Otherwise, the thread will make a null trip through the
-// kernel, causing it to run pending user-mode callbacks on the way out.
+// the thread to exit (in this case, the thread may already be in the kernel,
+// but only at a place where it's safe for it to be killed).  Otherwise, the
+// thread must be in user mode, and it's forced to make a null trip through
+// the kernel, causing it to run pending user-mode callbacks on the way out.
 //
 // On entry, the kernel is locked and interrupts enabled
 //
 	{
 	NThread& me = *static_cast<NThread*>(TheScheduler.iCurrentThread);
 	__NK_ASSERT_ALWAYS(TheScheduler.iKernCSLocked == 1);
-	__NK_ASSERT_ALWAYS(me.iInKernel == 0);
 	__NK_ASSERT_ALWAYS(me.iDiverting);
 	NThread::TDivert divertFn = me.iDivertFn;
 	me.iDivertFn = NULL;

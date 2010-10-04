@@ -22,8 +22,10 @@
 
 #include <domainmember.h>
 #include <domainmanager.h>
+#include "domainmanager_private.h"
 #include "domainobserver.h"
 #include "domainsrv.h"
+#include "domainmember_private.h"
 
 #define __DM_PANIC(aError) User::Panic(_L("domainCli.cpp"), (-(aError)) | (__LINE__ << 16))
 #define __DM_ASSERT(aCond) __ASSERT_DEBUG(aCond,User::Panic(_L("domainCli.cpp; assertion failed"), __LINE__))
@@ -47,14 +49,12 @@ TInt RDmDomainSession::Connect(TDmHierarchyId aHierarchyId, TDmDomainId aDomainI
 	return KErrNone;
 	}
 
-void RDmDomainSession::Acknowledge(TInt aValue, TInt aError)
+TInt RDmDomainSession::Acknowledge(TInt aValue, TInt aError)
 	{
 	__DM_ASSERT(Handle() != KNullHandle);
 
 	TIpcArgs a(aValue, aError);
-	TInt r = RSessionBase::SendReceive(EDmStateAcknowledge, a);
-	if (r != KErrNone)
-		__DM_PANIC(r);
+	return RSessionBase::SendReceive(EDmStateAcknowledge, a);
 	}
 
 void RDmDomainSession::RequestTransitionNotification()
@@ -76,6 +76,23 @@ void RDmDomainSession::CancelTransitionNotification()
 	}
 
 
+void RDmDomainSession::DeferAcknowledgement(TRequestStatus& aStatus)
+	{
+	__DM_ASSERT(Handle() != KNullHandle);
+	RSessionBase::SendReceive(EDmStateDeferAcknowledgement, aStatus);
+	}
+
+
+void RDmDomainSession::CancelDeferral()
+	{
+	if (Handle() != KNullHandle)
+		{
+		TInt r = RSessionBase::SendReceive(EDmStateCancelDeferral);
+		if (r != KErrNone)
+			__DM_PANIC(r);
+		}
+	}
+
 
 /**
 Connects to the domain identified by the specified domain Id.
@@ -90,7 +107,7 @@ when the power state changes.
 @param aDomainId The identifier of the domain to be connected to.
 
 @return KErrNone, if successful; otherwise one of the other system-wide
-        or domain manager specific error codes.
+        or Domain Manager specific error codes.
 
 @capability WriteDeviceData If aDomainId==KDmIdRoot
 */
@@ -126,7 +143,7 @@ when the state changes.
 @param aDomainId    The identifier of the domain to be connected to.
 
 @return KErrNone, if successful; otherwise one of the other system-wide
-        or domain manager specific error codes.
+        or Domain Manager specific error codes.
 
 @capability WriteDeviceData If aDomainId==KDmIdRoot
 */
@@ -194,15 +211,14 @@ EXPORT_C void RDmDomain::CancelTransitionNotification()
 
 
 
-
 /**
 Gets the domain's power state.
-	
+
 An application normally calls this function after a notification request
 has completed. It then performs any application-dependent action demanded by
 the power state, and then acknowledges the state transition.
 
-Note that the domain manager requires any domain power state change to be
+Note that the Domain Manager requires any domain power state change to be
 acknowledged by all applications connected to the domain.
 
 @return The connected domain's power state.
@@ -224,15 +240,17 @@ EXPORT_C TPowerState RDmDomain::GetPowerState()
 
 /**
 Acknowledges the state change.
-	
+
 An application must acknowledge that it has performed all actions required
 by the last known state of the domain.
 */
 EXPORT_C void RDmDomain::AcknowledgeLastState()
 	{
-	iSession.Acknowledge(iLastStatePropertyValue, KErrNone);
-	}
+	TInt r = iSession.Acknowledge(iLastStatePropertyValue, KErrNone);
 
+	if (r != KErrNone && r != KErrNotFound)
+		__DM_PANIC(r);
+	}
 
 /**
 Acknowledges the state change with the specified error
@@ -240,24 +258,101 @@ Acknowledges the state change with the specified error
 An application must acknowledge that it has performed all actions required
 by the last known state of the domain.
 
-@param aError KDmErrNotJoin if domain is not part of the hierarhcy or a 
+@param aError KDmErrNotJoin if domain is not part of the hierarchy or a
 	system wide error value associated with the state change.
 */
 EXPORT_C void RDmDomain::AcknowledgeLastState(TInt aError)
 	{
-	iSession.Acknowledge(iLastStatePropertyValue, aError);
+	TInt r = iSession.Acknowledge(iLastStatePropertyValue, aError);
+
+	if (r != KErrNone && r != KErrNotFound)
+		__DM_PANIC(r);
 	}
 
+/**
+Acknowledges the state change with the specified error
+
+@param aError KDmErrNotJoin if domain is not part of the hierarchy or a
+	system wide error value associated with the state change.
+
+@return KErrNone If the acknowledgment was valid, KErrNotFound if it was spurious
+*/
+TInt RDmDomain::AcknowledgeLastStatePriv(TInt aError)
+	{
+	return iSession.Acknowledge(iLastStatePropertyValue, aError);
+	}
+
+/**
+Having received a state transition notification, instead of acknowledging,
+request more time. To be sure of deferring in time a client should call this immediately
+after receiving notification. This asynchronous call will complete once the original deadline
+is reached (ie. one period earlier than the final deadline), at which point the member must either
+defer again or acknowledge the transition. In the meantime, the member should perform
+its transition actions, whilst remaining responsive to new completion events.
+
+For example, if after receiving a transition notification, the client calls DeferAcknowledgement
+once, but fails to acknowledge or renew its deferral, it would be timed out after two time periods.
+
+Once the member has completed all necessary actions it should call AcknowledgeLastState
+to indicate a successful transition (it need not wait for the completion of DeferAcknowledgement).
+
+@note Deferrals are not always possible,
+whether the member will actually be given more time depends on if
+   - The current transition allows deferrals at all.
+   - The member still has deferrals left - there may be a maximum number
+     allowed.
+   - The deferral request was received in time.
+
+@param aStatus Status of request
+   - KErrNone Request has completed i.e. The member must either defer again or acknowledge.
+   - KErrCompletion The deferral was obsoleted by a subsequent call to AcknowledgeLastState.
+   - KErrNotSupported The current transition may not be deferred, or maximum deferral count reached.
+   - KErrCancel The deferral was cancelled.
+   - KErrNotReady Deferral attempted before a transition notification was received
+     or after the deadline for the previous one.
+   - KErrPermissionDenied The member lacked the necessary capabilities.
+   - KErrServerBusy A deferral was already outstanding.
+
+This function is provided for members to inform the Domain Manager that they
+are still active and are responding to a transition notification.
+For example, a server may have to persist data using
+the file server before shut down. Since this task should be allowed to complete
+before shutdown continues, the member should defer the transition, and then persist
+the data, using asynchronous calls.
+
+At least one of the below capabilities is required in order to defer a
+domain transition. Without them, the client will get KErrPermissionDenied.
+
+@capability WriteDeviceData
+@capability ProtServ
+
+@pre The member has been notified of a transition which it has not yet acknowledged
+*/
+EXPORT_C void RDmDomain::DeferAcknowledgement(TRequestStatus& aStatus)
+	{
+	iSession.DeferAcknowledgement(aStatus);
+	}
+
+
+/**
+Will cancel a call of DeferAcknowledgement(), if one was pending.
+
+If none was pending, it does nothing.
+*/
+EXPORT_C void RDmDomain::CancelDeferral()
+	{
+	iSession.CancelDeferral();
+	}
 
 
 /**
 Gets the domain's state.
-	
+
 An application normally calls this function after a notification request
 has completed. It then performs any application-dependent action demanded by
 the state, and then acknowledges the state transition.
 
-Note, that the domain manager requires any domain state change to be
+Note, that the Domain Manager requires any domain state change to be
 acknowledged by all applications connected to the domain.
 
 @return The connected domain's state.
@@ -498,9 +593,18 @@ TInt RDmManagerSession::ObserverDomainCount()
 	return(RSessionBase::SendReceive(EDmObserveredCount));
 	}
 
+
+
+//-- RDmDomainManager ---------------------------------------------------------
+
+
+
 /**
-@internalAll
-@released
+Caller blocked until the Domain Manager server has started up and is ready 
+for requests.
+
+@return	KErrNone once the Domain Manager server is ready, otherwise one of the 
+		other system wide or the Domain Manager specific error codes.
 */
 EXPORT_C TInt RDmDomainManager::WaitForInitialization()
 	{
@@ -522,7 +626,7 @@ EXPORT_C TInt RDmDomainManager::WaitForInitialization()
 		if (r == KErrNone)
 			{
 			if (value) break; // initialized
-			// property exists but the server is not intialized yet
+			// property exists but the server is not initialised yet
 			}
 		else
 			{
@@ -547,20 +651,21 @@ EXPORT_C TInt RDmDomainManager::WaitForInitialization()
 	}
 
 
-
-
 /**
 Opens a controlling connection to the standard power domain hierarchy
-in the domain manager.
+in the Domain Manager.
 
-The domain manger allows only one open connection at any one time to the 
+The Domain Manager allows only one open connection at any one time to the 
 power domain hierarchy.
-Connection is usually made by the power policy entity.
 
-@return KErrNone, if successful; otherwise one of the other system-wide
-        or the domain manager specific error codes.
-        
-@see KDmErrAlreadyJoin   
+@return KErrNone if successful, otherwise one of the other system-wide
+        or the Domain Manager specific error codes.
+@return KErrInUse when the power hierarchy already has a controller connected.
+@return KErrBadHierarchyId when the server has failed to load the power hierarchy. 
+@return KErrPermissionDenied when the client has insufficient capabilities
+
+@capability PowerMgmt Required to create a connection to the Domain Manager.
+@see KDmHierarchyIdPower
 */
 EXPORT_C TInt RDmDomainManager::Connect()
 	{
@@ -568,34 +673,29 @@ EXPORT_C TInt RDmDomainManager::Connect()
 	}
 
 
-
-
 /**
-Opens a controlling connection to a specific domain hieararchy owned 
-by the domain manager.
+Opens a controlling connection to a specific domain hierarchy previously 
+loaded into the Domain Manager by the controller. The Domain Manager allows only 
+one open connection at any one time to a particular hierarchy.
 
-The domain manger allows only one open connection at any one time to a 
-particular hierarchy.
+@param	aHierarchyId The Id of the domain hierarchy to connect to.
 
-@param	aHierarchyId	The Id of the domain hierarchy to connect to.
-
-@return KErrNone, if successful; otherwise one of the other system-wide
-        or domain manager specific error codes.
-        
-@see KDmErrAlreadyJoin
-@see KErrBadHierarchyId       
+@return KErrNone if successful, otherwise one of the other system-wide
+        or the Domain Manager specific error codes.
+@return KErrInUse when the power hierarchy already has a controller connected.
+@return KErrBadHierarchyId when the server has failed to load the power hierarchy.
+@return KErrPermissionDenied when the client has insufficient capabilities
+   
+@capability PowerMgmt Required to create a connection to the Domain Manager.
 */
 EXPORT_C TInt RDmDomainManager::Connect(TDmHierarchyId aHierarchyId)
-
 	{
 	return iSession.Connect(aHierarchyId);
 	}
 
 
-
-
 /**
-Closes this connection to the domain manager.
+Closes this connection to the Domain Manager.
 	
 If there is no existing connection, then it returns silently.
 */
@@ -605,21 +705,23 @@ EXPORT_C void RDmDomainManager::Close()
 	}
 
 
-
-
 /**
-Requests a system-wide power state transition.
+Requests a system-wide power state transition and is used with the
+KDmHierarchyIdPower hierarchy. The domain hierarchy is traversed in the 
+default direction. 
 
-The domain hierarchy is traversed in the default direction
-		
-@param aState   The target power state.
-@param aStatus  The request status object for this asynchronous request.
+A transition to the power state EPwActive is an error and result in 
+async completion with KErrArgument.
+	
+@param aState   The target power state, not EPwActive or >=EPwLimit.
+@param aStatus	The request status object for this asynchronous request.
 
 @see RDmDomainManager::CancelTransition()
+@see KDmHierarchyIdPower
 */
 EXPORT_C void RDmDomainManager::RequestSystemTransition(TPowerState aState, TRequestStatus& aStatus)
 	{
-	if (aState == EPwActive)
+	if ((aState == EPwActive) || (aState >= EPwLimit))
 		{
 		TRequestStatus* status = &aStatus;
 		User::RequestComplete(status, KErrArgument);
@@ -629,13 +731,13 @@ EXPORT_C void RDmDomainManager::RequestSystemTransition(TPowerState aState, TReq
 	}
 
 
-
-
 /**
-Requests a system-wide power shutdown.
+Requests a system-wide power off (EPwOff) state transition to shutdown the 
+platform. Applicable to the KDmHierarchyIdPower hierarchy.
 
-This is a request to change the system's power state to EPwOff.
-This call does not return; the system can only return by rebooting.
+This call does not return; the system can only return by physical button restart.
+
+@see KDmHierarchyIdPower
 */
 EXPORT_C void RDmDomainManager::SystemShutdown()
 	{
@@ -646,18 +748,19 @@ EXPORT_C void RDmDomainManager::SystemShutdown()
 	}
 
 
-
-
 /**
-Requests a domain state transition.
-
-The domain hierarchy is traversed in the default direction.
+Requests a domain power state transition and is used with the
+KDmHierarchyIdPower hierarchy. The domain hierarchy is traversed in the 
+default direction.
 
 @param aDomainId The Id of the domain for which the state transition
                  is being requested.
-@param aState    The target state.
-@param aStatus   The request status object for this asynchronous request.
-
+@param aState    The target power state.
+@param aStatus   The request status object to receive the asynchronous result.
+				 KErrNone if successful, otherwise one of the other system-wide
+        		 or the Domain Manager specific error codes.
+        		 
+@see KDmHierarchyIdPower
 @see RDmDomainManager::CancelTransition()
 */
 EXPORT_C void RDmDomainManager::RequestDomainTransition(
@@ -669,13 +772,11 @@ EXPORT_C void RDmDomainManager::RequestDomainTransition(
 	}
 
 
-
-
 /**
-Cancels a state transition, whether initiated by a call
+Cancels an outstanding state transition, whether initiated by a call
 to RequestSystemTransition() or RequestDomainTransition().
 
-An outstanding state transition request completes with KErrCancel.
+The outstanding state transition request completes with KErrCancel.
 */
 EXPORT_C void RDmDomainManager::CancelTransition()
 	{
@@ -683,22 +784,21 @@ EXPORT_C void RDmDomainManager::CancelTransition()
 	}
 
 
-
-
 /**
-Requests a system-wide state transition.
-
-The domain hierarchy is traversed in the specified direction.
+Requests a state transition across the whole domain hierarchy that 
+this connection is controlling. The domain hierarchy is traversed in the 
+specified direction.
 		
-@param aState   The target state.
+@param aState	The target state, hierarchy specific state value.
 @param aDirection The direction in which to traverse the hierarchy
-@param aStatus  The request status object for this asynchronous request.
+@param aStatus  The request status object to receive the asynchronous result.
+				KErrNone if successful, otherwise one of the other system-wide
+        		or the Domain Manager specific error codes.
+
+@panic domainCli.cpp; assertion failed line - if the numerical value of 
+		aDirection is greater than the value of ETraverseMax. 
 
 @see RDmDomainManager::CancelTransition()
-
-@panic domainCli.cpp; assertion failed VARNUM if the numerical value of aDirection
-       is greater than the value of ETraverseMax. NOTE: VARNUM is the line number
-       in the source code and may change if the implementation changes.
 */
 EXPORT_C void RDmDomainManager::RequestSystemTransition(
 	TDmDomainState aState, 
@@ -711,23 +811,23 @@ EXPORT_C void RDmDomainManager::RequestSystemTransition(
 
 
 
-
 /**
-Requests a domain state transition.
-
-The domain hierarchy is traversed in the specified direction
+Requests a domain state transition for the hierarchy that this connection is 
+controlling. The domain hierarchy is traversed in the specified direction.
 
 @param aDomainId The Id of the domain for which the state transition
                  is being requested.
 @param aState    The target state.
 @param aDirection The direction in which to traverse the hierarchy.
-@param aStatus   The request status object for this asynchronous request.
-
-@see RDmDomainManager::CancelTransition()
+@param aStatus   The request status object to receive the asynchronous result.
+				 KErrNone if successful, otherwise one of the other system-wide
+        		 or the Domain Manager specific error codes.
 
 @panic domainCli.cpp; assertion failed VARNUM if the numerical value of aDirection
        is greater than the value of ETraverseMax. NOTE: VARNUM is the line number
        in the source code and may change if the implementation changes.
+       
+@see RDmDomainManager::CancelTransition()
 */
 EXPORT_C void RDmDomainManager::RequestDomainTransition(
 	TDmDomainId aDomainId, 
@@ -741,14 +841,19 @@ EXPORT_C void RDmDomainManager::RequestDomainTransition(
 
 
 
-
 /**
-Adds a domain hierarchy to the domain manager.
+Instructs the Domain Manager to load the domain hierarchy library for
+aHierarchyId. The library takes the name "domainpolicyNN.dll" where NN is 
+the hierarchy number as supplied.
 
 @param aHierarchyId The Id of the domain hierarchy to be added.
 
-@return	KErrNone if successful; otherwise one of the other system-wide
-        or domain manager specific error codes.
+@return KErrNone if successful, otherwise one of the other system-wide
+        or the Domain Manager specific error codes.
+@return KErrBadHierarchyId If the library is not found or contains invalid data
+@return KErrPermissionDenied when the client has insufficient capabilities
+
+@capability PowerMgmt Required to create a connection to the Domain Manager.
 */
 EXPORT_C TInt RDmDomainManager::AddDomainHierarchy(TDmHierarchyId aHierarchyId)
 	{
@@ -762,17 +867,15 @@ EXPORT_C TInt RDmDomainManager::AddDomainHierarchy(TDmHierarchyId aHierarchyId)
 	}
 
 
-
 /**
 Requests a list of transition failures since the last transition request.
 
-@param aTransitionFailures A client-supplied array of TTransitionFailure objects which 
-		on exit will contain the failures that have occurred since the last transition 
-		request. 
-@pre	The session must be connected.
+@param aTransitionFailures A client supplied array of TTransitionFailure objects
+		which on exit will contain the failures that have occurred since the 
+		last transition	request. 
 
-@return KErrNone, if successful; otherwise one of the other system-wide
-        or domain manager specific error codes.
+@return KErrNone if successful, otherwise one of the other system-wide
+        or the Domain Manager specific error codes.
 */
 EXPORT_C TInt RDmDomainManager::GetTransitionFailures(RArray<const TTransitionFailure>& aTransitionFailures)
 	{
@@ -780,12 +883,11 @@ EXPORT_C TInt RDmDomainManager::GetTransitionFailures(RArray<const TTransitionFa
 	}
 
 
-
 /**
 Gets the number of transition failures since the last transition request.
 
-@return	The number of failures, if successful; otherwise one of the other system-wide
-        or domain manager specific error codes.
+@return KErrNone if successful, otherwise one of the other system-wide
+        or the Domain Manager specific error codes.
 */
 EXPORT_C TInt RDmDomainManager::GetTransitionFailureCount()
 	{
@@ -794,7 +896,9 @@ EXPORT_C TInt RDmDomainManager::GetTransitionFailureCount()
 
 
 
-// CDmDomain
+//-- CDmDomain ----------------------------------------------------------------
+
+
 
 /**
 Constructor.
@@ -822,7 +926,7 @@ EXPORT_C CDmDomain::CDmDomain(TDmHierarchyId aHierarchyId, TDmDomainId aDomainId
 /**
 Destructor.
 
-Closes the session to the domain manager.
+Closes the session to the Domain Manager.
 */
 EXPORT_C CDmDomain::~CDmDomain()
 	{
@@ -852,6 +956,14 @@ EXPORT_C void CDmDomain::ConstructL()
 Requests notification when the domain's state changes.
 
 RunL() will be called when this happens.
+
+@note
+If the client is ready to acknowledge the last transition, but
+would like to register for notification of the next one, it
+should call this function and then call AcknowledgeLastState,
+immediately afterwards.
+This eliminates the possibility of a transition occurring
+between acknowledging and registering for notification.
 */
 EXPORT_C void CDmDomain::RequestTransitionNotification()
 	{
@@ -882,7 +994,7 @@ Acknowledges the last state change.
 An application must acknowledge that it has performed all actions required
 by the last known state of the domain.
 
-@param aError	The error to return to the domain manager. The client should
+@param aError	The error to return to the Domain Manager. The client should
 				set this to KErrNone if it successfully transitioned to the 
 				new state or to one of the system-wide error codes.
 */
@@ -908,6 +1020,199 @@ EXPORT_C TDmDomainState CDmDomain::GetState()
 	return iDomain.GetState();
 	}
 
+//-- CDmDomainKeepAlive ----------------------------------------------------------------
+
+
+/**
+Constructor.
+
+Adds this active object to the active scheduler.
+
+@param aHierarchyId The Id of the domain hierarchy to connect to.
+@param aDomainId	The Id of the domain to connect to.
+
+@see CActive
+*/
+EXPORT_C CDmDomainKeepAlive::CDmDomainKeepAlive(TDmHierarchyId aHierarchyId, TDmDomainId aDomainId)
+	: CDmDomain(aHierarchyId, aDomainId), iKeepAlive(NULL)
+	{
+	}
+
+/**
+Destructor.
+
+Cleanup the internal CDmKeepAlive active object.
+*/
+EXPORT_C CDmDomainKeepAlive::~CDmDomainKeepAlive()
+	{
+	delete iKeepAlive;
+	}
+
+/**
+Complete construction of this object. Classes derived from this one
+should call this as part of their ConstructL or NewL functions.
+*/
+EXPORT_C void CDmDomainKeepAlive::ConstructL()
+	{
+	CDmDomain::ConstructL();
+	iKeepAlive = new (ELeave) CDmKeepAlive(iDomain, *this);
+	}
+
+/**
+Acknowledges the last state change.
+
+An application must acknowledge that it has performed all actions required
+by the last known state of the domain.
+
+Once this is done the AO will no longer attempt to defer deadlines.
+
+@param aError	The error to return to the Domain Manager. The client should
+				set this to KErrNone if it successfully transitioned to the 
+				new state or to one of the system-wide error codes.
+*/
+EXPORT_C void CDmDomainKeepAlive::AcknowledgeLastState(TInt aError)
+	{
+	TInt r = iDomain.AcknowledgeLastStatePriv(aError);
+	if (r != KErrNone && r != KErrNotFound)
+		__DM_PANIC(r);
+
+	if (r == KErrNone)
+		{
+		// KErrNone indicates that an acknowledgment was accepted
+		// (as opposed to being spurious or late)
+
+		iKeepAlive->NotifyOfAcknowledgment();
+		}
+	}
+
+/**
+Handle completion of request notifications, begins deferrals.
+
+@note Clients should not need to override this, they
+will be notified of events via calls to HandleTransitionL.
+*/
+EXPORT_C void CDmDomainKeepAlive::RunL()
+	{
+	iKeepAlive->DeferNotification();
+	HandleTransitionL();
+	}
+
+/**
+This object will internally, use RDmDomain::DeferAcknowledgement.
+
+The default implementation of this function will simply ignore errors
+from RDmDomain::DeferAcknowledgement that
+it presumes the client can not or need not handle.
+
+ie.
+KErrCompletion - Client has now acknowledged notification - not an error.
+KErrCancel - Server cancelled request - client can do nothing.
+KErrNotSupported - Deferral not possible - client can do nothing.
+KErrNotReady - Deferral too late or too early - client can do nothing.
+
+All other error codes will be returned unhandled to the active scheduler,
+leading to a panic.
+
+If the client does want to handle or inspect these errors e.g. for diagnostic
+purposes, they can override this method. KErrNone should be returned
+for errors that should not be passed to the active scheduler.
+
+@param aError Error code to handle
+*/
+EXPORT_C TInt CDmDomainKeepAlive::HandleDeferralError(TInt aError)
+	{
+	switch (aError)
+		{
+		case KErrCompletion:
+		case KErrCancel:
+		case KErrNotSupported:
+		case KErrNotReady:
+			{
+			// All the above error codes may occur but signal only
+			// that Deferrals should not continue for the current
+			// transition.
+			return KErrNone;
+			}
+		case KErrPermissionDenied:
+		case KErrServerBusy:
+		default:
+			{
+			return aError;
+			}
+		}
+	}
+
+//-- CDmKeepAlive ----------------------------------------------------------------
+
+CDmKeepAlive::CDmKeepAlive(RDmDomain& aDomain, CDmDomainKeepAlive& aOwnerActiveObject)
+	: CActive(CActive::EPriorityHigh), iDomain(aDomain), iOwnerActiveObject(aOwnerActiveObject), iCeaseDeferral(EFalse)
+	{
+	CActiveScheduler::Add(this);
+	}
+
+CDmKeepAlive::~CDmKeepAlive()
+	{
+	Cancel();
+	}
+
+void CDmKeepAlive::DeferNotification()
+	{
+	__DM_ASSERT(!IsActive());
+	iStatus = KRequestPending;
+	iDomain.DeferAcknowledgement(iStatus);
+	SetActive();
+	}
+
+/**
+Informs the object that the state transition has
+been _successfully_ acknowledged
+*/
+void CDmKeepAlive::NotifyOfAcknowledgment()
+	{
+	if (IsActive())
+		{
+		iCeaseDeferral = ETrue;
+		}
+	}
+
+void CDmKeepAlive::RunL()
+	{
+	const TInt error = iStatus.Int();
+
+	TBool ceaseDeferral = iCeaseDeferral;
+	iCeaseDeferral = EFalse;
+
+	User::LeaveIfError(error);
+
+	// If a valid acknowledgment
+	// has occured since the last deferral
+	// then avoid deferring again since
+	// this would only lead to KErrNotReady
+	if(!ceaseDeferral)
+		{
+		DeferNotification();
+		}
+	else
+		{
+		// At this point we know error == KErrNone
+		// However, we return the error code KErrCompletion, as this
+		// is what would have happened, had the acknowledgment come in
+		// a little earlier,
+		// whilst the deferral was still outstanding on the server.
+		User::Leave(KErrCompletion);
+		}
+	}
+
+TInt CDmKeepAlive::RunError(TInt aError)
+	{
+	return iOwnerActiveObject.HandleDeferralError(aError);
+	}
+
+void CDmKeepAlive::DoCancel()
+	{
+	iDomain.CancelDeferral();
+	}
+
 // CDmDomainManager
 
 /**
@@ -930,7 +1235,7 @@ EXPORT_C CDmDomainManager::CDmDomainManager(TDmHierarchyId aHierarchyId) :
 /**
 Destructor.
 
-Closes the session to the domain manager.
+Closes the session to the Domain Manager.
 */
 EXPORT_C CDmDomainManager::~CDmDomainManager()
 	{
@@ -998,12 +1303,12 @@ EXPORT_C void CDmDomainManager::RequestDomainTransition(TDmDomainId aDomain, TDm
 
 
 /**
-Adds a domain hierarchy to the domain manager.
+Adds a domain hierarchy to the Domain Manager.
 
 @param aHierarchyId The Id of the domain hierarchy to add
 
 @return	KErrNone if successful; otherwise one of the other system-wide
-        or domain manager specific error codes.
+        or Domain Manager specific error codes.
 */
 EXPORT_C TInt CDmDomainManager::AddDomainHierarchy(TDmHierarchyId aHierarchyId)
 	{
@@ -1040,7 +1345,7 @@ Requests a list of transition failures since the last transition request.
 @pre	The session must be connected.
 
 @return KErrNone, if successful; otherwise one of the other system-wide
-        or domain manager specific error codes.
+        or Domain Manager specific error codes.
 */
 EXPORT_C TInt CDmDomainManager::GetTransitionFailures(RArray<const TTransitionFailure>& aTransitionFailures)
 	{
@@ -1054,7 +1359,7 @@ EXPORT_C TInt CDmDomainManager::GetTransitionFailures(RArray<const TTransitionFa
 Gets the number of transition failures since the last transition request.
 
 @return	The number of failures if successful, otherwise one of the other system-wide
-        or domain manager specific error codes.
+        or Domain Manager specific error codes.
 */
 EXPORT_C TInt CDmDomainManager::GetTransitionFailureCount()
 	{
@@ -1081,7 +1386,7 @@ Constructs a new observer on the domain hierarchy.
 
 Note that only one observer per domain hierarchy is allowed.
 
-@param	aHierarchyObserver	The implementation of the interface to the domain manager.
+@param	aHierarchyObserver	The implementation of the interface to the Domain Manager.
 @param	aHierarchyId		The Id of the domain hierarchy.
 
 @return The newly created CHierarchyObserver object.

@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -14,7 +14,6 @@
 //
 
 
-inline TInt DDmaHelper::PageSizeLog2()	{ return iPageSizeLog2; }
 inline TBool DDmaHelper::IsPageAligned(TLinAddr aAddr)		{ return !(aAddr & iPageSizeMsk); }
 inline TLinAddr DDmaHelper::PageAlign(TLinAddr aAddr)	{ return aAddr & ~iPageSizeMsk; }
 inline TLinAddr DDmaHelper::PageOffset(TLinAddr aAddr)		{ return aAddr & iPageSizeMsk; }
@@ -24,7 +23,6 @@ inline TInt DDmaHelper::MaxFragLength()	const { return iMaxPages << iPageSizeLog
 inline void DDmaHelper::SetFragLength(TInt aLength) { iFragLen = iFragLenRemaining = aLength; }
 inline TInt DDmaHelper::FragLength()	const { return iFragLen; }
 inline TInt DDmaHelper::LengthRemaining() const { return iReqLenClient - iLenConsumed; }
-inline TUint32 DDmaHelper::LengthConsumed() const {return iLenConsumed; }
 
 
 inline TBool DDmaHelper::IsDmaAligned(TLinAddr aAddr)		{ return !(aAddr & (iDmaAlignment-1)); }

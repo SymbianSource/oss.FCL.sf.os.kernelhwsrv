@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -16,35 +16,6 @@
 #include <domainpolicy.h>
 #include "domainpolicytest.h"
 
-const TInt KDomainTimeout = 2000000; /* 2000ms */
-
-static const TDmDomainSpec DomainHierarchy[] = 
-	{
-		{ KDmIdRoot,	KDmIdNone,	_INIT_SECURITY_POLICY_C1(ECapabilityWriteDeviceData),		EStartupCriticalStatic,	KDomainTimeout	},
-
-		// row 1		
-		{ KDmIdTestA,	KDmIdRoot,	_INIT_SECURITY_POLICY_PASS,									EStartupCriticalStatic,	KDomainTimeout	},
-		{ KDmIdTestB,	KDmIdRoot,	_INIT_SECURITY_POLICY_PASS,									EStartupCriticalStatic,	KDomainTimeout	},
-		{ KDmIdTestC,	KDmIdRoot,	_INIT_SECURITY_POLICY_PASS,									EStartupCriticalStatic,	KDomainTimeout	},
-
-		// row 2
-		{ KDmIdTestAA,	KDmIdTestA,	_INIT_SECURITY_POLICY_PASS,									EStartupCriticalStatic,	KDomainTimeout	},
-		{ KDmIdTestAB,	KDmIdTestA,	_INIT_SECURITY_POLICY_PASS,									EStartupCriticalStatic,	KDomainTimeout	},
-		{ KDmIdTestBA,	KDmIdTestB,	_INIT_SECURITY_POLICY_PASS,									EStartupCriticalStatic,	KDomainTimeout	},
-		{ KDmIdTestCA,	KDmIdTestC,	_INIT_SECURITY_POLICY_PASS,									EStartupCriticalStatic,	KDomainTimeout	},
-		
-		// row 3
-		{ KDmIdTestABA,	KDmIdTestAB,_INIT_SECURITY_POLICY_PASS,									EStartupCriticalStatic,	KDomainTimeout	},
-		{ KDmIdTestABB,	KDmIdTestAB,_INIT_SECURITY_POLICY_PASS,									EStartupCriticalStatic,	KDomainTimeout	},
-		{ KDmIdTestCAA,	KDmIdTestCA,_INIT_SECURITY_POLICY_PASS,									EStartupCriticalStatic,	KDomainTimeout	},
-
-		// end of array marker
-		{ KDmIdNone,	KDmIdNone,	_INIT_SECURITY_POLICY_PASS,	0,	0	}
-	};
-static const TDmHierarchyPolicy HierarchyPolicy	= 
-	{ETraverseParentsFirst, ETraverseChildrenFirst, ETransitionFailureStop};
-	
-
 
 /**
 Gets access to the test hierarchy specification.
@@ -58,10 +29,8 @@ the domain hierarchy specification array.
 */
 EXPORT_C const TDmDomainSpec* DmPolicy::GetDomainSpecs()
 	{
-	return (TDmDomainSpec*) DomainHierarchy;
+	return DomainHierarchy;
 	}
-
-
 
 
 /**
@@ -82,12 +51,12 @@ EXPORT_C void DmPolicy::Release(const TDmDomainSpec* /*aDomainSpec*/)
 
 
 /**
-Retrieves the domain hierarchy policy 
+Retrieves the domain hierarchy policy
 
 @param	aPolicy a client-supplied policy which on exit
 		will contain a copy of the policy for the requested domain hierarchy id.
 
-  
+
 @return	KErrNone
 */
 EXPORT_C TInt DmPolicy::GetPolicy(TDmHierarchyPolicy& aPolicy)
@@ -95,4 +64,25 @@ EXPORT_C TInt DmPolicy::GetPolicy(TDmHierarchyPolicy& aPolicy)
 	aPolicy = HierarchyPolicy;
 	return KErrNone;
 	}
+
+
+#ifdef DOMAIN_POLICY_V2
+
+EXPORT_C TInt DmPolicy::GetStateSpec(TAny*& aPtr, TUint& aNumElements)
+	{
+	aNumElements = StateSpecificationSize;
+	if (StateSpecificationSize)
+		aPtr = (TAny*) StateSpecification;
+	else
+		aPtr = NULL;
+	return StateSpecificationVersion;
+	}
+
+
+EXPORT_C void DmPolicy::ReleaseStateSpec(TAny* /*aStateSpec*/)
+	{
+	}
+
+#endif
+
 

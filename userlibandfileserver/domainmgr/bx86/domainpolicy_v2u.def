@@ -2,4 +2,6 @@ EXPORTS
 	?GetDomainSpecs@DmPolicy@@SAPBUTDmDomainSpec@@XZ @ 1 NONAME ; public: static struct TDmDomainSpec const * __cdecl DmPolicy::GetDomainSpecs(void)
 	?Release@DmPolicy@@SAXPBUTDmDomainSpec@@@Z @ 2 NONAME ; public: static void __cdecl DmPolicy::Release(struct TDmDomainSpec const *)
 	?GetPolicy@DmPolicy@@SAHAAVTDmHierarchyPolicy@@@Z @ 3 NONAME ; public: static int __cdecl DmPolicy::GetPolicy(class TDmHierarchyPolicy &)
-
+	?GetStateSpec@DmPolicy@@SAHAAPAXAAI@Z @ 4  NONAME ; public: static int __cdecl DmPolicy::GetStateSpec(void * &,unsigned int &)
+	?ReleaseStateSpec@DmPolicy@@SAXPAX@Z @ 5  NONAME ; public: static void __cdecl DmPolicy::ReleaseStateSpec(void *)
+	

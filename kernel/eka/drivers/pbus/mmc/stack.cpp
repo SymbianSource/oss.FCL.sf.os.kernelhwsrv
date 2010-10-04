@@ -3078,7 +3078,7 @@ inline TMMCErr DMMCStack::AttachCardSM()
 			s.iSessionID == ECIMNakedSession )
 			SMF_EXIT
 
-		s.PushCommandStack();
+		CurrentSessPushCmdStack();
 		s.FillCommandDesc( ECmdSendStatus, 0 );
 		m.SetTraps( KMMCErrBasic );		// to restore command stack position to its original level
 		SMF_INVOKES( ExecCommandSMST, EStAttStatus )
@@ -3086,7 +3086,7 @@ inline TMMCErr DMMCStack::AttachCardSM()
 	SMF_STATE(EStAttStatus)
 
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_ATTACHCARDSM3, "EStAttStatus" );
-		s.PopCommandStack();
+		CurrentSessPopCmdStack();
 		OstTraceFunctionExitExt( DMMCSTACK_ATTACHCARDSM_EXIT3, this, (TInt) err );
 		SMF_RETURN( err )
 
@@ -3358,8 +3358,8 @@ EXPORT_C TMMCErr DMMCStack::InitStackAfterUnlockSM()
 
 		m.SetTraps(KMMCErrResponseTimeOut | KMMCErrStatus | KMMCErrDataCRC | KMMCErrBypass);	// KMMCErrDataCRC will pick up if the card is not in 1-bit mode
 
-		s.FillCommandDesc(ECmdSendExtendedCSD);
-		s.FillCommandArgs(0, KMMCExtendedCSDLength, iPSLBuf, KMMCExtendedCSDLength);
+		CurrentSessFillCmdDesc(ECmdSendExtendedCSD);
+		CurrentSessFillCmdArgs(0, KMMCExtendedCSDLength, iPSLBuf, KMMCExtendedCSDLength);
 
 		__KTRACE_OPT(KPBUS1, Kern::Printf(">ConfigureHighSpeed(), Sending ECmdSendExtendedCSD"));
 		SMF_INVOKES(CIMReadWriteBlocksSMST, EStGotExtendedCSD)
@@ -3815,7 +3815,7 @@ TMMCErr DMMCStack::ExecSleepCommandSM()
 		TMMCard &cd = *(iCardArray->CardP(iAutoUnlockIndex));
 		s.SetCard(&cd);
 		
-		s.PushCommandStack();		
+		CurrentSessPushCmdStack();		
 		s.FillCommandDesc(ECmdSleepAwake, KBit15);
 		
 		// CMD5 is an AC command, ExecCommandSMST will automatically issue a deselect
@@ -3828,7 +3828,7 @@ TMMCErr DMMCStack::ExecSleepCommandSM()
 		
 		const TMMCStatus status(s.ResponseP());
 		
-		s.PopCommandStack();
+		CurrentSessPopCmdStack();
 
 		if(status.State() == ECardStateStby || status.State() == ECardStateSlp)
 			{			
@@ -3906,7 +3906,7 @@ TMMCErr DMMCStack::ExecAwakeCommandSM()
 		__KTRACE_OPT(KPBUS1, Kern::Printf("VccQ Powered Up"));
 		
 		//Issue CMD5 to awaken media
-		s.PushCommandStack();		
+		CurrentSessPushCmdStack();		
 		s.FillCommandDesc(ECmdSleepAwake);
 		s.Command().iArgument.SetRCA(s.CardP()->RCA());
 		
@@ -3935,7 +3935,7 @@ TMMCErr DMMCStack::ExecAwakeCommandSM()
 			return KMMCErrStatus;
 			}
 
-		s.PopCommandStack();	
+		CurrentSessPopCmdStack();	
 	
 	// Fall through to the next state
 	SMF_STATE(EStDone)
@@ -5113,7 +5113,7 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 	SMF_BEGIN
 
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECCOMMANDSM2, "EStBegin" );
-		if ( ( s.CardRCA() != 0 ) && ( (s.CardP()->iStatus.State()) == ECardStateSlp) )
+		if ( ( CurrentSessCardRCA() != 0 ) && ( (s.CardP()->iStatus.State()) == ECardStateSlp) )
 			{
 			// Currently selected media is asleep, so it must be awoken
 			SMF_INVOKES(ExecAwakeCommandSMST,EStExecCmd)
@@ -5147,7 +5147,7 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 
 				// Check if this card is already in the appropriate selected/deselected
 				// state for the forthcoming command.
-				if (s.CardRCA() != iSelectedCard)
+				if (CurrentSessCardRCA() != iSelectedCard)
 					{
 					DeselectsToIssue(1);
 					}
@@ -5159,8 +5159,8 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 			SMF_GOTOS( EStAnalyseCommand )
 
 		// Save the top-level command while we issue de-selects
-		s.PushCommandStack();
-		s.FillCommandDesc( ECmdSelectCard, 0 );		// Deselect - RCA=0
+		CurrentSessPushCmdStack();
+		CurrentSessFillCmdDesc( ECmdSelectCard, 0 );      // Deselect - RCA=0
 		iCxDeselectCount=iDeselectsToIssue;
 
 	// Fall through to the next state
@@ -5174,7 +5174,7 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 		// If we got an error and this is the last de-select then give up
 		if (err && iCxDeselectCount == 1)
 			{
-			s.PopCommandStack();
+		    CurrentSessPopCmdStack();
 			OstTraceFunctionExitExt( DMMCSTACK_EXECCOMMANDSM_EXIT1, this, (TInt) err );
 			SMF_RETURN(err)
 			}
@@ -5182,7 +5182,7 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 		if (--iCxDeselectCount > 0)
 			SMF_INVOKES(RetryGapTimerSMST,EStDeselectLoop)
 
-		s.PopCommandStack();
+		CurrentSessPopCmdStack();
 		iStackState &= ~KMMCStackStateDoDeselect;
 
 	// Fall through to the next state
@@ -5238,7 +5238,7 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 
 		// Need to select (or deselect by using RCA(0)) the card so push the
 		// top-level command onto the command stack while we issue the select command.
-		s.PushCommandStack();
+		CurrentSessPushCmdStack();
 		s.FillCommandDesc(ECmdSelectCard,targetRCA);
 		SMF_INVOKES(IssueCommandCheckResponseSMST,EStSelectDone)	
 
@@ -5254,7 +5254,7 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 			if (err == KMMCErrBusyTimeOut)
 				cmd.iFlags |= KMMCCmdFlagExecSelBusy;
 
-			s.PopCommandStack();
+			CurrentSessPopCmdStack();
 			SMF_NEXTS(EStErrRecover)
 			OstTraceFunctionExitExt( DMMCSTACK_EXECCOMMANDSM_EXIT4, this, (TInt) err );
 			return err;		// re-enter the next state with that error
@@ -5277,7 +5277,7 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 			cmd.iPollAttempts = 0;
 			}
 
-		s.PopCommandStack();
+		CurrentSessPopCmdStack();
 		
 		cmd = s.Command();
 		if (!cmd.iSpec.iUseStopTransmission && cmd.iSpec.iMultipleBlocks)
@@ -5287,7 +5287,7 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 			// therefore need to re-issue SET_BLOCK_COUNT.....
 	  		const TUint blocks = cmd.NumBlocks();
 	
-			s.PushCommandStack();
+			CurrentSessPushCmdStack();
 			s.FillCommandDesc( ECmdSetBlockCount, blocks );
 			SMF_INVOKES( IssueCommandCheckResponseSMST, EStBlockCountCmdIssued )
 			}
@@ -5300,7 +5300,7 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 		
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECCOMMANDSM9, "EStBlockCountCmdIssued" );
 		const TMMCStatus status(s.ResponseP());
-		s.PopCommandStack();
+		CurrentSessPopCmdStack();
 		if (status.Error())
 		    {
 		    OstTraceFunctionExitExt( DMMCSTACK_EXECCOMMANDSM_EXIT5, this, (TInt) KMMCErrStatus );
@@ -5320,13 +5320,13 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 		if (cmd.iSpec.iCommandClass != KMMCCmdClassApplication)
 			SMF_GOTOS( EStIssueCommand )
 
-		s.PushCommandStack();
+		CurrentSessPushCmdStack();
 		s.FillCommandDesc(ECmdAppCmd, s.CardRCA()); // Send APP_CMD (CMD55)	
 		SMF_INVOKES(IssueCommandCheckResponseSMST,EStIssueAppCommandDone)
 		
 	SMF_STATE(EStIssueAppCommandDone)
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECCOMMANDSM11, "EStIssueAppCommandDone" );
-		s.PopCommandStack();
+		CurrentSessPopCmdStack();
 		if ( err )
 			{
 			SMF_NEXTS(EStErrRecover)
@@ -5760,7 +5760,7 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 	SMF_BEGIN
 
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM2, "EStBegin" );
-		if(s.iSessionID == ECIMWriteBlock || s.iSessionID == ECIMWriteMBlock)
+		if(s.SessionID() == ECIMWriteBlock || s.SessionID() == ECIMWriteMBlock)
 			{
 			// Check that the card supports class 4 (Write) commands
 			const TUint ccc = s.iCardP->CSD().CCC();
@@ -5818,7 +5818,7 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 			}
 
 		s.iCardP->iSetBlockLen = 0;
-		s.PushCommandStack();
+		CurrentSessPushCmdStack();
 		s.FillCommandDesc( ECmdSetBlockLen, blockLength );
 		SMF_INVOKES( ExecCommandSMST, EStLength1 )
 
@@ -5826,7 +5826,7 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM5, "EStAttached" );
 		const TMMCStatus status(s.ResponseP());
-		s.PopCommandStack();
+		CurrentSessPopCmdStack();
 		if (status.Error())
 		    {
 		    OstTraceFunctionExitExt( DMMCSTACK_CIMREADWRITEBLOCKSSM_EXIT4, this, (TInt) KMMCErrStatus );
@@ -5930,7 +5930,7 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 			args |= KMMCCmdReliableWrite;
 			}
 		
-		s.PushCommandStack();
+		CurrentSessPushCmdStack();
 		s.FillCommandDesc( ECmdSetBlockCount, args );
 		SMF_INVOKES( ExecCommandSMST, EStBlockCountCmdIssued )
 
@@ -5938,7 +5938,7 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 		
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM9, "EStBlockCountCmdIssued" );
 		const TMMCStatus status(s.ResponseP());
-		s.PopCommandStack();
+		CurrentSessPopCmdStack();
 		if (status.Error())
 		    {
 		    OstTraceFunctionExitExt( DMMCSTACK_CIMREADWRITEBLOCKSSM_EXIT5, this, (TInt) KMMCErrStatus );
@@ -5957,7 +5957,7 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM10, "EStAppCmdIssued" );
 		const TMMCStatus status(s.ResponseP());
-		s.PopCommandStack();
+		CurrentSessPopCmdStack();
 		if (status.Error())
 		    {
 		    OstTraceFunctionExitExt( DMMCSTACK_CIMREADWRITEBLOCKSSM_EXIT6, this, (TInt) KMMCErrStatus );
@@ -5993,14 +5993,14 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 		// have bee a Deselect/Select issued), but we do know last response is stored in iLastStatus
 		TMMC::BigEndian4Bytes(s.ResponseP(), s.iLastStatus);
 
-		s.PushCommandStack();
+		CurrentSessPushCmdStack();
 		s.FillCommandDesc(ECmdSendStatus, 0);
 		SMF_INVOKES(ExecCommandSMST, EStWaitFinish1)
 
 	SMF_STATE(EStWaitFinish1)
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM14, "EStWaitFinish1" );
 		const TMMCStatus status(s.ResponseP());
-		s.PopCommandStack();
+		CurrentSessPopCmdStack();
 
 #ifdef __WINS__
 		SMF_GOTOS(EStRWFinish);
@@ -6161,7 +6161,7 @@ inline TMMCErr DMMCStack::CIMEraseSM()
 			command = ECmdTagEraseGroupEnd;
 			}
 
-		s.PushCommandStack();
+		CurrentSessPushCmdStack();
 		s.FillCommandDesc( command, endAddr );
 		SMF_INVOKES( ExecCommandSMST, EStEndTagged )
 
@@ -6191,7 +6191,7 @@ inline TMMCErr DMMCStack::CIMEraseSM()
 	SMF_STATE(EStWaitFinish)
 
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMERASESM10, "EStWaitFinish" );
-		s.PushCommandStack();
+		CurrentSessPushCmdStack();
 		s.FillCommandDesc(ECmdSendStatus, 0);
 		SMF_INVOKES(ExecCommandSMST, EStWaitFinish1)
 
@@ -6199,7 +6199,7 @@ inline TMMCErr DMMCStack::CIMEraseSM()
 
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMERASESM11, "EStWaitFinish1" );
 		const TMMCStatus st(s.ResponseP());
-		s.PopCommandStack();
+		CurrentSessPopCmdStack();
 
 #ifdef __WINS__
 		SMF_GOTOS(EStEraseFinish);

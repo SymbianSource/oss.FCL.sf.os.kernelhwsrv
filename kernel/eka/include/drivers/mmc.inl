@@ -1094,7 +1094,7 @@ inline void DMMCSession::MoreDataAvailable(TUint32 aNumBlocks, TUint8* aMemoryP,
 	Command().iDataMemoryP = aMemoryP;
 	EnableDoubleBuffering(aNumBlocks);
 
-	iStackP->UnBlock(this, KMMCBlockOnMoreData, aError == KErrNone ? KMMCErrNone : KMMCErrGeneral);
+	UnBlock(KMMCBlockOnMoreData, aError == KErrNone ? KMMCErrNone : KMMCErrGeneral);
 	}
 
 inline TBool DMMCSession::RequestMoreData()
@@ -1119,7 +1119,7 @@ inline TBool DMMCSession::RequestMoreData()
 	
 	if(Command().IsDoubleBuffered() && (Command().iBytesDone + Command().BufferLength() < Command().iTotalLength))
 		{
-		iStackP->Block(this, KMMCBlockOnMoreData);
+		Block(KMMCBlockOnMoreData);
 		iDataTransferCallback.CallBack();
 		return(ETrue);
 		}
@@ -1229,7 +1229,7 @@ inline TMMCard* DMMCStack::CardP(TUint aCardNumber)
  * @param aCardNumber The card number.
  * @return A pointer to the specified card.
  */
-	{return( (aCardNumber<iMaxCardsInStack) ? (iCardArray->CardP(aCardNumber)) : NULL );}
+	{return( (aCardNumber<MaxCardsInStack()) ? (iCardArray->CardP(aCardNumber)) : NULL );}
 
 inline DMMCSocket* DMMCStack::MMCSocket() const
 /** 

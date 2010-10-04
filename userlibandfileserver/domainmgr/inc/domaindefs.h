@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -11,6 +11,7 @@
 // Contributors:
 //
 // Description:
+// Contains the common definitions for the Domain Manager interface for clients.
 //
 // WARNING: This file contains some APIs which are internal and are subject
 //          to change without notice. Such APIs should therefore not be used
@@ -22,6 +23,7 @@
 
 #include <e32cmn.h>
 #include <e32power.h>
+
 
 /**
 @internalTechnology
@@ -159,7 +161,8 @@ typedef TUint TDmDomainState;
 /**
 @internalTechnology
 
-The power domain hierarchy Id.
+The power domain hierarchy Id. This hierarchy is used in development 
+platforms.
 */
 static const TDmHierarchyId	KDmHierarchyIdPower		= 1;
 
@@ -169,7 +172,8 @@ static const TDmHierarchyId	KDmHierarchyIdPower		= 1;
 /**
 @internalAll
 
-The start-up domain hierarchy Id.
+The system state start-up and shutdown domain hierarchy Id. This hierarchy is
+used in production devices.
 */
 static const TDmHierarchyId	KDmHierarchyIdStartup	= 2;
 
@@ -246,6 +250,35 @@ public:
 	TInt iError;
 	};
 
+
+
+/**
+The possible ways in which the domain manager can behave when a transition 
+fails. 
+
+@see TDmHierarchyPolicy
+@see TDmStateSpecV1
+@see DmPolicyGetPolicy
+*/
+enum TDmTransitionFailurePolicy
+	{
+	// Failure policies
+	
+	/**	The domain manager stops at the first transition failure */
+	ETransitionFailureStop,
+
+	/** The domain manager continues at any transition failure */
+	ETransitionFailureContinue,
+
+
+	// Special failure policies
+
+	/** Used in SDmStateSpecV1 when the default failure policy for the 
+	hierarchy should be used. The default failure policy is
+	returned by the DmPolicyGetPolicy() function, ordinal 3 in
+	the policy library. */
+	ETransitionFailureUsePolicyFromOrdinal3 = 256
+	};
 
 
 
@@ -384,6 +417,9 @@ static const TInt KDmErrOutstanding		= -262;
 Domain manager specific error code - indicates that the domain hierarchy does not exist.
 */
 static const TInt KErrBadHierarchyId	= -263;
+
+
+
 
 #endif
 

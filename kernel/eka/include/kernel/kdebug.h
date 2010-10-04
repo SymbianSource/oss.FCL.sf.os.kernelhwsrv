@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -39,9 +39,9 @@ Defines the minor version number of the stop-mode debug API
 @released
 */
 #ifdef __MEMMODEL_MULTIPLE__
-const TInt KDebuggerMinorVersionNumber	= 6;
+const TInt KDebuggerMinorVersionNumber	= 7;
 #else
-const TInt KDebuggerMinorVersionNumber	= 5;
+const TInt KDebuggerMinorVersionNumber	= 6;
 #endif
 /**
 Defines the build number of the stop-mode debug API
@@ -113,7 +113,7 @@ table is invalid
 */
 const TInt KDebuggerOffsetInvalid		= -1;
 
-const TUint32 KFilterBufferSize = 1024;
+const TUint32 KFilterBufferSize = 16384;
 const TUint32 KFilterBufferSignature = 0x4642444B;
 
 /**

@@ -3246,10 +3246,8 @@ NONSHARABLE_CLASS(CFsMountHelper) : public CBase
     {
  public:
 
-    inline ~CFsMountHelper();
-    
+    IMPORT_C ~CFsMountHelper();
     IMPORT_C static CFsMountHelper* New(RFs& aFs, TInt aDrvNum);
-    IMPORT_C void Close();
 
     /** file system dismounting options. Used by DismountFileSystem(). RFs::NotifyDismount(), RFs::DismountFileSystem()*/
     enum TFsDismountMode
@@ -3274,6 +3272,8 @@ NONSHARABLE_CLASS(CFsMountHelper) : public CBase
     inline CFsMountHelper(); 
     CFsMountHelper(const CFsMountHelper&);
     CFsMountHelper& operator=(const CFsMountHelper&);
+
+    void Close();
 
  private:
     TFsMntHelperImpl*  ipImpl; 

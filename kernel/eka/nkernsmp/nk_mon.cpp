@@ -123,6 +123,13 @@ void DisplaySubSchedulerInfo(Monitor& m, TSubScheduler& ss)
 
 	m.Printf("DeferShutdown %4d RdyThrdC %d Uncached %08x\r\n", ss.iDeferShutdown, ss.iRdyThreadCount, ss.iUncached);
 	DisplaySubSchedulerExt(m, ss);
+
+	volatile TUint32* ssc = (volatile TUint32*)&ss.iSubSchedScratch[0];
+	m.Printf("Scratch 0: %08x  1: %08x  2: %08x  3: %08x\r\n", ssc[ 0], ssc[ 1], ssc[ 2], ssc[ 3]);
+	m.Printf("Scratch 4: %08x  5: %08x  6: %08x  7: %08x\r\n", ssc[ 4], ssc[ 5], ssc[ 6], ssc[ 7]);
+	m.Printf("Scratch 8: %08x  9: %08x  A: %08x  B: %08x\r\n", ssc[ 8], ssc[ 9], ssc[10], ssc[11]);
+	m.Printf("Scratch C: %08x  D: %08x  E: %08x  F: %08x\r\n", ssc[12], ssc[13], ssc[14], ssc[15]);
+
 	TPriListBase* b = (TPriListBase*)&ss;
 	m.Printf("PriClassThrdC %4d %4d %4d %4d\r\n", ss.iPriClassThreadCount[0], ss.iPriClassThreadCount[1], ss.iPriClassThreadCount[2], ss.iPriClassThreadCount[3]);
 	m.Printf("Present %08x %08x\r\n", b->iPresent[1], b->iPresent[0]);
@@ -164,10 +171,10 @@ void Monitor::DisplaySchedulerInfo()
 
 	DisplaySchedulerExt(*this, *pS);
 	volatile TUint32* sc = (volatile TUint32*)&pS->iSchedScratch[0];
-	Printf("Scratch 0: %08x  1: %08x  2: %08x  3: %08x\r\n",sc[0],sc[1],sc[2],sc[3]);
-	Printf("Scratch 4: %08x  5: %08x  6: %08x  7: %08x\r\n",sc[4],sc[5],sc[6],sc[7]);
-	Printf("Scratch 8: %08x  9: %08x  A: %08x  B: %08x\r\n",sc[8],sc[9],sc[10],sc[11]);
-	Printf("Scratch C: %08x  D: %08x  E: %08x  F: %08x\r\n",sc[12],sc[13],sc[14],sc[15]);
+	Printf("Scratch 0: %08x  1: %08x  2: %08x  3: %08x\r\n", sc[ 0], sc[ 1], sc[ 2], sc[ 3]);
+	Printf("Scratch 4: %08x  5: %08x  6: %08x  7: %08x\r\n", sc[ 4], sc[ 5], sc[ 6], sc[ 7]);
+	Printf("Scratch 8: %08x  9: %08x  A: %08x  B: %08x\r\n", sc[ 8], sc[ 9], sc[10], sc[11]);
+	Printf("Scratch C: %08x  D: %08x  E: %08x  F: %08x\r\n", sc[12], sc[13], sc[14], sc[15]);
 
 	TInt i;
 	for (i=0; i<KMaxCpus; ++i)

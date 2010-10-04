@@ -283,12 +283,6 @@ TUint32 TVolFormatParam::GetVal(TUint aIndex) const
 
 //-------------------------------------------------------------------------------------------------------------------
 
-CFsMountHelper::~CFsMountHelper() 
-    {
-    Close();
-    } 
-
-
 CFsMountHelper::CFsMountHelper() 
     {}; 
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -1317,62 +1317,66 @@ LOCAL_C TInt TestGetClientGetResourceInfo()
 //! 
 //!						2) Call API to get the new state of the resource and check it exhibits
 //!						the expected value.
+//!
+//!						3) Call API to modify the state of the resource by setting its level to zero.
+//!
+//!						4) Call API to get the state of the resource and check it exhibits the expected zero value.
 //! 
-//!						3) Call API to return the resource state to its original value.
+//!						5) Call API to return the resource state to its original value.
 //! 
-//!						4) Call API to get the state of a long latency resource then call API
+//!						6) Call API to get the state of a long latency resource then call API
 //!						with operation-type qualifier cancel the request.
 //! 
-//!						5) Call API to modify the state of the long latency resource then call API
+//!						7) Call API to modify the state of the long latency resource then call API
 //!						with operation-type qualifier to cancel the request.
 //! 
-//!						6) Call API to get the state of a long latency resource and wait for it 
+//!						8) Call API to get the state of a long latency resource and wait for it 
 //!						to complete. Then call API with operation-type qualifier to cancel the request.
 //! 
-//!						7) Call API to modify the state of the long latency resource and wait for
+//!						9) Call API to modify the state of the long latency resource and wait for
 //!						it to complete. Then call API with operation-type qualifier to cancel the request.
 //! 
-//!						8) Call API to get the state of a long latency resource then call API
+//!						10) Call API to get the state of a long latency resource then call API
 //!						without operation-type qualifier to cancel the request.
 //! 
-//!						9) Call API to modify the state of the long latency resource then call API
+//!						11) Call API to modify the state of the long latency resource then call API
 //!						without operation-type qualifier to cancel the request.
 //! 
-//!						10) Call API to get the state of a long latency resource and wait for it 
+//!						12) Call API to get the state of a long latency resource and wait for it 
 //!						to complete. Then call API without operation-type qualifier to cancel the request.
 //! 
-//!						11) Call API to modify the state of the long latency resource and wait for
+//!						13) Call API to modify the state of the long latency resource and wait for
 //!						it to complete. Then call API without operation-type qualifier to cancel the request.
 //! 
-//!						12) Call API to get the state of a long latency resource 'n' times. Then call API with 
+//!						14) Call API to get the state of a long latency resource 'n' times. Then call API with 
 //!						resource qualifier to cancel the requests.
 //! 
-//!						13) Call API to modify the state of a long latency resource 'm' times. Then call API with 
+//!						15) Call API to modify the state of a long latency resource 'm' times. Then call API with 
 //!						resource qualifier to cancel the requests.
 //! 
-//!						14) Call API to get the state of a long latency resource 'n' times and wait for them to complete.
+//!						16) Call API to get the state of a long latency resource 'n' times and wait for them to complete.
 //!						Then call API with resource qualifier to cancel the requests.
 //! 
-//!						15) Call API to modify the state of a long latency resource 'm' times and wait for them to complete.
+//!						17) Call API to modify the state of a long latency resource 'm' times and wait for them to complete.
 //!						Then call API with resource qualifier to cancel the requests.
 //! 
-//!						16) Call API to get the state of a long latency resource 'n' times, call API to modify the state of
+//!						18) Call API to get the state of a long latency resource 'n' times, call API to modify the state of
 //!						a long latency resource 'm' times. Call the API to cancel the get operations with resource qualifier.
 //!						Wait for the operations to complete. Check the state of the associated TRequestStatus objects.
 //! 
-//!						17) Call API to get the state of a long latency resource 'n' times, call API to modify the state of
+//!						19) Call API to get the state of a long latency resource 'n' times, call API to modify the state of
 //!						a long latency resource 'm' times. Call the API to cancel the modify operations with resource qualifier.
 //!						Wait for the get operations to complete. Check the state of the associated TRequestStatus objects.
 //! 
-//!						18) Call API to get the state of a long latency resource 'n' times, call API to modify the state of
+//!						20) Call API to get the state of a long latency resource 'n' times, call API to modify the state of
 //!						a long latency resource 'm' times. Wait for the get operations to complete. Call the API to cancel the get
 //!						operations with resource qualifier. Check the state of the associated TRequestStatus objects.
 //! 
-//!						19) Call API to get the state of a long latency resource 'n' times, call API to modify the state of
+//!						21) Call API to get the state of a long latency resource 'n' times, call API to modify the state of
 //!						a long latency resource 'm' times. Wait for the modify operations to complete. Call the API to cancel the modify
 //!						operations with resource qualifier. Check the state of the associated TRequestStatus objects.
 //! 
-//!						20) Call API to get the state of a long latency resource 'n' times, call API to modify the state of
+//!						22) Call API to get the state of a long latency resource 'n' times, call API to modify the state of
 //!						a long latency resource 'm' times.
 //!						Then call API with operation-type qualifier to cancel the even-numbered get request(s).
 //!						Then call API without operation-type qualifier to cancel the even-numbered modify request(s).
@@ -1387,57 +1391,62 @@ LOCAL_C TInt TestGetClientGetResourceInfo()
 //! 
 //!						3) The associated TRequestStatus object should indicate KErrNone, exits otherwise.
 //! 
-//!						4) The associated TRequestStatus object should indicate KErrCancel if the cancel 
+//!						4) The associated TRequestStatus object should indicate KErrNone, exits otherwise.
+//!						Exit if the value read back is not as expected.
+//! 
+//!						5) The associated TRequestStatus object should indicate KErrNone, exits otherwise.
+//! 
+//!						6) The associated TRequestStatus object should indicate KErrCancel if the cancel 
 //!						request was accepted, exits otherwise.
 //!						The associated TRequestStatus object should indicate KErrNone if the cancel request
 //!						was not accepted, exits otherwise.
 //! 
-//!						5) The associated TRequestStatus object should indicate KErrCancel if the cancel 
+//!						7) The associated TRequestStatus object should indicate KErrCancel if the cancel 
 //!						request was accepted, exits otherwise.
 //!						The associated TRequestStatus object should indicate KErrNone if the cancel request
 //!						was not accepted, exits otherwise.
 //! 
-//!						6) The TRequestStatus object associated with the get operation should indicate 
+//!						8) The TRequestStatus object associated with the get operation should indicate 
 //!						KErrNone - exits otherwise. The TRequestStatus object associated with the cancel
 //!						operation should indicate KErrNone - exits otherwise.
 //! 
-//!						7) The TRequestStatus object associated with the get operation should indicate
+//!						9) The TRequestStatus object associated with the get operation should indicate
 //!						KErrNone - exits otherwise. The TRequestStatus object associated with the cancel
 //!						operation should indicate KErrNone - exits otherwise.
 //! 
-//!						8) The associated TRequestStatus object should indicate KErrCancel, exits otherwise.
+//!						10) The associated TRequestStatus object should indicate KErrCancel, exits otherwise.
 //! 
-//!						9) The associated TRequestStatus object should indicate KErrCancel, exits otherwise.
+//!						11) The associated TRequestStatus object should indicate KErrCancel, exits otherwise.
 //! 
-//!						10) The TRequestStatus object associated with the get operation should indicate 
+//!						12) The TRequestStatus object associated with the get operation should indicate 
 //!						KErrNone - exits otherwise. The TRequestStatus object associated with the cancel
 //!						operation should indicate KErrNone - exits otherwise.
 //! 
-//!						11) The TRequestStatus object associated with the get operation should indicate
+//!						13) The TRequestStatus object associated with the get operation should indicate
 //!						KErrNone - exits otherwise. The TRequestStatus object associated with the cancel
 //!						operation should indicate KErrNone - exits otherwise.
 //!
-//!						12) The TRequestStatus objects should all exibit KErrCancel - exits otherwise.
+//!						14) The TRequestStatus objects should all exibit KErrCancel - exits otherwise.
 //! 
-//!						13) The TRequestStatus objects should all exibit KErrCancel - exits otherwise.
+//!						15) The TRequestStatus objects should all exibit KErrCancel - exits otherwise.
 //! 
-//!						14) The TRequestStatus objects associated with the get operations should all exibit KErrNone - exits otherwise.
+//!						16) The TRequestStatus objects associated with the get operations should all exibit KErrNone - exits otherwise.
 //!						The TRequestStatus objects associated with the cancel operations should all exibit KErrNone - exits otherwise
 //! 
-//!						15) The TRequestStatus objects associated with the modify operations should all exibit KErrNone - exits otherwise.
+//!						17) The TRequestStatus objects associated with the modify operations should all exibit KErrNone - exits otherwise.
 //!						The TRequestStatus objects associated with the cancel operations should all exibit KErrNone - exits otherwise
 //! 
-//!						16) The TRequestStatus objects associated with the get operations should all exibit KErrCancel - exits otherwise.
+//!						18) The TRequestStatus objects associated with the get operations should all exibit KErrCancel - exits otherwise.
 //!						The TRequestStatus objects associated with the modify operations should all exibit KErrNone - exits otherwise
 //! 
-//!						17) The TRequestStatus objects associated with the get operations should all exibit KErrNone - exits otherwise.
+//!						19) The TRequestStatus objects associated with the get operations should all exibit KErrNone - exits otherwise.
 //!						The TRequestStatus objects associated with the modify operations should all exibit KErrCancel - exits otherwise
 //! 
-//!						18) The TRequestStatus objects associated with the get and modify operations should all exibit KErrNone - exits otherwise.
+//!						20) The TRequestStatus objects associated with the get and modify operations should all exibit KErrNone - exits otherwise.
 //! 
-//!						19) The TRequestStatus objects associated with the get and modify operations should all exibit KErrNone - exits otherwise.
+//!						21) The TRequestStatus objects associated with the get and modify operations should all exibit KErrNone - exits otherwise.
 //!
-//!						20) The TRequestStatus objects associated with the even-numbered request should exhibit KErrCancel.
+//!						22) The TRequestStatus objects associated with the even-numbered request should exhibit KErrCancel.
 //!						The TRequestStatus objects associated with the odd-numbered request should exhibit KErrNone.
 //!
 //! @SYMTestPriority        High
@@ -1500,7 +1509,29 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 	gTest.Printf(_L("TestGetSetResourceStateOps: level read back =0x%x, levelOwnerId=%d\n"),readValue,levelOwnerId);
 	gTest(newLevel==(TUint)readValue);
 
-	// 3) Call API to return the resource state to its original value.
+	// 3) Call API to modify the state of the resource by setting its level to zero
+	gTest.Printf(_L("TestGetSetResourceStateOps, starting test %d\n"),testNo++);
+	gChannel.ChangeResourceState(status,gLongLatencyResource,0);
+	User::WaitForRequest(status);
+	if(status != KErrNone)
+		{
+		gTest.Printf(_L("ChangeResourceState to level 0 returned %d\n"),r);
+		return r;
+		}
+
+	// 4) Call API to get the state of the resource and check it exhibits the expected zero value.
+	gTest.Printf(_L("TestGetSetResourceStateOps, starting test %d\n"),testNo++);
+	gChannel.GetResourceState(status,gLongLatencyResource,cached,&readValue,&levelOwnerId);
+	User::WaitForRequest(status);
+	if(status != KErrNone)
+		{
+		gTest.Printf(_L("TestGetSetResourceStateOps, get state status = %d\n"),r);
+		return r;
+		}
+	gTest.Printf(_L("TestGetSetResourceStateOps: level read back =0x%x, levelOwnerId=%d\n"),readValue,levelOwnerId);
+	gTest(readValue==0);
+
+	// 5) Call API to return the resource state to its original value.
 	gTest.Printf(_L("TestGetSetResourceStateOps, starting test %d\n"),testNo++);
 	gTest.Printf(_L("TestGetSetResourceStateOps: write original level 0x%x\n"), startingLevel);
 	gChannel.ChangeResourceState(status,gLongLatencyResource,startingLevel);
@@ -1519,7 +1550,7 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 		}
 	gTest.Printf(_L("TestGetSetResourceStateOps: check original level read back =0x%x, levelOwnerId=%d\n"),readValue,levelOwnerId);
 
-	// 4) Call API to get the state of a long latency resource then call API with operation-type qualifier cancel the request.
+	// 6) Call API to get the state of a long latency resource then call API with operation-type qualifier cancel the request.
 	gTest.Printf(_L("TestGetSetResourceStateOps, starting test %d\n"),testNo++);
 	gChannel.GetResourceState(status,gLongLatencyResource,cached,&readValue,&levelOwnerId);
 	r=gChannel.CancelGetResourceState(status);
@@ -1554,7 +1585,7 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 
 		}
 
-	// 5) Call API to modify the state of the long latency resource then call API with operation-type qualifier to cancel the request.
+	// 7) Call API to modify the state of the long latency resource then call API with operation-type qualifier to cancel the request.
 	gTest.Printf(_L("TestGetSetResourceStateOps, starting test %d\n"),testNo++);
 	newLevel = (TUint)(readValue + gAsyncResStateDelta);
 	gChannel.ChangeResourceState(status,gLongLatencyResource,newLevel);
@@ -1590,7 +1621,7 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 		}
 
 
-	// 6) Call API to get the state of a long latency resource and wait for it to complete.
+	// 8) Call API to get the state of a long latency resource and wait for it to complete.
 	//    Then call API with operation-type qualifier to cancel the request.	
 	gTest.Printf(_L("TestGetSetResourceStateOps, starting test %d\n"),testNo++);
 	gChannel.GetResourceState(status,gLongLatencyResource,cached,&readValue,&levelOwnerId);
@@ -1611,7 +1642,7 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 		return r;
 		}
 
-	// 7) Call API to modify the state of the long latency resource and wait for it to complete. 
+	// 9) Call API to modify the state of the long latency resource and wait for it to complete. 
 	//    Then call API with operation-type qualifier to cancel the request.
 	gTest.Printf(_L("TestGetSetResourceStateOps, starting test %d\n"),testNo++);
 	gChannel.ChangeResourceState(status,gLongLatencyResource,(readValue + gAsyncResStateDelta));
@@ -1632,7 +1663,7 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 		return r;
 		}
 
-	// 8) Call API to get the state of a long latency resource then call API without operation-type qualifier to cancel the request.
+	// 10) Call API to get the state of a long latency resource then call API without operation-type qualifier to cancel the request.
 	gTest.Printf(_L("TestGetSetResourceStateOps, starting test %d\n"),testNo++);
 	
 	// NOTE: Cancel operation can only remove request which is still inside the resource controller
@@ -1653,7 +1684,7 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 		return r;
 		}
 
-	// 9) Call API to modify the state of the long latency resource then call API without operation-type qualifier to cancel the request.
+	// 11) Call API to modify the state of the long latency resource then call API without operation-type qualifier to cancel the request.
 	gTest.Printf(_L("TestGetSetResourceStateOps, starting test %d\n"),testNo++);
 	
 	// NOTE: Cancel operation can only remove request which is still inside the resource controller
@@ -1675,7 +1706,7 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 		return r;
 		}
 
-	// 10) Call API to get the state of a long latency resource and wait for it to complete.
+	// 12) Call API to get the state of a long latency resource and wait for it to complete.
 	//     Then call API without operation-type qualifier to cancel the request.
 	gTest.Printf(_L("TestGetSetResourceStateOps, starting test %d\n"),testNo++);
 	gChannel.GetResourceState(status,gLongLatencyResource,cached,&readValue,&levelOwnerId);
@@ -1692,7 +1723,7 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 		return r;
 		}
 
-	// 11) Call API to modify the state of the long latency resource and wait for it to complete. 
+	// 13) Call API to modify the state of the long latency resource and wait for it to complete. 
 	//     Then call API without operation-type qualifier to cancel the request.
 	gTest.Printf(_L("TestGetSetResourceStateOps, starting test %d\n"),testNo++);
 	gChannel.ChangeResourceState(status,gLongLatencyResource,(readValue + gAsyncResStateDelta));
@@ -1716,7 +1747,7 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 	TRequestStatus setReqStatus[KLoopVarM];
 	TInt i=0;
 
-	// 12) Call API to get the state of a long latency resource 'n' times. 
+	// 14) Call API to get the state of a long latency resource 'n' times. 
 	//     Then call API with resource qualifier to cancel the requests.
 	gTest.Printf(_L("TestGetSetResourceStateOps, starting test %d\n"),testNo++);
 	for(i=0;i<KLoopVarN;i++)
@@ -1739,7 +1770,7 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 			}
 		}
 
-	// 13) Call API to modify the state of a long latency resource 'm' times. 
+	// 15) Call API to modify the state of a long latency resource 'm' times. 
 	//     Then call API with resource qualifier to cancel the requests.
 	gTest.Printf(_L("TestGetSetResourceStateOps, starting test %d\n"),testNo++);
 	for(i=0;i<KLoopVarM;i++)
@@ -1762,7 +1793,7 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 			}
 		}
 
-	// 14) Call API to get the state of a long latency resource 'n' times and wait for them to complete.
+	// 16) Call API to get the state of a long latency resource 'n' times and wait for them to complete.
 	//     Then call API with resource qualifier to cancel the requests.
 	gTest.Printf(_L("TestGetSetResourceStateOps, starting test %d\n"),testNo++);
 	for(i=0;i<KLoopVarN;i++)
@@ -1788,7 +1819,7 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 			}
 		}
 
-	// 15) Call API to modify the state of a long latency resource 'm' times and wait for them to complete.
+	// 17) Call API to modify the state of a long latency resource 'm' times and wait for them to complete.
 	//     Then call API with resource qualifier to cancel the requests.
 	gTest.Printf(_L("TestGetSetResourceStateOps, starting test %d\n"),testNo++);
 	for(i=0;i<KLoopVarM;i++)
@@ -1814,7 +1845,7 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 			}
 		}
 
-	// 16) Call API to get the state of a long latency resource 'n' times, call API to modify the state of
+	// 18) Call API to get the state of a long latency resource 'n' times, call API to modify the state of
 	//     a long latency resource 'm' times. 
 	//     Call the API to cancel the get operations with resource qualifier.
 	//     Wait for the operations to complete. Check the state of the associated TRequestStatus objects.
@@ -1852,7 +1883,7 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 			}
 		}
 
-	// 17) Call API to get the state of a long latency resource 'n' times, call API to modify the state of
+	// 19) Call API to get the state of a long latency resource 'n' times, call API to modify the state of
 	//     a long latency resource 'm' times. 
 	//     Call the API to cancel the modify operations with resource qualifier.
 	//     Wait for the get operations to complete. Check the state of the associated TRequestStatus objects.
@@ -1885,7 +1916,7 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 			}
 		}
 
-	// 18) Call API to get the state of a long latency resource 'n' times, call API to modify the state of
+	// 20) Call API to get the state of a long latency resource 'n' times, call API to modify the state of
 	//     a long latency resource 'm' times. Wait for the get operations to complete. 
 	//     Call the API to cancel the get operations with resource qualifier. Check the state of the associated TRequestStatus objects.
 	gTest.Printf(_L("TestGetSetResourceStateOps, starting test %d\n"),testNo++);
@@ -1927,7 +1958,7 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 			}
 		}
 
-	// 19) Call API to get the state of a long latency resource 'n' times, call API to modify the state of
+	// 21) Call API to get the state of a long latency resource 'n' times, call API to modify the state of
 	//     a long latency resource 'm' times. Wait for the modify operations to complete. Call the API to cancel the modify
 	//     operations with resource qualifier. Check the state of the associated TRequestStatus objects.
 	gTest.Printf(_L("TestGetSetResourceStateOps, starting test %d\n"),testNo++);
@@ -1967,7 +1998,7 @@ LOCAL_C TInt TestGetSetResourceStateOps()
 			}
 		}
 
-	// 20) Call API to get the state of a long latency resource 'n' times, call API to modify the state of a long latency resource 'm' times.
+	// 22) Call API to get the state of a long latency resource 'n' times, call API to modify the state of a long latency resource 'm' times.
 	//     Then call API without operation-type qualifier to cancel the even-numbered modify request(s).
 	//     Then call API with operation-type qualifier to cancel the even-numbered get request(s).
 	//     Check the state of the associated TRequestStatus objects.

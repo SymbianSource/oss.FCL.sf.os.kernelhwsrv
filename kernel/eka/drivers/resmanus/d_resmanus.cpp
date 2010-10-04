@@ -498,7 +498,6 @@ TInt DChannelResManUs::SendRequest(TMessageBase* aMsg)
 		{
 		case RBusDevResManUs::EChangeResourceState:
 			{
-			__ASSERT_ALWAYS(m.Ptr2() != NULL, RESMANUS_FAULT());
 #ifdef _DUMP_TRACKERS
 			DumpTracker(iSetStateTracker);
 #endif

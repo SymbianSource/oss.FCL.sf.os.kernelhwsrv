@@ -18,9 +18,11 @@
 TARGET			t_domain.exe        
 TARGETTYPE		EXE
 SOURCEPATH		.
-SOURCE			t_domain.cpp
+SOURCE			t_domain.cpp t_domain_cmn.cpp
 LIBRARY			euser.lib domaincli.lib
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+USERINCLUDE		../../../userlibandfileserver/domainmgr/inc
 
 CAPABILITY		WriteDeviceData PowerMgmt
 

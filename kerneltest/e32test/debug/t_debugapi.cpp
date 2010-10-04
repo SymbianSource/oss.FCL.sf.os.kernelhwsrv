@@ -1,4 +1,4 @@
-// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2005-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -22,7 +22,7 @@
 // (ARMv6 based target). It can be achieved by adding: #define STOP_MODE_DEBUGGING in .oby/iby file.
 // Supported and tested on H2 (ARMv5) and integrator_1136 (ARMv6) platforms.
 // It requires D_DEBUGAPI.DLL as well.
-// Using debug interfaca only, it completes (prints) the list of:
+// Using debug interface only, it completes (prints) the list of:
 // - processes;
 // - threads;
 // - chunks;

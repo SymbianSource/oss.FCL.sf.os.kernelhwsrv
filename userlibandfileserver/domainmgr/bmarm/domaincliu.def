@@ -42,4 +42,12 @@ EXPORTS
 	"_._9CDmDomain" @ 41 NONAME R3UNUSED ; CDmDomain::~CDmDomain(void)
 	__16CDmDomainManagerUc @ 42 NONAME R3UNUSED ; CDmDomainManager::CDmDomainManager(unsigned char)
 	AcknowledgeLastState__9CDmDomaini @ 43 NONAME R3UNUSED ; CDmDomain::AcknowledgeLastState(int)
-
+	CancelDeferral__9RDmDomain @ 44  NONAME R3UNUSED ; RDmDomain::CancelDeferral(void)
+	ConstructL__18CDmDomainKeepAlive @ 45  NONAME R3UNUSED ; CDmDomainKeepAlive::ConstructL(void)
+	DeferAcknowledgement__9RDmDomainR14TRequestStatus @ 46  NONAME R3UNUSED ; RDmDomain::DeferAcknowledgement(TRequestStatus &)
+	"_._18CDmDomainKeepAlive" @ 47  NONAME R3UNUSED ; CDmDomainKeepAlive::~CDmDomainKeepAlive(void)
+	__18CDmDomainKeepAliveUcUs @ 48  NONAME R3UNUSED ; CDmDomainKeepAlive::CDmDomainKeepAlive(unsigned char, unsigned short)
+	AcknowledgeLastState__18CDmDomainKeepAlivei @ 49  NONAME R3UNUSED ; CDmDomainKeepAlive::AcknowledgeLastState(int)
+	RunL__18CDmDomainKeepAlive @ 50  NONAME R3UNUSED ; CDmDomainKeepAlive::RunL(void)
+	HandleDeferralError__18CDmDomainKeepAlivei @ 51  NONAME R3UNUSED ; CDmDomainKeepAlive::HandleDeferralError(int)
+	

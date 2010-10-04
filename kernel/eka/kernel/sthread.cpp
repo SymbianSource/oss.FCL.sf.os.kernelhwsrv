@@ -140,6 +140,24 @@ void DThread::Destruct()
 		Kern::Free(iNThread.iExtraContext);
 	}
 
+#if defined(__EPOC32__) && defined(KTHREAD)
+void CheckSupervisorStackUsage(DThread* aT)
+	{
+	const TUint32* p = (const TUint32*)aT->iSupervisorStack;
+	TUint32 used = 0;
+	TUint32 free = 0;
+	if (p)
+		{
+		const TUint32* pE = p + (aT->iSupervisorStackSize / sizeof(TUint32));
+		while(p<pE && *p==0xeeeeeeeeu)
+			++p;
+		used = (pE - p) * sizeof(TUint32);
+		free = TUint32(aT->iSupervisorStackSize) - used;
+		}
+	Kern::Printf("Thread %O used %d bytes of kernel stack (%d bytes free)", aT, used, free);
+	}
+#endif
+
 // Enter and return with system unlocked.
 void DThread::Release()
 	{
@@ -185,6 +203,9 @@ void DThread::Release()
 	iTimer.Cancel(NULL);
 
 	__KTRACE_OPT(KTHREAD,Kern::Printf("Freeing supervisor-mode stack"));
+#if defined(__EPOC32__) && defined(KTHREAD)
+	__KTRACE_OPT(KTHREAD,CheckSupervisorStackUsage(this));
+#endif
 	FreeSupervisorStack();
 #ifdef BTRACE_THREAD_IDENTIFICATION
 	BTrace12(BTrace::EThreadIdentification,BTrace::EThreadDestroy,&iNThread,iOwningProcess,iId);
@@ -665,6 +686,31 @@ TUint64 tix2us(TUint64 aTicks, TUint32 aFreq)
 	}
 #endif
 
+#if defined(__SMP__) && defined(KTIMING)
+void TraceStatsOnThreadExit(DThread* aT)
+	{
+	TUint64 rc = aT->iNThread.iRunCount.i64;
+	NSchedulable::SCpuStats stats;
+	NKern::Lock();
+	aT->iNThread.GetCpuStats(NSchedulable::E_RunTime|NSchedulable::E_ActiveTime, stats);
+	NKern::Unlock();
+	TUint64 cputime = stats.iRunTime;
+	TUint64 acttime = stats.iActiveTime;
+	TUint32 f = NKern::CpuTimeMeasFreq();
+	TUint64 avgcpu = rc ? cputime / rc : 0;
+	TUint64 ratio = (acttime*100)/cputime;
+	TUint64 cpud = tix2us(cputime, f);
+	TUint64 actd = tix2us(acttime, f);
+	TUint64 avgd = tix2us(avgcpu, f);
+	Kern::Printf("Thread %O RC=%u CPU=%u.%06us ACT=%u.%06us AVG=%u.%06us RATIO=%d%%",
+					aT, TUint32(rc),
+					I64HIGH(cpud), I64LOW(cpud),
+					I64HIGH(actd), I64LOW(actd),
+					I64HIGH(avgd), I64LOW(avgd),
+					TUint32(ratio));
+	}
+#endif
+
 void DThread::Exit()
 //
 // This function runs in the context of the exiting thread
@@ -673,27 +719,7 @@ void DThread::Exit()
 	{
 #if defined(__SMP__) && defined(KTIMING)
 	if (KDebugNum(KTIMING))
-		{
-		TUint64 rc = iNThread.iRunCount.i64;
-		NSchedulable::SCpuStats stats;
-		NKern::Lock();
-		iNThread.GetCpuStats(NSchedulable::E_RunTime|NSchedulable::E_ActiveTime, stats);
-		NKern::Unlock();
-		TUint64 cputime = stats.iRunTime;
-		TUint64 acttime = stats.iActiveTime;
-		TUint32 f = NKern::CpuTimeMeasFreq();
-		TUint64 avgcpu = rc ? cputime / rc : 0;
-		TUint64 ratio = (acttime*100)/cputime;
-		TUint64 cpud = tix2us(cputime, f);
-		TUint64 actd = tix2us(acttime, f);
-		TUint64 avgd = tix2us(avgcpu, f);
-		Kern::Printf("Thread %O RC=%u CPU=%u.%06us ACT=%u.%06us AVG=%u.%06us RATIO=%d%%",
-						this, TUint32(rc),
-						I64HIGH(cpud), I64LOW(cpud),
-						I64HIGH(actd), I64LOW(actd),
-						I64HIGH(avgd), I64LOW(avgd),
-						TUint32(ratio));
-		}
+		TraceStatsOnThreadExit(this);
 #endif
 #ifdef KPANIC
 	if (iExitType==EExitPanic)

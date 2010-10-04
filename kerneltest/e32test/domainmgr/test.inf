@@ -22,21 +22,32 @@ PRJ_PLATFORMS
 BASEDEFAULT
 
 
-
 PRJ_TESTEXPORTS
 
 dm_tests.iby	/epoc32/rom/include/dm_tests.iby
 
+dmtest.all.bat	/epoc32/rom/include/dmtest.all.bat
 dmtest.auto.bat	/epoc32/rom/include/dmtest.auto.bat
 dm_autoexec.bat	/epoc32/rom/include/dm_autoexec.bat
-
 
 
 PRJ_TESTMMPFILES
 
 #ifndef SMP
 t_domain
+t_domain_monitor
+t_domain_manual		manual
+
 t_domain_slave		support
+t_dmslave_nocaps	support
+t_dmslave_wdd		support
+t_dmslave_protsrv	support
+
+domainpolicy94		support
+domainpolicy95		support
+domainpolicy96		support
+domainpolicy97		support
+domainpolicy98		support
 domainpolicy99		support
 #endif
 

@@ -369,7 +369,7 @@ EXPORTS
 	?RemoveNotifications@CFsNotify@@QAEHXZ @ 368 NONAME ; public: int __thiscall CFsNotify::RemoveNotifications(void)
 	?RequestNotifications@CFsNotify@@QAEHAAVTRequestStatus@@@Z @ 369 NONAME ; public: int __thiscall CFsNotify::RequestNotifications(class TRequestStatus &)
 	?SupportedFileSystemName@RFs@@QBEHAAVTDes16@@HH@Z @ 370 NONAME ; public: int __thiscall RFs::SupportedFileSystemName(class TDes16 &,int,int)const 
-	?Close@CFsMountHelper@@QAEXXZ @ 371 NONAME ; public: void __thiscall CFsMountHelper::Close(void)
+	??1CFsMountHelper@@UAE@XZ @ 371 NONAME ; public: virtual __thiscall CFsMountHelper::~CFsMountHelper(void)
 	?DismountFileSystem@CFsMountHelper@@QBEHXZ @ 372 NONAME ; public: int __thiscall CFsMountHelper::DismountFileSystem(void)const 
 	?DismountFileSystem@CFsMountHelper@@QBEXAAVTRequestStatus@@W4TFsDismountMode@1@@Z @ 373 NONAME ; public: void __thiscall CFsMountHelper::DismountFileSystem(class TRequestStatus &,enum CFsMountHelper::TFsDismountMode)const 
 	?GetMountProperties@CFsMountHelper@@QAEHXZ @ 374 NONAME ; public: int __thiscall CFsMountHelper::GetMountProperties(void)

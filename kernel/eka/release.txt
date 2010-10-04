@@ -1,3 +1,30 @@
+Version 2.00.4005
+=================
+(Made by vfebvre 24/09/2010)
+
+1.	lforynsk
+	1.	ou1cimx1#584587 PRM RBusDevResManUs::ChangeResourceState() to set a resource level to "0", causes FAULT: RESMANUS 0x000001e3 (483)
+
+2.	seolney
+	1.	ou1cimx1#553109 REQ 405-4716, Feature 405-5174: Staged shutdown server monitor
+
+3.	necliffo
+	1.	ou1cimx1#584508 Improve Code Coverage for LocalMedia Subsystem and MMC Stack
+
+4.	anhaigh
+	1.	ou1cimx1#588810 Critical thread identification in SMDG for Platsim : 417-74689 Increase SMDG buffer size: 417-74690
+		KDebug Critical Thread Identification and KDebug Event Filter Buffer Size Increase
+
+5.	davegord
+	1.	ou1cimx1#586071 Emulator panics with kernel assertion failure in nc_thrd.cpp, line 454
+
+6.	paconway
+	1.	ou1cimx1#586843 Local media subsystem instrumentation outputs incomplete information
+
+7.	ricoles
+	1.	ou1cimx1#562414 [mcl] ENV X86GMP ROMs hang on boot
+
+
 Version 2.00.4004
 =================
 (Made by vfebvre 24/09/2010)

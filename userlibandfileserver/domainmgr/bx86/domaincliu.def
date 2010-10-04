@@ -42,4 +42,12 @@ EXPORTS
 	?RequestTransitionNotification@CDmDomain@@QAEXXZ @ 41 NONAME ; public: void __thiscall CDmDomain::RequestTransitionNotification(void)
 	?StartObserver@CHierarchyObserver@@QAEHGW4TDmNotifyType@@@Z @ 42 NONAME ; public: int __thiscall CHierarchyObserver::StartObserver(unsigned short,enum TDmNotifyType)
 	?StopObserver@CHierarchyObserver@@QAEHXZ @ 43 NONAME ; public: int __thiscall CHierarchyObserver::StopObserver(void)
-
+	??0CDmDomainKeepAlive@@QAE@EG@Z @ 44  NONAME ; public: __thiscall CDmDomainKeepAlive::CDmDomainKeepAlive(unsigned char,unsigned short)
+	??1CDmDomainKeepAlive@@UAE@XZ @ 45  NONAME ; public: virtual __thiscall CDmDomainKeepAlive::~CDmDomainKeepAlive(void)
+	?AcknowledgeLastState@CDmDomainKeepAlive@@QAEXH@Z @ 46  NONAME ; public: void __thiscall CDmDomainKeepAlive::AcknowledgeLastState(int)
+	?CancelDeferral@RDmDomain@@QAEXXZ @ 47  NONAME ; public: void __thiscall RDmDomain::CancelDeferral(void)
+	?ConstructL@CDmDomainKeepAlive@@IAEXXZ @ 48  NONAME ; protected: void __thiscall CDmDomainKeepAlive::ConstructL(void)
+	?DeferAcknowledgement@RDmDomain@@QAEXAAVTRequestStatus@@@Z @ 49  NONAME ; public: void __thiscall RDmDomain::DeferAcknowledgement(class TRequestStatus &)
+	?RunL@CDmDomainKeepAlive@@MAEXXZ @ 50  NONAME ; protected: virtual void __thiscall CDmDomainKeepAlive::RunL(void)
+	?HandleDeferralError@CDmDomainKeepAlive@@UAEHH@Z @ 51  NONAME ; public: virtual int __thiscall CDmDomainKeepAlive::HandleDeferralError(int)
+	

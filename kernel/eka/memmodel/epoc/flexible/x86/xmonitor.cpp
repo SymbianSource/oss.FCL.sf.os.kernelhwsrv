@@ -58,7 +58,9 @@ TInt MapProcess(DMemModelProcess* aProcess, TBool aForce)
 
 	const TPde* kpd=(const TPde*)KPageDirectoryBase;
 	const TPde* ppd=(const TPde*)(KPageDirectoryBase+(aProcess->iOsAsid<<KPageTableShift));
-	if (!PdesEqual(kpd, ppd, KGlobalMemoryBase, 0x00000000))			// kernel mappings
+
+	// Check kernel mappings are the same except for IPC alias region
+	if (!PdesEqual(kpd, ppd, KGlobalMemoryBase, KIPCAlias) || !PdesEqual(kpd, ppd, KIPCAlias+KIPCAliasAreaSize, 0x00000000))
 		{
 		if (!aForce)
 			return KErrCorrupt;

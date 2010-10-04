@@ -17,7 +17,7 @@ rem
 setlocal
 set IMAGE_PATH=\
 set IMAGE_NAME=floppy
-set X86PC_PATH=\os\boardsupport\x86pc\
+set X86PC_PATH=\os\boardsupport_internal\x86pc\
 set TEMP_PATH=%IMAGE_PATH%_bfi_temp
 rem set BOCHS_PATH=C:\Program Files\Bochs-2.2.1
 set BOCHS_PATH=C:\Program Files\Bochs-2.2.6

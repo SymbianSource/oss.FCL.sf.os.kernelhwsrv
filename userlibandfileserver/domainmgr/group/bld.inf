@@ -1,4 +1,4 @@
-// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -23,14 +23,14 @@
 
 PRJ_PLATFORMS
 
-BASEUSERDEFAULT
+BASEUSERDEFAULT -ARM4T -ARMV4
 
 PRJ_EXPORTS
 
-../inc/domaindefs.h SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(domaindefs.h)
-../inc/domainmanager.h SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(domainmanager.h)
-../inc/domainmember.h SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(domainmember.h)
-../inc/domainpolicy.h SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(domainpolicy.h)
+../inc/domaindefs.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(domaindefs.h)
+../inc/domainmanager.h 			SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(domainmanager.h)
+../inc/domainmember.h 			SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(domainmember.h)
+../inc/domainpolicy.h 			SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(domainpolicy.h)
 
 ../bmarm/domainpolicyu.def	/epoc32/include/def/bmarm/domainpolicyu.def
 ../bwins/domainpolicyu.def	/epoc32/include/def/bwins/domainpolicyu.def

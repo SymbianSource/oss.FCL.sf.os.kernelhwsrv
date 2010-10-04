@@ -54,7 +54,7 @@ EXPORT_C DMMCSession::~DMMCSession()
 	OstTraceFunctionEntry1( DUP1_DMMCSESSION_DMMCSESSION_ENTRY, this );
 	// Ensure that the stack isn't currently running in another thread's context, otherwise this session won't be 
 	// removed from the stack's workset until some time later - by which time the session will have been deleted
-	__ASSERT_ALWAYS(!iStackP->StackRunning(), DMMCSocket::Panic(DMMCSocket::EMMCNotInDfcContext));
+	__ASSERT_ALWAYS(!StackP()->StackRunning(), DMMCSocket::Panic(DMMCSocket::EMMCNotInDfcContext));
 	Abort();
 	UnlockStack();
 	OstTraceFunctionExit1( DUP1_DMMCSESSION_DMMCSESSION_EXIT, this );
@@ -392,7 +392,7 @@ void DMMCSession::SetupCIMControl(TInt aSessID)
 
 	ResetCommandStack();
 
-	iMachine.Setup(f, iStackP);
+	iMachine.Setup(f, StackP());
 	OstTraceFunctionExit1( DMMCSESSION_SETUPCIMCONTROL_EXIT, this );
 	}
 
@@ -440,20 +440,20 @@ EXPORT_C TInt DMMCSession::Engage()
 	OstTraceFunctionEntry1( DMMCSESSION_ENGAGE_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf(">ms:eng"));
 
-	if( iStackP == NULL )
+	if( StackP() == NULL )
 	    {
 		OstTraceFunctionExitExt( DMMCSESSION_ENGAGE_EXIT, this, KErrBadDriver );
 		return KErrBadDriver;
 	    }
 
-	if( iStackP->iLockingSessionP != NULL && iStackP->iLockingSessionP != this &&
-		(iStackP->EffectiveModes(iConfig) & KMMCModeEnqueIfLocked) == 0 )
+	if( StackP()->iLockingSessionP != NULL && StackP()->iLockingSessionP != this &&
+		(StackP()->EffectiveModes(iConfig) & KMMCModeEnqueIfLocked) == 0 )
 	    {
 		OstTraceFunctionExitExt( DUP1_DMMCSESSION_ENGAGE_EXIT, this, KErrServerBusy );
 		return KErrServerBusy;
 	    }
 
-	const TMediaState doorState=iStackP->MMCSocket()->iMediaChange->MediaState();
+	const TMediaState doorState=StackP()->MMCSocket()->iMediaChange->MediaState();
 
 	__KTRACE_OPT(KPBUS1,Kern::Printf(">MMC:Eng ds = %x", doorState));
 	OstTrace1( TRACE_INTERNALS, DMMCSESSION_ENGAGE, "doorState = 0x%x", doorState);
@@ -470,7 +470,7 @@ EXPORT_C TInt DMMCSession::Engage()
 
 	SetupCIMControl(iSessionID);
 
-	iStackP->Add(this);
+	StackP()->Add(this);
 
 	__KTRACE_OPT(KPBUS1,Kern::Printf("<ms:eng"));
 	OstTraceFunctionExitExt( DUP3_DMMCSESSION_ENGAGE_EXIT, this, KErrNone );

@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -75,7 +75,7 @@ const TInt Debugger::ObjectOffsetTable[]=
 	_FOFF(DThread, iNThread.iSavedSP),
 	_FOFF(DThread, iNThread.iPriority),
 	_FOFF(DThread, iThreadType),
-	KDebuggerOffsetInvalid,
+	_FOFF(DThread, iFlags),
 
 // process info
 	_FOFF(DProcess, iName),

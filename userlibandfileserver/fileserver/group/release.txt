@@ -1,3 +1,17 @@
+Version 2.00.4004
+=================
+(Made by vfebvre 24/09/2010)
+
+1.	dlyokhin
+	1.	ou1cimx1#582672 RVCT compiler behaves strangely for ~CFsMountHelper()
+
+2.	jcoppear
+	1.	ou1cimx1#587358 T_LDRCHECK fails when Setting/Clearing the Attributes of DLL File in C:\sys\bin
+
+3.	michcox
+	1.	ou1cimx1#508483 Cannot compile ts_com.cpp if 64 bit file server macro is undefined
+
+
 Version 2.00.4003
 =================
 (Made by vfebvre 21/09/2010)

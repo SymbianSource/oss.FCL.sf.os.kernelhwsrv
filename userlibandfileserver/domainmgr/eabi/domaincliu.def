@@ -54,4 +54,18 @@ EXPORTS
 	_ZTV16CDmDomainManager @ 53 NONAME ; #<VT>#
 	_ZTV18CHierarchyObserver @ 54 NONAME ; #<VT>#
 	_ZTV9CDmDomain @ 55 NONAME ; #<VT>#
-
+	_ZN18CDmDomainKeepAlive10ConstructLEv @ 56 NONAME
+	_ZN18CDmDomainKeepAlive20AcknowledgeLastStateEi @ 57 NONAME
+	_ZN18CDmDomainKeepAliveC2Eht @ 58 NONAME
+	_ZN18CDmDomainKeepAliveD0Ev @ 59 NONAME
+	_ZN18CDmDomainKeepAliveD1Ev @ 60 NONAME
+	_ZN18CDmDomainKeepAliveD2Ev @ 61 NONAME
+	_ZN9RDmDomain14CancelDeferralEv @ 62 NONAME
+	_ZN9RDmDomain20DeferAcknowledgementER14TRequestStatus @ 63 NONAME
+	_ZTI12CDmKeepAlive @ 64 NONAME
+	_ZTI18CDmDomainKeepAlive @ 65 NONAME
+	_ZTV12CDmKeepAlive @ 66 NONAME
+	_ZTV18CDmDomainKeepAlive @ 67 NONAME
+	_ZN18CDmDomainKeepAlive4RunLEv @ 68 NONAME
+	_ZN18CDmDomainKeepAlive19HandleDeferralErrorEi @ 69 NONAME
+		

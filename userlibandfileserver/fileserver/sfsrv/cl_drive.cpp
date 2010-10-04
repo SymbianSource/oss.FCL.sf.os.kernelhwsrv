@@ -409,7 +409,15 @@ TBool TFsMntHelperImpl::operator==(const TFsMntHelperImpl& aRhs) const
 }
 
 
-
+//-------------------------------------------------------------------
+/** 
+    Closes the object, deletes the implementation
+*/
+void CFsMountHelper::Close()
+{
+    delete ipImpl;
+    ipImpl = NULL;
+}
 
 //-------------------------------------------------------------------
 /**
@@ -439,15 +447,6 @@ EXPORT_C CFsMountHelper* CFsMountHelper::New(RFs& aFs, TInt aDrvNum)
     return pSelf;
 }
 
-//-------------------------------------------------------------------
-/** 
-    Closes the object, deletes the implementation
-*/
-EXPORT_C void CFsMountHelper::Close()
-{
-    delete ipImpl;
-    ipImpl = NULL;
-}
 
 
 //-------------------------------------------------------------------
@@ -511,6 +510,10 @@ EXPORT_C TInt CFsMountHelper::DismountFileSystem() const
 
 
 
+EXPORT_C CFsMountHelper::~CFsMountHelper() 
+    {
+    Close();
+    } 
 
 
 

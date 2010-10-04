@@ -514,9 +514,17 @@ GLDEF_C __NAKED__ void __X86VectorExc()
 	asm("add eax, 8 ");			// EAX = ESP at point of exception if ring 3
 	asm("mov cx, %0" : : "i" (KRing0DS));
 	asm("mov gs, cx ");			// exception in user mode -> GS = user mode DS
+	asm("mov [ebp], eax ");
+	asm("jmp short ring3_exception ");
+
 	asm("ring0_exception: ");
 	asm("mov [ebp], eax ");
+	asm("cmp dword ptr [ebp+%0], 13 " : : "i" _FOFF(TX86ExcInfo, iExcId)); // check for GPF
+	asm("jnz short ring3_exception ");
+	asm("cmp dword ptr [ebp+%0], 0x7fa " : : "i" _FOFF(TX86ExcInfo, iExcErrorCode)); // check for int 0xff
+	asm("jz short fatal_exception_crash ");		// explicit crash instruction, so die immediately
 
+	asm("ring3_exception: ");
 	asm("cmp dword ptr [esi+%0], -1 " : : "i" _FOFF(TSubScheduler, iSSX.iIrqNestCount));
 	asm("jnz short fatal_exception_irq ");
 	asm("cmp dword ptr [esi+%0], 0 " : : "i" _FOFF(TSubScheduler, iKernLockCount));
@@ -567,6 +575,7 @@ GLDEF_C __NAKED__ void __X86VectorExc()
 
 	asm("fatal_exception_irq: ");
 	asm("fatal_exception_locked: ");
+	asm("fatal_exception_crash: ");
 	asm("mov eax, %0" : : "i" (addressof_TheScheduler)); 
 	asm("lea eax, [eax+%0]" : : "i" _FOFF(TScheduler,iMonitorExceptionHandler));
 	asm("mov eax, [eax] ");

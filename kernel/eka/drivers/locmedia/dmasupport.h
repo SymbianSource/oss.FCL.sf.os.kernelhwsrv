@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -26,7 +26,6 @@ class TLocDrvRequest;
 
 /**
 @internalTechnology
-@prototype
 
 Class used for read / write requests to the local media subsystem to gain access
 to physical memory address to make use of DMA without the need of an intermediate buffer.
@@ -68,7 +67,6 @@ public:
 	
 private:
 
-	static inline TInt PageSizeLog2();
 	static inline TBool IsPageAligned(TLinAddr aAddr);
 	static inline TLinAddr PageAlign(TLinAddr aAddr);
 	static inline TLinAddr PageOffset(TLinAddr aAddr);
@@ -77,7 +75,6 @@ private:
 	inline void SetFragLength(TInt aLength);
 	inline TInt FragLength()	const;
 	inline TInt LengthRemaining() const;
-	inline TUint32 LengthConsumed() const;
 
 	inline TBool IsDmaAligned(TLinAddr aAddr);
 	inline TBool IsBlockAligned(TInt64 aPos);

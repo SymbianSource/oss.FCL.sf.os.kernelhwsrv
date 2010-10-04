@@ -18,7 +18,7 @@ setlocal
 set IMAGE_PATH=\_vmx\
 set IMAGE_NAME=floppy
 set ROMBUILD_PATH=\os\kernelhwsrv\kernel\eka\rombuild\
-set X86PC_PATH=\os\boardsupport\x86pc\
+set X86PC_PATH=\os\boardsupport_internal\x86pc\
 set TEMP_PATH=%IMAGE_PATH%_bfi_temp
 if exist "%ProgramFiles%\VMWare\VMWare Workstation" (
 	set VMPLAYER=%ProgramFiles%\VMWare\VMWare Workstation\vmplayer.exe

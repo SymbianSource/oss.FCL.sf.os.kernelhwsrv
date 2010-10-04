@@ -1,4 +1,4 @@
-// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1998-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -338,9 +338,9 @@ TLocDrv* TDriveIterator::NextDrive()
 		iIndex++;
 		}
 
-	for (iDrive = NULL; iIndex < KMaxLocalDrives; iIndex++)
+	for (iDrive = NULL; Index() < KMaxLocalDrives; iIndex++)
 		{
-		iDrive = TheDrives[iIndex];
+		iDrive = TheDrives[Index()];
 		if (iDrive)
 			break;
 		}
@@ -1630,7 +1630,7 @@ EXPORT_C TInt TLocDrvRequest::CheckAndAdjustForPartition()
 //		    Otherwise the media driver adjust it internally
 		case DMediaPagingDevice::ECodePageInRequest:
 			__KTRACE_OPT(KLOCDPAGING,Kern::Printf("Adjusted Paging read request %lx@%lx",Length(),Pos()));
-			OstTraceDefExt4(OST_TRACE_CATEGORY_RND, TRACE_DEMANDPAGING, TLOCDRVREQUESTCHECKANDADJUSTFORPARTITION5, "Adjusted Paging read request length=%x:%x; position=%x%:%x", (TUint) I64HIGH(Length()), (TUint) I64LOW(Length()),  (TUint) I64HIGH (Pos()), (TUint) I64LOW (Pos()));
+			OstTraceDefExt4(OST_TRACE_CATEGORY_RND, TRACE_DEMANDPAGING, TLOCDRVREQUESTCHECKANDADJUSTFORPARTITION5, "Adjusted Paging read request length=%x:%x; position=%x:%x", (TUint) I64HIGH(Length()), (TUint) I64LOW(Length()),  (TUint) I64HIGH(Pos()), (TUint) I64LOW(Pos()));
 			if (Pos()+Length()>d.iPartitionLen)
 			    {
 				r = KErrArgument;
@@ -2030,8 +2030,8 @@ Passes the request through to the media driver.
 	__KTRACE_OPT(KLOCDRV,Kern::Printf("DPrimaryMediaBase(%d)::Request(%08x)",iMediaId,&aReq));
 	__KTRACE_OPT(KLOCDRV,Kern::Printf("this=%x, ReqId=%d, Pos=%lx, Len=%lx, remote thread %O",this,aReq.Id(),aReq.Pos(),aReq.Length(),aReq.RemoteThread()));
 
-	OstTraceDefExt2(OST_TRACE_CATEGORY_RND, TRACE_REQUEST, DPRIMARYMEDIABASE_REQUEST, "reqId=%d; remote thread=0x%x", (TInt) aReq.Id(), (TUint) aReq.RemoteThread());
-	OstTraceDefExt4(OST_TRACE_CATEGORY_RND, TRACE_REQUEST, DPRIMARYMEDIABASE_REQUEST2, "length=%x:%x; position=%x:%x", (TUint) I64HIGH(aReq.Length()), (TUint) I64LOW(aReq.Length()), (TUint) I64HIGH(aReq.Pos()), (TUint) I64LOW(aReq.Pos()));
+	OstTraceDefExt5(OST_TRACE_CATEGORY_RND, TRACE_PRIMARYMEDIAREQUEST, DPRIMARYMEDIABASE_REQUEST, "Request=0x%x; reqId=%d; remote thread=0x%x; mediaId=%d; driveNum=%d", (TUint) &aReq, (TInt) aReq.Id(), (TUint) aReq.RemoteThread(), iMediaId, (aReq.Drive())->iDriveNumber);
+	OstTraceDefExt5(OST_TRACE_CATEGORY_RND, TRACE_PRIMARYMEDIAREQUEST, DPRIMARYMEDIABASE_REQUEST2, "Request=0x%x; length=%x:%x; position=%x:%x", (TUint) &aReq, (TUint) I64HIGH(aReq.Length()), (TUint) I64LOW(aReq.Length()), (TUint) I64HIGH(aReq.Pos()), (TUint) I64LOW(aReq.Pos()));
 	
 	TInt reqId = aReq.Id();
 
@@ -2216,6 +2216,7 @@ TInt DPrimaryMediaBase::PinFragmentSendReceive(TLocDrvRequest& aReq, TLinAddr aL
 	
 	TLocDrvRequest fragment = aReq;		// create a request on the stack for use during fragmentation, pre-fill with the original req args, leave original Kernel message as repository (thread will block, message contents won't change)
 	TInt r = KErrNone;
+	OstTraceDefExt2(OST_TRACE_CATEGORY_RND, TRACE_PRIMARYMEDIAREQUEST, DPRIMARYMEDIABASE_PinFragmentSendReceive, "Request=0x%x; FragmentRequest=0x%x", (TUint) &aReq,(TUint) &fragment);
 
 //	Kern::Printf(">PFSR %02X aReq %08X aLinAddress %08X aLen %08X offset %08X", aReq.Id(), &aReq, aLinAddress, aLength, aReq.RemoteDesOffset());
 
@@ -3303,7 +3304,7 @@ void DPrimaryMediaBase::CompleteCurrent(TInt anError)
 void DPrimaryMediaBase::CompleteRequest(TLocDrvRequest& aMsg, TInt aResult)
 	{
 	OstTraceFunctionEntry1( DPRIMARYMEDIABASE_COMPLETEREQUEST_ENTRY, this );
-	OstTraceDefExt2(OST_TRACE_CATEGORY_RND, TRACE_REQUEST, DPRIMARYMEDIABASE_COMPLETEREQUEST1, "TLocDrvRequest Object=0x%x; aResult=%d", (TUint) &aMsg, aResult);
+	OstTraceDefExt2(OST_TRACE_CATEGORY_RND, TRACE_PRIMARYMEDIAREQUEST, DPRIMARYMEDIABASE_COMPLETEREQUEST1, "Request=0x%x; aResult=%d", (TUint) &aMsg, aResult);
 
 
 	__KTRACE_OPT(KLOCDRV,Kern::Printf("DPrimaryMediaBase(%d)::CompleteRequest(%08x) r %d",iMediaId,&aMsg, aResult));

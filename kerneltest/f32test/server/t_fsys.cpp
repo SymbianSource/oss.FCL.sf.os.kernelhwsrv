@@ -240,8 +240,6 @@ void TestFsMountHelper()
     test_KErrNone(nRes);
     test(fsName1 == fsName);
 
-    pHelper1->Close(); //-- just for testing
-
     delete pHelper1;
     delete pHelper2;
 }

@@ -64,8 +64,10 @@ TInt MapProcess(DMemModelProcess* aProcess, TBool aForce)
 
 	const TPde* kpd=(const TPde*)KPageDirectoryBase;
 	const TPde* ppd=(const TPde*)(KPageDirectoryBase+(aProcess->iOsAsid<<KPageTableShift));
-	if (!PdesEqual(kpd, ppd, KRomLinearBase, KUserGlobalDataEnd) ||		// ROM + user global
-		!PdesEqual(kpd, ppd, KRamDriveEndAddress, 0x00000000))			// kernel mappings
+	if (!PdesEqual(kpd, ppd, KRomLinearBase, KUserGlobalDataEnd)		||	// ROM + user global
+		!PdesEqual(kpd, ppd, KRamDriveEndAddress, KIPCAlias)			||	// kernel mappings other than IPC aliases
+		!PdesEqual(kpd, ppd, KIPCAlias+KIPCAliasAreaSize, 0x00000000u)		// kernel mappings other than IPC aliases
+		)			// kernel mappings
 		{
 		if (!aForce)
 			return KErrCorrupt;

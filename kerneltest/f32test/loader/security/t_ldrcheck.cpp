@@ -46,7 +46,7 @@ void CopyModules()
 	test.Next(_L("Copy Modules from ROM to disk"));
 
 	TInt r;
-	TTime modtime;
+	TTime modtime(0);  // don't update modification time
 
 	r=TheFs.MkDirAll(KSystemLibs);
 	test(r==KErrNone || r==KErrAlreadyExists);
@@ -610,6 +610,9 @@ static TInt CorruptFile(const TDesC& aFileName)
 
     CleanupStack::PopAndDestroy(1); //-- corrFile
 
+	test.Printf(_L("File size %d, changed byte %d from %d to %d\n"),
+				size, size - 5, ~dat[0], dat[0]);
+	
     return KErrNone;
 }
 
@@ -1200,6 +1203,12 @@ GLDEF_C TInt E32Main()
 	CTrapCleanup* cleanup;
 	cleanup=CTrapCleanup::New();
 	__UHEAP_MARK;
+	
+	// Turn off evil lazy dll unloading
+	RLoader l;
+	test(l.Connect()==KErrNone);
+	test(l.CancelLazyDllUnload()==KErrNone);
+	l.Close();
 
 	TBuf<20> sessPath;
 	TInt r=0;	

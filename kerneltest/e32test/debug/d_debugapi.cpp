@@ -1,4 +1,4 @@
-// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2005-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -268,7 +268,7 @@ TInt DDebugAPIChecker::Thread()
 	TInt** containerObjects = (TInt**)Read(processCon, iOffsetTable->iObjectCon_Objects);
 
 	Kern::Printf("THREAD TABLE:");
-	Kern::Printf("Id Pri Typ SupStack+Size UsrStack+Size ContType SavedSP   ThreadName    Process");
+	Kern::Printf("Id Pri Typ SupStack+Size UsrStack+Size ContType SavedSP   ThreadName    Process   ThreadFlags");
 
 	for (TInt i = 0; i < containerCount; i++)
 		{
@@ -287,8 +287,10 @@ TInt DDebugAPIChecker::Thread()
 		TInt* owningProcess =	(TInt*)Read(thread, iOffsetTable->iThread_OwningProcess);
 
 		TInt processName =		Read(owningProcess, iOffsetTable->iProcess_Name);
+		
+		TInt threadFlags = Read(thread, iOffsetTable->iThread_iFlags);
 
-		Kern::Printf("%02x %3x %3x %08x %04x %08x %04x %08x %08x %14s %s", 
+		Kern::Printf("%02x %3x %3x %08x %04x %08x %04x %08x %08x %14s %s %08x", 
 				id,
 				priority, 
 				type,
@@ -299,7 +301,8 @@ TInt DDebugAPIChecker::Thread()
 				userContextType,
 				savedSP,
 				ExtractName(name, threadCharName),
-				ExtractName(processName, processCharName)
+				ExtractName(processName, processCharName),
+				threadFlags
 				);
 		}
 

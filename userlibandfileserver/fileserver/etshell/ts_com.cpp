@@ -31,6 +31,13 @@
 #include <nkern/nk_trace.h>
 #include "filesystem_fat.h"
 
+#ifdef SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
+    #define	RFILE   RFile64
+#else
+    #define	RFILE	RFile
+#endif
+
+
 _LIT(KCrNl, "\r\n");
 _LIT(KNl, "\n");
 
@@ -42,6 +49,7 @@ TBool CShell::iDbgPrint = EFalse;
 //	lint -e40,e30
 const TShellCommand CShell::iCommand[ENoShellCommands]=
 	{
+//	TShellCommand(_L("BLANK"),_L("Help"),_L("-?"),TShellCommand::EDSwitch,ShellFunction::BLANK),
 	TShellCommand(_L("ATTRIB"),_L("Displays or changes file attributes"),_L("[drive:][path][filename] [+R | -R] [+H |-H] [+S | -S] [+A | -A] [/p]\n\n  /p - Pause after each screen of information"), TShellCommand::EPSwitch, ShellFunction::Attrib),
 	TShellCommand(_L("CD"),_L("Change the current directory for a drive"),_L("[path] [/d]\n\n  /d - Change drive"),TShellCommand::EDSwitch,ShellFunction::Cd),
 	TShellCommand(_L("CHKDEPS"),_L("Check the dependencies of an executable or a Dll (ARM only)"),_L("[Filename.EXE] or [Filename.DLL]"),0,ShellFunction::ChkDeps),
@@ -49,6 +57,7 @@ const TShellCommand CShell::iCommand[ENoShellCommands]=
 	TShellCommand(_L("COPY"),_L("Copy one (or more) file(s), overwriting existing one(s)"),_L("source [destination]"),TShellCommand::ESSwitch,ShellFunction::Copy),
 	TShellCommand(_L("DEL"),_L("Delete one file"),_L("[drive:][path][filename]"),TShellCommand::ESSwitch,ShellFunction::Del),
 	TShellCommand(_L("DIR"),_L("Show directory contents"),_L("[drive:][path][filename] [/p][/w]\n\n  /p - Pause after each screen of information\n  /w - Wide format"),TShellCommand::EPSwitch|TShellCommand::EWSwitch|TShellCommand::EASwitch,ShellFunction::Dir),
+//	TShellCommand(_L("EDLIN"),_L("Edit a text file"),_L("[drive:][path][filename] [/p]\n\n  /p - Pause after each screen of information"),TShellCommand::EPSwitch,ShellFunction::Edit),
     TShellCommand(_L("FORMAT"),_L("Format a disk"),ptrFormatHelp,TShellCommand::EQSwitch|TShellCommand::ESSwitch|TShellCommand::EESwitch|TShellCommand::EFSwitch,ShellFunction::Format),
     TShellCommand(_L("GOBBLE"),_L("Create a file"),_L("[filename] size [/e]\n\n /e - create an empty file, without writing any data"),TShellCommand::EESwitch,ShellFunction::Gobble),
 	TShellCommand(_L("HEXDUMP"),_L("Display the contents of a file in hexadecimal"),_L("[drive:][path][filename] [/p]\n\n  /p - Pause after each screen of information\n\n  Hit escape to exit from hexdump "),TShellCommand::EPSwitch,ShellFunction::Hexdump),
@@ -257,7 +266,7 @@ TInt ShellFunction::ChkDeps(TDes& aPath,TUint /*aSwitches*/)
 			aPath.Insert(0,TheShell->currentPath.Left(2));
 		}
 
-	RFile64 file;
+	RFILE file;
 	r=file.Open(CShell::TheFs,aPath,EFileStream);
 	if (r!=KErrNone)	//		File could not be opened
 		{
@@ -749,7 +758,7 @@ TInt ShellFunction::Dir(TDes& aPath,TUint aSwitches)
 	ShellFunction::StripQuotes(aPath);
 
 	RDir    dir;
-	RFile64 file;
+	RFILE file;
 	TParse dirParse;
 //	Parses the given path to give a full path
 	GetFullPath(aPath,dirParse);
@@ -857,7 +866,7 @@ TInt ShellFunction::Attrib(TDes& aPath,TUint aSwitches)
 	GetFullPath(aPath,dirParse);
 	aPath=dirParse.FullName();
 
-	RFile64 file;
+	RFILE file;
 	if (aPath[aPath.Length()-1]==KPathDelimiter)
 		aPath.Append('*');
 	else if( (aPath.Locate(KMatchAny)==KErrNotFound) && (aPath.Locate(KMatchOne)==KErrNotFound) )
@@ -2063,15 +2072,15 @@ TInt ShellFunction::Hexdump(TDes& aPath,TUint aSwitches)
 
 	ParsePath(aPath);
 	
-    RFile64 file;
+    RFILE file;
 	TInt r=file.Open(TheShell->TheFs,aPath,EFileStream);
 	if (r!=KErrNone)
 		return(r);
 
-		const TInt KLineLength = 16;
+	const TInt KLineLength = 16;
     TBuf<0x100> buf;
     TBuf<KLineLength> asciiBuf;
-		TBuf8<KLineLength> line;
+	TBuf8<KLineLength> line;
 
 	for (;;)
 		{
@@ -2164,7 +2173,7 @@ TInt ShellFunction::Gobble(TDes& aPath,TUint aSwitches)
 
 	TParse fileName;
 	GetFullPath(aPath,fileName);
-	RFile64 file;
+	RFILE file;
 
     const TInt    KBufSize=65536; //-- buffer size for writing data
     const TUint32 K1Megabyte = 1<<20; //-- 1M, 1048576
@@ -2211,7 +2220,7 @@ TInt ShellFunction::Gobble(TDes& aPath,TUint aSwitches)
 
 
     if(!(aSwitches&TShellCommand::EESwitch))
-    {//-- fill created file with random data
+    {//-- fill created file with randomn data
 
 	    while(rem)
 	    {
@@ -2284,7 +2293,7 @@ TInt ShellFunction::Move(TDes& aPath,TUint aSwitches)
 
 	TBuf<KShellMaxCommandLine> newName;
 	TBuf<KShellMaxCommandLine> tempPath=aPath;
-	RFile64 file;
+	RFILE file;
 	TWord   word(aPath);
 
 	TInt r=word.FindNextWord(aPath);
@@ -2950,7 +2959,7 @@ TInt ShellFunction::Rename(TDes& aPath,TUint aSwitches)
 
 	TBuf<KShellMaxCommandLine> newName;
 	TBuf<KShellMaxCommandLine> tempPath=aPath;
-	RFile64 file;
+	RFILE file;
 	TWord   word(aPath);
 
 	TInt r=word.FindNextWord(aPath);
@@ -3237,7 +3246,7 @@ void ByteSwap(TDes16& aDes)
 TInt ShellFunction::Type(TDes& aPath,TUint aSwitches)
 	{
 	ParsePath(aPath);
-	RFile64 file;
+	RFILE file;
 	TInt r=file.Open(TheShell->TheFs,aPath,EFileStreamText|EFileShareReadersOnly);
 	if (r!=KErrNone)
 		return r;
@@ -3612,7 +3621,7 @@ TInt ShellFunction::SetSize(TDes& aPath,TUint /*aSwitches*/)
 
 	TParse fileName;
 	GetFullPath(aPath,fileName);
-	RFile64 file;
+	RFILE file;
 	r=file.Open(CShell::TheFs,fileName.FullName(),EFileRead|EFileWrite);
 	if(r==KErrNotFound)
 		r=file.Create(CShell::TheFs,fileName.FullName(),EFileRead|EFileWrite);

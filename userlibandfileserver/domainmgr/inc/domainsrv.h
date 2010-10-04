@@ -11,7 +11,8 @@
 // Contributors:
 //
 // Description:
-// domain\src\domainsrv.h
+// Provides domain manager and member server message definitions and 
+// DmStateXXX inlines. 
 // 
 //
 
@@ -27,15 +28,24 @@ _LIT(KDmDomainServerNameLit,"!DmDomainServer");
 _LIT(KDmManagerServerNameLit,"!DmManagerServer");
 #define KDmManagerServerVersion	TVersion(1, 0, 0)
 
-enum 
+#ifdef __DS_DEBUG
+#include <e32debug.h>
+#define __DS_TRACE(s) RDebug::Print s
+#else
+#define __DS_TRACE(s)
+#endif
+
+enum TMemberRequests
 	{
 	EDmDomainJoin,
 	EDmStateAcknowledge,
 	EDmStateRequestTransitionNotification,
-	EDmStateCancelTransitionNotification
+	EDmStateCancelTransitionNotification,
+	EDmStateDeferAcknowledgement,
+	EDmStateCancelDeferral
 	};
 
-enum 
+enum TControllerRequests
 	{
 	EDmRequestSystemTransition,
 	EDmRequestDomainTransition,

@@ -13,7 +13,7 @@ EXPORTS
 	CharToDrive__3RFsG5TCharRi @ 12 NONAME ; RFs::CharToDrive(TChar, int &)
 	CheckDisk__C3RFsRC7TDesC16 @ 13 NONAME ; RFs::CheckDisk(TDesC16 const &) const
 	ClearPassword__3RFsiRCt5TBuf81i16 @ 14 NONAME ; RFs::ClearPassword(int, TBuf8<16> const &)
-	Duplicate__5RFileRC5RFile10TOwnerType @ 15 NONAME R3UNUSED ; RFile::Duplicate(RFile const &, TOwnerType)	
+	Duplicate__5RFileRC5RFile10TOwnerType @ 15 NONAME R3UNUSED ; RFile::Duplicate(RFile const &, TOwnerType)    
 	Close__8RRawDisk @ 16 NONAME ; RRawDisk::Close(void)
 	Compress__4CDir @ 17 NONAME ; CDir::Compress(void)
 	Connect__3RFsi @ 18 NONAME ; RFs::Connect(int)
@@ -369,10 +369,10 @@ EXPORTS
 	RequestNotifications__9CFsNotifyR14TRequestStatus @ 368 NONAME R3UNUSED ; CFsNotify::RequestNotifications(TRequestStatus &)
 	"_._9CFsNotify" @ 369 NONAME R3UNUSED ; CFsNotify::~CFsNotify(void)
 	SupportedFileSystemName__C3RFsR6TDes16ii @ 370 NONAME ; RFs::SupportedFileSystemName(TDes16 &, int, int) const
-	Close__14CFsMountHelper @ 371 NONAME R3UNUSED ; CFsMountHelper::Close(void)
-	DismountFileSystem__C14CFsMountHelper @ 372 NONAME R3UNUSED ; CFsMountHelper::DismountFileSystem(void) const
-	DismountFileSystem__C14CFsMountHelperR14TRequestStatusQ214CFsMountHelper15TFsDismountMode @ 373 NONAME R3UNUSED ; CFsMountHelper::DismountFileSystem(TRequestStatus &, CFsMountHelper::TFsDismountMode) const
-	GetMountProperties__14CFsMountHelper @ 374 NONAME R3UNUSED ; CFsMountHelper::GetMountProperties(void)
-	MountFileSystem__C14CFsMountHelper @ 375 NONAME R3UNUSED ; CFsMountHelper::MountFileSystem(void) const
-	New__14CFsMountHelperR3RFsi @ 376 NONAME R3UNUSED ; CFsMountHelper::New(RFs &, int)
+	DismountFileSystem__C14CFsMountHelper @ 371 NONAME R3UNUSED ; CFsMountHelper::DismountFileSystem(void) const
+	DismountFileSystem__C14CFsMountHelperR14TRequestStatusQ214CFsMountHelper15TFsDismountMode @ 372 NONAME R3UNUSED ; CFsMountHelper::DismountFileSystem(TRequestStatus &, CFsMountHelper::TFsDismountMode) const
+	GetMountProperties__14CFsMountHelper @ 373 NONAME R3UNUSED ; CFsMountHelper::GetMountProperties(void)
+	MountFileSystem__C14CFsMountHelper @ 374 NONAME R3UNUSED ; CFsMountHelper::MountFileSystem(void) const
+	New__14CFsMountHelperR3RFsi @ 375 NONAME R3UNUSED ; CFsMountHelper::New(RFs &, int)
+	"_._14CFsMountHelper" @ 376 NONAME R3UNUSED ; CFsMountHelper::~CFsMountHelper(void)
 

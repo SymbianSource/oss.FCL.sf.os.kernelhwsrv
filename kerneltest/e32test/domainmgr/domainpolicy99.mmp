@@ -13,33 +13,16 @@
 // Description:
 // e32test/domainmgr/domainpolicy99.mmp
 // domainpolicy99.dll Test Domain manager policy module
-// 
+//
 //
 
-/**
- @file
-*/
+TARGET		domainpolicy99.dll
+
+#include	"domainpolicydll.mmh"
+
+source		domainpolicy99.cpp
+
+deffile	   	../../../userlibandfileserver/domainmgr/~/domainpolicy.def
 
 
-TARGET          domainpolicy99.dll
-CAPABILITY PowerMgmt ProtServ DiskAdmin
-TARGETTYPE      dll
 
-userinclude		.
-OS_LAYER_SYSTEMINCLUDE_SYMBIAN
-
-sourcepath	.
-source		domainpolicytest.cpp
-
-library		euser.lib
-
-
-START WINS
-END
-
-START MARM
-END
-
-VENDORID 0x70000001
-
-SMPSAFE

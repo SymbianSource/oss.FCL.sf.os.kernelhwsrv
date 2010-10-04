@@ -16,4 +16,4 @@ rem Description:
 rem
 del %1.zip
 zip %1.zip %1.img
-copy /b \os\boardsupport\x86pc\pcboot\inflate.bin+%1.zip %2\E32ROM.IMG
+copy /b \os\boardsupport_internal\x86pc\pcboot\inflate.bin+%1.zip %2\E32ROM.IMG

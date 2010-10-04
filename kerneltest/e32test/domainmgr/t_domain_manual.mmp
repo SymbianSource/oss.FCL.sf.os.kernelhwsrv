@@ -1,0 +1,31 @@
+// Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/domainmgr/t_domain_manual.mmp
+// 
+//
+
+TARGET			t_domain_manual.exe        
+TARGETTYPE		EXE
+SOURCEPATH		.
+SOURCE			t_domain_manual.cpp t_domain_cmn.cpp
+LIBRARY			euser.lib domaincli.lib
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+USERINCLUDE		../../../userlibandfileserver/domainmgr/inc
+
+CAPABILITY		PowerMgmt WriteDeviceData ProtServ
+
+VENDORID 0x70000001
+
+SMPSAFE

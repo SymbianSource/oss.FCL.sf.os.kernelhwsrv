@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -11,8 +11,8 @@
 // Contributors:
 //
 // Description:
-// domain\src\domainsrv.cpp
-// 
+// domainmgr/src/domainsrv.cpp
+//
 //
 
 #include <e32debug.h>
@@ -23,20 +23,18 @@
 
 #include <domainpolicy.h>
 #include "domainsrv.h"
+#include "domaincfg.h"
 
 #define __DS_PANIC(aError) User::Panic(_L("domainSrv.cpp"), (-(aError)) | (__LINE__ << 16))
+#define __DS_PANIC_IFERR(aError) ((aError == KErrNone) || (User::Panic(_L("domainSrv.cpp"), (-(aError)) | (__LINE__ << 16)), 1))
+#define __DS_PANIC_IFNUL(aPtr) ((aPtr != NULL) || (User::Panic(_L("domainSrv.cpp"), (-(KErrNoMemory)) | (__LINE__ << 16)), 1))
 #define __DS_ASSERT(aCond) ((aCond) || (User::Panic(_L("domainSrv.cpp; assertion failed"), __LINE__), 1))
-
-//#define __DS_DEBUG
-
-#ifdef __DS_DEBUG
-#define __DS_TRACE(s) RDebug::Print s
-#else
-#define __DS_TRACE(s)
-#endif
+#define __DS_ASSERT_STARTUP(aCond) ((aCond) || (User::Panic(_L("Domain Server start-up error, server exiting"), __LINE__), 1))
 
 static _LIT_SECURITY_POLICY_PASS(KAllowAllPolicy);
-static _LIT_SECURITY_POLICY_C1(KPowerMgmtPolicy,ECapabilityPowerMgmt);
+static _LIT_SECURITY_POLICY_C1(KPowerMgmtPolicy, ECapabilityPowerMgmt);
+static _LIT_SECURITY_POLICY_C1(KWddPolicy, ECapabilityWriteDeviceData);
+static _LIT_SECURITY_POLICY_C1(KProtServPolicy, ECapabilityProtServ);
 
 // forward refs
 class CSvrDomain;
@@ -50,12 +48,22 @@ class CDmManagerServer;
 class CDmManagerSession;
 
 
+#if defined(_DEBUG) || defined(__DS_DEBUG)
+void GetClientNameFromMessageL(const RMessagePtr2& aMessage, TDes& aBuffer)
+	{
+	RThread clientThread;
+	aMessage.ClientL(clientThread);
+	aBuffer = clientThread.FullName();
+	clientThread.Close();
+	}
+#endif
 
 // CSvrDomain
 class CSvrDomain : public CTimer
 	{
 public: 
 	static CSvrDomain* New(CDmHierarchy& aHierarchy, const TDmDomainSpec&);
+	~CSvrDomain();
 
 	// from CTimer
 	void RunL();
@@ -81,6 +89,9 @@ private:
 	void ChildrenTransitionDone();
 	void CompleteDomainTransition();
 
+	void SetMemberDeferralBudgets();
+	TBool ExpireMemberDeferrals();
+
 private:
 	CDmHierarchy&		iHierarchy;
 	CSvrDomain*			iParent;
@@ -90,7 +101,13 @@ private:
 	CDmDomainSession*	iSessions;
 	TUint16				iChildrenCount;
 	TUint16				iTransCount;
-	TTimeIntervalMicroSeconds32	iTransTimeBudget;
+
+	TOverrideableSetting<TTimeIntervalMicroSeconds32, &CHierarchySettings::GetDomainTimeout>
+		iTransTimeBudget;
+
+
+	TOverrideableSetting<TInt, &CHierarchySettings::GetDeferralBudget>
+		iTransitionDeferralBudget;
 
 public:
 	const TSecurityPolicy	iJoinPolicy;
@@ -103,6 +120,8 @@ public:
 class CDmHierarchy : public CBase
 	{
 public:
+	~CDmHierarchy();
+
 	static CDmHierarchy* New(TDmHierarchyId aHierarchyId, TDmHierarchyPolicy& aPolicy);
 
 	CSvrDomain* LookupDomain(TDmDomainId aDomainId);
@@ -116,17 +135,32 @@ public:
 	virtual TInt RequestSystemTransition(TDmDomainState aTargetState, TDmTraverseDirection aTraverseDirection, const RMessage2* aMessage);
 	virtual void CompleteTransition(TInt aError);
 	virtual void NotifyCompletion(TInt aReason);
-	
+
+	CHierarchySettings& HierachySettings()
+		{
+		return *iSettings;
+		}
+
 protected:
 	CDmHierarchy(TDmHierarchyId aHierarchyId, TDmHierarchyPolicy& aPolicy);
 	void SetState(TDmDomainState aTargetState, TDmTraverseDirection aTraverseDirection = ETraverseDefault);
 
 private:
-	RMessagePtr2	iTransMessagePtr;
-	RMessagePtr2	iObsvrMessagePtr;
 	CSvrDomain*		iObservedDomain;
-	TBool			iOutstandingNotification;
+
+	CHierarchySettings* iSettings;
+
+	/** Direction of traversal if target state is after current state */
+	TDmTraverseDirection iPositiveTransitions;
+
+	/**	Direction of traversal if target state is before current state */
+	TDmTraverseDirection iNegativeTransitions;
+
 public:
+	/** Policy which outlines the action upon transition failure */
+	TOverrideableSetting<TDmTransitionFailurePolicy, &CHierarchySettings::GetFailurePolicy>
+		iFailurePolicy;
+
 	TDmHierarchyId	iHierarchyId;
 	CSvrDomain*		iRootDomain;
 	CSvrDomain*		iTransDomain;
@@ -135,9 +169,10 @@ public:
 	TDmTraverseDirection	iTraverseDirection;
 	TUint8			iTransId;
 	CDmManagerSession* iControllerSession;	// only one controller per hierarchy
-	TDmHierarchyPolicy iPolicy;
+
+
 	RArray<TTransitionFailure> iTransitionFailures;
-	
+
 	// observer stuff
 	TBool			iObserverStarted;
 	TDmNotifyType	iNotifyType;
@@ -206,13 +241,15 @@ class CDmSvrManager : public CBase
 public:
 	static CDmSvrManager* New();
 
-	TInt BuildDomainTree(TDmHierarchyId aHierarchyId, CDmHierarchy*& aHierarchy);
+	TInt BuildDomainTree(TDmHierarchyId aHierarchyId);
 	CDmHierarchy* LookupHierarchy(TDmHierarchyId aHierarchyId);
 	TInt LookupDomain(TDmHierarchyId aHierarchyId, TDmDomainId aDomainId, CSvrDomain*& aDomain);
 
 private:
 	CDmSvrManager();
 	void Construct();
+
+	TInt LoadStateSpecs(RLibrary& aLib, CDmHierarchy* aHierarchy);
 
 private:
 	RPointerArray<CDmHierarchy> iDomainHierarchies;
@@ -223,10 +260,11 @@ class CDmDomainServer : public CServer2
 	{
 public: 
 	// from CServer2
-	CSession2* NewSessionL(const TVersion& aVer) const;
 	CSession2* NewSessionL(const TVersion& aVer, const RMessage2& aMessage) const;
 
-	CDmDomainServer(CDmSvrManager* aManager) : CServer2(CActive::EPriorityStandard), iManager(aManager)
+	// Note, tracing of client thread names relies upon
+	// EUnsharableSessions being used
+	CDmDomainServer(CDmSvrManager* aManager) : CServer2(CActive::EPriorityStandard, EUnsharableSessions), iManager(aManager)
 		{}
 
 public:
@@ -238,28 +276,45 @@ class CDmDomainSession : public CSession2
 	{
 public: 
 	// from CBase
+	CDmDomainSession();
 	~CDmDomainSession();
 
 	// from CSession2
 	void ServiceL(const RMessage2& aMessage);
 
+	// Called by CSvrDomain
+	void SetDeferralBudget(TInt);
+	TBool DeferralActive() const;
+	void ExpireDeferral();
+	void CancelDeferral();
+
 private:
+	// Handle client calls
+	void DeferAcknowledgment(const RMessage2&);
+	void CompleteDeferral(TInt);
+	void ObsoleteDeferral();
+
 	CSvrDomain*			iDomain;
+	TInt				iDeferralsRemaining;
+	RMessagePtr2		iDeferralMsg;
+
 
 public:
 	CDmDomainSession*	iNext;
-	TUint8				iPending;
+	TUint8				iAcknPending; ///< Indicates if an acknowledgment is pending
 	TBool				iNotificationEnabled;
+
 	};
 
 class CDmManagerServer : public CServer2
 	{
 public: 
 	// from CServer2
-	CSession2* NewSessionL(const TVersion& aVer) const;
 	CSession2* NewSessionL(const TVersion& aVer, const RMessage2&) const;
 
-	CDmManagerServer(CDmSvrManager* aManager) : CServer2(CActive::EPriorityStandard), iManager(aManager)
+	// Note, tracing of client thread names relies upon
+	// EUnsharableSessions being used
+	CDmManagerServer(CDmSvrManager* aManager) : CServer2(CActive::EPriorityStandard, EUnsharableSessions), iManager(aManager)
 		{}
 	CDmSvrManager*	iManager;
 	};
@@ -268,12 +323,15 @@ class CDmManagerSession : public CSession2
 	{
 public: 
 	// from CBase
+	CDmManagerSession();
 	~CDmManagerSession();
 	
 	// from CSession2
 	void ServiceL(const RMessage2& aMessage);
 
-	CDmManagerSession();
+	RMessagePtr2	iTransMessagePtr;
+	RMessagePtr2	iObsvrMessagePtr;
+
 private:
 	CDmHierarchy* iHierarchy;	// not owned
 	};
@@ -323,20 +381,44 @@ TTransInfo::TTransInfo(TDmDomainId aDomainId, TDmDomainState aState, TInt aError
 CSvrDomain::CSvrDomain(CDmHierarchy& aHierarchy, const TDmDomainSpec* spec)
 	:	CTimer(CActive::EPriorityStandard), 
 		iHierarchy(aHierarchy),
-		iTransTimeBudget(spec->iTimeBudgetUs),
+		iParent(NULL),
+		iPeer(NULL),
+		iChild(NULL),
+		iChildrenCount(0),
+		iTransTimeBudget(TTimeIntervalMicroSeconds32(spec->iTimeBudgetUs), &iHierarchy.HierachySettings()),
+		iTransitionDeferralBudget(0, &iHierarchy.HierachySettings()),
 		iJoinPolicy(spec->iJoinPolicy),
 		iId(spec->iId)
-	{}
+	{
+	__DS_TRACE((_L("DM: CSvrDomain() @0x%08x, id 0x%x, hierachy id %d"), this, iId, iHierarchy.iHierarchyId));
+	}
 
 CSvrDomain* CSvrDomain::New(CDmHierarchy& aHierarchy, const TDmDomainSpec& aSpec)
 	{
-
 	CSvrDomain* self = new CSvrDomain(aHierarchy, &aSpec);
+	__DS_PANIC_IFNUL(self);
 
-	if (!self)
-		__DS_PANIC(KErrNoMemory);
 	self->Construct(&aSpec);
 	return self;
+	}
+
+CSvrDomain::~CSvrDomain()
+	{
+	__DS_TRACE((_L("DM: ~CSvrDomain() @0x%08x"), this));
+
+	// delete children
+	CSvrDomain* child = iChild;
+	while(child)
+		{
+		CSvrDomain* nextChild = child->iPeer;
+		delete child;
+		child = nextChild;
+		iChildrenCount--;
+		}
+	__DS_ASSERT(iChildrenCount==0);
+
+	TInt r = iProperty.Delete(DmStatePropertyKey(iHierarchy.iHierarchyId, iId));
+	__DS_PANIC_IFERR(r);
 	}
 
 void CSvrDomain::Construct(const TDmDomainSpec* spec)
@@ -347,23 +429,20 @@ void CSvrDomain::Construct(const TDmDomainSpec* spec)
 		RProperty::EInt,
 		KAllowAllPolicy,KPowerMgmtPolicy);
 
-	if (r != KErrNone)
-		__DS_PANIC(r);
+	__DS_PANIC_IFERR(r);
 	
 	r = iProperty.Attach(KUidDmPropertyCategory, DmStatePropertyKey(
 		iHierarchy.iHierarchyId, 
 		iId));
 
-	if (r != KErrNone)
-		__DS_PANIC(r);
+	__DS_PANIC_IFERR(r);
 
 	r = iProperty.Set(DmStatePropertyValue(0, spec->iInitState));
-	if (r != KErrNone)
-		__DS_PANIC(r);
+	__DS_PANIC_IFERR(r);
 
 	TRAP(r, CTimer::ConstructL());
-	if (r != KErrNone)
-		__DS_PANIC(r);
+	__DS_PANIC_IFERR(r);
+
 	CActiveScheduler::Add(this);
 	}
 
@@ -416,14 +495,16 @@ TBool CSvrDomain::CheckPropValue(TInt aPropValue)
 
 void CSvrDomain::RequestMembersTransition()
 	{
-	__DS_TRACE((_L("CSvrDomain::RequestMembersTransition() hierarchy=%d, domain=0x%x"), iHierarchy.iHierarchyId, iId));
+	__DS_TRACE((_L("DM: CSvrDomain::RequestMembersTransition() hierarchy=%d, domain=0x%x"), iHierarchy.iHierarchyId, iId));
 	__DS_ASSERT(iTransCount == 0);
-	
+
+	SetMemberDeferralBudgets();
+
 	for(CDmDomainSession* s = iSessions; s; s = s->iNext)
 		if (s->iNotificationEnabled)
 			{
 			++iTransCount;
-			s->iPending = ETrue;
+			s->iAcknPending = ETrue;
 			// notifications will be disabled until the client makes another 
 			// call to RDmDomain::RequestTransitionNotification()
 			s->iNotificationEnabled = EFalse;
@@ -440,7 +521,7 @@ void CSvrDomain::RequestMembersTransition()
 			}
 		}
 	if (iTransCount > 0)
-		CTimer::After(iTransTimeBudget);
+		CTimer::After(iTransTimeBudget());
 	iProperty.Set(iHierarchy.iTransPropValue);
 	if (iTransCount == 0)
 		MembersTransitionDone();
@@ -449,7 +530,7 @@ void CSvrDomain::RequestMembersTransition()
 
 void CSvrDomain::RequestChildrenTransition()
 	{
-	__DS_TRACE((_L("CSvrDomain::RequestChildrenTransition() hierarchy=%d, domain=0x%x"), iHierarchy.iHierarchyId, iId));
+	__DS_TRACE((_L("DM: CSvrDomain::RequestChildrenTransition() hierarchy=%d, domain=0x%x"), iHierarchy.iHierarchyId, iId));
 	__DS_ASSERT(iTransCount == 0);
 	iTransCount = iChildrenCount;
 	if (iTransCount)
@@ -468,7 +549,7 @@ void CSvrDomain::RequestChildrenTransition()
 
 void CSvrDomain::RequestDomainTransition()
 	{
-	__DS_TRACE((_L("CSvrDomain::RequestDomainTransition() hierarchy=%d, domain=0x%x state=0x%x prop=0x%x"), 
+	__DS_TRACE((_L("DM: CSvrDomain::RequestDomainTransition() hierarchy=%d, domain=0x%x state=0x%x prop=0x%x"), 
 						iHierarchy.iHierarchyId, iId, iHierarchy.iTransState, iHierarchy.iTransPropValue));
 	__DS_ASSERT(iTransCount == 0);
 	if (iHierarchy.iTraverseDirection == ETraverseChildrenFirst)
@@ -479,7 +560,7 @@ void CSvrDomain::RequestDomainTransition()
 		
 void CSvrDomain::MembersTransitionDone()
 	{
-	__DS_TRACE((_L("CSvrDomain::MembersTransitionDone() hierarchy=%d, domain=0x%x"), iHierarchy.iHierarchyId, iId));
+	__DS_TRACE((_L("DM: CSvrDomain::MembersTransitionDone() hierarchy=%d, domain=0x%x"), iHierarchy.iHierarchyId, iId));
 	__DS_ASSERT(iTransCount == 0);
 	if (iHierarchy.iTraverseDirection == ETraverseChildrenFirst)
 		CompleteDomainTransition();
@@ -489,7 +570,7 @@ void CSvrDomain::MembersTransitionDone()
 
 void CSvrDomain::ChildrenTransitionDone()
 	{
-	__DS_TRACE((_L("CSvrDomain::ChildrenTransitionDone() hierarchy=%d, domain=0x%x"), iHierarchy.iHierarchyId, iId));
+	__DS_TRACE((_L("DM: CSvrDomain::ChildrenTransitionDone() hierarchy=%d, domain=0x%x"), iHierarchy.iHierarchyId, iId));
 	__DS_ASSERT(iTransCount == 0);
 	if (iHierarchy.iTraverseDirection == ETraverseChildrenFirst)
 		RequestMembersTransition();
@@ -499,7 +580,7 @@ void CSvrDomain::ChildrenTransitionDone()
 
 void CSvrDomain::CompleteMemberTransition(TInt aError)
 	{
-	__DS_TRACE((_L("CSvrDomain::CompleteMemberTransition() hierarchy=%d, domain=0x%x, aError = %d"), iHierarchy.iHierarchyId, iId, aError));
+	__DS_TRACE((_L("DM: CSvrDomain::CompleteMemberTransition() hierarchy=%d, domain=0x%x, aError = %d"), iHierarchy.iHierarchyId, iId, aError));
 	__DS_ASSERT(iTransCount);
 
 	if (aError)
@@ -519,7 +600,7 @@ void CSvrDomain::CompleteMemberTransition(TInt aError)
 				}
 			}
 		// examine the failure policy to work out what to do
-		if (iHierarchy.iPolicy.iFailurePolicy == ETransitionFailureStop)
+		if (iHierarchy.iFailurePolicy() == ETransitionFailureStop)
 			{
 			iHierarchy.CompleteTransition(aError);
 			return;
@@ -545,16 +626,26 @@ void CSvrDomain::CompleteMemberTransition(TInt aError)
 
 void CSvrDomain::RunL()
 	{ // Timer expired 
-	__DS_TRACE((_L("CSvrDomain::RunL() Members transition timeout hierarchy=%d, domain=0x%x"), iHierarchy.iHierarchyId, iId));
+
+	if (ExpireMemberDeferrals())
+		{
+		__DS_TRACE((_L("DM: CSvrDomain::RunL() Deferring transition timeout hierarchy=%d, domain=0x%x"), iHierarchy.iHierarchyId, iId));
+		CTimer::After(iTransTimeBudget());
+		return;
+		}
+
+	__DS_TRACE((_L("DM: CSvrDomain::RunL() Members transition timeout hierarchy=%d, domain=0x%x, iTransCount=%d"), iHierarchy.iHierarchyId, iId, iTransCount));
 
 	// Add a transition failure to the array
 	TTransitionFailure failure(iId,KErrTimedOut);
 	iHierarchy.iTransitionFailures.Append(failure);
 
 
-	// examine the failure policy to work out what to do
-	if (iHierarchy.iPolicy.iFailurePolicy == ETransitionFailureStop)
+	// Examine the failure policy to work out what to do
+	if (iHierarchy.iFailurePolicy() == ETransitionFailureStop)
 		{
+		// CompleteTransition will in turn call CancelTransition,
+		// which will reset iTransCount and the iAcknPending flags
 		iHierarchy.CompleteTransition(KErrTimedOut);
 		return;
 		}
@@ -564,7 +655,11 @@ void CSvrDomain::RunL()
 		CDmDomainSession* session = iSessions;
 		while (session)
 			{
-			session->iPending = EFalse;
+			if (session->iAcknPending)
+				{
+				__DS_TRACE((_L("DM: Member transition timeout domain=0x%x: CDmDomainSession Object 0x%08x"), iId, session));
+				session->iAcknPending = EFalse;
+				}
 			session = session->iNext;
 			}
 		iTransCount = 0;
@@ -575,7 +670,7 @@ void CSvrDomain::RunL()
 
 void CSvrDomain::CompleteDomainTransition()
 	{
-	__DS_TRACE((_L("CSvrDomain::CompleteDomainTransition() hierarchy=%d, domain=0x%x"), iHierarchy.iHierarchyId, iId));
+	__DS_TRACE((_L("DM: CSvrDomain::CompleteDomainTransition() hierarchy=%d, domain=0x%x"), iHierarchy.iHierarchyId, iId));
 	__DS_ASSERT(iTransCount == 0);
 	if (iHierarchy.iTransDomain == this)
 		{
@@ -594,7 +689,7 @@ void CSvrDomain::CompleteDomainTransition()
 
 void CSvrDomain::CancelTransition()
 	{
-	__DS_TRACE((_L("CSvrDomain::CancelTransition() hierarchy=%d, domain=0x%x"), iHierarchy.iHierarchyId, iId));
+	__DS_TRACE((_L("DM: CSvrDomain::CancelTransition() hierarchy=%d, domain=0x%x"), iHierarchy.iHierarchyId, iId));
 	CTimer::Cancel();
 	CSvrDomain* child = iChild;
 	while (child)
@@ -605,7 +700,14 @@ void CSvrDomain::CancelTransition()
 	CDmDomainSession* session = iSessions;
 	while (session)
 		{
-		session->iPending = EFalse;
+		// At this point the server says that the current transition may no
+		// longer be acknowledged. Therefore, cancel the deferral
+		if (session->DeferralActive())
+			{
+			session->CancelDeferral();
+			}
+
+		session->iAcknPending = EFalse;
 		session = session->iNext;
 		}
 	iTransCount = 0;
@@ -641,6 +743,46 @@ TDmDomainState CSvrDomain::State()
 	return DmStateFromPropertyValue(value);
 	}
 
+/**
+Called before members are notified of a transition.
+*/
+void CSvrDomain::SetMemberDeferralBudgets()
+	{
+	const TInt deferralBudget = iTransitionDeferralBudget();
+	CDmDomainSession* session = iSessions;
+	while (session)
+		{
+		__DS_ASSERT(!session->DeferralActive());
+		__DS_ASSERT(!session->iAcknPending);
+		session->SetDeferralBudget(deferralBudget);
+		session = session->iNext;
+		}
+	}
+
+/**
+Called upon completion of the domain's timeout
+
+@return True if at least one member had an active deferral
+*/
+TBool CSvrDomain::ExpireMemberDeferrals()
+	{
+	TBool deferDomain = EFalse;
+	CDmDomainSession* session = iSessions;
+	while (session)
+		{
+		if (session->DeferralActive())
+			{
+			__DS_ASSERT(session->iAcknPending);
+
+			deferDomain = ETrue;
+			session->ExpireDeferral();
+			}
+		session = session->iNext;
+		}
+
+	return deferDomain;
+	}
+
 //*********************************************************
 // CDmHierarchy
 //*********************************************************
@@ -654,18 +796,37 @@ CDmHierarchy* CDmHierarchy::New(TDmHierarchyId aHierarchyId, TDmHierarchyPolicy&
 	else 
 		self = new CDmHierarchy(aHierarchyId, aPolicy);
 
-	if (!self)
-		__DS_PANIC(KErrNoMemory);
+	__DS_PANIC_IFNUL(self);
+
+	self->iSettings = new CHierarchySettings();
+	__DS_TRACE((_L("DM: CDmHierarchy::New() @0x%08x, CHierarchySettings @0x%08x"), self, self->iSettings));
+
+	__DS_PANIC_IFNUL(self->iSettings);
+
+	self->iFailurePolicy.SetSettings(self->iSettings);
 
 	return self;
 	}
 
 CDmHierarchy::CDmHierarchy(TDmHierarchyId aHierarchyId, TDmHierarchyPolicy& aPolicy) :
-	iOutstandingNotification(EFalse),
-	iHierarchyId(aHierarchyId),
-	iPolicy(aPolicy)
+	iPositiveTransitions(aPolicy.iPositiveTransitions),
+	iNegativeTransitions(aPolicy.iNegativeTransitions),
+	iFailurePolicy(aPolicy.iFailurePolicy, iSettings),
+	iHierarchyId(aHierarchyId)
 	{
+	__DS_TRACE((_L("DM: CDmHierarchy::CDmHierarchy() @0x%08x, hierarchy=%d"), this, iHierarchyId));
+
 	iTransitionFailures.Reset();
+	}
+
+CDmHierarchy::~CDmHierarchy()
+	{
+	__DS_TRACE((_L("DM: CDmHierarchy::~CDmHierarchy() @0x%08x"), this));
+
+	delete iRootDomain;
+	delete iSettings;
+	iTransitionFailures.Close();
+	iTransitions.Close();
 	}
 
 CSvrDomain* CDmHierarchy::LookupDomain(TDmDomainId aDomainId)
@@ -679,7 +840,13 @@ void CDmHierarchy::RequestTransition(const RMessage2* aMessage)
 	iTransitionFailures.Reset();
 
 	if (aMessage)
-		iTransMessagePtr = *aMessage;
+		{
+		__DS_PANIC_IFNUL(iControllerSession);
+		iControllerSession->iTransMessagePtr = *aMessage;
+		}
+
+	iSettings->SetCurrentTargetTransition(iTransState);
+
 	iTransPropValue = DmStatePropertyValue(++iTransId, iTransState);
 
 	iTransDomain->RequestDomainTransition();
@@ -704,22 +871,21 @@ void CDmHierarchy::SetNotifyMessage(const RMessage2* aMessage)
 	{
 	if (aMessage)
 		{
-		iObsvrMessagePtr = *aMessage;
-		iOutstandingNotification=ETrue;
-		}		
+		__DS_PANIC_IFNUL(iObserverSession);
+		iObserverSession->iObsvrMessagePtr = *aMessage;
+		}
 	}
 
 TBool CDmHierarchy::OutstandingNotification()
 	{
-	return iOutstandingNotification;
+	return iObserverSession && !(iObserverSession->iObsvrMessagePtr.IsNull());
 	}
 
 void CDmHierarchy::CompleteNotification(TInt aError)
 	{
-	if(iOutstandingNotification)
+	if (OutstandingNotification())
 		{
-		iObsvrMessagePtr.Complete(aError);
-		iOutstandingNotification=EFalse;
+		iObserverSession->iObsvrMessagePtr.Complete(aError);
 		}
 	}
 
@@ -730,11 +896,17 @@ void CDmHierarchy::StopObserver()
 	iTransitions.Reset();
 	iObserverStarted=EFalse;
 	}
+
 void CDmHierarchy::NotifyCompletion(TInt aReason)
 	{
 	iTransDomain = NULL;
 	iTransPropValue = 0;
-	iTransMessagePtr.Complete(aReason);
+
+	if(iControllerSession)
+		{
+		__DS_ASSERT(!(iControllerSession->iTransMessagePtr.IsNull()));
+		iControllerSession->iTransMessagePtr.Complete(aReason);
+		}
 	}
 
 TInt CDmHierarchy::RequestSystemTransition(TDmDomainState aTargetState, TDmTraverseDirection aTraverseDirection, const RMessage2* aMessage)
@@ -752,7 +924,7 @@ TInt CDmHierarchy::RequestDomainTransition(
 	TDmTraverseDirection aTraverseDirection, 
 	const RMessage2* aMessage)
 	{
-	__DS_TRACE((_L("CDmHierarchy::RequestTransition() hierarchy=%d domain=0x%x state=0x%x"), iHierarchyId, aDomainId, aTargetState)); 
+	__DS_TRACE((_L("DM: CDmHierarchy::RequestTransition() hierarchy=%d domain=0x%x state=0x%x"), iHierarchyId, aDomainId, aTargetState)); 
 	iTransDomain = LookupDomain(aDomainId);
 	if (!iTransDomain)
 		return KDmErrBadDomainId;
@@ -766,7 +938,7 @@ void CDmHierarchy::CompleteTransition(TInt aError)
 	if (!iTransDomain)
 		return;
 
-	__DS_TRACE((_L("CDmHierarchy::CompleteTransition() hierarchy=%d, domain=0x%x, aError=%d"), iHierarchyId, iTransDomain->iId, aError));
+	__DS_TRACE((_L("DM: CDmHierarchy::CompleteTransition() hierarchy=%d, domain=0x%x, aError=%d"), iHierarchyId, iTransDomain->iId, aError));
 
 	if (iTransDomain)
 		{
@@ -785,9 +957,9 @@ void CDmHierarchy::SetState(TDmDomainState aTargetState, TDmTraverseDirection aT
 		TDmDomainState oldState = iTransDomain->State();
 
 		if (aTargetState >= oldState)
-			iTraverseDirection = iPolicy.iPositiveTransitions;
+			iTraverseDirection = iPositiveTransitions;
 		else
-			iTraverseDirection = iPolicy.iNegativeTransitions;
+			iTraverseDirection = iNegativeTransitions;
 		}
 	else
 		iTraverseDirection = aTraverseDirection;
@@ -804,8 +976,8 @@ void CDmHierarchy::SetState(TDmDomainState aTargetState, TDmTraverseDirection aT
 CPowerUpHandler* CPowerUpHandler::New(CDmHierarchyPower& aHierarchyPower)
 	{
 	CPowerUpHandler* self = new CPowerUpHandler(aHierarchyPower);
-	if (!self)
-		__DS_PANIC(KErrNoMemory);
+	__DS_PANIC_IFNUL(self);
+
 	self->Construct();
 	return self;
 	}
@@ -858,8 +1030,7 @@ CDmHierarchyPower* CDmHierarchyPower::New(TDmHierarchyId aHierarchyId, TDmHierar
 
 	self = new CDmHierarchyPower(aHierarchyId, aPolicy);
 
-	if (!self)
-		__DS_PANIC(KErrNoMemory);
+	__DS_PANIC_IFNUL(self);
 
 	self->Construct();
 
@@ -875,8 +1046,7 @@ CDmHierarchyPower::CDmHierarchyPower(TDmHierarchyId aHierarchyId, TDmHierarchyPo
 void CDmHierarchyPower::Construct()
 	{
 	iPowerUpHandler = CPowerUpHandler::New(*this);
-	if (!iPowerUpHandler)
-		__DS_PANIC(KErrNoMemory);
+	__DS_PANIC_IFNUL(iPowerUpHandler);
 	}
 
 void CDmHierarchyPower::NotifyCompletion(TInt aReason)
@@ -887,7 +1057,7 @@ void CDmHierarchyPower::NotifyCompletion(TInt aReason)
 
 TInt CDmHierarchyPower::RequestSystemTransition(TDmDomainState aTargetState, TDmTraverseDirection aTraverseDirection, const RMessage2* aMessage)
 	{
-	__DS_TRACE((_L("CDmSvrManager::RequestSystemTransition() state = 0x%x"), aTargetState));
+	__DS_TRACE((_L("DM: CDmHierarchyPower::RequestSystemTransition() state = 0x%x"), aTargetState));
 	
 	TInt r = Power::EnableWakeupEvents((TPowerState) aTargetState);
 	if (r != KErrNone)
@@ -905,19 +1075,20 @@ void CDmHierarchyPower::CompleteTransition(TInt aError)
 	if (!iTransDomain)
 		return;
 
-	__DS_TRACE((_L("CDmHierarchyPower::CompleteTransition() domain=0x%x"), iTransDomain->iId));
+	__DS_TRACE((_L("DM: CDmHierarchyPower::CompleteTransition() domain=0x%x error=%d"),
+				iTransDomain->iId, aError));
 
 	if (iTransDomain && aError == KErrCancel)
 		iPowerUpHandler->Cancel();
 
-	if (iTransStatus & EPoweringDown)
+	if ((iTransStatus & EPoweringDown) && (aError != KErrCancel))
 		{
 		RFs fs;
 		TInt r=fs.Connect();
 		__DS_ASSERT(r==KErrNone);	
-		__DS_TRACE((_L("CDmSvrManager::CompleteTransition() Calling FinaliseDrives")));
+		__DS_TRACE((_L("DM: CDmSvrManager::CompleteTransition() Calling FinaliseDrives")));
 		r=fs.FinaliseDrives();
-		__DS_TRACE((_L("CDmSvrManager::CompleteTransition()  Finalise returned %d"),r)); 
+		__DS_TRACE((_L("DM: CDmSvrManager::CompleteTransition()  Finalise returned %d"),r)); 
 		fs.Close();
 
 		Power::PowerDown();
@@ -933,7 +1104,7 @@ void CDmHierarchyPower::CompleteTransition(TInt aError)
 
 void CDmHierarchyPower::PowerUp()
 	{
-	__DS_TRACE((_L("CDmHierarchyPower::RunL() Wakeup Event")));
+	__DS_TRACE((_L("DM: CDmHierarchyPower::RunL() Wakeup Event")));
 	__DS_ASSERT(iTransDomain);
 
 	Power::DisableWakeupEvents();
@@ -952,8 +1123,8 @@ void CDmHierarchyPower::PowerUp()
 CDmSvrManager* CDmSvrManager::New()
 	{
 	CDmSvrManager* self = new CDmSvrManager();
-	if (!self)
-		__DS_PANIC(KErrNoMemory);
+	__DS_PANIC_IFNUL(self);
+
 	self->Construct();
 	return self;
 	}
@@ -964,44 +1135,30 @@ CDmSvrManager::CDmSvrManager()
 
 void CDmSvrManager::Construct()
 	{
-	// load the power hierarchy-  Other hieratchies need to be loaded 
+	// Load the power hierarchy - other hierarchies need to be loaded
 	// explicitly using RDmDomainManager::AddDomainHierarchy()
-	CDmHierarchy* hierarchy;
-	TInt r = BuildDomainTree(KDmHierarchyIdPower, hierarchy);
-	if (r != KErrNone)
-		__DS_PANIC(r);
-
+	TInt r = BuildDomainTree(KDmHierarchyIdPower);
+	__DS_PANIC_IFERR(r);
 
 	RProperty prop;
 	r = prop.Define(KUidDmPropertyCategory, KDmPropertyKeyInit, RProperty::EInt,
-							KAllowAllPolicy,KPowerMgmtPolicy);
-	if (r != KErrNone)
-		__DS_PANIC(r);
+					KAllowAllPolicy,KPowerMgmtPolicy);
+	__DS_PANIC_IFERR(r);
 
 	prop.Set(KUidDmPropertyCategory, KDmPropertyKeyInit, ETrue);
 	}
 
-TInt CDmSvrManager::BuildDomainTree(TDmHierarchyId aHierarchyId, CDmHierarchy*& aHierarchy)
+TInt CDmSvrManager::BuildDomainTree(TDmHierarchyId aHierarchyId)
 	{
+	// We have already checked that the hierarchy doesn't already exist.
 
-	aHierarchy = NULL;
-
-	// assume we have already checked that the hierarchy doesn't already exist
-
-	// Get the name of the policy Dll
+	// Get the name of the policy DLL.
 	// This will be "domainPolicy.dll" for the power hierarchy
 	// and "domainPolicy<n>.dll" for other hierarchies where <n> is the hierarchy ID.
-	//
-	// If the hierarchy ID is less than KMaxCriticalPolicyDll, load only from ROM
 
 	TFullName dllName;
-
-	// is this policy "critical" i.e non-replaceable ?
-	_LIT(KSysBin,"z:\\sys\\bin\\");	
-	// const TInt KMaxCriticalPolicyDll = 1000;
-	// if (aHierarchyId < KMaxCriticalPolicyDll) // <-- cannot be false while aHierarchyId is a TUint8 (typedef'd to TDmHierarchyId)
+	_LIT(KSysBin,"z:\\sys\\bin\\");
 	dllName.Append(KSysBin);
-
 	dllName.Append(_L("domainPolicy"));
 	if (aHierarchyId != KDmHierarchyIdPower)
 		dllName.AppendNum(aHierarchyId);
@@ -1058,8 +1215,7 @@ TInt CDmSvrManager::BuildDomainTree(TDmHierarchyId aHierarchyId, CDmHierarchy*& 
 		}
 
 	CDmHierarchy* hierarchy = CDmHierarchy::New(aHierarchyId, hierarchyPolicy);
-	if (hierarchy == NULL)
-		__DS_PANIC(KErrNoMemory);
+	__DS_PANIC_IFNUL(hierarchy);
 
 	while (r == KErrNone && spec->iId != KDmIdNone)
 		{
@@ -1073,11 +1229,13 @@ TInt CDmSvrManager::BuildDomainTree(TDmHierarchyId aHierarchyId, CDmHierarchy*& 
 
 		domain = CSvrDomain::New(*hierarchy, *spec);
 		__DS_ASSERT(domain);
-	
+
 		if (spec->iParentId == KDmIdNone)
 			{
 			if (hierarchy->iRootDomain)
 				{
+				delete domain;
+				domain = NULL;
 				r = KDmErrBadDomainSpec;
 				break;
 				}
@@ -1088,6 +1246,8 @@ TInt CDmSvrManager::BuildDomainTree(TDmHierarchyId aHierarchyId, CDmHierarchy*& 
 			CSvrDomain* parent = hierarchy->LookupDomain(spec->iParentId);
 			if (!parent)
 				{
+				delete domain;
+				domain = NULL;
 				r = KDmErrBadDomainSpec;
 				break;
 				}
@@ -1096,15 +1256,28 @@ TInt CDmSvrManager::BuildDomainTree(TDmHierarchyId aHierarchyId, CDmHierarchy*& 
 		++spec;
 		}
 
+
+
 	if (spec)
 		(*release)(spec);
 
+	// Load state specs
+	if (r == KErrNone)
+		{
+		TInt err = LoadStateSpecs(lib, hierarchy);
+
+		// KErrNotFound indicates that policy does not contain state
+		// specs i.e. it is Version 1
+		if ( (err !=KErrNone) && (err !=KErrNotFound))
+			{
+			r = err;
+			}
+		}
 
 	if (r == KErrNone)
 		{
 		__DS_ASSERT(hierarchy->iRootDomain);
 		iDomainHierarchies.Append(hierarchy);
-		aHierarchy = hierarchy;
 		}
 	else
 		{
@@ -1113,6 +1286,76 @@ TInt CDmSvrManager::BuildDomainTree(TDmHierarchyId aHierarchyId, CDmHierarchy*& 
 		}
 
 	lib.Close();
+
+	return r;
+	}
+
+TInt CDmSvrManager::LoadStateSpecs(RLibrary& aLib, CDmHierarchy* aHierarchy)
+	{
+	__DS_TRACE((_L("DM: CDmSvrManager::LoadStateSpecs() on CDmHierarchy @0x%08x"), aHierarchy));
+	TLibraryFunction ordinal4 = aLib.Lookup(EDmPolicyGetStateSpec);
+	DmPolicyGetStateSpec getStateSpec = reinterpret_cast<DmPolicyGetStateSpec>(ordinal4);
+	if (getStateSpec == NULL)
+		return KErrNotFound;
+
+	TLibraryFunction ordinal5 = aLib.Lookup(EDmPolicyReleaseStateSpec);
+	DmPolicyReleaseStateSpec releaseStateSpec = reinterpret_cast<DmPolicyReleaseStateSpec>(ordinal5);
+	if (releaseStateSpec == NULL)
+		return KErrNotFound;
+
+	TAny* spec = NULL;
+	TUint count = 0;
+	TInt version = (*getStateSpec)(spec, count);
+	TInt r = KErrNone;
+
+	switch (version)
+		{
+		case 0:
+			{
+			r = KErrNotFound;
+			break;
+			}
+		case 1:
+			{
+			if (count < 1)
+				{
+				r = KDmErrBadDomainSpec;
+				break;
+				}
+
+			SDmStateSpecV1* specV1 = reinterpret_cast<SDmStateSpecV1*>(spec);
+			for(TUint i = 0; i<count; ++i)
+				{
+				const TTransitionConfig transitionCfg(specV1[i]);
+				r = transitionCfg.CheckValues();
+				if (r != KErrNone)
+					{
+					break;
+					}
+				TRAP(r, aHierarchy->HierachySettings().StoreConfigL(transitionCfg));
+				if (r != KErrNone)
+					{
+					break;
+					}
+				}
+			break;
+			}
+		default:
+			{
+			if (version > 1)
+				{
+				r = KDmErrBadDomainSpec;
+				}
+			else
+				{
+				r = version;
+				}
+			break;
+			}
+		}
+
+	if(spec)
+		(*releaseStateSpec)(spec);
 
 	return r;
 	}
@@ -1150,69 +1393,75 @@ TInt CDmSvrManager::LookupDomain(TDmHierarchyId aHierarchyId, TDmDomainId aDomai
 	
 	return KErrNone;
 	}
-	
+
+
 CSession2* CDmManagerServer::NewSessionL(const TVersion&, const RMessage2& aMessage) const
 	{
-
     // If the client does not have ECapabilityPowerMgmt capability, then it has no
     // right to make this request. Blow it up.
     if (!KPowerMgmtPolicy.CheckPolicy(aMessage))
 		{
-
         User::Leave(KErrPermissionDenied);
-
 		}
 
-	return new CDmManagerSession();
-	}
+	CDmManagerSession* session = new CDmManagerSession();
+#if defined(_DEBUG) || defined(__DS_DEBUG)
+	CleanupStack::PushL(session);
+	TFullName clientName;
+	GetClientNameFromMessageL(aMessage, clientName);
 
-CSession2* CDmManagerServer::NewSessionL(const TVersion&) const
-	{
-	__DS_PANIC(KErrGeneral);
-	return 0;
+	// Sessions on this server may not be shared by clients
+	__DS_TRACE((_L("DM: New CDmManagerSession @0x%08x, client %S"), session, &clientName));
+	CleanupStack::Pop();
+#else
+	(void)aMessage;
+#endif
+	return session;
 	}
 
 CDmManagerSession::CDmManagerSession()
-	{}
+	{
+	__DS_TRACE((_L("DM: CDmManagerSession() @0x%08x"), this));
+	}
 
 CDmManagerSession::~CDmManagerSession()
 	{
-	if (iHierarchy && iHierarchy->iControllerSession == this)
-		iHierarchy->iControllerSession = NULL;
-	if (iHierarchy && iHierarchy->iObserverSession == this)
-		iHierarchy->iObserverSession = NULL;
-	}
+	__DS_TRACE((_L("DM: ~CDmManagerSession() @0x%08x"), this));
 
-class MyMessage : public RMessage2
-	{
-public:
-	TInt* ArgRef(TInt i)
-		{ return &iArgs[i]; }
-	};
+	if (iHierarchy)
+		{
+		if (iHierarchy->iControllerSession == this)
+			{
+			iHierarchy->iControllerSession = NULL;
+			}
+		if (iHierarchy->iObserverSession == this)
+			{
+			iHierarchy->iObserverSession = NULL;
+			}
+		}
+
+	if(!iTransMessagePtr.IsNull())
+		iTransMessagePtr.Complete(KErrCancel);
+
+	if(!iObsvrMessagePtr.IsNull())
+		iObsvrMessagePtr.Complete(KErrCancel);
+	}
 
 void CDmManagerSession::ServiceL(const RMessage2& aMessage)
 	{
 	TInt r;
 	CDmSvrManager* manager = ((CDmManagerServer*) Server()) -> iManager;
 
-	// Check client has ECapabilityPowerMgmt capability
-/*	
-    if (!KPowerMgmtPolicy.CheckPolicy(aMessage))
-		{
-		aMessage.Complete(KErrPermissionDenied);
-		return;
-		}
-*/
 	switch (aMessage.Function())
 		{
 		case EDmHierarchyAdd:
 			{
 			r = KErrNone;
 			TDmHierarchyId hierarchyId = (TDmHierarchyId) aMessage.Int0();
+			__DS_TRACE((_L("DM: CDmManagerSession::ServiceL @0x%08x EDmHierarchyAdd, HierarchyId %d"), this, hierarchyId));
 
-			CDmHierarchy* hierarchy = manager->LookupHierarchy(hierarchyId);
-			if (hierarchy == NULL)
-				r = manager->BuildDomainTree(hierarchyId, hierarchy);
+			if (manager->LookupHierarchy(hierarchyId) == NULL)
+				r = manager->BuildDomainTree(hierarchyId);
 			aMessage.Complete(r);
 			}
 			break;
@@ -1221,6 +1470,7 @@ void CDmManagerSession::ServiceL(const RMessage2& aMessage)
 			{
 			r = KErrNone;
 			TDmHierarchyId hierarchyId = (TDmHierarchyId) aMessage.Int0();
+			__DS_TRACE((_L("DM: CDmManagerSession::ServiceL @0x%08x EDmHierarchyJoin, HierarchyId %d"), this, hierarchyId));
 
 			iHierarchy = manager->LookupHierarchy(hierarchyId);
 			if (iHierarchy == NULL)
@@ -1240,6 +1490,13 @@ void CDmManagerSession::ServiceL(const RMessage2& aMessage)
 			break;
 
 		case EDmRequestSystemTransition:
+			{
+			const TDmDomainState targetState = aMessage.Int0();
+			const TDmTraverseDirection direction = (TDmTraverseDirection)aMessage.Int1();
+
+			__DS_TRACE((_L("DM: CDmManagerSession::ServiceL @0x%08x EDmRequestSystemTransition, TargetState %d, Direction %d"),
+				this, targetState, direction));
+
 			if (iHierarchy==NULL)
 				{
 				aMessage.Complete(KErrBadHierarchyId);
@@ -1252,15 +1509,24 @@ void CDmManagerSession::ServiceL(const RMessage2& aMessage)
 				}
 
 			r = iHierarchy->RequestSystemTransition(
-				(TDmDomainState) aMessage.Int0(),
-				(TDmTraverseDirection) aMessage.Int1(),
+				targetState,
+				direction,
 				&aMessage);
 
 			if (r != KErrNone)
 				aMessage.Complete(r);
 			break;
+			}
 
 		case EDmRequestDomainTransition:
+			{
+			const TDmDomainId domain = (TDmDomainId)aMessage.Int0();
+			const TDmDomainState targetState = aMessage.Int1();
+			const TDmTraverseDirection direction = (TDmTraverseDirection)aMessage.Int2();
+
+			__DS_TRACE((_L("DM: CDmManagerSession::ServiceL @0x%08x EDmRequestDomainTransition, Domain 0x%x, TargetState %d, Direction %d"),
+				this, domain, targetState, direction));
+
 			if (iHierarchy==NULL)
 				{
 				aMessage.Complete(KErrBadHierarchyId);
@@ -1271,15 +1537,17 @@ void CDmManagerSession::ServiceL(const RMessage2& aMessage)
 				aMessage.Complete(KDmErrBadSequence);
 				break;
 				}
+
 			r = iHierarchy->RequestDomainTransition(
-				(TDmDomainId) aMessage.Int0(), 
-				(TDmDomainState) aMessage.Int1(), 
-				(TDmTraverseDirection) aMessage.Int2(),
+				domain,
+				targetState,
+				direction,
 				&aMessage);
 
 			if (r != KErrNone)
 				aMessage.Complete(r);
 			break;
+			}
 
 		case EDmGetTransitionFailureCount:
 			{
@@ -1327,6 +1595,9 @@ void CDmManagerSession::ServiceL(const RMessage2& aMessage)
 			break;
 
 		case EDmCancelTransition:
+			{
+			__DS_TRACE((_L("DM: CDmManagerSession::ServiceL @0x%08x EDmCancelTransition"), this));
+
 			if (iHierarchy == NULL)
 				{
 				aMessage.Complete(KErrBadHierarchyId);
@@ -1340,6 +1611,7 @@ void CDmManagerSession::ServiceL(const RMessage2& aMessage)
 				}
 			aMessage.Complete(KErrNone);
 			break;
+			}
 		case EDmObserverCancel:
 			if (iHierarchy == NULL)
 				{
@@ -1498,24 +1770,38 @@ void CDmManagerSession::ServiceL(const RMessage2& aMessage)
 		}
 	}
 
-CSession2* CDmDomainServer::NewSessionL(const TVersion&, const RMessage2&) const
+CSession2* CDmDomainServer::NewSessionL(const TVersion&, const RMessage2& aMessage) const
 	{
+	CDmDomainSession* session =  new (ELeave) CDmDomainSession;
+#ifdef __DS_DEBUG
+	CleanupStack::PushL(session);
+	TFullName clientName;
+	GetClientNameFromMessageL(aMessage, clientName);
 
-	return new CDmDomainSession();
+	// Sessions on this server may not be shared by clients
+	__DS_TRACE((_L("DM: New CDmDomainSession @0x%08x, client %S"), session, &clientName));
+	CleanupStack::Pop();
+#else
+	(void)aMessage;
+#endif
+	return session;
 	}
 
-CSession2* CDmDomainServer::NewSessionL(const TVersion&) const
+CDmDomainSession::CDmDomainSession()
+	: iDeferralsRemaining(0)
 	{
-	__DS_PANIC(KErrGeneral);
-	return 0;
+	__DS_TRACE((_L("DM: CDmDomainSession() @0x%08x"), this));
 	}
 
 CDmDomainSession::~CDmDomainSession()
 	{
-	if (iPending)
+	__DS_TRACE((_L("DM: ~CDmDomainSession() @0x%08x"), this));
+	if (iAcknPending)
 		iDomain->CompleteMemberTransition(KErrNone);
 	if (iDomain)
 		iDomain->Detach(this);
+	if (DeferralActive())
+		CancelDeferral();
 	}
 
 void CDmDomainSession::ServiceL(const RMessage2& aMessage)
@@ -1529,6 +1815,8 @@ void CDmDomainSession::ServiceL(const RMessage2& aMessage)
 		{
 		TDmHierarchyId hierarchyId = (TDmHierarchyId) aMessage.Int0();
 		TDmDomainId domainId = (TDmDomainId) aMessage.Int1();
+
+		__DS_TRACE((_L("DM: CDmDomainSession::ServiceL @0x%08x EDmDomainJoin, HierarchyId %d, DomainId 0x%x"), this, hierarchyId, domainId));
 
 		r = manager->LookupDomain(hierarchyId, domainId, iDomain);
 
@@ -1548,10 +1836,12 @@ void CDmDomainSession::ServiceL(const RMessage2& aMessage)
 		}
 
 	case EDmStateRequestTransitionNotification:
+		__DS_TRACE((_L("DM: CDmDomainSession::ServiceL @0x%08x EDmStateRequestTransitionNotification"), this));
 		iNotificationEnabled = ETrue;
 		break;
 
 	case EDmStateCancelTransitionNotification:
+		__DS_TRACE((_L("DM: CDmDomainSession::ServiceL @0x%08x EDmStateCancelTransitionNotification"), this));
 		iNotificationEnabled = EFalse;
 		break;
 
@@ -1559,59 +1849,165 @@ void CDmDomainSession::ServiceL(const RMessage2& aMessage)
 		{
 		TInt propValue = aMessage.Int0();
 		TInt error = aMessage.Int1();
+
+		__DS_TRACE((_L("DM: CDmDomainSession::ServiceL @0x%08x EDmStateAcknowledge, error %d"), this, error));
+
 		if (!iDomain)
 			{
 			r = KDmErrNotJoin;
 			break;
 			}
-		if (iPending && iDomain->CheckPropValue(propValue))
+		if (iAcknPending && iDomain->CheckPropValue(propValue))
 			{
-			iPending = EFalse;
+			if (DeferralActive())
+				ObsoleteDeferral();
+
+			iAcknPending = EFalse;
 			iDomain->CompleteMemberTransition(error);
 			}
-		}
+		else
+			{
+			// This error code indicates that there was no pending transition
+			// corresponding to the cookie supplied in propValue.
+			r = KErrNotFound;
+			}
+
 		break;
+		}
+
+	case EDmStateDeferAcknowledgement:
+		{
+		__DS_TRACE((_L("DM: CDmDomainSession::ServiceL @0x%08x EDmStateDeferAcknowledgement"), this));
+
+		// PlatSec check
+		if (!KWddPolicy.CheckPolicy(aMessage,
+									__PLATSEC_DIAGNOSTIC_STRING("KWriteDeviceDataPolicy")) &&
+			!KProtServPolicy.CheckPolicy(aMessage,
+										 __PLATSEC_DIAGNOSTIC_STRING("KProtServPolicy")))
+			{
+			// Try harder...
+			r = KErrPermissionDenied;
+			break;
+			}
+		DeferAcknowledgment(aMessage);
+		return;												// return, not break
+		}
+
+	case EDmStateCancelDeferral:
+		{
+		__DS_TRACE((_L("DM: CDmDomainSession::ServiceL @0x%08x EDmStateCancelDeferral"), this));
+		CancelDeferral();
+		break;
+		}
 	default:
 		r = KDmErrBadRequest;
 		break;
 		}
+
 	aMessage.Complete(r);
 	}
 
-	
+void CDmDomainSession::SetDeferralBudget(TInt aDeferralCount)
+	{
+	__DS_ASSERT(!DeferralActive());
+	iDeferralsRemaining = aDeferralCount;
+	}
+
+TBool CDmDomainSession::DeferralActive() const
+	{
+	return (!iDeferralMsg.IsNull());
+	}
+
+void CDmDomainSession::ExpireDeferral()
+	{
+	__DS_ASSERT(DeferralActive());
+	__DS_ASSERT(iDeferralsRemaining >= 0);
+
+	CompleteDeferral(KErrNone);
+	}
+
+void CDmDomainSession::DeferAcknowledgment(const RMessage2& aMessage)
+	{
+	__DS_ASSERT(aMessage.Function() == EDmStateDeferAcknowledgement);
+	__DS_ASSERT(!DeferralActive());
+
+	TInt r = KErrNone;
+
+	if (!iAcknPending)
+		{
+		r = KErrNotReady;
+		}
+	else if (iDeferralsRemaining == 0)
+		{
+		r = KErrNotSupported;
+		}
+
+	if(KErrNone != r)
+		{
+		aMessage.Complete(r);
+		return;
+		}
+
+	--iDeferralsRemaining;
+	iDeferralMsg = aMessage;
+	}
+
+void CDmDomainSession::CancelDeferral()
+	{
+	if (DeferralActive())
+		{
+		CompleteDeferral(KErrCancel);
+		}
+	}
+
+void CDmDomainSession::ObsoleteDeferral()
+	{
+	__DS_ASSERT(DeferralActive());
+
+	CompleteDeferral(KErrCompletion);
+	}
+
+void CDmDomainSession::CompleteDeferral(TInt aError)
+	{
+	__DS_TRACE((_L("DM: CDmDomainSession::CompleteDeferral() @0x%08x, aError %d"), this, aError));
+	__DS_ASSERT(DeferralActive());
+
+	iDeferralMsg.Complete(aError);
+	}
+
+
 TInt E32Main()
 	{
+	// Make DM a system critical server
+	User::SetProcessCritical(User::ESystemCritical);
+	User::SetCritical(User::ESystemCritical);
+
 	CTrapCleanup* cleanupStack = CTrapCleanup::New();
-	if(!cleanupStack)
-		__DS_PANIC(KErrNoMemory);
+	__DS_ASSERT_STARTUP(cleanupStack);
 
 	CActiveScheduler* sched = new CActiveScheduler();
-	if (!sched)
-		__DS_PANIC(KErrNoMemory);
+	__DS_ASSERT_STARTUP(sched);
 
 	CActiveScheduler::Install(sched);
 
 	CDmSvrManager* mngr = CDmSvrManager::New();
-	__DS_ASSERT(mngr);
+	__DS_ASSERT_STARTUP(mngr);
 
 	CDmManagerServer* msrv = new CDmManagerServer(mngr);
-	if (!msrv)
-		__DS_PANIC(KErrNoMemory);
+	__DS_ASSERT_STARTUP(msrv);
 
 	TInt r=msrv->Start(KDmManagerServerNameLit);
-	if (r != KErrNone)
-		__DS_PANIC(r);
+	__DS_ASSERT_STARTUP(r == KErrNone);
 
 	CDmDomainServer* dsrv = new CDmDomainServer(mngr);
-	if (!dsrv)
-		__DS_PANIC(KErrNoMemory);
+	__DS_ASSERT_STARTUP(dsrv);
 
 	r=dsrv->Start(KDmDomainServerNameLit);
-	if (r != KErrNone)
-		__DS_PANIC(r);
+	__DS_ASSERT_STARTUP(r == KErrNone);
 
 	CActiveScheduler::Start();
 
+	// Server should never shutdown, hence panic to highlight such an event
 	__DS_PANIC(0);
 
 	return KErrNone;

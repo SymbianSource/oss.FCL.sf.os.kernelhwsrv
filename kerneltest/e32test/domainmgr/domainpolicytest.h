@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -16,18 +16,39 @@
 #ifndef __DOMAIN_POLICY_TEST_H__
 #define __DOMAIN_POLICY_TEST_H__
 
-// The test domain hierarchy id 
+#include <domainpolicy.h>
 
+// Policy Domain Timeout
+const TInt KDomainTimeout = 2000000; /* 2000ms */
+
+// The original test domain hierarchy id
 static const TDmHierarchyId	KDmHierarchyIdTest = 99;
 
+// The test domain hierarchy Id for V2 policy with V2 features enabled
+static const TDmHierarchyId	KDmHierarchyIdTestV2 = 98;
+
+// The original test domain hierarchy id but as a V2 policy with V1 functionality
+static const TDmHierarchyId	KDmHierarchyIdTestV2_97 = 97;
+
+// The original test domain hierarchy id but as a V2 policy with V1 functionality, null state spec
+static const TDmHierarchyId	KDmHierarchyIdTestV2_96 = 96;
+
+//  The test domain hierarchy Id for V2 policy with V2 features enabled but botched
+static const TDmHierarchyId	KDmHierarchyIdTestV2_95 = 95;
+
+//  The test domain hierarchy Id for V2 policy with V2 features enabled but botched
+static const TDmHierarchyId	KDmHierarchyIdTestV2_94 = 94;
+
+
 /*
-Domains defined in this hiearchy
+Domains defined in this hierarchy.
 The hierarchy desribed here looks like this:
 		Root
 		A				B				C
 		AA	AB			BA				CA
 			ABA	ABB						CAA
-
+			
+This hierarchy is used in V1 and V2 policies. 
 */
 static const TDmDomainId	KDmIdTestA		= 0x02;
 static const TDmDomainId	KDmIdTestB		= 0x03;
@@ -41,33 +62,67 @@ static const TDmDomainId	KDmIdTestCA		= 0x08;
 static const TDmDomainId	KDmIdTestABA	= 0x09;
 static const TDmDomainId	KDmIdTestABB	= 0x0A;
 static const TDmDomainId	KDmIdTestCAA	= 0x0B;
+
 static const TInt KTestDomains = 0x0B;	// number of domains including root
 
 
 /*
-System-wide start-up states
+Simulated system-wide states for test purposes.
 
-Some of these states may be ommitted depending on the start-up mode.
-E.g. The system-starter might choose to omit EStartupNonCritical in "safe" mode
+The typical state transitions expected in this model:
+	EStartupCriticalStatic 	-> EStartupCriticalDynamic
+	EStartupCriticalDynamic -> EStartupNonCritical
+	EStartupNonCritical 	-> ENormalRunning
+	ENormalRunning 			-> EBackupMode
+	EBackupMode				-> ENormalRunning
+	ENormalRunning			-> EShutdownCritical
+	EShutdownCritical 		-> EShutdownNonCritical
+
+However, that does not stop tests from transition from/to any state as required
+for test cases. Further states can be added through numbering e.g. EBackupMode1
+if required.
 */
-enum TStartupState
+enum TSystemState
 	{
-	/** In this state, all ROM based (static) components or resources that 
-	are critical to the operation of the phone are started */
+	/** Device starting up initialising ROM based components/resources */
 	EStartupCriticalStatic,
 
-	/** In this state, all non-ROM based (dynamic) components or resources that 
-	are critical to the operation of the phone are started */
+	/** Device continuing start up initisliaing non-ROM based components/resoruces */
 	EStartupCriticalDynamic,
 
-	/** In this state, all ROM based (static) or non-ROM based (dynamic) 
-	components or resources that are not critical to the operation of the phone 
-	are started */
+	/** Device continues start up initialising non-critical components/resoruces */
 	EStartupNonCritical,
+	
+	/** Device running normally */
+	ENormalRunning,
+		
+	/** Device about to start system wide backup operation */
+	EBackupMode,
 
-	/** An integer that is strictly greater thean any legal start-up state value */
-	EStartupLimit
+	/** Device about to start system wide restore operation */
+	ERestoreMode,
+
+	/** Device starting shutdown perform critical shutdown actions */
+	EShutdownCritical,
+
+	/** Device performing non-critical shutdown actions */
+	EShutdownNonCritical,
+
+
+	/** An integer that is strictly greater than any legal system state value */
+	ESystemStateLimit
 	};
 
+
+// Externs for test policy data
+
+extern const TDmDomainSpec DomainHierarchy[];
+extern const TDmHierarchyPolicy HierarchyPolicy;
+
+extern const SDmStateSpecV1 StateSpecification[];
+extern const TUint StateSpecificationSize;
+extern const TInt StateSpecificationVersion;
+
 #endif
+
 

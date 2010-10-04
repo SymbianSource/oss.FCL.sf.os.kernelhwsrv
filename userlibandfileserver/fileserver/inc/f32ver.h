@@ -58,6 +58,6 @@ The build number.
 
 @see TVersion
 */
-const TInt KF32BuildVersionNumber=4003;
+const TInt KF32BuildVersionNumber=4004;
 //
 #endif

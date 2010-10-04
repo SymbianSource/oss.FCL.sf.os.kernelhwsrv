@@ -28,7 +28,7 @@ const char* InitialInputPtr;
 #if 1 /*#ifndef __X86__*/
 const char* InitialInput="";
 #else
-const char* InitialInput="replacement\rf\ri\rr\rc0\rc1\rc2\rc3\rc4\rc5\rc6\rc7\rc8\rc9\rca\rcb\rcc\rcd\rce\rcf\r";
+const char* InitialInput="replacement\rf\ri\rr\rc0\rc1\rc2\rc3\rc4\rc5\rc6\rc7\rc8\rc9\rca\rcb\rcc\rcd\rce\rcf\rc10\rS\r";
 #endif
 
 CrashDebugger::CrashDebugger() 

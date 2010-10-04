@@ -616,6 +616,8 @@ TInt DMemModelThread::Alias(TLinAddr aAddr, DMemModelProcess* aProcess, TInt aSi
 	TPde* pd = Mmu::PageDirectory(osAsid);
 	TInt pdeIndex = aAddr>>KChunkShift;
 	TPde pde = pd[pdeIndex];
+	// Get os asid, this is the current thread's process so no need for reference.
+	TUint32 local_asid = ((DMemModelProcess*)iOwningProcess)->OsAsid();
 #ifdef __SMP__
 	TLinAddr aliasAddr;
 #else
@@ -647,7 +649,7 @@ TInt DMemModelThread::Alias(TLinAddr aAddr, DMemModelProcess* aProcess, TInt aSi
 #ifdef __SMP__
 		TSubScheduler& ss = SubScheduler();		// OK since we are locked to this CPU
 		aliasAddr = TLinAddr(ss.i_AliasLinAddr) + (aAddr & (KChunkMask & ~KPageMask));
-		iAliasPdePtr = (TPde*)(TLinAddr(ss.i_AliasPdePtr) + (osAsid << KPageTableShift));
+		iAliasPdePtr = (TPde*)(TLinAddr(ss.i_AliasPdePtr) + (local_asid << KPageTableShift));
 #endif
 		iAliasLinAddr = aliasAddr;
 		*iAliasPdePtr = pde;

@@ -11,7 +11,7 @@
 // Contributors:
 //
 // Description:
-// e32test\power\t_domain.cpp
+// e32test/domainmgr/t_domain.cpp
 // Overview:
 // Domain manager tests
 // API Information:
@@ -51,320 +51,26 @@
 // 
 //
 
+#define __E32TEST_EXTENSION__
 #include <e32test.h>
-#include <domainmember.h>
-#include <domainmanager.h>
-#include <domainobserver.h>
-#include "domainpolicytest.h"
 #include <e32debug.h>
-#include <f32file.h>
-#include <e32ldr.h>
 #include <e32ldr_private.h>
+#include <domainobserver.h>
 
-LOCAL_D RTest test(_L(" T_DOMAIN "));
+#include "domainpolicytest.h"
+#include "t_domain.h"
+
+
+RTest test(_L(" T_DOMAIN "));
 _LIT(KThreadName, "t_domain_panic_thread");
+
+TDmHierarchyId GHierarchyIdUnderTest = 0;
 
 #ifdef _DEBUG
 #define __PRINT(x) {RDebug::Print x;}
 #else
 #define __PRINT(x) 
 #endif
-
-class CDmTestMember;
-
-// interface for test domain memebers.
-// Any test memeber should derive from this interface 
-class MDmDomainMember
-	{
-public:
-	virtual TDmHierarchyId HierarchyId() = 0;
-	virtual TDmDomainId	DomainId() = 0;
-	virtual TDmDomainState State() = 0;
-	virtual TInt Status() = 0;
-	virtual TUint32 Ordinal() = 0;
-	virtual TInt Notifications() = 0;
-	};
-
-class MDmTest
-	{
-public:
-	virtual void Perform() = 0;
-	virtual void Release() = 0;
-	virtual TInt TransitionNotification(MDmDomainMember& aDomainMember) = 0;
-	virtual void TransitionRequestComplete() = 0;
-	};
-
-// for the test hierarchy, we generate an ordinal for each domain
-// each byte of which describes the exact location of the domain in the hierarchy
-#define ORDINAL_FROM_DOMAINID0(id) (id)
-#define ORDINAL_FROM_DOMAINID1(parent, id) ((parent << 8) | (id))
-#define ORDINAL_FROM_DOMAINID2(grandparent, parent, id) ((grandparent << 16) | (parent << 8) | id)
-#define ORDINAL_FROM_DOMAINID3(greatgrandparent, grandparent, parent, id) ((greatgrandparent << 24) | (grandparent << 16) | (parent << 8) | id)
-#define PARENT_ORDINAL(id) (id >> 8)
-
-#define ORDINAL_LEVEL(ordinal)			\
-	((ordinal & 0xFF00) == 0) ? 1 :			\
-	((ordinal & 0xFF0000) == 0) ? 2 :		\
-	((ordinal & 0xFF000000) == 0) ? 3 : 4;
-
-
-// get the least significant domain id character (for debugging purposes)
-TBool GetDomainChar(TDmDomainId aDomainId, TChar& aChar)
-	{
-	TBool found = ETrue;
-	switch(aDomainId)
-		{
-		
-		case KDmIdTestA:	aChar = 'A'; break;
-		case KDmIdTestB:	aChar = 'B'; break;
-		case KDmIdTestC:	aChar = 'C'; break;
-		case KDmIdTestAA:	aChar = 'A'; break;
-		case KDmIdTestAB:	aChar = 'B'; break;
-		case KDmIdTestBA:	aChar = 'A'; break;
-		case KDmIdTestCA:	aChar = 'A'; break;
-		case KDmIdTestABA:	aChar = 'A'; break;
-		case KDmIdTestABB:	aChar = 'B'; break;
-		case KDmIdTestCAA:	aChar = 'A'; break;
-		// domain char not found 
-		case KDmIdNone:
-		case KDmIdRoot:		
-		default:			
-			found = EFalse;
-		}
-	return found;
-	}
-
-// prints the 4-character domain string into the passed descriptor (for debugging purposes)
-// e.g. "CAA" for KDmIdTestCAA
-void GetDomainDesc(TUint32 aOrdinal, TDes& aDes)
-	{
-	if (aOrdinal == KDmIdRoot)
-		{
-		aDes.Append(_L("root"));
-		return;
-		}
-
-	TUint32 val =  aOrdinal;
-
-	for (TInt n=0; n<4; n++)
-		{
-		TDmDomainId domainId = (TDmDomainId) (val >> 24);
-		TChar ch;
-		TBool found = GetDomainChar(domainId, ch);
-		if (found)
-			aDes.Append(ch);
-		val = val << 8;
-		}
-
-	}
-
-
-class CDmTestMember : public CActive, public MDmDomainMember
-	{
-public:	
-	// from CActive
-	void RunL();
-	// from MDmDomainMember
-	inline TDmHierarchyId HierarchyId() {return iHierarchy;};
-	inline TDmDomainId	DomainId() {return iId;};
-	inline TDmDomainState State() {return iState;};
-	inline TInt Status() {return iStatus.Int();};
-	inline TUint32 Ordinal() {return iOrdinal;};
-	inline TInt Notifications() {return iNotifications;};
-
-	CDmTestMember(TDmHierarchyId aHierarchy, TDmDomainId aId, TUint32 aOrdinal, MDmTest*);
-	~CDmTestMember();
-	void Acknowledge();
-
-protected:
-	// from CActive
-	virtual void DoCancel();
-
-
-public:
-	TDmHierarchyId iHierarchy;
-	TDmDomainId	iId;
-	TDmDomainState iState;
-	TUint32		iOrdinal;
-	MDmTest*	iTest;	
-	TInt		iNotifications;
-	RDmDomain	iDomain;
-	};
-
-
-
-CDmTestMember::CDmTestMember(TDmHierarchyId aHierarchy, TDmDomainId aId, TUint32 aOrdinal, MDmTest* aTest) : CActive(CActive::EPriorityStandard), 
-	iHierarchy(aHierarchy), iId(aId), iOrdinal(aOrdinal), iTest(aTest)
-	{
-	TInt r;
-
-	if (iHierarchy == KDmHierarchyIdPower)
-		 r = iDomain.Connect(iId);
-	else
-		 r = iDomain.Connect(iHierarchy, iId);
-
-	test(r == KErrNone);
-
-	CActiveScheduler::Add(this);
-
-	iDomain.RequestTransitionNotification(CActive::iStatus);
-	CActive::SetActive();
-	}
-
-CDmTestMember::~CDmTestMember()
-	{
-	CActive::Cancel();
-	iDomain.Close();
-	}
-
-void CDmTestMember::Acknowledge()
-	{
-	iDomain.AcknowledgeLastState();
-	}
-
-void CDmTestMember::RunL()
-	{
-
-	iNotifications++;
-
-	iState = iDomain.GetState();
-
-	TInt ackError = iTest->TransitionNotification(*this);
-	if (ackError == KErrNone)
-		iDomain.AcknowledgeLastState();
-	else if (ackError == KErrAbort)	// don't acknowledge
-		;
-	else
-		iDomain.AcknowledgeLastState(ackError);
-
-	
-	// request another notification (even if we didn't acknowledge the last one)
-	iDomain.RequestTransitionNotification(CActive::iStatus);
-	CActive::SetActive();
-	}
-
-void CDmTestMember::DoCancel()
-	{
-	iDomain.CancelTransitionNotification();
-	}
-
-
-// CDomainMemberAo
-class CDomainMemberAo : public CDmDomain, public MDmDomainMember
-	{
-public:	
-	static CDomainMemberAo* NewL(TDmHierarchyId aHierarchy, TDmDomainId aId, TUint32 aOrdinal, MDmTest*);
-	~CDomainMemberAo();
-
-	// from CActive
-	void RunL();
-
-	// from MDmDomainMember
-	inline TDmHierarchyId HierarchyId() {return iHierarchy;};
-	inline TDmDomainId	DomainId() {return iId;};
-	inline TDmDomainState State() {return iState;};
-	inline TInt Status() {return iStatus.Int();};
-	inline TUint32 Ordinal() {return iOrdinal;};
-	inline TInt Notifications() {return iNotifications;};
-
-private:
-	CDomainMemberAo(TDmHierarchyId aHierarchy, TDmDomainId aId, TUint32 aOrdinal, MDmTest*);
-
-public:
-	TDmHierarchyId iHierarchy;
-	TDmDomainId	iId;
-	TDmDomainState iState;
-	TUint32		iOrdinal;
-	MDmTest*	iTest;	
-	TInt		iNotifications;
-	};
-
-CDomainMemberAo* CDomainMemberAo::NewL(TDmHierarchyId aHierarchy, TDmDomainId aId, TUint32 aOrdinal, MDmTest* aTest)
-	{
-	CDomainMemberAo* self=new (ELeave) CDomainMemberAo(aHierarchy, aId, aOrdinal, aTest);
-	CleanupStack::PushL(self);
-	self->ConstructL();
-
-	self->RequestTransitionNotification();
-
-	CleanupStack::Pop();
-	return self;
-	}
-
-CDomainMemberAo::CDomainMemberAo(TDmHierarchyId aHierarchy, TDmDomainId aId, TUint32 aOrdinal, MDmTest* aTest) : 
-	CDmDomain(aHierarchy, aId), 
-	iHierarchy(aHierarchy), iId(aId), iOrdinal(aOrdinal), iTest(aTest)
-	{
-	}
-
-CDomainMemberAo::~CDomainMemberAo()
-	{
-	Cancel();
-	}
-
-void CDomainMemberAo::RunL()
-	{
-	iNotifications++;
-
-	iState = GetState();
-
-	TInt ackError = iTest->TransitionNotification(*this);
-	if (ackError == KErrNone)
-		AcknowledgeLastState(ackError);
-	else if (ackError == KErrAbort)	// don't acknowledge
-		;
-	else
-		AcknowledgeLastState(ackError); 
-	if (ackError != KErrAbort)	
-		AcknowledgeLastState(ackError);
-
-	
-	// request another notification (even if we didn't acknowledge the last one)
-	RequestTransitionNotification();
-	}
-
-
-// CDomainManagerAo
-class CDomainManagerAo : public CDmDomainManager
-	{
-public:	
-	~CDomainManagerAo();
-	static CDomainManagerAo* NewL(TDmHierarchyId aHierarchy, MDmTest& aTest);
-
-	// from CActive
-	void RunL();
-
-private:
-	CDomainManagerAo(TDmHierarchyId aHierarchy, MDmTest& aTest);
-
-private:
-	MDmTest& iTest;
-	};
-
-
-CDomainManagerAo* CDomainManagerAo::NewL(TDmHierarchyId aHierarchy, MDmTest& aTest)
-	{
-	CDomainManagerAo* self=new (ELeave) CDomainManagerAo(aHierarchy, aTest);
-	CleanupStack::PushL(self);
-
-	self->ConstructL();
-	CleanupStack::Pop();
-	return self;
-	}
-
-CDomainManagerAo::CDomainManagerAo(TDmHierarchyId aHierarchy, MDmTest& aTest) : 
-	CDmDomainManager(aHierarchy), iTest(aTest)
-	{
-	}
-
-CDomainManagerAo::~CDomainManagerAo()
-	{
-	}
-
-void CDomainManagerAo::RunL()
-	{
-	iTest.TransitionRequestComplete();
-	}
 
 
 class CDmTest1 : public CActive, public MDmTest
@@ -889,7 +595,7 @@ void CDmTest5::Perform()
 	//
 	CActiveScheduler::Add(this);
 
-	TInt r = RDmDomainManager::AddDomainHierarchy(KDmHierarchyIdTest);
+	TInt r = RDmDomainManager::AddDomainHierarchy(GHierarchyIdUnderTest);
 
     RDebug::Printf("RDmDomainManager::AddDomainHierarchy returns %d", r );
 
@@ -912,35 +618,35 @@ void CDmTest5::Perform()
 	TInt testMemberCount = 0;
 
 	// Add some test hierarchy members - these use the RDmDomain API
-	iTestMembers[testMemberCount] = new CDmTestMember(KDmHierarchyIdTest, KDmIdRoot, ORDINAL_FROM_DOMAINID0(KDmIdRoot), this);
+	iTestMembers[testMemberCount] = new CDmTestMember(GHierarchyIdUnderTest, KDmIdRoot, ORDINAL_FROM_DOMAINID0(KDmIdRoot), this);
 	test(iTestMembers[testMemberCount++] != NULL);
-	iTestMembers[testMemberCount] = new CDmTestMember(KDmHierarchyIdTest, KDmIdRoot, ORDINAL_FROM_DOMAINID0(KDmIdRoot), this);
+	iTestMembers[testMemberCount] = new CDmTestMember(GHierarchyIdUnderTest, KDmIdRoot, ORDINAL_FROM_DOMAINID0(KDmIdRoot), this);
 	test(iTestMembers[testMemberCount++] != NULL);
 	
 	// row 1
-	iTestMembers[testMemberCount] = new CDmTestMember(KDmHierarchyIdTest, KDmIdTestA, ORDINAL_FROM_DOMAINID1(KDmIdRoot, KDmIdTestA), this);
+	iTestMembers[testMemberCount] = new CDmTestMember(GHierarchyIdUnderTest, KDmIdTestA, ORDINAL_FROM_DOMAINID1(KDmIdRoot, KDmIdTestA), this);
 	test(iTestMembers[testMemberCount++] != NULL);
-	iTestMembers[testMemberCount] = new CDmTestMember(KDmHierarchyIdTest, KDmIdTestB, ORDINAL_FROM_DOMAINID1(KDmIdRoot, KDmIdTestB), this);
+	iTestMembers[testMemberCount] = new CDmTestMember(GHierarchyIdUnderTest, KDmIdTestB, ORDINAL_FROM_DOMAINID1(KDmIdRoot, KDmIdTestB), this);
 	test(iTestMembers[testMemberCount++] != NULL);
-	iTestMembers[testMemberCount] = new CDmTestMember(KDmHierarchyIdTest, KDmIdTestC, ORDINAL_FROM_DOMAINID1(KDmIdRoot, KDmIdTestC), this);
+	iTestMembers[testMemberCount] = new CDmTestMember(GHierarchyIdUnderTest, KDmIdTestC, ORDINAL_FROM_DOMAINID1(KDmIdRoot, KDmIdTestC), this);
 	test(iTestMembers[testMemberCount++] != NULL);
 	
 	// row2
-	iTestMembers[testMemberCount] = new CDmTestMember(KDmHierarchyIdTest, KDmIdTestAA, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestA, KDmIdTestAA), this);
+	iTestMembers[testMemberCount] = new CDmTestMember(GHierarchyIdUnderTest, KDmIdTestAA, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestA, KDmIdTestAA), this);
 	test(iTestMembers[testMemberCount++] != NULL);
-	iTestMembers[testMemberCount] = new CDmTestMember(KDmHierarchyIdTest, KDmIdTestAB, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestA, KDmIdTestAB), this);
+	iTestMembers[testMemberCount] = new CDmTestMember(GHierarchyIdUnderTest, KDmIdTestAB, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestA, KDmIdTestAB), this);
 	test(iTestMembers[testMemberCount++] != NULL);
-	iTestMembers[testMemberCount] = new CDmTestMember(KDmHierarchyIdTest, KDmIdTestBA, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestB, KDmIdTestBA), this);
+	iTestMembers[testMemberCount] = new CDmTestMember(GHierarchyIdUnderTest, KDmIdTestBA, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestB, KDmIdTestBA), this);
 	test(iTestMembers[testMemberCount++] != NULL);
-	iTestMembers[testMemberCount] = new CDmTestMember(KDmHierarchyIdTest, KDmIdTestCA, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestC, KDmIdTestCA), this);
+	iTestMembers[testMemberCount] = new CDmTestMember(GHierarchyIdUnderTest, KDmIdTestCA, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestC, KDmIdTestCA), this);
 	test(iTestMembers[testMemberCount++] != NULL);
 	
 	// row 3
-	iTestMembers[testMemberCount] = new CDmTestMember(KDmHierarchyIdTest, KDmIdTestABA, ORDINAL_FROM_DOMAINID3(KDmIdRoot, KDmIdTestA, KDmIdTestAB, KDmIdTestABA), this);
+	iTestMembers[testMemberCount] = new CDmTestMember(GHierarchyIdUnderTest, KDmIdTestABA, ORDINAL_FROM_DOMAINID3(KDmIdRoot, KDmIdTestA, KDmIdTestAB, KDmIdTestABA), this);
 	test(iTestMembers[testMemberCount++] != NULL);
-	iTestMembers[testMemberCount] = new CDmTestMember(KDmHierarchyIdTest, KDmIdTestABB, ORDINAL_FROM_DOMAINID3(KDmIdRoot, KDmIdTestA, KDmIdTestAB, KDmIdTestABB), this);
+	iTestMembers[testMemberCount] = new CDmTestMember(GHierarchyIdUnderTest, KDmIdTestABB, ORDINAL_FROM_DOMAINID3(KDmIdRoot, KDmIdTestA, KDmIdTestAB, KDmIdTestABB), this);
 	test(iTestMembers[testMemberCount++] != NULL);
-	iTestMembers[testMemberCount] = new CDmTestMember(KDmHierarchyIdTest, KDmIdTestCAA, ORDINAL_FROM_DOMAINID3(KDmIdRoot, KDmIdTestC, KDmIdTestCA, KDmIdTestCAA), this);
+	iTestMembers[testMemberCount] = new CDmTestMember(GHierarchyIdUnderTest, KDmIdTestCAA, ORDINAL_FROM_DOMAINID3(KDmIdRoot, KDmIdTestC, KDmIdTestCA, KDmIdTestCAA), this);
 	test(iTestMembers[testMemberCount++] != NULL);
 
 	// add some power hierarchy members - these use the CDmDomain AO API
@@ -1001,12 +707,12 @@ void CDmTest5::Perform()
 
 
 	// connect to the test hierarchy
-	r = iTestDomainManager.Connect(KDmHierarchyIdTest);
+	r = iTestDomainManager.Connect(GHierarchyIdUnderTest);
 	test(r == KErrNone);
 
 	// verify that we can't connect to the same hierarchy more than once
 	RDmDomainManager	domainManager;
-	r = domainManager.Connect(KDmHierarchyIdTest);
+	r = domainManager.Connect(GHierarchyIdUnderTest);
 	test(r == KErrInUse);
 
 
@@ -1045,7 +751,7 @@ void CDmTest5::Perform()
 	//*************************************************
 	test.Next(_L("Test 5c- verify domains are in correct state"));
 	RDmDomain domainMember;
-	r = domainMember.Connect(KDmHierarchyIdTest, iTestDomainId);
+	r = domainMember.Connect(GHierarchyIdUnderTest, iTestDomainId);
 	test (r == KErrNone);
 	TDmDomainState state = domainMember.GetState();
 	domainMember.Close();
@@ -1055,7 +761,7 @@ void CDmTest5::Perform()
 	// the root domain and the transition domain are in different states
 	if (iTestDomainId != KDmIdRoot && iTestState != EStartupCriticalStatic)
 		{
-		r = domainMember.Connect(KDmHierarchyIdTest, KDmIdRoot);
+		r = domainMember.Connect(GHierarchyIdUnderTest, KDmIdRoot);
 		test (r == KErrNone);
 		TDmDomainState state = domainMember.GetState();
 		domainMember.Close();
@@ -1097,6 +803,9 @@ void CDmTest5::Perform()
 	//*************************************************
 	// Test 5e- request a positive transition, with zero acknowledgements
 	// issue a positive transition with no members acknowledging the transition
+	// Expect timeout from server
+	// Also covers Testcase 2.3.2 from Transition Monitoring test suite when
+	// policy used in 96 or 97.
 	//*************************************************
 	test.Next(_L("Test 5e- request a positive transition, with zero acknowledgements"));
 	iAckMode = KAckNever;
@@ -1267,7 +976,7 @@ void CDmTest5::Perform()
 	test(status.Int() == KErrNone);
 	manager.Close();
 	
-	r = manager.Connect(KDmHierarchyIdTest);
+	r = manager.Connect(GHierarchyIdUnderTest);
 	test (r == KErrNone);
 	manager.RequestDomainTransition(KDmIdRoot, EStartupCriticalStatic, ETraverseDefault, status);
 	test(status.Int() == KRequestPending);
@@ -1299,7 +1008,7 @@ TInt CDmTest5::TransitionNotification(MDmDomainMember& aDomainMember)
 			aDomainMember.HierarchyId(), aDomainMember.Ordinal(), aDomainMember.State(), aDomainMember.Status()));
 		test(aDomainMember.State() == iPowerState);
 		}
-	else if (aDomainMember.HierarchyId() == KDmHierarchyIdTest)
+	else if (aDomainMember.HierarchyId() == GHierarchyIdUnderTest)
 		{
 		TBuf16<4> buf;
 		GetDomainDesc(aDomainMember.Ordinal(), buf);
@@ -1319,7 +1028,7 @@ TInt CDmTest5::TransitionNotification(MDmDomainMember& aDomainMember)
 
 	CDmTestMember** mp;
 
-	if (aDomainMember.HierarchyId() == KDmHierarchyIdTest && iAckMode == KAckAlways)
+	if (aDomainMember.HierarchyId() == GHierarchyIdUnderTest && iAckMode == KAckAlways)
 		{
 
 		if (iTraverseDirection == ETraverseParentsFirst)
@@ -1499,7 +1208,7 @@ TInt CDmTest6::PanicThreadFunc(TAny* aData)
 			{
 			RDmDomainManager manager;
 			TRequestStatus status;
-			TInt r = manager.Connect(KDmHierarchyIdTest);
+			TInt r = manager.Connect(GHierarchyIdUnderTest);
 			test(r == KErrNone);
 
 			User::SetJustInTime(EFalse);
@@ -1571,10 +1280,10 @@ void CDmTest6::Perform()
 	CActiveScheduler::Add(this);
 
 	CDomainManagerAo* iTestDomainManager = NULL;
-	TRAP_IGNORE(iTestDomainManager = CDomainManagerAo::NewL(KDmHierarchyIdTest, *this));
+	TRAP_IGNORE(iTestDomainManager = CDomainManagerAo::NewL(GHierarchyIdUnderTest, *this));
 	test (iTestDomainManager != NULL);
 
-	TInt r = CDomainManagerAo::AddDomainHierarchy(KDmHierarchyIdTest);
+	TInt r = CDomainManagerAo::AddDomainHierarchy(GHierarchyIdUnderTest);
 	test(r == KErrNone);
 
 	//*************************************************
@@ -1584,7 +1293,7 @@ void CDmTest6::Perform()
 
 	// verify that we can't connect to the same hierarchy more than once
 	CDomainManagerAo* testDomainManager = NULL;
-	TRAP(r, testDomainManager = CDomainManagerAo::NewL(KDmHierarchyIdTest, *this));
+	TRAP(r, testDomainManager = CDomainManagerAo::NewL(GHierarchyIdUnderTest, *this));
 	test(r == KErrInUse);
 	test (testDomainManager == NULL);
 
@@ -1592,35 +1301,35 @@ void CDmTest6::Perform()
 	TInt testMemberCount = 0;
 
 	// Add some test hierarchy members
-	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(KDmHierarchyIdTest, KDmIdRoot, ORDINAL_FROM_DOMAINID0(KDmIdRoot), this));
+	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(GHierarchyIdUnderTest, KDmIdRoot, ORDINAL_FROM_DOMAINID0(KDmIdRoot), this));
 	test(iTestMembers[testMemberCount++] != NULL);
-	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(KDmHierarchyIdTest, KDmIdRoot, ORDINAL_FROM_DOMAINID0(KDmIdRoot), this));
+	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(GHierarchyIdUnderTest, KDmIdRoot, ORDINAL_FROM_DOMAINID0(KDmIdRoot), this));
 	test(iTestMembers[testMemberCount++] != NULL);
 	
 	// row 1
-	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(KDmHierarchyIdTest, KDmIdTestA, ORDINAL_FROM_DOMAINID1(KDmIdRoot, KDmIdTestA), this));
+	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(GHierarchyIdUnderTest, KDmIdTestA, ORDINAL_FROM_DOMAINID1(KDmIdRoot, KDmIdTestA), this));
 	test(iTestMembers[testMemberCount++] != NULL);
-	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(KDmHierarchyIdTest, KDmIdTestB, ORDINAL_FROM_DOMAINID1(KDmIdRoot, KDmIdTestB), this));
+	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(GHierarchyIdUnderTest, KDmIdTestB, ORDINAL_FROM_DOMAINID1(KDmIdRoot, KDmIdTestB), this));
 	test(iTestMembers[testMemberCount++] != NULL);
-	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(KDmHierarchyIdTest, KDmIdTestC, ORDINAL_FROM_DOMAINID1(KDmIdRoot, KDmIdTestC), this));
+	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(GHierarchyIdUnderTest, KDmIdTestC, ORDINAL_FROM_DOMAINID1(KDmIdRoot, KDmIdTestC), this));
 	test(iTestMembers[testMemberCount++] != NULL);
 	
 	// row2
-	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(KDmHierarchyIdTest, KDmIdTestAA, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestA, KDmIdTestAA), this));
+	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(GHierarchyIdUnderTest, KDmIdTestAA, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestA, KDmIdTestAA), this));
 	test(iTestMembers[testMemberCount++] != NULL);
-	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(KDmHierarchyIdTest, KDmIdTestAB, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestA, KDmIdTestAB), this));
+	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(GHierarchyIdUnderTest, KDmIdTestAB, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestA, KDmIdTestAB), this));
 	test(iTestMembers[testMemberCount++] != NULL);
-	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(KDmHierarchyIdTest, KDmIdTestBA, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestB, KDmIdTestBA), this));
+	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(GHierarchyIdUnderTest, KDmIdTestBA, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestB, KDmIdTestBA), this));
 	test(iTestMembers[testMemberCount++] != NULL);
-	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(KDmHierarchyIdTest, KDmIdTestCA, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestC, KDmIdTestCA), this));
+	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(GHierarchyIdUnderTest, KDmIdTestCA, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestC, KDmIdTestCA), this));
 	test(iTestMembers[testMemberCount++] != NULL);
 	
 	// row 3
-	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(KDmHierarchyIdTest, KDmIdTestABA, ORDINAL_FROM_DOMAINID3(KDmIdRoot, KDmIdTestA, KDmIdTestAB, KDmIdTestABA), this));
+	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(GHierarchyIdUnderTest, KDmIdTestABA, ORDINAL_FROM_DOMAINID3(KDmIdRoot, KDmIdTestA, KDmIdTestAB, KDmIdTestABA), this));
 	test(iTestMembers[testMemberCount++] != NULL);
-	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(KDmHierarchyIdTest, KDmIdTestABB, ORDINAL_FROM_DOMAINID3(KDmIdRoot, KDmIdTestA, KDmIdTestAB, KDmIdTestABB), this));
+	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(GHierarchyIdUnderTest, KDmIdTestABB, ORDINAL_FROM_DOMAINID3(KDmIdRoot, KDmIdTestA, KDmIdTestAB, KDmIdTestABB), this));
 	test(iTestMembers[testMemberCount++] != NULL);
-	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(KDmHierarchyIdTest, KDmIdTestCAA, ORDINAL_FROM_DOMAINID3(KDmIdRoot, KDmIdTestC, KDmIdTestCA, KDmIdTestCAA), this));
+	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(GHierarchyIdUnderTest, KDmIdTestCAA, ORDINAL_FROM_DOMAINID3(KDmIdRoot, KDmIdTestC, KDmIdTestCA, KDmIdTestCAA), this));
 	test(iTestMembers[testMemberCount++] != NULL);
 
 
@@ -1651,7 +1360,7 @@ void CDmTest6::Perform()
 	test.Next(_L("Test 6c cancel a member notification request"));
 	RDmDomain domainMember;
 	TRequestStatus status;
-	domainMember.Connect(KDmHierarchyIdTest, iTestDomainId);
+	domainMember.Connect(GHierarchyIdUnderTest, iTestDomainId);
 	domainMember.RequestTransitionNotification(status);
 	domainMember.CancelTransitionNotification();
 	User::WaitForRequest(status);
@@ -1661,7 +1370,7 @@ void CDmTest6::Perform()
 	// Test 6d cancel a member notification request without having first requested a notification
 	//*************************************************
 	test.Next(_L("Test 6d cancel a member notification request without having first requested a notification"));
-	domainMember.Connect(KDmHierarchyIdTest, iTestDomainId);
+	domainMember.Connect(GHierarchyIdUnderTest, iTestDomainId);
 	domainMember.CancelTransitionNotification();
 	domainMember.Close();
 
@@ -1683,7 +1392,7 @@ void CDmTest6::Perform()
 	// Test 6g domain member connects to valid hierarchy but invalid domain
 	//*************************************************
 	test.Next(_L("Test 6g domain member connects to valid hierarchy but invalid domain"));
-	r = domainMember.Connect(KDmHierarchyIdTest, TDmDomainId(-1));
+	r = domainMember.Connect(GHierarchyIdUnderTest, TDmDomainId(-1));
 	test (r == KDmErrBadDomainId);
 
 	delete iTestDomainManager;
@@ -1726,7 +1435,7 @@ TInt CDmTest6::TransitionNotification(MDmDomainMember& aDomainMember)
 		
 	iTestNotifications++;
 
-	test (aDomainMember.HierarchyId() == KDmHierarchyIdTest);
+	test (aDomainMember.HierarchyId() == GHierarchyIdUnderTest);
 
 	TBuf16<4> buf;
 	GetDomainDesc(aDomainMember.Ordinal(), buf);
@@ -1849,14 +1558,14 @@ void CDmTest7::Perform()
 	//
 	CActiveScheduler::Add(this);
 
-	TInt r = RDmDomainManager::AddDomainHierarchy(KDmHierarchyIdTest);
+	TInt r = RDmDomainManager::AddDomainHierarchy(GHierarchyIdUnderTest);
 	test(r == KErrNone);
 
 	CDomainManagerAo* iTestDomainManager = NULL;
-	TRAP_IGNORE(iTestDomainManager = CDomainManagerAo::NewL(KDmHierarchyIdTest, *this));
+	TRAP_IGNORE(iTestDomainManager = CDomainManagerAo::NewL(GHierarchyIdUnderTest, *this));
 	test (iTestDomainManager != NULL);
 
-	r = CDomainManagerAo::AddDomainHierarchy(KDmHierarchyIdTest);
+	r = CDomainManagerAo::AddDomainHierarchy(GHierarchyIdUnderTest);
 	test(r == KErrNone);
 
 	//*************************************************
@@ -1868,38 +1577,38 @@ void CDmTest7::Perform()
 	TInt testMemberCount = 0;
 
 	// Add some test hierarchy members
-	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(KDmHierarchyIdTest, KDmIdRoot, ORDINAL_FROM_DOMAINID0(KDmIdRoot), this));
+	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(GHierarchyIdUnderTest, KDmIdRoot, ORDINAL_FROM_DOMAINID0(KDmIdRoot), this));
 	test(iTestMembers[testMemberCount++] != NULL);
 	
 	// row 1
-	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(KDmHierarchyIdTest, KDmIdTestA, ORDINAL_FROM_DOMAINID1(KDmIdRoot, KDmIdTestA), this));
+	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(GHierarchyIdUnderTest, KDmIdTestA, ORDINAL_FROM_DOMAINID1(KDmIdRoot, KDmIdTestA), this));
 	test(iTestMembers[testMemberCount++] != NULL);
-	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(KDmHierarchyIdTest, KDmIdTestB, ORDINAL_FROM_DOMAINID1(KDmIdRoot, KDmIdTestB), this));
+	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(GHierarchyIdUnderTest, KDmIdTestB, ORDINAL_FROM_DOMAINID1(KDmIdRoot, KDmIdTestB), this));
 	test(iTestMembers[testMemberCount++] != NULL);
-	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(KDmHierarchyIdTest, KDmIdTestC, ORDINAL_FROM_DOMAINID1(KDmIdRoot, KDmIdTestC), this));
+	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(GHierarchyIdUnderTest, KDmIdTestC, ORDINAL_FROM_DOMAINID1(KDmIdRoot, KDmIdTestC), this));
 	test(iTestMembers[testMemberCount++] != NULL);
 	
 	// row2
-	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(KDmHierarchyIdTest, KDmIdTestAA, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestA, KDmIdTestAA), this));
+	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(GHierarchyIdUnderTest, KDmIdTestAA, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestA, KDmIdTestAA), this));
 	test(iTestMembers[testMemberCount++] != NULL);
-	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(KDmHierarchyIdTest, KDmIdTestAB, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestA, KDmIdTestAB), this));
+	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(GHierarchyIdUnderTest, KDmIdTestAB, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestA, KDmIdTestAB), this));
 	test(iTestMembers[testMemberCount++] != NULL);
-	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(KDmHierarchyIdTest, KDmIdTestBA, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestB, KDmIdTestBA), this));
+	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(GHierarchyIdUnderTest, KDmIdTestBA, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestB, KDmIdTestBA), this));
 	test(iTestMembers[testMemberCount++] != NULL);
-	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(KDmHierarchyIdTest, KDmIdTestCA, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestC, KDmIdTestCA), this));
+	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(GHierarchyIdUnderTest, KDmIdTestCA, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestC, KDmIdTestCA), this));
 	test(iTestMembers[testMemberCount++] != NULL);
 	
 	// row 3
-	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(KDmHierarchyIdTest, KDmIdTestABA, ORDINAL_FROM_DOMAINID3(KDmIdRoot, KDmIdTestA, KDmIdTestAB, KDmIdTestABA), this));
+	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(GHierarchyIdUnderTest, KDmIdTestABA, ORDINAL_FROM_DOMAINID3(KDmIdRoot, KDmIdTestA, KDmIdTestAB, KDmIdTestABA), this));
 	test(iTestMembers[testMemberCount++] != NULL);
-	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(KDmHierarchyIdTest, KDmIdTestABB, ORDINAL_FROM_DOMAINID3(KDmIdRoot, KDmIdTestA, KDmIdTestAB, KDmIdTestABB), this));
+	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(GHierarchyIdUnderTest, KDmIdTestABB, ORDINAL_FROM_DOMAINID3(KDmIdRoot, KDmIdTestA, KDmIdTestAB, KDmIdTestABB), this));
 	test(iTestMembers[testMemberCount++] != NULL);
-	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(KDmHierarchyIdTest, KDmIdTestCAA, ORDINAL_FROM_DOMAINID3(KDmIdRoot, KDmIdTestC, KDmIdTestCA, KDmIdTestCAA), this));
+	TRAP(r, iTestMembers[testMemberCount] = CDomainMemberAo::NewL(GHierarchyIdUnderTest, KDmIdTestCAA, ORDINAL_FROM_DOMAINID3(KDmIdRoot, KDmIdTestC, KDmIdTestCA, KDmIdTestCAA), this));
 	test(iTestMembers[testMemberCount++] != NULL);
 
 	// create an observer
 	CHierarchyObserver* observer = NULL;
-	TRAP(r, observer = CHierarchyObserver::NewL(*this, KDmHierarchyIdTest));
+	TRAP(r, observer = CHierarchyObserver::NewL(*this, GHierarchyIdUnderTest));
 	test (r == KErrNone);
 	test(observer != NULL);
 	observer->StartObserver(iObservedDomainId, EDmNotifyAll);
@@ -1938,7 +1647,7 @@ void CDmTest7::Perform()
 	test.Next(_L("Test 7b - start & stop the observer"));
 
 	// create an observer, start it stop and then start it again
-	TRAP(r, observer = CHierarchyObserver::NewL(*this, KDmHierarchyIdTest));
+	TRAP(r, observer = CHierarchyObserver::NewL(*this, GHierarchyIdUnderTest));
 	test (r == KErrNone);
 	test(observer != NULL);
 	observer->StartObserver(iObservedDomainId, EDmNotifyAll);
@@ -2033,7 +1742,7 @@ void CDmTest7::Perform()
 	
 	
 	test.Printf(_L("Test 7c.2 - Starting the observer with wrong domain Id\n"));
-	TRAP(r, observer = CHierarchyObserver::NewL(*this, KDmHierarchyIdTest));
+	TRAP(r, observer = CHierarchyObserver::NewL(*this, GHierarchyIdUnderTest));
 	test (r == KErrNone);
 	test(observer != NULL);
 
@@ -2043,7 +1752,7 @@ void CDmTest7::Perform()
 	test(r==KDmErrBadDomainId);
 
 	test.Printf(_L("Test 7c.3 - Trying to create second observer on the same hierarchy\n"));
-	TRAP(r, CHierarchyObserver::NewL(*this, KDmHierarchyIdTest));
+	TRAP(r, CHierarchyObserver::NewL(*this, GHierarchyIdUnderTest));
 	test (r == KDmErrBadSequence);
 
 	
@@ -2082,7 +1791,7 @@ void CDmTest7::Perform()
 	{
 	RDmDomainManager manager;
 	TRequestStatus status;
-	TInt r = manager.Connect(KDmHierarchyIdTest);
+	TInt r = manager.Connect(GHierarchyIdUnderTest);
 	test (r == KErrNone);
 	manager.RequestDomainTransition(KDmIdRoot, EStartupCriticalStatic, ETraverseDefault, status);
 	User::WaitForRequest(status);
@@ -2099,7 +1808,7 @@ TInt CDmTest7::TransitionNotification(MDmDomainMember& aDomainMember)
 		
 	iTestNotifications++;
 
-	test (aDomainMember.HierarchyId() == KDmHierarchyIdTest);
+	test (aDomainMember.HierarchyId() == GHierarchyIdUnderTest);
 
 	TBuf16<4> buf;
 	GetDomainDesc(aDomainMember.Ordinal(), buf);
@@ -2189,6 +1898,192 @@ void CDmTest7::TransReqEvent(TDmDomainId /*aDomainId*/, TDmDomainState /*aState*
 	TestForCompletion();
 	}
 
+
+/**
+   Increase code coverage, in particular get CPowerUpHandler::DoCancel()
+   called.
+*/
+class CDmPowerCoverageTest : public CActive, public MDmTest
+	{
+public:
+	CDmPowerCoverageTest();
+	~CDmPowerCoverageTest()
+		{
+		Cancel();
+		iManager.Close();
+		delete iMember;
+		}
+	// from CActive
+	void RunL();
+	// from MDmTest
+	void Perform();
+	void Release();
+	TInt TransitionNotification(MDmDomainMember&);
+	void TransitionRequestComplete()
+		{}
+private:
+	// from CActive
+	virtual void DoCancel()
+		{
+		test(0);
+		}
+private:
+	CDmTestMember* iMember;
+	RDmDomainManager iManager;
+	};
+
+
+CDmPowerCoverageTest::CDmPowerCoverageTest()
+	: CActive(CActive::EPriorityStandard)
+	{}
+
+
+void CDmPowerCoverageTest::RunL()
+	{
+	RDebug::Printf("CDmPowerCoverageTest::RunL(): %d", iStatus.Int());
+	CActiveScheduler::Stop();
+	}
+
+
+void CDmPowerCoverageTest::Perform()
+	{
+	test.Next(_L("CDmPowerCoverageTest"));
+
+	iMember = new CDmTestMember(KDmHierarchyIdPower, KDmIdApps, 0, this);
+	test(iMember != NULL);
+
+	TInt r = iManager.Connect();
+	test(r == KErrNone);
+
+	CActiveScheduler::Add(this);
+	iManager.RequestSystemTransition(EPwStandby, iStatus);
+	iManager.CancelTransition();
+	CActive::SetActive();
+
+	CActiveScheduler::Start();
+	}
+
+
+TInt CDmPowerCoverageTest::TransitionNotification(MDmDomainMember&)
+	{
+	RDebug::Printf("CDmPowerCoverageTest::TransitionNotification()");
+	// Don't acknowledge
+	return KErrAbort;
+	}
+
+
+void CDmPowerCoverageTest::Release()
+	{
+	delete this;
+	}
+
+
+/**
+Test disconnecting domain controller from server whilst
+transition in progress
+*/
+class CDmTestDisconnect : public CBase, public MDmTest
+	{
+public:
+	~CDmTestDisconnect();
+
+	// from MDmTest
+	void Perform();
+	void Release();
+	TInt TransitionNotification(MDmDomainMember& aDomainMember);
+	void TransitionRequestComplete() {test(EFalse);}
+
+protected:
+	CDmTestMember*		iMember;
+	RDmDomainManager	iManager;
+	};
+
+CDmTestDisconnect::~CDmTestDisconnect()
+	{
+	delete iMember;
+	iManager.Close();
+	}
+
+void CDmTestDisconnect::Perform()
+	{
+	TInt r = RDmDomainManager::AddDomainHierarchy(GHierarchyIdUnderTest);
+	test_KErrNone(r);
+	test.Next(_L("Test disconnecting controller during transition"));
+	iMember = new (ELeave) CDmTestMember(GHierarchyIdUnderTest, KDmIdTestAB, ORDINAL_FROM_DOMAINID2(KDmIdRoot, KDmIdTestA, KDmIdTestAB), this);
+	r = iManager.Connect(GHierarchyIdUnderTest);
+	test_KErrNone(r);
+
+	test_Equal(0, RThread().RequestCount());
+	TRequestStatus status;
+	iManager.RequestDomainTransition(KDmIdRoot, EStartupCriticalStatic, ETraverseDefault, status);
+	CActiveScheduler::Start();
+
+	// No User::WaitForRequest is used, since it is expected that
+	// the outstanding request will not be completed
+	test_Equal(0, RThread().RequestCount());
+	}
+
+TInt CDmTestDisconnect::TransitionNotification(MDmDomainMember&)
+	{
+	iManager.Close();
+	CActiveScheduler::Stop();
+	return KErrNone;
+	}
+
+void CDmTestDisconnect::Release()
+	{
+	delete this;
+	}
+
+void RunTests(TInt aIter)
+	{
+	while (aIter--)
+		{
+		MDmTest* tests[] = 
+			{
+			new CDmTestDisconnect(),
+			new CDmTest1(KDmIdRoot, EPwStandby),
+			new CDmTest1(KDmIdRoot, EPwOff),
+			new CDmTest1(KDmIdRoot, EPwActive),
+			new CDmTest1(KDmIdApps, EPwStandby),
+			new CDmTest1(KDmIdApps, EPwOff),
+			new CDmTest1(KDmIdApps, EPwActive),
+			new CDmTest1(KDmIdUiApps, EPwStandby),
+			new CDmTest1(KDmIdUiApps, EPwOff),
+			new CDmTest1(KDmIdUiApps, EPwActive),
+			new CDmTest2(EPwStandby),
+			new CDmTest3(),
+	
+			// platform security tests
+			new CDmTest4(),
+	
+			// PREQ810 tests :
+			// note that we use a fictitious power state to prevent any 
+			new CDmTest5(KDmIdRoot, KDmIdRoot, EPwActive+10, EStartupCriticalDynamic),
+			new CDmTest5(KDmIdUiApps, KDmIdTestAB, EPwActive+10, EStartupCriticalDynamic),
+	
+		    // negative tests
+			new CDmTest6(),
+	
+	
+			// observer tests
+	 		new CDmTest7(KDmIdTestA),
+			new CDmTest7(KDmIdRoot),
+			
+			// increase code coverage
+			new CDmPowerCoverageTest(),
+			};
+	
+		for (unsigned int i = 0; i < sizeof(tests)/sizeof(*tests); ++i)
+			{
+			test(tests[i] != NULL);
+			tests[i]->Perform();
+			tests[i]->Release();
+			}
+		}
+	}
+
+
 GLDEF_C TInt E32Main()
 	{
 	CTrapCleanup* trapHandler=CTrapCleanup::New();
@@ -2207,9 +2102,8 @@ GLDEF_C TInt E32Main()
 	//
 	// Perform the number of iterations specifed by the command line argument.
 	//
-	// If no arguments - perform two iterations
+	// If no arguments - perform one iteration
 	//
-//  TInt iter = 2;
     TInt iter = 1;
 
 	TInt len = User::CommandLineLength();
@@ -2233,57 +2127,27 @@ GLDEF_C TInt E32Main()
 		}
 
 	test.Title();
-	test.Start(_L("Testing"));
-
 	test.Printf(_L("Go for %d iterations\n"), iter);
 
 	// Remember the number of open handles. Just for a sanity check ....
 	TInt start_thc, start_phc;
 	RThread().HandleCount(start_phc, start_thc);
 
-	while (iter--)
-		{
-		MDmTest* tests[] = 
-			{
-			new CDmTest1(KDmIdRoot, EPwStandby),
-			new CDmTest1(KDmIdRoot, EPwOff),
-			new CDmTest1(KDmIdRoot, EPwActive),
-			new CDmTest1(KDmIdApps, EPwStandby),
-			new CDmTest1(KDmIdApps, EPwOff),
-			new CDmTest1(KDmIdApps, EPwActive),
-			new CDmTest1(KDmIdUiApps, EPwStandby),
-			new CDmTest1(KDmIdUiApps, EPwOff),
-			new CDmTest1(KDmIdUiApps, EPwActive),
-			new CDmTest2(EPwStandby),
-			new CDmTest3(),
+
+	test.Start(_L("Test run with original test Hierarchy"));	
+	GHierarchyIdUnderTest = KDmHierarchyIdTest;
+	RunTests(iter);
+	test.End();
 	
-			// platform security tests
-			new CDmTest4(),
+	
+	test.Start(_L("Test run with original test Hierarchy as V2 policy"));	
+	GHierarchyIdUnderTest = KDmHierarchyIdTestV2_97;
+	RunTests(iter);
+	test.End();
 
-			// PREQ810 tests :
-			// note that we use a fictitious power state to prevent any 
-			new CDmTest5(KDmIdRoot, KDmIdRoot, EPwActive+10, EStartupCriticalDynamic),
-			new CDmTest5(KDmIdUiApps, KDmIdTestAB, EPwActive+10, EStartupCriticalDynamic),
-
-        // negative tests
-			new CDmTest6(),
-
-
-			// observer tests
-     		new CDmTest7(KDmIdTestA),
-			new CDmTest7(KDmIdRoot),
-			
-			};
-
-		for (unsigned int i = 0; i < sizeof(tests)/sizeof(*tests); ++i)
-			{
-			test(tests[i] != NULL);
-			tests[i]->Perform();
-			tests[i]->Release();
-			}
-
-		}
-
+	test.Start(_L("Test run with original test Hierarchy as V2 policy, but NULL state specification"));	
+	GHierarchyIdUnderTest = KDmHierarchyIdTestV2_96;
+	RunTests(iter);
 	test.End();
 
 	// Sanity check for open handles and for pending requests ...

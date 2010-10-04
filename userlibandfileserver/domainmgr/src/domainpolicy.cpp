@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -15,7 +15,7 @@
 // 
 //
 
-#include "domainpolicy.h"
+#include <domainpolicy.h>
 
 const TInt KDomainTimeout = 1000000; /* 1000ms */
 
@@ -26,7 +26,7 @@ static const TDmDomainSpec DomainHierarchy[] =
 		{ KDmIdApps,	KDmIdRoot,	_INIT_SECURITY_POLICY_PASS,								EPwActive,	KDomainTimeout	},
 		{ KDmIdUiApps,	KDmIdRoot,	_INIT_SECURITY_POLICY_PASS,								EPwActive,	KDomainTimeout	},
 		// end of array marker
-		{ KDmIdNone,	KDmIdNone,	_INIT_SECURITY_POLICY_PASS,								0,			0	}	
+		TDM_DOMAIN_SPEC_END	
 	};
 
 static const TDmHierarchyPolicy HierarchyPolicyPower	= 

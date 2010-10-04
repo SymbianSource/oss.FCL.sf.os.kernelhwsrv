@@ -56,7 +56,7 @@ class Monitor;
 class DMonObject
 	{
 public:
-#ifdef __GCC32__				// GCC uses a different class layout
+#if defined(__GCC32__) && !defined(__EABI__) && defined(__MARM__)	// old GCC uses a different class layout
 	DBase* iAsyncDeleteNext;
 	TAny* iVptr;
 #else
