@@ -109,7 +109,7 @@ hal/hal
 
 PRJ_EXTENSIONS
 
-#ifdef SBSV2 // If using SBSv2 with bootstrap FLM, MEMMODEL MUST begin with a capital letter
+#if 0  // Bug 2149 #ifdef SBSV2 // If using SBSv2 with bootstrap FLM, MEMMODEL MUST begin with a capital letter
 
 start		extension		base.bootstrap bootstrap
 

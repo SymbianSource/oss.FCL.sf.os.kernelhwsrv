@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?> 
+<!--
+#
+# Copyright (c) 2009-2010 Symbian Foundation. 
+# All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+#
+# Initial Contributors:
+# Symbian Foundation - initial contribution.
+#
+# Contributors:
+#
+# Description: Implementation of generic image generation for target using SBS/Raptor
+#
+-->
+<!--  Extension interfaces : replacements for Template Extension Makefiles  --> 
+
+<build xmlns="http://symbian.com/xml/build" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://symbian.com/xml/build ../../schema/build/2_0.xsd">
+	<interface name="base.rom" extends="Symbian.KernelFLM" flm="rom.flm">
+		<param name="REE_TARGET"/>
+		<param name="TYPE"/>
+		<param name="ROM_NAME" default=''/>
+		<param name="REE_DEFINES" default=''/>
+	</interface>
+</build>
