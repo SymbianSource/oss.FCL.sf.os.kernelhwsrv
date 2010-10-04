@@ -37,7 +37,9 @@ public:
 		EPOWERDOWN_POWER1 = 1,
 		EPOWERDOWN_POWER2 = 2,
 		EPOWERUP_POWER1 = 3,
-		EPOWERUP_POWER2 = 4
+		EPOWERUP_POWER2 = 4,
+		EPOWER_ACTDEAD_POWER2 = 5,
+		EPOWER_ESETPOWERDOWNTIMEOUT = 6
 		};
 
 public:
@@ -47,8 +49,25 @@ public:
 	inline void Test_power1up(TRequestStatus &aStatus, TUint &time);
 	inline void Test_power2up(TRequestStatus &aStatus, TUint &time);
 	inline TInt Test_setSleepTime(TUint sleepTime);
+	inline void Test_power2ActDead();
+	inline void Test_setPowerDownTimeout(TUint aTimeout);
 	static inline TInt Unload();
 	};
+
+#ifdef __KERNEL_MODE__
+class DTestPowerManager : public DPowerModel
+	{
+public:
+	TAny*	iDummy;
+	TAny*	iDummy2;
+	TAny*	iDummy3;
+
+	// the offset of iPslShutdownTimeoutMs should be exactly same as 
+	// of offset in DPowerManager
+	TUint iPslShutdownTimeoutMs; // default = 0
+
+	};
+#endif // __KERNEL_MODE__ 
 
 #include "d_lddpowerseqtest.inl"
 

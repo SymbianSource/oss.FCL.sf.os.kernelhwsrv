@@ -938,4 +938,5 @@ EXPORTS
 	?SetKeyOffset@RArrayBase@@IAEXH@Z @ 937  NONAME ; void RArrayBase::SetKeyOffset(int)
 	?CpuRetires@Cache@@SAXXZ @ 938 NONAME ; public: static void __cdecl Cache::CpuRetires(void)
 	?KernelRetires@Cache@@SAXXZ @ 939 NONAME ; public: static void __cdecl Cache::KernelRetires(void)
+	?Register@DPowerController@@QAEXI@Z @ 940 NONAME ; public: void __thiscall DPowerController::Register(unsigned int)
 

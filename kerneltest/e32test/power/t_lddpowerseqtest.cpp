@@ -78,11 +78,11 @@ void DoTests()
 	User::WaitForRequest(statuspowerdown1);
 	test(statuspowerdown1.Int() == KErrNone);
 
-	test.Printf(_L("Waiting for power up request completion of handler1\n"));
+	test.Printf(_L("Waiting for power down request completion of handler1\n"));
 	User::WaitForRequest(statuspowerdown2);
 	test(statuspowerdown2.Int() == KErrNone);
 
-	test.Printf(_L("Waiting for power down request completion of handler2\n"));
+	test.Printf(_L("Waiting for power up request completion of handler2\n"));
 	User::WaitForRequest(statuspowerup1);
 	test(statuspowerup1.Int() == KErrNone);
 
@@ -93,6 +93,24 @@ void DoTests()
 	test.Printf(_L("Waiting for time request completion\n"));;
 	User::WaitForRequest(tstatus);
 	test(tstatus.Int() == KErrNone);
+
+	test.Printf(_L("Set power manager shut down timeout value\n"));
+	ldd.Test_setPowerDownTimeout(10);
+
+	test.Printf(_L("Instruct power handler 2 to act dead\n"));
+	ldd.Test_power2ActDead();
+
+	test.Printf(_L("Enable wakeup power events to standby\n"));
+	r = Power::EnableWakeupEvents(EPwStandby);
+	test (r == KErrNone);
+
+	wakeup.HomeTime();
+	wakeup += TTimeIntervalMicroSeconds(5000000);
+	timer.At(tstatus, wakeup);
+
+	test.Printf(_L("Powerdown\n"));
+	r = Power::PowerDown();
+	test (r == KErrNone);
 
 	timer.Close();
 

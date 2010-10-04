@@ -1015,4 +1015,5 @@ EXPORTS
 	?SetKeyOffset@RArrayBase@@IAEXH@Z @ 1014  NONAME ; void RArrayBase::SetKeyOffset(int)
 	?CpuRetires@Cache@@SAXXZ @ 1015 NONAME ; public: static void __cdecl Cache::CpuRetires(void)
 	?KernelRetires@Cache@@SAXXZ @ 1016 NONAME ; public: static void __cdecl Cache::KernelRetires(void)
+	?Register@DPowerController@@QAEXI@Z @ 1017 NONAME ; public: void __thiscall DPowerController::Register(unsigned int)
 

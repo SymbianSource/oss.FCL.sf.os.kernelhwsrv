@@ -28,6 +28,10 @@ inline void RLddTest1::Test_power2up(TRequestStatus &aStatus, TUint &time)
 	{ DoRequest(EPOWERUP_POWER2, aStatus, (TAny *)&time); }
 inline TInt RLddTest1::Test_setSleepTime(TUint time)
 	{ return DoControl(ESET_SLEEPTIME, (TAny *)time); }
+inline void RLddTest1::Test_power2ActDead()
+	{ DoControl(EPOWER_ACTDEAD_POWER2); }
+inline void RLddTest1::Test_setPowerDownTimeout(TUint aTimeout)
+	{ DoControl(EPOWER_ESETPOWERDOWNTIMEOUT, (TAny *) aTimeout); }
 inline TInt RLddTest1::Unload()
 	{ return User::FreeLogicalDevice(KLddName); }
 #endif

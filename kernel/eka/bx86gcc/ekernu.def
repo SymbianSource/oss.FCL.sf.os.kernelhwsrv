@@ -1043,4 +1043,5 @@ EXPORTS
 	_ZN10RArrayBase12SetKeyOffsetEi @ 1042 NONAME
 	_ZN5Cache10CpuRetiresEv @ 1043 NONAME
 	_ZN5Cache13KernelRetiresEv @ 1044 NONAME
+	_ZN16DPowerController8RegisterEj @ 1045 NONAME
 

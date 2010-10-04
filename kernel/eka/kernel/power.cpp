@@ -21,8 +21,10 @@
 #include "execs.h"
 #include "msgqueue.h"
 
-// #define _DEBUG_POWER
-
+#ifdef _DEBUG
+#include <nkern/nk_trace.h>
+//#define _DEBUG_POWER
+#endif
 
 /******************************************************************************
  * Power Manager - a Power Model implementation
@@ -60,9 +62,18 @@ public:
 	DBatteryMonitor*	iBatteryMonitor;
 	DPowerHal*			iPowerHal;
 
-	TInt				iTotalCurrent;
+	TUint iPslShutdownTimeoutMs; // default = 0
 
 private:
+#ifndef _DEBUG_POWER	
+	enum 
+		{
+		ESHUTDOWN_TIMEOUT = 0xFFFFFFFF // -1
+		};
+
+	TInt iPendingShutdownCount;
+#endif	
+
 
 	DPowerManager();
 
@@ -89,6 +100,8 @@ private:
 // #endif
 	
 	void NotifyWakeupEvent(TInt aReason);
+
+	static void ShutDownTimeoutFn(TAny* aArg);
 
 	DMutex*			iFeatureLock;
 	DThread*		iClient;				// protected by the system lock
@@ -142,7 +155,7 @@ DPowerManager* DPowerManager::New()
 	return self;
 	}
 
-DPowerManager::DPowerManager() 
+DPowerManager::DPowerManager()							
 	{
 	}
 
@@ -328,7 +341,29 @@ void DPowerManager::CancelWakeupEventNotification()
 	NKern::ThreadLeaveCS();
 	}
 
-// Called in CS
+
+void DPowerManager::ShutDownTimeoutFn(TAny* aArg)
+	{
+	__KTRACE_OPT(KPOWER,Kern::Printf(">DPowerManager::ShutDownTimeoutFn"));
+	NFastSemaphore* sem = (NFastSemaphore*)aArg;
+#ifdef _DEBUG_POWER
+	NKern::FSSignal(sem);
+#else
+	TUint SignalCount = __e32_atomic_load_acq32(&(PowerManager->iPendingShutdownCount));
+	DPowerHandler* ph = PowerManager->iHandlers;
+	do
+		{
+		ph->iSem = NULL; 
+		ph = ph->iPrev;
+		}while(ph != PowerManager->iHandlers);
+
+	__e32_atomic_store_rel32(&(PowerManager->iPendingShutdownCount), (TUint)ESHUTDOWN_TIMEOUT); // = -1
+	NKern::FSSignalN(sem,SignalCount);
+
+	__KTRACE_OPT(KPOWER,Kern::Printf("<DPowerManager::ShutDownTimeoutFn"));
+#endif
+	}
+
 TInt DPowerManager::PowerDown()
 	{ // called by ExecHandler 
 	__KTRACE_OPT(KPOWER,Kern::Printf(">PowerManger::PowerDown(0x%x) Enter", iPowerController->iTargetState));
@@ -344,7 +379,12 @@ TInt DPowerManager::PowerDown()
 		}
 
     __PM_ASSERT(iHandlers);
-	NFastSemaphore sem(0);
+	NFastSemaphore shutdownSem(0);
+	NTimer ntimer;
+	TDfc dfc(ShutDownTimeoutFn, &shutdownSem);
+#ifndef _DEBUG_POWER	
+	iPendingShutdownCount = 0;
+#endif	
 	DPowerHandler* ph = iHandlers;
 	//Power down in reverse order of handle registration.
 	do
@@ -352,25 +392,56 @@ TInt DPowerManager::PowerDown()
 #ifdef _DEBUG_POWER
 		__PM_ASSERT(!(ph->iStatus & DPowerHandler::EDone));
 #endif
-		ph->iSem = &sem;
+		ph->iSem = &shutdownSem; 
 		ph->PowerDown(iPowerController->iTargetState);
-#ifdef _DEBUG_POWER
-		__PM_ASSERT(!(ph->iStatus & DPowerHandler::EDone));
-		NKern::FSWait(&sem);	// power down drivers one after another to simplify debug
-		__PM_ASSERT(!ph->iSem);
-		__PM_ASSERT(ph->iStatus & EDone);
-		ph->iStatus &= ~EDone;
-#endif
+#ifndef _DEBUG_POWER		
+		iPendingShutdownCount++; 
+#else
+		if(iPslShutdownTimeoutMs>0)
+			{
+		    // Fire shut down timeout timer			
+			ntimer.OneShot(iPslShutdownTimeoutMs, dfc);
+			}
+
+		NKern::FSWait(&shutdownSem);	// power down drivers one after another to simplify debug
+		__e32_atomic_and_ord32(&(ph->iStatus), ~DPowerHandler::EDone);
+
+		// timeout condition
+		if(iPslShutdownTimeoutMs>0 && ph->iSem)
+			{
+			__e32_atomic_store_ord_ptr(&ph->iSem, 0);
+			}
+		ntimer.Cancel();
+#endif		
 		ph = ph->iPrev;
 		}while(ph != iHandlers);
 
 #ifndef _DEBUG_POWER
+	if(iPslShutdownTimeoutMs>0)
+		{
+		// Fire shut down timeout timer
+		ntimer.OneShot(iPslShutdownTimeoutMs, dfc);
+		}
+
 	ph = iHandlers;
 	do
 		{
-		NKern::FSWait(&sem);
+		NKern::FSWait(&shutdownSem);
+		if(__e32_atomic_load_acq32(&iPendingShutdownCount)==ESHUTDOWN_TIMEOUT)
+			{
+			iPendingShutdownCount = 0;
+			NKern::Lock();
+			shutdownSem.Reset(); // iPendingShutdownCount could be altered while ShutDownTimeoutFn is running
+		       			     // reset it to make sure shutdownSem is completely clean.	
+			NKern::Unlock();
+			break;
+			}
+		__e32_atomic_add_ord32(&iPendingShutdownCount, (TUint)(~0x0)); // iPendingShutDownCount--;
 		ph = ph->iPrev;
 		}while(ph != iHandlers);
+
+	ntimer.Cancel();
+	
 #endif
 
 	TTickQ::Wait();
@@ -382,6 +453,8 @@ TInt DPowerManager::PowerDown()
 	K::SecondQ->WakeUp();
 	TTickQ::Signal();
 
+	NFastSemaphore powerupSem(0);
+
 	ph = iHandlers->iNext;
 	//Power up in same order of handle registration.
 	do
@@ -389,14 +462,13 @@ TInt DPowerManager::PowerDown()
 #ifdef _DEBUG_POWER
 		__PM_ASSERT(!(ph->iStatus & DPowerHandler::EDone));
 #endif
-		ph->iSem = &sem;
+		ph->iSem = &powerupSem;
 		ph->PowerUp();
 #ifdef _DEBUG_POWER
-		__PM_ASSERT(!(ph->iStatus & DPowerHandler::EDone));
-		NKern::FSWait(&sem);	// power down drivers one after another to simplify debug
+		NKern::FSWait(&powerupSem);	// power down drivers one after another to simplify debug
 		__PM_ASSERT(!ph->iSem);
-		__PM_ASSERT(ph->iStatus & EDone);
-		ph->iStatus &= ~EDone;
+		__PM_ASSERT(ph->iStatus & DPowerHandler::EDone);
+		ph->iStatus &= ~DPowerHandler::EDone;
 #endif
 		ph = ph->iNext;
 		}while(ph != iHandlers->iNext);
@@ -405,7 +477,7 @@ TInt DPowerManager::PowerDown()
 	ph = iHandlers->iNext;
 	do
 		{
-		NKern::FSWait(&sem);
+		NKern::FSWait(&powerupSem);
 		ph = ph->iNext;
 		}while(ph != iHandlers->iNext);
 #endif
@@ -419,6 +491,7 @@ TInt DPowerManager::PowerDown()
 
 	return KErrNone;
 	}	
+
 
 /******************************************************************************
  * Power Handlers
@@ -578,22 +651,13 @@ EXPORT_C void DPowerHandler::PowerDownDone()
 
 
 /**	@deprecated, no replacement	*/
-EXPORT_C void DPowerHandler::DeltaCurrentConsumption(TInt aDelta)
+EXPORT_C void DPowerHandler::DeltaCurrentConsumption(TInt /* aDelta */)
 	{
-	__e32_atomic_add_ord32(&iCurrent, aDelta);
-	__PM_ASSERT(iCurrent >= 0);
-	__e32_atomic_add_ord32(&PowerManager->iTotalCurrent, aDelta);
-	__PM_ASSERT(PowerManager->iTotalCurrent >= 0);
 	}
 
 /**	@deprecated, no replacement	*/
-EXPORT_C void DPowerHandler::SetCurrentConsumption(TInt aCurrent)
+EXPORT_C void DPowerHandler::SetCurrentConsumption(TInt /* aCurrent */)
 	{
-	__PM_ASSERT(aCurrent >= 0);
-	TInt old = (TInt)__e32_atomic_swp_ord32(&iCurrent, aCurrent);
-	TInt delta = aCurrent - old;
-	__e32_atomic_add_ord32(&PowerManager->iTotalCurrent, delta);
-	__PM_ASSERT(PowerManager->iTotalCurrent >= 0);
 	}
 
 /******************************************************************************
@@ -650,6 +714,25 @@ EXPORT_C void DPowerController::Register()
 	TPowerController::ThePowerController = this;
 #endif
 	K::PowerModel = PowerManager;
+	}
+
+/**
+Registers this power controller object with the power manager.
+
+The power manager can only use the power controller after registration.
+
+@param aShutdownTimeoutMs The kernel shut down time out value in msec.
+
+@pre Calling thread must be in a critical section.
+@pre No fast mutex can be held.
+@pre Call in a thread context.
+@pre Kernel must be unlocked
+@pre interrupts enabled
+*/
+EXPORT_C void DPowerController::Register(TUint aShutdownTimeoutMs)
+	{
+	PowerManager->iPslShutdownTimeoutMs = aShutdownTimeoutMs;
+	Register();
 	}
 
 #ifndef __X86__

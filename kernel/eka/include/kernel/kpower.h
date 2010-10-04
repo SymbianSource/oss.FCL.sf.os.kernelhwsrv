@@ -66,6 +66,7 @@ class DPowerController : public DBase
 public:
 	IMPORT_C DPowerController();
 	IMPORT_C void Register();
+	IMPORT_C void Register(TUint aShutdownTimeoutMs);
 	IMPORT_C void WakeupEvent();
 #ifndef __X86__
 	IMPORT_C TInt RegisterResourceController(DBase* aController, TInt aClientId);

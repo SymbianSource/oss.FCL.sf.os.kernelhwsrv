@@ -1,3 +1,11 @@
+Version 2.00.4006
+=================
+(Made by vfebvre 27/09/2010)
+
+1.	erifung
+	1.	RP540323 REQ:405-4716 kernel side device driver staged shutdown feature
+
+
 Version 2.00.4005
 =================
 (Made by vfebvre 24/09/2010)

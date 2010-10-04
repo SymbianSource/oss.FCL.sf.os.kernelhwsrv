@@ -60,6 +60,9 @@ public:
 	DTest2PowerHandler();
 	void PowerUp();
 	void PowerDown(TPowerState);
+	void ActDead();
+private:
+	TBool iActDead;
 	};
 
 class DTestFactory : public DLogicalDevice
@@ -86,6 +89,8 @@ protected:
 	virtual TInt Request(TInt aReqNo, TAny* a1, TAny* a2);
 	DTest1PowerHandler power1;
 	DTest2PowerHandler power2;
+private:
+	TUint iPslShutdownTimeoutMsBackup;
 	};
 
 
@@ -149,6 +154,7 @@ DTest1::~DTest1()
 	power2.Remove();
 	//try to remove a handler twice - should not cause any problems
 	power2.Remove();
+	((DTestPowerManager*)(Kern::PowerModel()))->iPslShutdownTimeoutMs = iPslShutdownTimeoutMsBackup;
 	}
 
 TInt DTest1::Request(TInt aReqNo, TAny* a1, TAny* a2)
@@ -192,10 +198,18 @@ TInt DTest1::Request(TInt aReqNo, TAny* a1, TAny* a2)
 		// 'Control' functions...
 		switch(aReqNo)
 			{
+				
 			// DoControl
 			case RLddTest1::ESET_SLEEPTIME:
 				sleepTime = (TUint)a1;
 				break;
+			case RLddTest1::EPOWER_ACTDEAD_POWER2:
+				power2.ActDead();
+				break;	
+			case RLddTest1::EPOWER_ESETPOWERDOWNTIMEOUT:
+				iPslShutdownTimeoutMsBackup = ((DTestPowerManager*)(Kern::PowerModel()))->iPslShutdownTimeoutMs;
+				((DTestPowerManager*)(Kern::PowerModel()))->iPslShutdownTimeoutMs = (TUint)a1;
+				break;				
 			}
 		}
 
@@ -209,7 +223,7 @@ DTest1PowerHandler::DTest1PowerHandler():DPowerHandler(KLitPower1)
 //
 	}
 
-DTest2PowerHandler::DTest2PowerHandler():DPowerHandler(KLitPower2)
+DTest2PowerHandler::DTest2PowerHandler():DPowerHandler(KLitPower2), iActDead(EFalse)
 	{
 //
 // Power handler2 constructor
@@ -276,5 +290,14 @@ void DTest2PowerHandler::PowerDown(TPowerState /*aState*/)
 
 	Kern::RequestComplete(aStatus_down2, KErrNone);
 
-	PowerDownDone();
+	if(!iActDead)
+		{
+		PowerDownDone();
+		}
 	}
+
+void DTest2PowerHandler::ActDead()
+	{
+	iActDead = ETrue;
+	}
+
