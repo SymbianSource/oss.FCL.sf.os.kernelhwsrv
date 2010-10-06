@@ -161,12 +161,21 @@ void UserSideTestVectorNew()
 	RDebug::Printf("User-Side:vector operator new");
 	RDebug::Printf("OOM tests");
 
+#if defined(__ARMCC__) && __ARMCC_VERSION >= 400000 // Work-around a problem where compsupp doesn't overload the rvct 4.0 runtime 
+	#define TEST_VEC_NEW_OOM(CLASS) \
+	RDebug::Printf("new " #CLASS "[%d]", KOOMArraySize );\
+		{\
+		CLASS* p##CLASS = new(std::nothrow) CLASS[KOOMArraySize];\
+		test_Equal(NULL, p##CLASS);\
+		}
+#else
 	#define TEST_VEC_NEW_OOM(CLASS) \
 	RDebug::Printf("new " #CLASS "[%d]", KOOMArraySize );\
 		{\
 		CLASS* p##CLASS = new CLASS[KOOMArraySize];\
 		test_Equal(NULL, p##CLASS);\
 		}
+#endif
 
 	TEST_VEC_NEW_OOM(XCtorAndDtor);
 	TEST_VEC_NEW_OOM(XCtorOnly);

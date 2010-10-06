@@ -1,3 +1,18 @@
+Version 2.00.4007
+=================
+(Made by fadhliM 30/09/2010)
+
+1.	lanerobe
+	1.	ou1cimx1#573530 Use new(nothrow) to avoid vector new not checking for NULL return
+	2.	ou1cimx1#583517 DEV: T_LDRTST fails if SD card is missing
+
+2.	haifeyan
+	1.	ou1cimx1#591262 Boosted otg - add error message ID(MCL)
+
+3.	migubarr
+	1.	ou1cimx1#587076 Paging subsystem isn't enabled to use physical address only media access
+
+
 Version 2.00.4006
 =================
 (Made by vfebvre 27/09/2010)

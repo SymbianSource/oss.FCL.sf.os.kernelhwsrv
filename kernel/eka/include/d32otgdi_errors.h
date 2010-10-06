@@ -43,6 +43,10 @@ const TInt KErrUsbOtgBadState					= -6675;
 
 const TInt KErrUsbOtgInOPTTestingMode              = -6676;
 
+const TInt KErrUsbOtgThermalNormal                 = -6677;
+const TInt KErrUsbOtgThermalWarning                = -6678;
+const TInt KErrUsbOtgThermalFatal                  = -6679;
+
 const TInt KErrUsbOtgStackNotStarted			= -6680;
 const TInt KErrUsbOtgVbusAlreadyRaised			= -6681;
 const TInt KErrUsbOtgSrpForbidden				= -6682;

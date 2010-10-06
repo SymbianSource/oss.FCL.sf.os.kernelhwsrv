@@ -1158,12 +1158,17 @@ static void GetSpecialDrives()
 	TInt r = Fs.MkDirAll(hashDir);
 	test_Value(r, r == KErrNone || r == KErrAlreadyExists);
 
+	TBool removableDrivePresent = EFalse;
+
 	for (TInt d = 0; d <= (TInt)sizeof(SpecialDriveList); ++d)
 		{
 		TInt dr = SpecialDriveList[d];
 		TDriveInfo di;
 		test.Printf(_L("Drive %d\n"), dr);
 		test(Fs.Drive(di, dr) == KErrNone);
+
+		if (di.iDriveAtt & KDriveAttRemovable)
+			removableDrivePresent = ETrue;
 		if (di.iType == EMediaNotPresent)
 			continue;
 		
@@ -1194,6 +1199,23 @@ static void GetSpecialDrives()
 		r = Fs.MkDirAll(fn);
 		test.Printf(_L("MkDirAll %S returns %d\n"), &fn, r);
 		test_Value(r, r == KErrNone || r == KErrAlreadyExists);
+		}
+
+	if (removableDrivePresent)
+		{
+		if (!NoRemovable && SpecialDrives[1] == '!')
+			{
+			test.Printf(_L("Removable drive present but empty - please insert a card...\n"));
+			test(0);
+			}
+		}
+	else
+		{
+		if (!NoRemovable)
+			{
+			NoRemovable = ETrue;
+			test.Printf(_L("Updated NoRemovable=1 due to having no removable drives\n"));
+			}
 		}
 	}
 

@@ -5445,6 +5445,8 @@ EXPORT_C TInt LocDrv::RegisterPagingDevice(DPrimaryMediaBase* aPrimaryMedia, con
 	if (aPrimaryMedia->iBody->iMediaExtension)
 		pagingDevice->iType|= DPagingDevice::EMediaExtension;
 
+	pagingDevice->iFlags = flags;
+
 	pagingDevice->iReadUnitShift = aReadShift;
 
 	pagingDevice->iFirstLocalDriveNumber = firstLocalDriveNumber;
