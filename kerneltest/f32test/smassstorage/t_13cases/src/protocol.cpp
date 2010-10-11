@@ -13,7 +13,10 @@
 // Description:
 // 
 
-
+#include <e32std.h>
+#include <e32base.h>
+#include "mtransport.h"
+#include "mprotocol.h"
 #include "t_13cases_protocol.h"
 
 /**

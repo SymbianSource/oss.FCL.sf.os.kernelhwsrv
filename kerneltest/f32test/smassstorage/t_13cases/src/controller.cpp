@@ -14,7 +14,10 @@
 // 
 
 
-#include "protocol.h"
+#include <e32std.h>
+#include "mprotocol.h"
+#include "mtransport.h"
+#include "drivemanager.h"
 #include "cusbmassstoragecontroller.h"
 #include "cbulkonlytransport.h"
 

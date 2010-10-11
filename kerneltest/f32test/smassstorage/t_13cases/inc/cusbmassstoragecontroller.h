@@ -28,15 +28,6 @@ Class declaration for CUsbMassStorageController.
 
 class CBulkOnlyTransport;
 
-/**
-Stub drive manager for bulk-only transport testing.
-*/
-class CDriveManager
-	{
-public:
-	TInt Connect(TUint aLun);
-	TInt Disconnect(TUint aLun);
-	};
 
 /**
 Stub Mass Storage Controller class for bulk-only transport testing.

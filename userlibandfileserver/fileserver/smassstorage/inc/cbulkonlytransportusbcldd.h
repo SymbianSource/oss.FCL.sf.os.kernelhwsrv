@@ -28,9 +28,6 @@
 #include "cbulkonlytransport.h"
 #include "cactivedevicestatenotifierbase.h"
 
-// Maximum size for SCSI Read10 Write10 and Verify10 commands
-// Windows requests size of 64K whereas MAC requests size of 128K
-static const TUint32 KMaxBufSize = 128 * 1024;
 
 //Forward Declaration
 class CBulkOnlyTransportUsbcLdd;
@@ -138,11 +135,8 @@ private:
 
 	TBuf8<KCommandBufferLength> iCommandBuf; // For Responses to commands 
 
-	TBuf8<KMaxBufSize> iDataBuf1;	// For data transfers (Reading and Writing)
+    TBulkMm iBulkMm;
 
-	TBuf8<KMaxBufSize> iDataBuf2;
-
-	TBool iSwap;
 	/** internal buffer for CSW */
 	TBuf8<KCswLength> iCswBuf;
 

@@ -24,11 +24,7 @@ Classes for bulk-only transport testing.
 #ifndef __T_13CASES_PROTOCOL_H__
 #define __T_13CASES_PROTOCOL_H__
 
-#include <e32base.h> 
-#include <e32def.h>
-#include <e32std.h>
-	
-#include "protocol.h"
+#include "mprotocol.h"
 
 class CScsiProtocol : public CBase, public MProtocolBase
 	{

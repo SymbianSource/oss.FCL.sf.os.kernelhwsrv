@@ -12,7 +12,7 @@
 //
 // Description:
 // Implements a Symbian OS server that exposes the RUsbMassStorage API
-// 
+//
 //
 
 /**
@@ -24,30 +24,36 @@
 #include "usbmsshared.h"
 #include "cusbmassstorageserver.h"
 #include "cusbmassstoragesession.h"
+#include "drivemanager.h"
 #include "cusbmassstoragecontroller.h"
-#include "massstoragedebug.h"
-
+#include "smassstorage.h"
 #include "usbmsserversecuritypolicy.h"
+
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "cusbmassstorageserverTraces.h"
+#endif
+
 /**
  Constructs a USB mass storage Server
- 
+
  @return  a pointer to CUsbMassStorageServer object
  */
 CUsbMassStorageServer* CUsbMassStorageServer::NewLC(CUsbMassStorageController& aController)
-	{
-	CUsbMassStorageServer* r = new (ELeave) CUsbMassStorageServer(aController);
-	CleanupStack::PushL(r);
-	r->StartL(KUsbMsServerName);
-	return r;
-	}
+    {
+    CUsbMassStorageServer* r = new (ELeave) CUsbMassStorageServer(aController);
+    CleanupStack::PushL(r);
+    r->StartL(KUsbMsServerName);
+    return r;
+    }
 
 /**
  Destructor
  */
 CUsbMassStorageServer::~CUsbMassStorageServer()
-	{
+    {
     // Intentionally left blank
-	}
+    }
 
 
 /**
@@ -56,73 +62,67 @@ CUsbMassStorageServer::~CUsbMassStorageServer()
  @param aController a USB mass storage controller reference
  */
 CUsbMassStorageServer::CUsbMassStorageServer(CUsbMassStorageController& aController)
-     : CPolicyServer(EPriorityHigh,KUsbMsServerPolicy) 
+     : CPolicyServer(EPriorityHigh,KUsbMsServerPolicy)
     , iController(aController)
-	{
-    __PRINT(_L("CUsbMassStorageServer::CUsbMassStorageServer\n"));   
-	}
+    {
+    OstTraceFunctionEntry0(CUSBMASSSTORAGESERVER_100);
+    }
 
 /**
  Create a new session on this server
- 
- @param	&aVersion	Version of client
- @return	A pointer to a session object to be used for the client
+
+ @param &aVersion   Version of client
+ @return    A pointer to a session object to be used for the client
  */
 CSession2* CUsbMassStorageServer::NewSessionL(const TVersion &aVersion, const RMessage2& /*aMessage*/) const
-	{
-	TVersion v(KUsbMsSrvMajorVersionNumber,KUsbMsSrvMinorVersionNumber,KUsbMsSrvBuildVersionNumber);
+    {
+    OstTraceFunctionEntry0(CUSBMASSSTORAGESERVER_110);
+    TVersion v(KUsbMsSrvMajorVersionNumber,KUsbMsSrvMinorVersionNumber,KUsbMsSrvBuildVersionNumber);
+    if (!User::QueryVersionSupported(v, aVersion))
+        User::Leave(KErrNotSupported);
 
-	__PRINT(_L("CUsbMassStorageServer::NewSessionL\n"));
-	if (!User::QueryVersionSupported(v, aVersion))
-		User::Leave(KErrNotSupported);
-
-	CUsbMassStorageServer* ncThis = const_cast<CUsbMassStorageServer*>(this);
-	
-	CUsbMassStorageSession* sess = CUsbMassStorageSession::NewL(*ncThis);
-		
-	return sess;
-	}
+    CUsbMassStorageServer* ncThis = const_cast<CUsbMassStorageServer*>(this);
+    CUsbMassStorageSession* sess = CUsbMassStorageSession::NewL(*ncThis);
+    return sess;
+    }
 
 
 /**
  Inform the client there has been an error.
- 
- @param	aError	The error that has occurred
+
+ @param aError  The error that has occurred
  */
 void CUsbMassStorageServer::Error(TInt aError)
-	{
-	__PRINT1(_L("CUsbMassStorageServer::Error [aError=%d]\n"), aError);
-
-	Message().Complete(aError);
-	ReStart();
-	}
+    {
+    OstTrace1(TRACE_SMASSSTORAGE_FS, CUSBMASSSTORAGESERVER_120,
+              "aError=%d", aError);
+    Message().Complete(aError);
+    ReStart();
+    }
 
 /**
  Increment the open session count (iSessionCount) by one.
- 
- @post	the number of open sessions is incremented by one
+
+ @post  the number of open sessions is incremented by one
  */
 void CUsbMassStorageServer::IncrementSessionCount()
-	{
-	__PRINT1(_L("CUsbMassStorageServer::IncrementSessionCount %d\n"), iSessionCount);
-	__ASSERT_DEBUG(iSessionCount >= 0, User::Panic(KUsbMsSvrPncCat, EUsbMsPanicIllegalIPC));
-	
-	++iSessionCount;
-
-	__PRINT(_L("CUsbMassStorageServer::IncrementSessionCount\n"));
-	}
+    {
+    OstTrace1(TRACE_SMASSSTORAGE_FS, CUSBMASSSTORAGESERVER_130,
+              "SessionCount=%d", iSessionCount);
+    __ASSERT_DEBUG(iSessionCount >= 0, User::Panic(KUsbMsSvrPncCat, EUsbMsPanicIllegalIPC));
+    ++iSessionCount;
+    }
 
 /**
  Decrement the open session count (iSessionCount) by one.
- 
- @post		the number of open sessions is decremented by one
+
+ @post      the number of open sessions is decremented by one
  */
 void CUsbMassStorageServer::DecrementSessionCount()
-	{
-	__PRINT1(_L("CUsbMassStorageServer::DecrementSessionCount %d\n"), iSessionCount);
-
-	__ASSERT_DEBUG(iSessionCount > 0, User::Panic(KUsbMsSvrPncCat, EUsbMsPanicIllegalIPC));
-
-	--iSessionCount;
-	}
+    {
+    OstTrace1(TRACE_SMASSSTORAGE_FS, CUSBMASSSTORAGESERVER_140,
+              "SessionCount=%d", iSessionCount);
+    __ASSERT_DEBUG(iSessionCount > 0, User::Panic(KUsbMsSvrPncCat, EUsbMsPanicIllegalIPC));
+    --iSessionCount;
+    }
 

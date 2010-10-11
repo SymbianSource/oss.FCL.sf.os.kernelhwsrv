@@ -17,14 +17,15 @@
 
 TARGET			t_domain.exe        
 TARGETTYPE		EXE
+USERINCLUDE		../misc
 SOURCEPATH		.
 SOURCE			t_domain.cpp t_domain_cmn.cpp
-LIBRARY			euser.lib domaincli.lib
+LIBRARY			euser.lib domaincli.lib efsrv.lib
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 
 USERINCLUDE		../../../userlibandfileserver/domainmgr/inc
 
-CAPABILITY		WriteDeviceData PowerMgmt
+CAPABILITY		WriteDeviceData PowerMgmt AllFiles
 
 VENDORID 0x70000001
 

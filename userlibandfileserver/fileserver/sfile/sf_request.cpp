@@ -2212,6 +2212,9 @@ void CFsInternalRequest::Complete(TInt aError)
 			Free();
 			}
 		}
+	else if(func==KDeferredDismount)
+		{
+		}
 	else
 		Fault(EInternalRequestComplete3);
 	}

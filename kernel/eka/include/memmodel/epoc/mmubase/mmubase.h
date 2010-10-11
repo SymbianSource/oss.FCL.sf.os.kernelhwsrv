@@ -464,7 +464,7 @@ public:
 	virtual void RemapPage(TInt aId, TUint32 aAddr, TPhysAddr aOldAddr, TPhysAddr aNewAddr, TPte aPtePerm, DProcess* aProcess)=0;
 	virtual TInt UnmapPages(TInt aId, TUint32 aAddr, TInt aNumPages, TPhysAddr* aPageList, TBool aSetPagesFree, TInt& aNumPtes, TInt& aNumFree, DProcess* aProcess)=0;
 	virtual void ClearRamDrive(TLinAddr aStart)=0;
-	virtual TInt PdePtePermissions(TUint& aMapAttr, TPde& aPde, TPte& aPte)=0;
+	virtual TInt PdePtePermissions(TUint& aMapAttr, TPde& aPde, TPte& aPte, TBool aGlobal)=0;
 	virtual void Map(TLinAddr aLinAddr, TPhysAddr aPhysAddr, TInt aSize, TPde aPdePerm, TPte aPtePerm, TInt aMapShift)=0;
 	virtual void Unmap(TLinAddr aLinAddr, TInt aSize)=0;
 	virtual void InitShadowPageTable(TInt aId, TLinAddr aRomAddr, TPhysAddr aOrigPhys)=0;

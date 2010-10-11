@@ -741,34 +741,6 @@ void TestFormat_ForceDismount()
     test_Value(nRes, nRes == KErrDisMounted);
     file1.Close();  //-- this will make the previously "Dismounted" mount die.
 
-    //---------------------------------------------------------------------------------
-    //-- 3. check that forced formatting will complete NotifyDismount
-    test.Printf(_L("Test forced formatting completes NotifyDismount\n"));
-    TRequestStatus stat1;
-
-    nRes = file1.Replace(TheFs, KFname, EFileWrite);
-    test_KErrNone(nRes);
-
-    TheFs.NotifyDismount(gDrive, stat1, EFsDismountRegisterClient);
-    test(stat1.Int() == KRequestPending);
-
-    fmtMode = EQuickFormat;
-    nRes = format.Open(TheFs, drivePath, fmtMode, fmtCnt);
-    test_Value(nRes, nRes == KErrInUse);
-    format.Close();
-
-    test(stat1.Int() == KRequestPending);
-
-    fmtMode = EQuickFormat | EForceFormat; 
-    nRes = format.Open(TheFs, drivePath, fmtMode, fmtCnt); 
-    test_KErrNone(nRes);
-    format.Close();
-
-    User::WaitForRequest(stat1);
-    test(stat1.Int() == KErrNone);
-
-    buf8.SetLength(22);
-    nRes = file1.Write(buf8);
     test_Value(nRes, nRes == KErrDisMounted);
     file1.Close();  
 

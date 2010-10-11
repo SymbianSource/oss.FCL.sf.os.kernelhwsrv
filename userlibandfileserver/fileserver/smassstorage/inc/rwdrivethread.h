@@ -186,7 +186,6 @@ private:
 
 public:
 	TBool ReadDriveData(CMassStorageDrive* aDrive, const TInt64& aOffset, TUint32 aLength, TBool aIgnoreCache);
-	void DiscardRead();
 
 private:
 	static TInt ThreadFunction(TAny* aSelf);

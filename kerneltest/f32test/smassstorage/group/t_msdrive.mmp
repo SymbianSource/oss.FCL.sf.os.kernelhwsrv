@@ -25,6 +25,7 @@ SOURCE			drivemanager.cpp
 SOURCE			drivepublisher.cpp
 	
 LIBRARY			euser.lib
+USERINCLUDE		../traces
 USERINCLUDE  	../../../../userlibandfileserver/fileserver/inc
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 USERINCLUDE		../../../../userlibandfileserver/fileserver/smassstorage/inc

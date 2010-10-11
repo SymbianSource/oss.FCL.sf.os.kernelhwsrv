@@ -40,7 +40,11 @@ CNotifyInfo::~CNotifyInfo()
 //
 //
 	{
-	__ASSERT_DEBUG(!iLink.iNext,Fault(ENotifyInfoDestructor));
+	// message should have been completed already
+	__ASSERT_DEBUG(iMessage.IsNull(), Fault(ENotifyInfoDestructor));
+
+	__ASSERT_DEBUG(iLink.iNext,Fault(ENotifyInfoDestructor));	
+	iLink.Deque();
 	}
 
 void CNotifyInfo::Complete(TInt aError)
@@ -49,10 +53,8 @@ void CNotifyInfo::Complete(TInt aError)
 //
 	{
 	__PRINT2(_L("CNotifyInfo::Complete 0x%x error=%d"),this,aError);
-	if (!iMessage.IsNull())				// Dismount notifiers may be completed but remain in the list
-		{											// until handled by the client or the session is closed.
+	if (!iMessage.IsNull())						
 		iMessage.Complete(aError);
-		}
 	}
 
 
@@ -259,11 +261,26 @@ CDismountNotifyInfo::~CDismountNotifyInfo()
 			break;
 		case EFsDismountRegisterClient:
 			__ASSERT_ALWAYS(TheDrives[iDriveNumber].DismountUnlock() >= 0, Fault(ENotifyDismountCancel));
+			__ASSERT_ALWAYS(iMessage.IsNull(), Fault(ENotifyDismountCancel));
+			TheDrives[iDriveNumber].DismountClientRemoved();
 			break;
 		default:
 			break;
 		}
 	}
+
+void CDismountNotifyInfo::Complete(TInt aError)
+	{
+	__PRINT2(_L("CDismountNotifyInfo::Complete 0x%x error=%d"),this,aError);
+	if (!iMessage.IsNull())						
+		{
+		iMessage.Complete(aError);
+		// inc count of messages completed by EFsDismountNotifyClients & waiting for an EFsAllowDismount request from client
+		if (iMode == EFsDismountRegisterClient)
+			TheDrives[iDriveNumber].DismountClientAdded();
+		}
+	}
+
 
 void CDismountNotifyInfo::Initialise(TNotifyDismountMode aMode, TInt aDriveNumber, TRequestStatus* aStatus,const RMessagePtr2& aMessage,CSessionFs* aSession)
 	{
@@ -324,25 +341,12 @@ TBool TBaseQue::DoCancelSession(CSessionFs* aSession,TInt aCompletionCode, TRequ
 			{
 			isFound=ETrue;
 			info->Complete(aCompletionCode);
-			info->iLink.Deque();
 			delete(info);
 			if(aStatus)
 				break;
 			}
 		}
 	return(isFound);
-	}
-
-CNotifyInfo* TBaseQue::DoFindEntry(CSessionFs* aSession, TRequestStatus* aStatus)
-	{
-	TDblQueIter<CNotifyInfo> q(iHeader);
-	CNotifyInfo* info;
-	while((info=q++)!=NULL)
-		{
-		if(info->Session()==aSession && (!aStatus || aStatus==info->Status()))
-			return info;
-		}
-	return NULL;
 	}
 
 void TBaseQue::DoCancelAll(TInt aCompletionCode)
@@ -356,7 +360,6 @@ void TBaseQue::DoCancelAll(TInt aCompletionCode)
 	while((info=q++)!=NULL)
 		{
 		info->Complete(aCompletionCode);
-		info->iLink.Deque();
 		delete(info);
 		}
 	__ASSERT_DEBUG(iHeader.IsEmpty(),Fault(EBaseQueCancel));
@@ -433,7 +436,6 @@ void TChangeQue::CheckChange(CFsRequest* aRequest)
 			{
 			__PRINT1(_L("TChangeQue::CheckChange()-Matching info=0x%x"),info);
 			info->Complete(KErrNone);
-			info->iLink.Deque();
 			delete(info);
 			}
 		}
@@ -530,7 +532,6 @@ void TDiskSpaceQue::CheckDiskSpace()
 				{
 				__PRINT1(_L("TDiskSpaceQue::CheckDiskSpace()-Matching info=0x%x"),info);
 				info->Complete(KErrNone);
-				info->iLink.Deque();
 				delete(info);
 				}
 			}
@@ -579,7 +580,6 @@ void TDiskSpaceQue::CheckDiskSpace(TInt64& aFreeDiskSpace)
 			{
 			__PRINT1(_L("TDiskSpaceQue::CheckDiskSpace()-Matching info=0x%x"),info);
 			info->Complete(KErrNone);
-			info->iLink.Deque();
 			delete(info);
 			}
 		}
@@ -646,7 +646,6 @@ void TDebugQue::CheckDebug(TUint aDebugChange)
 			{
 			__PRINT1(_L("TDebugQue::CheckDebug()-Matching info=0x%x"),info);
 			info->Complete(KErrNone);
-			info->iLink.Deque();
 			delete(info);
 			}
 		}
@@ -664,22 +663,41 @@ TInt TDismountNotifyQue::AddNotify(CNotifyInfo* aInfo)
 	return(KErrNone);
 	}
 
-TInt TDismountNotifyQue::CancelSession(CSessionFs* aSession,TInt aCompletionCode,TRequestStatus* aStatus)
+void TDismountNotifyQue::CancelSession(CSessionFs* aSession,TInt aCompletionCode,TRequestStatus* aStatus)
 //
-// Returns the drive number or KErrNotFound
 //
 	{
 	iQLock.Wait();
 
-	// return the drive number
-	CDismountNotifyInfo* info = (CDismountNotifyInfo*) DoFindEntry(aSession, aStatus);
-	TInt driveNumber = info ? info->DriveNumber() : KErrNotFound;
+	TDblQueIter<CDismountNotifyInfo> q(iHeader);
+	CDismountNotifyInfo* info;
+	while((info=q++)!=NULL)
+		{
+		if(info->Session()==aSession && (!aStatus || aStatus==info->Status()))
+			{
+			TInt driveNumber = info->DriveNumber();
 
-	TBaseQue::DoCancelSession(aSession,aCompletionCode,aStatus);
+			info->Complete(aCompletionCode);
+			TInt mode = info->Mode();
+
+			delete info;
+			info = NULL;
+
+			// if we're cancelling a dismount request (EFsDismountNotifyClients or EFsDismountForceDismount), 
+			// then we need to cancel the deferred dismount and issue a disk change notification as observers 
+			// may be expecting one...
+			if (mode == EFsDismountNotifyClients || mode == EFsDismountForceDismount)
+				{
+				TheDrives[driveNumber].SetDismountDeferred(EFalse);
+				FsNotify::DiskChange(driveNumber);
+				}
+
+			if(aStatus)
+				break;
+			}
+		}
 
 	iQLock.Signal();
-
-	return(driveNumber);
 	}
 
 void TDismountNotifyQue::CancelAll(TInt aCompletionCode)
@@ -708,40 +726,43 @@ void TDismountNotifyQue::CheckDismount(TNotifyDismountMode aMode, TInt aDrive, T
 			__PRINT1(_L("TDismountNotifyQue::CheckDismount()-Matching info=0x%x"),info);
 			info->Complete(aError);
 			if(aRemove)
-				{
-				info->iLink.Deque();
-				delete(info);
-				}
+				delete info;
 			}
 		}
 
-	__ASSERT_ALWAYS(!aRemove || TheDrives[aDrive].DismountLocked() == 0, Fault(EDismountLocked));
+	__ASSERT_ALWAYS(!(aRemove && aMode == EFsDismountRegisterClient && TheDrives[aDrive].DismountLocked() > 0), Fault(EDismountLocked));
 
 	iQLock.Signal();
 	}
 
 TBool TDismountNotifyQue::HandlePendingDismount(CSessionFs* aSession, TInt aDrive)
 //
-// Determine if the session has any outstanding dismount notifications on the specified drive.
+// Determine if the session has any outstanding *completed* dismount notifications on the specified drive 
+// and delete them. Called from TFsAllowDismount::DoRequestL()
 //
 	{
 	iQLock.Wait();
-	TDblQueIter<CNotifyInfo> q(iHeader);
-	CNotifyInfo* info;
+	TDblQueIter<CDismountNotifyInfo> q(iHeader);
+	CDismountNotifyInfo* info;
+
+	TBool entryFound = EFalse;
+
 	while((info=q++)!=NULL)
 		{
 		__ASSERT_DEBUG(info->Type()==CNotifyInfo::EDismount,Fault(EBadDismountNotifyType));
 		if(((CDismountNotifyInfo*)info)->IsMatching(EFsDismountRegisterClient, aDrive, aSession))
 			{
-			__PRINT1(_L("TDismountNotifyQue::CheckDismount()-Pending info=0x%x"),info);
-			info->iLink.Deque();
-			delete(info);
-			iQLock.Signal();
-			return ETrue;
+			__PRINT1(_L("TDismountNotifyQue::HandlePendingDismount()-Pending info=0x%x"),info);
+
+			if (info->Completed())
+				delete info;
+
+			entryFound = ETrue;
 			}
 		}
 	iQLock.Signal();
-	return EFalse;
+
+	return entryFound;
 	}
 
 void FsNotify::Initialise()
@@ -948,15 +969,14 @@ void FsNotify::CancelDebugSession(CSessionFs* aSession, TRequestStatus* aStatus)
 	iDebugQue.CancelSession(aSession,KErrCancel,aStatus);
 	}
 
-TInt FsNotify::CancelDismountNotifySession(CSessionFs* aSession, TRequestStatus* aStatus)
+void FsNotify::CancelDismountNotifySession(CSessionFs* aSession, TRequestStatus* aStatus)
 //
 // Cancel all media removal notification(s) setup by aSession (if aStatus == NULL)
 // else cancels all outstanding notifications(s) for the session
 //
 	{
 	__PRINT2(_L("FsNotify::CancelDismountNotifySession() aSession=0x%x aStatus=0x%x"),aSession,aStatus);
-	TInt drive = iDismountNotifyQue.CancelSession(aSession,KErrCancel,aStatus);
-	return drive;
+	iDismountNotifyQue.CancelSession(aSession,KErrCancel,aStatus);
 	}
 
 void FsNotify::CancelSession(CSessionFs* aSession)

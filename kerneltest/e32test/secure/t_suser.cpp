@@ -1,4 +1,4 @@
-// Copyright (c) 2001-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2001-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -44,11 +44,14 @@
 #include <nkern/nk_trace.h>
 #include <e32hal.h>
 #include <hal.h>
+#include "testexclusions.h"
 
 LOCAL_D RTest test(_L("T_SUSER"));
 
 _LIT(KSyncSemaphoreName,"T_SUSER-SyncSemaphore");
 RSemaphore SyncSemaphore;
+TBool gControllerShutdownDisabled = EFalse;
+TInt gTestExclusions = 0;
 
 
 void SlaveWait()
@@ -319,7 +322,9 @@ enum TTestProcessFunctions
 	ETestProcessSetCurrencySymbol,
 	ETestProcessAddEventESwitchOff,
 	ETestProcessAddEventECaseOpen,
-	ETestProcessAddEventECaseClose
+	ETestProcessAddEventECaseClose,
+	ETestProcessPowerHalTestMode,
+	ETestProcessGetTestExclusions
 	};
 
 #include "testprocess.h"
@@ -530,6 +535,16 @@ TInt DoTestProcess(TInt aTestNum,TInt aArg1,TInt aArg2)
 		TRawEvent event;
 		event.Set(TRawEvent::ECaseClose);
 		return UserSvr::AddEvent(event);
+		}
+
+	case ETestProcessPowerHalTestMode:
+		{
+		return UserSvr::HalFunction(EHalGroupPower, EPowerHalPowerManagerTestMode, (TAny*)KDisableControllerShutdown, NULL);
+		}
+		
+	case ETestProcessGetTestExclusions:
+		{
+		return GetTestExclusionSettings(gTestExclusions);
 		}
 
 	default:
@@ -822,6 +837,60 @@ void TestSetCritical()
 
 TUint KTestUid = 0x87654321;
 
+void GetTestExclusions()
+	{
+	RTestProcess process;
+	TRequestStatus logonStatus;
+
+	test.Start(_L("Get Test exclusions"));
+	TInt caps = 1u<<ECapabilityWriteDeviceData | 1u<<ECapabilityAllFiles;
+	process.Create(caps, ETestProcessGetTestExclusions, KTestUid);
+	process.Logon(logonStatus);
+	process.Resume();
+	User::WaitForRequest(logonStatus);
+	test(process.ExitType()==EExitKill);
+	test(logonStatus==KErrNone);
+	CLOSE_AND_WAIT(process);
+	test.End();
+	}
+	
+void TestPowerHalTestMode()
+	{
+	RTestProcess process;
+	TRequestStatus logonStatus;
+
+	test.Start(_L("Try calling PowerHal without ECapabilityWriteDeviceData"));
+	process.Create(~(1u<<ECapabilityWriteDeviceData), ETestProcessPowerHalTestMode, KTestUid);
+	process.Logon(logonStatus);
+	process.Resume();
+	User::WaitForRequest(logonStatus);
+	test(process.ExitType()==EExitKill);
+	test(logonStatus==KErrPermissionDenied);
+	CLOSE_AND_WAIT(process);
+	
+	test.Start(_L("Try calling PowerHal without ECapabilityPowerMgmt"));
+	process.Create(~(1u<<ECapabilityPowerMgmt), ETestProcessPowerHalTestMode, KTestUid);
+	process.Logon(logonStatus);
+	process.Resume();
+	User::WaitForRequest(logonStatus);
+	test(process.ExitType()==EExitKill);
+	test(logonStatus==KErrPermissionDenied);
+	CLOSE_AND_WAIT(process);
+
+	test.Next(_L("Call PowerHal with ECapabilityWriteDeviceData and ECapabilityPowerMgmt"));
+	TInt caps = 1u<<ECapabilityWriteDeviceData | 1u<<ECapabilityPowerMgmt;
+	process.Create(caps,ETestProcessPowerHalTestMode, KTestUid);
+	process.Logon(logonStatus);
+	process.Resume();
+	User::WaitForRequest(logonStatus);
+	test(process.ExitType()==EExitKill);
+	test(logonStatus==KErrNone);
+	gControllerShutdownDisabled = ETrue;
+	CLOSE_AND_WAIT(process);
+
+	test.End();
+	}
+
 void SetAbsoluteTimeout(RTimer& aTimer, TUint aUs, TRequestStatus& aStatus)
 	{
 	TTime wakeup;
@@ -950,7 +1019,7 @@ void TestEvents()
 
 	TInt muid = 0;
 	HAL::Get(HAL::EMachineUid, muid);
-	if(muid==HAL::EMachineUid_OmapH2 || muid==HAL::EMachineUid_OmapH4 || muid==HAL::EMachineUid_OmapH6 || muid==HAL::EMachineUid_NE1_TB || muid==HAL::EMachineUid_X86PC || muid==HAL::EMachineUid_Win32Emulator)
+	if(gControllerShutdownDisabled || muid==HAL::EMachineUid_OmapH2 || muid==HAL::EMachineUid_OmapH4 || muid==HAL::EMachineUid_OmapH6 || muid==HAL::EMachineUid_NE1_TB || muid==HAL::EMachineUid_X86PC || muid==HAL::EMachineUid_Win32Emulator)
 		{
 		test.Next(_L("Calling UserSvr::AddEvent(ESwitchOff) with ECapabilityPowerMgmt & ECapabilitySwEvent"));
 		TRequestStatus absstatus;
@@ -1232,8 +1301,13 @@ GLDEF_C TInt E32Main()
 	test_KErrNone(SyncSemaphore.CreateGlobal(KSyncSemaphoreName,0));
 
 	test.Start(_L("Test MachineConfiguration()"));
+
 	TestMachineConfiguration();
 
+	GetTestExclusions();
+	
+	TestPowerHalTestMode();
+	
 	test.Next(_L("Test SetCritical()"));
 	TestSetCritical();
 

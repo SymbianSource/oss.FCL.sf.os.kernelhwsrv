@@ -922,12 +922,12 @@ public:
 private:
 	CSessionFs();
 	~CSessionFs();
+	void Cleanup();
 
 private:
 	TInt iResourceCountMark;
 	TInt iResourceCount;
 	TInt iSessionFlags;
-	RFastLock iSessionFlagsLock;
 	CFsObjectIx* iHandles;
 	HBufC* iPath;
 	RArray<TReservedDriveAccess> iReservedDriveAccess;
@@ -1466,11 +1466,12 @@ public:
 public:
 	~CNotifyInfo();
 	void Initialise(TInfoType aType,TRequestStatus* aStatus,const RMessagePtr2& aMessage,CSessionFs* aSession);
-	void Complete(TInt aError);
+	virtual void Complete(TInt aError);
 	//
 	inline CSessionFs* Session();
 	inline TRequestStatus* Status();
-	inline TInfoType Type() const {return(iType);}
+	inline TInfoType Type() {return(iType);}
+	inline TBool Completed() {return iMessage.IsNull();}
 public:
 	TDblQueLink iLink;
 protected:
@@ -1522,9 +1523,12 @@ NONSHARABLE_CLASS(CDismountNotifyInfo) : public CNotifyInfo
 	{
 public:
 	~CDismountNotifyInfo();
+	virtual void Complete(TInt aError);
 	void Initialise(TNotifyDismountMode aMode, TInt aDriveNumber,TRequestStatus* iStatus,const RMessagePtr2& aMessage,CSessionFs* aSession);
 	TBool IsMatching(TNotifyDismountMode aMode, TInt aDriveNumber, CSessionFs* aSession);
 	inline TInt DriveNumber() {return iDriveNumber;}
+	inline TNotifyDismountMode Mode() {return iMode;}
+
 private:
 	TNotifyDismountMode iMode;
 	TInt iDriveNumber;
@@ -1541,7 +1545,6 @@ protected:
 	void DoAddNotify(CNotifyInfo* aInfo);
 	TBool DoCancelSession(CSessionFs* aSession,TInt aCompletionCode,TRequestStatus* aStatus=NULL);
 	void DoCancelAll(TInt aCompletionCode);
-	CNotifyInfo* DoFindEntry(CSessionFs* aSession, TRequestStatus* aStatus=NULL);
 	TBool IsEmpty();
 protected:
 	TDblQue<CNotifyInfo> iHeader;
@@ -1589,7 +1592,7 @@ class TDismountNotifyQue : public TBaseQue
 	{
 public:
 	TInt AddNotify(CNotifyInfo* aInfo);
-	TInt CancelSession(CSessionFs* aSession,TInt aCompletionCode,TRequestStatus* aStatus=NULL);
+	void CancelSession(CSessionFs* aSession,TInt aCompletionCode,TRequestStatus* aStatus=NULL);
 	void CancelAll(TInt aCompletionCode);
 	void CheckDismount(TNotifyDismountMode aMode, TInt aDrive, TBool aRemove, TInt aError);
 	TBool HandlePendingDismount(CSessionFs* aSession, TInt aDrive);
@@ -1612,7 +1615,7 @@ public:
 	static void CancelChangeSession(CSessionFs* aSession,TRequestStatus* aStatus=NULL);
 	static void CancelDiskSpaceSession(CSessionFs* aSession,TRequestStatus* aStatus=NULL);
 	static void CancelDebugSession(CSessionFs* aSession, TRequestStatus* aStatus=NULL);
-	static TInt CancelDismountNotifySession(CSessionFs* aSession, TRequestStatus* aStatus=NULL);
+	static void CancelDismountNotifySession(CSessionFs* aSession, TRequestStatus* aStatus=NULL);
 	static void CancelSession(CSessionFs* aSession);
 	static TBool HandlePendingDismount(CSessionFs* aSession, TInt aDriveNumber);
 	static TBool IsChangeQueEmpty(TInt aDrive);
@@ -1704,12 +1707,13 @@ extern SCapabilitySet DisabledCapabilities;
 const TInt KDispatchObjectClose=KMaxTInt-1;
 const TInt KSessionInternalReserved2=KMaxTInt-2;	// not used any more - placeholder
 const TInt KSessionInternalReserved3=KMaxTInt-3;	// not used any more - placeholder
-const TInt KSessionInternalReserved4=KMaxTInt-4;	// not used any more - placeholder
+const TInt KDeferredDismount=KMaxTInt-4;
 const TInt KFileShareClose=KMaxTInt-5;
 const TInt KFlushDirtyData=KMaxTInt-6;
 
 const TOperation DispatchObjectCloseOp=	{KDispatchObjectClose,	EInternalRequest,	&TFsCloseObject::Initialise,		NULL,	&TFsCloseObject::DoRequestL			};
 const TOperation FileShareCloseOp=		{KFileShareClose,		EInternalRequest,	&TFsCloseFileShare::Initialise,		NULL,	&TFsCloseFileShare::DoRequestL		};
+const TOperation DeferredDismountOp=	{KDeferredDismount,		EInternalRequest,	&TFsDeferredDismount::Initialise,	NULL,	&TFsDeferredDismount::DoRequestL	};
 
 extern TBool OpenOnDriveZOnly;
 extern TBool LocalFileSystemInitialized;

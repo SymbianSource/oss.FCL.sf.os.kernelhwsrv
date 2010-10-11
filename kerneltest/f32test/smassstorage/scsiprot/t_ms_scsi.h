@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -23,11 +23,6 @@
 #ifndef __T_MS_SCSI_H__
 #define __T_MS_SCSI_H__
 
-#include <e32def.h>
-#include <f32fsys.h> // for Proxy drive
-
-#include "scsiprot.h"
-#include "drivemanager.h"
 
 
 /**

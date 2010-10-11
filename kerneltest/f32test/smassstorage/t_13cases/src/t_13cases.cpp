@@ -22,7 +22,10 @@ specification secton 6.7.
 #include <e32std.h>
 #include <e32test.h>
 #include <testusbc.h>
+#include "mtransport.h"
+#include "mprotocol.h"
 #include "t_13cases_protocol.h"
+#include "drivemanager.h"
 #include "cusbmassstoragecontroller.h"
 #include "cbulkonlytransport.h"
 

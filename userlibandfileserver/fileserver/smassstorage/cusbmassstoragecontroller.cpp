@@ -12,7 +12,7 @@
 //
 // Description:
 // CUsbMassStorageController implementation.
-// 
+//
 //
 
 /**
@@ -20,21 +20,31 @@
  @internalTechnology
 */
 
-#include "cusbmassstoragecontroller.h"
-#include "massstoragedebug.h"
+#include <e32std.h>
+#include "mtransport.h"
+#include "mprotocol.h"
+
 #include "scsiprot.h"
+#include "cusbmassstorageserver.h"
+#include "drivemanager.h"
+#include "cusbmassstoragecontroller.h"
 #include "cbulkonlytransport.h"
+
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "cusbmassstoragecontrollerTraces.h"
+#endif
 
 /**
 Destructor
 */
 CUsbMassStorageController::~CUsbMassStorageController()
-	{
-	delete iServer;
-	delete iProtocol;
-	delete iTransport;
-	delete iDriveManager;
-	}
+    {
+    delete iServer;
+    delete iProtocol;
+    delete iTransport;
+    delete iDriveManager;
+    }
 
 /**
 Creates the drive manager, transport, protocol and server
@@ -42,32 +52,31 @@ Creates the drive manager, transport, protocol and server
 @param aMaxDrives Maximum number of Mass Storage drives supported.
 */
 void CUsbMassStorageController::CreateL(RArray<TInt>& aDriveMapping)
-	{
-	__PRINT(_L("CUsbMassStorageController::CreateL In"));
+    {
+    OstTraceFunctionEntry0(CUSBMASSSTORAGECONTROLLER_100);
 #if !defined(__WINS__) && !defined(__X86__)
-	iTransportLddFlag = EUsbcsc; // Create transport object using SC Ldd By default
+    iTransportLddFlag = EUsbcsc; // Create transport object using SC Ldd By default
 #else
-	iTransportLddFlag = EUsbc;
+    iTransportLddFlag = EUsbc;
 #endif
-	//Save this value for use in the Reset method.
-	iMaxDrives = aDriveMapping.Count();
-	//Create and init drive manager
-	iDriveManager = CDriveManager::NewL(aDriveMapping);
+    //Save this value for use in the Reset method.
+    iMaxDrives = aDriveMapping.Count();
+    OstTrace1(TRACE_SMASSSTORAGE_FS, CUSBMASSSTORAGECONTROLLER_101,
+              "MaxDrives = %d", iMaxDrives);
+    //Create and init drive manager
+    iDriveManager = CDriveManager::NewL(aDriveMapping);
 
-	//Create transport and protocol and initialize them
-	__PRINT(_L("CUsbMassStorageController::CreateL: Creating transport and protocol"));
-	iTransport = CBulkOnlyTransport::NewL(iMaxDrives, *this, iTransportLddFlag);
-	if (!iTransport)
-		User::Leave(KErrNoMemory);
+    //Create transport and protocol and initialize them
+    iTransport = CBulkOnlyTransport::NewL(iMaxDrives, *this, iTransportLddFlag);
+    if (!iTransport)
+        User::Leave(KErrNoMemory);
 
-	iProtocol = CScsiProtocol::NewL(*iDriveManager);
+    iProtocol = CScsiProtocol::NewL(*iDriveManager);
 
-	//Create and start server
-	__PRINT(_L("CUsbMassStorageController::CreateL: Creating server"));
-	iServer = CUsbMassStorageServer::NewLC(*this);
-	CleanupStack::Pop(iServer);
-	__PRINT(_L("CUsbMassStorageController::CreateL Out"));
-	}
+    //Create and start server
+    iServer = CUsbMassStorageServer::NewLC(*this);
+    CleanupStack::Pop(iServer);
+    }
 
 /**
 Returns a reference to the drive manager
@@ -75,15 +84,15 @@ Returns a reference to the drive manager
 @return A reference to the drive manager
 */
 CDriveManager& CUsbMassStorageController::DriveManager()
-	{
-	return *iDriveManager;
-	}
+    {
+    return *iDriveManager;
+    }
 
 
 void CUsbMassStorageController::GetTransport(MTransportBase* &aTransport)
-	{
-	aTransport = iTransport; 
-	}
+    {
+    aTransport = iTransport;
+    }
 
 /**
 Starts the transport and initializes the protocol.
@@ -91,78 +100,69 @@ Starts the transport and initializes the protocol.
 @param aConfig Reference to Mass Storage configuration data
 */
 TInt CUsbMassStorageController::Start(TMassStorageConfig& aConfig)
-	{
-	__PRINT(_L("CUsbMassStorageController::Start In"));
-	//Save this value for use in the Reset method.
-	iConfig = aConfig;
+    {
+    OstTraceFunctionEntry0(CUSBMASSSTORAGECONTROLLER_200);
+    //Save this value for use in the Reset method.
+    iConfig = aConfig;
 
     __ASSERT_DEBUG(iTransport, User::Invariant());
-	if ((iTransport->InitialiseTransportL((TInt) iTransportLddFlag)) != KErrNone)
-		{
-		iTransportLddFlag = EUsbc; // If SC Ldd not present use the default USB Client Ldd
-		delete iTransport;
-		iTransport = CBulkOnlyTransport::NewL(iMaxDrives, *this, iTransportLddFlag);
-		if (!iTransport)
-			User::Leave(KErrNoMemory);
-		if ((iTransport->InitialiseTransportL((TInt) iTransportLddFlag)) != KErrNone)
-			return KErrNotFound;
-		}
+    if ((iTransport->InitialiseTransportL((TInt) iTransportLddFlag)) != KErrNone)
+        {
+        iTransportLddFlag = EUsbc; // If SC Ldd not present use the default USB Client Ldd
+        delete iTransport;
+        iTransport = CBulkOnlyTransport::NewL(iMaxDrives, *this, iTransportLddFlag);
+        if (!iTransport)
+            User::Leave(KErrNoMemory);
+        if ((iTransport->InitialiseTransportL((TInt) iTransportLddFlag)) != KErrNone)
+            return KErrNotFound;
+        }
 
-	TInt err = KErrNotReady;
+    TInt err = KErrNotReady;
 
-	if (iProtocol && iTransport)
-		{
-		iTransport->RegisterProtocol(*iProtocol);
-		iProtocol->RegisterTransport(iTransport);
-		__PRINT(_L("CUsbMassStorageController::Start: Starting"));
-		((CScsiProtocol*)iProtocol)->SetScsiParameters(aConfig);
-		err = iTransport->Start();
-		}
+    if (iProtocol && iTransport)
+        {
+        iTransport->RegisterProtocol(*iProtocol);
+        iProtocol->RegisterTransport(iTransport);
+        ((CScsiProtocol*)iProtocol)->SetScsiParameters(aConfig);
+        err = iTransport->Start();
+        }
 
-	__PRINT(_L("CUsbMassStorageController::Start Out"));
-
-	return err;
-	}
+    return err;
+    }
 
 /**
 Stops the transport.
 */
 TInt CUsbMassStorageController::Stop()
-	{
-
-	__PRINT(_L("CUsbMassStorageController::Stop In"));
-	TInt err = KErrNotReady;
-	if (iTransport)
-		{
-		__PRINT(_L("CUsbMassStorageController::Stop: Stopping"));
-		err = iTransport->Stop();
-		}
-	TInt i=0;
-	for (i=0; i<=iMaxDrives; ++i)
-		{
-		iDriveManager->SetCritical(i, EFalse);   //unset critical
-		}
-	__PRINT(_L("CUsbMassStorageController::Stop Out"));
-
-	return err;
-	}
+    {
+    OstTraceFunctionEntry0(CUSBMASSSTORAGECONTROLLER_110);
+    TInt err = KErrNotReady;
+    if (iTransport)
+        {
+        err = iTransport->Stop();
+        }
+    TInt i=0;
+    for (i=0; i<=iMaxDrives; ++i)
+        {
+        iDriveManager->SetCritical(i, EFalse);   //unset critical
+        }
+    return err;
+    }
 
 /**
 Delete the transport and protocol and start new ones.
 */
 void CUsbMassStorageController::Reset()
-	{
+    {
+    OstTraceFunctionEntry0(CUSBMASSSTORAGECONTROLLER_120);
+    delete iProtocol;
+    iProtocol = NULL;
 
-	delete iProtocol;
-	iProtocol = NULL;
-
-	//Create transport and protocol and initialize them
-	__PRINT(_L("CUsbMassStorageController::Reset: Creating  protocol"));
-
-	TRAPD(err,iProtocol = CScsiProtocol::NewL(*iDriveManager));
-	err = err;
-	__ASSERT_DEBUG(err==KErrNone, User::Invariant());
-	iTransport->RegisterProtocol(*iProtocol);
-	iProtocol->RegisterTransport(iTransport);
-	}
+    //Create transport and protocol and initialize them
+    TRAPD(err,iProtocol = CScsiProtocol::NewL(*iDriveManager));
+    err = err;
+    __ASSERT_DEBUG(err==KErrNone, User::Invariant());
+    iTransport->RegisterProtocol(*iProtocol);
+    iProtocol->RegisterTransport(iTransport);
+    }
 

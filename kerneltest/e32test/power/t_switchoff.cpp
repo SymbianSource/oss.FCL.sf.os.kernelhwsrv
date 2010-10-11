@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -15,10 +15,13 @@
 // 
 //
 
+#define __E32TEST_EXTENSION__
+
 #include <e32event.h>
 #include <e32event_private.h>
 #include <e32svr.h>
 #include <e32test.h>
+#include "testexclusions.h"
 
 LOCAL_D RTest test(_L(" T_SWITCHOFF "));
 
@@ -60,6 +63,15 @@ GLDEF_C TInt E32Main()
 	{
 	test.Title();
 	test.Start(_L("Testing"));
+
+	TInt testExclusions = 0;
+	test_KErrNone(GetTestExclusionSettings(testExclusions));
+	
+	if (testExclusions & KDisableControllerShutdown)
+		{
+		UserSvr::HalFunction(EHalGroupPower, EPowerHalPowerManagerTestMode, (TAny*)KDisableControllerShutdown, NULL);
+		}
+	
 
 	SwittchOffTests();
 

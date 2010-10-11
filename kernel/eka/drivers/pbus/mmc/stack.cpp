@@ -1082,7 +1082,7 @@ TMMCSessRing::TMMCSessRing()
  * Constructor
  */
 	: iPMark(NULL),iPoint(NULL),iPrevP(NULL),iSize(0)
-	{OstTraceFunctionEntry1( TMMCSESSRING_TMMCSESSRING_ENTRY, this );}
+	{}
 
 
 void TMMCSessRing::Erase()
@@ -1090,9 +1090,7 @@ void TMMCSessRing::Erase()
  * Erases all the ring content
  */
 	{
-	OstTraceFunctionEntry1( TMMCSESSRING_ERASE_ENTRY, this );
 	iPMark = iPoint = iPrevP = NULL; iSize = 0;
-	OstTraceFunctionExit1( TMMCSESSRING_ERASE_EXIT, this );
 	}
 
 
@@ -1118,19 +1116,16 @@ TBool TMMCSessRing::Point(DMMCSession* aSessP)
  * Finds aSessP and sets Point to that position
  */
 	{
-	OstTraceFunctionEntryExt( TMMCSESSRING_POINT_ENTRY, this );
 	Point();
 
 	while( iPoint != NULL )
 		if( iPoint == aSessP )
 		    {
-			OstTraceFunctionExitExt( TMMCSESSRING_POINT_EXIT1, this, (TUint) ETrue );
 			return ETrue;
 		    }
 		else
 			this->operator++(0);
 
-	OstTraceFunctionExitExt( TMMCSESSRING_POINT_EXIT2, this, (TUint) EFalse );
 	return EFalse;
 	}
 
@@ -1139,13 +1134,11 @@ void TMMCSessRing::Add(DMMCSession* aSessP)
  * Inserts aSessP before Marker. Point is moved into the Marker position.
  */
 	{
-	OstTraceFunctionEntryExt( TMMCSESSRING_ADD1_ENTRY, this );
 	if( iSize == 0 )
 		{
 		iPMark = iPrevP = iPoint = aSessP;
 		aSessP->iLinkP = aSessP;
 		iSize = 1;
-		OstTraceFunctionExit1( TMMCSESSRING_ADD1_EXIT1, this );
 		return;
 		}
 
@@ -1154,7 +1147,6 @@ void TMMCSessRing::Add(DMMCSession* aSessP)
 	aSessP->iLinkP = iPoint;
 	iPMark = iPrevP = aSessP;
 	iSize++;
-	OstTraceFunctionExit1( TMMCSESSRING_ADD1_EXIT2, this );
 	}
 
 
@@ -1165,12 +1157,10 @@ void TMMCSessRing::Add(TMMCSessRing& aRing)
  * Erases aRing.
  */
 	{
-	OstTraceFunctionEntry1( TMMCSESSRING_ADD2_ENTRY, this );
 	Point();
 
 	if( aRing.iSize == 0 )
 	    {
-		OstTraceFunctionExit1( TMMCSESSRING_ADD2_EXIT1, this );
 		return;
 	    }
 
@@ -1189,7 +1179,6 @@ void TMMCSessRing::Add(TMMCSessRing& aRing)
 		}
 
 	aRing.Erase();
-	OstTraceFunctionExit1( TMMCSESSRING_ADD2_EXIT2, this );
 	}
 
 DMMCSession* TMMCSessRing::Remove()
@@ -1198,7 +1187,6 @@ DMMCSession* TMMCSessRing::Remove()
  * Point (and possibly Marker) move forward as in operator++
  */
 	{
-	OstTraceFunctionEntry1( TMMCSESSRING_REMOVE1_ENTRY, this );
 	DMMCSession* remS = iPrevP;
 
 	if( iSize < 2 )
@@ -1219,7 +1207,6 @@ DMMCSession* TMMCSessRing::Remove()
 			}
 		}
 
-	OstTraceFunctionExitExt( TMMCSESSRING_REMOVE1_EXIT, this, ( TUint )( remS ) );
 	return remS;
 	}
 
@@ -1229,12 +1216,10 @@ void TMMCSessRing::Remove(DMMCSession* aSessP)
  * Removes a specified session from the ring
  */
 	{
-	OstTraceFunctionEntryExt( TMMCSESSRING_REMOVE2_ENTRY, this );
 	if( Point(aSessP) )
 		Remove();
 	else
 		DMMCSocket::Panic(DMMCSocket::EMMCSessRingNoSession);
-	OstTraceFunctionExit1( TMMCSESSRING_REMOVE2_EXIT, this );
 	}
 
 

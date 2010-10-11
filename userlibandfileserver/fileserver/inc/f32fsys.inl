@@ -1347,6 +1347,4 @@ inline TInt CFsObject::Inc()
 inline TInt CFsObject::Dec()
 	{ return __e32_atomic_tas_ord32(&iAccessCount, 1, -1, 0); }
 
-inline TInt CFsObject::AccessCount() const
-	{return iAccessCount;}
 

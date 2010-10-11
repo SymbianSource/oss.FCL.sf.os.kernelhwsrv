@@ -2117,7 +2117,13 @@ void CFileCache::FileDirty(CFsMessageRequest& aMsgRequest)
 	// Remember the last session which caused the file to become dirty
 	// Always record whether any session has reserved access so the CheckDiskSpace() behaves correctly
 	if (iDirtyDataOwner == NULL || session->ReservedAccess(iDriveNum))
+		{
+		if (iDirtyDataOwner)
+			iDirtyDataOwner->Close();
 		iDirtyDataOwner = session;
+		// open the session to prevent it from being deleted while there is dirty data
+		iDirtyDataOwner->Open();
+		}
 
 	// start a timer after which file will be flushed
 	CDriveThread* driveThread=NULL;
@@ -2132,6 +2138,9 @@ void CFileCache::FileDirty(CFsMessageRequest& aMsgRequest)
 */
 void CFileCache::MarkFileClean()
 	{
+	if (iDirtyDataOwner)
+		iDirtyDataOwner->Close();
+
 	iDirtyDataOwner = NULL;
 
 	if (!iDriveThread)

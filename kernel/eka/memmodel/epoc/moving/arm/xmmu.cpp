@@ -1447,7 +1447,7 @@ TInt GetCacheAttr(TUint& cacheL1, TUint& cacheL2, TUint& cbatt)
 	return r;
 	}
 
-TInt ArmMmu::PdePtePermissions(TUint& aMapAttr, TPde& aPde, TPte& aPte)
+TInt ArmMmu::PdePtePermissions(TUint& aMapAttr, TPde& aPde, TPte& aPte, TBool /*aGlobal*/)
 	{
 	__KTRACE_OPT(KMMU,Kern::Printf(">ArmMmu::PdePtePermissions, mapattr=%08x",aMapAttr));
 	TUint read=aMapAttr & EMapAttrReadMask;

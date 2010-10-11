@@ -1937,7 +1937,7 @@ void ArmMmu::FlushShadow(TLinAddr aRomAddr)
 #if defined(__CPU_MEMORY_TYPE_REMAPPING) //arm1176, arm11mcore, armv7
 /**
 Calculates page directory/table entries for memory type described in aMapAttr.
-Global, small page (4KB) mapping is assumed.
+Small page (4KB) mapping is assumed.
 (All magic numbers come from ARM page table descriptions.)
 @param aMapAttr On entry, holds description(memory type, access permisions,...) of the memory.
 				It is made up of TMappingAttributes constants or TMappingAttributes2 object. If TMappingAttributes,
@@ -1946,10 +1946,11 @@ Global, small page (4KB) mapping is assumed.
 				for given type of memory, with base address set to 0.
 @param aPte		On exit, holds small-page-entry (4K) for the 2nd level descriptor
 				for given type of memory, with base address set to 0.
+@param aGlobal	Set to ETrue when the mapping should be global.
 @return KErrNotSupported 	If memory described in aMapAttr is not supported
 		KErrNone			Otherwise
 */
-TInt ArmMmu::PdePtePermissions(TUint& aMapAttr, TPde& aPde, TPte& aPte)
+TInt ArmMmu::PdePtePermissions(TUint& aMapAttr, TPde& aPde, TPte& aPte, TBool aGlobal)
 	{
 	__KTRACE_OPT(KMMU,Kern::Printf(">ArmMmu::PdePtePermissions, mapattr=%08x",aMapAttr));
 
@@ -1977,10 +1978,11 @@ TInt ArmMmu::PdePtePermissions(TUint& aMapAttr, TPde& aPde, TPte& aPte)
 #if defined	(__CPU_USE_SHARED_MEMORY)
 				KArmV6PteS 												|	// Memory is always shared.
 #else
-				(memory.Shared()	  ? KArmV6PteS	: 0) 				|	// Shared bit
-#endif				
-				(memory.Writable()	  ? 0			: KArmV6PteAPX)		|	// APX = !Writable
-				(memory.UserAccess() ? KArmV6PteAP1: 0);					// AP1 = UserAccess
+				(memory.Shared()	? KArmV6PteS	: 0)				|	// Shared bit
+#endif
+				(memory.Writable()	? 0				: KArmV6PteAPX)		|	// APX = !Writable
+				(memory.UserAccess()? KArmV6PteAP1	: 0)				|	// AP1 = UserAccess
+				(aGlobal			? 0 			: KArmV6PteNG);			// Not Global bit
 		// aMapAttr remains the same
 		}
 	else
@@ -2060,7 +2062,7 @@ TInt ArmMmu::PdePtePermissions(TUint& aMapAttr, TPde& aPde, TPte& aPte)
 		aPde=((aMapAttr&EMapAttrUseECC)>>8)|KArmV6PdePageTable;
 
 		//	5.	Calculate small-page-entry for the 2nd level (aka page table) descriptor 
-		aPte=SP_PTE(apxap, tex0_c_b, exec, 1);	// always global
+		aPte=SP_PTE(apxap, tex0_c_b, exec, aGlobal);
 		if (aMapAttr&EMapAttrShared)
 			aPte |= KArmV6PteS;
 	
@@ -2150,7 +2152,7 @@ static const TUint8 L2Actual[32]=
 	WBRA,	WBRA,	WBRA,	WBRA	//111
 	};
 
-TInt ArmMmu::PdePtePermissions(TUint& aMapAttr, TPde& aPde, TPte& aPte)
+TInt ArmMmu::PdePtePermissions(TUint& aMapAttr, TPde& aPde, TPte& aPte, TBool aGlobal)
 	{
 	__KTRACE_OPT(KMMU,Kern::Printf(">ArmMmu::PdePtePermissions, mapattr=%08x",aMapAttr));
 
@@ -2191,7 +2193,7 @@ TInt ArmMmu::PdePtePermissions(TUint& aMapAttr, TPde& aPde, TPte& aPte)
 		apxap=(read>=4)?KArmV6PermRWRO:KArmV6PermRWNO;
 	else
 		apxap=KArmV6PermRWRW;
-	TPte pte=SP_PTE(apxap, cbtex, exec, 1);	// always global
+	TPte pte=SP_PTE(apxap, cbtex, exec, aGlobal);
 	if (aMapAttr&EMapAttrShared)
 		pte |= KArmV6PteS;
 

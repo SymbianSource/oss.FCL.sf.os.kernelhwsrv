@@ -2527,7 +2527,7 @@ TInt DPlatChunkHw::DoNew(DPlatChunkHw*& aChunk, TPhysAddr aAddr, TInt aSize, TUi
 	TUint mapattr=aMapAttr;
 	TPde pdePerm=0;
 	TPte ptePerm=0;
-	TInt r=m.PdePtePermissions(mapattr, pdePerm, ptePerm);
+	TInt r=m.PdePtePermissions(mapattr, pdePerm, ptePerm, ETrue);
 	if (r==KErrNone)
 		{
 		pC->iAllocator=m.MappingRegion(mapattr);

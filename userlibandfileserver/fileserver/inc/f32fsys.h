@@ -251,7 +251,6 @@ public:
 	IMPORT_C TName Name() const;
 	IMPORT_C virtual TBool IsCorrectThread();
 	inline CFsObjectCon* Container() const;
-	inline TInt AccessCount() const;
 protected:
 	void DoClose();
 	TInt UniqueID() const;
@@ -469,7 +468,11 @@ public:
 	TInt DismountProxyDrive();
     TInt ForceUnmountFileSystemForFormatting();
 
-public:
+	void DismountClientAdded();
+	void DismountClientRemoved();
+	TInt DismountClientCount();
+	TInt DeferredDismountCheck();
+
 	void DismountLock();
 	TInt DismountUnlock();
 	TInt DismountLocked() const;
@@ -518,7 +521,6 @@ private:
 	IMPORT_C TBool IsMainThread() const;
 	IMPORT_C void DriveFault(TBool aDriveError) const;
     void DoDismount();
-    void DoCompleteDismountNotify(TInt aCompletionCode);
 
 private:
 	
@@ -526,7 +528,7 @@ private:
     enum 
 	    { 
         ENotifyOff       = 0x01, 
-        EDismountDeferred= 0x02,
+        EDismountDeferred= 0x02,	// Dismount initiated, waiting for clients to respond with EFsAllowDismount or files to become unclamped
         ENotRugged       = 0x04, 
         EClampPresent    = 0x08,
         EDriveIsSynch    = 0x10, //-- is set on mount when the drive is synchronous (doesn't have its own thread)
@@ -550,9 +552,9 @@ private:
 	TInt            iDismountLock;
 	TInt            iMountFailures;		// number of times the mount has failed
 	TInt            iLastMountError;
-
-	TInt iSpare1;			
-	TInt iSpare2;
+	
+	TInt iDismountClientCount;	// number of EFsAllowDismount requests pending following a EFsDismountNotifyClients request
+	CFsInternalRequest* iDeferredDismountRequest;
 
 	
 	friend class LocalDrives;			// for access to iChanged flag
@@ -2038,9 +2040,6 @@ public:
 	TInt CheckMount();
 	void InitL();
 	inline CFileCB& File();
-
-	// override CFsDispatchObject::Close() so that we can flush dirty data
-	void Close();
 
 	// For serialising aync requests 
 	TBool RequestStart(CFsMessageRequest* aRequest);

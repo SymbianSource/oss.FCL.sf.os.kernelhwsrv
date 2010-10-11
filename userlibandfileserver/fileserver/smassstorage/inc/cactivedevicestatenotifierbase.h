@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of the License "Eclipse Public License v1.0"
@@ -11,59 +11,55 @@
 *
 * Contributors:
 *
-* Description: 
+* Description:
 * Class declaration for Device State.Notifier Base Class
 *
 */
 
 
-/** 
+/**
  @file
  @internalTechnology
 */
 
 #ifndef CACTIVEDEVICESTATENOTIFIERBASE_H
 #define CACTIVEDEVICESTATENOTIFIERBASE_H
-#include <e32base.h>
 
-#include "cbulkonlytransport.h"
-#include "protocol.h"
-#include "cusbmassstoragecontroller.h"
 
 class CActiveDeviceStateNotifierBase : public CActive
-	{
+    {
 public:
-	// Construction
-	static CActiveDeviceStateNotifierBase* NewL(CBulkOnlyTransport& aBot,
+    // Construction
+    static CActiveDeviceStateNotifierBase* NewL(CBulkOnlyTransport& aBot,
                                                 MLddDeviceStateNotification& aLddDeviceStateNotification);
 
-	// Destruction
-	~CActiveDeviceStateNotifierBase();
+    // Destruction
+    ~CActiveDeviceStateNotifierBase();
 
-	void Activate();
+    void Activate();
 
 protected:
-	// Construction
-	CActiveDeviceStateNotifierBase(CBulkOnlyTransport& aBot,
+    // Construction
+    CActiveDeviceStateNotifierBase(CBulkOnlyTransport& aBot,
                                    MLddDeviceStateNotification& aLddDeviceStateNotification);
-	void ConstructL();
+    void ConstructL();
 
-	// Cancel request.
-	// Defined as pure virtual by CActive;
-	// implementation provided by this class.
-	virtual void DoCancel();
+    // Cancel request.
+    // Defined as pure virtual by CActive;
+    // implementation provided by this class.
+    virtual void DoCancel();
 
-	// Service completed request.
-	// Defined as pure virtual by CActive;
-	// implementation provided by this class,
-	virtual void RunL();
+    // Service completed request.
+    // Defined as pure virtual by CActive;
+    // implementation provided by this class,
+    virtual void RunL();
 
 protected:
-	CBulkOnlyTransport& iBot;
+    CBulkOnlyTransport& iBot;
     MLddDeviceStateNotification& iLddDeviceStateNotification;
-	TUint iDeviceState;
-	TUint iOldDeviceState;
-	};
+    TUint iDeviceState;
+    TUint iOldDeviceState;
+    };
 
 #endif
 

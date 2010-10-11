@@ -130,6 +130,10 @@ void TDrive::CreateL(TInt aDriveNumber)
 	iMount=TheContainer->CreateL();
 	TInt r=iLock.CreateLocal();
 	User::LeaveIfError(r);
+
+	iDeferredDismountRequest = new(ELeave) CFsInternalRequest;
+	iDeferredDismountRequest->Set(DeferredDismountOp,NULL);
+	iDeferredDismountRequest->SetDriveNumber(aDriveNumber);
 	}
 
 TInt TDrive::CheckMountAndEntryName(const TDesC& aName)
@@ -2345,10 +2349,66 @@ TBool TDrive::DismountLocked() const
 	{ return(iDismountLock); }
 
 
+/**
+DismountClientAdded() - 
+
+Increments the count of clients which need to respond to a dismount request - by calling RFs::AllowDismount() -
+before the dismount can process
+
+Called when a EFsDismountRegisterClient request is completed by RFs::NotifyDismount(,,EFsDismountNotifyClients)
+*/
+void TDrive::DismountClientAdded()
+	{
+    __e32_atomic_add_ord32(&iDismountClientCount, (TUint32) 1);
+	}
+
+/**
+DismountClientRemoved() - 
+Called when a EFsDismountRegisterClient request is deleted. E.g. by RFs::AllowDismount()
+*/
+void TDrive::DismountClientRemoved()
+	{
+	ASSERT(iDismountClientCount > 0);
+    if ((__e32_atomic_add_ord32(&iDismountClientCount, (TUint32) -1) == 1) &&
+		(!FsThreadManager::IsDriveThread(iDriveNumber,EFalse)) &&
+		DismountDeferred())
+		{
+		iDeferredDismountRequest->Dispatch();
+		}
+	}
+
+TInt TDrive::DismountClientCount()
+	{
+	return iDismountClientCount;
+	}
+
+
+/*
+Dismount the file system if a deferred dismount has been schedulued and there are no waiting clients and no clamps
+*/
+TInt TDrive::DeferredDismountCheck()
+	{
+	// Don't dismount if no deferred dismount is scheduled
+	if (!DismountDeferred())
+		return KErrNone;
+
+	// Don't dismount if clients are waiting
+	if (DismountClientCount() > 0)
+		return KErrNone;
+
+	// Don't dismount if files are clamped
+	TInt clampErr = ClampsOnDrive();
+	if (clampErr != 0 && clampErr != KErrNotSupported)
+		return KErrNone;
+
+	// Nothing to wait for, so dismount immediately 
+	__ASSERT_DEBUG(GetFSys(), Fault(EAllowDismount));
+	return DeferredDismount();
+	}
 
 
 /**
-Pending flag - set while waiting for clients to accept the dismount
+Dismount deferred flag - set while waiting for clients to accept the dismount or files to become unclamped
 */
 void TDrive::SetDismountDeferred(TBool aPending)
 	{
@@ -2529,19 +2589,7 @@ TInt TDrive::DismountProxyDrive()
 
 //----------------------------------------------------------------------------
 /**
-    Complete, remove and delete notification requests
-    @param  aCompletionCode completion code for some notifications
-*/
-void TDrive::DoCompleteDismountNotify(TInt aCompletionCode)
-    {
-    FsNotify::HandleDismount(EFsDismountRegisterClient, iDriveNumber, ETrue, KErrNone);
-	FsNotify::HandleDismount(EFsDismountNotifyClients, iDriveNumber, ETrue, aCompletionCode);
-	FsNotify::HandleDismount(EFsDismountForceDismount, iDriveNumber, ETrue, aCompletionCode);
-    }
-
-//----------------------------------------------------------------------------
-/**
-    a helper method that allows forced dismounting current mount for volume formatting.
+    a helper method that allows forced unmounting current mount for volume formatting.
 */
 TInt TDrive::ForceUnmountFileSystemForFormatting()
     {
@@ -2565,8 +2613,6 @@ TInt TDrive::ForceUnmountFileSystemForFormatting()
     //-- 
 
     ForceDismount();
-
-    DoCompleteDismountNotify(KErrDisMounted); //-- complete all dismount notifications
 
     return KErrNone;
     }

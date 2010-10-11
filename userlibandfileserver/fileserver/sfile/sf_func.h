@@ -1068,6 +1068,13 @@ public:
 	static TInt DoRequestL(CFsRequest* aRequest);
 	};
 
+class TFsDeferredDismount
+	{
+public:
+	static TInt Initialise(CFsRequest* aRequest);
+	static TInt DoRequestL(CFsRequest* aRequest);
+	};
+
 void GetFileFromScratch(CFsRequest* aRequest, CFileShare*& aShare, CFileCB*& aFile);
 
 #endif	// __SF_FUNC_H

@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -17,12 +17,13 @@
 
 TARGET			t_power.exe        
 TARGETTYPE		EXE
+USERINCLUDE		../misc
 SOURCEPATH		../power
 SOURCE			t_power.cpp
-LIBRARY			euser.lib
+LIBRARY			euser.lib efsrv.lib
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 
-CAPABILITY		PowerMgmt
+CAPABILITY		PowerMgmt WriteDeviceData AllFiles
 
 VENDORID 0x70000001
 

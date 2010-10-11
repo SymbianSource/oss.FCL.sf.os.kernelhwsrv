@@ -1171,6 +1171,14 @@ enum TPowerHalFunction
 	- TAny* a2 : NULL.
 	*/
 	EPowerHalAcessoryPowerPresent,
+
+
+	/**
+	Used for testing purposes.
+
+	Sets a member in the power manager depending on which testing of some API's are skipped	
+	*/
+	EPowerHalPowerManagerTestMode,
 	};
 
 

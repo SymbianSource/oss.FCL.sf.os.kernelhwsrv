@@ -12,7 +12,7 @@
 //
 // Description:
 // Implements a Symbian OS server that exposes the RUsbMassStorage API
-// 
+//
 //
 
 /**
@@ -23,21 +23,6 @@
 #ifndef __CUSBMASSSTORAGESERVER_H__
 #define __CUSBMASSSTORAGESERVER_H__
 
-#include "massstoragedebug.h"
-
-
-_LIT(KUsbMsSvrPncCat, "CUsbMsServer");
-
-enum TUsbPanicServer
-	{
-    EMsCBulkOnlyTransportNull = 300,
-    EMsCDeviceStateNotifierNull,
-	EMsClientInvalidSessCount,
-	EMsControlInterfaceBadState,
-	EMsControlInterfaceStillActive,
-	EMsBulkOnlyStillActive,
-	EMsWrongEndpoint
-	};
 
 //
 // Forward declarations
@@ -49,28 +34,28 @@ class CUsbMassStorageController;
  Implements a Symbian OS server that exposes the RUsbMassStorage API
  */
  class CUsbMassStorageServer : public CPolicyServer
-	{
+    {
 public:
-	static CUsbMassStorageServer* NewLC(CUsbMassStorageController& aController);
-	virtual ~CUsbMassStorageServer();
+    static CUsbMassStorageServer* NewLC(CUsbMassStorageController& aController);
+    virtual ~CUsbMassStorageServer();
 
-	virtual CSession2* NewSessionL(const TVersion &aVersion, const RMessage2& aMessage) const;
-	void Error(TInt aError);
+    virtual CSession2* NewSessionL(const TVersion &aVersion, const RMessage2& aMessage) const;
+    void Error(TInt aError);
 
-	inline CUsbMassStorageController& Controller() const;
+    inline CUsbMassStorageController& Controller() const;
 
-	void IncrementSessionCount();
-	void DecrementSessionCount();
-	inline TInt SessionCount() const;
+    void IncrementSessionCount();
+    void DecrementSessionCount();
+    inline TInt SessionCount() const;
 
 protected:
-	CUsbMassStorageServer(CUsbMassStorageController& aController);
-	void ConstructL();
-	
+    CUsbMassStorageServer(CUsbMassStorageController& aController);
+    void ConstructL();
+
 private:
-	CUsbMassStorageController& iController;
-	TInt iSessionCount;
-	};
+    CUsbMassStorageController& iController;
+    TInt iSessionCount;
+    };
 
 #include "cusbmassstorageserver.inl"
 

@@ -158,8 +158,9 @@ TInt DX86PlatChunk::SetupPermissions()
 	if(iChunkType==ESharedKernelSingle || iChunkType==ESharedKernelMultiple || iChunkType==ESharedIo || iChunkType==ESharedKernelMirror)
 		{
 		// override map attributes for shared kernel chunks
-		TUint ma = (iMapAttr &~ EMapAttrAccessMask) | (iChunkType==ESharedKernelMirror?EMapAttrSupRw:EMapAttrUserRw);
-		TInt r = m.PdePtePermissions(ma, iPdePermissions, iPtePermissions);
+		TBool kernelMirror = iChunkType == ESharedKernelMirror;
+		TUint ma = (iMapAttr &~ EMapAttrAccessMask) | ((kernelMirror)? EMapAttrSupRw : EMapAttrUserRw);
+		TInt r = m.PdePtePermissions(ma, iPdePermissions, iPtePermissions, kernelMirror);
 		if (r != KErrNone)
 			return r;
 		iMapAttr = ma;

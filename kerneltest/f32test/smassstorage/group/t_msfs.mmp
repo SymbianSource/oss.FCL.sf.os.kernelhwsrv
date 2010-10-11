@@ -47,8 +47,9 @@ LIBRARY		usbcsc_bil.lib
 #endif
 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
-USERINCLUDE    ../../../../userlibandfileserver/fileserver/smassstorage/inc
-USERINCLUDE    ../inc
+USERINCLUDE	../../../../userlibandfileserver/fileserver/smassstorage/inc
+USERINCLUDE	../traces
+USERINCLUDE	../inc
 
 capability  NetworkControl DiskAdmin
 

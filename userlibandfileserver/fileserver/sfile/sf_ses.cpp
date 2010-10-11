@@ -40,9 +40,12 @@ CSessionFs *CSessionFs::NewL()
 	return new(ELeave) CSessionFs;
 	}
 
-CSessionFs::~CSessionFs()
+
+void CSessionFs::Cleanup()
 	{
 	__PRINT1(_L("CSessionFs::~CSessionFs() deleting... = 0x%x"),this);
+
+	CancelAsyncRequests(this);
 		
 	FsNotify::CancelSession(this);
 
@@ -74,41 +77,28 @@ CSessionFs::~CSessionFs()
 
 	
 	delete iPath;
-	iSessionFlagsLock.Close();
 
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)
     __e32_atomic_add_ord32(&SessionCount, (TUint32) -1);
 #endif
 	}
 
+CSessionFs::~CSessionFs()
+	{
+	}
+
 void CSessionFs::Close()
 	{
-	TheFileServer->SessionQueueLockWait();
-
-	if (iAccessCount == 1)
-		{
-		// close the objects owned by this session 
-		// NB closing a CFileShare may allocate a request to flush dirty data which will
-		// in turn increment iAccessCount on this session
-		if (iHandles)
-			{
-			// Cancel any ASYNC requests belonging to this session BEFORE 
-			// CSessionFs is deleted to avoid a KERN-EXEC 44 (EBadMessageHandle)
-			CancelAsyncRequests(this);
-			delete iHandles;
-			iHandles = NULL;
-			}
-		}
-
 	if (__e32_atomic_tas_ord32(&iAccessCount, 1, -1, 0) == 1)
 		{
 		RMessage2 message = iMessage;
+		Cleanup();
+		TheFileServer->SessionQueueLockWait();
 		delete this;
+		TheFileServer->SessionQueueLockSignal();
 		// NB Must complete the message AFTER the session has been deleted...
 		message.Complete(KErrNone);
 		}
-
-	TheFileServer->SessionQueueLockSignal();
 	}
 
 void CSessionFs::CreateL()
@@ -119,8 +109,6 @@ void CSessionFs::CreateL()
 	__PRINT1(_L("CSessionFs::CreateL 0x%x"),this);
 
 	iHandles=CFsObjectIx::NewL();
-	TInt r = iSessionFlagsLock.CreateLocal();
-	User::LeaveIfError(r);
 	}
 
 TInt CSessionFs::CurrentDrive()
@@ -231,35 +219,27 @@ TBool CSessionFs::IsChangeNotify()
 
 TBool CSessionFs::TestSessionFlags(TUint32 aFlags)
 	{
-	iSessionFlagsLock.Wait();
-	TBool b = (iSessionFlags & aFlags) == aFlags;
-	iSessionFlagsLock.Signal();
-	return(b);
+	return (TBool) ((iSessionFlags & aFlags) == aFlags);
 	}
 
 
 void CSessionFs::SetSessionFlags(TUint32 aBitsToSet, TUint32 aBitsToClear)
 	{
-	iSessionFlagsLock.Wait();
+	// currently this only called from the main thread.
+	__CHECK_MAINTHREAD();
 
-	iSessionFlags &= ~aBitsToClear;
-	iSessionFlags |= aBitsToSet;
-	
-	iSessionFlagsLock.Signal();
+	__e32_atomic_ior_ord_ptr(&iSessionFlags, aBitsToSet);
+	__e32_atomic_and_ord_ptr(&iSessionFlags, ~aBitsToClear);
 	}
 
 void CSessionFs::CloseRequestCountInc()
 	{
-	iSessionFlagsLock.Wait();
-	iCloseRequestCount++;	
-	iSessionFlagsLock.Signal();
+    __e32_atomic_add_ord32(&iCloseRequestCount, (TUint32) 1);
 	}
 
 void CSessionFs::CloseRequestCountDec()
 	{
-	iSessionFlagsLock.Wait();
-	iCloseRequestCount--;
-	iSessionFlagsLock.Signal();
+    __e32_atomic_add_ord32(&iCloseRequestCount, (TUint32) -1);
 	}
 
 //

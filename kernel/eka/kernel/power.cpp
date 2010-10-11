@@ -25,6 +25,7 @@
 #include <nkern/nk_trace.h>
 //#define _DEBUG_POWER
 #endif
+const TUint KDisableControllerShutdown = 0x1;
 
 /******************************************************************************
  * Power Manager - a Power Model implementation
@@ -62,7 +63,8 @@ public:
 	DBatteryMonitor*	iBatteryMonitor;
 	DPowerHal*			iPowerHal;
 
-	TUint iPslShutdownTimeoutMs; // default = 0
+	TUint				iPslShutdownTimeoutMs; // default = 0
+	TInt				iTestMode;
 
 private:
 #ifndef _DEBUG_POWER	
@@ -188,6 +190,16 @@ TSupplyStatus DPowerManager::MachinePowerStatus()
 TInt DPowerManager::PowerHalFunction(TInt aFunction, TAny* a1, TAny* a2)
 	{ // from DPowerModel
 	__KTRACE_OPT(KPOWER,Kern::Printf(">DPowerManager::PowerHalFunction() func=0x%x, a1=0x%x, a2=0x%x", aFunction, a1, a2));
+	if (aFunction == EPowerHalPowerManagerTestMode)
+		{
+		if ((!Kern::CurrentThreadHasCapability(ECapabilityPowerMgmt,__PLATSEC_DIAGNOSTIC_STRING("Checked by PowerHalFunction EPowerHalPowerManagerTestMode"))) ||
+			(!Kern::CurrentThreadHasCapability(ECapabilityWriteDeviceData,__PLATSEC_DIAGNOSTIC_STRING("Checked by PowerHalFunction EPowerHalPowerManagerTestMode"))))
+			{
+			return KErrPermissionDenied;
+			} 
+		iTestMode = (TInt) a1;
+		return KErrNone;
+		}
 	TInt r;
 	if (iPowerHal)
 		r = iPowerHal->PowerHalFunction(aFunction, a1, a2);
@@ -445,8 +457,9 @@ TInt DPowerManager::PowerDown()
 #endif
 
 	TTickQ::Wait();
+	if(!(iTestMode & KDisableControllerShutdown))
+		iPowerController->PowerDown(K::SecondQ->WakeupTime());
 
-	iPowerController->PowerDown(K::SecondQ->WakeupTime());
 	__PM_ASSERT(iPowerController->iTargetState != EPwOff);
 	iPowerController->iTargetState = EPwActive;
 

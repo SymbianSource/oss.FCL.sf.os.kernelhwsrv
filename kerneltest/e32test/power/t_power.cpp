@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -41,6 +41,7 @@
 #include <f32file.h>
 #include <e32ldr.h>
 #include <e32ldr_private.h>
+#include "testexclusions.h"
 
 LOCAL_D RTest test(_L(" T_POWER "));
 
@@ -55,6 +56,14 @@ void SetAbsoluteTimeout(RTimer& aTimer, TUint aUs, TRequestStatus& aStatus)
 void PowerTests()
 	{
 	test.Next(_L("test PowerDown()"));
+	
+	TInt testExclusions = 0;
+	test_KErrNone(GetTestExclusionSettings(testExclusions));
+	
+	if (testExclusions & KDisableControllerShutdown)
+		{
+		UserSvr::HalFunction(EHalGroupPower, EPowerHalPowerManagerTestMode, (TAny*)KDisableControllerShutdown, NULL);
+		}
 
 	TInt r = Power::PowerDown();
 	test (r == KErrNotReady);

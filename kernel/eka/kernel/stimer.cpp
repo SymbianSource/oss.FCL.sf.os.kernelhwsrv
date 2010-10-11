@@ -1,4 +1,4 @@
-// Copyright (c) 1994-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1994-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -1824,7 +1824,8 @@ TInt K::SetSystemTimeAndOffset(const TTimeK& aTime, TInt aOffset, TUint aTimeSet
 				if (aTimeSetMode & Kern::ETimeSet_SetHwRtc)
 					{
 					r = A::SetSystemTimeInSecondsFrom2000(s);
-					if (r!=KErrNone)
+					// Set SW RTC even if HW RTC is not supported 
+					if ((r!=KErrNone) && (r != KErrNotSupported))
 						{
 						TTickQ::Signal();
 						return r;

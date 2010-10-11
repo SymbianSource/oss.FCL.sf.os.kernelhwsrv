@@ -1,3 +1,23 @@
+Version 2.00.4008
+=================
+(Made by fadhliM 05/10/2010)
+
+1.	gayarama
+	1.	ou1cimx1#577332 ENV t_power, t_domain, t_switchoff, t_timer, t_suser, t_lddpowerseqtest : Tests cause reboot, preventing testing.
+
+2.	dogunjum
+	1.	MINOR_CHANGE Documentation on how to use the Domain Manager Notification Interface With Deferrals
+
+3.	martai
+	1.	ou1cimx1#594087 t_sharedio fails at line 544
+
+4.	paconway
+	1.	ou1cimx1#586853 Fault observed on Bridge with MMC stack OST tracing enabled over XTI
+
+5.	necliffo
+	1.	MINOR_CHANGE D_MMCTEST - Fix x86 rombuild
+
+
 Version 2.00.4007
 =================
 (Made by fadhliM 30/09/2010)

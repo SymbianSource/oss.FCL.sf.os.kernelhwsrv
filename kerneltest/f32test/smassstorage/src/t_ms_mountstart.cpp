@@ -52,10 +52,10 @@
  @internalTechnology
 */
 
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include <e32std.h>
-#include <e32std_private.h>
 #include <e32svr.h>
 #include <hal.h>
 #include <massstorage.h>
@@ -571,7 +571,9 @@ LOCAL_C void doComponentTest()
 			test(trsClientComplete == KErrCancel);
 			test.Next(_L("...issuing a forced dismount request"));
 	   		fs.NotifyDismount(removalDrvNo, trsClientComplete, EFsDismountForceDismount);
-			test(trsClientComplete == KErrNone);
+
+            User::WaitForRequest(trsClientComplete);
+			test_KErrNone(trsClientComplete.Int());
 			expectedAllowDismountRet = KErrNotReady;
 			expectedCompletionCode = KErrNone;
 			}
@@ -689,7 +691,8 @@ LOCAL_C void doComponentTest()
 		// Since all clients have been closed, the next stage should result in a dismount
 		test.Next(_L("Notify clients of pending media removal and check status"));
 		fs.NotifyDismount(removalDrvNo, trsClientComplete, EFsDismountNotifyClients);
-		test(trsClientComplete == KErrNone);
+        User::WaitForRequest(trsClientComplete);
+		test_KErrNone(trsClientComplete.Int());
 
 		test.Next(_L("Mount FAT FS on to the removal drive"));
 		LOG_AND_TEST(KErrNone, fs.MountFileSystem(fsName, removalDrvNo));

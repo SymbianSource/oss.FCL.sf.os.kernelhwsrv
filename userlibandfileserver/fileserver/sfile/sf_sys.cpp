@@ -1181,7 +1181,9 @@ TInt TDrive::DeferredDismount()
 	if (err == CFsRequest::EReqActionBusy)
 		return err;
 
-    DoCompleteDismountNotify(err);
+    // Complete, remove and delete notification requests
+	FsNotify::HandleDismount(EFsDismountNotifyClients, iDriveNumber, ETrue, err);
+	FsNotify::HandleDismount(EFsDismountForceDismount, iDriveNumber, ETrue, err);
 
 	SetDismountDeferred(EFalse);
 
@@ -1358,9 +1360,8 @@ TInt TFsNotifyDismountCancel::DoRequestL(CFsRequest* aRequest)
 //
 	{
 	CSessionFs* session = aRequest->Session();
-	TInt drive = FsNotify::CancelDismountNotifySession(session, (TRequestStatus*)aRequest->Message().Ptr0());
-	if (drive >= 0)
-		TheDrives[drive].SetDismountDeferred(EFalse);
+	FsNotify::CancelDismountNotifySession(session, (TRequestStatus*)aRequest->Message().Ptr0());
+
 	return KErrNone;
 	}
 
@@ -1385,22 +1386,7 @@ TInt TFsAllowDismount::DoRequestL(CFsRequest* aRequest)
 	if(!FsNotify::HandlePendingDismount(aRequest->Session(), driveNumber))
 		return KErrNotFound;
 
-	if(theDrive->DismountLocked())
-		return KErrNone;
-
-	TInt clampErr = theDrive->ClampsOnDrive();
-	TInt err = KErrNone;
-
-	if ((theDrive->DismountDeferred()) && (clampErr == 0 || clampErr == KErrNotSupported))
-		{
-		// No clamps to worry about, so dismount immediately and complete the request
-		__ASSERT_DEBUG(aRequest->Drive()->GetFSys(), Fault(EAllowDismount));
-
-		// When the last client has responded, allow the media to be forcibly dismounted
-		err = theDrive->DeferredDismount();
-		}
-
-	return err;
+	return theDrive->DeferredDismountCheck();
 	}
 
 TInt TFsAllowDismount::Initialise(CFsRequest* aRequest)
@@ -1410,6 +1396,23 @@ TInt TFsAllowDismount::Initialise(CFsRequest* aRequest)
 	{
 	return ValidateDrive(aRequest->Message().Int0(),aRequest);
 	}	
+
+
+TInt TFsDeferredDismount::Initialise(CFsRequest* /*aRequest*/)
+	{
+	return KErrNone;
+	}
+
+/*
+Dismount the file system - this internal request is queued when one client issues a EFsDismountNotifyClients
+request and another client with an outstanding EFsDismountRegisterClient closes their session (in the context 
+of the main file server thread) without sending a EFsAllowDismount request.
+
+*/
+TInt TFsDeferredDismount::DoRequestL(CFsRequest* aRequest)
+	{
+	return TheDrives[aRequest->DriveNumber()].DeferredDismountCheck();
+	}
 
 
 TInt TFsMountProxyDrive::DoRequestL(CFsRequest* aRequest)

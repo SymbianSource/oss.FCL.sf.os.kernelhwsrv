@@ -51,6 +51,7 @@
 // 
 //
 
+
 #define __E32TEST_EXTENSION__
 #include <e32test.h>
 #include <e32debug.h>
@@ -59,7 +60,7 @@
 
 #include "domainpolicytest.h"
 #include "t_domain.h"
-
+#include "testexclusions.h"
 
 RTest test(_L(" T_DOMAIN "));
 _LIT(KThreadName, "t_domain_panic_thread");
@@ -2124,6 +2125,14 @@ GLDEF_C TInt E32Main()
 			// strange command - silently ignore
 			{} 
 		delete hb;
+		}
+
+	TInt testExclusions = 0;
+	test_KErrNone(GetTestExclusionSettings(testExclusions));
+	
+	if (testExclusions & KDisableControllerShutdown)
+		{
+		UserSvr::HalFunction(EHalGroupPower, EPowerHalPowerManagerTestMode, (TAny*)KDisableControllerShutdown, NULL);
 		}
 
 	test.Title();

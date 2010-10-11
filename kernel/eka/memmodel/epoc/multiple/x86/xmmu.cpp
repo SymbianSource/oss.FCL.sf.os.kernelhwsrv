@@ -1323,7 +1323,7 @@ static const TUint8 CacheBuffActual[16]=
 static const TUint8 ActualReadPrivilegeLevel[4]={1,1,4,4};	// RONO,RWNO,RORO,RWRW
 static const TUint8 ActualWritePrivilegeLevel[4]={0,1,0,4};	// RONO,RWNO,RORO,RWRW
 
-TInt X86Mmu::PdePtePermissions(TUint& aMapAttr, TPde& aPde, TPte& aPte)
+TInt X86Mmu::PdePtePermissions(TUint& aMapAttr, TPde& aPde, TPte& aPte, TBool aGlobal)
 	{
 	__KTRACE_OPT(KMMU,Kern::Printf(">X86Mmu::PdePtePermissions, mapattr=%08x",aMapAttr));
 	TUint read=aMapAttr & EMapAttrReadMask;
@@ -1363,10 +1363,10 @@ TInt X86Mmu::PdePtePermissions(TUint& aMapAttr, TPde& aPde, TPte& aPte)
 		r=KErrNotSupported;
 	if (r==KErrNone)
 		{
-		cache=CacheBuffActual[cache];
-		aPde=KPdePtePresent|KPdePteWrite|KPdePteUser;
-		aPte=pte|cbatt|iPteGlobal;		// HW chunks can always be global
-		aMapAttr=read|(write<<4)|(read<<8)|(cache<<12);
+		cache = CacheBuffActual[cache];
+		aPde = KPdePtePresent | KPdePteWrite | KPdePteUser;
+		aPte = pte | cbatt | ((aGlobal)? iPteGlobal : 0);
+		aMapAttr = read | (write<<4) | (read<<8) | (cache<<12);
 		}
 	__KTRACE_OPT(KMMU,Kern::Printf("<X86Mmu::PdePtePermissions, r=%d, mapattr=%08x, pde=%08x, pte=%08x",
 								r,aMapAttr,aPde,aPte));

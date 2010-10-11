@@ -27,6 +27,7 @@ SOURCE			cbulkonlytransportusbcscldd.cpp
 SOURCE			cactivedevicestatenotifierbase.cpp
 
 USERINCLUDE		../inc
+USERINCLUDE		../traces
 USERINCLUDE		../../../../userlibandfileserver/fileserver/smassstorage/inc
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 

@@ -143,7 +143,7 @@ TInt DArmPlatChunk::SetupPermissions()
 		// override map attributes for shared kernel chunks
 		TUint ma = (iMapAttr &~ EMapAttrAccessMask) | EMapAttrSupRw;
 		TPde pde;
-		TInt r = m.PdePtePermissions(ma, pde, iPtePermissions);
+		TInt r = m.PdePtePermissions(ma, pde, iPtePermissions, ETrue);
 		if (r != KErrNone)
 			return r;
 		iMapAttr = ma;

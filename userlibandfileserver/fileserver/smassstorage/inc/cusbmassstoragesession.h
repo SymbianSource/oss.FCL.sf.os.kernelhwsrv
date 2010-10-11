@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -12,7 +12,7 @@
 //
 // Description:
 // Implements a Session of a Symbian OS server for the RUsbMassStorage API
-// 
+//
 //
 
 /**
@@ -23,10 +23,6 @@
 #ifndef __CUSBMASSSTORAGESESSION_H__
 #define __CUSBMASSSTORAGESESSION_H__
 
-#include <e32std.h>
-#include <e32base.h>
-#include "massstoragedebug.h"
-#include "usbmsshared.h"
 
 _LIT(KUsbMsCliPncCat, "UsbMs-Client");
 
@@ -44,29 +40,29 @@ class CUsbMassStorageServer;
  Implements a Session of a Symbian OS server for the RUsbMassStorage API
  */
 class CUsbMassStorageSession : public CSession2
-	{
+    {
 public:
-	static CUsbMassStorageSession* NewL(CUsbMassStorageServer& aServer);
-	virtual ~CUsbMassStorageSession();
+    static CUsbMassStorageSession* NewL(CUsbMassStorageServer& aServer);
+    virtual ~CUsbMassStorageSession();
 
-	// CSession
-	virtual void ServiceL(const RMessage2& aMessage);
+    // CSession
+    virtual void ServiceL(const RMessage2& aMessage);
 
 protected:
-	CUsbMassStorageSession(CUsbMassStorageServer& aServer);
-	void ConstructL();
+    CUsbMassStorageSession(CUsbMassStorageServer& aServer);
+    void ConstructL();
 
-	void DispatchMessageL(const RMessage2& aMessage);
-	TInt Start(const RMessage2& aMessage);
-	TInt Stop();
-	TInt Shutdown();
+    void DispatchMessageL(const RMessage2& aMessage);
+    TInt Start(const RMessage2& aMessage);
+    TInt Stop();
+    TInt Shutdown();
 
 private:
- 	void GetMsConfigL(const RMessage2& aMessage, TMassStorageConfig& aMsStorage);
-	
+    void GetMsConfigL(const RMessage2& aMessage, TMassStorageConfig& aMsStorage);
+
 private:
-	CUsbMassStorageServer& iUsbMsServer;
-	};
+    CUsbMassStorageServer& iUsbMsServer;
+    };
 
 #endif //__CUSBMASSSTORAGESESSION_H__
 

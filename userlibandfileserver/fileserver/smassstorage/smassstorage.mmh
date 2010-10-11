@@ -20,9 +20,11 @@
  @file
 */
 
-TARGETTYPE		fsy
+TARGETTYPE	fsy
 
 USERINCLUDE	../inc
+USERINCLUDE	traces
+
 #ifdef SYMBIAN_OLD_EXPORT_LOCATION
 SYSTEMINCLUDE	../inc
 SYMBIAN_BASE_SYSTEMINCLUDE(kernel)
@@ -32,12 +34,17 @@ USERINCLUDE	../smassstorage/inc
 SOURCEPATH	../smassstorage
 SOURCE		scsiprot.cpp
 SOURCE		cbulkonlytransport.cpp
+
+// Double Buffering media interface
 SOURCE		cbulkonlytransportusbcldd.cpp
+SOURCE		tbulkmm.cpp
+SOURCE		rwdrivethread.cpp
+// Shared Chunk media interface
 #if !defined(WINS) && !defined(GENERIC_X86)
 SOURCE		cbulkonlytransportusbcscldd.cpp
 #endif
+
 SOURCE		cactivedevicestatenotifierbase.cpp
-SOURCE		rwdrivethread.cpp
 SOURCE		cmassstoragefilesystem.cpp
 SOURCE		cmassstoragemountcb.cpp
 SOURCE		cusbmassstoragecontroller.cpp
@@ -47,20 +54,22 @@ SOURCE		drivemanager.cpp
 SOURCE		drivepublisher.cpp
 
 LIBRARY		efile.lib efsrv.lib euser.lib 
+
+// Shared Chunk library
 #if !defined(WINS) && !defined(GENERIC_X86)
 LIBRARY	usbcsc_bil.lib
 #endif
 
 
 SOURCEPATH	.
-DOCUMENT		 ../group/release.txt
+DOCUMENT	../group/release.txt
 
 
 START WINS
-BASEADDRESS		0x61000000 
+BASEADDRESS	0x61000000 
 END
 
-UID		0 0x100000d6   //TODO reserve new UID
+UID	0 0x100000d6   //TODO reserve new UID
 
 unpaged
 

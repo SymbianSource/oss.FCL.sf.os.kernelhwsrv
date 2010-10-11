@@ -216,6 +216,26 @@ LOCAL_C void Test2()
 
 
 
+void RemountFileSystem(TInt aDriveNo, TDesC& aFsName, TDesC& aFsExtName0, TDesC& aFsExtName1)
+	{
+	TInt r;
+	if(aFsExtName0.Length() > 0)
+		{
+		r=TheFs.MountFileSystem(aFsName,aFsExtName0,aDriveNo);
+		test(r==KErrNone);
+		}
+	else if(aFsExtName1.Length() > 0) // untested !
+		{
+		r=TheFs.MountFileSystem(aFsName,aFsExtName1,aDriveNo);
+		test(r==KErrNone);
+		}
+	else 
+		{
+		r=TheFs.MountFileSystem(aFsName,aDriveNo);
+		test(r==KErrNone);
+		}
+	}
+
 LOCAL_C void TestDeferredDismount(TDesC& aRoot, TDesC& aFileName, RFileClamp* handlePtr)
 	{
 	// Open and clamp file, register for dismount notification, then issue 
@@ -231,26 +251,23 @@ LOCAL_C void TestDeferredDismount(TDesC& aRoot, TDesC& aFileName, RFileClamp* ha
 	TBuf<KMaxFileSystemNameLength> fsName;
 	TBuf<KMaxFileSystemExtNameLength> fsExtName_0;
 	TBuf<KMaxFileSystemExtNameLength> fsExtName_1;
-	TBool fsExt0Present=EFalse;
-	TBool fsExt1Present=EFalse;
 	TInt driveNo, r;
 	r=TheFs.CharToDrive(aRoot[0], driveNo);
 	test(r==KErrNone);
 	r=TheFs.FileSystemName(fsName, driveNo);
 	test(r==KErrNone);
-	r=TheFs.ExtensionName(fsExtName_0,driveNo,0);
-	if(r==KErrNone)
-		fsExt0Present=ETrue;
-	r=TheFs.ExtensionName(fsExtName_1,driveNo,1);
-	if(r==KErrNone)
-		fsExt1Present=ETrue;
 
+	//*******************************************************************************************************
 	// Create a file & write to it so that we can test whether dismounting works correctly with dirty data
+	//*******************************************************************************************************
+	test.Next(_L("T_Clamp - TestDeferredDismount(), testing unmounting with dirty data, registered clients & clamped files"));
+
 	TDriveInfo driveInfo;
 	test(TheFs.Drive(driveInfo, driveNo) == KErrNone);
 	TFileName dirtyFileName(_L("dirtyFile.tst"));
 	RFile dirtyFile;
-	if (!(driveInfo.iMediaAtt & KMediaAttWriteProtected))
+	TBool writeProtectedMedia = driveInfo.iMediaAtt & KMediaAttWriteProtected;
+	if (!writeProtectedMedia)
 		{
 		r=dirtyFile.Replace(TheFs, dirtyFileName, EFileWrite);
 		test(r==KErrNone);
@@ -268,9 +285,16 @@ LOCAL_C void TestDeferredDismount(TDesC& aRoot, TDesC& aFileName, RFileClamp* ha
 
 	TRequestStatus clientNotify=KErrNone;
 	TRequestStatus clientDismount=KErrNone;
-	TheFs.NotifyDismount(driveNo, clientNotify); // Register for notification
+	TheFs.NotifyDismount(driveNo, clientNotify); // Register for dismount notification
 	test(clientNotify == KRequestPending);
+
+	// register for disk change notifcation, so we can detect when dismount has actually taken place
+	TRequestStatus diskChangeStatus;
+	TheFs.NotifyChange(ENotifyDisk, diskChangeStatus);
+	test.Printf(_L("diskChangeStatus %d"), diskChangeStatus.Int());
+	test(diskChangeStatus == KRequestPending); // no disk change yet
 	
+
 	TheFs.NotifyDismount(driveNo, clientDismount, EFsDismountNotifyClients);
 	test(clientDismount == KRequestPending);
 	User::WaitForRequest(clientNotify);
@@ -279,6 +303,7 @@ LOCAL_C void TestDeferredDismount(TDesC& aRoot, TDesC& aFileName, RFileClamp* ha
 	r=TheFs.AllowDismount(driveNo);	// Respond to dismount notification
 	test(r == KErrNone);
 	test(clientDismount == KRequestPending); // Dismount is deferred
+	test(diskChangeStatus == KRequestPending); // no disk change yet
 
 	//
 	// Now unclamp the file, and check that the deferred dismount is performed.
@@ -287,33 +312,38 @@ LOCAL_C void TestDeferredDismount(TDesC& aRoot, TDesC& aFileName, RFileClamp* ha
 	User::WaitForRequest(clientDismount);
 	test(clientDismount == KErrNone);	
 
+	// wait for disk change notification following dismount
+	User::WaitForRequest(diskChangeStatus);
+	test(diskChangeStatus == KErrNone); // should have got a disk change notification after dismount
+	r = TheFs.Drive(driveInfo, driveNo);
+	test (r==KErrNone);
+	test (driveInfo.iType == EMediaNotPresent);
+
+	// re-register for disk change notifcation, so we can detect when remount has actually taken place
+	TheFs.NotifyChange(ENotifyDisk, diskChangeStatus);
+	test.Printf(_L("diskChangeStatus %d"), diskChangeStatus.Int());
+	test(diskChangeStatus == KRequestPending); // no disk change yet
+	
 	// Try to write to the opened file: this should return KErrNotReady as there is no drive thread
-	if (!(driveInfo.iMediaAtt & KMediaAttWriteProtected))
+	if (!writeProtectedMedia)
 		{
 		r=dirtyFile.Write(_L8("My name isn't really Michael Caine"));
 		test(r==KErrNotReady);
 		}
 
 	// Re-mount the file system
-	if(fsExt0Present)
-		{
-		r=TheFs.MountFileSystem(fsName,fsExtName_0,driveNo);
-		test(r==KErrNone);
-		}
-	else if(fsExt1Present) // untested !
-		{
-		r=TheFs.MountFileSystem(fsName,fsExtName_1,driveNo);
-		test(r==KErrNone);
-		}
-	else 
-		{
-		r=TheFs.MountFileSystem(fsName,driveNo);
-		test_KErrNone(r);
-		}
+	RemountFileSystem(driveNo, fsName, fsExtName_0, fsExtName_1);
+
+	// wait for disk change notification following remount
+	User::WaitForRequest(diskChangeStatus);
+	test(diskChangeStatus == KErrNone); // should have got a disk change notification after dismount
+	r = TheFs.Drive(driveInfo, driveNo);
+	test (r==KErrNone);
+	test (driveInfo.iType != EMediaNotPresent);
 
 	// create some more dirty data to verify that the file server can cope with the drive thread 
 	// having gone & come back again
-	if (!(driveInfo.iMediaAtt & KMediaAttWriteProtected))
+	if (!writeProtectedMedia)
 		{
 		r=dirtyFile.Write(_L8("My name is Michael Phelps and I'm a fish."));
 		test(r==KErrDisMounted);
@@ -323,8 +353,12 @@ LOCAL_C void TestDeferredDismount(TDesC& aRoot, TDesC& aFileName, RFileClamp* ha
 		test(r == KErrNone);
 		}
 
+	//*******************************************************************************************************
 	// Issue a EFsDismountNotifyClients with no clients but with files clamped
 	// & verify that the dismount request completes when clamps are removed
+	//*******************************************************************************************************
+	test.Next(_L("T_Clamp - TestDeferredDismount(), testing unmounting with no registered clients & clamped files"));
+
 	r=testFile.Open(TheFs,aFileName,EFileRead);
 	test(r==KErrNone);
 	r=handlePtr->Clamp(testFile);
@@ -338,21 +372,7 @@ LOCAL_C void TestDeferredDismount(TDesC& aRoot, TDesC& aFileName, RFileClamp* ha
 	User::WaitForRequest(clientDismount);
 	test(clientDismount == KErrNone);	
 	// Re-mount the file system again
-	if(fsExt0Present)
-		{
-		r=TheFs.MountFileSystem(fsName,fsExtName_0,driveNo);
-		test(r==KErrNone);
-		}
-	else if(fsExt1Present) // untested !
-		{
-		r=TheFs.MountFileSystem(fsName,fsExtName_1,driveNo);
-		test(r==KErrNone);
-		}
-	else 
-		{
-		r=TheFs.MountFileSystem(fsName,driveNo);
-		test_KErrNone(r);
-		}
+	RemountFileSystem(driveNo, fsName, fsExtName_0, fsExtName_1);
 
 
 	// Issue a EFsDismountForceDismount with no clients but with files clamped
@@ -369,23 +389,239 @@ LOCAL_C void TestDeferredDismount(TDesC& aRoot, TDesC& aFileName, RFileClamp* ha
 	test(r==KErrNone);
 	User::WaitForRequest(clientDismount);
 	test(clientDismount == KErrNone);	
+
+
 	// Re-mount the file system again
-	if(fsExt0Present)
+	RemountFileSystem(driveNo, fsName, fsExtName_0, fsExtName_1);
+
+
+	const TInt KNumClients = 5;
+    RFs clientFs[KNumClients];
+	TRequestStatus clientNotifies[KNumClients];
+	TRequestStatus clientDiskChanges[KNumClients];
+	TRequestStatus clientComplete;
+
+	#define LOG_AND_TEST(a, e) {if (a!=e) {test.Printf(_L("lvalue %d, rvalue%d\n\r"), a,e); test(EFalse);}}
+	
+	//*******************************************************************************************************
+	// Test unmounting with multiple registered clients which do not respond & close their sessions
+	//*******************************************************************************************************
+	test.Next(_L("T_Clamp - TestDeferredDismount(), testing unmounting with multiple registered clients which do not respond & close their sessions"));
+
+	TheFs.NotifyChange(ENotifyDisk, diskChangeStatus);
+	test.Printf(_L("diskChangeStatus %d"), diskChangeStatus.Int());
+
+	TInt i;
+	for (i=0; i< KNumClients; i++)
 		{
-		r=TheFs.MountFileSystem(fsName,fsExtName_0,driveNo);
-		test(r==KErrNone);
-		}
-	else if(fsExt1Present) // untested !
-		{
-		r=TheFs.MountFileSystem(fsName,fsExtName_1,driveNo);
-		test(r==KErrNone);
-		}
-	else 
-		{
-		r=TheFs.MountFileSystem(fsName,driveNo);
-		test_KErrNone(r);
+		LOG_AND_TEST(KErrNone, clientFs[i].Connect());
+   		clientFs[i].NotifyDismount(driveNo, clientNotifies[i]);
+		test(clientNotifies[i] == KRequestPending);
 		}
 
+	test.Next(_L("Close all but one client sessions with outstanding notifiers"));
+	for (i=0; i< KNumClients-1; i++)
+		clientFs[i].Close();
+
+	// Since all clients have NOT been closed, the next stage should not yet complete
+	test.Next(_L("Notify clients of pending media removal and check status - should not complete"));
+	TheFs.NotifyDismount(driveNo, clientComplete, EFsDismountNotifyClients);
+	test(clientComplete == KRequestPending);
+
+
+	test.Next(_L("Close the remaining sessions with an outstanding notifier"));
+	clientFs[KNumClients-1].Close();
+
+	// Check that the dismount completes now that all session have been closed
+	test.Next(_L("Check that the dismount completes"));
+    User::WaitForRequest(clientComplete);
+	test_KErrNone(clientComplete.Int());
+
+	// wait for disk change notification following dismount
+	User::WaitForRequest(diskChangeStatus);
+	test(diskChangeStatus == KErrNone); // should have got a disk change notification after dismount
+	r = TheFs.Drive(driveInfo, driveNo);
+	test (r==KErrNone);
+	test (driveInfo.iType == EMediaNotPresent);
+
+	// re-register for disk change notifcation, so we can detect when remount has actually taken place
+	TheFs.NotifyChange(ENotifyDisk, diskChangeStatus);
+	test.Printf(_L("diskChangeStatus %d"), diskChangeStatus.Int());
+	test(diskChangeStatus == KRequestPending); // no disk change yet
+	
+
+	// Re-mount the file system again
+	RemountFileSystem(driveNo, fsName, fsExtName_0, fsExtName_1);
+
+	// wait for disk change notification following remount
+	User::WaitForRequest(diskChangeStatus);
+	test(diskChangeStatus == KErrNone); // should have got a disk change notification after dismount
+	r = TheFs.Drive(driveInfo, driveNo);
+	test (r==KErrNone);
+	test (driveInfo.iType != EMediaNotPresent);
+
+	
+
+	//*******************************************************************************************************
+	// Issue a EFsDismountNotifyClients with multiple clients 
+	// Verify that the dismount completes if a client re-registers for dismount notifications BEFORE calling AllowDismount
+	//*******************************************************************************************************
+
+	test.Next(_L("T_Clamp - TestDeferredDismount(), testing unmounting with multiple registered clients & a re-registration"));
+
+	for(i=0; i< KNumClients; i++)
+		{
+   		r=clientFs[i].Connect();
+		test(r==KErrNone);
+		}
+	// Cancel any deferred dismount in preparation for the next test
+	TheFs.NotifyDismountCancel();
+
+	// All clients register for dismount notification
+	for(i=0; i< KNumClients; i++)
+		{
+		clientNotifies[i] = KErrNone;
+   		clientFs[i].NotifyDismount(driveNo, clientNotifies[i]);
+		test(clientNotifies[i] == KRequestPending);
+		}
+	
+	// Issue a EFsDismountNotifyClients & wait for clients to respond
+	clientDismount = KErrNone;
+   	TheFs.NotifyDismount(driveNo, clientDismount, EFsDismountNotifyClients);
+	test(clientDismount == KRequestPending);
+
+	// Check all clients have received the notification
+	for(i=0; i< KNumClients; i++)
+		{
+		User::WaitForRequest(clientNotifies[i]);
+		test(clientNotifies[i] == KErrNone);
+		}
+	// All clients - except first one - invoke AllowDismount
+	for(i=1; i< KNumClients; i++)
+		{
+		r=clientFs[i].AllowDismount(driveNo);
+		test(r==KErrNone);
+		}
+
+
+	// verify dismount has not yet completed
+	test(clientDismount == KRequestPending);
+
+
+	// first client re-registers for dismount notifications
+	clientFs[0].NotifyDismount(driveNo, clientNotifies[0]);
+	test(clientNotifies[0] == KRequestPending);
+
+	// first client allows dismount
+	clientFs[0].AllowDismount(driveNo);
+	test(r==KErrNone);
+
+	// Wait for dismount
+	User::WaitForRequest(clientDismount);
+	test(clientDismount == KErrNone);
+
+
+	// verify the first client's re-issued dismount notification is still pending
+	test(clientNotifies[0] == KRequestPending);
+
+
+	// Re-mount the file system again
+	RemountFileSystem(driveNo, fsName, fsExtName_0, fsExtName_1);
+
+
+	// Issue a EFsDismountNotifyClients again & check previously re-registered notification completes
+	test(clientNotifies[0] == KRequestPending);
+	clientDismount = KErrNone;
+   	TheFs.NotifyDismount(driveNo, clientDismount, EFsDismountNotifyClients);
+	test(clientDismount == KRequestPending);
+
+	// wait for notification
+	User::WaitForRequest(clientNotifies[0]);
+	
+	// first client allows dismount
+	clientFs[0].AllowDismount(driveNo);
+	test(r==KErrNone);
+
+	// Wait for dismount
+	User::WaitForRequest(clientDismount);
+	test(clientDismount == KErrNone);
+
+
+
+	// Re-mount the file system again
+	RemountFileSystem(driveNo, fsName, fsExtName_0, fsExtName_1);
+
+	
+
+	//*******************************************************************************************************
+	// Issue a EFsDismountNotifyClients again with a multiple clients & then call RFs::NotifyDismountCancel()
+	// Verify that all clients receive a disk change notification
+	//*******************************************************************************************************
+	test.Next(_L("T_Clamp - TestDeferredDismount(), testing unmounting with registered clients, a re-registration & a cancel"));
+	
+	// All clients register for dismount notification & disk change notification
+	for(i=0; i< KNumClients; i++)
+		{
+		clientNotifies[i] = KErrNone;
+   		clientFs[i].NotifyDismount(driveNo, clientNotifies[i], EFsDismountRegisterClient);
+		test(clientNotifies[i] == KRequestPending);
+		
+		clientFs[i].NotifyChange(ENotifyDisk, clientDiskChanges[i]);
+		test.Printf(_L("diskChangeStatus %d"), clientDiskChanges[i].Int());
+		test(clientDiskChanges[i] == KRequestPending);
+		}
+	
+
+	// Issue a EFsDismountNotifyClients
+   	TheFs.NotifyDismount(driveNo, clientComplete, EFsDismountNotifyClients);
+	test(clientComplete == KRequestPending);
+
+
+	// Check all clients have received the notification
+	for(i=0; i< KNumClients; i++)
+		{
+		User::WaitForRequest(clientNotifies[i]);
+		test(clientNotifies[i] == KErrNone);
+
+		test.Printf(_L("diskChangeStatus %d"), clientDiskChanges[i].Int());
+		test(clientDiskChanges[i] == KRequestPending);
+		}
+
+	// verify dismount has not yet completed
+	test(clientComplete == KRequestPending);
+
+
+	// first client re-registers for dismount notifications
+	clientFs[0].NotifyDismount(driveNo, clientNotifies[0]);
+	test(clientNotifies[0] == KRequestPending);
+
+	// first client acknowledges the dismount request
+	r = clientFs[0].AllowDismount(driveNo);
+	test(r == KErrNone);
+
+	
+	// cancel dismount
+//	TheFs.NotifyDismountCancel(clientComplete);
+	TheFs.NotifyDismountCancel();
+	test(clientComplete == KErrCancel);
+	User::WaitForRequest(clientComplete);
+
+	// Check all clients have received a disk change notification - 
+	// the file server should send a disk change notification when RFs::NotifyDismountCancel() is called
+	for(i=0; i< KNumClients; i++)
+		{
+		User::WaitForRequest(clientDiskChanges[i]);
+		test.Printf(_L("diskChangeStatus %d"), clientDiskChanges[i].Int());
+		test(clientDiskChanges[i] == KErrNone);
+		}
+
+
+	// cleanup
+	for(i=0; i< KNumClients; i++)
+		{
+   		clientFs[i].Close();
+		test(r==KErrNone);
+		}
 	}
 
 

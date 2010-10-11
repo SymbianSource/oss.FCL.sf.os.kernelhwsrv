@@ -22,7 +22,8 @@
 	UID			0x1000007B 0x101F7774
 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
-USERINCLUDE	../inc	  
+USERINCLUDE	../inc
+USERINCLUDE	../traces  
 USERINCLUDE	../../../../userlibandfileserver/fileserver/smassstorage/inc	  
 
 SOURCEPATH	../src

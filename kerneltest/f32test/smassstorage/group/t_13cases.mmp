@@ -28,6 +28,7 @@ SOURCE			cactivedevicestatenotifierbase.cpp
 
 
 USERINCLUDE		../t_13cases/inc
+USERINCLUDE		../t_13cases/traces
 USERINCLUDE		../../../../userlibandfileserver/fileserver/smassstorage/inc
 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN

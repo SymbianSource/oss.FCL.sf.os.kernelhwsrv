@@ -13,6 +13,7 @@
 // Description:
 //
 
+#include "massstoragedebug.h"
 #include "cusbmassstoragescheduler.h"
 #include "cusbmassstorageserver.h"
 

@@ -12,7 +12,7 @@
 //
 // Description:
 // Class declaration for CUsbMassStorageController.
-// 
+//
 //
 
 /**
@@ -23,11 +23,10 @@
 #ifndef __CUSBMASSSTORAGECONTROLLER_H__
 #define __CUSBMASSSTORAGECONTROLLER_H__
 
-#include <e32base.h>
-#include <usbmsshared.h>
-#include "drivemanager.h"
-#include "cusbmassstorageserver.h"
-#include "protocol.h"
+
+class MTransportBase;
+class MProtocolBase;
+class CUsbMassStorageServer;
 
 /**
 Mass Storage Controller class.
@@ -35,25 +34,25 @@ Encapsulates the drive manager, transport and protocol for USB Mass Storage.
 Its main purpose is to instantiate and initialize these objects.
 */
 class CUsbMassStorageController : public CBase
-	{
-	public:
-	~CUsbMassStorageController();
-	void CreateL(RArray<TInt>& aDriveMapping);
-	CDriveManager& DriveManager();
-	TInt Start(TMassStorageConfig& aConfig);
-	TInt Stop();
-	void Reset();
-	void GetTransport(MTransportBase* &aTransport);
-	enum TTransportldd {EUsbc = 1, EUsbcsc};
-	
-	private:
-	CDriveManager* iDriveManager;
-	MTransportBase* iTransport;
-	MProtocolBase* iProtocol;
-	CUsbMassStorageServer* iServer;
-	TMassStorageConfig iConfig;
-	TInt iMaxDrives;
-	TTransportldd iTransportLddFlag;
-	};
+    {
+public:
+    ~CUsbMassStorageController();
+    void CreateL(RArray<TInt>& aDriveMapping);
+    CDriveManager& DriveManager();
+    TInt Start(TMassStorageConfig& aConfig);
+    TInt Stop();
+    void Reset();
+    void GetTransport(MTransportBase* &aTransport);
+    enum TTransportldd {EUsbc = 1, EUsbcsc};
+
+private:
+    CDriveManager* iDriveManager;
+    MTransportBase* iTransport;
+    MProtocolBase* iProtocol;
+    CUsbMassStorageServer* iServer;
+    TMassStorageConfig iConfig;
+    TInt iMaxDrives;
+    TTransportldd iTransportLddFlag;
+    };
 
 #endif //__CUSBMASSSTORAGECONTROLLER_H__

@@ -12,7 +12,7 @@
 //
 // Description:
 // CMassStorageFileSystem implementation.
-// 
+//
 //
 
 /**
@@ -22,51 +22,57 @@
 
 #include <f32file.h>
 #include <f32ver.h>
+#include "drivemanager.h"
 #include "cusbmassstoragecontroller.h"
 #include "cmassstoragefilesystem.h"
 #include "cmassstoragemountcb.h"
-#include "massstoragedebug.h"
 #include "massstorage.h"
+
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "cmassstoragefilesystemTraces.h"
+#endif
+
 
 _LIT(KMsFsyName, "MassStorageFileSystem");
 _LIT(KMsThreadName, "MassStorageThread");
 _LIT(KMsDeadThreadName, "MassStorageDeadThread");
 _LIT(KMsFsysSemName, "MassStorageSemaphore");
-LOCAL_D const TInt KMsFsyMajorVersionNumber=1;
-LOCAL_D const TInt KMsFsyMinorVersionNumber=0;
+static const TInt KMsFsyMajorVersionNumber=1;
+static const TInt KMsFsyMinorVersionNumber=0;
 
 CMassStorageFileSystem::CMassStorageFileSystem()
-	{
-	}
+    {
+    }
 
 CMassStorageFileSystem::~CMassStorageFileSystem()
-	{
-	//Kill the controller thread if it exists
-	delete iMassStorageController;
-	delete iMediaChanged;
-	RThread thread;
-	TInt err = thread.Open(KMsThreadName);
-	if (err == KErrNone)
-		{
-		thread.Kill(1); //Parameter is irrelevant
-		}
-	thread.Close();
-	iMsDrives.Close();
-	}
+    {
+    //Kill the controller thread if it exists
+    delete iMassStorageController;
+    delete iMediaChanged;
+    RThread thread;
+    TInt err = thread.Open(KMsThreadName);
+    if (err == KErrNone)
+        {
+        thread.Kill(1); //Parameter is irrelevant
+        }
+    thread.Close();
+    iMsDrives.Close();
+    }
 
 CMassStorageFileSystem* CMassStorageFileSystem::NewL()
-	{
-	CMassStorageFileSystem*  self = new (ELeave) CMassStorageFileSystem();
-	CleanupStack::PushL(self);
-	self->ConstructL();
-	CleanupStack::Pop(self);
-	return self;
-	}
-	
+    {
+    CMassStorageFileSystem*  self = new (ELeave) CMassStorageFileSystem();
+    CleanupStack::PushL(self);
+    self->ConstructL();
+    CleanupStack::Pop(self);
+    return self;
+    }
+
 void CMassStorageFileSystem::ConstructL()
-	{
-	iMediaChanged = new(ELeave) CArrayFixFlat<TBool>(KMaxDrives);
-	}
+    {
+    iMediaChanged = new(ELeave) CArrayFixFlat<TBool>(KMaxDrives);
+    }
 
 /**
 Set the file system version and name
@@ -74,47 +80,47 @@ Set the file system version and name
 @return Any of the standard Symbian error codes.
 */
 TInt CMassStorageFileSystem::Install()
-	{
-	__PRINT(_L("CMassStorageFileSystem::Install In\n"));
-	iVersion=TVersion(KMsFsyMajorVersionNumber, KMsFsyMinorVersionNumber, KF32BuildVersionNumber);
-	TInt err = SetName(&KMsFsyName);
-	__PRINT(_L("CMassStorageFileSystem::Install Out\n"));
-	return err;
-	}
+    {
+    OstTraceFunctionEntry0(CMASSSTORAGEFILESYSTEM_100);
+    iVersion=TVersion(KMsFsyMajorVersionNumber, KMsFsyMinorVersionNumber, KF32BuildVersionNumber);
+    TInt err = SetName(&KMsFsyName);
+    return err;
+    }
 
 TInt CMassStorageFileSystem::Remove()
-	{
-	__PRINT(_L("CMassStorageFileSystem::Remove In\n"));
-	TInt err = KErrNone;
-	if (iInstalled)
-		{
-		// Try connecting to the server to send a shutdown message.
-		// - If the class controller has a session in use, this will return KErrInUse
-		RUsbMassStorage usbMs;
-		err = usbMs.Connect();
-		if(err == KErrNone)
-			{
-			err = usbMs.Shutdown();
-			usbMs.Close();
+    {
+    OstTraceFunctionEntry0(CMASSSTORAGEFILESYSTEM_101);
+    TInt err = KErrNone;
+    if (iInstalled)
+        {
+        // Try connecting to the server to send a shutdown message.
+        // - If the class controller has a session in use, this will return KErrInUse
+        RUsbMassStorage usbMs;
+        err = usbMs.Connect();
+        if(err == KErrNone)
+            {
+            err = usbMs.Shutdown();
+            usbMs.Close();
 
-			if(err == KErrNone)
-				{
-				User::WaitForRequest(iThreadStat);
-				err = iThreadStat.Int();
-				}
-			else
-				{
-				__PRINT1(_L("CMassStorageFileSystem::Remove Shutdown Error %d\n"),err);
-				}
-			}
-		else
-			{
-			__PRINT1(_L("CMassStorageFileSystem::Remove Connect Error %d\n"),err);
-			}
-		}
-	__PRINT(_L("CMassStorageFileSystem::Remove Out\n"));
-	return(err);
-	}
+            if(err == KErrNone)
+                {
+                User::WaitForRequest(iThreadStat);
+                err = iThreadStat.Int();
+                }
+            else
+                {
+                OstTrace1(TRACE_SMASSSTORAGE_FS, CMASSSTORAGEFILESYSTEM_102,
+                          "Shutdown Error %d", err);
+                }
+            }
+        else
+            {
+            OstTrace1(TRACE_SMASSSTORAGE_FS, CMASSSTORAGEFILESYSTEM_103,
+                      "Connect Error %d", err);
+            }
+        }
+    return(err);
+    }
 
 /**
 Creates a new Mass Storage mount object.
@@ -123,13 +129,13 @@ Creates a new Mass Storage mount object.
 @leave KErrNotReady if the Mass Storage controller is not running.
 */
 CMountCB* CMassStorageFileSystem::NewMountL() const
-	{
-	if (!iRunning)
-		{
-		User::Leave(KErrNotReady);
-		}
-	return CMassStorageMountCB::NewL(iMsDrives);
-	}
+    {
+    if (!iRunning)
+        {
+        User::Leave(KErrNotReady);
+        }
+    return CMassStorageMountCB::NewL(iMsDrives);
+    }
 
 /**
 Sets the media attributes and type in the aInfo parameter to those of the specified drive.
@@ -138,20 +144,19 @@ Sets the media attributes and type in the aInfo parameter to those of the specif
 @param aDriveNumber The number of the drive to get the information from.
 */
 void CMassStorageFileSystem::DriveInfo(TDriveInfo& aInfo, TInt aDriveNumber) const
-	{
-	__PRINT(_L("CMassStorageFileSystem::DriveInfo In\n"));
-	TLocalDriveCapsV2Buf caps;
-	if (!IsValidLocalDriveMapping(aDriveNumber))
-		{
-		return;
-		}
-	(void)GetLocalDrive(aDriveNumber).Caps(caps);   
+    {
+    OstTraceFunctionEntry0(CMASSSTORAGEFILESYSTEM_104);
+    TLocalDriveCapsV2Buf caps;
+    if (!IsValidLocalDriveMapping(aDriveNumber))
+        {
+        return;
+        }
+    (void)GetLocalDrive(aDriveNumber).Caps(caps);
     // error ignored as Caps always returns  valid Media and Drive attributes
-	aInfo.iMediaAtt=caps().iMediaAtt;
+    aInfo.iMediaAtt=caps().iMediaAtt;
     aInfo.iType = ::EMediaNotPresent;  // Media is not available to the file system
-	aInfo.iDriveAtt=caps().iDriveAtt;
-	__PRINT(_L("CMassStorageFileSystem::DriveInfo Out\n"));
-	}
+    aInfo.iDriveAtt=caps().iDriveAtt;
+    }
 
 /**
 Returns a reference to the Mass Storage controller.
@@ -159,65 +164,66 @@ Returns a reference to the Mass Storage controller.
 @return Reference to the Mass Storage controller.
 */
 CUsbMassStorageController& CMassStorageFileSystem::Controller()
-	{
-	return *iMassStorageController;
-	}
+    {
+    return *iMassStorageController;
+    }
 
 /**
 Fill iMsDrives with a mapping of lun->drive number for supported mass storage drives
 
 */
 TInt CMassStorageFileSystem::EnumerateMsDrivesL()
-	{
-	__PRINT(_L("CMassStorageFileSystem::EnumerateMsDrives In\n"));
-	iMsDrives.Reset();
-	TInt driveCount = 0;
+    {
+    OstTraceFunctionEntry0(CMASSSTORAGEFILESYSTEM_105);
+    iMsDrives.Reset();
+    TInt driveCount = 0;
 
-	TLocalDriveCapsV2Buf caps;
-	for (TInt i = EDriveC; i < KMaxDrives; i++)
-		{
-		caps.FillZ();
-		
-		if (IsValidLocalDriveMapping(i))
-			{
-			TInt err = GetLocalDrive(i).Caps(caps);
-			TInt locDrvNum = DriveNumberToLocalDriveNumber(i);
-			__PRINT2(_L("Caps: err=%d, att=%d\n"), err, caps().iDriveAtt);
-			
-			TBool isRemovable = err==KErrNotReady || (caps().iDriveAtt & KDriveAttRemovable);
-			__PRINT2(_L("EnumerateMsDrives: Drive %c: is %sremovable\n"),
-							'A'+i-EDriveA, 
-							isRemovable?_S(""):_S("NOT "));
-							
-			if (isRemovable)
-				{
-				//
-				// STF: Connect to the local drive here.  This gives us the media changed flag, and
-				//		our own TBusLocalDrive object for use by the proxy drive and controller.
-				//
-				TBool& mediaChanged = (*iMediaChanged).ExtendL();
-				mediaChanged = EFalse;
-				TBusLocalDrive* localDrive = new(ELeave) TBusLocalDrive;
-				iLocalDriveForMediaFlag.Append(*localDrive);
-				
-				TInt err=iLocalDriveForMediaFlag[driveCount].Connect(locDrvNum, mediaChanged);
-				if(err == KErrNone)
-					{
-					iMsDrives.Append(i);
-					}
-				driveCount++;
-				}
-			}
-		}
+    TLocalDriveCapsV2Buf caps;
+    for (TInt i = EDriveC; i < KMaxDrives; i++)
+        {
+        caps.FillZ();
 
-	__PRINT1(_L("CMassStorageFileSystem::EnumerateMsDrives Out, %d MS drives found\n"), driveCount);
-	return driveCount;
-	}
+        if (IsValidLocalDriveMapping(i))
+            {
+            TInt err = GetLocalDrive(i).Caps(caps);
+            TInt locDrvNum = DriveNumberToLocalDriveNumber(i);
+            OstTraceExt2(TRACE_SMASSSTORAGE_FS, CMASSSTORAGEFILESYSTEM_106,
+                      "Caps: err=%d, att=%d", err, caps().iDriveAtt);
+
+            TBool isRemovable = err==KErrNotReady || (caps().iDriveAtt & KDriveAttRemovable);
+            OstTraceExt2(TRACE_SMASSSTORAGE_FS, CMASSSTORAGEFILESYSTEM_107,
+                         "EnumerateMsDrives: Drive %c: removable %d", 'A'+i-EDriveA, isRemovable);
+
+            if (isRemovable)
+                {
+                //
+                // STF: Connect to the local drive here.  This gives us the media changed flag, and
+                //      our own TBusLocalDrive object for use by the proxy drive and controller.
+                //
+                TBool& mediaChanged = (*iMediaChanged).ExtendL();
+                mediaChanged = EFalse;
+                TBusLocalDrive* localDrive = new(ELeave) TBusLocalDrive;
+                iLocalDriveForMediaFlag.Append(*localDrive);
+
+                TInt err=iLocalDriveForMediaFlag[driveCount].Connect(locDrvNum, mediaChanged);
+                if(err == KErrNone)
+                    {
+                    iMsDrives.Append(i);
+                    }
+                driveCount++;
+                }
+            }
+        }
+
+    OstTrace1(TRACE_SMASSSTORAGE_FS, CMASSSTORAGEFILESYSTEM_108,
+              "%d MS drives found", driveCount);
+    return driveCount;
+    }
 
 TBool CMassStorageFileSystem::IsExtensionSupported() const
-	{
-	return ETrue;
-	}
+    {
+    return ETrue;
+    }
 
 /**
 Creates a TrapCleanup and ActiveScheduler and initializes the Mass Storage controller.
@@ -226,103 +232,104 @@ Start the ActiveScheduler.
 @return Any of the standard Symbian error codes.
 */
 TInt CMassStorageFileSystem::InitThread()
-	{
-	__PRINT(_L("CMassStorageFileSystem::InitThread In\n"));
-	
-	//Give the thread a name so we can kill it later
-	User::RenameThread(KMsThreadName);
-		
-	CTrapCleanup* cleanup = CTrapCleanup::New();
-	if (cleanup == NULL)
-		{
-		return KErrNoMemory;
-		}
+    {
+    OstTraceFunctionEntry0(CMASSSTORAGEFILESYSTEM_109);
 
-	TRAPD(err, InitThreadL());
-	
-	delete cleanup;
-	
-	__PRINT1(_L("CMassStorageFileSystem::InitThread Out, error=%d\n"), err);
-	return err;
-	}
+    //Give the thread a name so we can kill it later
+    User::RenameThread(KMsThreadName);
+
+    CTrapCleanup* cleanup = CTrapCleanup::New();
+    if (cleanup == NULL)
+        {
+        return KErrNoMemory;
+        }
+
+    TRAPD(err, InitThreadL());
+
+    delete cleanup;
+
+    OstTrace1(TRACE_SMASSSTORAGE_FS, CMASSSTORAGEFILESYSTEM_110,
+              "error=%d", err);
+    return err;
+    }
 
 TInt CMassStorageFileSystem::InitThreadL()
-	{
-	__PRINT(_L("CMassStorageFileSystem::InitThreadL In\n"));
-	
-	RSemaphore gSemThreadReady;
+    {
+    OstTraceFunctionEntry0(CMASSSTORAGEFILESYSTEM_111);
 
-	TInt ret = gSemThreadReady.OpenGlobal(KMsFsysSemName);
+    RSemaphore gSemThreadReady;
 
-	if (ret != KErrNone && ret != KErrAlreadyExists)
-		{
-		User::Leave(ret);
-		}
+    TInt ret = gSemThreadReady.OpenGlobal(KMsFsysSemName);
 
-	// Determine which drives are available for Mass Storage.
-	// (this also creates a local TBusLocalDrive for use by the drive controller)
-	EnumerateMsDrivesL();
+    if (ret != KErrNone && ret != KErrAlreadyExists)
+        {
+        User::Leave(ret);
+        }
 
-	CActiveScheduler* sched = new CActiveScheduler;
-	if (sched == NULL)
-		{
-		gSemThreadReady.Signal();
-		User::Leave(KErrNoMemory);
-		}
-	CleanupStack::PushL(sched);
-	CActiveScheduler::Install(sched);
+    // Determine which drives are available for Mass Storage.
+    // (this also creates a local TBusLocalDrive for use by the drive controller)
+    EnumerateMsDrivesL();
 
-	iMassStorageController = new CUsbMassStorageController;
-	if (iMassStorageController == NULL)
-		{
-		gSemThreadReady.Signal();
-		User::Leave(KErrNoMemory);
-		}
-	
-	__PRINT(_L("CMassStorageFileSystem::InitThread: Creating Mass Storage Controller\n"));
-	TRAPD(err, iMassStorageController->CreateL(iMsDrives));
-	if (err != KErrNone)
-		{
-		gSemThreadReady.Signal();
-		CActiveScheduler::Install(NULL);
-		User::Leave(err);
-		}
-	
-	CleanupStack::Pop(sched);
+    CActiveScheduler* sched = new CActiveScheduler;
+    if (sched == NULL)
+        {
+        gSemThreadReady.Signal();
+        User::Leave(KErrNoMemory);
+        }
+    CleanupStack::PushL(sched);
+    CActiveScheduler::Install(sched);
 
-	iRunning = ETrue;
-	gSemThreadReady.Signal();
-	gSemThreadReady.Close();
-	CActiveScheduler::Start();
+    iMassStorageController = new CUsbMassStorageController;
+    if (iMassStorageController == NULL)
+        {
+        gSemThreadReady.Signal();
+        User::Leave(KErrNoMemory);
+        }
+
+    OstTrace0(TRACE_SMASSSTORAGE_FS, CMASSSTORAGEFILESYSTEM_112,
+              "Creating Mass Storage Controller");
+    TRAPD(err, iMassStorageController->CreateL(iMsDrives));
+    if (err != KErrNone)
+        {
+        gSemThreadReady.Signal();
+        CActiveScheduler::Install(NULL);
+        User::Leave(err);
+        }
+
+    CleanupStack::Pop(sched);
+
+    iRunning = ETrue;
+    gSemThreadReady.Signal();
+    gSemThreadReady.Close();
+    CActiveScheduler::Start();
 
 //========= stop thread ================
-	delete iMassStorageController;
-	iMassStorageController = NULL;
-	TInt i=0;
-	for (;i<iLocalDriveForMediaFlag.Count();i++)
-		{
-		iLocalDriveForMediaFlag[i].Disconnect();
-		}
-	iLocalDriveForMediaFlag.Reset();
-	(*iMediaChanged).Reset();	
-	delete sched;
-	iRunning = EFalse;
-	
-	__PRINT(_L("CMassStorageFileSystem::InitThread Out\n"));
-	return KErrNone;
-	}
-	
+    OstTrace0(TRACE_SMASSSTORAGE_FS, CMASSSTORAGEFILESYSTEM_113,"thread stopping...");
+    delete iMassStorageController;
+    iMassStorageController = NULL;
+    TInt i=0;
+    for (;i<iLocalDriveForMediaFlag.Count();i++)
+        {
+        iLocalDriveForMediaFlag[i].Disconnect();
+        }
+    iLocalDriveForMediaFlag.Reset();
+    (*iMediaChanged).Reset();
+    delete sched;
+    iRunning = EFalse;
+    OstTrace0(TRACE_SMASSSTORAGE_FS, CMASSSTORAGEFILESYSTEM_114,"thread stopped.");
+    return KErrNone;
+    }
+
 /**
 Not supported in Mass Storage file system.
 
 @leave KErrNotReady
 */
 CFileCB* CMassStorageFileSystem::NewFileL() const
-	{
-	__PRINT(_L("CMassStorageFileSystem::NewFileL In\n"));
-	User::Leave(KErrNotReady);
-	return NULL;
-	}
+    {
+    User::Leave(KErrNotReady);
+    return NULL;
+    }
 
 /**
 Not supported in Mass Storage file system.
@@ -330,10 +337,10 @@ Not supported in Mass Storage file system.
 @leave KErrNotReady
 */
 CDirCB* CMassStorageFileSystem::NewDirL() const
-	{
-	User::Leave(KErrNotReady);
-	return NULL;
-	}
+    {
+    User::Leave(KErrNotReady);
+    return NULL;
+    }
 
 /**
 Not supported in Mass Storage file system.
@@ -341,10 +348,10 @@ Not supported in Mass Storage file system.
 @leave KErrNotReady
 */
 CFormatCB* CMassStorageFileSystem::NewFormatL() const
-	{
-	User::Leave(KErrNotReady);
-	return NULL;
-	}
+    {
+    User::Leave(KErrNotReady);
+    return NULL;
+    }
 
 /**
 Not supported in Mass Storage file system.
@@ -352,9 +359,9 @@ Not supported in Mass Storage file system.
 @return KErrNotSupported
 */
 TInt CMassStorageFileSystem::DefaultPath(TDes& /*aPath*/) const
-	{
-	return KErrNotSupported;
-	}
+    {
+    return KErrNotSupported;
+    }
 
 /**
 Not supported in Mass Storage file system.
@@ -362,66 +369,67 @@ Not supported in Mass Storage file system.
 @return KErrNotSupported
 */
 TInt CMassStorageFileSystem::DriveList(TDriveList& /*aList*/) const
-	{
-	return KErrNotSupported;
-	}
+    {
+    return KErrNotSupported;
+    }
 
 /**
 Thread entry point.
 */
-LOCAL_C TInt MsInitThreadFn(TAny* aPtr)
-	{
-	User::SetCritical(User::ESystemCritical);
-	((CMassStorageFileSystem*)aPtr)->InitThread();
-	//Rename the thread so we can create a new one with the same original name later
-	User::RenameThread(KMsDeadThreadName);
-	return KErrNone;
-	}
+static TInt MsInitThreadFn(TAny* aPtr)
+    {
+    User::SetCritical(User::ESystemCritical);
+    ((CMassStorageFileSystem*)aPtr)->InitThread();
+    //Rename the thread so we can create a new one with the same original name later
+    User::RenameThread(KMsDeadThreadName);
+    return KErrNone;
+    }
 
 /**
 Standard entry point for file systems.
 Creates a new file system object and starts a new thread for the Mass Storage controller.
 */
 extern "C" EXPORT_C CFileSystem* CreateFileSystem()
-	{
-	__PRINT(_L("CMassStorageFileSystem::CreateFileSystem In\n"));
-	RSemaphore gSemThreadReady;
-	TInt err = gSemThreadReady.CreateGlobal(KMsFsysSemName, 0);
-	if (err != KErrNone)
-		{
-		__PRINT1(_L("CMassStorageFileSystem::CreateFileSystem Out Semaphore Error %d\n"),err);
-		return NULL;
-		}
+    {
+    OstTraceFunctionEntry0(CMASSSTORAGEFILESYSTEM_115);
+    RSemaphore gSemThreadReady;
+    TInt err = gSemThreadReady.CreateGlobal(KMsFsysSemName, 0);
+    if (err != KErrNone)
+        {
+        OstTrace1(TRACE_SMASSSTORAGE_FS, CMASSSTORAGEFILESYSTEM_116,
+                  "Semaphore CreateGlobal Error %d", err);
+        return NULL;
+        }
 
-	CFileSystem* msFsys = NULL;
-	TRAP(err,  msFsys = CMassStorageFileSystem::NewL());
-	if (err != KErrNone)
-		{
-		__PRINT1(_L("CMassStorageFileSystem::CreateFileSystem Out MSFS Error %d\n"),err);
-		gSemThreadReady.Close();
-		return NULL;
-		}
+    CFileSystem* msFsys = NULL;
+    TRAP(err,  msFsys = CMassStorageFileSystem::NewL());
+    if (err != KErrNone)
+        {
+        OstTrace1(TRACE_SMASSSTORAGE_FS, CMASSSTORAGEFILESYSTEM_117,
+                  "MSFS Error %d",err);
+        gSemThreadReady.Close();
+        return NULL;
+        }
 
-	RThread msThread;
-	__PRINT(_L("CMassStorageFileSystem::CreateFileSystem: Creating Mass Storage thread\n"));
-	err = msThread.Create(KMsThreadName, MsInitThreadFn, KDefaultStackSize, NULL, msFsys);
-	if (err != KErrNone)
-		{
-		__PRINT1(_L("CMassStorageFileSystem::CreateFileSystem Out Thread Error %d\n"),err);
-		gSemThreadReady.Close();
-		return msFsys;
-		}
-	((CMassStorageFileSystem*)msFsys)->iInstalled=ETrue;
+    RThread msThread;
+    OstTrace0(TRACE_SMASSSTORAGE_FS, CMASSSTORAGEFILESYSTEM_118,
+              "Creating Mass Storage thread...");
+    err = msThread.Create(KMsThreadName, MsInitThreadFn, KDefaultStackSize, NULL, msFsys);
+    if (err != KErrNone)
+        {
+        OstTrace1(TRACE_SMASSSTORAGE_FS, CMASSSTORAGEFILESYSTEM_119,
+                  "Thread Error %d", err);
+        gSemThreadReady.Close();
+        return msFsys;
+        }
+    ((CMassStorageFileSystem*)msFsys)->iInstalled=ETrue;
 
 
-	msThread.Logon(((CMassStorageFileSystem*)msFsys)->iThreadStat);
-	msThread.Resume();
-	gSemThreadReady.Wait();
-	gSemThreadReady.Close();
-	msThread.Close();
-	
-	__PRINT(_L("CMassStorageFileSystem::CreateFileSystem Out Clean\n"));
-	
-	return msFsys;
-	}
+    msThread.Logon(((CMassStorageFileSystem*)msFsys)->iThreadStat);
+    msThread.Resume();
+    gSemThreadReady.Wait();
+    gSemThreadReady.Close();
+    msThread.Close();
+    return msFsys;
+    }
 
