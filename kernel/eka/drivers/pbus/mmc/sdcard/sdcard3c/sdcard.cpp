@@ -1482,8 +1482,8 @@ TMMCErr DSDStack::SwitchToHighSpeedModeSM()
 	SMF_STATE(EstCheckController) 	
         OstTrace0( TRACE_INTERNALS, DSDSTACK_SWITCHTOHIGHSPEEDMODESM2, "EstCheckController");
 	  	// Get the clock speed supported by the controller
-		TMMCMachineInfoV4 machineInfo;
-		TMMCMachineInfoV4Pckg machineInfoPckg(machineInfo);
+		TMMCMachineInfoV44 machineInfo;
+		TMMCMachineInfoV44Pckg machineInfoPckg(machineInfo);
 		MachineInfo(machineInfoPckg);
 		
 		if (machineInfo.iVersion >= TMMCMachineInfoV4::EVersion4)

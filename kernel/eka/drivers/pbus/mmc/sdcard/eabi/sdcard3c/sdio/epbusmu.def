@@ -120,7 +120,7 @@ EXPORTS
 	_ZTV7DMMCPsu @ 119 NONAME ; vtable for DMMCPsu
 	_ZTV9DMMCStack @ 120 NONAME ; vtable for DMMCStack
 	_ZN9DMMCStack22ModifyCardCapabilitySMEv @ 121 NONAME ; DMMCStack::ModifyCardCapabilitySM()
-	_ZN9DMMCStack6Dummy1Ev @ 122 NONAME
+	_Z18MMCGetExtInterface18TMMCExtInterfaceIdRP16MMCMExtInterfacePv @ 122 NONAME
 	_ZN9DMMCStack12GetInterfaceENS_12TInterfaceIdERPNS_10MInterfaceE @ 123 NONAME
 	_ZN9DMMCStack11MachineInfoER5TDes8 @ 124 NONAME
 	_ZN9DMMCStack11SetBusWidthEm @ 125 NONAME

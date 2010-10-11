@@ -15,11 +15,17 @@
 // 
 //
 
+// Define this macro to enable access to eMMC BOOT partitions (v4.3 and higher)
+//macro EMMC_BOOT_PARTITION_ACCESS_ENABLED
+
+#include "drivers/elocd.mmh"
+
 target			bgahsmmcptn.dll
 targettype		kext
 
 #include 		"../../kernel/kern_ext.mmh"
 systeminclude	../../include/drivers
+userinclude	traces
 
 source			bgahsmmcptn.cpp
 source			toc.cpp

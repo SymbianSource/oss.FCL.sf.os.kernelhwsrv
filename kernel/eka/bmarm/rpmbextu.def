@@ -1,0 +1,7 @@
+EXPORTS
+	Close__11DRpmbDevice @ 1 NONAME R3UNUSED ; DRpmbDevice::Close(void)
+	Open__11DRpmbDeviceUi @ 2 NONAME R3UNUSED ; DRpmbDevice::Open(unsigned int)
+	SendAccessRequest__11DRpmbDeviceR5TDes8T1 @ 3 NONAME R3UNUSED ; DRpmbDevice::SendAccessRequest(TDes8 &, TDes8 &)
+	"_._11DRpmbDevice" @ 4 NONAME R3UNUSED ; DRpmbDevice::~DRpmbDevice(void)
+	__11DRpmbDevice @ 5 NONAME R3UNUSED ; DRpmbDevice::DRpmbDevice(void)
+

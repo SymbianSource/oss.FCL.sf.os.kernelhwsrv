@@ -56,6 +56,7 @@ PRJ_MMPFILES
 ../../drivers/medmmc/bgahsmmcptn
 ../../drivers/pbus/mmc/epbusmmc
 ../../drivers/medmmc/medmmc
+../../drivers/rpmb/rpmbext
 
 #if !defined(WINS) && !defined(GENERIC_X86)
 ../../drivers/pbus/mmc/sdcard/sdcard3c/epbussd

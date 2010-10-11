@@ -1,0 +1,4 @@
+EXPORTS
+	CreatePhysicalDevice__Fv @ 1 NONAME R3UNUSED ; CreatePhysicalDevice(void)
+	KTRIMEnabled @ 2 NONAME ; (null)
+

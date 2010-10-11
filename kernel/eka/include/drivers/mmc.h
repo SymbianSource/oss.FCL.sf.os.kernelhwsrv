@@ -1,4 +1,4 @@
-// Copyright (c) 1999-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1999-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -12,7 +12,7 @@
 //
 // Description:
 // Generic MMC controller types and standard classes for MMC manipulation
-// This controller follows MMC spec V2.1
+// This controller follows MMC spec V4.4+
 // 
 //
 
@@ -26,6 +26,7 @@
 
 #include <drivers/pbus.h>
 #include <d32locd.h>
+#include <drivers/rpmbpacket.h>
 
 // MMC Card maximum system settings
 
@@ -56,7 +57,10 @@ class TMapping;
 class TMMCPasswordStore;
 class TMMCEraseInfo;
 class TMMCMachineInfoV4;
+class TMMCMachineInfoV44;
+typedef TPckg<TMMCMachineInfo> TMMCardMachineInfoPckg;
 typedef TPckg<TMMCMachineInfoV4> TMMCMachineInfoV4Pckg;
+typedef TPckg<TMMCMachineInfoV44> TMMCMachineInfoV44Pckg;
 
 enum TMMCAppCommand {EMMCNormalCmd,EMMCApplicationCmd};
 
@@ -104,10 +108,36 @@ into standard Symbian OS error values.
 */
 typedef TUint32 TMMCErr;
 
-//		MMC Enums and inline functions
+/**
+A structure to define global parameters for the initialisation of an RPMB object.
+This is required for devices with emmc4.4+
+@internalComponent
+*/
+struct TRpmbDeviceParms
+    {
+    DMMCSocket* iSocketPtr;
+    TUint iCardNumber;
+    };
 
+/*
+ Global counter for number or RPMB partitions. Only one partition per device 
+ */
+GLREF_D TUint NumberOfRpmbs;
+/*
+ Global holder for RPMB parameters
+ */
+GLREF_D TRpmbDeviceParms TheRpmbs[KMaxPBusSockets*4];
 
+GLREF_D TBool RpmbParmsPopulated;
 
+/**
+Max number of RPMB devices
+*/
+const TUint MaxIndexRpmb = 0;
+
+/**
+MMC Enums and inline functions
+*/
 
 /**
 @publishedPartner
@@ -570,6 +600,43 @@ enum TMMCResponseTypeEnum
 
 
 /**
+ * Client InterfaceIDs for GetExtInterface
+ * @publishedPartner
+ * 
+ */
+enum TMMCExtInterfaceId
+    {
+    KInterfaceRpmb
+    };
+
+class MMCMExtInterface
+    {
+public:
+    virtual TInt Func() = 0;
+    };
+
+/**
+Interface class to return information for an RPMB capable device.
+Used for emmc v4.4+
+*/
+
+class MRpmbInfo
+    {
+public:
+    virtual inline TInt RpmbInfo(TUint aDeviceIndex, TRpmbDeviceParms& aParams);
+    };
+
+/**
+ A generic adapter function for returning an interface of specified type
+ The caller should set aInterfacePtr to NULL before calling
+ @aInterfaceId Denotes the required interface to be returned
+ @aInterfacePtr On completion contains an interface of type specified by aInterfaceId
+ @aThis Extends the interface to provide further access to DMMCSession
+ */
+ 
+IMPORT_C TInt MMCGetExtInterface(TMMCExtInterfaceId aInterfaceId, MMCMExtInterface*& aInterfacePtr, TAny* aThis = NULL);
+
+/**
 @publishedPartner
 @released
 
@@ -626,10 +693,11 @@ enum TMMCSessionTypeEnum
 	ECIMLockStack			 =14,
 	ECIMInitStackAfterUnlock =15,
 	ECIMAutoUnlock			 =16,
-	ECIMSleep				 =17
+	ECIMSleep				 =17,
+    ECIMRpmbAccess           =18
 	};
 
-const TUint KMMCMaxSessionTypeNumber  = 18;
+const TUint KMMCMaxSessionTypeNumber  = 19;
 const TUint KMMCMinCustomSession	  = 1024;
 
 const TUint KMMCCmdDirDirBitPosition=	KBit0;			//fixed - dont change it
@@ -639,7 +707,7 @@ const TUint KMMCCmdDirNegate=			KBit6;
 const TUint KMMCCmdDirWBitDirect=		KBit7;
 
 const TUint KMMCCmdReliableWrite	=	KBit31;
-
+const TUint KMMCCmdTrim             =   KBit0;			//Trim command arg
 
 /**
 @publishedPartner
@@ -1463,7 +1531,7 @@ class TExtendedCSD
 /**
 	Extended CSD register class.
 	For more information about this register, see the MultimediaCard System 
-	Specification, Version 4.1+
+	Specification, Version 4.4
 
 	@publishedPartner
 	@released
@@ -1503,10 +1571,28 @@ public:
 		EBusWidthModeIndex = 183,
 		/** Offset of the BOOT_CONFIG field */
 		EBootConfigIndex = 179,
+        /** Offset of the BOOT_CONFIG_PROT field */
+        EBootConfigProtectionIndex = 178,
 		/** Offset of the BOOT_BUS_WIDTH field */
 		EBootBusWidthIndex = 177,
 		/** Offset of the ERASE_GROUP_DEF field */
-		EEraseGroupDefIndex = 175
+		EEraseGroupDefIndex = 175,
+        /** Offset of the BOOT_WP field */
+        EBootAreaWriteProtectionIndex = 173,
+        /** Offset of the USER_WP field */
+        EUserAreaWriteProtectionIndex = 171,
+        /** Offset of the FW_CONFIG field */
+        EFwConfigIndex = 169,
+        /** Offset of the RST_n_FUNCTION field */
+        EHardwareResetFunctionIndex = 162,
+        /** Offset of the PARTITIONS_ATTRIBUTE field */
+        EPartitionsAttributeIndex = 156,
+        /** Offset of the PARTITION_SETTING_COMPLETED field */
+        EPartitionSettingIndex = 155,
+        /** Offset of the GP_SIZE_MULT field */
+
+
+
 		};
 
 	/** 
@@ -1523,6 +1609,17 @@ public:
 		EAccessSizeIndex = 225,
 		/** Offset of the HC_ERASE_GRP_SIZE field */
 		EHighCapacityEraseGroupSizeIndex = 224
+		};
+		
+	/**	This enum defines the values for the Extended CSD Revision register	*/
+	enum TExtendedCSDRev
+		{
+		EExtendedCSDRev1_0 = 0,
+		EExtendedCSDRev1_1 = 1,
+		EExtendedCSDRev1_2 = 2,
+		EExtendedCSDRev1_3 = 3,
+		EExtendedCSDRev1_4 = 4,
+		EExtendedCSDRev1_5 = 5
 		};
 
 	/** This enum defines the bus width encoding used by the BUS_WIDTH field */
@@ -1547,15 +1644,21 @@ public:
 	/**
 	This enum defines the boot config encoding used by the BOOT_CONFIG field
 	*/
-	enum TExtCSDBootConfig
+	enum TExtCSDBootConfig // in v4.4 this is now called PARTITION_CONFIG
 		{
 		ESelectUserArea	 				= 0x00,
 		ESelectBootPartition1 			= 0x01,
 		ESelectBootPartition2 			= 0x02,
+		ESelectRPMB						= 0x03, // R/W Replay Protected Memory Block (RPMB)
+		ESelectGPAPartition1			= 0x04, // Access to General Purpose Area partition 1
+		ESelectGPAPartition2			= 0x05, // Access to General Purpose Area partition 2
+		ESelectGPAPartition3 			= 0x06, // Access to General Purpose Area partition 3
+		ESelectGPAPartition4 			= 0x07, // Access to General Purpose Area partition 4		
 		EEnableBootPartition1forBoot 	= 0x08,
 		EEnableBootPartition2forBoot 	= 0x10,
 		EEnableUserAreaforBoot			= 0x38,
-		EEnableBootAck  				= 0x40
+		EEnableBootAck  				= 0x40,
+		EPartitionTestMode              = 0x100 // Indicates test mode for eMMC partitions
 		};
 
 	/**
@@ -1698,6 +1801,9 @@ public:
 	/** returns the contents of the BOOT_SIZE_MUTLI field */
 	inline TUint BootSizeMultiple() const;
 	
+	/** returns the size of the boot partitions in sectors */
+	inline TUint32 BootSizeInSectors() const;
+	
 	/** returns the contents of the ERASE_TIMEOUT_MULT field */
 	inline TUint EraseTimeoutMultiple() const;
 	
@@ -1719,13 +1825,77 @@ public:
 	/** returns True if the CARD_TYPE field conatains a valid value **/
 	inline TBool IsSupportedCardType() const;
 
+    /** returns the contents of the ERASED_MEM_CONT field */
+    inline TUint ErasedMemoryContent() const;
+
+    /** returns the contents of the BOOT_CONFIG_PROT field */
+    inline TUint BootConfigProt() const;
+
+    /** returns the contents of the BOOT_WP field */
+    inline TUint BootAreaWriteProtectionReg() const;
+
+    /** returns the contents of the USER_WP field */
+    inline TUint UserAreaWriteProtectionReg() const;
+
+    /** returns the contents of the FW_CONFIG field */
+    inline TUint FwConfiguration() const;
+
+    /** returns the RPMB size based on contents of the RPMB_SIZE_MULT field */
+    inline TUint32 RpmbSize() const;
+    
+    /** returns the RPMB size in sectors */
+    inline TUint32 RpmbSizeInSectors() const;
+
+    /** returns the contents of the RST_n_FUNCTION field */
+    inline TUint HwResetFunction() const;
+
+    /** returns the contents of the PARTITIONING_SUPPORT field */
+    inline TUint PartitioningSupport() const;
+
+    /** returns the Max Enhanced Area Size base on the contents of the
+        MAX_ENH_SIZE_MULT field */
+    inline TUint32 MaxEnhancedAreaSize() const;
+
+    /** returns the contents of the PARTITIONS_ATTRIBUTE field */
+    inline TUint PartitionsAttribute() const;
+
+    /** returns the contents of the PARTITION_SETTING_COMPLETED field */
+    inline TUint PartitioningSetting() const;
+
+    /** returns the General purpose partition sizes based on contents of the
+        GP_SIZE_MULT fields */
+    inline TUint64 GeneralPurposePartition1Size() const;
+    inline TUint64 GeneralPurposePartition2Size() const;
+    inline TUint64 GeneralPurposePartition3Size() const;
+    inline TUint64 GeneralPurposePartition4Size() const;
+    
+    /** returns the General Purpose Partition sizes in sectors */
+    inline TUint32 GeneralPurposePartition1SizeInSectors() const;
+    inline TUint32 GeneralPurposePartition2SizeInSectors() const;
+    inline TUint32 GeneralPurposePartition3SizeInSectors() const;
+    inline TUint32 GeneralPurposePartition4SizeInSectors() const;
+
+    /** returns the Enhanced User Data Area Size based on thec contents of the
+        ENH_SIZE_MULT fields */
+    inline TUint64 EnhancedUserDataAreaSize() const;
+
+    /** returns the Enhanced User Data Start Address based on the contents of
+        the ENH_START_ADDR fields */
+    inline TUint32 EnhancedUserDataStartAddress() const;
+
+    /** returns the contents of the SEC_BAD_BLK_MGMNT field */
+    inline TUint BadBlockManagementMode() const;
+
 private:
+    inline TUint64 PartitionSize(TUint8 aMult0, TUint8 aMult1, TUint8 aMult2, TUint32 aMultiplier) const;
+
 	/** 
 	@internalComponent little endian 512 byte field representing extended CSD	
 	*/
 	TUint8 iData[KMMCExtendedCSDLength];
 	};
 
+const TInt KMMCSelectPartitionMask		= KBit0 | KBit1 | KBit2;
 
 //	32 bit MMC card status field (response R1)
 
@@ -1754,6 +1924,7 @@ const TUint32 KMMCStatErrAddressError=	KBit30;
 const TUint32 KMMCStatErrOutOfRange=	KBit31;
 
 const TUint32 KMMCStatErrorMask=		KMMCStatErrOutOfRange	|
+										KMMCStatSwitchError		|
 										KMMCStatErrAddressError	|
 										KMMCStatErrBlockLenError|
 										KMMCStatErrEraseSeqError|
@@ -2113,6 +2284,8 @@ const TUint32 KMMCCmdFlagDMARamValid=   KBit6;  // Memory is DMA'able flag
 const TUint32 KMMCCmdFlagDoubleBuffer=  KBit7;  // The current DT command is double-buffered
 const TUint32 KMMCCmdFlagPhysAddr=		KBit8;  // Address is a physical address
 const TUint32 KMMCCmdFlagReliableWrite=	KBit9;  // Current command is Reliable Write
+const TUint32 KMMCCmdFlagDeleteNotify=  KBit10; // Current command is Delete Notify
+const TUint32 KMMCCmdFlagRpmbIO=        KBit11; // Current command is of RPMB type
 
 const TUint32 KMMCCmdFlagASSPFlags=	KMMCCmdFlagBytesValid	|
 									KMMCCmdFlagTransStopped	|
@@ -2948,6 +3121,11 @@ public:
 	inline void SetupCIMWriteBlock(TMMCArgument aBlockAddr, TUint8* aMemoryP, TUint32 aBlocks = 1);
 	inline void SetupCIMEraseMSector(TMMCArgument aBlockAddr, TUint32 aBlocks = 1);
 	inline void SetupCIMEraseMGroup(TMMCArgument aBlockAddr, TUint32 aBlocks = 1);
+	
+	// RPMB access macros setup
+	inline void SetupRpmbSendRequest(TBool aSetReliableWrite);
+    inline void SetupRpmbReceiveResponse();
+    inline void SetupRpmbSendReadResultRegisterRequest();
 		
 	// Raw commands (must be used in the locked bus state only)
 	// Known commands with or without (with a default) argument
@@ -3008,6 +3186,9 @@ public:
 	
 	inline void PushCommandStack();
 	inline void PopCommandStack();
+	
+	inline void SetPartition(TInt aPartition);
+	inline TInt Partition() const;
 
 	// Methods for double-buffered data transfer:
 	inline TBool RequestMoreData();
@@ -3061,8 +3242,10 @@ private:
 	
 	TMMCCallBack iDataTransferCallback;	// A callback function, used to request more data when performing double-buffering
 
-	TUint32 iSpare[21];				// Spare data (stolen from iCommand)
-
+	TUint32 iSpare[20];					// Spare data (stolen from iCommand)
+	
+	TUint32 iPartition;					// The targetted partition
+	
 	TMMCard* iSavedCardP;			// Saved copy of iCardP
 
 	TMMCStateMachine iMachine;		// State Machine context
@@ -3496,6 +3679,8 @@ protected:
 	inline   TMMCErr ProgramTimerSM();
 	static   TMMCErr GoIdleSMST(TAny* aStackP);
 	inline	 TMMCErr GoIdleSM();
+	static   TMMCErr SwitchPartitionSMST(TAny* aStackP);
+	inline	 TMMCErr SwitchPartitionSM();
 
 	static   TMMCErr SwitchToLowVoltageSMST(TAny* aStackP);
 	
@@ -3523,6 +3708,21 @@ private:
 
 	static   TMMCErr ExecBusTestSMST(TAny* aStackP);
 	inline	 TMMCErr ExecBusTestSM();
+
+	static TMMCErr CIMRpmbAccessSMST(TAny* aStackP);
+    TMMCErr CIMRpmbAccessSM();
+
+	static TMMCErr  CIMRpmbWriteAuthenticationKeySMST(TAny* aStackP);
+    TMMCErr CIMRpmbWriteAuthenticationKeySM();
+
+	static TMMCErr CIMRpmbReadWrCounterSMST(TAny* aStackP);
+    TMMCErr CIMRpmbReadWrCounterSM();
+
+	static TMMCErr CIMRpmbWriteSMST(TAny* aStackP);
+    TMMCErr CIMRpmbWriteSM();
+
+	static TMMCErr CIMRpmbReadSMST(TAny* aStackP);
+    TMMCErr CIMRpmbReadSM();
 
 	enum TBusWidthAndClock
 		{
@@ -3616,11 +3816,6 @@ public:
 	friend class DMMCSession;
 	friend class TMMCardArray;
 
-private:
-    //
-    // Dummy functions to maintain binary compatibility
-    IMPORT_C virtual void Dummy1();
-
 protected:
 	/** 
 	Gets an interface from a derived class
@@ -3651,8 +3846,8 @@ protected:
 
 
 
-
 class TMMCMachineInfo
+
 /**
 	Platform-specific configuration information for the 
 	MultiMediaCard stack.
@@ -3814,9 +4009,6 @@ public:
 
 
 
-
-typedef TPckg<TMMCMachineInfo> TMMCardMachineInfoPckg;
-
 /**
 	Platform-specific configuration information for the 
 	MultiMediaCard stack. Contains information pertinent to 
@@ -3871,6 +4063,43 @@ public:
     */
 	enum TLoVoltagePowerClasses {ELo065mA, ELo070mA, ELo080mA, ELo090mA, ELo100mA, ELo120mA, ELo140mA, ELo160mA, ELo180mA, ELo200mA, ELo250mA };
 	TUint iLowVoltagePowerClass;
+	};
+
+
+
+/**
+	Platform-specific configuration information for the 
+	MultiMediaCard stack. Contains information pertinent to 
+	MMC specification version 4.4
+	
+	An object of this type is passed to the Variant implementation
+	of DMMCStack::MachineInfo(), which should fill the public data
+	members with appropriate information and values.
+
+@internalComponent
+*/
+class TMMCMachineInfoV44 : public TMMCMachineInfoV4
+	{
+public:
+	inline TMMCMachineInfoV44() {memclr(this, sizeof(*this));}
+
+	/**
+	The version of the structure returned by the PSL in a call to 
+	DMMStack::MachineInfo()
+	The fields defined in TMMCMachineInfoV44 are only valid if the 
+	version is EVersion44 or higher
+	*/
+	enum TVersion {EVersion3, EVersion4, EVersion44};
+
+    /**
+    Use iRpmbSlotCount and iRpmbSlotList to define a list of up to
+	four slots for devices containing an RPMB partitions to be 
+	exposed
+    */
+	TUint iRpmbSlotCount;
+	TUint * iRpmbSlotList;
+	
+	TUint8 iSpare[14];
 	};
 
 
@@ -4130,6 +4359,7 @@ public:
 		EMMCInvalidCardNumber			=19,
 		EMMCNotInDfcContext				=20,
 		EMMCAddressCardNotSupported		=21,
+		EMMCInvalidPartitionNumber      =22
 		};
     IMPORT_C static void Panic(TMMCPanic aPanic);
 	friend class DMMCStack;

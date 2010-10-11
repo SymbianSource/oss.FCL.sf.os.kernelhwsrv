@@ -1,4 +1,4 @@
-// Copyright (c) 1999-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1999-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -16,6 +16,9 @@
 //          to change without noticed. Such APIs should therefore not be used
 //          outside the Kernel and Hardware Services package.
 //
+
+const TInt KOneKiloByte = 1024;
+const TInt KSectorSize  = 512;
 
 /**
  
@@ -179,6 +182,132 @@ inline TUint TExtendedCSD::HighCapacityWriteProtectGroupSize() const {return iDa
 inline TUint TExtendedCSD::SleepCurrentVcc() const {return iData[220];}
 inline TUint TExtendedCSD::SleepCurrentVccQ() const {return iData[219];}
 inline TUint TExtendedCSD::SleepAwakeTimeout() const {return iData[217];}
+
+inline TUint TExtendedCSD::ErasedMemoryContent() const {return iData[181];}
+inline TUint TExtendedCSD::BootConfigProt() const {return iData[EBootConfigProtectionIndex];}
+inline TUint TExtendedCSD::BootAreaWriteProtectionReg() const {return iData[EBootAreaWriteProtectionIndex];}
+inline TUint TExtendedCSD::UserAreaWriteProtectionReg() const {return iData[EUserAreaWriteProtectionIndex];}
+inline TUint TExtendedCSD::FwConfiguration() const {return iData[EFwConfigIndex];}
+
+
+inline TUint32 TExtendedCSD::BootSizeInSectors() const
+	{
+		
+	return BootSizeMultiple() * 128 * KOneKiloByte / KSectorSize;
+	}
+
+inline TUint32 TExtendedCSD::RpmbSize() const 
+    {
+    return static_cast<TUint32>(iData[168]);
+    }
+    
+inline TUint32 TExtendedCSD::RpmbSizeInSectors() const 
+	{
+	
+	return RpmbSize() * 128 * KOneKiloByte / KSectorSize;
+	}
+
+inline TUint TExtendedCSD::HwResetFunction() const {return iData[EHardwareResetFunctionIndex];}
+inline TUint TExtendedCSD::PartitioningSupport() const {return iData[160];}
+
+inline TUint32 TExtendedCSD::MaxEnhancedAreaSize() const 
+    {
+    return(iData[157] | 
+           (static_cast<TUint32>(iData[158]) << 8) | 
+           (static_cast<TUint32>(iData[159]) << 16) * 
+           HighCapacityWriteProtectGroupSize());
+    }
+
+inline TUint TExtendedCSD::PartitionsAttribute() const {return iData[EPartitionsAttributeIndex];}
+inline TUint TExtendedCSD::PartitioningSetting() const {return iData[EPartitionSettingIndex];}
+
+inline TUint64 TExtendedCSD::PartitionSize(TUint8 aMult0, TUint8 aMult1, TUint8 aMult2, TUint32 aMultiplier) const
+    {
+    TUint64 size = static_cast<TUint64>(aMult2) * 8 * 8;
+    size +=  static_cast<TUint64>(aMult1) * 8;
+    size += static_cast<TUint64>(aMult0);
+    
+    size *= aMultiplier;
+    return size;
+    }
+
+inline TUint64 TExtendedCSD::GeneralPurposePartition1Size() const 
+    {
+    return PartitionSize(iData[143], 
+                         iData[144], 
+                         iData[145], 
+                         (HighCapacityWriteProtectGroupSize() * HighCapacityEraseGroupSize() * 512 * 1024)
+                        );            
+    }
+    
+inline TUint32 TExtendedCSD::GeneralPurposePartition1SizeInSectors() const 
+	{
+	return I64LOW(GeneralPurposePartition1Size() / KSectorSize);
+	}
+
+inline TUint64 TExtendedCSD::GeneralPurposePartition2Size() const 
+    {
+    return PartitionSize(iData[146], 
+                         iData[147], 
+                         iData[148], 
+                         (HighCapacityWriteProtectGroupSize() * HighCapacityEraseGroupSize() * 512 * 1024)
+                        );
+    }
+    
+inline TUint32 TExtendedCSD::GeneralPurposePartition2SizeInSectors() const 
+	{
+	return I64LOW(GeneralPurposePartition2Size() / KSectorSize);
+	}
+
+    
+inline TUint64 TExtendedCSD::GeneralPurposePartition3Size() const 
+    {
+    return PartitionSize(iData[149], 
+                         iData[150], 
+                         iData[151], 
+                         (HighCapacityWriteProtectGroupSize() * HighCapacityEraseGroupSize() * 512 * 1024)
+                        );
+    }
+
+inline TUint32 TExtendedCSD::GeneralPurposePartition3SizeInSectors() const 
+	{
+	return I64LOW(GeneralPurposePartition3Size() / KSectorSize);
+	}
+
+inline TUint64 TExtendedCSD::GeneralPurposePartition4Size() const 
+    {
+    return PartitionSize(iData[152], 
+                         iData[153], 
+                         iData[154], 
+                         (HighCapacityWriteProtectGroupSize() * HighCapacityEraseGroupSize() * 512 * 1024)
+                        );
+
+    }
+
+inline TUint32 TExtendedCSD::GeneralPurposePartition4SizeInSectors() const 
+	{
+	return I64LOW(GeneralPurposePartition4Size() / KSectorSize);
+	}
+
+inline TUint64 TExtendedCSD::EnhancedUserDataAreaSize() const 
+    {
+    return PartitionSize(iData[140],
+                         iData[141],
+                         iData[142],
+                         HighCapacityWriteProtectGroupSize()
+                        );
+    }
+
+inline TUint32 TExtendedCSD::EnhancedUserDataStartAddress() const 
+    {
+	// note, for HC devices this is in sectors, otherwise in bytes
+    return(iData[136] | 
+           (static_cast<TUint32>(iData[137]) << 8) | 
+           (static_cast<TUint32>(iData[138]) << 16) | 
+           (static_cast<TUint32>(iData[139]) << 24));
+    }
+
+inline TUint TExtendedCSD::BadBlockManagementMode() const {return iData[134];}
 
 // "Modes Segment" of Extended CSD - i.e. modifiable fields
 inline TUint TExtendedCSD::CmdSet() const {return iData[ECmdSetIndex];}
@@ -944,6 +1073,33 @@ inline void DMMCSession::PopCommandStack()
 		DMMCSocket::Panic(DMMCSocket::EMMCCommandStack));
 	}
 
+
+/**
+Sets the target partition access bits
+*/	
+inline void DMMCSession::SetPartition(TInt aPartition) 
+	{
+	TInt partition = aPartition & ~TExtendedCSD::EPartitionTestMode;
+	__ASSERT_DEBUG( 
+		partition >= TExtendedCSD::ESelectUserArea && 
+		partition <= TExtendedCSD::ESelectGPAPartition4, 
+		DMMCSocket::Panic(DMMCSocket::EMMCInvalidPartitionNumber));
+		
+		iPartition = partition;
+		iPartition |= aPartition & TExtendedCSD::EPartitionTestMode;
+	}
+
+
+/**
+ * Returns the target partition
+ * @return The partition access identifier for which this session is destined
+*/	
+inline TInt DMMCSession::Partition() const
+	{
+	return iPartition;
+	}
+
+
 inline TMMCCommandDesc& DMMCSession::Command()
 /**
  * Returns the current command, as referred to by the stack pointer.
@@ -1040,6 +1196,66 @@ inline void DMMCSession::SetupCIMEraseMGroup(TMMCArgument aBlockAddr, TUint32 aB
 	Command().iFlags |= KMMCCmdFlagBlockAddress;
 	iSessionID = ECIMEraseGroup;
 	}
+
+inline void DMMCSession::SetupRpmbSendReadResultRegisterRequest()
+    {
+/**
+ * Sets the session to send an RPMB read result register request to the RPMB partition.
+ *  
+ * Having set-up the session for this operation, the client must invoke, SMF_INVOKES. the 
+ * read write state machine. CIMReadWriteBlocksSM, and the operation will commence. The read
+ * write state machine initiates the result register read sequence by issuing the Write Multiple 
+ * command, CMD25. Prior to this the state machine has issued CMD23 with the block count set 
+ * to 1.
+ *  
+ *  
+ * All other RPMB request packets initiate an RPMB access and are constructed in the security code 
+ * and sent to the stack via the security driver and the RPMB kernel extension DLL. The result 
+ * register read request is used part ways through the program key and data write accesses to find 
+ * out about the success of the particular operation. It is not sent via the RPMB kernel extension 
+ * DLL so it is constructed here. Luckily it is easy to make.
+ */
+    TUint8* readRequestPtr = Command().iDataMemoryP;
+    memset(readRequestPtr, 0, KRpmbOneFramePacketLength);
+    * (readRequestPtr + KRpmbRequestLsbOffset) = KRpmbRequestReadResultRegister;
+    SetupRpmbSendRequest(EFalse);
+    }
+
+inline void DMMCSession::SetupRpmbSendRequest(TBool aSetReliableWrite)
+/**
+ * Sets the session to send an RPMB request to the RPMB partition.
+ *  
+ * Having set-up the session for this operation, the client must invoke, SMF_INVOKES, the 
+ * read write state machine, CIMReadWriteBlocksSM, and the operation will commence. The read
+ * write state machine initiates the result read sequence by issuing the Write Multiple 
+ * command, CMD25. Prior to this the state machine has issued CMD23 with the block count set 
+ * to 1 and optionally, if aSetReliableWrite is TRUE, with the arguement bit (31) set to 1. 
+ */
+    {
+    iSessionID=ECIMWriteMBlock;
+    Command().iCommand = ECmdWriteMultipleBlock;
+    Command().iFlags |= KMMCCmdFlagRpmbIO;
+    if (aSetReliableWrite)
+        {
+        Command().iFlags |= KMMCCmdFlagReliableWrite;
+        }
+    }
+
+inline void DMMCSession::SetupRpmbReceiveResponse()
+/**
+ * Sets the session to receive an RPMB resposne from the RPMB partition.
+ * 
+ * Having set-up the session for this operation, the client must invoke ,SMF_INVOKES. the 
+ * read write state machine, CIMReadWriteBlocksSM, and the operation will commence. The read
+ * write state machine initiates the result read sequence by issuing the Read Multiple 
+ * command, CMD18. Prior to this the state machine has issued CMD23 with the block count set 
+ * to 1.
+ */
+    {
+    iSessionID=ECIMReadMBlock;
+    Command().iCommand = ECmdReadMultipleBlock;
+    Command().iFlags |= KMMCCmdFlagRpmbIO;
+    }
 
 inline void DMMCSession::EnableDoubleBuffering(TUint32 aNumBlocks)
 /**
@@ -1555,3 +1771,34 @@ inline TBool TMMCEraseInfo::EraseGroupCmdsSupported() const
  * @return ETrue if Erase Group commands are supported.
  */
 	{return(iEraseFlags&KMMCEraseGroupCmdsSupported);}
+
+/**
+Return RPMB information.
+@param aDeviceIndex The RPMB specific device index. Must be zero in current implementation
+@param aParams Retrieves the RPMB specific information required for initialisation
+*/
+
+inline TInt MRpmbInfo::RpmbInfo(TUint aDeviceIndex, TRpmbDeviceParms& aParams)
+    {
+	// note that MMCGetExtInterface doesn't hand out an instance of MRpmbInfo until
+	// RpmbParmsPopulated is true so baseport configuration has been read and any 
+	// changes to NumberOfRpmbs and TheRpmbs are flushed
+	if (aDeviceIndex>MaxIndexRpmb)
+		{
+		// currently support just one RPMB capable device at index 0
+		return KErrGeneral;
+		}
+	else
+		{
+		if (NumberOfRpmbs==0)
+			{
+			// baseport configuration doesn't include an RPMB partition
+			return KErrNotSupported;
+			}
+		else
+			{	
+			aParams = TheRpmbs[0];
+			return KErrNone;
+			}
+		}
+	}	

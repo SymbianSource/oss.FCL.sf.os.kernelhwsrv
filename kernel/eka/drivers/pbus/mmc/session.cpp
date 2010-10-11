@@ -36,6 +36,7 @@ EXPORT_C DMMCSession::DMMCSession(const TMMCCallBack& aCallBack)
  * @param aCallBack reference to a TMMCCallback object to be called upon completion.
  */
 	: iCallBack(aCallBack),
+	iPartition(TExtendedCSD::ESelectUserArea), // UDA is the hardware default
 #ifdef __EPOC32__
 	iPollTimer(DMMCSession::PollTimerCallBack, this),
 	iRetryTimer(DMMCSession::RetryTimerCallBack, this),
@@ -419,7 +420,8 @@ EXPORT_C TMMCSMSTFunc DMMCSession::GetMacro(TInt aSessNum) const
 		DMMCStack::NoSessionSMST,					// CIMLockStack is never really executed as a session
 		DMMCStack::InitStackAfterUnlockSMST,
 		DMMCStack::CIMAutoUnlockSMST,
-		DMMCStack::ExecSleepCommandSMST				// CIMSleep
+		DMMCStack::ExecSleepCommandSMST,			// CIMSleep
+		DMMCStack::CIMRpmbAccessSMST				// CIMRpmbAccess
 		};
 
 	if (aSessNum >= 0 && aSessNum < (TInt) KMMCMaxSessionTypeNumber)

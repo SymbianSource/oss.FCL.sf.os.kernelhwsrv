@@ -1,0 +1,36 @@
+// Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/rpmb/bld.inf
+// Kernel and User library test code
+// 
+//
+
+/**
+ @file
+*/
+
+
+PRJ_PLATFORMS
+
+BASEDEFAULT
+
+PRJ_EXPORTS
+
+PRJ_TESTEXPORTS
+
+rpmbtestautoexec.bat \epoc32\rom\e32test\rpmb\autoexec.bat
+
+PRJ_TESTMMPFILES
+
+t_rpmb

@@ -55,6 +55,9 @@ t_rename
 
 t_fsrvbm    support
 t_fsysbm    support
+
+t_trimbm    manual
+
 t_whet      support
 #ifdef ARMCC
 t_whetvfp   support

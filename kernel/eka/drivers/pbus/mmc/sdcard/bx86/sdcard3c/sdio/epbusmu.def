@@ -95,7 +95,7 @@ EXPORTS
 	?RegisterMediaDevices@TMMCardControllerInterface@@MAEHH@Z @ 94 NONAME ; protected: virtual int __thiscall TMMCardControllerInterface::RegisterMediaDevices(int)
 	?RequestAsyncPowerDown@DPBusSocket@@QAEXXZ @ 95 NONAME ; public: void __thiscall DPBusSocket::RequestAsyncPowerDown(void)
 	?ControlIO@DPBusSocket@@UAEHHPAX0@Z @ 96 NONAME ; public: virtual int __thiscall DPBusSocket::ControlIO(int,void *,void *)
-	?Dummy1@DMMCStack@@EAEXXZ @ 97 NONAME ; private: virtual void __thiscall DMMCStack::Dummy1(void)
+	?MMCGetExtInterface@@YAHW4TMMCExtInterfaceId@@AAPAVMMCMExtInterface@@PAX@Z @ 97 NONAME
 	?GetInterface@DMMCStack@@MAEXW4TInterfaceId@1@AAPAVMInterface@1@@Z @ 98 NONAME ; protected: virtual void __thiscall DMMCStack::GetInterface(enum DMMCStack::TInterfaceId,class DMMCStack::MInterface * &)
 	?MachineInfo@DMMCStack@@UAEXAAVTDes8@@@Z @ 99 NONAME ; public: virtual void __thiscall DMMCStack::MachineInfo(class TDes8 &)
 	?SetBusWidth@DMMCStack@@MAEXK@Z @ 100 NONAME ; protected: virtual void __thiscall DMMCStack::SetBusWidth(unsigned long)

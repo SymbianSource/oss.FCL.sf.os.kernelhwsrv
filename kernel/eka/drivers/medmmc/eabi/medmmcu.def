@@ -1,0 +1,8 @@
+EXPORTS
+	_Z20CreatePhysicalDevicev @ 1 NONAME
+	KTRIMEnabled @ 2 NONAME DATA 4
+	_ZTI20DMmcMediaDriverFlash @ 3 NONAME
+	_ZTI28DPhysicalDeviceMediaMmcFlash @ 4 NONAME
+	_ZTV20DMmcMediaDriverFlash @ 5 NONAME
+	_ZTV28DPhysicalDeviceMediaMmcFlash @ 6 NONAME
+

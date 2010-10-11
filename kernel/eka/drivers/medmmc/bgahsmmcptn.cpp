@@ -16,11 +16,13 @@
 //
 
 #include <emmcptn.h>
+#include "mmc.h"
 #include "bgahsmmcptn.h"
+#include "medmmc.h"
 #include "toc.h"
+
 //#define __DEBUG_PARTITIONS_
 //#define __DEBUG_CHECK_PARTITION_
-const TInt    KDiskSectorShift          = 9;
 
 class DBB5PartitionInfo : public DEMMCPartitionInfo
 	{
@@ -39,8 +41,11 @@ protected:
 private:
 	virtual TInt ReadPartition(TUint32 aPtOffset);
 	static void SessionEndCallBack(TAny* aSelf);
-		   void DoSessionEndCallBack();
+	void DoSessionEndCallBack();
 	virtual TInt DecodePartitionInfo();
+	TInt GetPartitionSizeInSectors(TUint aPartition, TUint32& aSize);
+	TInt GetPartitionOffset(TUint32& aPtOffset);
+	TInt SelectNextPartition();
 
 protected:
 	DMediaDriver*	iDriver;
@@ -53,6 +58,7 @@ protected:
 	TUint32 		iPartitionAttributes[KMaxLocalDrives];
 	TBool           iCheckTOC;
 	Toc*            iTocPtr;
+	TUint32			iSelectedPartition;	
 	};
 
 DBB5PartitionInfo::DBB5PartitionInfo()
@@ -88,19 +94,169 @@ TInt DBB5PartitionInfo::Initialise(DMediaDriver* aDriver)
 	TInt bufLen, minorBufLen;
 	stack->BufferInfo(iIntBuf, bufLen, minorBufLen);
 
+	iSelectedPartition = TExtendedCSD::ESelectUserArea;
+	
 	return(KErrNone);
 	}
 
 TInt DBB5PartitionInfo::PartitionInfo(TPartitionInfo& aInfo, const TMMCCallBack& aCallBack)
 	{
 	iPartitionInfo = &aInfo;
+	iPartitionInfo->iPartitionCount = 0;
 	iCallBack = aCallBack;
 
+	// Always check the user partition first
+	iSelectedPartition = TExtendedCSD::ESelectUserArea;
+	iSession->SetPartition(iSelectedPartition);
+
 	// Preferred partition scheme is BB5, which is located in the last block of the media.
-    const TUint32 ptiOffset = (I64LOW(iCard->DeviceSize64() >> KDiskSectorShift)) - KPIOffsetFromMediaEnd;
-	return ReadPartition(ptiOffset);
+    TUint32 ptiOffset;
+    TInt r;
+    do
+    	{
+	    r = GetPartitionOffset(ptiOffset);
+
+	    if(r == KErrNone)
+	    	{
+		    r = ReadPartition(ptiOffset);
+		    return r;
+	    	}
+
+	    r = SelectNextPartition();
+    	}
+    while(r != KErrNotFound);
+
+	return r;
 	}
 	
+// retrieves size in terms of sectors
+TInt DBB5PartitionInfo::GetPartitionSizeInSectors(TUint aPartition, TUint32& aSize)
+	{
+	TInt r = KErrNone;
+	
+	TUint32 size = 0;
+	
+	const TExtendedCSD& extCsd = iCard->ExtendedCSD();
+	
+	switch(aPartition)
+		{
+		case TExtendedCSD::ESelectUserArea:
+			{
+			size = (TUint32)(iCard->DeviceSize64() / KSectorSize);
+			
+			if(extCsd.ExtendedCSDRev() >= TExtendedCSD::EExtendedCSDRev1_5)
+				{
+				TUint32 otherPartitionsSize = 
+					extCsd.GeneralPurposePartition1SizeInSectors()
+					+ extCsd.GeneralPurposePartition2SizeInSectors()
+					+ extCsd.GeneralPurposePartition3SizeInSectors()
+					+ extCsd.GeneralPurposePartition4SizeInSectors();
+					
+					__ASSERT_DEBUG(size >= otherPartitionsSize, Kern::Fault("DBB5PartitionInfo size mismatch", __LINE__));
+					size -= otherPartitionsSize;
+				}
+			}
+			break;
+		case TExtendedCSD::ESelectBootPartition1:
+		case TExtendedCSD::ESelectBootPartition2:
+			size = (extCsd.ExtendedCSDRev() < TExtendedCSD::EExtendedCSDRev1_3) ? 
+				0 : extCsd.BootSizeInSectors();
+			break;
+		case TExtendedCSD::ESelectRPMB:
+			size = (extCsd.ExtendedCSDRev() < TExtendedCSD::EExtendedCSDRev1_5) ? 
+				0 : extCsd.RpmbSizeInSectors();
+			break;
+		case TExtendedCSD::ESelectGPAPartition1:
+			size = (extCsd.ExtendedCSDRev() < TExtendedCSD::EExtendedCSDRev1_5) ? 
+				0 : extCsd.GeneralPurposePartition1SizeInSectors();
+			break;
+		case TExtendedCSD::ESelectGPAPartition2:
+			size = (extCsd.ExtendedCSDRev() < TExtendedCSD::EExtendedCSDRev1_5) ? 
+				0 : extCsd.GeneralPurposePartition2SizeInSectors();
+			break;
+		case TExtendedCSD::ESelectGPAPartition3:
+			size = (extCsd.ExtendedCSDRev() < TExtendedCSD::EExtendedCSDRev1_5) ? 
+				0 : extCsd.GeneralPurposePartition3SizeInSectors();
+			break;
+		case TExtendedCSD::ESelectGPAPartition4:
+			size = (extCsd.ExtendedCSDRev() < TExtendedCSD::EExtendedCSDRev1_5) ? 
+				0 : extCsd.GeneralPurposePartition4SizeInSectors();
+			break;
+		default:
+			// unknown partition
+			size = 0;
+			r = KErrNotSupported;
+			break;
+		}
+
+	aSize = size;	
+	return r;
+	}
+	
+TInt DBB5PartitionInfo::GetPartitionOffset(TUint32& aPtiOffset)
+	{
+	TInt r = GetPartitionSizeInSectors(iSelectedPartition, aPtiOffset);
+		
+	if((r != KErrNone) || (aPtiOffset == 0))
+		{
+		// error reading or partition not supported, skip
+		r = KErrNotSupported;
+		}
+	else
+		{			
+		// need to determine correct end of the partition
+		aPtiOffset -= KPIOffsetFromMediaEnd;
+		}
+		
+	return r;
+	}
+	
+TInt DBB5PartitionInfo::SelectNextPartition()
+	{
+	TExtendedCSD extCsd = iCard->ExtendedCSD();
+	TUint maxPartition = TExtendedCSD::ESelectUserArea;
+	
+	if(extCsd.ExtendedCSDRev() >= TExtendedCSD::EExtendedCSDRev1_5)
+		{
+		// v4.4 supports UDA, 2x BOOT, RPMB and 4x GPAP partitions
+		maxPartition = TExtendedCSD::ESelectGPAPartition4;
+		}
+#ifdef EMMC_BOOT_PARTITION_ACCESS_ENABLED
+	else if(extCsd.ExtendedCSDRev() >= TExtendedCSD::EExtendedCSDRev1_3)
+		{
+		// v4.3 supports up to two BOOT partitions
+		maxPartition = TExtendedCSD::ESelectBootPartition2;
+		}
+#endif // EMMC_BOOT_PARTITION_ACCESS_ENABLED
+
+	++iSelectedPartition;
+	
+	// skip through to GPAP1 if either the currently selected partition is RPMB or
+	// if it is one of the BOOT partitions and boot partition access is not enabled
+	if((iSelectedPartition == TExtendedCSD::ESelectRPMB)
+#ifndef EMMC_BOOT_PARTITION_ACCESS_ENABLED 
+		|| (iSelectedPartition == TExtendedCSD::ESelectBootPartition1)
+		|| (iSelectedPartition == TExtendedCSD::ESelectBootPartition2)
+#endif	   
+		)
+		{
+		iSelectedPartition = TExtendedCSD::ESelectGPAPartition1;
+		}
+
+	TInt r = KErrNone;
+	if(iSelectedPartition > maxPartition)
+		{
+		r = KErrNotFound; // no more partitions to be checked
+		}
+	else
+		{
+		iSession->SetPartition(iSelectedPartition);
+		}
+		
+	return r;	
+	}	
+	
+// returns KErrCompletion on success after having checked all partitions
 TInt DBB5PartitionInfo::ReadPartition(TUint32 aPtOffset)
     {
 	// If media driver is persistent (see EMediaDriverPersistent)
@@ -167,14 +323,72 @@ void DBB5PartitionInfo::DoSessionEndCallBack()
 
 	TInt r = iSession->EpocErrorCode();
 
+	
+	TInt& partitionCount = iPartitionInfo->iPartitionCount;
+
 	if (r == KErrNone)
 		r = DecodePartitionInfo();
 
-	if (!iCheckTOC)
-	    {        
-	    iDriver->PartitionInfoComplete(r == KErrNone ? r : KErrNotReady);
-	    }
+	if (iCheckTOC)
+		{
+		//BB5 table not found need to check for TOC in this partition before continuing
+		if (r!=KErrNone)
+			{
+			iDriver->PartitionInfoComplete(KErrNotReady);
+			}
+		return;
+		}
+
+
+	if(r == KErrNone)
+		{
+		// check next partition(s) for BB5
+		TUint32 ptiOffset = 0;
+	
+		r = SelectNextPartition();
+		while(r != KErrNotFound)
+			{
+			if(r == KErrNone)
+				r = GetPartitionOffset(ptiOffset);
+				
+			if(r == KErrNone)
+				{
+				r = ReadPartition(ptiOffset);
+				if(r != KErrNone)
+					break;
+
+
+				return;
+				}
+
+			r = SelectNextPartition();
+			}
+
+		
+		// end of partitions - reinterpret error code
+		if(r != KErrNotFound)
+			{
+			__KTRACE_OPT(KPBUSDRV, Kern::Printf("Mmc:dsc: ReadPartition() failed r=%d!", r));
+			r = KErrCorrupt;
+			}
+		else if(partitionCount == 0)
+			{
+			__KTRACE_OPT(KPBUSDRV, Kern::Printf("Mmc:dsc: No supported partitions found!"));
+			r = KErrCorrupt;
+			}
+		else
+			r = KErrCompletion;
+		}
+
+	// Notify medmmc that partitioninfo is complete
+	iCallBack.CallBack();
+
+	// All potential partitions checked - KErrCompletion
+	// indicates that there are no more partitions to check
+	r = (r == KErrCompletion) ? KErrNone : KErrNotReady;
+	iDriver->PartitionInfoComplete(r);
 	}
+
 
 TInt DBB5PartitionInfo::DecodePartitionInfo()
 //
@@ -182,9 +396,9 @@ TInt DBB5PartitionInfo::DecodePartitionInfo()
 //
 	{
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">Mmc:PartitionInfo()"));
-	TUint partitionCount = iPartitionInfo->iPartitionCount = 0;
+	TInt& partitionCount = iPartitionInfo->iPartitionCount;
+    TInt r = KErrNone;
 
-	
 	if (iCheckTOC)
 	    {
         // Try utilising the TOC (Table Of Contents) partitioning scheme 
@@ -199,7 +413,6 @@ TInt DBB5PartitionInfo::DecodePartitionInfo()
         STocItem item;
         iTocPtr = reinterpret_cast<Toc*>(&iIntBuf[0]);
         iTocPtr->iTocStartSector = KTocStartSector;
-        TInt r = KErrNone;
 
 // USER Drive - Only 1        
         r = iTocPtr->GetItemByName(KTocUserName, item); 
@@ -262,7 +475,7 @@ TInt DBB5PartitionInfo::DecodePartitionInfo()
             }
         
 // SWAP Partition - Only 1        
-        r = iTocPtr->GetItemByName(KTocSwap, item); 
+        r = iTocPtr->GetItemByName(KTocSwap, item);
         if (KErrNone == r)
             {
             __KTRACE_OPT(KPBUSDRV, Kern::Printf("[MD  :   ] (%11s) in TOC found : Start addr = 0x%X  Size = 0x%X", item.iFileName, item.iStart, item.iSize));
@@ -283,6 +496,7 @@ TInt DBB5PartitionInfo::DecodePartitionInfo()
             }
 #endif //__DEBUG_PARTITIONS_
         
+		r = KErrNone;
         iCheckTOC = EFalse;
 	    }
 	else
@@ -324,12 +538,12 @@ TInt DBB5PartitionInfo::DecodePartitionInfo()
                         {                   
                         iPartitionInfo->iEntry[partitionCount].iPartitionType	  = partitionType;
                         iPartitionAttributes[partitionCount]                      = partitionTable->iPartitions[index].iPartition_attributes;
-                        
+	                    static_cast<DMmcMediaDriverFlash *>(iDriver)->SetEMmcPartitionMapping(partitionCount, iSelectedPartition);
                         // ROM/ROFS partitions have a BB5 checksum header that must be offset for the Symbian OS.
-                        const TUint32 KstartOffset = ((KPartitionTypeROM == partitionType) || (KPartitionTypeRofs == partitionType) || (KPartitionTypeEmpty == partitionType)) ? KBB5HeaderSizeInSectors : 0;
+						const TUint32 KStartOffset = ((KPartitionTypeROM == partitionType) || (KPartitionTypeRofs == partitionType) || (KPartitionTypeEmpty == partitionType)) ? KBB5HeaderSizeInSectors : 0;
                         
-                        iPartitionInfo->iEntry[partitionCount].iPartitionBaseAddr = ((Int64) partitionTable->iPartitions[index].iStart_sector + KstartOffset) << KDiskSectorShift;
-                        iPartitionInfo->iEntry[partitionCount].iPartitionLen      = ((Int64) partitionTable->iPartitions[index].iSize - KstartOffset) << KDiskSectorShift;
+                        iPartitionInfo->iEntry[partitionCount].iPartitionBaseAddr = ((Int64) partitionTable->iPartitions[index].iStart_sector + KStartOffset) << KDiskSectorShift;
+                        iPartitionInfo->iEntry[partitionCount].iPartitionLen      = ((Int64) partitionTable->iPartitions[index].iSize - KStartOffset) << KDiskSectorShift;
         
                     	__KTRACE_OPT(KPBUSDRV, Kern::Printf("Registering partition #%d:", partitionCount));
                     	__KTRACE_OPT(KPBUSDRV, Kern::Printf("partitionCount....: %d", partitionCount));
@@ -339,6 +553,7 @@ TInt DBB5PartitionInfo::DecodePartitionInfo()
                     	__KTRACE_OPT(KPBUSDRV, Kern::Printf("iPartitionLen.....: 0x%lx (sectors: %d)", iPartitionInfo->iEntry[partitionCount].iPartitionLen, iPartitionInfo->iEntry[partitionCount].iPartitionLen >> KDiskSectorShift));
                     	__KTRACE_OPT(KPBUSDRV, Kern::Printf("iPartitionType....: %d", iPartitionInfo->iEntry[partitionCount].iPartitionType));
                     	__KTRACE_OPT(KPBUSDRV, Kern::Printf("iPartitionAttribs.: 0x%x", iPartitionAttributes[partitionCount]));
+						__KTRACE_OPT(KPBUSDRV, Kern::Printf("iPartitionMapping.: 0x%x", static_cast<DMmcMediaDriverFlash *>(iDriver)->GetEMmcPartitionMapping(partitionCount)));
                     	__KTRACE_OPT(KPBUSDRV, Kern::Printf(" "));
         
                         partitionCount++;
@@ -361,24 +576,43 @@ TInt DBB5PartitionInfo::DecodePartitionInfo()
 	if(partitionCount == 0)
 		{
 		__KTRACE_OPT(KPBUSDRV, Kern::Printf("Mmc: No supported partitions found!"));
-		return KErrCorrupt;
+		// No Supported partitions found on this physical partition
+		return KErrNone;
 		}
-#ifdef __DEBUG_CHECK_PARTITION_	
-	else
+		
+#ifdef __DEBUG_CHECK_PARTITION_			
+	// Validate partition address boundaries
+	TUint32 eMmcPartitionSizeInSectors = 0;
+	if(r == KErrNone)
 		{
-		// at least one entry for a supported partition found
-		const TInt64 deviceSize = iCard->DeviceSize64();
-		TPartitionEntry& part = iPartitionInfo->iEntry[partitionCount - 1];
-
-		// Check that the card address space boundary is not exceeded by the last partition
-		if(part.iPartitionBaseAddr + part.iPartitionLen > deviceSize)
+		// At least one entry for a supported partition found
+		r = GetPartitionSizeInSectors(iSelectedPartition, eMmcPartitionSizeInSectors);
+		
+		if(r != KErrNone)
 			{
-			__KTRACE_OPT(KPBUSDRV, Kern::Printf("Mmc: MBR partition exceeds card memory space"));
-			return KErrCorrupt;
+			__KTRACE_OPT(KPBUSDRV, Kern::Printf("Mmc: Could not retrieve size for eMMC partition 0x%02X", iSelectedPartition));
+			r = KErrCorrupt;
 			}
-
-		// Go through all partition entries and check boundaries
-		for(TInt i = partitionCount - 1; i > 0; i--)
+		}
+		
+	if(r == KErrNone)
+		{
+		TUint64 eMmcPartitionSize = eMmcPartitionSizeInSectors * KSectorSize;
+		
+		TPartitionEntry& part = iPartitionInfo->iEntry[partitionCount - 1];
+	
+		// Check that the eMmcPartition address space boundary is not exceeded by the last partition
+		if(part.iPartitionBaseAddr + part.iPartitionLen > eMmcPartitionSize)
+			{
+			__KTRACE_OPT(KPBUSDRV, Kern::Printf("Mmc: Partition #%d exceeds eMmc address space", partitionCount));
+			r = KErrCorrupt;
+			}
+		}
+		
+	if(r == KErrNone)
+		{
+		// Go through all BB5 partition entries on this eMMC partition and check boundaries
+		for(TInt i = partitionCount - 1; i > iPartitionInfo->iPartitionCount; i--)
 			{
 			const TPartitionEntry& curr = iPartitionInfo->iEntry[i];
 			TPartitionEntry& prev = iPartitionInfo->iEntry[i-1];
@@ -387,20 +621,20 @@ TInt DBB5PartitionInfo::DecodePartitionInfo()
 			if(curr.iPartitionBaseAddr < (prev.iPartitionBaseAddr + prev.iPartitionLen))
 				{
 				__KTRACE_OPT(KPBUSDRV, Kern::Printf("Mmc: Overlapping partitions - check #%d", i));
-				return KErrCorrupt;
+				r = KErrCorrupt;
 				}
 			}
 		}
 #endif // _DEBUG_CHECK_PARTITION_
-
-	iPartitionInfo->iPartitionCount = partitionCount;
-	iPartitionInfo->iMediaSizeInBytes = iCard->DeviceSize64();
-
-	//Notify medmmc that partitioninfo is complete.
-	iCallBack.CallBack();
+		
+	if(r == KErrNone)
+		{
+		iPartitionInfo->iPartitionCount = partitionCount;
+		iPartitionInfo->iMediaSizeInBytes = iCard->DeviceSize64();
+		}
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<Mmc:PartitionInfo (C:%d)", partitionCount));
-	return KErrNone;
+	return r;
 	}
 
 

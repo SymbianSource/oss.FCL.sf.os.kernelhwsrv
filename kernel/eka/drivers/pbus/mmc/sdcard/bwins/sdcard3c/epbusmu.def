@@ -95,7 +95,7 @@ EXPORTS
 	?InitStackAfterUnlockSM@DMMCStack@@MAEKXZ @ 94 NONAME ; protected: virtual unsigned long __thiscall DMMCStack::InitStackAfterUnlockSM(void)
 	?RegisterMediaDevices@TMMCardControllerInterface@@MAEHH@Z @ 95 NONAME ; protected: virtual int __thiscall TMMCardControllerInterface::RegisterMediaDevices(int)
 	?ModifyCardCapabilitySM@DMMCStack@@MAEKXZ @ 96 NONAME ; unsigned long DMMCStack::ModifyCardCapabilitySM(void)
-	?Dummy1@DMMCStack@@EAEXXZ @ 97 NONAME ; void DMMCStack::Dummy1(void)
+	?MMCGetExtInterface@@YAHW4TMMCExtInterfaceId@@AAPAVMMCMExtInterface@@PAX@Z @ 97 NONAME ; int MMCGetExtInterface(enum TMMCExtInterfaceId, class MMCMExtInterface * &, void *)
 	?GetInterface@DMMCStack@@MAEXW4TInterfaceId@1@AAPAVMInterface@1@@Z @ 98 NONAME ; protected: virtual void __thiscall DMMCStack::GetInterface(enum DMMCStack::TInterfaceId,class DMMCStack::MInterface * &)
 	?MachineInfo@DMMCStack@@UAEXAAVTDes8@@@Z @ 99 NONAME ; public: virtual void __thiscall DMMCStack::MachineInfo(class TDes8 &)
 	?SetBusWidth@DMMCStack@@MAEXK@Z @ 100 NONAME ; protected: virtual void __thiscall DMMCStack::SetBusWidth(unsigned long)

@@ -95,7 +95,7 @@ EXPORTS
 	InitStackAfterUnlockSM__9DMMCStack @ 94 NONAME ; DMMCStack::InitStackAfterUnlockSM(void)
 	RegisterMediaDevices__26TMMCardControllerInterfacei @ 95 NONAME ; TMMCardControllerInterface::RegisterMediaDevices(int)
 	ModifyCardCapabilitySM__9DMMCStack @ 96 NONAME R3UNUSED ; DMMCStack::ModifyCardCapabilitySM(void)
-	Dummy1__9DMMCStack @ 97 NONAME R3UNUSED ; DMMCStack::Dummy1(void)
+	MMCGetExtInterface__F18TMMCExtInterfaceIdRP16MMCMExtInterfacePv @ 97 NONAME
 	GetInterface__9DMMCStackQ29DMMCStack12TInterfaceIdRPQ29DMMCStack10MInterface @ 98 NONAME R3UNUSED ; DMMCStack::GetInterface(DMMCStack::TInterfaceId, DMMCStack::MInterface *&)
 	MachineInfo__9DMMCStackR5TDes8 @ 99 NONAME R3UNUSED ; DMMCStack::MachineInfo(TDes8 &)
 	SetBusWidth__9DMMCStackUl @ 100 NONAME R3UNUSED ; DMMCStack::SetBusWidth(unsigned long)

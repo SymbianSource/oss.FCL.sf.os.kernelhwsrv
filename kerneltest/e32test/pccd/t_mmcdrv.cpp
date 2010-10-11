@@ -1,4 +1,4 @@
-// Copyright (c) 1996-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1996-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -13,9 +13,11 @@
 // Description:
 // e32test\pccd\t_mmcdrv.cpp
 // Test the MultiMediaCard (MMC) media driver
-// Spare Test case Numbers 0513-0519
+// Spare Test case Numbers 0515-0519
 // 
 //
+
+#define __E32TEST_EXTENSION__
 
 #include "../mmu/d_sharedchunk.h"
 #include <e32test.h>
@@ -1860,8 +1862,122 @@ void TestMediaChange()
 	test(SecThreadChangeFlag==EFalse); // Closed 2nd thread so shouldn't have been updated
 	}
 	
+// Helper function for eMMC partition switching test - writes test data
+TInt EMmcPartitionWriteTestData(const TInt aDriveNumber, const TChar aDataPattern)
+	{
+	TBusLocalDrive drv;
+	TBool chg(EFalse);
+
+	TInt r = drv.Connect(aDriveNumber, chg);
+	test(r == KErrNone);
+
+	TBuf8<KDiskSectorSize> buffer;
+
+	// write pattern to sector 0
+	buffer.Fill(aDataPattern, KDiskSectorSize);
+	r = drv.Write((TInt64) 0, buffer);
+	
+	return r;
+	}
+	
+// Helper function for eMMC partition switching test - reads test data
+TInt EMmcPartitionReadTestData(const TInt aDriveNumber, TDes8& aData)
+	{
+	// read pattern from sector 0
+	TBusLocalDrive drv;
+	TBool chg(EFalse);
+	
+	TInt r = drv.Connect(aDriveNumber, chg);	
+	test(r == KErrNone);
+	
+	aData.Fill(0x00, aData.MaxSize());
+	r = drv.Read((TInt64) 0, aData.MaxSize(), aData);
+
+    drv.Disconnect();
+    return r;
+	}
+	
+// Helper function for eMMC partition switching test - compares data to expected pattern
+TInt EMmcPartitionReadAndCompareTestData(const TInt aDriveNumber, const TChar aExpectedPattern)
+	{	
+	TBuf8<KDiskSectorSize> actual;
+	TBuf8<KDiskSectorSize> expected;
+	TInt r = EMmcPartitionReadTestData(aDriveNumber, actual);
+	test(r == KErrNone);
+	
+	expected.Fill(aExpectedPattern, KDiskSectorSize);
+	
+	if(expected.Compare(actual) != 0)
+		{
+		test.Printf(_L("ERROR: Comparison failed. Expected:\n"));
+		DumpBuffer(expected);			
+		test.Printf(_L("\nActual:\n"));
+		DumpBuffer(actual);
+		r = KErrGeneral;
+		}
+		
+	return r;
+	}
+	
+
+		
+/**
+@SYMTestCaseID 0514 (taken from spare test case IDs)
+@SYMTestCaseDesc Test low-level partition switching capability
+@SYMTestPriority normal
+
+@SYMTestActions
+	a) Precondition: Valid partitions have been flashed to BOOT 1 and BOOT 2, 
+	   these have to be mapped correctly in variantmediadef.h
+	b) Write Data Pattern 1 to BOOT 1
+	c) Write Data Pattern 2 to BOOT 2
+	d) Read data from BOOT 1 and compare to DP1 - test passes if data matches
+	e) Write Data Pattern 3 to BOOT 1, at the same offset as in b)
+	f) Read data from BOOT 2 and compare to DP2 - test passes if data matches
+
+@SYMTestExpectedResults All tests must pass	
+*/
+void TestPartitionSwitching()
+	{
+	const TInt  KDriveBoot1      = 4; // see variantmediadef.h
+	const TInt  KDriveBoot2      = 5;
+	const TChar KDataPattern1    = 0xD1;
+	const TChar KDataPattern2    = 0xD2;
+	const TChar KDataPattern3    = 0xD3;
+	
+	test.Start(_L("eMMC partition switching"));
+
+	// Write data data pattern 1 to boot1
+	test.Printf(_L("Writing Data Pattern 1 to BOOT 1\n"));
+	TInt r = EMmcPartitionWriteTestData(KDriveBoot1, KDataPattern1);
+	test(r == KErrNone);
+
+	// Write data data pattern 2 to boot2
+	test.Printf(_L("Writing Data Pattern 2 to BOOT 2\n"));
+	r = EMmcPartitionWriteTestData(KDriveBoot2, KDataPattern2);
+	test(r == KErrNone);
+
+	// Read back data from boot 1 and compare it to previously written pattern
+	test.Printf(_L("Reading from BOOT 1\n"));
+	r = EMmcPartitionReadAndCompareTestData(KDriveBoot1, KDataPattern1);
+	test(r == KErrNone);
+
+	// Write data data pattern 3 to boot1
+	test.Printf(_L("Writing Data Pattern 3 to BOOT 1\n"));
+	r = EMmcPartitionWriteTestData(KDriveBoot1, KDataPattern3);
+	test(r == KErrNone);
+	
+	// Read back data from boot 2 and compare it to previously written pattern
+	test.Printf(_L("Reading from BOOT 2\n"));
+	r = EMmcPartitionReadAndCompareTestData(KDriveBoot2, KDataPattern2);
+	test(r == KErrNone);
+	
+	test.End();
+	}
 
 //// End of Test 
+
+
 void Format()
 //
 // Format current drive
@@ -2203,39 +2319,53 @@ GLDEF_C TInt E32Main()
 	goto doorTest;
 #endif
 	
+	if(ManualMode)
+		{
+		// Only test in manual mode, as the rom needs special prep anyway (drive registration 
+		// in variantmediadef.h and flashing of BB5 partition info structures using mmcloader)
+		// It is possible that as a result of the changes to variantmediadef.h the 
+		// drive-number-to-letter mapping in the appropriate estart.txt may have to be adjusted 
+		// as well
+		TestPartitionSwitching();
+		}
+	
 	for(TInt pass = 0; pass < TMMCDrive::EMaxTestModes; pass++) 
 		{
 		TInt r = KErrNone;
+		
 		switch (pass)
 			{			
-			case 0 : r = TheMmcDrive.SetTestMode(TMMCDrive::ETestPartition); break;
-			case 1 : 
+			case TMMCDrive::ETestPartition : 
+				r = TheMmcDrive.SetTestMode(TMMCDrive::ETestPartition); 
+				break;
+				
+			case TMMCDrive::ETestWholeMedia : 
 				// don't trash partition table in automated mode because...
 				// cards in test rigs have often got deliberately small partition sizes to testing (!)
 				if (!ManualMode)
 					continue;
 				r = TheMmcDrive.SetTestMode(TMMCDrive::ETestWholeMedia); 
 				break; 
-			case 2 : {
-						r = TheMmcDrive.SetTestMode(TMMCDrive::ETestSharedMemory);
-						AllocateSharedBuffers(EFalse,EFalse);
-						break;
-					 }
-			case 3 : {
-						r = TheMmcDrive.SetTestMode(TMMCDrive::ETestSharedMemoryCache); 
-						AllocateSharedBuffers(EFalse, ETrue);
-						break;
-					 }
-			case 4 : {
-						r = TheMmcDrive.SetTestMode(TMMCDrive::ETestSharedMemoryFrag);
-						AllocateSharedBuffers(ETrue, EFalse);
-						break;
-			         }
-			default: {
-						r = TheMmcDrive.SetTestMode(TMMCDrive::ETestSharedMemoryFragCache);
-						AllocateSharedBuffers(ETrue, ETrue);
-						break;
-			         }
+				
+			case TMMCDrive::ETestSharedMemory :
+				r = TheMmcDrive.SetTestMode(TMMCDrive::ETestSharedMemory);
+				AllocateSharedBuffers(EFalse,EFalse);
+				break;
+				
+			case TMMCDrive::ETestSharedMemoryCache :
+				r = TheMmcDrive.SetTestMode(TMMCDrive::ETestSharedMemoryCache); 
+				AllocateSharedBuffers(EFalse, ETrue);
+				break;
+				
+			case TMMCDrive::ETestSharedMemoryFrag :
+				r = TheMmcDrive.SetTestMode(TMMCDrive::ETestSharedMemoryFrag);
+				AllocateSharedBuffers(ETrue, EFalse);
+				break;
+				
+			default:
+				r = TheMmcDrive.SetTestMode(TMMCDrive::ETestSharedMemoryFragCache);
+				AllocateSharedBuffers(ETrue, ETrue);
+				break;
 			}
 
 

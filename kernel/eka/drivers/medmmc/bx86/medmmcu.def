@@ -1,0 +1,4 @@
+EXPORTS
+	?CreatePhysicalDevice@@YAPAVDPhysicalDevice@@XZ @ 1 NONAME ; class DPhysicalDevice * CreatePhysicalDevice(void)
+	?KTRIMEnabled@@3IB @ 2 NONAME ; unsigned int const KTRIMEnabled
+

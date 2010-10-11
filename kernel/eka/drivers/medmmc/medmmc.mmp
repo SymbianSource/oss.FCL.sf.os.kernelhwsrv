@@ -1,4 +1,4 @@
-// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1998-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -28,12 +28,19 @@ targettype		pdd
 //Define this macro to create an MBR when formatting low-capacity MMC cards :
 //macro			SYMBIAN_CREATE_MBR_ON_LOW_CAPACITY_MMC
 
+// Define this macro to bypass automatic partition switching - in this case 
+// switching can also be done by HandleControlIORequest()
+// macro		EMMC_PARTITION_TEST_MODE_ENABLED
+
 source			medmmc.cpp
 source			mmcptn.cpp
+source			medmmcpatchdata.cpp
 
 library			epbusmmc.lib
 library			elocd.lib
 library			emmcptn.lib
+
+DEFFILE             	~/medmmc.def
 
 linkas			medmmc.pdd
 

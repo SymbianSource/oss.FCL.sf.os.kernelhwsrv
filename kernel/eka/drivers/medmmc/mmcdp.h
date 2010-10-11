@@ -21,7 +21,8 @@
 
 
 #ifdef __TEST_PAGING_MEDIA_DRIVER__
-const TInt KMmcGetStats	= 0x00000001;
+const TInt KMmcGetStats			= 0x00000001;
+const TInt KMmcSwitchPartition	= 0x00000002;
 struct SMmcStats
 	{
 	TInt iReqPage;

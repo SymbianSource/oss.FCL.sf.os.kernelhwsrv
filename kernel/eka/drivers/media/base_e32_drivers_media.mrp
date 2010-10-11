@@ -44,6 +44,7 @@ source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\bx86\sdcard3c\sdio\
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\eabi\sdcard3c\sdio\epbusmu.def
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\eabi\sdcard3c\sdio\distribution.policy.s60
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\sdcard3c\sdio
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\rpmb
 
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\media
 

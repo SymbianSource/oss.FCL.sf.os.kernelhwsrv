@@ -1,3 +1,20 @@
+Version 2.00.4009
+=================
+(Made by fadhliM 07/10/2010)
+
+1.	hengrant
+	1.	RP 531855	eMMC 4.4 User Data Partitions
+		REQ 417-54821	MMC v4.4 support for eMMC (Bridge M4)
+		SUB 417-73300	eMMC V4.4
+		SUB 417-73303	eMMC v4.4 - User-Data partitions with Enhanced Attributes Support
+	2.	RP 529139	eMMC 4.4 RPMB
+		REQ 417-75165	MMC v4.4 support for eMMC (Bridge M5)
+		SUB 417-59932	eMMC v4.4 - Replay Protected Memory Block (RPMB) support 
+	3.	RP 543420
+		REQ 417-75165	MMC v4.4 support for eMMC (Bridge M5)
+		SUB 417-73302	eMMC v4.4 - TRIM Support
+
+
 Version 2.00.4008
 =================
 (Made by fadhliM 05/10/2010)
@@ -38,7 +55,9 @@ Version 2.00.4006
 (Made by vfebvre 27/09/2010)
 
 1.	erifung
-	1.	RP540323 REQ:405-4716 kernel side device driver staged shutdown feature
+	1.	RP 540346
+		REQ 405-4716 Staged shutdown server monitor
+		SUB 417-75212 Staged shutdown server monitor - kernel-side component
 
 
 Version 2.00.4005
@@ -49,7 +68,10 @@ Version 2.00.4005
 	1.	ou1cimx1#584587 PRM RBusDevResManUs::ChangeResourceState() to set a resource level to "0", causes FAULT: RESMANUS 0x000001e3 (483)
 
 2.	seolney
-	1.	ou1cimx1#553109 REQ 405-4716, Feature 405-5174: Staged shutdown server monitor
+	1.	RP 506754
+		REQ 405-4716	Staged shutdown server monitor
+		SUB 417-75146	Shutdown Monitor: Domain Manager
+		ou1cimx1#553109 REQ 405-4716, Feature 405-5174: Staged shutdown server monitor
 
 3.	necliffo
 	1.	ou1cimx1#584508 Improve Code Coverage for LocalMedia Subsystem and MMC Stack

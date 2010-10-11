@@ -20,6 +20,23 @@
 #include <drivers/locmedia.h>
 #include "stackbody.h"
 
+/*
+ Global helper object shared by all stacks to hold device specific RPMB information
+ */
+ static MRpmbInfo rpmbInfo;
+
+/*
+ Global counter for number or RPMB partitions. Only one partition per device
+*/
+
+GLDEF_D TUint NumberOfRpmbs = 0;
+/*
+ Global holder for RPMB parameters
+ */
+GLDEF_D TRpmbDeviceParms TheRpmbs[KMaxPBusSockets*4];
+
+GLDEF_D TBool RpmbParmsPopulated = EFalse;
+
 #include "OstTraceDefinitions.h"
 #ifdef OST_TRACE_COMPILER_IN_USE
 #include "../../../include/drivers/locmedia_ost.h"
@@ -3007,6 +3024,79 @@ TInt DMMCStack::AutoUnlockCB()
 	}
 
 
+TMMCErr DMMCStack::SwitchPartitionSM()
+/**
+ * This SM function must be invoked before execution of any partition-specific command.
+ *
+ * @return MMC error code
+ */
+	{
+	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:sp"));
+
+		enum states
+			{
+			EStBegin=0,
+			EStPartitionSelected,
+			EStEnd
+			};
+
+		DMMCSession& s=Session();
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_SWITCHPARTITIONSM1, "Current session=0x%x", &s );
+
+	SMF_BEGIN
+
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_SWITCHPARTITIONSM2, "EStBegin" );
+
+		TMMCard *cardP = s.CardP();
+		if(cardP)
+			{
+			TInt curPtn = cardP->ExtendedCSD().BootConfig() & KMMCSelectPartitionMask;
+			TInt tgtPtn = s.Partition() & KMMCSelectPartitionMask;
+
+	 		if(curPtn != tgtPtn)
+	 			{
+				OstTraceExt2( TRACE_INTERNALS, DMMCSTACK_SWITCHPARTITIONSM3,
+					"EStSelectPartition: Switching partitions from 0x%02X to 0x%02X", 
+					(TUint32) curPtn, (TUint32) tgtPtn);
+					
+				// need to preserve the non-partition related bits
+				tgtPtn |= cardP->ExtendedCSD().BootConfig() & ~KMMCSelectPartitionMask;
+	
+	 			TMMCArgument arg = TExtendedCSD::GetWriteArg(
+	 				TExtendedCSD::EWriteByte, TExtendedCSD::EBootConfigIndex, tgtPtn, 0);
+	 				
+	 			CurrentSessPushCmdStack();	
+	 			s.FillCommandDesc(ECmdSwitch, arg);
+	 			SMF_INVOKES(ExecSwitchCommandST, EStPartitionSelected)
+				}
+ 			}
+ 			
+ 		// no switching required
+		SMF_GOTOS( EStEnd )
+
+ 	SMF_STATE(EStPartitionSelected)
+ 	
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_SWITCHPARTITIONSM4, "EStPartitionSelected" );
+		const TMMCStatus status(s.ResponseP());
+		CurrentSessPopCmdStack();
+		if (status.Error())
+			{
+            OstTraceFunctionExitExt( DMMCSTACK_SWITCHPARTITIONSM_EXIT1, this, (TInt) KMMCErrStatus );
+			return KMMCErrStatus;
+			}
+		else
+			{ // update extended CSD
+			TInt ptn = (s.CardP()->ExtendedCSD().BootConfig() & ~KMMCSelectPartitionMask) | (s.Partition() & KMMCSelectPartitionMask);
+			memset( s.CardP()->iExtendedCSD.Ptr() + TExtendedCSD::EBootConfigIndex, ptn, 1);
+			OstTrace1( TRACE_INTERNALS, DMMCSTACK_SWITCHPARTITIONSM5, 
+				"EStPartitionSelected: Switched to partition 0x%02X", ptn );
+			}
+		
+	SMF_END
+		
+	}
+
+
 inline TMMCErr DMMCStack::AttachCardSM()
 /**
  * This SM function must be invoked by every session which is CardControlled.
@@ -3045,7 +3135,6 @@ inline TMMCErr DMMCStack::AttachCardSM()
 			s.SynchBlock( KMMCBlockOnCardInUse );
 			SMF_WAIT
 			}
-
 		if( s.iCardP->IsPresent() && s.iCardP->iCID == s.iCID )
 			s.iCardP->iUsingSessionP = &s;
 		else
@@ -3069,6 +3158,7 @@ inline TMMCErr DMMCStack::AttachCardSM()
 		SMF_INVOKES( ExecCommandSMST, EStAttStatus )
 
 	SMF_STATE(EStAttStatus)
+
 
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_ATTACHCARDSM3, "EStAttStatus" );
 		CurrentSessPopCmdStack();
@@ -3357,7 +3447,11 @@ EXPORT_C TMMCErr DMMCStack::InitStackAfterUnlockSM()
 			SMF_GOTOS(EStExit);
 			}
 
+
+
 		memcpy(s.CardP()->iExtendedCSD.Ptr(), iPSLBuf, KMMCExtendedCSDLength);
+
+
 
 		// Call a licencee-specific state machine to allow the Extended CSD register to be modified.
 		SMF_INVOKES( ModifyCardCapabilitySMST, EStGotModifiedExtendedCSD )
@@ -3365,45 +3459,89 @@ EXPORT_C TMMCErr DMMCStack::InitStackAfterUnlockSM()
 	SMF_STATE(EStGotModifiedExtendedCSD)
 
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_INITSTACKAFTERUNLOCKSM7, "EStGotExtendedCSD" );
+
+        const TExtendedCSD& extendedCSD = s.CardP()->ExtendedCSD();
 	
 		__KTRACE_OPT(KPBUS1, Kern::Printf("Extended CSD"));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("CSDStructureVer:            %u", s.CardP()->ExtendedCSD().CSDStructureVer()));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("ExtendedCSDRev:             %u", s.CardP()->ExtendedCSD().ExtendedCSDRev()));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("CSDStructureVer:            %u", extendedCSD.CSDStructureVer()));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("ExtendedCSDRev:             %u", extendedCSD.ExtendedCSDRev()));
 		__KTRACE_OPT(KPBUS1, Kern::Printf("-------------------------------"));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("SupportedCmdSet:            %u", s.CardP()->ExtendedCSD().SupportedCmdSet()));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("PowerClass26Mhz360V:        0x%02X", s.CardP()->ExtendedCSD().PowerClass26Mhz360V()));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("PowerClass52Mhz360V:        0x%02X", s.CardP()->ExtendedCSD().PowerClass52Mhz360V()));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("PowerClass26Mhz195V:        0x%02X", s.CardP()->ExtendedCSD().PowerClass26Mhz195V()));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("PowerClass52Mhz195V:        0x%02X", s.CardP()->ExtendedCSD().PowerClass52Mhz195V()));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("CardType:                   %u", s.CardP()->ExtendedCSD().CardType()));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("CmdSet:                     %u", s.CardP()->ExtendedCSD().CmdSet()));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("CmdSetRev:                  %u", s.CardP()->ExtendedCSD().CmdSetRev()));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("PowerClass:                 %u", s.CardP()->ExtendedCSD().PowerClass()));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("HighSpeedTiming:            %u", s.CardP()->ExtendedCSD().HighSpeedTiming()));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("HighCapacityEraseGroupSize: %u", s.CardP()->ExtendedCSD().HighCapacityEraseGroupSize()));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("AccessSize:                 %u", s.CardP()->ExtendedCSD().AccessSize()));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("BootInfo:                   %u", s.CardP()->ExtendedCSD().BootInfo() ));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("BootSizeMultiple:           %u", s.CardP()->ExtendedCSD().BootSizeMultiple() ));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("EraseTimeoutMultiple:       %u", s.CardP()->ExtendedCSD().EraseTimeoutMultiple() ));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("ReliableWriteSector:        %u", s.CardP()->ExtendedCSD().ReliableWriteSector() ));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("HighCapWriteProtGroupSize:  %u", s.CardP()->ExtendedCSD().HighCapacityWriteProtectGroupSize() ));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("SleepCurrentVcc:            %u", s.CardP()->ExtendedCSD().SleepCurrentVcc() ));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("SleepCurrentVccQ:           %u", s.CardP()->ExtendedCSD().SleepCurrentVccQ()));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("SleepAwakeTimeout:          %u", s.CardP()->ExtendedCSD().SleepAwakeTimeout()));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("BootConfig:                 %u", s.CardP()->ExtendedCSD().BootConfig()));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("BootBusWidth:               %u", s.CardP()->ExtendedCSD().BootBusWidth()));
-		__KTRACE_OPT(KPBUS1, Kern::Printf("EraseGroupDef:              %u", s.CardP()->ExtendedCSD().EraseGroupDef()));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("SupportedCmdSet:            %u", extendedCSD.SupportedCmdSet()));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("PowerClass26Mhz360V:        0x%02X", extendedCSD.PowerClass26Mhz360V()));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("PowerClass52Mhz360V:        0x%02X", extendedCSD.PowerClass52Mhz360V()));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("PowerClass26Mhz195V:        0x%02X", extendedCSD.PowerClass26Mhz195V()));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("PowerClass52Mhz195V:        0x%02X", extendedCSD.PowerClass52Mhz195V()));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("CardType:                   %u", extendedCSD.CardType()));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("CmdSet:                     %u", extendedCSD.CmdSet()));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("CmdSetRev:                  %u", extendedCSD.CmdSetRev()));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("PowerClass:                 %u", extendedCSD.PowerClass()));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("HighSpeedTiming:            %u", extendedCSD.HighSpeedTiming()));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("HighCapacityEraseGroupSize: %u", extendedCSD.HighCapacityEraseGroupSize()));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("AccessSize:                 %u", extendedCSD.AccessSize()));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("BootInfo:                   %u", extendedCSD.BootInfo() ));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("BootSizeMultiple:           %u", extendedCSD.BootSizeMultiple() ));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("EraseTimeoutMultiple:       %u", extendedCSD.EraseTimeoutMultiple() ));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("ReliableWriteSector:        %u", extendedCSD.ReliableWriteSector() ));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("HighCapWriteProtGroupSize:  %u", extendedCSD.HighCapacityWriteProtectGroupSize() ));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("SleepCurrentVcc:            %u", extendedCSD.SleepCurrentVcc() ));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("SleepCurrentVccQ:           %u", extendedCSD.SleepCurrentVccQ()));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("SleepAwakeTimeout:          %u", extendedCSD.SleepAwakeTimeout()));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("BootConfig:                 %u", extendedCSD.BootConfig()));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("BootBusWidth:               %u", extendedCSD.BootBusWidth()));
+		__KTRACE_OPT(KPBUS1, Kern::Printf("EraseGroupDef:              %u", extendedCSD.EraseGroupDef()));
+
+        // 4.4 extensions
+		__KTRACE_OPT(KPBUS1, Kern::Printf("ErasedMemoryContent:        0x%02X", extendedCSD.ErasedMemoryContent()));
+        __KTRACE_OPT(KPBUS1, Kern::Printf("BootConfigProtection:       0x%02X", extendedCSD.BootConfigProt()));
+        __KTRACE_OPT(KPBUS1, Kern::Printf("BootAreaWriteProtectionReg: 0x%02X", extendedCSD.BootAreaWriteProtectionReg()));
+        __KTRACE_OPT(KPBUS1, Kern::Printf("UserAreaWriteProtectionReg: 0x%02X", extendedCSD.UserAreaWriteProtectionReg()));
+        __KTRACE_OPT(KPBUS1, Kern::Printf("FWConfiguration:            0x%02X", extendedCSD.FwConfiguration()));
+        __KTRACE_OPT(KPBUS1, Kern::Printf("RPMBSize:                   0x%04X", extendedCSD.RpmbSize()));
+        __KTRACE_OPT(KPBUS1, Kern::Printf("HwResetFunction:            0x%02X", extendedCSD.HwResetFunction()));
+        __KTRACE_OPT(KPBUS1, Kern::Printf("PartitioningSupport:        0x%02X", extendedCSD.PartitioningSupport()));
+        __KTRACE_OPT(KPBUS1, Kern::Printf("MaxEnhancedAreaSize:        0x%04X", extendedCSD.MaxEnhancedAreaSize()));
+        __KTRACE_OPT(KPBUS1, Kern::Printf("PartitionsAttribute:        0x%02X", extendedCSD.PartitionsAttribute()));
+        __KTRACE_OPT(KPBUS1, Kern::Printf("PartitioningSetting:        0x%02X", extendedCSD.PartitioningSetting()));
+        __KTRACE_OPT(KPBUS1, Kern::Printf("GPP1:                       0x%04X", extendedCSD.GeneralPurposePartition1Size()));
+        __KTRACE_OPT(KPBUS1, Kern::Printf("GPP2:                       0x%04X", extendedCSD.GeneralPurposePartition2Size()));
+        __KTRACE_OPT(KPBUS1, Kern::Printf("GPP3:                       0x%04X", extendedCSD.GeneralPurposePartition3Size()));
+        __KTRACE_OPT(KPBUS1, Kern::Printf("GPP4:                       0x%04X", extendedCSD.GeneralPurposePartition4Size()));
+        __KTRACE_OPT(KPBUS1, Kern::Printf("EnhancedUserDataSize:       0x%04X", extendedCSD.EnhancedUserDataAreaSize()));
+        __KTRACE_OPT(KPBUS1, Kern::Printf("EnhancedUserDataStartAddr:  0x%04X", extendedCSD.EnhancedUserDataStartAddress()));
+        __KTRACE_OPT(KPBUS1, Kern::Printf("BadBlockManagementMode:     0x%04X", extendedCSD.BadBlockManagementMode()));
+
+
+		OstTraceDefExt3( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSM8, "CSDStructureVer=%u; ExtendedCSDRev=%u; SupportedCmdSet=%u", extendedCSD.CSDStructureVer(), extendedCSD.ExtendedCSDRev(), extendedCSD.SupportedCmdSet() );
+		OstTraceDefExt4( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSM9, "PowerClass26Mhz360V=0x%02x; PowerClass52Mhz360V=0x%02x; PowerClass26Mhz195V=0x%02x; PowerClass52Mhz195V=0x%02x", extendedCSD.PowerClass26Mhz360V(), extendedCSD.PowerClass52Mhz360V(), extendedCSD.PowerClass26Mhz195V(), extendedCSD.PowerClass52Mhz195V() );
+		OstTraceDefExt5( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSM10, "CardType=%u; CmdSet=%u; CmdSetRev=%u; PowerClass=%u; HighSpeedTiming=%u", extendedCSD.CardType(), extendedCSD.CmdSet(), extendedCSD.CmdSetRev(), extendedCSD.PowerClass(), extendedCSD.HighSpeedTiming() );
+		OstTraceDefExt5( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSM11, "HighCapacityEraseGroupSize=%u; AccessSize=%u; BootInfo=%u; BootSizeMultiple=%u; EraseTimeoutMultiple=%u", extendedCSD.HighCapacityEraseGroupSize(), extendedCSD.AccessSize(), extendedCSD.BootInfo(), extendedCSD.BootSizeMultiple(), extendedCSD.EraseTimeoutMultiple() );
+		OstTraceDefExt5( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSM12, "ReliableWriteSector=%u; HighCapWriteProtGroupSize=%u; SleepCurrentVcc=%u; SleepCurrentVccQ=%u; SleepAwakeTimeout=%u", extendedCSD.ReliableWriteSector(), extendedCSD.HighCapacityWriteProtectGroupSize(), extendedCSD.SleepCurrentVcc(), extendedCSD.SleepCurrentVccQ(), extendedCSD.SleepAwakeTimeout() );
+		OstTraceDefExt3( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSM13, "BootConfig=%u; BootBusWidth=%u; EraseGroupDef=%u", extendedCSD.BootConfig(), extendedCSD.BootBusWidth(), extendedCSD.EraseGroupDef() );
+
+        // 4.4 extensions
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSMx1, "ErasedMemoryContent:        0x%02X", extendedCSD.ErasedMemoryContent());
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSMx2, "BootConfigProtection:       0x%02X", extendedCSD.BootConfigProt());
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSMx3, "BootAreaWriteProtectionReg: 0x%02X", extendedCSD.BootAreaWriteProtectionReg());
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSMx4, "UserAreaWriteProtectionReg: 0x%02X", extendedCSD.UserAreaWriteProtectionReg());
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSMx5, "FWConfiguration:            0x%02X", extendedCSD.FwConfiguration());
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSMx6, "RPMBSize:                   0x%04X", extendedCSD.RpmbSize());
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSMx7, "HwResetFunction:            0x%02X", extendedCSD.HwResetFunction());
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSMx8, "PartitioningSupport:        0x%02X", extendedCSD.PartitioningSupport());
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSMx9, "MaxEnhancedAreaSize:        0x%04X", extendedCSD.MaxEnhancedAreaSize());
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSMx10, "PartitionsAttribute:        0x%02X", extendedCSD.PartitionsAttribute());
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSMx11, "PartitioningSetting:        0x%02X", extendedCSD.PartitioningSetting());
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSMx12, "GPP1:                       0x%04X", extendedCSD.GeneralPurposePartition1Size());
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSMx13, "GPP2:                       0x%04X", extendedCSD.GeneralPurposePartition2Size());
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSMx14, "GPP3:                       0x%04X", extendedCSD.GeneralPurposePartition3Size());
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSMx15, "GPP4:                       0x%04X", extendedCSD.GeneralPurposePartition4Size());
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSMx16, "EnhancedUserDataSize:       0x%04X", extendedCSD.EnhancedUserDataAreaSize());
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSMx17, "EnhancedUserDataStartAddr:  0x%04X", extendedCSD.EnhancedUserDataStartAddress());
+        OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSMx18, "BadBlockManagementMode:     0x%04X", extendedCSD.BadBlockManagementMode());
+
 		
-		OstTraceDefExt3( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSM8, "CSDStructureVer=%u; ExtendedCSDRev=%u; SupportedCmdSet=%u", s.CardP()->ExtendedCSD().CSDStructureVer(), s.CardP()->ExtendedCSD().ExtendedCSDRev(), s.CardP()->ExtendedCSD().SupportedCmdSet() );
-		OstTraceDefExt4( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSM9, "PowerClass26Mhz360V=0x%02x; PowerClass52Mhz360V=0x%02x; PowerClass26Mhz195V=0x%02x; PowerClass52Mhz195V=0x%02x", s.CardP()->ExtendedCSD().PowerClass26Mhz360V(), s.CardP()->ExtendedCSD().PowerClass52Mhz360V(), s.CardP()->ExtendedCSD().PowerClass26Mhz195V(), s.CardP()->ExtendedCSD().PowerClass52Mhz195V() );
-		OstTraceDefExt5( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSM10, "CardType=%u; CmdSet=%u; CmdSetRev=%u; PowerClass=%u; HighSpeedTiming=%u", s.CardP()->ExtendedCSD().CardType(), s.CardP()->ExtendedCSD().CmdSet(), s.CardP()->ExtendedCSD().CmdSetRev(), s.CardP()->ExtendedCSD().PowerClass(), s.CardP()->ExtendedCSD().HighSpeedTiming() );
-		OstTraceDefExt5( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSM11, "HighCapacityEraseGroupSize=%u; AccessSize=%u; BootInfo=%u; BootSizeMultiple=%u; EraseTimeoutMultiple=%u", s.CardP()->ExtendedCSD().HighCapacityEraseGroupSize(), s.CardP()->ExtendedCSD().AccessSize(), s.CardP()->ExtendedCSD().BootInfo(), s.CardP()->ExtendedCSD().BootSizeMultiple(), s.CardP()->ExtendedCSD().EraseTimeoutMultiple() );
-		OstTraceDefExt5( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSM12, "ReliableWriteSector=%u; HighCapWriteProtGroupSize=%u; SleepCurrentVcc=%u; SleepCurrentVccQ=%u; SleepAwakeTimeout=%u", s.CardP()->ExtendedCSD().ReliableWriteSector(), s.CardP()->ExtendedCSD().HighCapacityWriteProtectGroupSize(), s.CardP()->ExtendedCSD().SleepCurrentVcc(), s.CardP()->ExtendedCSD().SleepCurrentVccQ(), s.CardP()->ExtendedCSD().SleepAwakeTimeout() );
-		OstTraceDefExt3( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSM13, "BootConfig=%u; BootBusWidth=%u; EraseGroupDef=%u", s.CardP()->ExtendedCSD().BootConfig(), s.CardP()->ExtendedCSD().BootBusWidth(), s.CardP()->ExtendedCSD().EraseGroupDef() );
-		
-		if (s.CardP()->ExtendedCSD().ExtendedCSDRev() >= 3)
+		if (extendedCSD.ExtendedCSDRev() >= 3)
 			{
-			if (!(s.CardP()->ExtendedCSD().EraseGroupDef()) && s.CardP()->ExtendedCSD().HighCapacityEraseGroupSize())
+			if (!(extendedCSD.EraseGroupDef()) && extendedCSD.HighCapacityEraseGroupSize())
 				{
 				// Need to ensure that media is using correct erase group sizes.
 				TMMCArgument arg = TExtendedCSD::GetWriteArg(
@@ -3429,7 +3567,7 @@ EXPORT_C TMMCErr DMMCStack::InitStackAfterUnlockSM()
 	
 		if (err == KMMCErrNone)
 			{
-			// EEraseGroupDef has been updated succussfully, 
+			// EEraseGroupDef has been updated successfully, 
 			// update the Extended CSD to reflect this			
 			memset( s.CardP()->iExtendedCSD.Ptr()+TExtendedCSD::EEraseGroupDefIndex, TExtendedCSD::EEraseGrpDefEnableHighCapSizes, 1);
 			}
@@ -3948,8 +4086,8 @@ void DMMCStack::DetermineBusWidthAndClock(
 
 	// Get the bus widths & clocks supported by the controller
 	// NB If the PSL doesn not support TMMCMachineInfoV4, return
-	TMMCMachineInfoV4 machineInfo;
-	TMMCMachineInfoV4Pckg machineInfoPckg(machineInfo);
+	TMMCMachineInfoV44 machineInfo;
+	TMMCMachineInfoV44Pckg machineInfoPckg(machineInfo);
 	MachineInfo(machineInfoPckg);
 	if (machineInfo.iVersion < TMMCMachineInfoV4::EVersion4)
 	    {
@@ -5724,6 +5862,7 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 			EStBegin=0,
 			EStRestart,
 			EStAttached,
+			EStLength,
 			EStLength1,
 			EStLengthSet,
 			EStIssueBlockCount,
@@ -5755,7 +5894,6 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 				return KMMCErrNotSupported;
 			    }
 			}
-
 		s.iState |= KMMCSessStateInProgress;
 		m.SetTraps(KMMCErrInitContext);
 
@@ -5770,9 +5908,15 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 			SMF_INVOKES( AttachCardSMST, EStAttached )	// attachment is mandatory here
 			}
 
+
 	SMF_BPOINT(EStAttached)
 
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM4, "EStAttached" );
+		SMF_INVOKES( SwitchPartitionSMST, EStLength ) // may have to switch partitions
+		
+	SMF_STATE(EStLength)
+
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM16, "EStLength" );
 		TMMCCommandDesc& cmd = s.Command();
 
 		const TUint32 blockLength = cmd.BlockLength();
@@ -5809,7 +5953,7 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 
 	SMF_STATE(EStLength1)
 
-		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM5, "EStAttached" );
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM5, "EStLength" );
 		const TMMCStatus status(s.ResponseP());
 		CurrentSessPopCmdStack();
 		if (status.Error())
@@ -5851,17 +5995,19 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 
   		const TUint blocks = cmd.NumBlocks();
 
-		SMF_NEXTS(EStBpoint1)
+	SMF_NEXTS(EStBpoint1)
+		
 		if ( !(opType & kTypeSpecial) )	// A special session has already set its command descriptor
 			{
 			
+
 			if (cmd.iFlags & KMMCCmdFlagReliableWrite)
 				//ensure multiple block commands are used for reliable writing
 				opType |= kTypeMultiple;
 			
-			if ( (blocks==1) && !(cmd.iFlags & KMMCCmdFlagReliableWrite) )
+			if ( (blocks==1) && !(cmd.iFlags & KMMCCmdFlagReliableWrite) && !(cmd.iFlags & KMMCCmdFlagRpmbIO))
 				{
-				// Reliable Write requires that Multi-Block command is used.
+				// Reliable Write & RPMB require that Multi-Block command is used.
 				opType &= ~kTypeMultiple;
 				}
 
@@ -6005,7 +6151,7 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 		// Fall through if CURRENT_STATE is not PGM or DATA
 	SMF_STATE(EStRWFinish)
 
-		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM15, "EStRWFinish" );
+	OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM15, "EStRWFinish" );
 		if (TMMCStatus(s.ResponseP()).Error() != 0)
 		    {
 		    OstTraceFunctionExitExt( DMMCSTACK_CIMREADWRITEBLOCKSSM_EXIT8, this, (TInt) KMMCErrStatus );
@@ -6034,6 +6180,7 @@ inline TMMCErr DMMCStack::CIMEraseSM()
 			EStBegin=0,
 			EStRestart,
 			EStAttached,
+			EStLength,
 			EStStartTagged,
 			EStEndTagged,
 			EStErased,
@@ -6069,13 +6216,21 @@ inline TMMCErr DMMCStack::CIMEraseSM()
 
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMERASESM3, "EStRestart" );
 		SMF_CALLMEWR(EStRestart) // Create a recursive call entry to recover from Init
-
-		s.ResetCommandStack();
+        
+        CurrentSessPushCmdStack(); //Push stack pointer to preserve flags for TRIM
+		
 		SMF_INVOKES( AttachCardSMST, EStAttached )		// attachment is mandatory
 
 	SMF_BPOINT(EStAttached)
 
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMERASESM4, "EStAttached" );
+		SMF_INVOKES( SwitchPartitionSMST, EStLength )  // may have to switch partitions
+			
+	SMF_STATE(EStLength)
+	
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMERASESM13, "EStLength" );
+
+		CurrentSessPopCmdStack();
 		TMMCCommandDesc& cmd = s.Command();
 
 		if(cmd.iTotalLength == 0)
@@ -6095,6 +6250,14 @@ inline TMMCErr DMMCStack::CIMEraseSM()
 				break;
 			case ECIMEraseGroup:
 				OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMERASESM6, "ECIMEraseGroup" );
+				
+				if(cmd.iFlags & KMMCCmdFlagDeleteNotify)
+				    {
+				    cmd.iBlockLength = KMMCardHighCapBlockSize; //TRIM cmd blocklength
+				    cmd.iCommand = ECmdTagEraseGroupStart;
+				    break;
+				    }
+				
 				cmd.iBlockLength = s.iCardP->iCSD.EraseGroupSize();
 				if(cmd.iBlockLength == 0 || cmd.iTotalLength % cmd.iBlockLength != 0)
 				    {
@@ -6123,7 +6286,7 @@ inline TMMCErr DMMCStack::CIMEraseSM()
 	SMF_STATE(EStStartTagged)
 
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMERASESM7, "EStStartTagged" );
-		const TMMCCommandDesc& cmd = s.Command();
+		TMMCCommandDesc& cmd = s.Command();
 
 		TMMCCommandEnum command;
 		TUint endAddr = cmd.iArgument;
@@ -6134,20 +6297,29 @@ inline TMMCErr DMMCStack::CIMEraseSM()
 			}
 		else
 			{
-			if(cmd.IsBlockCmd())
-				{
-				endAddr += (cmd.iTotalLength - cmd.iBlockLength) >> KMMCardHighCapBlockSizeLog2;
-				}
-			else
-				{
-				endAddr += cmd.iTotalLength - cmd.iBlockLength;
-				}
+            if(cmd.iFlags & KMMCCmdFlagDeleteNotify)
+                {
+                endAddr += cmd.IsBlockCmd() ? (cmd.iTotalLength / cmd.iBlockLength - 1) : (cmd.iTotalLength - cmd.iBlockLength);
+                command = ECmdTagEraseGroupEnd;
+                }
+                else
+                    {
+                    if(cmd.IsBlockCmd())
+                    {
+                    endAddr += (cmd.iTotalLength - cmd.iBlockLength) >> KMMCardHighCapBlockSizeLog2;
+                    }
+                    else
+                        {
+                        endAddr += cmd.iTotalLength - cmd.iBlockLength;
+                        }
 	
-			command = ECmdTagEraseGroupEnd;
-			}
+                    command = ECmdTagEraseGroupEnd;
+                    }
+			} 
 
-		CurrentSessPushCmdStack();
+		const TUint flags = cmd.iFlags;
 		s.FillCommandDesc( command, endAddr );
+		cmd.iFlags = flags;                                   //Preserving current flags for TRIM
 		SMF_INVOKES( ExecCommandSMST, EStEndTagged )
 
 	SMF_STATE(EStEndTagged)
@@ -6159,7 +6331,16 @@ inline TMMCErr DMMCStack::CIMEraseSM()
 		const TInt KMaxEraseTimeoutInSeconds = 30;
 		iBody->SetInactivityTimeout(KMaxEraseTimeoutInSeconds);
 		m.SetTraps(KMMCErrAll);
-		s.FillCommandDesc( ECmdErase, 0 );
+		
+		TMMCCommandDesc& cmd = s.Command();
+		
+		if(cmd.iFlags & KMMCCmdFlagDeleteNotify)
+		    {
+            s.FillCommandDesc(ECmdErase, KMMCCmdTrim);
+		    }
+		else
+		    s.FillCommandDesc( ECmdErase, 0 );
+		
 		SMF_INVOKES( ExecCommandSMST, EStErased )
 
 	SMF_STATE(EStErased)
@@ -6602,6 +6783,9 @@ TMMCErr DMMCStack::ModifyCardCapabilitySMST( TAny* aStackP )
 TMMCErr DMMCStack::AttachCardSMST( TAny* aStackP )
 	{ return( static_cast<DMMCStack *>(aStackP)->AttachCardSM() ); }
 
+TMMCErr DMMCStack::SwitchPartitionSMST( TAny* aStackP )
+	{ return( static_cast<DMMCStack *>(aStackP)->SwitchPartitionSM() ); }
+
 TMMCErr DMMCStack::ExecCommandSMST( TAny* aStackP )
 	{ return( static_cast<DMMCStack *>(aStackP)->ExecCommandSM() ); }
 
@@ -6689,8 +6873,6 @@ EXPORT_C DMMCSession* DMMCStack::AllocSession(const TMMCCallBack& aCallBack) con
 	return new DMMCSession(aCallBack);
 	}
 
-EXPORT_C void DMMCStack::Dummy1() {}
-
 /**
  * Calls the PSL-implemented function SetBusWidth() if the bus width has changed
  *
@@ -6743,8 +6925,14 @@ EXPORT_C void DMMCStack::SetBusWidth(TUint32 /*aBusWidth*/)
 	{
 	}
 
-EXPORT_C void DMMCStack::MachineInfo(TDes8& /*aMachineInfo*/)
+EXPORT_C void DMMCStack::MachineInfo(TDes8& aMachineInfo)
+/**
+ * Default implementation of method. Calls 
+ * DMMCStack::MachineInfo(TMMCMachineInfo& aMachineInfo)
+ */
 	{
+    TMMCMachineInfoV44Pckg& mi = static_cast<TMMCMachineInfoV44Pckg&> (aMachineInfo);
+    MachineInfo(mi());
 	}
 
 TBusWidth DMMCStack::BusWidthEncoding(TInt aBusWidth) const
@@ -7559,4 +7747,40 @@ EXPORT_C TInt DMMCMediaChange::Create()
 	OstTraceFunctionExitExt( DMMCMEDIACHANGE_CREATE_EXIT, this, r );
 	return r;
 	}
+
+/**
+ A generic adapter function for returning an interface of specified type
+ The caller should set aInterfacePtr to NULL before calling
+ @aInterfaceId Denotes the required interface to be returned
+ @aInterfacePtr On completion contains an interface of type specified by aInterfaceId
+ @aThis Extends the interface to provide further access to DMMCSession
+ */
+
+EXPORT_C TInt MMCGetExtInterface(TMMCExtInterfaceId aInterfaceId, MMCMExtInterface*& aInterfacePtr, TAny* /*aThis*/)
+    {
+    OstTrace1(TRACE_FLOW, MMCGETEXTINTERFACE_ENTRY, ">MMCGetExtInterface InterfaceId=%d", aInterfaceId );
+    TInt r = KErrNone;
+	switch(aInterfaceId)
+        {
+        case KInterfaceRpmb:
+            {   
+            if (RpmbParmsPopulated)
+				{
+				aInterfacePtr = (MMCMExtInterface*)(&rpmbInfo);
+				}
+			else
+				{
+				// don't hand out interface if not ready to use
+				aInterfacePtr = NULL;
+				r = KErrNotReady;
+				}
+            break;
+            }
+        default:
+            aInterfacePtr = NULL;
+            break;
+        }
+    OstTrace0(TRACE_FLOW, MMCGETEXTINTERFACE_EXIT, "<MMCGetExtInterface" );
+    return r;
+    }
 

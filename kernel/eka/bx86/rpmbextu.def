@@ -1,0 +1,7 @@
+EXPORTS
+	??0DRpmbDevice@@QAE@XZ @ 1 NONAME ; public: __thiscall DRpmbDevice::DRpmbDevice(void)
+	??1DRpmbDevice@@UAE@XZ @ 2 NONAME ; public: virtual __thiscall DRpmbDevice::~DRpmbDevice(void)
+	?Close@DRpmbDevice@@QAEXXZ @ 3 NONAME ; public: void __thiscall DRpmbDevice::Close(void)
+	?Open@DRpmbDevice@@QAEHI@Z @ 4 NONAME ; public: int __thiscall DRpmbDevice::Open(unsigned int)
+	?SendAccessRequest@DRpmbDevice@@QAEHAAVTDes8@@0@Z @ 5 NONAME ; public: int __thiscall DRpmbDevice::SendAccessRequest(class TDes8 &,class TDes8 &)
+

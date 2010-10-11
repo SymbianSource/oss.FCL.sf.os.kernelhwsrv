@@ -1,0 +1,7 @@
+EXPORTS
+	?SendAccessRequest@DRpmbDevice@@QAEHAAVTDes8@@0@Z @ 1 NONAME ; int DRpmbDevice::SendAccessRequest(class TDes8 &, class TDes8 &)
+	??1DRpmbDevice@@UAE@XZ @ 2 NONAME ; DRpmbDevice::~DRpmbDevice(void)
+	?Close@DRpmbDevice@@QAEXXZ @ 3 NONAME ; void DRpmbDevice::Close(void)
+	??0DRpmbDevice@@QAE@XZ @ 4 NONAME ; DRpmbDevice::DRpmbDevice(void)
+	?Open@DRpmbDevice@@QAEHI@Z @ 5 NONAME ; int DRpmbDevice::Open(unsigned int)
+

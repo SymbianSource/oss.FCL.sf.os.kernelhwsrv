@@ -264,8 +264,12 @@ include/drivers/resourcecontrol_clientsettings.h	SYMBIAN_OS_LAYER_PLATFORM_EXPOR
 include/drivers/resmanus_trace.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 
 include/drivers/i2s.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
-						//
+					
 include/drivers/display.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+
+include/drivers/rpmbdevice.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/rpmbpacket.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+
 
 // Real Time Clock SHAI API
 include/drivers/rtclock.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)

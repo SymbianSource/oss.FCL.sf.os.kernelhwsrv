@@ -1,4 +1,4 @@
-// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -17,8 +17,7 @@
 
 #include <drivers/mmccd_ifc.h>
 #include <drivers/pbusmedia.h>
-
-
+#include <drivers/mmc.h>
 
 
 /**
@@ -207,6 +206,10 @@ EXPORT_C TInt TMMCardControllerInterface::Create()
 		else
 			__KTRACE_OPT(KPBUS1,Kern::Printf("Socket %d not MMC card",i));
 		}
+
+	// set RpmbConfigRead to true and ensure that changes to RpmbConfigRead, NumberOfRpmbs 
+	// and TheRpmbs are flushed at the same time
+	__e32_atomic_store_ord32(&RpmbParmsPopulated, ETrue);
 		
 	__KTRACE_OPT(KPBUS1,Kern::Printf("<TMMCardControllerInterface::Create, ret %d",r));
 	return r;
@@ -230,8 +233,29 @@ By default, All MMC derivatives register at least an MMC driver
 	if(pS == NULL)
 		return(KErrNoMemory);
 
-	TMMCMachineInfo mi;
-	pS->iStack->MachineInfo(mi);
+	// Retrieve RPMB specific information from the PSL layer
+	__KTRACE_OPT(KPBUS1, Kern::Printf("RPMB: Begin registering RPMB information from PSL layer"));
+	
+	TMMCMachineInfoV44 mi;
+    TMMCMachineInfoV44Pckg machineInfoPckg(mi);
+    pS->iStack->MachineInfo(machineInfoPckg);
+
+	// Register each slot marked as being RPMB capable
+	// Code won't write beyond the end of TheRpmbs[] because 4 slots are reserved 
+	// for each pbus socket and only 4 slots are processed for each socket
+	TInt rpmbSlots = (mi.iRpmbSlotCount <= 4) ? mi.iRpmbSlotCount : 4;
+
+	// if baseport set up so that iRpmbSlotList==NULL assert now
+	__ASSERT_ALWAYS((((rpmbSlots>0)&&(mi.iRpmbSlotList!=NULL))||(rpmbSlots==0)), Kern::Fault(__FILE__, __LINE__));
+	TInt i;
+	for ( i=0; i<rpmbSlots; i++)
+		{
+			TheRpmbs[NumberOfRpmbs].iSocketPtr = pS;
+			TheRpmbs[NumberOfRpmbs].iCardNumber = mi.iRpmbSlotList[i];
+			__KTRACE_OPT(KPBUS1, Kern::Printf("RPMB: TheRpmbs[%d]: socketPtr %x: CardNumber %d", NumberOfRpmbs, pS, mi.iRpmbSlotList[i]));
+			NumberOfRpmbs++;
+		}
+	__KTRACE_OPT(KPBUS1, Kern::Printf("RPMB: Registering of RPMB information from PSL layer complete"));
 	
 	// There may be more than one physical card slot for this socket/stack;
 	// if this is the case, then we have to create a separate DPBusPrimaryMedia 
@@ -258,7 +282,7 @@ By default, All MMC derivatives register at least an MMC driver
 #endif // __WINS__
 
 
-	for (TInt i=0; i<physicalCardSlots ; i++)	
+	for (i=0; i<physicalCardSlots ; i++)	
 		{
 		DPBusPrimaryMedia* pMedia = new DPBusPrimaryMedia(pS);
 		if (pMedia == NULL)
