@@ -1785,7 +1785,6 @@ TInt DPcCardMediaDriverAta::Caps(TLocalDriveCapsV6& aInfo)
 	aInfo.iFileSystemId=KDriveFileSysFAT;
 	aInfo.iHiddenSectors=iHiddenSectors;
 	aInfo.iBlockSize=KAtaSectorSize;
-	SetTotalSizeInBytes(aInfo);
 	return KErrCompletion;	// synchronous completion
 	}
 

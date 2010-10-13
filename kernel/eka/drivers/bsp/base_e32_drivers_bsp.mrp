@@ -10,8 +10,6 @@ source	\sf\os\kernelhwsrv\kernel\eka\drivers\resmanus
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\xyin
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\iic
 source  \sf\os\kernelhwsrv\kernel\eka\drivers\hcr
-source  \sf\os\kernelhwsrv\kerneltest\e32utils\hcrscripts
-
 
 binary	\sf\os\kernelhwsrv\kernel\eka\drivers\bsp all
 exports	\sf\os\kernelhwsrv\kernel\eka\drivers\bsp
@@ -20,5 +18,4 @@ notes_source	\component_defs\release.src
 
 
 ipr E
-ipr T \sf\os\kernelhwsrv\kerneltest\e32utils\hcrscripts
 

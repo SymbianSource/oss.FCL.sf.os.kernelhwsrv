@@ -17,7 +17,6 @@
 
 TARGET			t_nandpaging.exe
 TARGETTYPE		EXE
-userinclude		../../e32test/mediaext
 SOURCEPATH		../demandpaging
 SOURCE			t_nandpaging.cpp
 LIBRARY			euser.lib efsrv.lib hal.lib

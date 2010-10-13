@@ -855,8 +855,8 @@ void CLocalMountCB::FileOpenL(const TDesC& aName,TUint aMode,TFileOpen anOpen,CF
     file.SetSize64(fileSize, EFalse);
 	file.SetAtt(info.dwFileAttributes&KEntryAttMaskSupported);
 
-	if (IsRomDrive())
-		file.SetAtt(file.Att() | KEntryAttReadOnly);
+//	if (IsRomDrive())
+//		file.iAtt|=KEntryAttReadOnly;
 	TTime tempTime=file.Modified();
 	fileTimeToTime(&info.ftLastWriteTime,tempTime);
 	file.SetModified(tempTime);

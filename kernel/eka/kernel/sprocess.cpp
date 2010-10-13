@@ -590,16 +590,6 @@ TBool DProcess::KillAllThreads(TExitType aType, TInt aReason, const TDesC &aCate
 		pLink=pLink->iNext;
 		if (pT!=pC)
 			{
-			// If killing pT will cause a system crash then force that to happen in the context of the
-			// current thread
-			if(pT->iFlags & KThreadFlagSystemPermanent)
-				{
-				K::Fault(K::EPermanentThreadExit);
-				}
-			if (aType != EExitKill && (pT->iFlags & KThreadFlagSystemCritical))
-				{
-				K::Fault(K::ESystemThreadPanic);
-				}
 			// Need to stop the current thread being killed as a consequence of killing pT
 			pT->iFlags &= ~(KThreadFlagProcessPermanent|KThreadFlagProcessCritical);
 			pT->Die(aType, aReason, aCategory);

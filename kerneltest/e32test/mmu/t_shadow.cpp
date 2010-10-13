@@ -464,11 +464,6 @@ GLDEF_C TInt E32Main()
 #ifdef __WINS__
 	test.Printf(_L("Test not valid in WINS\n"));
 #else
-	// Turn off lazy dll unloading
-	RLoader l;
-	test_KErrNone(l.Connect());
-	test_KErrNone(l.CancelLazyDllUnload());
-	l.Close();
 
 	test.Start(_L("Testing ROM shadowing"));
 	Initialise();

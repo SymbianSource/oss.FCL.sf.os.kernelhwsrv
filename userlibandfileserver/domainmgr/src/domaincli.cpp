@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -18,7 +18,6 @@
 #include <e32base.h>
 #include <e32base_private.h>
 #include <e32property.h>
-
 
 #include <domainmember.h>
 #include <domainmanager.h>
@@ -381,43 +380,26 @@ TInt RDmManagerSession::GetTransitionFailures(RArray<const TTransitionFailure>& 
 	{
 	__DM_ASSERT(Handle() != KNullHandle);
 
-	
 	aTransitionFailures.Reset();
 
 	TInt err = KErrNone;
-		
+
 	TInt failureCount = GetTransitionFailureCount();
 	if (failureCount <= 0)
 		return failureCount;
-	
-	// Pre-allocate array with a known size which for this case is the value in failureCount 
-	// in order to guarantee that future append operations to the array aTransitionFailures would
-	// not fail. This is assuming that the pre-allocated size is not exceeded.
-	err=aTransitionFailures.Reserve(failureCount); 
-	if (err != KErrNone)
-		return err;
-		
+
 	TTransitionFailure* failures = new TTransitionFailure[failureCount];
 	if(failures == NULL)
-		{		
-		aTransitionFailures.Reset();
 		return(KErrNoMemory);
-		}
-	
 	TPtr8 dataPtr(reinterpret_cast<TUint8*>(failures), failureCount * sizeof(TTransitionFailure));
 
 	TIpcArgs a(&dataPtr);
 	err = RSessionBase::SendReceive(EDmGetTransitionFailures, a);
-
+	
 	if (err == KErrNone)
 		{
-		for (TInt i=0; i<failureCount; i++)	
-			{
-			err = aTransitionFailures.Append(failures[i]);		
-			//The pre-allocation made above for the array aTransitionFailures should guarantee
-			//that append operations complete succesfully.			
-			__DM_ASSERT(err == KErrNone);	
-			}
+		for (TInt i=0; i<failureCount; i++)
+			aTransitionFailures.Append(failures[i]);
 		}
 
 	delete [] failures;
@@ -457,34 +439,19 @@ TInt RDmManagerSession::GetEvents(RArray<const TTransInfo>& aTransitions)
 	if (count <= 0)
 		return KErrGeneral;
 
-	// Pre-allocate array with a known size which for this case is the value in count 
-	// in order to guarantee that future append operations to the array aTransitionFailures 
-	// would not fail. This is assuming that the pre-allocated size is not exceeded.
-	TInt ret=aTransitions.Reserve(count); 
-	if (ret != KErrNone)
-		return ret;
-
 	TTransInfo* trans = new TTransInfo[count];
 	if(trans == NULL)
-		{
-		aTransitions.Reset();
 		return(KErrNoMemory);
-		}
 	
 	TPtr8 dataPtr(reinterpret_cast<TUint8*>(trans), count * sizeof(TTransInfo));
 
 	TIpcArgs a(&dataPtr);
-	ret=RSessionBase::SendReceive(EDmObserverGetEvent, a);
+	TInt ret=RSessionBase::SendReceive(EDmObserverGetEvent, a);
 	
 	if(ret==KErrNone)
 		{
 		for (TInt i=0; i<count; i++)
-			{
-			ret = aTransitions.Append(trans[i]);					
-			//The pre-allocation made above for the array aTransitions should guarantee
-			//that append operations complete succesfully.
-			__DM_ASSERT(ret == KErrNone);					
-			}
+			aTransitions.Append(trans[i]);
 		}
 	
 	delete [] trans;

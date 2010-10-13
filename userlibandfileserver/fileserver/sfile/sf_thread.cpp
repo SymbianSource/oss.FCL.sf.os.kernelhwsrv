@@ -858,7 +858,15 @@ TInt CDriveThread::FinaliseTimerEvent(TAny* aSelfP)
 	TDrive& drive = TheDrives[self.iDriveNumber];
 	if(drive.IsMounted())
         {
-        (void)drive.FinaliseMount(RFs::EFinal_RW);
+        if (drive.CurrentMount().LockStatus() == 0)
+            {
+            // Ignore the error here, as there's nothing we can do about it...
+            (void)drive.FinaliseMount(RFs::EFinal_RW);
+            }
+        else
+            {
+            self.StartFinalisationTimer();
+            }
         }
 
 	return KErrNone;
@@ -921,14 +929,14 @@ CPluginThread::CPluginThread(CFsPlugin& aPlugin)
   : iPlugin(aPlugin)
 	{
 	/** @prototype */
+	iOperationLock.Close();
 	iPlugin.Open();
 	}
 
 CPluginThread::~CPluginThread()
-	{
-	iPlugin.Close();
-	iOperationLock.Close();
-	}
+    {
+    iPlugin.Close();
+    }
 
 
 CPluginThread* CPluginThread::NewL(CFsPlugin& aPlugin)

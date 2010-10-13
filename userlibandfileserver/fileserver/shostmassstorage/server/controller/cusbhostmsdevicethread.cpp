@@ -173,16 +173,11 @@ void  CUsbHostMsDeviceThread::RunL()
         {
         if (iUsbHostMsDevice->IsSuspended())
             {
-
-            RMessage2 msg = iRMessage2[iDequeueIndex];      
-            if (msg.Function() != EUsbHostMsSuspendLun)
-                {
-                // request resume 
-                Unlock();
-                iUsbHostMsDevice->Resume(iStatus);
-                SetActive();
-                return;
-                }            
+            // request resume 
+            Unlock();
+            iUsbHostMsDevice->Resume(iStatus);
+            SetActive();
+            return;
             }
         }
 
@@ -314,11 +309,8 @@ void CUsbHostMsDeviceThread::HandleMessage(const RMessage2& aMessage)
 		return;
 	case EUsbHostMsUnRegisterInterface:
 		// Check whether all luns have got uninitialised. 
-        if (iUsbHostMsDevice)
-            {
-            for(TInt i = 0, j = iUsbHostMsDevice->GetMaxLun(); i <= j; i++)
-                TRAP_IGNORE(iUsbHostMsDevice->RemoveLunL(i));
-            }
+		for(TInt i = 0, j = iUsbHostMsDevice->GetMaxLun(); i <= j; i++)
+			TRAP_IGNORE(iUsbHostMsDevice->RemoveLunL(i));
 		TRAP(ret, UnRegisterInterfaceL(aMessage));
 		break;
 	case EUsbHostMsRegisterLun:

@@ -24,7 +24,7 @@
 using namespace F32_Test_Utils;
 
 
-RTest test(_L("T_PROXYDRIVE1"));
+GLDEF_D RTest test(_L("T_PROXYDRIVE1"));
 
 
 TInt GetRemovableDrive(TInt aDriveNumber)
@@ -81,7 +81,7 @@ TInt GetRemovableDrive(TInt aDriveNumber)
 
 
 
-void CallTestsL()
+GLDEF_C void CallTestsL()
 	{
     TInt drive;
 	TInt err=RFs::CharToDrive(gDriveToTest,drive);
@@ -96,7 +96,7 @@ void CallTestsL()
 
 	TInt r;
 
-	TInt localDriveNumber = GetRemovableDrive(drive); //-- local _physical_ drive number
+	TInt localDriveNumber = GetRemovableDrive(drive);
 	if (localDriveNumber < 0)
 		{
 		test.Printf(_L("Not a removable drive, skipping test\n"));
@@ -113,23 +113,14 @@ void CallTestsL()
 	TBuf<1> p2;
 	TInt driveNumber = EDriveM;
 
-    //-- this is a hack - mount the proxy drive to the existing one with alive file system just to check
-    //-- that it works.
-
 	r = TheFs.MountProxyDrive(driveNumber, KBitProxyDrive, &p1, &p2);
 	test.Printf(_L("MountProxyDrive(%d, %S) r %d\n"), driveNumber, &KBitProxyDrive, r);
 	test (r >= 0);
 
-    //-- query existing file system name on the drive that we are be parasiting on.
-    TFSName fsName;
-    r = TheFs.FileSystemName(fsName, drive);
+	_LIT(KFileSystem, "FAT");
+	r = TheFs.MountFileSystem(KFileSystem, driveNumber);
+	test.Printf(_L("MountFileSystem(%S) r %d\n"), &KFileSystem, r);
 	test(r == KErrNone);
-
-
-	r = TheFs.MountFileSystem(fsName, driveNumber);
-	test.Printf(_L("MountFileSystem(%S) r %d\n"), &fsName, r);
-	test(r == KErrNone);
-
 
 
 	RFs fs;
@@ -144,8 +135,8 @@ void CallTestsL()
 	test.Printf(_L("RDir::Open(%S) r %d\n"), &dirPath, r);
 
 
-	r = TheFs.DismountFileSystem(fsName, driveNumber);
-	test.Printf(_L("DismountFileSystem(%S) r %d\n"), &fsName, r);
+	r = TheFs.DismountFileSystem(KFileSystem, driveNumber);
+	test.Printf(_L("DismountFileSystem(%S) r %d\n"), &KFileSystem, r);
 	test (r == KErrInUse);
 
 	// dismount failed - attempt a forced dismount
@@ -153,7 +144,7 @@ void CallTestsL()
 	TheFs.NotifyDismount(driveNumber, stat, EFsDismountForceDismount);
 	User::WaitForRequest(stat);
 	r = stat.Int();
-	test.Printf(_L("DismountFileSystem(%S, EFsDismountForceDismount) r %d\n"), &fsName, r);
+	test.Printf(_L("DismountFileSystem(%S, EFsDismountForceDismount) r %d\n"), &KFileSystem, r);
 	test (r == KErrNone);
 
 	r = TheFs.DismountProxyDrive(driveNumber);

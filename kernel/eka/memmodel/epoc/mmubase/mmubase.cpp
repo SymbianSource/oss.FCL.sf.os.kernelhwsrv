@@ -3242,7 +3242,7 @@ TInt DemandPaging::DoInstallPagingDevice(DPagingDevice* aDevice, TInt aId)
 	{
 	NKern::LockSystem();
 	SPagingDevice* device = &iPagingDevices[aId];
-	if((device->iInstalled) && !(aDevice->iType & DPagingDevice::EMediaExtension))
+	if(device->iInstalled)
 		{
 		__KTRACE_OPT2(KPAGING,KBOOT,Kern::Printf("**** Attempt to install more than one ROM paging device !!!!!!!! ****"));
 		//Panic(EDeviceAlreadyExists);

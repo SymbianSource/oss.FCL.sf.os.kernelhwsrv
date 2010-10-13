@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -114,16 +114,8 @@ void CUsbHostMsSession::DispatchMessageL(const RMessage2& aMessage)
 			return;
 			}
 		break;
-    case EUsbHostMsUnRegisterInterface:
-        if(iCleanupInProgress)
-            {
-            aMessage.Complete(KErrInUse);
-            return;
-            }
-        else
-            {
-            iCleanupInProgress = ETrue;
-            }
+	case EUsbHostMsUnRegisterInterface:
+		iCleanupInProgress = ETrue;
 		break;
 	/* If it is a cleanup then we need to delete the iDeviceThread */
 	case EUsbHostMsFinalCleanup:	
@@ -136,17 +128,12 @@ void CUsbHostMsSession::DispatchMessageL(const RMessage2& aMessage)
 		break;
 		}
 
-	if (iDeviceThread == NULL) 
+	if (iDeviceThread == NULL || iCleanupInProgress ) 
 		{
 		aMessage.Complete(KErrBadHandle);
 		return;
 		}
 
-    if (iCleanupInProgress && aMessage.Function() != EUsbHostMsUnRegisterInterface) 
-        {
-        aMessage.Complete(KErrBadHandle);
-        return;
-        }
 
 	r = iDeviceThread->QueueMsg(aMessage);
 	if (r != KErrNone)

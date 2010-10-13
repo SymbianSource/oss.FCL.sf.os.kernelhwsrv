@@ -36,22 +36,17 @@ a media driver with the local media subsystem.
 enum TMediaDevice { EFixedMedia0, EFixedMedia1, EFixedMedia2, EFixedMedia3,
 					EFixedMedia4, EFixedMedia5, EFixedMedia6, EFixedMedia7,
 					ERemovableMedia0, ERemovableMedia1, ERemovableMedia2, ERemovableMedia3,
-					EInvalidMedia,
-					EMediaExtension0, EMediaExtension1, EMediaExtension2, EMediaExtension3,
-					EMediaExtension4, EMediaExtension5, EMediaExtension6, EMediaExtension7,
+					EInvalidMedia
 				};
 
 #define __IS_REMOVABLE(aDevice) (aDevice>=ERemovableMedia0 && aDevice<=ERemovableMedia3)
 #define __IS_FIXED(aDevice) ((TUint)aDevice<=EFixedMedia7)
-#define __IS_EXTENSION(aDevice) (aDevice>=EMediaExtension0 && aDevice<=EMediaExtension7)
-
 #define MEDIA_DEVICE_IRAM EFixedMedia0
 #define MEDIA_DEVICE_LFFS EFixedMedia1
 #define MEDIA_DEVICE_NAND EFixedMedia2
 #define MEDIA_DEVICE_MMC ERemovableMedia0
 #define MEDIA_DEVICE_PCCARD ERemovableMedia1
 #define MEDIA_DEVICE_CSA ERemovableMedia2
-#define MEDIA_DEVICE_NFE EMediaExtension0
 
 typedef signed int TSocket;
 
@@ -511,16 +506,6 @@ public:
 	};
 typedef TPckgBuf<TPageDeviceInfo> TPageDeviceInfoBuf;
 
-class TLocalDriveFinaliseInfo
-/**
-@internalTechnology
-*/
-	{
-public:
-	TInt iMode;		// @see RFs::TFinaliseDrvMode
-	};
-typedef TPckgBuf<TLocalDriveFinaliseInfo> TLocalDriveFinaliseInfoBuf;
-
 class RLocalDrive : public RBusLogicalChannel
 /**
 Interface class to local media
@@ -565,11 +550,9 @@ public:
 	enum TReadWriteFlags
 		{
 		ELocDrvMetaData					= 0x80000000,	/**< Set if read/write request is for metadata */
-		ELocDrvWholeMedia				= 0x40000000,	/**< Set to access whole media, rather than partition */
-		ELocDrvDirectIO					= 0x20000000
+		ELocDrvWholeMedia				= 0x40000000	/**< Set to access whole media, rather than partition */
 		};
 
-	// @see TBusLocalDrive::QueryDevice()
 	enum TQueryDevice
 		{ 
 		// Symbian publishedPartner range
@@ -584,14 +567,7 @@ public:
 		EQueryLicenseeFirst					= 0x8000,
 		EQueryLicenseeLast					= 0xBFFF,
 		
-		// Finalize Drive - called as a result of a call to RFs::FinaliseDrives()
-		EQueryFinaliseDrive					= EQuerySymbianPublishedPartnerFirst + 0,	// @internalTechnology
-
 		EQueryPageDeviceInfo = EQuerySymbianTestFirst,	/**< @see TPageDeviceInfo */
-		
-		// NFE test driver
-		EQuerySymbianNfeTestFirst = EQuerySymbianTestFirst+0x10,
-		EQuerySymbianNfeTestEnd = EQuerySymbianTestFirst+0x1F,
 		};
 public:
 	inline TVersion VersionRequired() const;

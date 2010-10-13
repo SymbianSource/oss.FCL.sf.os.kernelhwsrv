@@ -3,6 +3,7 @@
 component	base_e32_drivers_debug
 
 source	\sf\os\kernelhwsrv\kernel\eka\debug
+source	\sf\os\kernelhwsrv\kernel\eka\debug\crashMonitor
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\debug
 
 binary	\sf\os\kernelhwsrv\kernel\eka\drivers\debug\group all

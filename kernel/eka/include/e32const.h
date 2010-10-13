@@ -2409,7 +2409,7 @@ enum TChanges
 	
 
 	/**
-	The system's free memory level has crossed a specified threshold value.
+	The free memory level has crossed a specified threshold value.
 	
 	On systems that support data paging, this is also generated where the available swap space
 	crosses one of the specified threshold values.
@@ -2418,20 +2418,13 @@ enum TChanges
 
 	
 	/**
-	A memory allocation has failed due to insufficient free memory somewhere in the system.
-
-	Please note that this notifcation is generated when any memory allocation fails, not just
-	allocations attempted by the current process.
-
-	This is designed to notify a system memory manager component when a memory allocation failed
-	even when the system's memory has not crossed the low-memory threshold.  It should not be used
-	as part of a memory management strategy within a single process.
+	A memory allocation has failed due to insufficient free memory.
 	*/
 	EChangesOutOfMemory=0x40,
 	
 
 	/**
-	The system's free memory level has fallen below the low-memory threshold
+	The free memory level has fallen below the low-memory threshold
 	@see UserSvr::SetMemoryThresholds()
 	*/
 	EChangesLowMemory=0x80,

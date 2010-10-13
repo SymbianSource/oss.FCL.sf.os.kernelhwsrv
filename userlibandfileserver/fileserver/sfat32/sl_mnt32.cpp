@@ -218,8 +218,8 @@ Set or reset "VolumeClean" (ClnShutBitmask) flag.
 void CFatMountCB::SetVolumeCleanL(TBool aClean) 
     {
 
-	//-- The volume can't be set clean if there are disk access objects opened on it. This precondition must be checked before calling this function
-    if(aClean && Locked())
+	//-- The volume can't be set clean if there are objects opened on it. This precondition must be checked before calling this function
+    if(aClean && LockStatus()!=0)
         {
         __PRINT1(_L("#- CFatMountCB::SetVolumeCleanL drive:%d isn't free!"),DriveNumber());
         ASSERT(0);
@@ -1068,8 +1068,8 @@ void CFatMountCB::ReadSection64L(const TDesC& aName, TInt64 aPos, TAny* aTrg, TI
 			//  Read the remaining length or the entire cluster block whichever is smaller
 			TInt readLength = (TInt)Min((TInt64)(aLength-readTotal),(clusterListLen<<ClusterSizeLog2())-pos);
 			__ASSERT_DEBUG(readLength>0,Fault(EReadFileSectionFailed));
-			TInt64 dataAddress=(FAT().DataPositionInBytesL(cluster))+pos;
-			iRawDisk->ReadL(dataAddress,readLength,aTrg,aMessage,readTotal, 0);
+			TInt64 dataAddress=(FAT().DataPositionInBytes(cluster))+pos;
+			iRawDisk->ReadL(dataAddress,readLength,aTrg,aMessage,readTotal);
 			readTotal += readLength;
 
 			if (readTotal == aLength)

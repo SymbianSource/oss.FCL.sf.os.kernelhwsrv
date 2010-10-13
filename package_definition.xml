@@ -17,9 +17,6 @@
       </component>
     </collection>
     <collection id="kerneltest" name="Kernel Test" level="hw-if">
-	  <component id="sdiotest" name="SDIO Tests" introduced="9.2" purpose="development">
-      <unit bldFile="kerneltest/sdiotest" mrp="kerneltest/sdiotest/base_sdiotests.mrp"/>
-      </component>
       <component id="e32utils" name="E32 Utilities" purpose="development">
       <unit bldFile="kerneltest/e32utils/group" mrp="kerneltest/e32utils/group/base_e32utils.mrp"/>
       </component>
@@ -28,12 +25,6 @@
       </component>
       <component id="f32test" name="File Server Tests" purpose="development">
         <unit bldFile="kerneltest/f32test/group" mrp="kerneltest/f32test/group/base_f32test.mrp"/>
-      </component>
-      <component id="rofstests" name="Read Only File System Tests" purpose="development" filter="test">
-        <unit bldFile="kerneltest/f32test/rofs"/>
-      </component>
-      <component id="loadertest" name="Loader Tests" purpose="development" filter="test">
-        <unit bldFile="kerneltest/f32test/loader"/>
       </component>
     </collection>
     <collection id="ldds" name="Logical Device Drivers" level="adaptation">

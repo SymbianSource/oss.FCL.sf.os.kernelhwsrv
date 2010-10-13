@@ -1,4 +1,4 @@
-// Copyright (c) 1999-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1999-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -27,8 +27,9 @@
 // ======== TSDCard ========
 
 TSDCard::TSDCard()
-:	iProtectedAreaSize(0), iPARootDirEnd(KPARootDirEndUnknown), iClientCountSD(0)
+:	iProtectedAreaSize(0), iPARootDirEnd(KPARootDirEndUnknown)
 	{
+	// empty
 	}
 
 TInt64 TSDCard::DeviceSize64() const

@@ -89,13 +89,17 @@ void ValidateAtts(TUint& aSetAttMask,TUint& aClearAttMask)
 // Do not allow the entry type to be changed
 //
 	{
-	const TUint KReadOnlyAtts = KEntryAttVolume	| 
-								KEntryAttDir	| 
-								KEntryAttRemote	|
-								KEntryAttModified;
+	const TUint KReadOnlySetAtts = KEntryAttVolume | 
+								   KEntryAttDir    | 
+								   KEntryAttRemote;
 
-	aSetAttMask   &= ~KReadOnlyAtts;
-	aClearAttMask &= ~KReadOnlyAtts;
+	const TUint KReadOnlyClrAtts = KEntryAttVolume | 
+								   KEntryAttDir    | 
+								   KEntryAttRemote | 
+								   KEntryAttModified;
+
+	aSetAttMask   &= ~KReadOnlySetAtts;
+	aClearAttMask &= ~KReadOnlyClrAtts;
 	}
 
 void CheckForLeaveAfterOpenL(TInt leaveError, CFsRequest* aRequest, TInt aHandle)
@@ -543,19 +547,6 @@ TInt TDrive::FinaliseMount(TInt aOperation, TAny* aParam1/*=NULL*/, TAny* aParam
 	TRAP(r,CurrentMount().FinaliseMountL(aOperation, aParam1, aParam2));
 	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBFinaliseMount2Ret, EF32TraceUidFileSys, r);
 	
-	// Pass FinaliseDrive notification down to media driver
-	TInt driveNumber = DriveNumber();
-	if (LocalDrives::IsValidDriveMapping(driveNumber) && !LocalDrives::IsProxyDrive(driveNumber))
-		{
-		TBusLocalDrive& drv = LocalDrives::GetLocalDrive(driveNumber);
-
-		TLocalDriveFinaliseInfoBuf finaliseBuf;
-		finaliseBuf().iMode = aOperation;
-
-		// notify local drive, ignore the error
-		drv.QueryDevice(RLocalDrive::EQueryFinaliseDrive, finaliseBuf);	
-		}
-
     return r;
 	}
 
@@ -1244,31 +1235,6 @@ TInt TDrive::SetEntry(const TDesC& aName,const TTime& aTime,TUint aSetAttMask,TU
 		DriveNumber(), aName, I64LOW(aTime.Int64()), I64HIGH(aTime.Int64()), aSetAttMask, aClearAttMask);
 	TRAP(r,CurrentMount().SetEntryL(entryName,aTime,aSetAttMask,aClearAttMask))
 	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBSetEntryLRet, EF32TraceUidFileSys, r);
-	// If the file is already open then write the file attributes directly to the file
-	TFileName foldedName;
-	TUint32 nameHash=0;
-	foldedName.CopyF(aName);
-	nameHash=CalcNameHash(foldedName);
-
-	__CHECK_DRIVETHREAD(iDriveNumber);
-	TDblQueIter<CFileCB> q(CurrentMount().iMountQ);
-	CMountCB* currentMount = &CurrentMount();
-	CFileCB* file;
-	while ((file=q++)!=NULL)
-		{
-		if ((&file->Drive()==this) && 
-			&file->Mount() == currentMount &&
-			nameHash == file->NameHash() && 
-			file->FileNameF().Match(foldedName)==KErrNone)
-			{
-			TUint att = file->Att();
-			att |= aSetAttMask;
-			att &= ~aClearAttMask;
-			file->SetAtt(att | KEntryAttModified);
-			file->SetModified(aTime);
-			break;
-			}
-		}
 
 	return(r);
 	}
@@ -2221,9 +2187,8 @@ EXPORT_C TBool TDrive::GetNotifyUser()
 
 
 /**
-    Gracefully dismounts the current mount. This is method is called from outside, so do some finalisation work on mount.
+Dismounts the current mount. This is method is called from outside, so do some finalisation work on mount.
 After calling this function there is no current mount on the drive.
-
 */
 EXPORT_C void TDrive::Dismount()
 	{
@@ -2233,12 +2198,10 @@ EXPORT_C void TDrive::Dismount()
 	if (!iCurrentMount)
 		return;
 
-    //-- try to do the best flushing file caches
     TRAP_IGNORE(FlushCachedFileInfoL());
 
     //-- try our best to finalise the mount (the mount can decide to do some job during finalisation, e.g. write some data)
-    //-- finalise the mount in RO mode, we are dismounting the FS anyway
-    TRAP_IGNORE(iCurrentMount->FinaliseMountL(RFs::EFinal_RO));
+    TRAP_IGNORE(iCurrentMount->FinaliseMountL());
     
     DoDismount();
 	}
@@ -2247,7 +2210,8 @@ EXPORT_C void TDrive::Dismount()
 
 
 /**
-    Dismounts the current mount by force.
+Forcibly dismounts the current mount and prevents it being remounted.
+After calling this function there is no current mount on the drive.
 */
 void TDrive::ForceDismount()
 	{
@@ -2259,15 +2223,7 @@ void TDrive::ForceDismount()
 		return;
   
 	TRAP_IGNORE(FlushCachedFileInfoL());
-
-    //-- try our best to finalise the mount (the mount can decide to do some job during finalisation, e.g. write some data)
-    //-- finalise the mount in RO mode, we are dismounting the FS anyway
-    TRAP_IGNORE(iCurrentMount->FinaliseMountL(RFs::EFinal_RO));
-
-    //-- mark the mount as 'Dismounted'; this invalidates all object handles until the mount is successfully "remounted". 
-    //-- if there are still some objects opened on this mount, CMountCB::Close() won't destroy it until all objects are closed.
-    iCurrentMount->SetDismounted(); 
-    
+	iCurrentMount->SetDismounted(); //! this affects TDrive::ReMount()
     DoDismount();
 	}
 

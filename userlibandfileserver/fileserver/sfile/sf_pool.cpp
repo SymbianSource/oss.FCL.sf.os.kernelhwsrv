@@ -64,11 +64,7 @@ TInt CFsPool<T>::Construct(TInt aPoolSize)
 			{
 			return KErrNoMemory;
 			}
-		r = iFreeList.Append(t);
-        if(r !=  KErrNone)
-            {
-            return r;
-            }
+		iFreeList.Append(t);	
 		i++;
 		}
 	

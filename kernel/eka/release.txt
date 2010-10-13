@@ -1,112 +1,17 @@
-Version 2.00.2660
+Version 2.00.2146
 =================
-(Made by fadhliM 24/08/2010)
+(Made by vfebvre 21/09/2010)
 
-1.	cnotton
-	1.	ou1cimx1#532041 ENV ExecHandler::MathSecureRandom() allocates a large amount of stack space
+1.	haifeyan
+	1.	ou1cimx1#582961 Boosted otg - add error message ID
 
 
-Version 2.00.2659
+Version 2.00.2145
 =================
-(Made by fadhliM 23/08/2010)
-
-1.	jimhofe
-	1.	ou1cimx1#526275 [System Build] Dummy MPR files cause build break in TB92SF_1229
-
-
-Version 2.00.2658
-=================
-(Made by fadhliM 16/08/2010)
-
-1.	jimhofe
-	1.	MINOR_CHANGE Removing names from documentation
-
-2.	t30zhang
-	1.	ou1cimx1#521838 Mutex order issue in USB host stack
-
-3.	jcoppear
-	1.	ou1cimx1#524810 EChangesOutOfMemory is prone to misuse
-
-4.	fagortz
-	1.	ou1cimx1#522998 LocDrv::RegisterPagingDevice() assumes iblockSize is non-zero
-
-5.	mmoate
-	1.	ou1cimx1#462350 DEV TB92 CBR issues affecting component delivery to foundation for Symbian^3
-
-6.	jukwak
-	1.	ou1cimx1#516021 [DEV] t_pci has dependency on naviengine. Propagated from MCL.
-
-
-Version 2.00.2657
-=================
-(Made by fadhliM 06/08/2010)
-
-1.	jimhofe
-	1.	MINOR_CHANGE Removing author names from documentation
-
-2.	davegord
-	1.	ou1cimx1#506836  Problem with ExecHandler::FsRegisterThread()
-
-Version 2.00.2656
-=================
-(Made by fadhliM 29/07/2010)
-
-1.	h14jiang
-	1.	ou1cimx1#504401 [92] Disk full notification pops up
-
-
-Version 2.00.2655
-=================
-(Made by fadhliM 27/07/2010)
-
-1.	vfebvre
-	1.	ou1cimx1#488886 System-critical thread being reported in MC when another permanent thread in same process fault
-
-2.	dogunjum
-	1.	ou1cimx1#479596 92: Domain Manager - Correct the usage of RArray::Append()
-
-
-Version 2.00.2654
-=================
-(Made by fadhliM 19/07/2010)
-
-1.	gcochran
-	1.	ou1cimx1#498818/DEF144551 t_svrpinning, _P,_UP test fails with unexpected thread exit type on Vasco/TB9.2
-
-2.	martai
-	1.	ou1cimx1#494023 E32TEST T_SHADOW Fails during testMultipleReadFile()
-
-
-Version 2.00.2653
-=================
-(Made by famustaf 14/07/2010)
+(Made by famustaf 13/07/2010)
 
 1.	davegord
-	1.	ou1cimx1#485331 Kernel signals MTP server unexpectedly and cause it panic
-
-
-Version 2.00.2652
-=================
-(Made by famustaf 12/07/2010)
-
-1.	jcoppear
-	1.	ou1cimx1#479552 ENV E32TEST T_ALIAS_REMOVE timeout
-	
-
-Version 2.00.2651
-=================
-(Made by famustaf 12/07/2010)
-
-1.	paconway
-	1.	MINOR_CHANGE Correct EPL header for sdapctest.mmp
-
-
-Version 2.00.2650
-=================
-(Made by famustaf 07/07/2010)
-
-1.	paconway
-	1.	REQ 417-56766 MBBMS over CMMB for TD-SCDMA Gen. 2 MobileTv
+	1.	ou1cimx1#488511 (92PS1) Kernel signals MTP server unexpectedly and cause it panic
 
 
 Version 2.00.2144

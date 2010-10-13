@@ -32,7 +32,7 @@
 #include <e32const_private.h>
 #include "sf_plugin.h"
 #include "sf_func.h"
-#include <f32plugin.h>
+#include <F32plugin.h>
 #include "f32trace.h"
 #include <utraceefile.h>
 
@@ -114,8 +114,6 @@
 #define __PLUGIN_PRINT2(t,a,b)
 #define __PLUGIN_PRINT3(t,a,b,c)
 #endif
-
-#define _LOFF(p,T,f) ((T*)(((TUint8*)(p))-_FOFF(T,f)))
 
 const TInt KMaxTotalDriveReserved	=0x100000;
 const TInt KMaxSessionDriveReserved	=0x10000;
@@ -1314,13 +1312,11 @@ public:
 	inline void Init();
 	void ReStart();
 	TBool IsPluginRequest();
-	static inline CFsMessageRequest* RequestFromMessage(const RMessagePtr2& aMessage);
 	
    // UID of the process to touching the file. (To be used in notification framework).
    // TUid iUID;
 private:
 	void DoNotify(TInt aError);
-	void DoNotifyDiskSpace(TInt aError);
 	TInt DoInitialise();
 	TInt PostInitialise();
 	TBool DispatchToPlugin();

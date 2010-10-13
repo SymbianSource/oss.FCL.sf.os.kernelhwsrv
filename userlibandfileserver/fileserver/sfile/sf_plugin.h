@@ -21,7 +21,7 @@
 
 #include "message.h"
 #include <f32fsys.h>
-#include <f32plugin.h>
+#include <F32plugin.h>
 
 class CFsSyncMessageScheduler;
 class CFsInternalRequest;

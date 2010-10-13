@@ -1,4 +1,4 @@
-// Copyright (c) 1994-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1994-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -119,9 +119,9 @@ TInt ExecHandler::MathSecureRandom(TDes8& aRandomValue)
 
 	// The random number generator requires a temporary buffer to write the data to, before we write it back to
 	// userspace's buffer. The buffer is allocated here on the stack to avoid having to heap-allocate, and if
-	// the requested amount of data is larger, a loop is used. 1024 bytes will always fit onto the stack in an
+	// the requested amount of data is larger, a loop is used. 2048 bytes will always fit onto the stack in an
 	// exec handler.
-	const TInt KRandomBufferSize = 1024;
+	const TInt KRandomBufferSize = 2048;
 	TBuf8<KRandomBufferSize> randomBuffer;
 
 	TInt err = KErrNone;

@@ -42,7 +42,6 @@ PRJ_EXPORTS
 ../pbus/mmc/sdcard/sdcard3c/sdio/dummyexp.h     SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/sdio/)
 ../pbus/mmc/sdcard/sdcard3c/sdio/sdiocard.h     SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/sdio/)
 ../pbus/mmc/sdcard/sdcard3c/sdio/sdiocard.inl     SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/sdio/)
-../sdapc/d_sdapc.h				SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(drivers/)
 
 PRJ_MMPFILES
 
@@ -60,7 +59,6 @@ PRJ_MMPFILES
 #if !defined(WINS) && !defined(GENERIC_X86)
 ../../drivers/pbus/mmc/sdcard/sdcard3c/epbussd
 ../../drivers/pbus/mmc/sdcard/sdcard3c/sdio/epbussdio
-../../drivers/sdapc/d_sdapc
 #endif
 
 // Build the folowing from variant if required.

@@ -200,7 +200,6 @@ TInt DMediaDriverIRam::Caps(TLocDrvRequest& m)
 	caps.iEraseBlockSize=TInternalRamDrive::MaxSize();	// overload for RAM drive to avoid
 														// F32 depending on memory model
 	caps.iBlockSize=1;
-	SetTotalSizeInBytes(caps);
 	return KErrNone;									
 	}
 

@@ -699,18 +699,8 @@ TInt TFsFileRead::DoRequestL(CFsRequest* aRequest)
 			// Current operation points to a local buffer
 			// The request originated from the file server (e.g. file cache) with a local message handle (KLocalMessageHandle)
 			TPtr8 dataDesc((TUint8*) currentOperation.iReadWriteArgs.iData + currentOperation.iReadWriteArgs.iOffset, len, len);
-
-			// save the client's RMessage2
-			const RMessage2 msgClient = aRequest->Message();
-			
-			// overwrite RMessage2 in CFsMessageRequest with RLocalMessage 
-			const RLocalMessage msgLocal;					
-			const_cast<RMessage2&> (aRequest->Message()) = msgLocal;
-
-			TRAP(r,file->ReadL(pos, len, &dataDesc, aRequest->Message(), 0));
-							
-			// restore the client's RMessage2
-			const_cast<RMessage2&> (aRequest->Message()) = msgClient;
+			const RLocalMessage msg;
+			TRAP(r,file->ReadL(pos, len, &dataDesc, msg, 0));
 			}
 		}
 
@@ -968,6 +958,10 @@ TInt TFsFileWrite::CommonInit(CFileShare* aShare, CFileCB* aFile, TInt64& aPos, 
         {//-- this call is originated from explicit file write operation. Set 'Archive' attribute and new file time.
         aFile->SetArchiveAttribute(); //-- it will also set KEntryAttModified
         }
+    else
+        {//-- don't touch data and attributes if it is cache flushing dirty data
+        aFile->iAtt |= KEntryAttModified;
+        }
 
 
 	return KErrNone;
@@ -1100,18 +1094,8 @@ TInt TFsFileWrite::DoRequestL(CFsRequest* aRequest)
 		else
 			{
 			TPtr8 dataDesc((TUint8*) currentOperation.iReadWriteArgs.iData + currentOperation.iReadWriteArgs.iOffset, len, len);
-
-			// save the client's RMessage2
-			const RMessage2 msgClient = aRequest->Message();
-			
-			// overwrite RMessage2 in CFsMessageRequest with RLocalMessage 
-			const RLocalMessage msgLocal;					
-			const_cast<RMessage2&> (aRequest->Message()) = msgLocal;
-
-			TRAP(r,file->WriteL(pos, len, &dataDesc, aRequest->Message(), 0));
-							
-			// restore the client's RMessage2
-			const_cast<RMessage2&> (aRequest->Message()) = msgClient;
+			const RLocalMessage msg;
+			TRAP(r,file->WriteL(pos, len, &dataDesc, msg, 0));
 			}
 		}
 
@@ -1583,11 +1567,13 @@ TInt TFsFileSetSize::DoRequestL(CFsRequest* aRequest)
 	
 	CFileCB& file=share->File();
 
+	// flush the write cache
+	CFileCache* fileCache = share->File().FileCache();
+	if (fileCache && (r = fileCache->FlushDirty(aRequest)) != CFsRequest::EReqActionComplete)
+		return r;
+	
 	if (size==file.Size64())
-		{
-		file.SetCachedSize64(size);	// Ensure the cache size doesn't exceeed the physical size
 		return(KErrNone);
-		}
 	
 	TBool fileHasGrown = size > file.Size64();
 	if (fileHasGrown)
@@ -1641,7 +1627,6 @@ TInt TFsFileAtt::DoRequestL(CFsRequest* aRequest)
 	CFileShare* share=(CFileShare*)aRequest->ScratchValue();
 //	TInt att=(TInt)aRequest->FileShare()->File().Att()&KEntryAttMaskSupported;
 	TInt att=(TInt)share->File().Att();	// DRM: let ROM XIP attribute through
-	att&= ~KEntryAttModified;	// this is an internal attribute and should not be returned to the client
 	TPtrC8 pA((TUint8*)&att,sizeof(TInt));
 	aRequest->WriteL(KMsgPtr0,pA);
 	
@@ -1681,7 +1666,7 @@ TInt TFsFileSetAtt::DoRequestL(CFsRequest* aRequest)
 	ValidateAtts(setAttMask,clearAttMask);
 
 	TRACE5(UTF::EBorder, UTraceModuleFileSys::ECFileCBSetEntryL, EF32TraceUidFileSys, &share->File(), 0, 0, setAttMask,clearAttMask);
-	TRAP(r,share->File().SetEntryL(share->File().Modified(),setAttMask,clearAttMask))
+	TRAP(r,share->File().SetEntryL(TTime(0),setAttMask,clearAttMask))
 	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECFileCBSetEntryLRet, EF32TraceUidFileSys, r);
 
 	return(r);
@@ -1790,12 +1775,12 @@ TInt TFsFileSet::DoRequestL(CFsRequest* aRequest)
     TTime time;
 	TPtr8 t((TUint8*)&time,sizeof(TTime));
 	aRequest->ReadL(KMsgPtr0,t);
-	TUint setAttMask=(TUint)(aRequest->Message().Int1());
+	TUint setAttMask=(TUint)(aRequest->Message().Int1()|KEntryAttModified);
 	TUint clearAttMask=(TUint)aRequest->Message().Int2();
 	ValidateAtts(setAttMask,clearAttMask);//	Validate attributes
 
 	TRACE5(UTF::EBorder, UTraceModuleFileSys::ECFileCBSetEntryL, EF32TraceUidFileSys, &share->File(), 0, 0, setAttMask,clearAttMask);
-	TRAP(r,share->File().SetEntryL(time,setAttMask|KEntryAttModified,clearAttMask))
+	TRAP(r,share->File().SetEntryL(time,setAttMask,clearAttMask))
 	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECFileCBSetEntryLRet, EF32TraceUidFileSys, r);
 
 	return(r);
@@ -3639,21 +3624,9 @@ TBool TFileShareLock::MatchByPos(TUint64 aPosLow, TUint64 aPosHigh) const
 
 
 
-EXPORT_C TBool CFileCB::DirectIOMode(const RMessagePtr2& aMessage)
-	{
-	CFsMessageRequest* msgRequest = CFsMessageRequest::RequestFromMessage(aMessage);
 
-	TInt func = msgRequest->Operation()->Function();
-	ASSERT(func == EFsFileRead || func == EFsFileWrite || func == EFsFileWriteDirty  || func == EFsReadFileSection);
 
-	CFileShare* share;
-	CFileCB* file;
-	GetFileFromScratch(msgRequest, share, file);
-	if (share == NULL)		// no share indicates this is a request originating from the file cache
-		return EFalse;
 
-	return func == EFsFileRead ? share->iMode & EFileReadDirectIO : share->iMode & EFileWriteDirectIO; 
-	}
 
 
 

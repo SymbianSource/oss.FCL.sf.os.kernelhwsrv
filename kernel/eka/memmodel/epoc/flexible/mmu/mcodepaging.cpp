@@ -131,8 +131,6 @@ TInt DCodePagedMemoryManager::InstallPagingDevice(DPagingDevice* aDevice)
 			{
 			TRACEB(("DCodePagedMemoryManager::InstallPagingDevice drive=%d",i));
 			TAny* null = 0;
-			if(aDevice->iType & DPagingDevice::EMediaExtension)
-				__e32_atomic_store_ord_ptr(&iDevice[i], null);
 			if(!__e32_atomic_cas_ord_ptr(&iDevice[i], &null, aDevice)) // set iDevice[i]=aDevice if it was originally 0
 				{
 				// paging device already registered...

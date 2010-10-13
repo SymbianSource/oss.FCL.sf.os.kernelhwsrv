@@ -502,8 +502,6 @@ TInt DRomMemoryManager::InstallPagingDevice(DPagingDevice* aDevice)
 		}
 
 	TAny* null = 0;
-	if(aDevice->iType & DPagingDevice::EMediaExtension)
-		__e32_atomic_store_ord_ptr(&iDevice, null);
 	if(!__e32_atomic_cas_ord_ptr(&iDevice, &null, aDevice)) // set iDevice=aDevice if it was originally 0
 		{
 		// ROM paging device already registered...

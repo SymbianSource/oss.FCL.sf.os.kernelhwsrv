@@ -550,18 +550,6 @@ GLDEF_C void ExtractNameString(TDes16& aName, const TUint8* aEntry)
 	aName.SetLength(i);
 	}
 
-TDes& MakePrintable(TDes& aDes)
-	{
-	TInt len = aDes.Length();
-
-	for (TInt i=0; i<len; i++)
-		{
-		if ((TUint8) aDes[i] < 0x20)
-			aDes[i] = '?';
-		}
-	return aDes;
-	}
-
 GLDEF_C TBool DumpDirEntry(TInt aNum, const TUint8* aEntry)
 // 
 // Dump a single directory entry to the log.  Return false if it was end of
@@ -581,9 +569,9 @@ GLDEF_C TBool DumpDirEntry(TInt aNum, const TUint8* aEntry)
 		ExtractNameString(name, aEntry);
 		TInt ord = aEntry[0];
 		if (ord & KDirLastLongEntry)
-			RDebug::Print(_L("%5d: %-15S #%-2d LAST"), aNum, &MakePrintable(name), ord & ~KDirLastLongEntry);
+			RDebug::Print(_L("%5d: %-15S #%-2d LAST"), aNum, &name, ord & ~KDirLastLongEntry);
 		else
-			RDebug::Print(_L("%5d: %-15S #%-2d"), aNum, &MakePrintable(name), ord & ~KDirLastLongEntry);
+			RDebug::Print(_L("%5d: %-15S #%-2d"), aNum, &name, ord & ~KDirLastLongEntry);
 		}
 	else if (!IsValidDirEntry(d))
 		return EFalse;
@@ -592,7 +580,7 @@ GLDEF_C TBool DumpDirEntry(TInt aNum, const TUint8* aEntry)
 		TBuf<11> name;
 		name.Copy(d->Name());
 		RDebug::Print(_L("%5d: '%S'  %S  cluster %d"),
-					  aNum, &MakePrintable(name), DirAttributes(d->Attributes()), d->StartCluster());
+					  aNum, &name, DirAttributes(d->Attributes()), d->StartCluster());
 		}
 	return ETrue;
 	}

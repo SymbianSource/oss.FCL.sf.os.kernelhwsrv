@@ -18,7 +18,6 @@ source	\sf\os\kernelhwsrv\kernel\eka\personality
 source	\sf\os\kernelhwsrv\kernel\eka\rombuild
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\paging
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\pipe
-source	\sf\os\kernelhwsrv\kernel\eka\base_e32.history.xml
 source	\sf\os\kernelhwsrv\kernel\eka\base_e32.mrp
 source	\sf\os\kernelhwsrv\kernel\eka\base.bld
 source	\sf\os\kernelhwsrv\kernel\eka\bld.inf

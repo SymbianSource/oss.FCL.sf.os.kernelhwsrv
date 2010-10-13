@@ -160,12 +160,7 @@ void CUsbHostMsDevice::InitLunL(TLun aLun)
 void CUsbHostMsDevice::SuspendLunL(TLun aLun)
 	{
     __MSFNLOG
-    if (IsSuspended())
-        {
-        return;
-        }
-
-    iLuList.GetLuL(aLun).ReadyToSuspend();
+	iLuList.GetLuL(aLun).ReadyToSuspend();
 
     // check whether all the luns are suspended, if so then request usb
     // interface suspension to the transport layer

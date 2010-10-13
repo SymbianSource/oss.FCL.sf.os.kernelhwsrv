@@ -2782,10 +2782,9 @@ public:
 	/** The type of device this represents. */
 	enum TType
 		{
-		ERom  = 1<<0,			/**< Paged ROM device type. */
-		ECode = 1<<1,			/**< Code paging device type. */
-		EData = 1<<2,			/**< Data paging device type. */
-		EMediaExtension = 1<<3	/**< Media extension device type. */
+		ERom  = 1<<0,	/**< Paged ROM device type. */
+		ECode = 1<<1,	/**< Code paging device type. */
+		EData = 1<<2	/**< Data paging device type. */
 		};
 
 	enum TSpecialDrives
