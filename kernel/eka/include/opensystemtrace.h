@@ -22,7 +22,7 @@
 /**
 This macro defines the version of the Open System Trace instrumentation API.
 */
-#define OST_INSTRUMENTATION_API_VERSION 2.1.0
+#define OST_INSTRUMENTATION_API_VERSION 2.2.0
 
 
 /**
@@ -130,8 +130,9 @@ will end up in production images used by consumers.
 
 /**
 Preprocessor category for RnD traces
+@deprecated Use OST_TRACE_CATEGORY_PRODUCTION
 */
-#define OST_TRACE_CATEGORY_RND 0x00000002
+#define OST_TRACE_CATEGORY_RND OST_TRACE_CATEGORY_PRODUCTION
 
 /**
 Preprocessor category for performance measurement traces
@@ -360,7 +361,7 @@ RnD trace with no parameters
                   The text itself is not sent in the trace packet
 */
 #define OstTrace0( aGroupName, aTraceName, aTraceText ) \
-    OstTraceDef0( OST_TRACE_CATEGORY_RND, aGroupName, aTraceName, aTraceText )
+    OstTraceDef0( OST_TRACE_CATEGORY_PRODUCTION, aGroupName, aTraceName, aTraceText )
 
 
 /**
@@ -375,7 +376,7 @@ RnD trace with one 32-bit parameter
 @param aParam The 32-bit value to be traced
 */
 #define OstTrace1( aGroupName, aTraceName, aTraceText, aParam ) \
-    OstTraceDef1( OST_TRACE_CATEGORY_RND, aGroupName, aTraceName, aTraceText, aParam )
+    OstTraceDef1( OST_TRACE_CATEGORY_PRODUCTION, aGroupName, aTraceName, aTraceText, aParam )
 
 
 /**
@@ -391,7 +392,7 @@ RnD trace with more than 32 bits of data
 @param aLength Length of the data to be traced
 */
 #define OstTraceData( aGroupName, aTraceName, aTraceText, aPtr, aLength ) \
-    OstTraceDefData( OST_TRACE_CATEGORY_RND, aGroupName, aTraceName, aTraceText, aPtr, aLength )
+    OstTraceDefData( OST_TRACE_CATEGORY_PRODUCTION, aGroupName, aTraceName, aTraceText, aPtr, aLength )
 
 
 /**
@@ -408,7 +409,7 @@ parameter into a stack-allocated buffer and call OstTraceData with the buffer.
 @param aParam The parameter to be traced
 */
 #define OstTraceExt1( aGroupName, aTraceName, aTraceText, aParam ) \
-    OstTraceDefExt1( OST_TRACE_CATEGORY_RND, aGroupName, aTraceName, aTraceText, aParam )
+    OstTraceDefExt1( OST_TRACE_CATEGORY_PRODUCTION, aGroupName, aTraceName, aTraceText, aParam )
 
 
 /**
@@ -426,7 +427,7 @@ call OstTraceData with the buffer.
 @param aParam2 The second parameter to be traced
 */
 #define OstTraceExt2( aGroupName, aTraceName, aTraceText, aParam1, aParam2 ) \
-    OstTraceDefExt2( OST_TRACE_CATEGORY_RND, aGroupName, aTraceName, aTraceText, aParam1, aParam2 )
+    OstTraceDefExt2( OST_TRACE_CATEGORY_PRODUCTION, aGroupName, aTraceName, aTraceText, aParam1, aParam2 )
 
 
 /**
@@ -445,7 +446,7 @@ call OstTraceData with the buffer.
 @param aParam3 The third parameter to be traced
 */
 #define OstTraceExt3( aGroupName, aTraceName, aTraceText, aParam1, aParam2, aParam3 ) \
-    OstTraceDefExt3( OST_TRACE_CATEGORY_RND, aGroupName, aTraceName, aTraceText, aParam1, aParam2, aParam3 )
+    OstTraceDefExt3( OST_TRACE_CATEGORY_PRODUCTION, aGroupName, aTraceName, aTraceText, aParam1, aParam2, aParam3 )
 
 
 /**
@@ -465,7 +466,7 @@ call OstTraceData with the buffer.
 @param aParam4 The fourth parameter to be traced
 */
 #define OstTraceExt4( aGroupName, aTraceName, aTraceText, aParam1, aParam2, aParam3, aParam4 ) \
-    OstTraceDefExt4( OST_TRACE_CATEGORY_RND, aGroupName, aTraceName, aTraceText, aParam1, aParam2, aParam3, aParam4 )
+    OstTraceDefExt4( OST_TRACE_CATEGORY_PRODUCTION, aGroupName, aTraceName, aTraceText, aParam1, aParam2, aParam3, aParam4 )
 
 
 /**
@@ -486,7 +487,7 @@ call OstTraceData with the buffer.
 @param aParam5 The fifth parameter to be traced
 */
 #define OstTraceExt5( aGroupName, aTraceName, aTraceText, aParam1, aParam2, aParam3, aParam4, aParam5 ) \
-    OstTraceDefExt5( OST_TRACE_CATEGORY_RND, aGroupName, aTraceName, aTraceText, aParam1, aParam2, aParam3, aParam4, aParam5 )
+    OstTraceDefExt5( OST_TRACE_CATEGORY_PRODUCTION, aGroupName, aTraceName, aTraceText, aParam1, aParam2, aParam3, aParam4, aParam5 )
 
 
 /**
@@ -496,7 +497,7 @@ The trace is mapped to TRACE_FLOW or TRACE_API group by the trace compiler
 @param aTraceName Name of the trace. The name is mapped to a 32-bit identifier and thus must be unique
 */
 #define OstTraceFunctionEntry0( aTraceName ) \
-    do {if ( OST_TRACE_CATEGORY_RND & OST_TRACE_CATEGORY ) \
+    do {if ( OST_TRACE_CATEGORY_PRODUCTION & OST_TRACE_CATEGORY ) \
     BTraceFilteredContext8( EXTRACT_GROUP_ID(aTraceName), \
                         EOstTrace, \
                         KOstTraceComponentID, \
@@ -511,7 +512,7 @@ The trace is mapped to TRACE_FLOW or TRACE_API group by the trace compiler
 @param aInstance The instance identifier, for example "this" pointer
 */
 #define OstTraceFunctionEntry1( aTraceName, aInstance ) \
-    do {if ( OST_TRACE_CATEGORY_RND & OST_TRACE_CATEGORY ) \
+    do {if ( OST_TRACE_CATEGORY_PRODUCTION & OST_TRACE_CATEGORY ) \
     BTraceFilteredContext12( EXTRACT_GROUP_ID(aTraceName), \
                          EOstTrace, \
                          KOstTraceComponentID, \
@@ -527,7 +528,7 @@ The trace is mapped to TRACE_FLOW or TRACE_API group by the trace compiler
 @param aInstance Name of the instance identifier
 */
 #define OstTraceFunctionEntryExt( aTraceName, aInstance ) \
-    do {if ( OST_TRACE_CATEGORY_RND & OST_TRACE_CATEGORY ) \
+    do {if ( OST_TRACE_CATEGORY_PRODUCTION & OST_TRACE_CATEGORY ) \
         OstTraceGenExt( aTraceName, ( TUint )aInstance );} while (0)
 
 
@@ -538,7 +539,7 @@ The trace is mapped to TRACE_FLOW or TRACE_API group by the trace compiler
 @param aTraceName Name of the trace. The name is mapped to a 32-bit identifier and thus must be unique
 */
 #define OstTraceFunctionExit0( aTraceName ) \
-    do {if ( OST_TRACE_CATEGORY_RND & OST_TRACE_CATEGORY ) \
+    do {if ( OST_TRACE_CATEGORY_PRODUCTION & OST_TRACE_CATEGORY ) \
     BTraceFilteredContext8( EXTRACT_GROUP_ID(aTraceName), \
                         EOstTrace, \
                         KOstTraceComponentID, \
@@ -553,7 +554,7 @@ The trace is mapped to TRACE_FLOW or TRACE_API group by the trace compiler
 @param aInstance The instance identifier, for example "this" pointer
 */
 #define OstTraceFunctionExit1( aTraceName, aInstance ) \
-    do {if ( OST_TRACE_CATEGORY_RND & OST_TRACE_CATEGORY ) \
+    do {if ( OST_TRACE_CATEGORY_PRODUCTION & OST_TRACE_CATEGORY ) \
     BTraceFilteredContext12( EXTRACT_GROUP_ID(aTraceName), \
                          EOstTrace, \
                          KOstTraceComponentID, \
@@ -570,7 +571,7 @@ The trace is mapped to TRACE_FLOW or TRACE_API group by the trace compiler
 @param aRetval The function return value
 */
 #define OstTraceFunctionExitExt( aTraceName, aInstance, aRetval ) \
-    do {if ( OST_TRACE_CATEGORY_RND & OST_TRACE_CATEGORY ) \
+    do {if ( OST_TRACE_CATEGORY_PRODUCTION & OST_TRACE_CATEGORY ) \
         OstTraceGen2( aTraceName, ( TUint )aInstance, aRetval );} while (0)
 
 
@@ -582,7 +583,7 @@ The trace is mapped to TRACE_PERFORMANCE group by the trace compiler
 @param aEventName The name of the event. A corresponding OstTraceEventStop call must be made later in code
 */
 #define OstTraceEventStart0( aTraceName, aEventName ) \
-        OstTraceDef1( OST_TRACE_CATEGORY_RND, "TRACE_PERFORMANCE", aTraceName, null, (TInt32)1 )
+        OstTraceDef1( OST_TRACE_CATEGORY_PRODUCTION, "TRACE_PERFORMANCE", aTraceName, null, (TInt32)1 )
 
 
 /**
@@ -594,7 +595,7 @@ The trace is mapped to TRACE_PERFORMANCE group by the trace compiler
 @param aParam The parameter to be associated to the event
 */
 #define OstTraceEventStart1( aTraceName, aEventName, aParam ) \
-        OstTraceDef1( OST_TRACE_CATEGORY_RND, "TRACE_PERFORMANCE", aTraceName, null, aParam )
+        OstTraceDef1( OST_TRACE_CATEGORY_PRODUCTION, "TRACE_PERFORMANCE", aTraceName, null, aParam )
 
 
 /**
@@ -606,7 +607,7 @@ The trace is mapped to TRACE_PERFORMANCE group by the trace compiler
 @param aStartTraceName Event start trace name. Must match a Trace Name of OstTraceEventStart trace
 */
 #define OstTraceEventStop( aTraceName, aEventName, aStartTraceName ) \
-        OstTraceDefExt2( OST_TRACE_CATEGORY_RND, "TRACE_PERFORMANCE", aTraceName, null, (TInt32)0, (TUint32)(aStartTraceName & 0xFFFF) ) 
+        OstTraceDefExt2( OST_TRACE_CATEGORY_PRODUCTION, "TRACE_PERFORMANCE", aTraceName, null, (TInt32)0, (TUint32)(aStartTraceName & 0xFFFF) ) 
 
 
 /**
@@ -618,7 +619,7 @@ The trace is mapped to TRACE_STATE group by the trace compiler
 @param aNewState The new value for the state, literal string (for example "value")
 */
 #define OstTraceState0( aTraceName, aStateName, aNewState ) \
-        OstTraceDefExt2( OST_TRACE_CATEGORY_RND, "TRACE_STATE", aTraceName, null, _L8(aStateName), _L8(aNewState) ) 
+        OstTraceDefExt2( OST_TRACE_CATEGORY_PRODUCTION, "TRACE_STATE", aTraceName, null, _L8(aStateName), _L8(aNewState) ) 
 
 
 /**
@@ -631,7 +632,7 @@ The trace is mapped to TRACE_STATE group by the trace compiler
 @param aInstance The instance identifier, for example "this" pointer
 */
 #define OstTraceState1( aTraceName, aStateName, aNewState, aInstance ) \
-        OstTraceDefExt3( OST_TRACE_CATEGORY_RND, "TRACE_STATE", aTraceName, null, _L8(aStateName), _L8(aNewState), (TUint32) aInstance ) 
+        OstTraceDefExt3( OST_TRACE_CATEGORY_PRODUCTION, "TRACE_STATE", aTraceName, null, _L8(aStateName), _L8(aNewState), (TUint32) aInstance ) 
        
 #else // OST_TRACE_COMPILER_IN_USE
 

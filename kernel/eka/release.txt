@@ -1,16 +1,27 @@
 Version 2.00.4009
 =================
+(Made by fadhliM 11/10/2010)
+
+1.	naushahm
+	1.	ou1cimx1#586151 OST_TRACE_CATEGORY_RND is redundant
+
+
+Version 2.00.4009
+=================
 (Made by fadhliM 07/10/2010)
 
 1.	hengrant
-	1.	RP 531855	eMMC 4.4 User Data Partitions
+	1.	RP 531855 eMMC 4.4 User Data Partitions
 		REQ 417-54821	MMC v4.4 support for eMMC (Bridge M4)
 		SUB 417-73300	eMMC V4.4
 		SUB 417-73303	eMMC v4.4 - User-Data partitions with Enhanced Attributes Support
-	2.	RP 529139	eMMC 4.4 RPMB
+	2.	RP 531864 eMMC 4.4 (TRIM - NOT BRIDGE M4)
+		REQ 417-54821	MMC v4.4 support for eMMC (Bridge M4)
+		SUB 417-73302	eMMC v4.4 - TRIM Support
+	3.	RP 529139 eMMC 4.4 RPMB
 		REQ 417-75165	MMC v4.4 support for eMMC (Bridge M5)
 		SUB 417-59932	eMMC v4.4 - Replay Protected Memory Block (RPMB) support 
-	3.	RP 543420
+	4.	RP 543420
 		REQ 417-75165	MMC v4.4 support for eMMC (Bridge M5)
 		SUB 417-73302	eMMC v4.4 - TRIM Support
 
