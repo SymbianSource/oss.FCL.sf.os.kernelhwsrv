@@ -6,7 +6,7 @@
  * text file LICENCE.txt (ARM contract number LEC-ELA-00080 v1.0).
  */
 
-/* Portions copyright Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies). */
+/* Portions copyright Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies). */
 
 /*
  * RCS $Revision: 92950 $
@@ -354,9 +354,26 @@ void* __ARM_exceptions_buffer_init(void)
 void *__ARM_exceptions_buffer_allocate(void *buffer, size_t size)
 {
   emergency_buffer *b = (emergency_buffer *)buffer;
+
+  #ifndef __EPOC32__
   if (size > sizeof(emergency_eco) || b == NULL || b->inuse) return NULL;
   b->inuse = true;
   return &b->eco;
+  #else
+  ASSERT(b);
+
+  if (size > sizeof(emergency_eco) || b->inuse) {
+    // The first buffer isn't usable; try the second one instead, if it exists.
+    if (b->em_buf2_p)
+    	return b->em_buf2_p->Alloc(size);
+    else
+    	return NULL;
+  }
+  else {
+    b->inuse = true;
+    return &b->eco;
+  }
+  #endif
 }
 
 // Deallocator: Must return non-NULL if and only if it recognises
@@ -364,9 +381,26 @@ void *__ARM_exceptions_buffer_allocate(void *buffer, size_t size)
 void *__ARM_exceptions_buffer_free(void *buffer, void *addr)
 {
   emergency_buffer *b = (emergency_buffer *)buffer;
+
+  #ifndef __EPOC32__
   if (b == NULL || addr != &b->eco) return NULL;
   b->inuse = false;
   return b;
+  #else
+  ASSERT(b);
+
+  if (addr != &b->eco) {
+    // The object wasn't from the first buffer; see if it is from the second one.
+    if (b->em_buf2_p)
+      return b->em_buf2_p->Free(addr);
+    else
+      return NULL;
+  }
+  else {
+    b->inuse = false;
+    return b;
+  }
+  #endif
 }
 
 #  if 0

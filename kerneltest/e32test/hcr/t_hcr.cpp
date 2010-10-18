@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -2091,7 +2091,7 @@ void HcrSimTests(const TDesC& aDriver)
 	test.Next(_L("Reload Device Driver"));
 	HcrSimTest.Close();
 	r = User::FreeLogicalDevice(aDriver);
-	test_KErrNone(r);
+    test_KErrNone(r);
 	r = User::LoadLogicalDevice(aDriver);
 	test_KErrNone(r);
 	r = HcrSimTest.Open(aDriver);
@@ -2322,12 +2322,11 @@ void RomHeaderTests()
 	{
 	test.Next(_L("Rom Header"));
 #ifdef __WINS__
-	test.Printf(_L("Not available on the emulator.\n"));
+	test.Printf(_L("HCR Core Image DAT File not available on the emulator.\n"));
 #else
 	const TRomHeader* romheader = (TRomHeader*) UserSvr::RomHeaderAddress();
-	test.Printf(_L("HCR File Address: %08x\n"), romheader->iHcrFileAddress);
-	test(romheader->iHcrFileAddress);
-	if (romheader->iPageableRomStart)
+	test.Printf(_L("HCR Core Image DAT File Address: %08x\n"), romheader->iHcrFileAddress);
+	if (romheader->iHcrFileAddress && romheader->iPageableRomStart)
 		{
 		// If this is a paged ROM, HCR file must be in the unpaged area
 		test_Compare(romheader->iRomBase + romheader->iPageableRomStart, >, romheader->iHcrFileAddress);
@@ -2337,8 +2336,9 @@ void RomHeaderTests()
 
 void HcrRealSettingDiscovery()
 	{
-	test.Next(_L("Setting Discovery"));
+	test.Next(_L("BSP HCR.dll Test Setting Discovery"));
 	TInt r;
+	TBool anyFound = EFalse;
 	TCategoryUid cat;
 	test.Printf(_L("Category Element  Type     Len  Value\n"));
 	test.Printf(_L("--------------------------------------------------\n"));
@@ -2349,6 +2349,7 @@ void HcrRealSettingDiscovery()
 		test_Compare(0, <=, nosettings);
 		if (nosettings > 0)
 			{
+			anyFound = ETrue;
 			TElementId* elids;
 			TSettingType* types;
 			TUint16* lens;
@@ -2551,6 +2552,11 @@ void HcrRealSettingDiscovery()
 			User::Free(lens);
 			}
 		}
+	if (anyFound == EFalse)
+		{
+		test.Printf(_L("No TEST settings found in BSP HCR.dll\n"));
+		}
+	test.Printf(_L("--------------------------------------------------\n"));	
 	}
 void HcrRealRetrieveKernelExtensionTestResults()
 	{
@@ -2598,33 +2604,14 @@ void HcrRealTests(const TDesC& aDriver)
 		test_KErrNone(r);
 		r = HcrSimTest.Open(aDriver);
 		test_KErrNone(r);
-		//
+		
+		// Check the BSP specific HCR-using test kernel extensions were
+		// able to retrieve HCR settings during kernel initialisation.
 		HcrRealRetrieveKernelExtensionTestResults();
+		// Discovery of settings, may not print any if repositories for BSP
+		// do not contain any test settings.
 		HcrRealSettingDiscovery();
 
-		// Initialize static variable with the right HCR client type
-		if(aDriver.Compare(KTestHcrRealOwn) == 0)
-			gHcrThread = KSimOwnThread;
-		else if(aDriver.Compare(KTestHcrRealClient) == 0)
-			gHcrThread = KSimClientThread;
-		else
-			test(EFalse);
-		//
-		TBool smr;
-		TBool smrrep;
-		r = HcrSimTest.HasRepositoryInSmr(smr, smrrep);
-		test_KErrNone(r);
-		if (smrrep)
-			{
-			// File + NAND
-			HcrSimTestApiTests(SettingsList6, sizeof(SettingsList6) / sizeof(SSettingC));
-			}
-		else
-			{
-			// File
-			HcrSimTestApiTests(SettingsList7, sizeof(SettingsList7) / sizeof(SSettingC));
-			}
-		//
 		test.Next(_L("Close LDD"));
 		HcrSimTest.Close();
 		r = User::FreeLogicalDevice(aDriver);
@@ -2635,9 +2622,6 @@ void HcrRealTests(const TDesC& aDriver)
 
 void HcrCatRecodsExampleTest(const TDesC& aDriver)
     {
-    using namespace HCR;
-
-   
     test.Start(_L("HCR Record Structured Category Test"));
     test.Next(_L("Load HCR Test driver"));
     

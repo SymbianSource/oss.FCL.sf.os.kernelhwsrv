@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "ARM EABI LICENCE.txt"
@@ -12,7 +12,7 @@
 //
 // Description:
 // e32/compsupp/symaehabi/symbian_support.cpp
-// 
+//
 //
 
 /* Environment: */
@@ -40,6 +40,7 @@ namespace NAMES { void default_unexpected_handler(void); }
 EXPORT_C TCppRTExceptionsGlobals::TCppRTExceptionsGlobals()
 	{
 	buffer.inuse = false;
+	buffer.em_buf2_p = NULL;
 	thread_globals.uncaughtExceptions = 0;
 	thread_globals.unexpectedHandler = NAMES::default_unexpected_handler;
 	thread_globals.terminateHandler = __default_terminate_handler;
@@ -50,8 +51,27 @@ EXPORT_C TCppRTExceptionsGlobals::TCppRTExceptionsGlobals()
 	thread_globals.emergency_buffer = &buffer;
 	Dll::SetTls(this);
 	}
+
+EXPORT_C void TCppRTExceptionsGlobals::Init2ndEmergencyBuffer()
+	{
+	ASSERT(buffer.em_buf2_p == NULL);
+
+	TEmergencyBuffer2* p = (TEmergencyBuffer2*) User::Alloc( sizeof(TEmergencyBuffer2) );
+	if (!p)
+		abort();
+	p->Init();
+	buffer.em_buf2_p = p;
+	}
+
+EXPORT_C void TCppRTExceptionsGlobals::Kill2ndEmergencyBuffer()
+	{
+	ASSERT(buffer.em_buf2_p);
+
+	User::Free(buffer.em_buf2_p);
+	}
+
 #if __ARMCC_VERSION < 220000
-extern "C" 
+extern "C"
 {
   /*
     we have to dummy up the following for 2.1. The names changed in the def file
@@ -78,7 +98,7 @@ EXPORT_C void _ZN15XLeaveException16ForceKeyFunctionEv()
 	}
 }
 
-#else 
+#else
 // This is the key function that forces the class impedimenta to be get exported in RVCT 2.2 and later.
 EXPORT_C void XLeaveException::ForceKeyFunction(){}
 #endif
@@ -224,9 +244,9 @@ TExceptionDescriptor * ReLoadExceptionDescriptor(uint32_t addr, _Unwind_Control_
 		// look in extension ROM if there is one
 		TUint main_start = UserSvr::RomHeaderAddress();
 		TUint main_end = main_start + ((TRomHeader*)main_start)->iUncompressedSize;
-		
+
 		TUint rda = UserSvr::RomRootDirectoryAddress();
-		
+
 		// Assume rom starts on multiple of 4k
 		if (rda > main_end)
 			{
@@ -237,7 +257,7 @@ TExceptionDescriptor * ReLoadExceptionDescriptor(uint32_t addr, _Unwind_Control_
 			// 3. the extension ROM is mapped starting at a megabyte boundary
 			// Thus the address of the extension ROM header may be obtained by rounding the root directory
 			// address down to the next megabyte boundary.
-         
+
  			TUint ext_start = rda &~ 0x000fffffu;
 			TRomExceptionSearchTable* extrom_exctab = (TRomExceptionSearchTable*)(((TExtensionRomHeader*)ext_start)->iRomExceptionSearchTable);
 			if (extrom_exctab && addr >= extrom_exctab->iEntries[0] && addr < GET_EST_FENCEPOST(extrom_exctab))
@@ -315,7 +335,7 @@ class TestOverflowTruncate8 : public TDes8Overflow
 public:
 	virtual void Overflow(TDes8& /*aDes*/) {}
 	};
-	
+
 #endif
 
 void DebugPrintf(const char * aFmt, ...)
@@ -333,7 +353,7 @@ void DebugPrintf(const char * aFmt, ...)
 	RDebug::RawPrint(buf2);
 #else
 	(void)aFmt;
-#endif		
+#endif
 	}
 
 } // extern "C"

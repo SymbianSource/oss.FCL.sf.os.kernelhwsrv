@@ -722,7 +722,7 @@ GLDEF_C TInt E32Main()
 	r=listfile.Open(TheFs,listfilename,EFileRead|EFileShareAny);
 	if (r!=KErrNone)
 		__PANIC(r);
-	TInt listfilesize;
+	TInt listfilesize = 0;
 	r=listfile.Size(listfilesize);
 	if (r!=KErrNone)
 		__PANIC(r);

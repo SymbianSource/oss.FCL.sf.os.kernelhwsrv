@@ -1025,7 +1025,7 @@ public:
 		/**
 		Maximum Number of Pointers supported by hardware/driver
 
-		Returns the maximum number of pointers for a multi-touch configuration (or KErrNotSupported or 0 or 1 for single-touch legacy configuration)
+		Returns the maximum number of pointers for a multipletouch configuration (or KErrNotSupported or 0 or 1 for single-touch legacy configuration)
 		*/
 		EPointerMaxPointers,
 

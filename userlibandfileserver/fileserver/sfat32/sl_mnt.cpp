@@ -1634,15 +1634,20 @@ TBool CFatMountCB::IsDirectoryEmptyL(TUint32 aCluster)
         MoveToDosEntryL(dirEntryPos,dirEntry);
         if (dirEntry.IsParentDirectory() || dirEntry.IsCurrentDirectory())
             goto LoopEnd;
+        
         if (dirEntry.IsEndOfDirectory())
             return ETrue;
+        
         if (IsRootDir(dirEntryPos)&&(dirEntryPos.iPos+StartOfRootDirInBytes()==RootDirEnd()))
             return ETrue;   //  Root Directory has no end of directory marker
+        
         if (!dirEntry.IsErased())
-            return EFalse;
+            break; //-- found a valid dir. entry
 LoopEnd:
         MoveToNextEntryL(dirEntryPos);
         }
+    
+    return EFalse;
     }
 
 //-----------------------------------------------------------------------------------------
@@ -1810,7 +1815,7 @@ void CFatMountCB::WriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny* a
         if (offset<length)
             {__ASSERT_ALWAYS(FAT().GetNextClusterL(aPos.iCluster),User::Leave(KErrCorrupt));}
         if (offset>=length)
-            return;
+            break;
         }
     }
 
@@ -1884,7 +1889,7 @@ void CFatMountCB::ReadFromClusterListL(TEntryPos& aPos,TInt aLength,const TAny* 
             __ASSERT_ALWAYS(FAT().GetNextClusterL(aPos.iCluster),User::Leave(KErrCorrupt));
             }
         if (offset>=aLength)
-            return;
+            break;
         }
     }
 
@@ -3513,7 +3518,8 @@ void CFatMountCB::GetLongNameL(const TDesC& aShortName,TDes& aLongName)
 
     TLeafDirData leafDir;
     pos.iCluster=FindLeafDirL(aShortName.Left(namePos), leafDir);
-    FOREVER
+    
+    for(;;)
         {
         TFatDirEntry startEntry;
         User::LeaveIfError(GetDirEntry(pos,entry,startEntry,aLongName));
@@ -3529,13 +3535,14 @@ void CFatMountCB::GetLongNameL(const TDesC& aShortName,TDes& aLongName)
             LocaleUtils::ConvertToUnicodeL(entryName, entryName8);
             if (shortNameWithoutPathDelimiter.MatchF(entryName)!=KErrNotFound)
                 {
-                if (entryIsVFat==EFalse)
+                if(!entryIsVFat)
                     aLongName=shortNameWithoutPathDelimiter;
-                return;
+                
+                break;
                 }
             }
         MoveToNextEntryL(pos);
-        }
+        }//for(;;)
     }
 
 
@@ -3815,8 +3822,12 @@ TInt CFatMountCB::ErasePassword()
     r=local->ErasePassword();
     if(r==KErrNone)
         {
-        // ...media change to ensure a fresh remount the drive
-        r = local->ForceRemount(0);
+        //-- ReMount whole driver stack since MBR may have been rewritten and partition may have moved / changed size.
+        //-- this is mostly applicable to SD cards formatting, since SD stack takes care of creating partition table.
+        //-- use KForceMediaChangeReOpenAllMediaDrivers flag that will cause remounting media 
+        //-- drivers associatied with the current partition only and not affecting other ones.
+        r = LocalDrive()->ForceRemount((TUint)RFs::KForceMediaChangeReOpenMediaDriver);
+        
         local->Status() = KErrNotReady;
         WritePasswordData();
         }
@@ -4366,13 +4377,10 @@ a null offset is returned.
 TTimeIntervalSeconds CFatMountCB::TimeOffset() const
 	{
     if((Drive().Att() & KDriveAttRemovable) && FatFileSystem().GetUseLocalTime() )
-	    {
         return User::UTCOffset();
-        }
-	else
-        {
-        return TTimeIntervalSeconds(0);
-        }
+
+    
+    return TTimeIntervalSeconds(0);
 	}
 
 
@@ -4431,10 +4439,11 @@ TUint32 EocCodeByFatType(TFatType aFatType)
         return  EOF_12Bit-7; //-- 0xff8
         
         default: 
-        ASSERT(aFatType == EInvalid); 
-        return 0;
+        break;
         }
 
+    ASSERT(aFatType == EInvalid); 
+    return 0;
     }
 
 //-----------------------------------------------------------------------------------------

@@ -1524,7 +1524,7 @@ EXPORT_C TTimeK Kern::SystemTimeSecure()
 /**
 	Gets the current system time.
 
-	@return The current time as the number of microseconds since midnight, January 1st, 0 AD nominal Gregorian.
+	@return The current time as the number of microseconds since midnight, January 1st, year 0 (nominal Gregorian).
 */
 	{
 	TTimeK r = Kern::SystemTime();
@@ -1555,7 +1555,7 @@ EXPORT_C TTimeK Kern::SystemTime()
 /**
 	Gets the current nonsecure (user-settable) system time.
 
-	@return The current time as the number of microseconds since midnight, January 1st, 0 AD nominal Gregorian.
+	@return The current time as the number of microseconds since midnight, January 1st, year 0 (nominal Gregorian).
 */
 	{
 	TTickQ& q=*K::TickQ;

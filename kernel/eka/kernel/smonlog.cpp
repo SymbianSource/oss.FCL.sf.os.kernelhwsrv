@@ -26,7 +26,7 @@
 
 const TInt KRestartType = CrashLogger::ESoftRestart;
 
-/** Number of seconds elapsed between 01/01/0000 AD and 01/01/2000 AD.
+/** Number of seconds elapsed between 01/01/0000 and 01/01/2000.
     Value is the number of days multiplied by the number of seconds per day:
     730497 * 86400
  */
@@ -321,7 +321,7 @@ void CrashLogger::DumpRomInfo()
 
 void CrashLogger::DumpCrashTime()
 	{                   
-	// We want time from 2000AD when SystemTime starts from 0AD hence the adjustment.
+	// We want time from 2000AD when SystemTime starts from year 0 hence the adjustment.
 	TTimeK secsSince0AD = CrashTime();
 
     if(!secsSince0AD)

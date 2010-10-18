@@ -30,6 +30,9 @@ RTest test(_L("t_falsespace"));
 const TInt KNumberThreads=2;
 const TInt KHeapSize=0x2000;
 
+//-- this is taken from the file server. Hardcoded constant that specifies session limits on reserving the drive space
+const TInt KMaxSessionDriveReserved	=0x10000; 
+
 static TInt RsrvSpaceThread(TAny* aArg);
 static TInt SessCloseThread(TAny* aArg);
 static void GetFreeDiskSpace(TInt64 &aFree);
@@ -80,6 +83,24 @@ void SynchronousClose(RFs &aSession)
 	User::WaitForRequest(s);
 	}
 
+//-----------------------------------------------------------------------------
+/**
+    Get a cluster size for the currently mounted FS (if it supports clusters). 
+    @return 0 if there was an error (e.g. cluster size query is not supported), otherwise a cluster size
+*/
+static TUint32 FsClusterSize()
+{
+    TVolumeIOParamInfo volIop;
+    TInt nRes = TheFs.VolumeIOParam(gTestDrive, volIop);
+
+    if(nRes != KErrNone || volIop.iClusterSize < 512 || !IsPowerOf2(volIop.iClusterSize))
+        {
+        test.Printf(_L("FsClusterSize() The FS hasn't reported a cluster size\n"));
+        return 0;
+        }
+        
+    return volIop.iClusterSize;
+}
 
 static TInt CreateFileX(const TDesC& aBaseName,TInt aX, TInt aFileSize)
 //
@@ -147,8 +168,7 @@ static void FillUpDisk()
 // Test that a full disk is ok
 //
 	{
-
-	test.Start(_L("Fill disk to capacity"));
+	test.Next(_L("Fill disk to capacity\n"));
 	TInt r=TheFs.MkDirAll(KBasePath);
 	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 	gCount=0;
@@ -211,8 +231,6 @@ static void FillUpDisk()
 		while (freespaceBeforeScanDrive != freespaceAfterScanDrive );
 
 	gCount--;
-
-	test.End();
 	}
 
 static void GetFreeDiskSpace(TInt64 &aFree)
@@ -233,7 +251,7 @@ static void Test1()
 //	Test the API fundamentaly works for one session
 //
 	{
-	test.Next(_L("Test Disk Space reserve APIs"));
+	test.Next(_L("Test Disk Space reserve APIs\n"));
 	TInt r=0;
 	
     FormatDrive();
@@ -303,7 +321,7 @@ static void Test2()
 //	
 	{
 
-	test.Next(_L("Test Session and total reserve limits"));
+	test.Next(_L("Test Session and total reserve limits\n"));
 	
     FormatDrive();
 	
@@ -319,7 +337,7 @@ static void Test2()
 		test_KErrNone(r);
 		}
 
-	test.Next(_L("Test breaching sesson reserve limit"));
+	test.Next(_L("Test breaching sesson reserve limit\n"));
 	r=sessions[0].ReserveDriveSpace(gTestDrive,0x10001);
 	test_Value(r, r == KErrArgument);
 
@@ -328,7 +346,7 @@ static void Test2()
 
 	if(v.iFree > 0x100000)
 		{
-		test.Next(_L("Test breaching drive reserve limit"));
+		test.Next(_L("Test breaching drive reserve limit\n"));
 
 		for (i=0; i<16; i++)
 			{
@@ -343,7 +361,7 @@ static void Test2()
 	else
 		{
 		test.Printf(_L("Drive too small: breaching drive reserve limit test skipped\n"));
-		test.Next(_L("Testing exhausting available drive free space instead"));
+		test.Next(_L("Testing exhausting available drive free space instead\n"));
 
 		for(i=0; (v.iFree -= 0x10000) >= 0; i++)
 			{
@@ -368,7 +386,7 @@ static void Test3()
 //	Test session cleanup
 //		
 	{
-	test.Next(_L("Test session close and clean up of resrved space"));
+	test.Next(_L("Test session close and clean up of resrved space\n"));
 
 	FormatDrive();
 	
@@ -439,13 +457,23 @@ static void Test4()
 //	reserve an area etc
 //	
 	{
-	test.Next(_L("Test Filling disk and using APIs"));
+	test.Next(_L("Test Filling disk and using APIs\n"));
 
 	if(IsTestingLFFS())
 		{
-		//-- This test is not valid for LFFS, because free space on this FS can change itself because of some 
-        //-- internal FS activities
+		//-- This test is not valid for LFFS, because free space on this FS can change itself because of some internal FS activities
 		test.Printf(_L("This test is inconsistent on LFFS\n"));
+		return;
+		}
+	
+
+    const TInt KThreshold = 0x10000;
+	
+    //-- check that the cluster size doesn't exceed the max. limit
+    const TInt KClusterSz = FsClusterSize();
+    if(KClusterSz > KThreshold)
+        {
+        test.Printf(_L("The cluster size(%d) is bigger than threshold to test (%d)! Skipping the test!\n"), KClusterSz, KThreshold);
 		return;
 		}
 	
@@ -473,7 +501,7 @@ static void Test4()
 
 	file.Close();
 
-	r=fs.ReserveDriveSpace(gTestDrive,0x10000);		//reserve some disk space
+	r=fs.ReserveDriveSpace(gTestDrive,KThreshold);		//reserve some disk space
 	test_KErrNone(r);
 		
 	FillUpDisk();									//fill up the disk
@@ -493,7 +521,7 @@ static void Test4()
 	r=fs.ReleaseReserveAccess(gTestDrive);			//release reserve space
 	test_KErrNone(r);
 	
-	test(freeA == (freeB - 0x10000));				//test difference in space is equal to the amount reserved
+	test(freeA == (freeB - KThreshold));				//test difference in space is equal to the amount reserved
 
 	r=fs.Volume(v,gTestDrive);						//get disk space
 	test_KErrNone(r);
@@ -611,7 +639,7 @@ static void Test5()
 //
 //
 	{
-	test.Next(_L("Test Session limits"));
+	test.Next(_L("Test Session limits\n"));
 
 	if(IsTestingLFFS())
 		{
@@ -731,7 +759,7 @@ static void Test6()
 //
 	{
 	
-	test.Next(_L("Test sharable session"));
+	test.Next(_L("Test sharable session\n"));
 
 	RFs fsess;
 	TInt r=KErrNone;
@@ -787,6 +815,8 @@ static void Test7()
 // Tests notifier events for sessions with and without reserved access
 //
 	{
+	test.Next(_L("Test reserved access notification\n"));
+
 	if(IsTestingLFFS())
 		{
 		// This test is not valid for LFFS...
@@ -794,10 +824,25 @@ static void Test7()
 		return;
 		}
 
-	
-	test.Next(_L("Test reserved access notification"));
-	
 	FormatDrive();
+
+    //-- find out the cluster size
+    const TInt KClusterSz = FsClusterSize();
+    if(!IsPowerOf2(KClusterSz))
+        {
+        test.Printf(_L("The FS hasn't reported a cluster size. The test is inconsistent, skipping\n"));
+        return;
+        }
+
+    //-- check that the cluster size doesn't exceed the max. limit
+    if(KClusterSz > KMaxSessionDriveReserved)
+        {
+        test.Printf(_L("The cluster size(%d) is bigger than reserve limit (%d)! Skipping the test!\n"), KClusterSz, KMaxSessionDriveReserved);
+        return;
+        }
+
+    
+    const TInt resSpace = Max(0x1000, KClusterSz);
 
 	RFs theNrm;
 	RFs theRes;
@@ -823,25 +868,6 @@ static void Test7()
 	err = theTestSession.Connect();
 	test_KErrNone(err);
 
-	// determine the cluster size
-	RFile theFile;
-	err=theFile.Replace(theTestSession, fileName, EFileShareAny | EFileWrite);
-	test_KErrNone(err);
-
-	// Neither notifier should be triggered here
-	err = theFile.SetSize(1);
-	test(KErrNone == err);
-	theFile.Close();
-
-	TInt64 newFreeSpace;
-	GetFreeDiskSpace(newFreeSpace);
-	TInt clusterSize = TInt(freeSpace - newFreeSpace);
-	theTestSession.Delete(fileName);
-	GetFreeDiskSpace(newFreeSpace);
-	test (newFreeSpace == freeSpace);
-
-	TInt resSpace = Max(0x1000, clusterSize);
-		
 	TVolumeInfo volInfo;
 	theNrm.Volume(volInfo, gTestDrive);
 	test(volInfo.iFree == freeSpace);
@@ -857,6 +883,8 @@ static void Test7()
 	theNrm.Volume(volInfo, gTestDrive);
 	test(volInfo.iFree == freeSpace - resSpace);
 
+
+    RFile theFile;
 
 	//
 	// Register the notifiers and verify that the only the "Normal"
@@ -918,7 +946,7 @@ static void Test7()
 
 LOCAL_C void TestForDEF142554()
     {
-    test.Next(_L("Test for DEF142554: test RFile::Modified and RFile::Att when disk full"));
+    test.Next(_L("Test for DEF142554: test RFile::Modified and RFile::Att when disk full\n"));
     
     Format(gTestDrive);
     
@@ -990,7 +1018,7 @@ static void TestFAT4G_Boundary()
 	{
     const TInt64 K4Gig = 4*(TInt64)K1GigaByte;
 
-	test.Next(_L("Test files crossing 4G boundary on FAT"));
+	test.Next(_L("Test files crossing 4G boundary on FAT\n"));
 
     if(!Is_Fat32(TheFs, gTestDrive))
 		{
@@ -1056,7 +1084,7 @@ static void TestFAT4G_Boundary()
 
 void TestRAMDriveNotification()
 	{
-	test.Next(_L("Verifying RFs::ReserveDriveSpace() triggers RFs::NotifyDiskSpace() events"));
+	test.Next(_L("Verifying RFs::ReserveDriveSpace() triggers RFs::NotifyDiskSpace() events\n"));
 
 	TInt64 freeSpace;
 	GetFreeDiskSpace(freeSpace);
@@ -1065,19 +1093,19 @@ void TestRAMDriveNotification()
 	// set a notification on half the amount we plan to reserve
 	TInt reserve = 4096;
 	TInt64 trigger = freeSpace - 2048;
-	test.Printf(_L("setting notification for space to fall below: 0x%Lx bytes ... "), trigger);
+	test.Printf(_L("setting notification for space to fall below: 0x%Lx bytes ... \n"), trigger);
 	TRequestStatus stat;
 	TheFs.NotifyDiskSpace(trigger, gTestDrive, stat);
 	test_Value(stat.Int(), stat == KRequestPending);
 	test.Printf(_L("ok\n"));
 
 	// reserve the space and validate that this triggers the notification
-	test.Printf(_L("reserving 0x%x bytes ..."), reserve);
+	test.Printf(_L("reserving 0x%x bytes ...\n"), reserve);
 	TInt r = TheFs.ReserveDriveSpace(gTestDrive, reserve);
 	test_KErrNone(r);
 	test.Printf(_L("ok\n"));
 
-	test.Printf(_L("validating that the disk space notification triggered ... "));
+	test.Printf(_L("validating that the disk space notification triggered ...\n"));
 	User::After(2000000);	// 2 seconds should be enough to cause the trigger
 	test_Value(stat.Int(), stat == KErrNone);
 	test.Printf(_L("ok\n"));
@@ -1090,10 +1118,9 @@ void TestRAMDriveNotification()
 */
 void Test0()
 {
-    test.Next(_L("test ReserveDriveSpace threshold"));
+    test.Next(_L("test ReserveDriveSpace threshold\n"));
 
     TInt nRes;
-    TVolumeIOParamInfo volIop;
     TInt64 freespace=0;
 
     //-- 1. format the volume
@@ -1102,14 +1129,20 @@ void Test0()
     GetFreeDiskSpace(freespace);
     const TInt64 freeSpace1 = freespace; //-- initial amount of free space on the volume
 
-    nRes = TheFs.VolumeIOParam(gTestDrive, volIop);
-    test_KErrNone(nRes);
-    const TInt KClusterSz = volIop.iClusterSize;
+    const TInt KClusterSz = FsClusterSize();
     if(!IsPowerOf2(KClusterSz))
         {
-        test.Next(_L("The FS hasn't reported a cluster size. The test is inconsistent, skipping"));
+        test.Printf(_L("The FS hasn't reported a cluster size. The test is inconsistent, skipping\n"));
         return;
         }
+
+    //-- check that the cluster size doesn't exceed the max. limit
+    if(KClusterSz > KMaxSessionDriveReserved)
+        {
+        test.Printf(_L("The cluster size(%d) is bigger than reserve limit (%d)! Skipping the test!\n"), KClusterSz, KMaxSessionDriveReserved);
+        return;
+        }
+
 
     //-- reserve exactly 1 cluster worth drive space.
     nRes = TheFs.ReserveDriveSpace(gTestDrive, KClusterSz);
@@ -1162,7 +1195,7 @@ GLDEF_C void CallTestsL()
 	// If TESTFAST mode (for automated test builds) is set, don't run LFFS tests.
 	if ((UserSvr::DebugMask(2) & 0x00000002) && IsTestingLFFS())
 		{
-		test.Printf(_L("TEST NOT RUN FOR LFFS DRIVE"));
+		test.Printf(_L("TEST NOT RUN FOR LFFS DRIVE\n"));
 		return;
 		}
 

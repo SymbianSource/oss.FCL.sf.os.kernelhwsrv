@@ -145,6 +145,8 @@ TInt CFatFileSystem::GetInterface(TInt aInterfaceId, TAny*& aInterface,TAny* aIn
 			return KErrNone;
 
         default:
-            return(CFileSystem::GetInterface(aInterfaceId, aInterface, aInput));
+            break;
         }
+    
+    return(CFileSystem::GetInterface(aInterfaceId, aInterface, aInput));
     }

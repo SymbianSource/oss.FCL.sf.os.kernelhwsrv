@@ -1,3 +1,17 @@
+Version 2.00.4006
+=================
+(Made by fadhliM 13/10/2010)
+
+1.	dlyokhin
+	1.	ou1cimx1#582827 RFormat causes all logical drives (associated with a primary removable media device) to be deleted and recreated
+	2.	ou1cimx1#603919 TDrive::ForceDismount() shouldn't finalise drive in RO mode
+	3.	ou1cimx1#602572 SD stack should correctly support SD cards larger than 32GB
+
+2.	michcox
+	1.	ou1cimx1#512321 coverity defects - Fileserver - cases 125100, 126171, 130137
+	2.	ou1cimx1#565164 Fix Change - coverity defects - Fileserver
+
+
 Version 2.00.4005
 =================
 (Made by fadhliM 04/10/2010)

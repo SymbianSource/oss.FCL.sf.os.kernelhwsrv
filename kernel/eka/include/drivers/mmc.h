@@ -2286,6 +2286,7 @@ const TUint32 KMMCCmdFlagPhysAddr=		KBit8;  // Address is a physical address
 const TUint32 KMMCCmdFlagReliableWrite=	KBit9;  // Current command is Reliable Write
 const TUint32 KMMCCmdFlagDeleteNotify=  KBit10; // Current command is Delete Notify
 const TUint32 KMMCCmdFlagRpmbIO=        KBit11; // Current command is of RPMB type
+const TUint32 KMMCCmdFlagIgnoreStatus=  KBit12; // Ignore card status from response
 
 const TUint32 KMMCCmdFlagASSPFlags=	KMMCCmdFlagBytesValid	|
 									KMMCCmdFlagTransStopped	|

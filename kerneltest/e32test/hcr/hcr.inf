@@ -56,7 +56,7 @@ corrupt2.dat          /epoc32/release/wins/udeb/z/sys/data/corrupt2.dat
 empty.dat             /epoc32/release/wins/udeb/z/sys/data/empty.dat
 megalarge1.dat        /epoc32/release/wins/udeb/z/sys/data/megalarge1.dat
 megalarge2.dat        /epoc32/release/wins/udeb/z/sys/data/megalarge2.dat
-filerepos.dat         /epoc32/release/wins/udeb/z/sys/data/hcr.dat
+filerepos.dat         /epoc32/release/wins/udeb/z/sys/data/test_hcr.dat
 
 
 filerepos_cds.dat     /epoc32/release/wins/urel/z/sys/data/filerepos_cds.dat
@@ -69,7 +69,7 @@ corrupt2.dat          /epoc32/release/wins/urel/z/sys/data/corrupt2.dat
 empty.dat             /epoc32/release/wins/urel/z/sys/data/empty.dat
 megalarge1.dat        /epoc32/release/wins/urel/z/sys/data/megalarge1.dat
 megalarge2.dat        /epoc32/release/wins/urel/z/sys/data/megalarge2.dat
-filerepos.dat         /epoc32/release/wins/urel/z/sys/data/hcr.dat
+filerepos.dat         /epoc32/release/wins/urel/z/sys/data/test_hcr.dat
 
 
 filerepos_cds.dat     /epoc32/release/winscw/udeb/z/sys/data/filerepos_cds.dat
@@ -82,7 +82,7 @@ corrupt2.dat          /epoc32/release/winscw/udeb/z/sys/data/corrupt2.dat
 empty.dat             /epoc32/release/winscw/udeb/z/sys/data/empty.dat
 megalarge1.dat        /epoc32/release/winscw/udeb/z/sys/data/megalarge1.dat
 megalarge2.dat        /epoc32/release/winscw/udeb/z/sys/data/megalarge2.dat
-filerepos.dat         /epoc32/release/winscw/udeb/z/sys/data/hcr.dat
+filerepos.dat         /epoc32/release/winscw/udeb/z/sys/data/test_hcr.dat
 
 
 filerepos_cds.dat     /epoc32/release/winscw/urel/z/sys/data/filerepos_cds.dat
@@ -95,7 +95,7 @@ corrupt2.dat          /epoc32/release/winscw/urel/z/sys/data/corrupt2.dat
 empty.dat             /epoc32/release/winscw/urel/z/sys/data/empty.dat
 megalarge1.dat        /epoc32/release/winscw/urel/z/sys/data/megalarge1.dat
 megalarge2.dat        /epoc32/release/winscw/urel/z/sys/data/megalarge2.dat
-filerepos.dat         /epoc32/release/winscw/urel/z/sys/data/hcr.dat
+filerepos.dat         /epoc32/release/winscw/urel/z/sys/data/test_hcr.dat
 
 PRJ_TESTMMPFILES
 

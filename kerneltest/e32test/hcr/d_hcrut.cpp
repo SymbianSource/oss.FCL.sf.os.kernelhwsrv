@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -535,11 +535,13 @@ TInt DHcrTestChannel::Request(TInt aReqNo, TAny* a1, TAny* /*a2*/ )
     case RHcrTest::ECtrlSwitchFileRepository:
 	    {
 	    TInt r;
-	    TAny* args[2];
+	    TAny* args[2];	// args[1] length includes null terminating char
 	    TEST_MEMGET(a1, args, sizeof(args));
-	    const TText* fileRepName = (TText*) args[0];
 	    
-	    r = gObserver.SwitchRepository(fileRepName, HCR::HCRInternal::ECoreRepos);
+	    TBuf8<MAX_FILENAME_LEN> fileName;
+	    TEST_MEMGET(args[0], (TAny*)fileName.Ptr(), ((TInt)args[1])); 
+	    
+	    r = gObserver.SwitchRepository(fileName.Ptr(), HCR::HCRInternal::ECoreRepos);
 	    if (r != KErrNone)
 	        {
 	        HCR_TRACE_RETURN(r);

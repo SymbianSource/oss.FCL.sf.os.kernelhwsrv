@@ -77,32 +77,45 @@ const TInt KResManCallBackPriority = 5; // Arbitrary! Can be 0-7, 7 is highest
 			__ASSERT_ALWAYS(0,RESMANUS_FAULT());					\
 		}															\
 	}
+
 /***************************************************************************************
 	class TTrackGetStateBuf
  ***************************************************************************************/
-TTrackGetStateBuf::TTrackGetStateBuf(TPowerResourceCbFn aFn, TAny* aPtr,
+TTrackGetStateBuf::TTrackGetStateBuf(TPowerResourceCbFn aFn, TAny* /*aPtr*/,
 						       TDfcQue* aQue, TInt aPriority)
-							   :	iCtrlBlock(aFn, aPtr, aQue, aPriority)
+							   :	iCtrlBlock(aFn, this, aQue, aPriority)
 	{
 	iRequest = NULL;
+	}
+
+TTrackGetStateBuf::~TTrackGetStateBuf()
+	{
+	if(iRequest)
+		Kern::DestroyClientRequest(iRequest);
 	}
 
 /***************************************************************************************
 	class TTrackSetStateBuf
  ***************************************************************************************/
-TTrackSetStateBuf::TTrackSetStateBuf(TPowerResourceCbFn aFn, TAny* aPtr,
+TTrackSetStateBuf::TTrackSetStateBuf(TPowerResourceCbFn aFn, TAny* /*aPtr*/,
 						       TDfcQue* aQue, TInt aPriority)
-							   :	iCtrlBlock(aFn, aPtr, aQue, aPriority)
+							   :	iCtrlBlock(aFn, this, aQue, aPriority)
 	{
 	iRequest = NULL;
+	}
+
+TTrackSetStateBuf::~TTrackSetStateBuf()
+	{
+	if(iRequest)
+		Kern::DestroyClientRequest(iRequest);
 	}
 
 /***************************************************************************************
 	class TTrackNotifyBuf
  ***************************************************************************************/
-TTrackNotifyBuf::TTrackNotifyBuf(TPowerResourceCbFn aFn, TAny* aPtr,
+TTrackNotifyBuf::TTrackNotifyBuf(TPowerResourceCbFn aFn, TAny* /*aPtr*/,
 								 TDfcQue* aQue, TInt aPriority)
-							   :	iNotifyBlock(aFn, aPtr, aQue, aPriority)
+							   :	iNotifyBlock(aFn, this, aQue, aPriority)
 	{
 	iRequest = NULL;
 	}
@@ -113,17 +126,6 @@ TTrackNotifyBuf::~TTrackNotifyBuf()
 		Kern::DestroyClientRequest(iRequest);
 	}
 
-TTrackSetStateBuf::~TTrackSetStateBuf()
-	{
-	if(iRequest)
-		Kern::DestroyClientRequest(iRequest);
-	}
-
-TTrackGetStateBuf::~TTrackGetStateBuf()
-	{
-	if(iRequest)
-		Kern::DestroyClientRequest(iRequest);
-	}
 	
 /***************************************************************************************
 	class DDeviceResManUs
@@ -505,7 +507,6 @@ TInt DChannelResManUs::SendRequest(TMessageBase* aMsg)
 			if( r != KErrNone)
 				return r;
 			callBack = &(((TTrackSetStateBuf*)trackBuf)->iCtrlBlock);
-			new (callBack) TPowerResourceCb(&AsyncCallBackFn, (TAny*)trackBuf, iDfcQ, KResManCallBackPriority);
 			parms[0] = (TUint)m.Ptr2();
 			parms[1] = (TUint)callBack;
 			m.iArg[2] = &(parms[0]);
@@ -532,7 +533,6 @@ TInt DChannelResManUs::SendRequest(TMessageBase* aMsg)
 			if(r != KErrNone)
 				return r;
 			prn = &(((TTrackNotifyBuf*)trackBuf)->iNotifyBlock);
-			new (prn) DPowerResourceNotification(&AsyncCallBackFn, (TAny*)trackBuf, iDfcQ, KResManCallBackPriority);
 			m.iArg[2] = (TAny*)prn;
 			break;
 			}
@@ -546,7 +546,6 @@ TInt DChannelResManUs::SendRequest(TMessageBase* aMsg)
 			if(r != KErrNone)
 				return r;
 			prn = &(((TTrackNotifyBuf*)trackBuf)->iNotifyBlock);
-			new (prn) DPowerResourceNotification(&AsyncCallBackFn, (TAny*)trackBuf, iDfcQ, KResManCallBackPriority);
 			parms[2] = (TUint)prn;
 			break;
 			}
@@ -2020,9 +2019,7 @@ TInt DChannelResManUs::GetStateBuffer(TTrackingControl*& aTracker, TTrackingBuff
 		TTrackGetStateBuf* stateBuf = (TTrackGetStateBuf*)aBuffer;
 		stateBuf->iRequest->SetDestPtr1(aState);
 		stateBuf->iRequest->SetDestPtr2(aLevelOwnerPtr);
-		// Use placement new to update the content of the TPowerResourceCb
 		aCb = &(stateBuf->iCtrlBlock);
-		new (aCb) TPowerResourceCb(&AsyncCallBackFn,(TAny*)aBuffer,iDfcQ,KResManCallBackPriority);
 		}
 	return r;
 	}
@@ -2052,18 +2049,30 @@ void DChannelResManUs::DumpTracker(TTrackingControl* aTracker)
 		}
 	Kern::Printf("iOwningChannel at 0x%x\n",aTracker->iOwningChannel);
 	Kern::Printf("iFreeQue at 0x%x\n",aTracker->iFreeQue);
+	
 	SDblQueLink* buf;
 	if(aTracker->iFreeQue!=NULL)
 		{
-		buf=aTracker->iFreeQue->First();
-		while(buf!=aTracker->iFreeQue->Last())
+		SDblQueLink* anchor = &(aTracker->iFreeQue->iA);
+		buf = anchor->iNext;
+		while(anchor != buf )
 			{
-			Kern::Printf("iFreeQue first buffer at 0x%x\n",buf);
+			Kern::Printf("iFreeQue buffer at 0x%x\n",buf);
 			TAny* intermediatePtr = (TAny*)buf;
-			if((aTracker->iType == EGetState)||(aTracker->iType == ESetState))
+			if(aTracker->iType == EGetState)
+				{
+				TTrackGetStateBuf* tempBuf =(TTrackGetStateBuf*)intermediatePtr;
+				Kern::Printf("TTrackGetStateBuf buffer control block at 0x%x\n",&(tempBuf->iCtrlBlock));
+				}
+			else if(aTracker->iType == ESetState)
 				{
 				TTrackSetStateBuf* tempBuf =(TTrackSetStateBuf*)intermediatePtr;
-				Kern::Printf("buffer control block at 0x%x\n",(TInt)&tempBuf->iCtrlBlock);
+				Kern::Printf("TTrackSetStateBuf buffer control block at 0x%x\n",&(tempBuf->iCtrlBlock));
+				}
+			else if(aTracker->iType == ENotify)
+				{
+				TTrackNotifyBuf* tempBuf =(TTrackNotifyBuf*)intermediatePtr;
+				Kern::Printf("TTrackNotifyBuf buffer notify block at 0x%x\n",&(tempBuf->iNotifyBlock));
 				}
 			buf = buf->iNext;
 			};
@@ -2071,15 +2080,26 @@ void DChannelResManUs::DumpTracker(TTrackingControl* aTracker)
 	Kern::Printf("iBusyQue at 0x%x\n",aTracker->iBusyQue);
 	if(aTracker->iBusyQue!=NULL)
 		{
-		buf=aTracker->iBusyQue->First();
-		while(buf!=aTracker->iBusyQue->Last())
+		SDblQueLink* anchor = &(aTracker->iBusyQue->iA);
+		buf = anchor->iNext;
+		while(anchor != buf )
 			{
 			Kern::Printf("iBusyQue buffer at 0x%x\n",buf);
 			TAny* intermediatePtr = (TAny*)buf;
-			if((aTracker->iType == EGetState)||(aTracker->iType == ESetState))
+			if(aTracker->iType == EGetState)
+				{
+				TTrackGetStateBuf* tempBuf =(TTrackGetStateBuf*)intermediatePtr;
+				Kern::Printf("TTrackGetStateBuf buffer control block at 0x%x\n",&(tempBuf->iCtrlBlock));
+				}
+			else if(aTracker->iType == ESetState)
 				{
 				TTrackSetStateBuf* tempBuf =(TTrackSetStateBuf*)intermediatePtr;
-				Kern::Printf("buffer control block at 0x%x\n", (TInt)&tempBuf->iCtrlBlock);
+				Kern::Printf("TTrackSetStateBuf buffer control block at 0x%x\n",&(tempBuf->iCtrlBlock));
+				}
+			else if(aTracker->iType == ENotify)
+				{
+				TTrackNotifyBuf* tempBuf =(TTrackNotifyBuf*)intermediatePtr;
+				Kern::Printf("TTrackNotifyBuf buffer notify block at 0x%x\n",&(tempBuf->iNotifyBlock));
 				}
 			buf= buf->iNext;
 			};
@@ -2157,12 +2177,14 @@ TInt DChannelResManUs::InitTrackingControl(TTrackingControl*& aTracker, TUint8 a
 		if(r!=KErrNone)
 			{
 			SDblQueLink* ptr = (aTracker->iFreeQue)->First();
+			TTrackingBuffer *buf = NULL;
 			do
 				{
 				SDblQueLink* next = NULL;
 				if(ptr !=NULL)
 					next = ptr->iNext;
-				delete ptr;
+				buf = (TTrackingBuffer *)ptr;
+				DELETE_TRACKING_BUFFER(aTracker,buf)
 				ptr = next;
 				} while ((ptr!=NULL)&&(ptr!=(aTracker->iFreeQue)->Last()));
 			delete aTracker->iFreeQue;

@@ -2106,7 +2106,7 @@ public:
 	IMPORT_C TInt RemoveProxyDrive(const TDesC& aDriveName);
 	
 	template <class T0,class T1> inline TInt MountProxyDrive(const TUint aDrive, const TDesC& aName, T0 a0, T1 a1)
-		{ return(DoMountProxyDrive(TIpcArgs(aDrive, &aName, a0, a1))); };
+		{ return(DoMountProxyDrive(TIpcArgs(aDrive, &aName, a0, a1))); }
 	IMPORT_C TInt DismountProxyDrive(const TUint aDrive);
 	
 	TInt Unclamp(const RFileClamp& aHandle);
@@ -2151,6 +2151,33 @@ public:
         };
 
     EFSRV_IMPORT_C TInt SupportedFileSystemName(TDes& aName, TInt aDrive, TInt aFsEnumerator) const;
+
+
+    
+    /**
+        A set of special flags passed directly to the media driver via RFs::RemountDrive() API.
+        They are used to specify how exactly the drive should be remounted. For more information see RLocalDrive::ForceMediaChange()
+        @see RFs::RemountDrive()
+    */     
+    enum TForceMediaChangeFlags
+        {
+        /**
+        Passing this flag to RFs::RemountDrive() API results in all media drivers associated with the primary media being closed and reopened.
+        All pending requests on all logical drives associated with the primary media will be cancelled.
+        */
+        KForceMediaChangeReOpenAllMediaDrivers = 0,
+        
+        /**
+        This flag is used to simulate ejecting and re-inserting the media.
+        All pending requests on all logical drives associated with the primary media will be cancelled.
+        */
+        KMediaRemountForceMediaChange = 0x00000001,
+        
+        /** This flag is used to force the media driver for the specified logical drive to be closed and reopened.
+        It should not affect any pending requests on other logical drives associated with the primary media.
+        */
+        KForceMediaChangeReOpenMediaDriver = 0x80000000
+        };
 
 protected:
 	TInt SendReceive(TInt aFunction,const TIpcArgs& aArgs) const;

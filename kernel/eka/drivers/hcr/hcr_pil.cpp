@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -93,7 +93,7 @@ LOCAL_C TInt SearchEntryInTRomDir(const TRomDir* aActDir, const TPtrC aFileName,
 
 // -- WINS Specific ----------------------------------------------------------
 
-#ifdef __WINS__
+#if defined(__WINS__) || defined(HCRTEST_AVOID_BSP_HCR_DAT)
 
 // Set to ensure Rom Hdr dependency does not break compilation in 
 // LocateCoreImgRepository() at the end of this file.
@@ -103,6 +103,7 @@ LOCAL_C TInt SearchEntryInTRomDir(const TRomDir* aActDir, const TPtrC aFileName,
 #define HCRTEST_COREIMG_DONTUSE_ROMHDR
 
 #endif
+
 
 // -- FUNCTIONS ---------------------------------------------------------------
 
@@ -2955,10 +2956,14 @@ TInt LocateCoreImgRepository(HCR::TRepository*& aRepos)
     // Use this testing more on Emulator platform
     // and on hardware when ROM Header is not to be used or not implemented
     
+#ifdef HCRTEST_AVOID_BSP_HCR_DAT
+	const TText8* hcrfile = (const TText8*) "test_hcr.dat";
+#else
 	const TText8* hcrfile = (const TText8*) "hcr.dat";
+#endif
 	TInt retVal = SearchCoreImgRepository(aRepos, hcrfile);
 	if (retVal != KErrNone)
-		return retVal;
+		HCR_TRACE_RETURN(retVal);
 	
 #else
 
@@ -2980,10 +2985,10 @@ TInt LocateCoreImgRepository(HCR::TRepository*& aRepos)
 			aRepos = HCR::TRepositoryFile::New(reinterpret_cast<const HCR::SRepositoryFile *>(romHeader.iHcrFileAddress));
 			NKern::ThreadLeaveCS();
 			if (aRepos == 0)
-				return KErrNoMemory;
+				HCR_TRACE_RETURN(KErrNoMemory);
 			}
 	else
-		return KErrNotFound;
+		HCR_TRACE_RETURN(KErrNotFound);
 		
 #endif // HCRTEST_COREIMG_DONTUSE_ROMHDR
 

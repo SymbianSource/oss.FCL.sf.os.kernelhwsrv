@@ -380,7 +380,10 @@ When all three components are present, the string should take the form:
 
 YYYYMMDD:HHMMSS.MMMMMM
 
-If omitted, the first component is set to January 1st 0 AD nominal Gregorian. 
+If omitted, the first component defaults to 1 January, year 0 (nominal Gregorian).
+This is the base date for TTime, so the result of this method will be the number
+of microseconds in the time specified by the second and third components.
+
 If either the second or third components are omitted, they are set to zero.
 
 Notes:
@@ -1472,7 +1475,7 @@ Gets the number of days in the current month.
 
 EXPORT_C TDay TTime::DayNoInWeek() const
 //
-// 1st January 0AD was a Monday
+// 1st January year 0 was a Monday
 //
 /**
 Gets the day number within the current week.
@@ -2480,8 +2483,8 @@ Gets the number of days in a month.
 
 EXPORT_C TBool Time::IsLeapYear(TInt aYear)
 //
-// up to and including 1600 leap years were every 4 years,since then leap years are every 4 years unless
-// the year falls on a century which is not divisible by 4 (ie 1900 wasnt,2000 will be)
+// up to and including 1600 leap years were every 4 years; since then leap years are every 4 years unless
+// the year falls on a century which is not divisible by 4 (i.e. 1900 wasn't, 2000 will be)
 // for simplicity define year 0 as a leap year
 //
 /**
@@ -2500,16 +2503,24 @@ Tests whether a year is a leap year.
 
 EXPORT_C TInt Time::LeapYearsUpTo(TInt aYear)
 //
-// from 0AD to present year according to the rule above
+// from year 0 to specified year according to the rule above
 //
 /**
-Gets the number of leap years between 0 AD nominal Gregorian and the specified 
-year - inclusive.
+Gets the number of leap years between year 0 (nominal Gregorian) and the specified 
+year, inclusive.
+
+The calendar used is nominal Gregorian with astronomical numbering (where
+year 2000 = 2000 AD, year 1600 = 1600 AD, year 1 = 1 AD, and so year 0 =
+1 BC, year -100 = 101 BC).  No days are removed from September 1752 or any
+other month.  Leap year calculation before 1600 uses the Julian method of
+every four years, even for years which are exactly divisible by 100 but not
+by 400.  Thus leap years include: 1200, 1300, 1400, 1500, 1600 and 2000;
+non-leap years include: 1601, 1700, 1800, 1900 and 2100.
 
 @param aYear The final year in the range to search. If negative, the function 
              will return a negative number of leap years.
 
-@return The number of leap years between 0 AD nominal Gregorian and aYear.
+@return The number of leap years between year 0 (nominal Gregorian) and aYear.
 */
 	{
 
@@ -2523,4 +2534,3 @@ year - inclusive.
 	num+=(aYear/4-century+century/4);
 	return(num);
 	}
-

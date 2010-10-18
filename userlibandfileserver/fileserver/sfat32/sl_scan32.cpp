@@ -234,11 +234,10 @@ TBool CScanDrive::IsDirError() const
 */
 CScanDrive::TGenericError CScanDrive::ProblemsDiscovered() const
 {
-
     if(IsDirError()) 
         return EScanDriveDirError;
-    else
-        return iGenericError;
+
+    return iGenericError;
 }
 
 /**

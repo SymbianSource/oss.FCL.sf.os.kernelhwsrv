@@ -636,6 +636,7 @@ TMMCErr DSDStack::InitialiseMemoryCardSM()
 			__KTRACE_OPT(KPBUS1, Kern::Printf("R7 not supported."));
 			OstTrace0( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM3, "R7 not supported" );
 			Command().iSpec.iResponseType = ERespTypeR1;
+			Command().iFlags |= KMMCCmdFlagIgnoreStatus;
 			}
 
  

@@ -602,7 +602,7 @@ TInt DIicBusChannelSlavePsl::InitTransfer()
 		//		while(AsspRegister::Read32(iChannelBase + KFifoLevelOffset) <= (KFifoMaxLevel - iWordSize) &&
 		//		      iTxData != iTxDataEnd)
 		// For the template port, will just use a dummy variable (dummyFifoLvlChk )in place of the register read
-		TInt dummyFifoLvlChk = 0;
+		TInt dummyFifoLvlChk = 1;
 		while((dummyFifoLvlChk)	&&	// Replace this dummy variable with a read of the hardware
 			(iTxData != iTxDataEnd))
 			{

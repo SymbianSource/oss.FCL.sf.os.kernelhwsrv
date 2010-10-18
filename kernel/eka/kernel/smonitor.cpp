@@ -835,7 +835,7 @@ GLDEF_C TInt KernelModuleEntry(TInt aReason)
 /**
 Time of system crash.
 
-@return Time of crash in seconds since 0AD, or zero if crash time un-available.
+@return Time of crash in seconds since year 0 (nominal Gregorian), or zero if crash time un-available.
 */
 EXPORT_C TInt64 CrashTime()
 	{

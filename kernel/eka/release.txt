@@ -1,4 +1,45 @@
-Version 2.00.4009
+Version 2.00.4011
+=================
+(Made by fadhliM 15/10/2010)
+
+1.	stmansfi
+	1.	ou1cimx1#594006 ENV t_hcrut test faults and t_hcr fails on Bridge
+
+2.	ahiron
+	1.	ou1cimx1#604699 TDfc usage in Resmanus and IIC
+	2.	ou1cimx1#607313 SPB10.1 Coverity Prevent defects, Mandatory Checkers
+
+3.	dlyokhin
+	1.	ou1cimx1#602572 SD stack should correctly support SD cards larger than 32GB
+
+4.	lanerobe
+	1.	ou1cimx1#600014 LOADER T_LDRTST should explicitly use bytepair for exet110 and exet111
+
+5.	jcoppear
+	1.	ou1cimx1#609854 SIROCCO - Vasco - t_shadow faults
+
+6.	tocosgro
+	1.	ou1cimx1#600880 TTime class, base year wrong
+
+7.	fagortz
+	1.	ou1cimx1#606677 Linux build problem with kernelhwsrv
+	2.	ou1cimx1#604084 ENV Automounter is referenced in both SF and Nokia packages
+	3.	ou1cimx1#614366 8GB SD card does not mount properly
+
+8.	jessiezh
+	1.	ou1cimx1#600789 MCL MaxUserThreadStack size must be increased from 80KB to 1MB 
+
+9.	kmetherm
+	1.	ou1cimx1#587561 MCL The term 'Multi-Touch' must be removed from all KHS documentation including doxygen comments
+
+10.	davegord
+	1.	ou1cimx1#598182 ENV T_TLDD requires building invalid LDD which Raptor does not support
+
+11.	ricoles
+	1.	ou1cimx1#611968 [mcl] Update Dll::Tls API doc to describe what happens on DLL unload/reload
+
+
+Version 2.00.4010
 =================
 (Made by fadhliM 11/10/2010)
 
@@ -3323,7 +3364,7 @@ Version 2.00.1987
 (Made by GeorgeSin 08/04/2009)
 
 1.	Archana H
-	1.	DEFECT FIX: DEF137353: Emulator multitouch support broken on Win2K 
+	1.	DEFECT FIX: DEF137353: Emulator multipletouch support broken on Win2K 
 	
 2.	MiguelB
 	1.	DEFECT FIX: DEF136839: NAND media driver doesn't cancel garbage collection DFC 
@@ -3448,7 +3489,7 @@ Version 2.00.1981
 	3.	MINOR_CHANGE: Fix incorrect interrupt enable/disable sequence for the naviengine GCE driver plus offset fix.
 
 2.	kelly li
-	1.	MILESTONE: Ermine, GT0488, MS3.1, DS1448, PREQ2338: Base: Emulator support for multi-touch, pressure & proximity
+	1.	MILESTONE: Ermine, GT0488, MS3.1, DS1448, PREQ2338: Base: Emulator support for multipletouch, pressure & proximity
 	
 3.	Gavin Cochrane
 	1.	DEFECT FIX: PDEF135653: Lumiere20.024_Memory: Phone resets automatically after RAM low(2000~3000kb). 

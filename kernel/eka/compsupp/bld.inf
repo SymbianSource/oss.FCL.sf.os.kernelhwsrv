@@ -1,4 +1,4 @@
-// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2005-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "ARM EABI LICENCE.txt"
@@ -13,66 +13,66 @@
 // Description:
 // Compiler runtime support.
 // 
-//
 
 PRJ_PLATFORMS
 
-ARMV4 ARMV5 ARMV5SMP ARMV7
-
+ARMV4 ARMV5 ARMV5SMP ARMV6 ARMV7
 
 PRJ_EXPORTS
 
-rvct.h                      SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(rvct/)
-gcce/gcce.h                 SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(gcce/)
+rvct.h              SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(rvct/)
+gcce/gcce.h         SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(gcce/)
+symcpp/symcpp.h     SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(symcpp.h)
 
-symcpp/symcpp.h SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(symcpp.h)
-
-compsupp.iby                /epoc32/rom/include/
-
+compsupp.iby        /epoc32/rom/include/
 
 PRJ_MMPFILES
 
-#if !defined GCCXML && !defined GCCE
+#if !defined(GCCXML) && !defined(GCCE)
 
     symcpp/scppnwdl.mmp
     rvct/dfprvct-thunk.mmp
     rvct/usrt.mmp
+    rvct/usrt_nx.mmp
     rvct/ksrt.mmp
 
-    #ifndef SMP // Only static libraries build for SMP.
+    #ifndef SMP
+        rvct/drtaeabi.mmp
+        rvct/dfpaeabi.mmp
+        rvct/dfpaeabi_vfpv2.mmp
 
-    rvct/drtaeabi.mmp
-
-    rvct/dfpaeabi.mmp
-    rvct/dfpaeabi_vfpv2.mmp
-
-    #if defined(ARMCC_2_2) || defined(ARMCC_3_1)
-
-        rvct/drtrvct.mmp
-        rvct/drtrvct_vfpv2.mmp
-
-        rvct/dfprvct.mmp
-        rvct/dfprvct_vfpv2.mmp
-    #endif
-
+        // As of RVCT 4.0 we no longer export compiler-internal functions.
+        #if defined(ARMCC_2_2) || defined(ARMCC_3_1)
+            rvct/drtrvct.mmp
+            rvct/drtrvct_vfpv2.mmp
+            rvct/dfprvct.mmp
+            rvct/dfprvct_vfpv2.mmp
+        #endif
     #endif
 
 PRJ_EXTENSIONS
 
-// Unzip RVCT3.1 runtime if being built with RVCT2.2 or RVCT4.0
+    #ifndef ARMCC_2_2
+    start extension tools/compsupp
+    option  FILE  $(EXTENSION_ROOT)/rt_2_2.zip
+    option  TODIR $(EPOCROOT)epoc32/release
+    end
+    #endif
 
-start extension tools/compsupp
+    #ifndef ARMCC_3_1
+    start extension tools/compsupp
+    option  FILE  $(EXTENSION_ROOT)/rt_3_1.zip
+    option  TODIR $(EPOCROOT)epoc32/release
+    end
+    #endif
 
-#if defined(ARMCC_2_2) || defined(ARMCC_4_0)
-option  FILE  $(EXTENSION_ROOT)/rt_3_1.zip
-#elif defined(ARMCC_3_1)
-option  FILE  $(EXTENSION_ROOT)/rt_2_2.zip
+    #ifndef ARMCC_4_0
+    start extension tools/compsupp
+    option  FILE  $(EXTENSION_ROOT)/rt_4_0.zip
+    option  TODIR $(EPOCROOT)epoc32/release
+    end
+    #endif
+
 #endif
-
-option  TODIR $(EPOCROOT)epoc32/release
-
-end
-
-#endif // #if !defined GCCXML && !defined GCCE
 
 

@@ -443,6 +443,8 @@ TInt DIicBusChannelSlave::CaptureChannel(TDes8* aConfigHdr, TIicBusSlaveCallback
 
 		if(r == KErrNone)
 			{
+			// Use placement new to re-initialise the iClientTimeoutDfc callback object (don't re-allocate the memory)
+			new (iClientTimeoutDfc) TDfc(SlaveStaticCB,(TAny*)this, 7);	// Highest Dfc priority
 			iClient->Open();
 			aCallback->iChannel=this;
 			iNotif = aCallback;
@@ -456,7 +458,6 @@ TInt DIicBusChannelSlave::CaptureChannel(TDes8* aConfigHdr, TIicBusSlaveCallback
 				}
 			else
 				r=DoRequest(ESyncConfigPwrUp);
-
 			if(r == KErrNone)
 				{
 				if(!aAsynch)	// For asynchronous version there is nothing more to do until the callback is invoked
@@ -477,6 +478,7 @@ TInt DIicBusChannelSlave::CaptureChannel(TDes8* aConfigHdr, TIicBusSlaveCallback
 	return r;
 	}
 
+
 TInt DIicBusChannelSlave::ReleaseChannel()
 	{
 	__KTRACE_OPT(KIIC, Kern::Printf("DIicBusChannelSlave::ReleaseChannel\n"));
@@ -494,6 +496,10 @@ TInt DIicBusChannelSlave::ReleaseChannel()
 	r=DoRequest(EPowerDown);
 	if(r == KErrNone)
 		{
+		if(iClientTimeoutDfc != NULL)
+			{
+			iClientTimeoutDfc->~TDfc();	// call destructor directly, ie don't free the memory
+			}
 		TInt intState=__SPIN_LOCK_IRQSAVE(iSpinLock);
 		iClient=NULL;
 		iChannelInUse=0;	// Channel now available for capture by other clients
@@ -802,7 +808,7 @@ TInt DIicBusChannelSlave::SetNotificationTrigger(TInt /*aTrigger*/)
 
 DIicBusChannelSlave::DIicBusChannelSlave(TBusType aBusType, TChannelDuplex aChanDuplex, TInt16 aChannelId)
 	: DIicBusChannel(DIicBusChannel::ESlave, aBusType, aChanDuplex),
-	iChannelId(aChannelId), iTimerState(EInactive),
+	iChannelId(aChannelId), iClientTimeoutDfc(NULL), iTimerState(EInactive),
 	iMasterWaitTime(KSlaveDefMWaitTime), iClientWaitTime(KSlaveDefCWaitTime),
 	iSpinLock(TSpinLock::EOrderGenericIrqLow2)  // Semi-arbitrary, low priority value
 	{
@@ -813,7 +819,12 @@ DIicBusChannelSlave::DIicBusChannelSlave(TBusType aBusType, TChannelDuplex aChan
 
 DIicBusChannelSlave::~DIicBusChannelSlave()
     {
-    delete iClientTimeoutDfc;
+	if(iClientTimeoutDfc != NULL)
+		{
+		delete iClientTimeoutDfc;
+		iClientTimeoutDfc = NULL;
+		}
+	return;
     }
 
 void DIicBusChannelSlave::SlaveStaticCB(TAny* aPtr)
@@ -1139,9 +1150,7 @@ TInt DIicBusChannelMasterSlave::CaptureChannel(TDes8* aConfigHdr, TIicBusSlaveCa
 
 TInt DIicBusChannelMasterSlave::ReleaseChannel()
     {
-	iMasterChannel->Lock();
 	TInt r=iSlaveChannel->ReleaseChannel();
-	iMasterChannel->Unlock();
 	return r;
 	};
 

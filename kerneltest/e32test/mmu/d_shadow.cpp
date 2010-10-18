@@ -36,6 +36,10 @@ const TUint KPageDirectorySize = 4096;  // Full size (ttbr0+ttbr1)
 const TUint KMaxNumberOfPageDirectories = 256;
 #endif
 
+// A buffer used to test shadowing of unpaged ROM.  It is two pages in size so that it will always
+// contain at least one memory page.
+const TUint8 UnpagedMemory[8192] = { 1 };
+
 class DShadow;
 
 class DShadowFactory : public DLogicalDevice
@@ -395,7 +399,10 @@ TInt DShadow::Request(TInt aFunction, TAny* a1, TAny* a2)
 			
 			break;	
 			}
-			
+
+		case RShadow::EControlGetUnpagedPage:
+			return _ALIGN_UP((TLinAddr)UnpagedMemory, pageSize);
+
 		default:
 			r=KErrNotSupported;
 			break;

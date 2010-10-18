@@ -338,7 +338,7 @@ TInt ShellFunction::ChkDsk(TDes& aPath,TUint aSwitches)
 
     if (nRes != KErrNone)
 	{
-    	CShell::TheConsole->Printf(_L("Wrong drive specified!\n"));
+    	CShell::Printf(_L("Wrong drive specified!\n"));
         return nRes;
     }
     
@@ -348,7 +348,7 @@ TInt ShellFunction::ChkDsk(TDes& aPath,TUint aSwitches)
         nRes=TheShell->TheFs.ScanDrive(aPath);
         if(nRes == KErrNone)
         {
-            CShell::TheConsole->Printf(_L("No errors.\n"));
+            CShell::Printf(_L("No errors.\n"));
         }
     }
     else if(bFinaliseDrv)
@@ -357,7 +357,7 @@ TInt ShellFunction::ChkDsk(TDes& aPath,TUint aSwitches)
         if(nRes != KErrNone)
             return nRes;
 
-        CShell::TheConsole->Printf(_L("Drive %c: is finalised RW\n"), 'A'+drive);
+        CShell::Printf(_L("Drive %c: is finalised RW\n"), 'A'+drive);
     }
     else if(bUnFinaliseDrv)
     {//-- Unfinalise the drive
@@ -365,7 +365,7 @@ TInt ShellFunction::ChkDsk(TDes& aPath,TUint aSwitches)
         if(nRes != KErrNone)
             return nRes;
 
-        CShell::TheConsole->Printf(_L("Drive %c: is Unfinalised\n"), 'A'+drive);
+        CShell::Printf(_L("Drive %c: is Unfinalised\n"), 'A'+drive);
     }
     else
     {//-- run CheckDisk on the specified drive
@@ -377,22 +377,22 @@ TInt ShellFunction::ChkDsk(TDes& aPath,TUint aSwitches)
 	    switch(nRes)
 		    {
 	    case 0:
-		    CShell::TheConsole->Printf(_L("Completed - no errors found\n"));
+		    CShell::Printf(_L("Completed - no errors found\n"));
 		    break;
 	    case 1:
-		    CShell::TheConsole->Printf(_L("Error - File cluster chain contains a bad value (<2 or >maxCluster)\n"));
+		    CShell::Printf(_L("Error - File cluster chain contains a bad value (<2 or >maxCluster)\n"));
 		    break;
 	    case 2:
-		    CShell::TheConsole->Printf(_L("Error - Two files are linked to the same cluster\n"));
+		    CShell::Printf(_L("Error - Two files are linked to the same cluster\n"));
 		    break;
 	    case 3:
-		    CShell::TheConsole->Printf(_L("Error - Unallocated cluster contains a value != 0\n"));
+		    CShell::Printf(_L("Error - Unallocated cluster contains a value != 0\n"));
 		    break;
 	    case 4:
-		    CShell::TheConsole->Printf(_L("Error - Size of file != number of clusters in chain\n"));
+		    CShell::Printf(_L("Error - Size of file != number of clusters in chain\n"));
 		    break;
 	    default:
-		    CShell::TheConsole->Printf(_L("Undefined Error value\n"));
+		    CShell::Printf(_L("Undefined Error value\n"));
 		    }
 	 }
     return nRes;
@@ -1494,12 +1494,12 @@ TInt DoDismountFS(RFs& aFs, TInt aDrvNum, TBool aForceDismount)
     nRes = aFs.DismountFileSystem(fsName, aDrvNum);
     if(nRes != KErrNone)
         {
-        CShell::TheConsole->Printf(_L("Can't dismount FS!\n"));
+        CShell::Printf(_L("Can't dismount FS!\n"));
         return nRes;
         }
     else
         {
-        CShell::TheConsole->Printf(_L("'%S' filesystem dismounted from drive %c:\n"), &fsName, 'A'+aDrvNum);
+        CShell::Printf(_L("'%S' filesystem dismounted from drive %c:\n"), &fsName, 'A'+aDrvNum);
         return KErrNone;
         }
     }
@@ -1509,7 +1509,7 @@ TInt DoDismountFS(RFs& aFs, TInt aDrvNum, TBool aForceDismount)
         aFs.NotifyDismount(aDrvNum, rqStat, EFsDismountForceDismount);  
         User::WaitForRequest(rqStat);
         
-        CShell::TheConsole->Printf(_L("'%S' filesystem Forcedly dismounted from drive %c:\n"), &fsName, 'A'+aDrvNum);
+        CShell::Printf(_L("'%S' filesystem Forcedly dismounted from drive %c:\n"), &fsName, 'A'+aDrvNum);
 
         return rqStat.Int(); 
     }
@@ -1551,7 +1551,7 @@ TInt DoRemountFS(RFs& aFs, TInt aDrvNum)
         nRes = aFs.ExtensionName(extName, aDrvNum, 1);
         if(nRes == KErrNone)
         {   
-            CShell::TheConsole->Printf(_L("Non-primary extensions are not supported!\n"));
+            CShell::Printf(_L("Non-primary extensions are not supported!\n"));
             return KErrNotSupported;
         }
     }
@@ -1579,7 +1579,7 @@ TInt DoRemountFS(RFs& aFs, TInt aDrvNum)
 
     if(nRes == KErrNone)
     {
-        CShell::TheConsole->Printf(_L("mounted filesystem:%S\n"), &fsName);
+        CShell::Printf(_L("mounted filesystem:%S\n"), &fsName);
     }
 
     return nRes;
@@ -1630,7 +1630,7 @@ TInt ShellFunction::MountFileSystem(TDes& aArgs, TUint aSwitches)
     nRes = DoExtractDriveLetter(token);
     if(nRes < 0)
     {
-        CShell::TheConsole->Printf(KErrInvalidDrive);
+        CShell::Printf(KErrInvalidDrive);
         return KErrArgument;
     }
 
@@ -1651,7 +1651,7 @@ TInt ShellFunction::MountFileSystem(TDes& aArgs, TUint aSwitches)
         
         if(nRes == KErrNotFound)
         {//-- nothing to dismount
-            CShell::TheConsole->Printf(_L("specified drive doesn't have FS mounted\n"));
+            CShell::Printf(_L("specified drive doesn't have FS mounted\n"));
             return KErrNone;
         }
 
@@ -1673,8 +1673,8 @@ TInt ShellFunction::MountFileSystem(TDes& aArgs, TUint aSwitches)
     nRes = fs.FileSystemName(fsName, drvNum);
     if(nRes == KErrNone)
     {
-        CShell::TheConsole->Printf(_L("specified drive already has '%S' file system mounted.\n"), &fsName);
-        CShell::TheConsole->Printf(_L("Dismount it first using '/U' switch or use '/F' switch.\n"));
+        CShell::Printf(_L("specified drive already has '%S' file system mounted.\n"), &fsName);
+        CShell::Printf(_L("Dismount it first using '/U' switch or use '/F' switch.\n"));
         return KErrNone;
     }
 
@@ -1692,13 +1692,13 @@ TInt ShellFunction::MountFileSystem(TDes& aArgs, TUint aSwitches)
 
     if(!DoFindToken(aArgs, KFSY_Param, ptrFSYName))
     {//-- FSY plugin name, like "elocal.fsy"
-        CShell::TheConsole->Printf(_L("'%S' parameter is required!\n"), &KFSY_Param);
+        CShell::Printf(_L("'%S' parameter is required!\n"), &KFSY_Param);
         return KErrNone;
     }
 
     if(!DoFindToken(aArgs, KFsName_Param, ptrFSName))
     {//-- file system name, like "FAT"
-        CShell::TheConsole->Printf(_L("'%S' parameter is required!\n"), &KFsName_Param);
+        CShell::Printf(_L("'%S' parameter is required!\n"), &KFsName_Param);
         return KErrNone;
     }
 
@@ -1714,7 +1714,7 @@ TInt ShellFunction::MountFileSystem(TDes& aArgs, TUint aSwitches)
     nRes = fs.AddFileSystem(ptrFSYName);
     if(nRes != KErrNone && nRes != KErrAlreadyExists)
     {
-        CShell::TheConsole->Printf(_L("Can't load '%S' file system plugin!\n"), &ptrFSYName);        
+        CShell::Printf(_L("Can't load '%S' file system plugin!\n"), &ptrFSYName);        
         return nRes;
     }
 
@@ -1723,7 +1723,7 @@ TInt ShellFunction::MountFileSystem(TDes& aArgs, TUint aSwitches)
         nRes = fs.AddExtension(ptrPExtName);
         if(nRes != KErrNone && nRes != KErrAlreadyExists)
         {
-            CShell::TheConsole->Printf(_L("Can't load '%S' FS extension plugin!\n"), &ptrPExtName);        
+            CShell::Printf(_L("Can't load '%S' FS extension plugin!\n"), &ptrPExtName);        
             return nRes;
         }
     }
@@ -1738,11 +1738,11 @@ TInt ShellFunction::MountFileSystem(TDes& aArgs, TUint aSwitches)
         nRes = fs.MountFileSystem(ptrFSName, drvNum, bDrvSynch);
     }
 
-    CShell::TheConsole->Printf(_L("Mounting new file system...\n"));        
+    CShell::Printf(_L("Mounting new file system...\n"));        
 
     if(nRes != KErrNone && nRes != KErrCorrupt)
     {//-- KErrCorrupt might mean that the FS mounted OK onto the drive, but ve volume itself needs formatting
-        CShell::TheConsole->Printf(_L("Error mounting the filesystem! (%d)\n"), nRes);
+        CShell::Printf(_L("Error mounting the filesystem! (%d)\n"), nRes);
         return nRes;
     }
 
@@ -1810,7 +1810,7 @@ TInt ShellFunction::Format(TDes& aPath, TUint aSwitches)
     const TInt nDrv = DoExtractDriveLetter(ptrPath);
     if(nDrv < 0 )
         {
-        CShell::TheConsole->Printf(_L("type \"format /?\" for help.\n"));
+        CShell::Printf(_L("type \"format /?\" for help.\n"));
         return KErrNone;
         }
 
@@ -1908,7 +1908,7 @@ TInt ShellFunction::Format(TDes& aPath, TUint aSwitches)
                 }
                 else
                 {
-                CShell::TheConsole->Printf(_L("Invalid SectorsPerCluster value!\n"));
+                CShell::Printf(_L("Invalid SectorsPerCluster value!\n"));
                 return KErrNone;
                 }
             }
@@ -1925,7 +1925,7 @@ TInt ShellFunction::Format(TDes& aPath, TUint aSwitches)
                 }
             else
                 {
-                CShell::TheConsole->Printf(_L("Invalid Reserved Sectors value!\n"));
+                CShell::Printf(_L("Invalid Reserved Sectors value!\n"));
                 return KErrNone;
                 }
             }
@@ -1942,7 +1942,7 @@ TInt ShellFunction::Format(TDes& aPath, TUint aSwitches)
                 }
             else
                 {
-                CShell::TheConsole->Printf(_L("Invalid FAT tables number value!\n"));
+                CShell::Printf(_L("Invalid FAT tables number value!\n"));
                 return KErrNone;
                 }
             }
@@ -1967,7 +1967,7 @@ TInt ShellFunction::Format(TDes& aPath, TUint aSwitches)
                 }
                 else
                 {
-                CShell::TheConsole->Printf(_L("Invalid SectorsPerCluster value!\n"));
+                CShell::Printf(_L("Invalid SectorsPerCluster value!\n"));
                 return KErrNone;
                 }
             }
@@ -1984,7 +1984,7 @@ TInt ShellFunction::Format(TDes& aPath, TUint aSwitches)
                 }
             else
                 {
-                CShell::TheConsole->Printf(_L("Invalid FAT tables number value!\n"));
+                CShell::Printf(_L("Invalid FAT tables number value!\n"));
                 return KErrNone;
                 }
             }
@@ -1999,7 +1999,7 @@ TInt ShellFunction::Format(TDes& aPath, TUint aSwitches)
         }
     else
         {
-        CShell::TheConsole->Printf(_L("The new file system is:%S\n"), &fsName);
+        CShell::Printf(_L("The new file system is:%S\n"), &fsName);
         nRes = format.Open(TheShell->TheFs, ptrPath, fmtMode, fmtCnt, volFmtParamBuf);
         }
 
@@ -2028,28 +2028,28 @@ TInt ShellFunction::Format(TDes& aPath, TUint aSwitches)
     //-- format errors processing
     if(nRes != KErrNone)
         {
-        CShell::TheConsole->Printf(_L("Format failed.\n"));
+        CShell::Printf(_L("Format failed.\n"));
         }
 
     switch(nRes)
         {
         case KErrNone:
-            CShell::TheConsole->Printf(_L("Format complete.\n"));
+            CShell::Printf(_L("Format complete.\n"));
         break;
 
         
         case KErrArgument: //-- FORMAT has rejected specified parameters
-            CShell::TheConsole->Printf(_L("Possible reason: Invalid combination of formatting parameters.\n"));
+            CShell::Printf(_L("Possible reason: Invalid combination of formatting parameters.\n"));
             nRes = KErrNone;
         break;
 
         case KErrNotSupported: //-- trying to format SD card with parameters or not supported FS name specified
-            CShell::TheConsole->Printf(_L("Possible reasons: media does not support special formatting or specified file system is not supported\n"));
+            CShell::Printf(_L("Possible reasons: media does not support special formatting or specified file system is not supported\n"));
             nRes = KErrNone;
         break;
 
         case KErrNotFound: //-- possible reason: unrecognisable media and automounter FS + formatting without specifying the FS name
-            CShell::TheConsole->Printf(_L("Possible reason: Unable to chose appropriate file system (not specified)\n"));
+            CShell::Printf(_L("Possible reason: Unable to chose appropriate file system (not specified)\n"));
             nRes = KErrNone;
         break;
 
@@ -2146,7 +2146,7 @@ TInt ShellFunction::Gobble(TDes& aPath,TUint aSwitches)
 	TInt fileNameLen=aPath.LocateReverse(' ');
 	if (fileNameLen==KErrNotFound)	//	No spaces implies no filelength specified
 		{
-		CShell::TheConsole->Printf(_L("Please specify a file name and a file length\n"));
+		CShell::Printf(_L("Please specify a file name and a file length\n"));
 		return (KErrNone);
 		}
 
@@ -2164,7 +2164,7 @@ TInt ShellFunction::Gobble(TDes& aPath,TUint aSwitches)
 	TInt r=size.Val(fileSize,radix);
 	if (r!=KErrNone || ! size.Eos())
 		{
-		CShell::TheConsole->Printf(_L("Please specify a file length\n"));
+		CShell::Printf(_L("Please specify a file length\n"));
 		return (KErrNone);
 		}
 
@@ -2211,7 +2211,7 @@ TInt ShellFunction::Gobble(TDes& aPath,TUint aSwitches)
     //-- this can make write faster on rugged fat.
     if(aSwitches&TShellCommand::EESwitch)
     {//-- /e switch is specified, create an empty file without writing data
-        CShell::TheConsole->Printf(_L("Creating an empty file, size:%LD bytes\n"), fileSize);
+        CShell::Printf(_L("Creating an empty file, size:%LD bytes\n"), fileSize);
     }
 
     r=file.SetSize(fileSize);
@@ -2249,8 +2249,8 @@ TInt ShellFunction::Gobble(TDes& aPath,TUint aSwitches)
 
     endTime.SecondsFrom(startTime, timeTaken);
 
-    CShell::TheConsole->Printf(_L("Total bytes written:%LD\n"), cntBytes);
-    CShell::TheConsole->Printf(_L("Time taken:%d Sec.\n"), timeTaken.Int());
+    CShell::Printf(_L("Total bytes written:%LD\n"), cntBytes);
+    CShell::Printf(_L("Time taken:%d Sec.\n"), timeTaken.Int());
 
     return r;
 
@@ -2261,7 +2261,7 @@ TInt ShellFunction::Gobble(TDes& aPath,TUint aSwitches)
     if(r!= KErrAlreadyExists) //this is to ensure that an existing file does not get deleted
 	    CShell::TheFs.Delete(fileName.FullName());
 
-    CShell::TheConsole->Printf(_L("Error - could not create file, code:%d\n"), r);
+    CShell::Printf(_L("Error - could not create file, code:%d\n"), r);
 
     return r;
 	}
@@ -3033,7 +3033,7 @@ TInt ShellFunction::Rd(TDes& aPath,TUint /*aSwitches*/)
 	r=directory.Open(TheShell->TheFs,dirPath.FullName(),KEntryAttMatchExclusive|KEntryAttDir);
 	if (r!=KErrNone)
 		{
-		CShell::TheConsole->Printf(_L("Directory %S was not found\n"),&dirPath.FullName());
+		CShell::Printf(_L("Directory %S was not found\n"),&dirPath.FullName());
 		return (KErrNone);
 		}
 	directory.Close();
@@ -3041,10 +3041,10 @@ TInt ShellFunction::Rd(TDes& aPath,TUint /*aSwitches*/)
 	TInt ret=TheShell->TheFs.RmDir(dirPath.FullName());
     
     if (ret==KErrNone)
-	    CShell::TheConsole->Printf(_L("Directory %S was removed\n"),&dirPath.FullName());
+	    CShell::Printf(_L("Directory %S was removed\n"),&dirPath.FullName());
     else if(ret==KErrInUse)
 	    {
-		CShell::TheConsole->Printf(_L("Directory %S is in use and cannot be deleted\n"),&dirPath.FullName());
+		CShell::Printf(_L("Directory %S is in use and cannot be deleted\n"),&dirPath.FullName());
 		return KErrNone;
 		}
 	
@@ -3069,11 +3069,14 @@ TInt ShellFunction::Start(TDes& aProg,TUint /*aSwitches*/)
 
 TInt ShellFunction::Time(TDes&,TUint /*aSwitches*/)
 	{
-	TTime time;
+	
+    TTime time;
 	time.HomeTime();
 	TDateTime dateTime(time.DateTime());
-	CShell::TheConsole->Printf(_L("  %+02d/%+02d/%+04d %+02d:%+02d:%+02d.%+06d\n"),dateTime.Day()+1,dateTime.Month()+1,dateTime.Year(),dateTime.Hour(),dateTime.Minute(),dateTime.Second(),dateTime.MicroSecond());
-	return(KErrNone);
+	
+	CShell::Printf(_L("  %+02d/%+02d/%+04d %+02d:%+02d:%+02d.%+03d\n"),dateTime.Day()+1,dateTime.Month()+1,dateTime.Year(),dateTime.Hour(),dateTime.Minute(),dateTime.Second(),dateTime.MicroSecond());
+
+    return KErrNone;
 	}
 
 TInt ShellFunction::Trace(TDes& aState,TUint aSwitches)
@@ -3359,6 +3362,7 @@ void ShellFunction::ParsePath(TDes& aPath)
 	aPath.Insert(0,pathParse.FullName());
 	}
 
+/*
 TBool ShellFunction::Certain()
 	{
 	CShell::TheConsole->Printf(_L("Are you sure? Y/N..."));
@@ -3372,6 +3376,7 @@ TBool ShellFunction::Certain()
 	CShell::TheConsole->Printf(_L("%c\n"),r);
 	return(r=='Y');
 	}
+*/
 
 TInt ShellFunction::GetFullPath(TDes& aPath,TParse& aParse)
 //

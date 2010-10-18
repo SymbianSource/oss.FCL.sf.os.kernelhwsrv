@@ -224,4 +224,6 @@ EXPORTS
 	__aeabi_uidiv @ 223 NONAME
 	__ARM_get_typeid @ 224 NONAME
 	__cxa_get_exception_ptr @ 225 NONAME
+	_ZN23TCppRTExceptionsGlobals22Init2ndEmergencyBufferEv @ 226 NONAME
+	_ZN23TCppRTExceptionsGlobals22Kill2ndEmergencyBufferEv @ 227 NONAME
 

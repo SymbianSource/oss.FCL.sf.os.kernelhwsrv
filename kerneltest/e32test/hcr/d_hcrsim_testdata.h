@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -258,7 +258,7 @@ SSettingC SettingsListCorrupt2[] = {
 	{{{ KTestCategories[0], 1}, ETypeInt32, 0x0000, 0 }, {{ 0 }}},
 	{{{ KTestCategories[0], 2}, ETypeInt32, 0x0000, 0 }, {{ 0 }}},
 	};
-#if !defined(__KERNEL_MODE__) || defined(HCRTEST_USERSIDE_INTERFACE)
+#if !defined(__KERNEL_MODE__) 
 const TUint32 KTestInvalidCategory = 0;
 const TUint32 KTestInvalidSettingId = 5678;
 
@@ -670,5 +670,5 @@ SSettingC SettingsList7[] = {
 	{{{ KTestCategories[5], 0x00d0}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64Three) }}},
 	{{{ KTestCategories[5], 0xffffffff}, ETypeInt8, 0x0000, 0 }, {{ 1 }}},
 	};
-#endif // !defined(__KERNEL_MODE__) || defined(HCRTEST_USERSIDE_INTERFACE)
+#endif // !defined(__KERNEL_MODE__) 
 #endif // !D_HCRSIM_TESTDATA_H

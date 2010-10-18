@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -24,6 +24,8 @@
 #ifndef __KERNEL_MODE__
 #include <e32std.h>
 #endif
+
+#define MAX_FILENAME_LEN 64
 
 
 /**
@@ -77,10 +79,14 @@ public:
 	    return DoControl(ECtrlFileFindSettingsInCategory, (TAny*)args);
 	    }
 	
-	inline TUint Test_SwitchFileRepository(const TText* aRepName)
+	// aNameLen includes the null terminator
+	inline TUint Test_SwitchFileRepository(const TText8* aRepName, TInt aNameLen)
 	    {
-	    TAny* args[1];
+	    __ASSERT_ALWAYS((aNameLen<MAX_FILENAME_LEN),User::Panic(_L("d_hcrut.h"), __LINE__));
+	    
+	    TAny* args[2];
 	    args[0] = (TAny*) aRepName;
+	    args[1] = (TAny*) aNameLen;
 	    return DoControl(ECtrlSwitchFileRepository, (TAny*)args);
 	    }
 		

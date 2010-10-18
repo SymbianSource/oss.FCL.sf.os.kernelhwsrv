@@ -1758,18 +1758,26 @@ class TLocale;
 
 Stores and manipulates the date and time. 
 
-It represents a date and time as a number of microseconds since midnight, 
-January 1st, 1 AD nominal Gregorian. BC dates are represented by negative 
-TTime values. A TTime object may be constructed from a TInt64, a TDateTime 
-a string literal, or by default, which initialises the time to an arbitrary 
-value. To access human-readable time information, the TTime may be converted 
-from a TInt64 into a TDateTime, which represents the date and time as seven 
-numeric fields and provides functions to extract these fields. Alternatively, 
-to display the time as text, the time may be formatted and placed into a
-descriptor using a variety of formatting commands and which may or may not
-honour the system's locale settings. The conversion between time and text may
-be performed the other way around, so that a descriptor can be parsed and
-converted into a TTime value.
+It represents a date and time as a number of microseconds since midnight
+at the beginning of 1 January, year 0 (using astronomical numbering, where
+year 2000 = 2000 AD, year 1600 = 1600 AD, year 1 = 1 AD, and so year 0 =
+1 BC, year -100 = 101 BC, etc).  The calendar used is nominal Gregorian, so
+no days are removed from September 1752 or any other month, but leap year
+calculations before 1600 use the Julian method of every four years, even
+for years which are exactly divisible by 100 but not by 400.  Thus leap
+years include: 1200, 1300, 1400, 1500, 1600 and 2000; non-leap years
+include: 1601, 1700, 1800, 1900 and 2100.
+
+A TTime object may be constructed from a TInt64, a TDateTime, a string literal,
+or by default, which initialises the time to an arbitrary value. To access
+human-readable time information, the TTime may be converted from a TInt64
+into a TDateTime, which represents the date and time as seven numeric fields
+and provides functions to extract these fields. Alternatively, to display the
+time as text, the time may be formatted and placed into a descriptor using a
+variety of formatting commands and which may or may not honour the system's
+locale settings. The conversion between time and text may be performed the
+other way around, so that a descriptor can be parsed and converted into a
+TTime value.
 
 In addition to setting and getting the date and time and converting between 
 text and time, TTime provides functions to get intervals between times and 

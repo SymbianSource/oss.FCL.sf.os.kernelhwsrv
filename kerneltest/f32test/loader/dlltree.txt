@@ -212,8 +212,8 @@ GBNFExe		X B N I F T		:	GLat4
 
 # just add some data paged executables so loading gets OOM tested
 
-DataPagedExe1	X PD T
-DataPagedExe2	X PD D T
+DataPagedExe1	X B PD I T
+DataPagedExe2	X B PD D I T
 
 !TESTCASES
 

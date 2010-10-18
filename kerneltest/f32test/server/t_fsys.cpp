@@ -697,7 +697,7 @@ static void TestMountingBrokenMedia(TInt aDrive)
     test(remounts ==  KMaxMountFailures);
     
     // simulate a media change to reset failure count
-    r = TheFs.RemountDrive(aDrive, NULL, 0);
+    r = TheFs.RemountDrive(aDrive, NULL, RFs::KForceMediaChangeReOpenAllMediaDrivers);
 
     // now try mounting again & verify the the file server attempts to mount the drive again
     for (entryAttempts=0; entryAttempts < KEntryAttempts; entryAttempts++)
@@ -1335,14 +1335,13 @@ static void TestRemountFSWithOpenedObjects()
     nRes = TheFs.DismountFileSystem(fsName, drvNumber);
     test_Value(nRes, nRes == KErrInUse);
 
-    // Flag from locmedia.h to simulate ejecting and re-inserting the media.
-    const TUint KMediaRemountForceMediaChange = 0x00000001;
+    
     TRequestStatus changeStatus;
     TheFs.NotifyChange(ENotifyAll, changeStatus);
     
     
-    //-- 3. forcedly remount the drive
-    nRes = TheFs.RemountDrive(drvNumber, NULL, KMediaRemountForceMediaChange);
+    //-- 3. forcedly remount the drive to simulate ejecting and re-inserting the media.
+    nRes = TheFs.RemountDrive(drvNumber, NULL, RFs::KMediaRemountForceMediaChange);
     
     if(nRes == KErrNotSupported)
     	{//-- this feature is not supported and the test is inconsistent.

@@ -649,10 +649,11 @@ TUint32 CFatTable::PosInBytes(TUint32 aFatIndex) const
             return aFatIndex<<2; //-- 4 bytes per FAT entry
 
         default:
-            ASSERT(0);
-            return 0;//-- get rid of warning
+            break;
         };
 
+    ASSERT(0);
+    return 0;//-- get rid of warning
 	}
 
 //-----------------------------------------------------------------------------

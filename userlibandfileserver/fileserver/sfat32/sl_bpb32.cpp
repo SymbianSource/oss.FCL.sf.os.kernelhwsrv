@@ -274,9 +274,9 @@ TFatType TFatBootSector::FatType(void) const
         return EFat12;
     else if(clusterCnt < 65525)
         return EFat16;
-    else
-        return EFat32;
 
+    
+    return EFat32;
     }
 
 

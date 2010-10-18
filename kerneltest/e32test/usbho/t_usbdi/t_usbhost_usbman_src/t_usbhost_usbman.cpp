@@ -17,7 +17,7 @@
 #include <e32cmn_private.h>
 #include <e32property.h>
 #include <d32otgdi.h>
-#include "..\..\t_usbdi\inc\testdebug.h"
+#include "../../t_usbdi/inc/testdebug.h"
 #include "OstTraceDefinitions.h"
 #ifdef OST_TRACE_COMPILER_IN_USE
 #include "t_usbhost_usbmanTraces.h"

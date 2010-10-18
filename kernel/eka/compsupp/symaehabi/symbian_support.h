@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "ARM EABI LICENCE.txt"
@@ -69,8 +69,25 @@ struct emergency_eco {
     XLeaveException aUserLeaveException;
 };
 
+
+
+#include "emergency_buffer.h"
+
+struct emergency_eco2 : emergency_eco {
+  // The secondary emergency buffer might as well support slightly bigger objects.
+  int spacer[6];
+};
+
+typedef TEmergencyBuffer<emergency_eco2, 2> TEmergencyBuffer2;
+
+
 struct emergency_buffer {
   bool inuse;
+
+  TEmergencyBuffer2* em_buf2_p; // offset = 4, size = 4.
+
+  // This field has always been forced to an 8-byte alignment, so the fact that
+  // em_buf2_p has been added shouldn't break compatibility with existing binaries.
   struct emergency_eco eco;
 };
 
@@ -79,6 +96,9 @@ class TCppRTExceptionsGlobals
 	{
 public:
 	IMPORT_C TCppRTExceptionsGlobals();
+public:
+	IMPORT_C void Init2ndEmergencyBuffer();
+	IMPORT_C void Kill2ndEmergencyBuffer();
 private:
 	__cxa_eh_globals thread_globals;
 	emergency_buffer buffer;

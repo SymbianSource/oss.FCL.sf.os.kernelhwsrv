@@ -877,8 +877,9 @@ TInt CFatFileCB::BlockMap(SBlockMapInfo& aInfo, TInt64& aStartPos, TInt64 aEndPo
     aStartPos = iCurrentPos.iPos;
     if ((I64LOW(aStartPos) == FCB_FileSize()) || ( I64LOW(aStartPos) == (myStartPos + length)))
         return KErrCompletion;
-    else
-        return KErrNone;
+    
+    
+    return KErrNone;
     }
 
 
@@ -898,8 +899,10 @@ TInt CFatFileCB::GetInterface(TInt aInterfaceId,TAny*& aInterface,TAny* aInput)
             return FatMount().LocalDrive()->GetLocalDrive((TBusLocalDrive*&) aInterface);
 
         default:
-            return CFileCB::GetInterface(aInterfaceId,aInterface,aInput);
+            break;
         }
+    
+    return CFileCB::GetInterface(aInterfaceId,aInterface,aInput);
     }
 
 

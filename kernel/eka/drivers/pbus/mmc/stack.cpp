@@ -5712,10 +5712,15 @@ TMMCErr DMMCStack::IssueCommandCheckResponseSM()
 		else
 			{
 			// If commands returns card status and there we no command errors
-			// (or the status contains errors) then save the status info.
-			if ( (cmd.iFlags & KMMCCmdFlagStatusReceived) ||
-				 ((exitCode==KMMCErrNone || (exitCode & KMMCErrStatus)) &&
-				  (cmd.iSpec.iResponseType==ERespTypeR1 || cmd.iSpec.iResponseType==ERespTypeR1B)) )
+			// (or the status contains errors) and the status is not to be ignored, 
+			// then save the status info.
+			if ( !(cmd.iFlags & KMMCCmdFlagIgnoreStatus) &&
+				 ((cmd.iFlags & KMMCCmdFlagStatusReceived) ||
+				 ((exitCode==KMMCErrNone || (exitCode & KMMCErrStatus))) &&
+				 (cmd.iSpec.iResponseType==ERespTypeR1 || cmd.iSpec.iResponseType==ERespTypeR1B)) )
+
+				  
+				  
 				{
 				TMMCStatus status=s.ResponseP();
 				s.iLastStatus=status;

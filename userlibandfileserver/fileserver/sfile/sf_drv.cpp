@@ -2201,8 +2201,7 @@ EXPORT_C TBool TDrive::GetNotifyUser()
 
 /**
     Gracefully dismounts the current mount. This is method is called from outside, so do some finalisation work on mount.
-After calling this function there is no current mount on the drive.
-
+    After calling this function there is no current mount on the drive.
 */
 EXPORT_C void TDrive::Dismount()
 	{
@@ -2216,8 +2215,8 @@ EXPORT_C void TDrive::Dismount()
     TRAP_IGNORE(FlushCachedFileInfoL());
 
     //-- try our best to finalise the mount (the mount can decide to do some job during finalisation, e.g. write some data)
-    //-- finalise the mount in RO mode, we are dismounting the FS anyway
-    TRAP_IGNORE(iCurrentMount->FinaliseMountL(RFs::EFinal_RO));
+    //-- finalise the mount in RW mode
+    TRAP_IGNORE(iCurrentMount->FinaliseMountL(RFs::EFinal_RW));
     
     DoDismount();
 	}
@@ -2240,8 +2239,9 @@ void TDrive::ForceDismount()
 	TRAP_IGNORE(FlushCachedFileInfoL());
 
     //-- try our best to finalise the mount (the mount can decide to do some job during finalisation, e.g. write some data)
-    //-- finalise the mount in RO mode, we are dismounting the FS anyway
-    TRAP_IGNORE(iCurrentMount->FinaliseMountL(RFs::EFinal_RO));
+    //-- finalise the mount in RW mode. It is possible that the mount is being forcedly dismounted with some files opened on it.
+    //-- in this case further attempt to access may will result in successful remountng and re-attaching mount and its files to the media.
+    TRAP_IGNORE(iCurrentMount->FinaliseMountL(RFs::EFinal_RW));
 
     //-- mark the mount as 'Dismounted'; this invalidates all object handles until the mount is successfully "remounted". 
     //-- if there are still some objects opened on this mount, CMountCB::Close() won't destroy it until all objects are closed.
@@ -2541,10 +2541,8 @@ TBool TDrive::ClampFlag()
 TInt TDrive::ClearDeferredDismount()
 // debug-only function for testing
 	{
-	Lock();
 	FsNotify::HandleDismount(EFsDismountRegisterClient, DriveNumber(), ETrue, KErrNone);
 	SetDismountDeferred(EFalse);
-	UnLock();
 	return KErrNone;
 	}
 #endif

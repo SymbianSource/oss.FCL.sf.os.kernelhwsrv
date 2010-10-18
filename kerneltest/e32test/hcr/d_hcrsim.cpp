@@ -1,4 +1,4 @@
-// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -154,9 +154,12 @@ void HasRepositoryInSmr(TBool& aHasSmr, TBool& aHasSmrHcr)
 		}											\
 	}
 
+// Invoke some non-fatal calls on the real HCR.dll in the BSP to show
+// a kernel extension can use the HCR API early in boot.
 void KextInitTests()
 	{
 	TInt r;
+	
 	// Get last Setting in Reference Compiled Repository
 	TUint32 value1;
 	TSettingId setting1(0xFFFFFFFF, 0xFFFFFFFF);
@@ -164,88 +167,8 @@ void KextInitTests()
 	KEXT_TESTKERRNONE(r);
 	KEXT_TEST(value1==0x4C415354); // 'L', 'A', 'S', 'T'
 
-	// Determine what test repositories the HCR has loaded
-	// Make sure we have the file repository
-	const TRomHeader& romheader = Epoc::RomHeader();
-	KEXT_TEST(romheader.iHcrFileAddress != NULL); // Assuming this is the test repository (hcr.dat)
-	// Find the nand repository
-	TBool smr;
-	TBool smrrep;
-	SSettingC* repos = NULL;
-	TInt nosettings = 0;
-	HasRepositoryInSmr(smr, smrrep);
-	if (smrrep)
-		{
-		repos = SettingsList6; // File+Nand
-		nosettings = sizeof(SettingsList6) / sizeof(SSettingC);
-		}
-	else if (!smr)
-		{
-		repos = SettingsList7; // File Only
-		nosettings = sizeof(SettingsList7) / sizeof(SSettingC);
-		}
-	else
-		{
-		// SMR partitions found but no HCR repository
-		KEXT_TEST(0);
-		return;
-		}
-
-	// Simple word setting Get
-	for (SSettingC* setting = repos; setting < repos + nosettings; setting++)
-		{
-// Note: these macros are irrelevant here, it is just so the two test kernel
-// extensions do something different
-#ifdef HCRTEST_CLIENT_THREAD
-		if (setting->iName.iType == ETypeInt32)
-			{
-			TSettingId id(setting->iName.iId.iCat, setting->iName.iId.iKey);
-			TInt32 val;
-			r = GetInt(id, val);
-			KEXT_TESTKERRNONE(r);
-			KEXT_TEST(setting->iValue.iLit.iInt32 == val);
-			}
-#else // !HCRTEST_CLIENT_THREAD
-		if (setting->iName.iType == ETypeUInt32)
-			{
-			TSettingId id(setting->iName.iId.iCat, setting->iName.iId.iKey);
-			TUint32 val;
-			r = GetUInt(id, val);
-			KEXT_TESTKERRNONE(r);
-			KEXT_TEST(setting->iValue.iLit.iUInt32 == val);
-			}
-#endif // !HCRTEST_CLIENT_THREAD
-		}
-
-	// Large setting Get
-	for (SSettingC* setting = repos; setting < repos + nosettings; setting++)
-		{
-// Note: these macros are irrelevant here, it is just so the two test kernel
-// extensions do something different
-#ifdef HCRTEST_CLIENT_THREAD
-		if (setting->iName.iType == ETypeBinData)
-			{
-			TSettingId id(setting->iName.iId.iCat, setting->iName.iId.iKey);
-			TBuf8<KMaxSettingLength> val;
-			TPtrC8 aval(setting->iValue.iPtr.iData, setting->iName.iLen);
-			r = GetData(id, val);
-			KEXT_TESTKERRNONE(r);
-			KEXT_TEST(0 == val.Compare(aval));
-			}
-#else // !HCRTEST_CLIENT_THREAD
-		if (setting->iName.iType == ETypeText8)
-			{
-			TSettingId id(setting->iName.iId.iCat, setting->iName.iId.iKey);
-			TBuf8<KMaxSettingLength> val;
-			TPtrC8 aval(setting->iValue.iPtr.iString8, setting->iName.iLen);
-			r = GetString(id, val);
-			KEXT_TESTKERRNONE(r);
-			KEXT_TEST(0 == val.Compare(aval));
-			}
-#endif // !HCRTEST_CLIENT_THREAD
-		}
-
-	// Some other API calls
+	// Check number of settings in some test categories.
+	// Most likely these categories are not used in the real HCR.dll
 	TUint i;
 	for (i = 0; i < sizeof(KTestCategories) / sizeof(TCategoryUid); i++)
 		{
@@ -296,6 +219,9 @@ TInt DHcrSimTestDrvFactory::Install()
 	r = Kern::DynamicDfcQCreate(iDfcQ, KHcrSimTestThreadPriority, KHcrSimTestThread);
 	if (r != KErrNone)
 		return r;
+	// Allow this test DFCQ thread to take page faults should it happen rather
+	// than let the Kernel panic it with 2,61 KERN-EXEC.
+	iDfcQ->SetRealtimeState(ERealtimeStateOff);
 #ifdef HCRTEST_USERSIDE_INTERFACE
 	r = SetName(&KTestHcrRealOwn);
 #else

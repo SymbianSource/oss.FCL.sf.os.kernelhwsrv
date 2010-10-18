@@ -832,7 +832,6 @@ in the extension hierarchy.
 
 
 
-EFSRV_EXPORT_C TInt RFs::RemountDrive(TInt aDrive,const TDesC8* aMountInfo,TUint aFlags)
 /**
 Forces a remount of the specified drive.
 
@@ -840,14 +839,13 @@ Forces a remount of the specified drive.
 @param aMountInfo Information passed down to the media driver. The meaning of
                   this information depends on the media driver, for example,
                   keys for secure areas.
-@param aFlags     When the flag is set to
-                  0x00000001 - Used to simulate ejecting and re-inserting the media.
-                  0x80000000 - used to force the media driver for the specified logical
-                               drive to be closed and reopened.
 
-@return KErrNone if successful, otherwise one of
-        the other system wide error codes.
+@param aFlags     one of the flags specified in RFs::TForceMediaChangeFlags and describing the way 
+                  drive is going to be remounted.   
+
+@return KErrNone if successful, otherwise one of the other system wide error codes.
 */
+EFSRV_EXPORT_C TInt RFs::RemountDrive(TInt aDrive,const TDesC8* aMountInfo,TUint aFlags)
 	{
 	OstTraceExt4(TRACE_BORDER, EFSRV_EFSREMOUNTDRIVE, "sess %x aDrive %d aMountInfo %x aFlags %x", (TUint) Handle(), aDrive, (TUint) aMountInfo, (TUint) aFlags);
 	TInt r = SendReceive(EFsRemountDrive,TIpcArgs(aDrive,aMountInfo,aFlags));

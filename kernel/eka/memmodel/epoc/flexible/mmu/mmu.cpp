@@ -297,7 +297,7 @@ void Mmu::Init1Common()
 	iTempPteCacheMaintenance = BlankPte((TMemoryAttributes)(CacheMaintenance::TemporaryMapping()|EMemoryAttributeDefaultShareable),pteType);
 	
 	// other
-	PP::MaxUserThreadStack=0x14000;			// 80K - STDLIB asks for 64K for PosixServer!!!!
+	PP::MaxUserThreadStack=0x100000;		// 1Mb - STDLIB asks for 64K for PosixServer!!!!
 	PP::UserThreadStackGuard=0x2000;		// 8K
 	PP::MaxStackSpacePerProcess=0x200000;	// 2Mb
 	K::SupervisorThreadStackSize=0x1000;	// 4K

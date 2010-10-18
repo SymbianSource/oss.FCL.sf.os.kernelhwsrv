@@ -26,6 +26,11 @@
 /**
 Sets the value of the Thread Local Storage (TLS) variable.
 
+Note that the TLS value for a given DLL may be preserved even if the DLL has
+been unloaded from the current process and loaded again since it was set. The
+value is not guaranteed to be preserved. The DLL must take steps to ensure that
+Dll::FreeTls is called for all relevant threads if this must be avoided.
+
 @param aPtr       The value to be assigned to the Thread Local Storage variable.
                   In practice, this is almost always a pointer to memory
                   that has previously been allocated, but does not necessarily
@@ -48,6 +53,11 @@ TInt Dll::SetTls(TAny* aPtr)
 
 /**
 Gets the value of the Thread Local Storage (TLS) variable.
+
+Note that the TLS value for a given DLL may be preserved even if the DLL has
+been unloaded from the current process and loaded again since it was set. The
+value is not guaranteed to be preserved. The DLL must take steps to ensure that
+Dll::FreeTls is called for all relevant threads if this must be avoided.
 
 @return           The value of the Thread Local Storage variable as set by
                   a previous call to Dll::SetTls(). If no value has previously

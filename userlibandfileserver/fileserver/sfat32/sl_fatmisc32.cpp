@@ -107,15 +107,12 @@ TInt CFatFormatCB::AdjustFirstDataSectorAlignment(TUint aEraseBlockSizeInSectors
 	ASSERT(iReservedSectors >= (bFat32 ? KDefFat32ResvdSec : KDefFatResvdSec));
 
 	if ((FirstDataSector() & (aEraseBlockSizeInSectors-1)) == 0)
-		{
 		return KErrNone;
-		}
-	else
-		{
-		iReservedSectors = reservedSectorsSaved;
-		iSectorsPerFat = sectorsPerFatSaved;
-		return KErrGeneral;
-		}
+
+	
+    iReservedSectors = reservedSectorsSaved;
+	iSectorsPerFat = sectorsPerFatSaved;
+	return KErrGeneral;
 	}
 
 
@@ -283,10 +280,17 @@ void CFatFormatCB::DoFormatStepL()
 			}
 		}
 
-	// ReMount since MBR may have been rewritten and partition may have moved / changed size
-	TInt ret = LocalDrive()->ForceRemount(0);
-	if (ret != KErrNone && ret != KErrNotSupported)
-		User::Leave(ret);
+    
+    {//-- ReMount whole driver stack since MBR may have been rewritten and partition may have moved / changed size.
+     
+    //-- this is mostly applicable to SD cards formatting, since SD stack takes care of creating partition table.
+    //-- use KForceMediaChangeReOpenAllMediaDrivers flag that will cause remounting media 
+    //-- drivers associatied with the current partition only and not affecting other ones.
+    const TInt ret = LocalDrive()->ForceRemount((TUint)RFs::KForceMediaChangeReOpenMediaDriver);
+    if(ret != KErrNone && ret != KErrNotSupported)
+	    User::Leave(ret);
+    }
+	
 
 	// MBR may have changed, so need to re-read iHiddenSectors etc.before BPB is written
 	InitializeFormatDataL();

@@ -71,7 +71,8 @@ public:
 		EControlClaimPhys,
 		EControlGetMemoryArchitecture,
 		EControlGetMemModelInfo,
-		EControlGetPdInfo		
+		EControlGetPdInfo,
+		EControlGetUnpagedPage,
 		};
 		
 public:
@@ -94,6 +95,7 @@ public:
 	inline void GetMemoryArchitecture(TCpu &aCpu, TUint &aCR);
 	inline TMemModel GetMemModelInfo(TUint &aPageTable, TUint &aNumPds);
 	inline TInt GetPdInfo(TUint aPdNo, TUint &aPdSize, TUint &aPdBase, TUint &aOffset);
+	inline TLinAddr GetUnpagedPage();
 	};
 
 
@@ -161,7 +163,10 @@ inline TInt RShadow::GetPdInfo(TUint aPdNo, TUint &aPdSize, TUint &aPdBase, TUin
 	aOffset =  ret & KPageOffsetMask;
 	return (ret & KErrNoPageTable)?KErrNotFound:KErrNone;
 	}
-	
+
+inline TLinAddr RShadow::GetUnpagedPage()
+	{ return DoControl(EControlGetUnpagedPage, NULL, NULL); }
+
 #endif
 
 #endif

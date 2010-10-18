@@ -22,8 +22,6 @@ target          usrt2_2.lib
 target          usrt3_1.lib
 #elif defined(ARMCC_4_0)
 target 		    usrt4_0.lib
-#else
-target          error
 #endif
 
 SMPSAFE

@@ -893,10 +893,8 @@ TInt CLeafDirCache::FindInCache(const TDesC& aPath, TLeafDirData& aLeafDirData) 
 		CLeafDirTreeNode* dummy = NULL;
 		return (iTree->Search(path, dummy, aLeafDirData));
 		}
-	else
-		{
-		return KErrBadName;
-		}
+
+	return KErrBadName;
 	}
 
 /*

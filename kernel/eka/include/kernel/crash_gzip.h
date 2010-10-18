@@ -118,9 +118,11 @@ const TInt KCrashGzipInBufSize = 128;
 */							
 const TInt KCrashGzipOutBufSize = 128;
 
-/** Number of seconds elapsed between 01/01/0000 AD and 01/01/1970 AD.
+/** Number of seconds elapsed between 01/01/0000 and 01/01/1970.
     Value is the number of days multiplied by the number of seconds per day:
     719540 * 86400
+
+    @see TTime
  */
 const TInt64 KYear1970ADInSeconds = I64LIT(62168256000);
 

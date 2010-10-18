@@ -78,7 +78,11 @@ TUint8* PageBuffer1 = NULL;
 TUint8* PageBuffer2 = NULL;
 TUint8* PageBuffer3 = NULL;
 
-void TestShadowPage(TLinAddr aPageAddr, TPaged aPageType)
+// A buffer used to test shadowing of paged ROM.  It is two pages in size so that it will always
+// contain at least one memory page.
+const TUint8 RomToShadow[8192] = { 1 };
+
+void TestShadowPage(TLinAddr aPageAddr, TPaged aPageType, TBool aCanModify)
 	{
 	test.Start(_L("Test shadowing a page"));	
 	test.Printf(_L("  addr == 0x%08x, type == %d\n"), aPageAddr, aPageType);
@@ -130,16 +134,19 @@ void TestShadowPage(TLinAddr aPageAddr, TPaged aPageType)
 	test.Next(_L("Check page following shadow page is unaltered"));
 	test_Equal(0, Mem::Compare((TUint8*)(secondPage),PageSize,PageBuffer3,PageSize));
 
-	test.Next(_L("Write data into shadow page"));
-	for(TInt i=0; i<PageSize; i++)
+	if (aCanModify)
 		{
-		TInt i2=i*i;
-		PageBuffer2[i]=TUint8(i2^(i2>>8)^(i2>>16));
-		}
-	test_KErrNone(Shadow.Write(aPageAddr,PageBuffer2));
+		test.Next(_L("Write data into shadow page"));
+		for(TInt i=0; i<PageSize; i++)
+			{
+			TInt i2=i*i;
+			PageBuffer2[i]=TUint8(i2^(i2>>8)^(i2>>16));
+			}
+		test_KErrNone(Shadow.Write(aPageAddr,PageBuffer2));
 
-	test.Next(_L("Check data written into shadow page"));
-	test_Equal(0, Mem::Compare((TUint8*)aPageAddr,PageSize,PageBuffer2,PageSize));
+		test.Next(_L("Check data written into shadow page"));
+		test_Equal(0, Mem::Compare((TUint8*)aPageAddr,PageSize,PageBuffer2,PageSize));
+		}
 	
 	test.Next(_L("Check page following shadow page is unaltered"));
 	test_Equal(0, Mem::Compare((TUint8*)(secondPage),PageSize,PageBuffer3,PageSize));
@@ -460,6 +467,18 @@ void Finalise()
 	User::Free(PageBuffer3);
 	}
 
+static TLinAddr PageToShadow(TBool aPaged)
+	{
+	if (aPaged)
+		{
+		test(RomPagingSupported);
+		test(sizeof(RomToShadow) >= ((TUint)(2 * PageSize)));
+		return _ALIGN_UP((TLinAddr)RomToShadow, PageSize);
+		}
+	else
+		return Shadow.GetUnpagedPage();
+	}
+
 GLDEF_C TInt E32Main()
 //
 // Test ROM shadowing
@@ -484,22 +503,28 @@ GLDEF_C TInt E32Main()
 	test.Start(_L("Testing ROM shadowing"));
 	Initialise();
 
-	TestRomIsSectionMapped(); 
+	TestRomIsSectionMapped();
 
-	TestShadowPage(RomUnpagedStart, EUnpaged);
-	TestShadowPage(RomUnpagedStart + PageSize, EUnpaged);
-	TestShadowPage(RomUnpagedEnd - PageSize, EUnpaged);
-	TestNoFreeRAM(RomUnpagedStart);
-	TestShadowPageOOM(RomUnpagedStart);
+	TLinAddr unpagedPage = PageToShadow(EFalse);
+	
+	TestShadowPage(unpagedPage,              EUnpaged, ETrue);
+	TestShadowPage(RomUnpagedStart,          EUnpaged, EFalse);
+	TestShadowPage(RomUnpagedEnd - PageSize, EUnpaged, EFalse);
+	
+	TestNoFreeRAM(unpagedPage);
+	TestShadowPageOOM(unpagedPage);
 	
 	if (RomPagingSupported)
 		{
-		TestShadowPage(RomPagedStart, EPaged);
-		TestShadowPage(RomPagedStart + PageSize, EPaged);
-		TestShadowPage(RomPagedEnd - PageSize, EPaged);
-		TestNoFreeRAM(RomPagedEnd - PageSize);
-		TestShadowPageOOM(RomPagedStart);
-		TestInteractionWithPinning(RomPagedStart);
+		TLinAddr pagedPage = PageToShadow(ETrue);
+	
+		TestShadowPage(pagedPage,              EPaged, ETrue);
+		TestShadowPage(RomPagedStart,          EPaged, EFalse);
+		TestShadowPage(RomPagedEnd - PageSize, EPaged, EFalse);
+		
+		TestNoFreeRAM(pagedPage);
+		TestShadowPageOOM(pagedPage);
+		TestInteractionWithPinning(pagedPage);
 		}
 
 	// todo: add test when reforming section mappings is implemented

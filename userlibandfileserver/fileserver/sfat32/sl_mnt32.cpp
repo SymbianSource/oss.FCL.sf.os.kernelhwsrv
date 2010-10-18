@@ -335,8 +335,7 @@ TBool CFatMountCB::VolumeCleanL()
         User::LeaveIfError(drive.ReadNonCritical(StartOfFatInBytes()+KFatEntrySize, KFatEntrySize, ptrFatEntry)); //read FAT32[1] entry
         return (fatEntry & KFat32CleanShutDownMask);
         }
-    else 
-    if(Is16BitFat())
+    else if(Is16BitFat())
         {//-- Fat16
         TFat16Entry fatEntry;
         const TInt  KFatEntrySize=sizeof(fatEntry); //-- FAT entry size in bytes
@@ -659,7 +658,7 @@ TInt CFatMountCB::SubType(TDes& aName) const
 	if(aName.MaxLength() < 5)
 		return KErrArgument;
 	
-	switch (FatType())
+	switch(FatType())
 		{
 		case EFat12:
 			{
@@ -676,11 +675,14 @@ TInt CFatMountCB::SubType(TDes& aName) const
 			aName = KFSSubType_FAT32;
 			return KErrNone;
 			}
+
 		default:
-		// case EInvalidFatType
-			return KErrNotReady;
+		    break;
+			
 		}
-	}
+	
+        return KErrNotReady;
+    }
 
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -1006,8 +1008,10 @@ TInt CFatMountCB::GetInterface(TInt aInterfaceId, TAny*& aInterface,TAny* aInput
            	return KErrNone;
         
         default:
-            return(CMountCB::GetInterface(aInterfaceId, aInterface, aInput));
+            break;
         }
+    
+    return(CMountCB::GetInterface(aInterfaceId, aInterface, aInput));
     }
 
 //-----------------------------------------------------------------------------------------

@@ -327,11 +327,11 @@ TBool RBitVector::Find(TUint32& aStartPos, TBool aBitVal, TFindDirection aDir) c
             return FindNearest(aStartPos, aBitVal, EFalse);
 
         default:
-            Panic(EWrondFindDirection);
-            return EFalse;
-
+            break;
         };
-    
+
+    Panic(EWrondFindDirection);
+    return EFalse;
     }
 
 //-----------------------------------------------------------------------------
@@ -670,11 +670,9 @@ TBool RBitVector::ItrLeft(TUint32& aIdx) const
 {
     if(aIdx == 0)
         return ETrue;
-    else
-    {
-        aIdx--;
-        return EFalse;
-    }
+    
+    aIdx--;
+    return EFalse;
 }
 
 //-----------------------------------------------------------------------------
@@ -692,8 +690,8 @@ TBool RBitVector::ItrRight(TUint32& aIdx) const
         aIdx++;
         return EFalse;
     }
-    else
-        return ETrue;
+
+    return ETrue;
 }
 
 //-----------------------------------------------------------------------------

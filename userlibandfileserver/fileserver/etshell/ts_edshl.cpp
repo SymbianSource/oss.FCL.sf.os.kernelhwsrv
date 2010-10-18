@@ -1059,7 +1059,9 @@ TInt CShell::RunBatch(TDes& aCommand)
 		readBuf.SetLength(r);
 		
 		readBuf.Trim();
-		TheFs.SessionPath(currentPath);
+		r = TheFs.SessionPath(currentPath);
+		if(r!=KErrNone)
+		    break;
 		TheConsole->Printf(currentPath);		
 		TheConsole->Printf(_L(">%S\n"),&readBuf);
 
@@ -1093,7 +1095,7 @@ TInt CShell::RunBatch(TDes& aCommand)
 	
     
     file.Close();
-	return KErrNone;
+	return r;
 	}
 
 

@@ -69,7 +69,7 @@ void initialiseDigitiserHalData()
 //	TInt iProximityStep;    	/**<proximity resolution, e.g. proximity readings change in steps of 1, 5, 10, ... */
 //	TInt iMaxPressure;      	/**< maximum pressure reading*/
 //	TInt iPressureStep;     	/**< pressure resolution, */	
-//	TUint8 iMaxPointers;    	/**< max number of multi-touch pointers supported by hardware/driver.*/ 
+//	TUint8 iMaxPointers;    	/**< max number of multipletouch pointers supported by hardware/driver.*/ 
 //	TUint8 iNumberOfPointers;	/**< Number of pointers it supports (settable).*/
 //	};
 

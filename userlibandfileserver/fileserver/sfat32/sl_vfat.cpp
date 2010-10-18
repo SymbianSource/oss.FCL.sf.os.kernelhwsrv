@@ -548,16 +548,11 @@ TBool CFatMountCB::GenerateShortNameL(TUint32 aDirCluster,const TDesC& aName,TSh
 		User::Leave(KErrAlreadyExists);
 
 	if((i == -1) && IsLegalDosName(aName,EFalse,EFalse,EFalse,EFalse,ETrue))
-		{
-		// Original file name is a legal 8.3 name
-		return(ETrue);
-		}
-	else
-		{
-	    return(EFalse);
+		{// Original file name is a legal 8.3 name
+		return ETrue;
 		}
 
-
+	return EFalse;
 	}
 
 

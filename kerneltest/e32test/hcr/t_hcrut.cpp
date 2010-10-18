@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -56,8 +56,9 @@ void TestBoundaryFindSettingsInCategory()
     test_Equal((lastEl - firstEl + 1), NumInTestCat);
 
     // Load file repository data for the boundary test condition
-    const TText * fileBc0 = (const TText *)"filerepos_bc0.dat";
-    test_KErrNone(HcrTest.Test_SwitchFileRepository(fileBc0));
+    const TText8 * fileBc0 = (const TText8 *)"filerepos_bc0.dat";
+	TInt len0 = sizeof("filerepos_bc0.dat");
+	test_KErrNone(HcrTest.Test_SwitchFileRepository(fileBc0, len0));
 
     // Test the low end boundary conditions in the file repository.
     // First element in the category is also the first element in the
@@ -82,8 +83,9 @@ void TestBoundaryFindSettingsInCategory()
 
 
     //Load relevant coreImg repository
-    const TText * fileBc1 = (const TText *)"filerepos_bc1.dat";
-    test_KErrNone(HcrTest.Test_SwitchFileRepository(fileBc1));
+    const TText8 * fileBc1 = (const TText8 *)"filerepos_bc1.dat";
+	TInt len1 = sizeof("filerepos_bc1.dat");
+    test_KErrNone(HcrTest.Test_SwitchFileRepository(fileBc1, len1));
 
 
     //Test the low end boundary condition when first element of the 
