@@ -1,4 +1,4 @@
-// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -1086,6 +1086,7 @@ GLDEF_C TInt E32Main()
 // Test timers.
 //
     {
+	COMPLETE_POST_BOOT_SYSTEM_TASKS();
 
 	test.Title();
 	test.Start(_L("Creating client semaphore"));

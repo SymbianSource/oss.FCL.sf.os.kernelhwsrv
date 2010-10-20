@@ -1,4 +1,4 @@
-// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -484,6 +484,7 @@ GLDEF_C TInt E32Main()
 // Test ROM shadowing
 //
     {
+	COMPLETE_POST_BOOT_SYSTEM_TASKS();
 	test.Title();
 	
 	if (!HaveMMU())
@@ -494,11 +495,6 @@ GLDEF_C TInt E32Main()
 #ifdef __WINS__
 	test.Printf(_L("Test not valid in WINS\n"));
 #else
-	// Turn off lazy dll unloading
-	RLoader l;
-	test_KErrNone(l.Connect());
-	test_KErrNone(l.CancelLazyDllUnload());
-	l.Close();
 
 	test.Start(_L("Testing ROM shadowing"));
 	Initialise();

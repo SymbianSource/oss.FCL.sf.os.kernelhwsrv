@@ -1,4 +1,4 @@
-// Copyright (c) 1996-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1996-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -191,6 +191,7 @@ LOCAL_C void ProgressBar(TInt aPos,TInt anEndPos,TInt anXPos)
 
 GLDEF_C TInt E32Main()
     {
+	COMPLETE_POST_BOOT_SYSTEM_TASKS();
 	TInt i;
 	TBuf<64> b;
 

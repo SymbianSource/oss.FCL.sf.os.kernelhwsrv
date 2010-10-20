@@ -1,4 +1,4 @@
-// Copyright (c) 2003-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2003-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -381,6 +381,7 @@ void CreateWithOOMCheck(TInt aSize, TBool aPhysicalAddress)
 
 GLDEF_C TInt E32Main()
     {
+	COMPLETE_POST_BOOT_SYSTEM_TASKS();
 	TBuf16<512> cmd;
 	User::CommandLine(cmd);
 	if(cmd.Length() && TChar(cmd[0]).IsDigit())
@@ -400,12 +401,6 @@ GLDEF_C TInt E32Main()
 	MemModelAttributes=UserSvr::HalFunction(EHalGroupKernel, EKernelHalMemModelInfo, NULL, NULL);
 	TUint mm=MemModelAttributes&EMemModelTypeMask;
 	PhysicalCommitSupported = mm!=EMemModelTypeDirect && mm!=EMemModelTypeEmul;
-
-// Turn off lazy dll unloading
-	RLoader l;
-	test(l.Connect()==KErrNone);
-	test(l.CancelLazyDllUnload()==KErrNone);
-	l.Close();
 
 	test.Title();
 

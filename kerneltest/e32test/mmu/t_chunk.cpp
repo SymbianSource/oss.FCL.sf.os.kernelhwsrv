@@ -1382,6 +1382,7 @@ TInt E32Main()
 //	Test RChunk class
 //
 	{
+	COMPLETE_POST_BOOT_SYSTEM_TASKS();
 	test.Title();
 	if (!HaveVirtMem())
 		{
@@ -1389,12 +1390,6 @@ TInt E32Main()
 		return KErrNone;
 		}
 	testInitialise();
-
-	// Turn off lazy dll unloading so the kernel heap checking isn't affected.
-	RLoader l;
-	test(l.Connect()==KErrNone);
-	test(l.CancelLazyDllUnload()==KErrNone);
-	l.Close();
 
 	_LIT(KExtended,"extended");
 

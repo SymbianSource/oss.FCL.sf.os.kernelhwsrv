@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -1320,16 +1320,11 @@ void TestChunkUserBase()
 
 TInt E32Main()
 	{
+	COMPLETE_POST_BOOT_SYSTEM_TASKS();
 	// Running as slave?
 	TInt slaveCommand;
 	if(User::GetTIntParameter(1,slaveCommand)==KErrNone)
 		return SlaveCommand((TSlaveCommand)slaveCommand);
-
-// Turn off lazy dll unloading
-	RLoader l;
-	test(l.Connect()==KErrNone);
-	test(l.CancelLazyDllUnload()==KErrNone);
-	l.Close();
 
 	test.Title();
 

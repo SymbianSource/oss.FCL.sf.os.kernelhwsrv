@@ -75,7 +75,11 @@ void TTestThread::Init(const TDesC& aName, TThreadFunction aFn, TAny* aData, TBo
 		RDebug::Printf("RThread::Create failed, code=%d", r);
 		User::Panic(KPanicCat, EThreadCreateFailed);
 		}
-
+#if defined(DMA_INVERTED_THREAD_PRIORITIES)
+	iThread.SetPriority(EPriorityRealTime);
+#else
+	iThread.SetPriority(EPriorityLess);
+#endif	// #if defined(DMA_INVERTED_THREAD_PRIORITIES)
 	iThread.Logon(iLogonStatus);
 	__ASSERT_ALWAYS(iLogonStatus == KRequestPending, User::Panic(_L("TTestThread"),0));
 

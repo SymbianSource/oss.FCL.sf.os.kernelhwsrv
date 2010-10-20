@@ -3272,6 +3272,7 @@ void HcrRealBenchmarkTests(const TDesC& aDriver)
 
 GLDEF_C TInt E32Main()
 	{
+	COMPLETE_POST_BOOT_SYSTEM_TASKS();
 	__UHEAP_MARK;
 
 	test.Title();

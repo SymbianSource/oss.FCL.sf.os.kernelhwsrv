@@ -4270,6 +4270,7 @@ EXPORT_C TInt E32Main()
 // Main
 //
 	{
+	COMPLETE_POST_BOOT_SYSTEM_TASKS();
 	gTest.Title();
 	gTest.Start(_L("Test Power Resource Manager user side API\n"));
 

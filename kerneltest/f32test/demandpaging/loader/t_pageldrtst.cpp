@@ -1,4 +1,4 @@
-// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2006-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -4923,6 +4923,7 @@ void DoStats()
 
 TInt E32Main()
 	{
+	COMPLETE_POST_BOOT_SYSTEM_TASKS();
 #ifndef TEST_ON_UNPAGED
 	TRomHeader* romHeader = (TRomHeader*)UserSvr::RomHeaderAddress();
 	if(!romHeader->iPageableRomStart)
@@ -4930,14 +4931,6 @@ TInt E32Main()
 		TestIsDemandPaged = EFalse;
 		}
 #endif
-	// Turn off lazy dll unloading
-	RLoader l;
-	if (l.Connect() == KErrNone)
-		{
-		l.CancelLazyDllUnload();
-		l.Close();
-		}
-	
 	HAL::Get(HAL::ESystemTickPeriod, TickPeriod);
 
 	SVMCacheInfo  tempPages;

@@ -86,7 +86,7 @@ void RDmaSession::SelfTest(TBool aSimulatedDmac)
 	test.Next(_L("Open channel"));
 	TUint channelCookie=0;
 	r = session.ChannelOpen(testChannel, channelCookie);
-	test.Printf(_L("cookie recived = 0x%08x\n"), channelCookie);
+	test.Printf(_L("cookie received = 0x%08x\n"), channelCookie);
 	test_KErrNone(r);
 
 	test.Next(_L("Get Channel caps"));
@@ -134,7 +134,7 @@ void RDmaSession::SelfTest(TBool aSimulatedDmac)
 	test.Next(_L("Create Dma request - max fragment size 32K"));
 	TUint reqCookie=0;
 	r = session.RequestCreateOld(channelCookie, reqCookie, 32 * KKilo);
-	test.Printf(_L("cookie recived = 0x%08x\n"), reqCookie);
+	test.Printf(_L("cookie received = 0x%08x\n"), reqCookie);
 	test_KErrNone(r);
 
 	if(newPil)
@@ -142,7 +142,7 @@ void RDmaSession::SelfTest(TBool aSimulatedDmac)
 		test.Next(_L("Create Dma request (with new-style callback)"));
 		TUint reqCookieNewStyle=0;
 		r = session.RequestCreate(channelCookie, reqCookieNewStyle);
-		test.Printf(_L("cookie recived = 0x%08x\n"), reqCookieNewStyle );
+		test.Printf(_L("cookie received = 0x%08x\n"), reqCookieNewStyle );
 		test_KErrNone(r);
 
 		if(!aSimulatedDmac)
@@ -314,7 +314,7 @@ void TDmaCapability::SelfTest()
 // is horribly confusing. The _L macro will make the
 // *first* string token wide, but not the next two.
 // Therefore these must be made wide or compilier
-// will complain about concatination of narrow and wide string
+// will complain about concatenation of narrow and wide string
 // literals
 #define CAP_TEST(CAP, CAPSET, EXPCT)\
 	{\

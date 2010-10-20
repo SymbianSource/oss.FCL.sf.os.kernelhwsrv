@@ -1,4 +1,4 @@
-// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2005-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -33,9 +33,10 @@ RTest test(_L("T_CPUTIME"));
 _LIT(KUp, "up");
 _LIT(KDown, "down");
 
-const TInt KLongWait  = 3000000;  // 3 seconds
-const TInt KShortWait =  100000;  // 0.1 seconds
-const TInt KTolerance =    1000;  // 1 ms
+const TInt KLongWait			= 3000000;  // 3 seconds
+const TInt KShortWait			=  100000;  // 0.1 seconds
+const TInt64 KMaxStartupTime	=    1000;  // 1 ms
+const TInt64 KMaxOverheadPerMil	=      25;	// 2.5%
 const TInt numCpus = UserSvr::HalFunction(EHalGroupKernel, EKernelHalNumLogicalCpus, 0, 0);
 
 #define FailIfError(EXPR) \
@@ -67,7 +68,7 @@ TBool GetCpuTimeIsSupported()
 TInt SetCpuAffinity(TInt aCore)
     {
     TInt r = UserSvr::HalFunction(EHalGroupKernel, EKernelHalLockThreadToCpu, (TAny *)aCore, 0);
-    test(r==KErrNone);  
+    test(r == KErrNone);  
     return r;
     }
 
@@ -184,7 +185,7 @@ void EnsureSystemIdle()
 		TRequestStatus status;
 		thread.Logon(status);
 		User::WaitForRequest(status);
-		test(status == KErrNone);
+		test(status.Int() == KErrNone);
 		CLOSE_AND_WAIT(thread);
 		
 		(threadParam.iSem).Close();
@@ -219,12 +220,12 @@ void TestThreadCpuTime()
 
 	RThread thread;
 	RUndertaker u;
-	TInt h;
 	TRequestStatus s;
+	TInt h;
 	FailIfError(thread.Create(_L("Thread"), ThreadFunction, 1024, NULL, &threadParam));
 	thread.SetPriority(EPriorityLess);
 	FailIfError(u.Create());
-	FailIfError(u.Logon(s,h));
+	FailIfError(u.Logon(s, h));
 	test(s==KRequestPending);
 
 	TTimeIntervalMicroSeconds time, time2;
@@ -232,59 +233,81 @@ void TestThreadCpuTime()
 
 	// Test cpu time is initially zero
 	FailIfError(thread.GetCpuTime(time));
-	test(time == 0);
+	us = time.Int64();
+	test(us == 0);
+
+	// Resume the thread, and sleep long enough for it to wait-on-semaphore
+	thread.Resume();
+	User::After(KLongWait);
+	FailIfError(thread.GetCpuTime(time));
+	us = time.Int64();
+	test.Printf(_L("Time %Ldus\n"), us);
+	test(us < KMaxStartupTime);							// wait should happen in less than 1ms
 
 	// Test cpu time is not increased while thread is waiting on semaphore
-	thread.Resume();
-	User::After(KShortWait);
+	User::After(KLongWait);
 	FailIfError(thread.GetCpuTime(time2));
 	us = time2.Int64();
-	test.Printf(_L("Time %dus\n"), us);
-	test(us < KTolerance); // wait should happen in less than 1ms
+	test.Printf(_L("Time %Ldus\n"), us);
+	test(time2 == time);
 
-	// Test cpu time increases when thread allowed to run
-	// We want to allow 2% tolerance for the thread's CPU time, as there could be
-	// something else running on the system during that time which would result lower CPU time than the
-	// actual KShortPeriod or KLongPeriod wait time.
-	// Also User::After(t) might return within the range of <t, t + 1000000/64 + 2*NanoKarnelTickPeriod>.
-	// Given all that - we expect that the the cpu time should be within the range of:
-	// <t - 0.02*t, t + 15625 + 2*NanoKernelTickPeriod>
-	// or <0.98*t, t + 15625 + 2*NanoKernelTickPeriod>
-	TInt user_after_tolerance = 0;
-	HAL::Get(HAL::ENanoTickPeriod, user_after_tolerance);
-	user_after_tolerance += user_after_tolerance + 15625;
+	// Test cpu time increases when thread allowed to run.
+	//
+	// We want to allow some tolerance for the thread's CPU time, as there could
+	// be other processes running on the system, which would result in lower CPU
+	// time than the actual KShortPeriod or KLongPeriod wait time. We try to
+	// minimise this by making this process as a whole High priority, but it
+	// will still be lower than the WindowServer or the FileServer (but we hope
+	// they won't be active during this test).
+	//
+	// Also interrupts and other overheads may take some of the thread's time.
+	//
+	// Also User::After(t) might return late, by up to one Symbian OS tick (64Hz)
+	// plus twice the NanoKernelTickPeriod
+	// 
+	// Given all that, we expect that the the CPU time should be in the range:
+	//
+	// ( WaitTime*(100-MaxOverhead)% ) <= CPUTime <= ( WaitTime+(1/Hz)+2*NanoKernelTickPeriod )
 
-	(threadParam.iSem).Signal();
-	User::After(KShortWait);
+	TInt nanoTick = 0;
+	HAL::Get(HAL::ENanoTickPeriod, nanoTick);
+	TInt64 maxSleepOverrun = 2*nanoTick + (1000000/64);					// microseconds
+	TInt64 minCpuTime;
+
+	(threadParam.iSem).Signal();										// make thread runnable
+
+	User::After(KShortWait);											// yield CPU for a while
+	FailIfError(thread.GetCpuTime(time2));
+	us = time2.Int64() - time.Int64();
+	test.Printf(_L("Time %Ldus\n"), us);
+	minCpuTime = KShortWait*(1000-KMaxOverheadPerMil)/1000;
+	test(us >= minCpuTime);
+	test(us <= KShortWait+maxSleepOverrun);
+
 	FailIfError(thread.GetCpuTime(time));
-	us = time.Int64() - time2.Int64();
-	test.Printf(_L("Time %dus\n"), us);
-	test(100*us >= 98*KShortWait); // left limit
-	test(us - KShortWait <= user_after_tolerance); // right limit
-
-	FailIfError(thread.GetCpuTime(time));
-	User::After(KLongWait);
+	User::After(KLongWait);												// yield CPU for a while
 	FailIfError(thread.GetCpuTime(time2));
 	us = time2.Int64() - time.Int64();
 	test.Printf(_L("Time %dus\n"), us);
-	test(100*us >= 98*KLongWait); // left limit
-	test(us - KLongWait <= user_after_tolerance); // right limit
+	minCpuTime = KLongWait*(1000-KMaxOverheadPerMil)/1000;
+	test(us >= minCpuTime);
+	test(us <= KLongWait+maxSleepOverrun);
 
 	// Test not increased while suspended
 	thread.Suspend();
 	FailIfError(thread.GetCpuTime(time));
-	User::After(KShortWait);
+	User::After(KLongWait);
 	FailIfError(thread.GetCpuTime(time2));
-	test(time == time2);
+	test(time2 == time);
 	thread.Resume();
 
 	// Test not increased while dead
 	thread.Kill(KErrNone);
 	User::WaitForRequest(s);	// wait on undertaker since that completes in supervisor thread
 	FailIfError(thread.GetCpuTime(time));
-	User::After(KShortWait);
+	User::After(KLongWait);
 	FailIfError(thread.GetCpuTime(time2));
-	test(time == time2);
+	test(time2 == time);
 
 	RThread t;
 	t.SetHandle(h);
@@ -312,6 +335,7 @@ TBool DoTestThreadCpuTime2()  // Returns ETrue if test passed
 	if (numCpus > 1)
 		{
 		test.Printf(_L("** SMP system detected - not testing time shared between threads until load balancing optimized **\n"));
+		test.End();
 		return ETrue;
 		}
 
@@ -371,7 +395,7 @@ TBool DoTestThreadCpuTime2()  // Returns ETrue if test passed
 				TRequestStatus status;
 				threads[k].Logon(status);
 				User::WaitForRequest(status);
-				test(status == KErrNone);
+				test(status.Int() == KErrNone);
 				CLOSE_AND_WAIT(threads[k]);
 				}
 			}
@@ -452,6 +476,15 @@ GLDEF_C TInt E32Main()
 	TestFastCounter();
 	if (GetCpuTimeIsSupported())
 		{
+		// This process (and this thread) should have priority
+		// over pretty much everything else in the system; test
+		// threads will have slightly lower relative priorities,
+		// but still higher than any other nonsystem tasks ...
+		RProcess thisProcess;
+		RThread thisThread;
+		thisProcess.SetPriority(EPriorityHigh);
+		thisThread.SetPriority(EPriorityMore);
+
 		EnsureSystemIdle();
 		TestThreadCpuTime();
 		TestThreadCpuTime2();
@@ -462,3 +495,4 @@ GLDEF_C TInt E32Main()
 	test.End();
 	return 0;
 	}
+

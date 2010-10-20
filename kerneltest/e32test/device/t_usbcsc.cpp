@@ -4553,6 +4553,7 @@ TInt ParseCommandLine()
 
 GLDEF_C TInt E32Main()
 	{
+	COMPLETE_POST_BOOT_SYSTEM_TASKS();
 	test.Title();
 	__UHEAP_MARK;
 	if (ParseCommandLine())

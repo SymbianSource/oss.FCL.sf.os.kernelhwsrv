@@ -1,3 +1,38 @@
+Version 2.00.4012
+=================
+(Made by fadhliM 19/10/2010)
+
+1.	h14jiang
+	1.	ou1cimx1#591478 [MCL] ENV: baseapitest has a dependency on TEF, which is outside of kernelhwsrv package
+
+2.	seolney
+	1.	ou1cimx1#616416 ENV: t_dmasim takes too long
+
+3.	mipetzol
+	1.	ou1cimx1#614127 'Inverted Thread Priorities' Use Case for T_DMA
+
+4.	gcochran
+	1.	ou1cimx1#607403 Kernel - SPB10.1 Coverity Prevent defects, Mandatory Checkers
+
+5.	ricoles
+	1.	ou1cimx1#614361 SMP kernel doesn't allow exec calls to be made from ram-loaded code on UDEB
+
+6.	necliffo
+	1.	ou1cimx1#584612 eMMC Reliable Write not enabled for internal eMMC devices
+
+7.	shubmurt
+	1.	ou1cimx1#560596 E32Test for Publish-Subscribe
+
+8.	davegord
+	1.	ou1cimx1#567063 ENV : T_CPUTIME Fails at Line 270 in TestThreadCpuTime()
+
+9.	tocosgro
+	1.	MINOR_CHANGE Check compiler version before issuing pragma
+
+10.	saabbasn
+	1.	ou1cimx1#612006 ENV t_smpsoak child processes now check for already existing files
+
+
 Version 2.00.4011
 =================
 (Made by fadhliM 15/10/2010)

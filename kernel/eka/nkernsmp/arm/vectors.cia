@@ -137,8 +137,8 @@ extern "C" __NAKED__ void __ArmVectorSwi()
 	asm("sub	sp, sp, #%a0" : : "i" _FOFF(SThreadExcStack,iR15));
 	asm("stmia	sp, {r0-r14}^ ");			// save R0-R12, R13_usr, R14_usr
 	asm("mov	r4, #%a0" : : "i" ((TInt)SThreadExcStack::ESvc));
-	USER_MEMORY_GUARD_ON_IF_MODE_USR(r11);
 	asm("ldr	r12, [lr, #-4] ");			// get SWI opcode
+	USER_MEMORY_GUARD_ON_IF_MODE_USR(r11);
 	GET_RWNO_TID(,r11);
 	asm("str	r4, [sp, #%a0]" : : "i" _FOFF(SThreadExcStack,iExcCode));	// word describing exception type
 	asm("movs	r12, r12, lsl #9 ");		// 512*SWI number into r12

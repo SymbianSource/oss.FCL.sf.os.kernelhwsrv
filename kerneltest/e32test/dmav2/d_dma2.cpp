@@ -20,9 +20,8 @@
 #include "d_dma2.h"
 
 _LIT(KClientPanicCat, "D_DMA2");
-_LIT(KDFCThreadName,"D_DMA_DFC_THREAD");
-_LIT(KIsrCbDfcThreadName,"D_DMA_IsrCb_thread");
-const TInt KDFCThreadPriority=26;
+_LIT(KDFCThreadName, "D_DMA_DFC_THREAD");
+_LIT(KIsrCbDfcThreadName, "D_DMA_IsrCb_thread");
 
 class TStopwatch
 	{
@@ -320,7 +319,6 @@ TInt DClientDmaRequest::Queue(TRequestStatus* aRequestStatus, TCallbackRecord* a
 
 	iClientDataRequest->SetDestPtr2(aDurationMicroSecs);
 
-
 	TInt r = iClientDataRequest->SetStatus(aRequestStatus);
 	if(r != KErrNone)
 		{
@@ -532,12 +530,14 @@ DDmaTestSession::DDmaTestSession()
 	{}
 
 // called in thread critical section
-TInt DDmaTestSession::DoCreate(TInt /*aUnit*/, const TDesC8* /*aInfo*/, const TVersion& /*aVer*/)
+TInt DDmaTestSession::DoCreate(TInt /*aUnit*/, const TDesC8* aInfo, const TVersion& /*aVer*/)
 	{
 	__NK_ASSERT_ALWAYS(iDfcQ == NULL);
 	__NK_ASSERT_ALWAYS(iIsrCallbackDfcQ == NULL);
 
-	TInt r = Kern::DynamicDfcQCreate(iDfcQ, KDFCThreadPriority, KDFCThreadName);
+	const TInt dfcThreadPrio = reinterpret_cast<TInt>(aInfo);
+
+	TInt r = Kern::DynamicDfcQCreate(iDfcQ, dfcThreadPrio, KDFCThreadName);
 	if (r != KErrNone)
 		{
 		Kern::Printf("DDmaTestSession::DoCreate D_DMA_DFC_THREAD returned (%d)\n", r);
@@ -545,7 +545,7 @@ TInt DDmaTestSession::DoCreate(TInt /*aUnit*/, const TDesC8* /*aInfo*/, const TV
 		}
 	NKern::ThreadSetCpuAffinity((NThread*)(iDfcQ->iThread), KCpuAffinityAny);
 
-	r = Kern::DynamicDfcQCreate(iIsrCallbackDfcQ, KDFCThreadPriority, KIsrCbDfcThreadName);
+	r = Kern::DynamicDfcQCreate(iIsrCallbackDfcQ, dfcThreadPrio, KIsrCbDfcThreadName);
 	if (r != KErrNone)
 		{
 		Kern::Printf("DDmaTestSession::DoCreate D_DMA_IsrCb_thread returned (%d)\n", r);
@@ -556,7 +556,11 @@ TInt DDmaTestSession::DoCreate(TInt /*aUnit*/, const TDesC8* /*aInfo*/, const TV
 	iClient = &Kern::CurrentThread();
 
 	r = CreateSharedChunk();
-	Kern::Printf("DDmaTestSession::DoCreate CreateSharedChunk returned (%d)\n", r);
+	if (r != KErrNone)
+		{
+		Kern::Printf("DDmaTestSession::DoCreate CreateSharedChunk returned %d", r);
+		}
+
 	return r;
 	}
 
@@ -1431,7 +1435,6 @@ void DDmaTestSession::DestroyDmaRequestByIndex(TInt aIndex)
 TInt DDmaTestSession::CreateSharedChunk()
 	{
     // Enter critical section so we can't die and leak the objects we are creating
-    // I.e. the TChunkCleanup and DChunk (Shared Chunk)
     NKern::ThreadEnterCS();
 
     // Create the chunk
@@ -1448,19 +1451,21 @@ TInt DDmaTestSession::CreateSharedChunk()
     DChunk* chunk;
 	TUint32 mapAttr;
     TInt r = Kern::ChunkCreate(info, chunk, iChunkBase, mapAttr);
-    if(r!=KErrNone)
+    if (r != KErrNone)
         {
         NKern::ThreadLeaveCS();
+		Kern::Printf("DDmaTestSession::CreateSharedChunk ChunkCreate returned %d", r);
         return r;
         }
 
     // Map our device's memory into the chunk (at offset 0)
 	TUint32 physicalAddr;
-	r = Kern::ChunkCommitContiguous(chunk,0,KMaxChunkSize, physicalAddr);
-    if(r!=KErrNone)
+	r = Kern::ChunkCommitContiguous(chunk, 0, KMaxChunkSize, physicalAddr);
+    if (r != KErrNone)
         {
-        // Commit failed so tidy-up...
+        // Commit failed, so tidy-up...
         Kern::ChunkClose(chunk);
+		Kern::Printf("DDmaTestSession::CreateSharedChunk ChunkCommitContiguous returned %d", r);
         }
     else
         {
@@ -1518,6 +1523,7 @@ TInt DDmaTestSession::RequestFragmentCount(TUint aRequestCookie)
 TInt DDmaTestSession::FragmentRequest(TUint aRequestCookie, const TDmaTransferArgs& aTransferArgs, TBool aLegacy)
 	{
 	__KTRACE_OPT(KDMA, Kern::Printf(">FragmentRequest: cookie=0x%08x, legacy=%d", aRequestCookie, aLegacy)); 
+
 	TInt requestIndex = CookieToRequestIndex(aRequestCookie);
 	if(requestIndex < 0)
 		return requestIndex;
@@ -1639,8 +1645,11 @@ DDmaTestFactory::DDmaTestFactory()
 
 TInt DDmaTestFactory::Create(DLogicalChannelBase*& aChannel)
     {
-	aChannel=new DDmaTestSession;
-	Kern::Printf("DDmaTestFactory::Create %d\n", aChannel?KErrNone : KErrNoMemory);
+	aChannel = new DDmaTestSession;
+	if (!aChannel)
+		{
+		Kern::Printf("DDmaTestFactory::Create failed\n");
+		}
 	return aChannel ? KErrNone : KErrNoMemory;
     }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -13,7 +13,7 @@
 // Description:
 // e32test\dma\d_dma.h
 // User-side API for LDD used to test DMA framework.
-// 
+//
 //
 
 #ifndef __D_DMA_H__
@@ -52,6 +52,7 @@ public:
 			struct
 				{
 				TUint32 iId;
+				TInt iDfcThreadPriority;
 				TInt iDesCount;
 				TInt iMaxTransferSize;
 				} iOpen;
@@ -113,6 +114,11 @@ inline TInt RTestDma::Open(TUint32 aId, TInt aDesCount, TInt aMaxTransferSize)
 	TPckgBuf<TOpenInfo> infoBuf;
 	infoBuf().iWhat = TOpenInfo::EOpen;
 	infoBuf().U.iOpen.iId = aId;
+#if defined(DMA_INVERTED_THREAD_PRIORITIES)
+	infoBuf().U.iOpen.iDfcThreadPriority = 11;
+#else
+	infoBuf().U.iOpen.iDfcThreadPriority = 26;
+#endif	// #if defined(DMA_INVERTED_THREAD_PRIORITIES)
 	infoBuf().U.iOpen.iDesCount = aDesCount;
 	infoBuf().U.iOpen.iMaxTransferSize = aMaxTransferSize;
 	return DoCreate(KTestDmaLddName, TestDmaLddVersion(), 0, NULL, &infoBuf, EOwnerThread);
@@ -190,6 +196,7 @@ inline TBool RTestDma::FragmentCheck(TInt aRequestIdx, TInt aExpectedCount)
 	else
 		return ETrue;
 	}
+
 #endif // #ifndef __KERNEL_MODE__
 
 #endif

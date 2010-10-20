@@ -41,6 +41,9 @@
 	#define BTraceContext8(aCategory,aSubCategory,a1,a2) 
 #endif	// BTRACE_PAGING_MEDIA
 
+// Enables reliable writes for system drives
+#define _ENABLE_EMMC_RELIABLE_WRITE_
+
 // Enable this macro to debug cache: 
 // NB The greater the number of blocks, the slower this is...
 //#define _DEBUG_CACHE
@@ -1273,10 +1276,14 @@ TInt DMmcMediaDriverFlash::LaunchWrite(TInt64 aStart, TUint32 aLength, TMediaReq
 				// One request, i.e. not end of previous DB request 
 				// 512 Bytes long when sector aligned
 				if ( ( I64LOW(iPhysEnd - iPhysStart) == iBlkLen) && ((iReqStart & ~iBlkMsk) == iPhysStart) )
-					{
-					__KTRACE_OPT(KPBUSDRV, Kern::Printf("mmd:lw:AtomicWrite"));
-					iSession->Command().iFlags|= KMMCCmdFlagReliableWrite;
-					}
+                    {
+				    // Reliable write will only be issued on non-removable drives (i.e. System drives)
+                    if (!isRemovableDrive( *( iCurrentReq->Drive() ) ) )
+                        {                                            
+                        __KTRACE_OPT(KPBUSDRV, Kern::Printf("mmd:lw:AtomicWrite"));
+                        iSession->Command().iFlags|= KMMCCmdFlagReliableWrite;
+                        }
+			        }
 				}
 #endif //_ENABLE_EMMC_RELIABLE_WRITE_			
 		
@@ -2679,6 +2686,30 @@ TInt DMmcMediaDriverFlash::Caps(TLocDrv& aDrive, TLocalDriveCapsV6& aInfo)
 	return KErrCompletion;
 	}
 
+// 
+// returns True if the specified drive is removable either physically or logically
+//
+TBool DMmcMediaDriverFlash::isRemovableDrive(TLocDrv& aDrive)
+    {    
+    if (iInternalSlot && iMmcPartitionInfo)
+        {        
+        TBuf8<sizeof(TLocalDriveCapsV6)> capsBuf;
+        capsBuf.SetMax();
+        capsBuf.FillZ();
+        iMmcPartitionInfo->PartitionCaps(aDrive,capsBuf);
+        TLocalDriveCapsV6& CapsInfo = *(TLocalDriveCapsV6*)capsBuf.Ptr(); 
+        
+        if (CapsInfo.iDriveAtt & (KDriveAttRemovable|KDriveAttLogicallyRemovable) )
+            {            
+            return ETrue;
+            }
+        else
+            {
+            return EFalse;
+            }
+        }
+    return ETrue;
+    }
 
 // ---- cache ----
 
@@ -3433,19 +3464,25 @@ void DMmcMediaDriverFlash::NotifyPowerDown()
 
 	EndInCritical();
 
+	if (iMedReq == EMReqRead || iMedReq == EMReqWrite)
+        {
+        // Powerdown during a read or write operation,
+	    // invalidate Cache to ensure Cache consistency 
+	    InvalidateCache();
+        }
+	
 	// need to cancel the session as the stack doesn't take too kindly to having the same session engaged more than once.
 	if (iSession)
 		iStack->CancelSession(iSession);
-
-	CompleteRequest(KErrNotReady);
-	iMedReq = EMReqIdle;
+	
+	CompleteRequest(KErrNotReady);	
 	OstTraceFunctionExit0( DMMCMEDIADRIVERFLASH_NOTIFYPOWERDOWN_EXIT );
 	}
 
 void DMmcMediaDriverFlash::NotifyEmergencyPowerDown()
 	{
 	OstTraceFunctionEntry0( DMMCMEDIADRIVERFLASH_NOTIFYEMERGENCYPOWERDOWN_ENTRY );
-	__KTRACE_OPT(KPBUSDRV,Kern::Printf(">Ata:NotifyEmergencyPowerDown"));
+	__KTRACE_OPT(KPBUSDRV,Kern::Printf(">mmc:NotifyEmergencyPowerDown"));
 
 	iSessionEndDfc.Cancel();
 	iDataTransferCallBackDfc.Cancel();
@@ -3455,12 +3492,18 @@ void DMmcMediaDriverFlash::NotifyEmergencyPowerDown()
 		r=KErrAbort;
 	EndInCritical();
 
+	if (iMedReq == EMReqRead || iMedReq == EMReqWrite)
+        {
+        // Powerdown during a read or write operation,
+        // invalidate Cache to ensure Cache consistency
+        InvalidateCache();
+        }
+	
 	// need to cancel the session as the stack doesn't take too kindly to having the same session engaged more than once.
 	if (iSession)
 		iStack->CancelSession(iSession);
 
-	CompleteRequest(r);
-	iMedReq = EMReqIdle;
+	CompleteRequest(r);	
 	OstTraceFunctionExit0( DMMCMEDIADRIVERFLASH_NOTIFYEMERGENCYPOWERDOWN_EXIT );
 	}
 

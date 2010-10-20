@@ -52,7 +52,11 @@
 #ifdef __DMASIM__
 RTest test(_L("T_DMASIM"));
 #else
+#if defined(DMA_INVERTED_THREAD_PRIORITIES)
+RTest test(_L("T_DMAINV"));
+#else
 RTest test(_L("T_DMA"));
+#endif
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -314,7 +318,7 @@ TInt CTest::OpenChannel(TInt aDesCount, TInt aMaxFragmentSize)
 		if (r == KErrNotSupported)
 			return r;
 		XTEST1(KErrNone == r || KErrInUse == r, r);
-		
+
 		if(KErrInUse == r)
 			{
 			// Channel is in use.
@@ -349,7 +353,11 @@ CTesterThread::CTesterThread(TInt aIdx, CTest* aTest)
 	name = _L("TESTER-");
 	name.AppendNum(aIdx);
 	test(iThread.Create(name, ThreadFunction, 0x2000, NULL, this) == KErrNone);
+#if defined(DMA_INVERTED_THREAD_PRIORITIES)
+	iThread.SetPriority(EPriorityRealTime);
+#else
 	iThread.SetPriority(EPriorityLess);
+#endif	// #if defined(DMA_INVERTED_THREAD_PRIORITIES)
 	iThread.Logon(iStatus);
 	SetActive();
 	iThread.Resume();
@@ -883,12 +891,6 @@ static void TestStreaming(RTestDma aChannel, TInt aFragmentCount, TInt aSize)
 
 	r = aChannel.Execute(_L8("Q0Q1Q2C"));
 	XTEST1(r == KErrNone, r);
-#ifdef __DMASIM__
-	// At least part of the last destination buffer should be
-	// unchanged if cancel occured before the transfer completed.
-	// Assert only on WINS as real DMACs are too fast.
-	XTEST(! aChannel.CheckBuffer(KDestBuf2, 'C'));
-#endif
 
 	//
 	// Perform another transfer to ensure cancel operation let the
@@ -923,15 +925,28 @@ static void TestStreaming(RTestDma aChannel, TInt aFragmentCount, TInt aSize)
 	test(aChannel.FragmentCheck(KRequest2, aFragmentCount));
 	// Queue first request (Q0)
 	r = aChannel.Execute(_L8("Q0"));
-	// Wait a second, so next request will be queued on its own
-	// (instead of being appended to the previous one)
-	User::After(1000000);
+	// Wait till Q0 completes before queuing next request
+	// this is to ensure that Q0's link register doesn't
+	// get over-written, which would lead to the test passing
+	// trivially.
+	//
+	// Polling is the only way to achieve this under the
+	// current test interface (since passing in a new
+	// TRequestStatus necessitates re-fragmenting)
+	for(TInt i = 0; i < 100; i++)
+		{
+		if(aChannel.CheckBuffer(KDestBuf0, 'A'))
+			break;
+
+		User::After(10000); // Wait 10 milliseconds
+		}
+	XTEST(aChannel.CheckBuffer(KDestBuf0, 'A'));
+
 	// Queue third request (Q2)
 	r = aChannel.Execute(_L8("Q2"));
 	XTEST1(r == KErrNone, r);
 	User::WaitForRequest(rs2);
 	XTEST1(rs2 == KErrNone, rs2.Int());
-	XTEST(aChannel.CheckBuffer(KDestBuf0, 'A'));
 	// KDestBuf1 should have been left untouched!
 	// If we find all B's in KDestBuf1, that means the last descriptor of the
 	// first request (Q0) wasn't properly unlinked and still points to the Q1
@@ -960,9 +975,15 @@ static void TestStreaming(RTestDma aChannel, TInt aFragmentCount, TInt aSize)
 		XTEST(aChannel.Execute(_L8("Q0Q1Q2")) == KErrNone);
 		User::WaitForRequest(rs0);
 		XTEST(rs0 != KErrNone);
+		// Request 0 should definitely not succeed, due to the
+		// fault injection. However, depending on the underlying
+		// hardware type, the transfers for the
+		// subsequent requests may or may not complete.
+		// On a double buffered or scatter-gather controller
+		// if the later requests were already programmed into the
+		// second buffer, or linked in to the hardware descriptor chain
+		// they could proceed autonomously.
 		XTEST(! aChannel.CheckBuffer(KDestBuf0, 'A'));
-		XTEST(! aChannel.CheckBuffer(KDestBuf1, 'B'));
-		XTEST(! aChannel.CheckBuffer(KDestBuf2, 'C'));
 		XTEST(aChannel.Execute(_L8("C")) == KErrNone);
 
 		// Transfer again to ensure cancel cleaned-up correctly
@@ -1084,12 +1105,13 @@ static TBool ParseCmdLine(TBool& aCrashDbg, TInt& aMaxfrag, TInt& aMaxIter, TInt
 
 TInt E32Main()
 	{
+	COMPLETE_POST_BOOT_SYSTEM_TASKS();
 	test.Title();
 
 	test.Start(_L("Parsing command-line"));
 	// Default values when run with empty command-line
 	TInt maxfrag = 16; // 5 fragments needed to exercise fully double-buffering state machine
-	TInt maxIter = 3;
+	TInt maxIter = 1;
 	TInt maxchannel = KMaxTInt;
 	TBool crashDbg = EFalse;
 	TInt maxFragSize = 0x4000; //16k
@@ -1102,6 +1124,17 @@ TInt E32Main()
 		User::SetProcessCritical(User::ESystemCritical);
 		}
 
+	RProcess p;
+	RThread t;
+#if defined(DMA_INVERTED_THREAD_PRIORITIES)
+	// Set the process priority to the maximum value allowed for normal apps.
+	// This will increase the system's interpretation of the thread priority.
+	test(p.SetPriority(EPriorityHigh) == KErrNone);
+	t.SetPriority(EPriorityRealTime);
+#else
+	t.SetPriority(EPriorityLess);
+#endif	// #if defined(DMA_INVERTED_THREAD_PRIORITIES)
+	RDebug::Printf("Process priority:  %d", p.Priority());
 
 	TInt r;
 #if defined(__DMASIM__) && defined(__WINS__)
@@ -1145,12 +1178,6 @@ TInt E32Main()
 		test(EFalse);
 		}
 #endif
-
-	// Turn off evil lazy dll unloading
-	RLoader l;
-	test(l.Connect()==KErrNone);
-	test(l.CancelLazyDllUnload()==KErrNone);
-	l.Close();
 
 	__UHEAP_MARK;
 	__KHEAP_MARK;
@@ -1230,7 +1257,9 @@ TInt E32Main()
 	delete Bipper;
 	TheCriticalSection.Close();
 
-	UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, (TAny*)5000, 0);
+	r = UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, (TAny*)5000, 0);
+	test_KErrNone(r);
+
 	__KHEAP_MARKEND;
 	__UHEAP_MARKEND;
 

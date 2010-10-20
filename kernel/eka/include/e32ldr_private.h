@@ -1,4 +1,4 @@
-// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -55,6 +55,7 @@ enum TLoaderMsg
 	ECheckLibraryHash=14, 
 	ELoadFSProxyDrive=15,
     ELoadCodePage=16,
+	ELoaderRunReaper=17,
     EMaxLoaderMsg
 	};
 //
@@ -95,6 +96,7 @@ public:
 	TInt LoadLocale(const TDesC& aLocaleDllName, TLibraryFunction* aExportList);
 	TInt GetInfoFromHeader(const TDesC8& aHeader, TDes8& aInfoBuf);
 	IMPORT_C TInt CancelLazyDllUnload();
+	IMPORT_C TInt RunReaper();
 	IMPORT_C TInt Delete(const TDesC& aFileName);
     IMPORT_C TInt CheckLibraryHash(const TDesC& aFileName, TBool aValidateHash=EFalse);
 	TInt LoadProcess(TInt& aHandle, const TDesC& aFileName, const TDesC& aCommand, const TUidType& aUidType, TInt aMinStackSize, TOwnerType aType);

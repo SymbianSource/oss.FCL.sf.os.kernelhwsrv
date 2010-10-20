@@ -2020,8 +2020,10 @@ static const TUint32 CrcTab32[256] =
 /* RVCT 3.1 and 4.0 read past the end of arrays when unrolling loops.
  * This only happens when using -O3 -Otime, so force to -O2.
  */
+#if __ARMCC_VERSION >= 310000 
 #pragma push
 #pragma O2
+#endif
 
 /**
 Performs a CCITT CRC-32 checksum on the specified data.
@@ -2042,4 +2044,6 @@ EXPORT_C void Mem::Crc32(TUint32& aCrc, const TAny* aPtr, TInt aLength)
 		crc = (crc >> 8) ^ CrcTab32[(crc ^ *p++) & 0xff];
 	aCrc = crc;
 	}
+#if __ARMCC_VERSION >= 310000 
 #pragma pop
+#endif

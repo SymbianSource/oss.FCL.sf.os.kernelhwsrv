@@ -206,11 +206,13 @@ private:
 	void PasswordControl(TInt aFunc, TLocalDrivePasswordData& aData);
 	void Reset();
 	TInt AllocateSession();  
+	TBool isRemovableDrive(TLocDrv& aDrive);
 
 #ifdef _DEBUG_CACHE
 	TBool CacheInvariant();
 	TUint8* GetCachedBlock(TInt64 aAddr);
 #endif
+
 private:
 	DMMCStack* iStack;			 				// controller objects
 	TMMCard* iCard;

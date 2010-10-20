@@ -13,7 +13,7 @@
 // Description:
 // e32test\dmav2\d_dma2.h
 // User-side API for LDD used to test DMAv2 framework.
-// 
+//
 //
 
 #ifndef __D_DMA2_H__
@@ -312,7 +312,8 @@ struct TAddressParms
 		{
 		_LIT(KOutput, "TAddressParms: src=0x%08x (%d) dst=0x%08x (%d) count=0x%08x (%d)\0");
 #ifdef __KERNEL_MODE__
-		DmaAppendFormat(aBuf, (const char*)KOutput().Ptr(), iSrcAddr, iSrcAddr, iDstAddr, iDstAddr, iTransferCount, iTransferCount);
+		DmaAppendFormat(aBuf, (const char*)KOutput().Ptr(), iSrcAddr, iSrcAddr,
+						iDstAddr, iDstAddr, iTransferCount, iTransferCount);
 #else
 		aBuf.AppendFormat(KOutput, iSrcAddr, iSrcAddr, iDstAddr, iDstAddr, iTransferCount, iTransferCount);
 #endif
@@ -411,16 +412,16 @@ public:
 #ifndef __KERNEL_MODE__
 	TInt ChannelIsQueueEmpty(TUint aDriverCookie,TBool& aQueueEmpty)
 		{
-		return DoControl(EIsQueueEmpty, reinterpret_cast<TAny*>(aDriverCookie),	&aQueueEmpty);		
+		return DoControl(EIsQueueEmpty, reinterpret_cast<TAny*>(aDriverCookie),	&aQueueEmpty);
 		}
 
 	TInt ChannelIsOpened(TUint aDriverCookie,TBool &aChannelOpen)
 		{
-		return DoControl(EIsOpened, reinterpret_cast<TAny*>(aDriverCookie), &aChannelOpen);		
+		return DoControl(EIsOpened, reinterpret_cast<TAny*>(aDriverCookie), &aChannelOpen);
 		}
 
 	TInt ChannelCancelAll(TUint aDriverCookie)
-		{	
+		{
 		return DoControl(ECancelAllChannel, reinterpret_cast<TAny*>(aDriverCookie));
 		}
 
@@ -436,27 +437,27 @@ public:
 		}
 
 	TInt ChannelClose(TUint aDriverCookie)
-		{	
+		{
 		return DoControl(ECloseChannel, reinterpret_cast<TAny*>(aDriverCookie));
 		}
 
 	TInt ChannelPause(TUint aDriverCookie)
-		{	
+		{
 		return DoControl(EPauseChannel, reinterpret_cast<TAny*>(aDriverCookie));
 		}
-	
+
 	TInt ChannelResume(TUint aDriverCookie)
-		{	
+		{
 		return DoControl(EResumeChannel, reinterpret_cast<TAny*>(aDriverCookie));
 		}
 
 	TInt ChannelLinking(TUint aDriverCookie)
-		{	
+		{
 		return DoControl(ELinkChannel, reinterpret_cast<TAny*>(aDriverCookie));
 		}
 
 	TInt ChannelUnLinking(TUint aDriverCookie)
-		{	
+		{
 		return DoControl(EUnlinkChannel, reinterpret_cast<TAny*>(aDriverCookie));
 		}
 
@@ -473,22 +474,41 @@ public:
 		TPckg<TDmacTestCaps> package(aChannelCaps);
 		return DoControl(EChannelCaps, reinterpret_cast<TAny*>(aDriverCookie), &package);
 		}
-	
+
 	TInt Open()
 		{
-		TInt r = KErrNone;
-		r = DoCreate(KTestDmaLddNameHw,TestDmaLddVersion(), 0, NULL, NULL, EOwnerThread);
-		RDebug::Printf("RDmaSession::Open returned %d", r);
+#if defined(DMA_INVERTED_THREAD_PRIORITIES)
+		const TInt dfcThreadPriority = 11;
+#else
+		const TInt dfcThreadPriority = 26;
+#endif
+		const TInt r = DoCreate(KTestDmaLddNameHw, TestDmaLddVersion(), 0, NULL,
+								reinterpret_cast<const TDesC8*>(dfcThreadPriority), EOwnerThread);
+		if (r != KErrNone)
+			{
+			RDebug::Printf("RDmaSession::Open(): DoCreate() returned %d", r);
+			}
 		return r;
 		}
 
 	TInt OpenSim()
 		{
-		return DoCreate(KTestDmaLddNameSim,TestDmaLddVersion(), 0, NULL, NULL, EOwnerThread);
+#if defined(DMA_INVERTED_THREAD_PRIORITIES)
+		const TInt dfcThreadPriority = 11;
+#else
+		const TInt dfcThreadPriority = 26;
+#endif
+		const TInt r = DoCreate(KTestDmaLddNameSim, TestDmaLddVersion(), 0, NULL,
+								reinterpret_cast<const TDesC8*>(dfcThreadPriority), EOwnerThread);
+		if (r != KErrNone)
+			{
+			RDebug::Printf("RDmaSession::OpenSim(): DoCreate() returned %d", r);
+			}
+		return r;
 		}
 
 	TInt RequestCreateOld(TUint aChannelCookie, TUint& aRequestCookie, TUint aMaxTransferSize=0)
-		{	
+		{
 		return DoRequestCreate(aChannelCookie, EFalse, aMaxTransferSize, aRequestCookie);
 		}
 
@@ -499,49 +519,50 @@ public:
 		}
 
 	TInt RequestDestroy(TUint aRequestCookie)
-		{	
+		{
 		return DoControl(ERequestClose, reinterpret_cast<TAny*>(aRequestCookie));
 		}
 
 	TInt RequestFragmentCount(TUint aRequestCookie)
-		{	
+		{
 		return DoControl(EFragmentCount, reinterpret_cast<TAny*>(aRequestCookie));
 		}
 
 	TInt RequestEnableDstElementCounting(TUint aRequestCookie)
-		{					
-		return DoControl(EEnableDstElementCounting, reinterpret_cast<TAny*>(aRequestCookie));		
+		{
+		return DoControl(EEnableDstElementCounting, reinterpret_cast<TAny*>(aRequestCookie));
 		}
 
 	TInt RequestEnableSrcElementCounting(TUint aRequestCookie)
-		{		
+		{
 		return DoControl(EEnableSrcElementCounting, reinterpret_cast<TAny*>(aRequestCookie));
 		}
 
 	TInt RequestDisableDstElementCounting(TUint aRequestCookie)
-		{	
+		{
 		return DoControl(EDisableDstElementCounting, reinterpret_cast<TAny*>(aRequestCookie));
 		}
 
 	TInt RequestDisableSrcElementCounting(TUint aRequestCookie)
-		{	
+		{
 		return DoControl(EDisableSrcElementCounting, reinterpret_cast<TAny*>(aRequestCookie));
 		}
 
 	TInt RequestTotalNumDstElementsTransferred(TUint aRequestCookie)
-		{	
+		{
 		return DoControl(ETotalNumDstElementsTransferred, reinterpret_cast<TAny*>(aRequestCookie));
 		}
 
 	TInt RequestTotalNumSrcElementsTransferred(TUint aRequestCookie)
-		{	
+		{
 		return DoControl(ETotalNumSrcElementsTransferred, reinterpret_cast<TAny*>(aRequestCookie));
 		}
 
 	/**
 	Will fragment a DMA request using the legacy API
 	*/
-	TInt FragmentRequestOld(TUint aRequestCookie, const TDmaTransferArgs& aTransferArgs, TUint64* aDurationMicroSecs=NULL)
+	TInt FragmentRequestOld(TUint aRequestCookie, const TDmaTransferArgs& aTransferArgs,
+							TUint64* aDurationMicroSecs=NULL)
 		{
 		const TFragmentArgs args(aRequestCookie, aTransferArgs, aDurationMicroSecs);
 		TPckgC<TFragmentArgs> package(args);
@@ -551,14 +572,16 @@ public:
 	/**
 	Will fragment a DMA request using the new API
 	*/
-	TInt FragmentRequest(TUint aRequestCookie, const TDmaTransferArgs& aTransferArgs, TUint64* aDurationMicroSecs=NULL)
+	TInt FragmentRequest(TUint aRequestCookie, const TDmaTransferArgs& aTransferArgs,
+						 TUint64* aDurationMicroSecs=NULL)
 		{
 		const TFragmentArgs args(aRequestCookie, aTransferArgs, aDurationMicroSecs);
 		TPckgC<TFragmentArgs> package(args);
 		return DoControl(EFragment, &package);
 		}
 
-	TInt QueueRequest(TUint aRequestCookie, TRequestStatus& aStatus, TCallbackRecord* aRecord = NULL, TUint64* aDurationMicroSecs=NULL)
+	TInt QueueRequest(TUint aRequestCookie, TRequestStatus& aStatus, TCallbackRecord* aRecord = NULL,
+					  TUint64* aDurationMicroSecs=NULL)
 		{
 		//These dummy values can accept the writeback from the driver
 		//if the client does not want them.
@@ -569,7 +592,8 @@ public:
 
 		aStatus = KRequestPending;
 
-		TQueueArgs args(aRequestCookie, &aStatus, aRecord ? aRecord : &dummyRec, aDurationMicroSecs ? aDurationMicroSecs : &dummyTime);
+		TQueueArgs args(aRequestCookie, &aStatus, aRecord ? aRecord : &dummyRec,
+						aDurationMicroSecs ? aDurationMicroSecs : &dummyTime);
 		TPckgC<TQueueArgs> package(args);
 		return DoControl(EQueueRequest, &package);
 		}
@@ -577,7 +601,8 @@ public:
 	/**
 	Synchronous version of QueueRequest
 	*/
-	TInt QueueRequest(TUint aRequestCookie, TCallbackRecord* aRecord = NULL, TUint64* aDurationMicroSecs=NULL)
+	TInt QueueRequest(TUint aRequestCookie, TCallbackRecord* aRecord = NULL,
+					  TUint64* aDurationMicroSecs=NULL)
 		{
 		TRequestStatus status;
 		TInt r = QueueRequest(aRequestCookie, status, aRecord, aDurationMicroSecs);
@@ -592,7 +617,9 @@ public:
 
 	@pre Isr callback for completion must have been requested at request fragmentation time
 	*/
-	TInt QueueRequestWithRequeue(TUint aRequestCookie, TIsrRequeArgs* aRequeueArgs, TInt aCount, TRequestStatus& aStatus, TCallbackRecord* aRecord = NULL, TUint64* aDurationMicroSecs=NULL)
+	TInt QueueRequestWithRequeue(TUint aRequestCookie, TIsrRequeArgs* aRequeueArgs, TInt aCount,
+								 TRequestStatus& aStatus, TCallbackRecord* aRecord = NULL,
+								 TUint64* aDurationMicroSecs=NULL)
 		{
 		//These dummy values can accept the writeback from the driver
 		//if the client does not want them.
@@ -603,7 +630,9 @@ public:
 
 		aStatus = KRequestPending;
 
-		TQueueArgsWithReque args(aRequeueArgs, aCount, aRequestCookie, &aStatus, aRecord ? aRecord : &dummyRec, aDurationMicroSecs ? aDurationMicroSecs : &dummyTime);
+		TQueueArgsWithReque args(aRequeueArgs, aCount, aRequestCookie,
+								 &aStatus, aRecord ? aRecord : &dummyRec,
+								 aDurationMicroSecs ? aDurationMicroSecs : &dummyTime);
 		TPckgC<TQueueArgsWithReque> package(args);
 		return DoControl(EQueueRequestWithReque, &package);
 		}
@@ -611,10 +640,12 @@ public:
 	/**
 	Synchronous version of QueueRequestWithRequeue
 	*/
-	TInt QueueRequestWithRequeue(TUint aRequestCookie, TIsrRequeArgs* aRequeueArgs, TInt aCount, TCallbackRecord* aRecord = NULL, TUint64* aDurationMicroSecs=NULL)
+	TInt QueueRequestWithRequeue(TUint aRequestCookie, TIsrRequeArgs* aRequeueArgs, TInt aCount,
+								 TCallbackRecord* aRecord = NULL, TUint64* aDurationMicroSecs=NULL)
 		{
 		TRequestStatus status;
-		TInt r = QueueRequestWithRequeue(aRequestCookie, aRequeueArgs, aCount, status, aRecord, aDurationMicroSecs);
+		TInt r = QueueRequestWithRequeue(aRequestCookie, aRequeueArgs, aCount, status, aRecord,
+										 aDurationMicroSecs);
 		User::WaitForRequest(status);
 		return r;
 		}
@@ -638,13 +669,14 @@ public:
 
 private:
 
-	TInt DoRequestCreate(TUint aChannelCookie, TBool aNewStyle, TUint aMaxTransferSize, TUint& aRequestCookie)
+	TInt DoRequestCreate(TUint aChannelCookie, TBool aNewStyle, TUint aMaxTransferSize,
+						 TUint& aRequestCookie)
 		{
 		TRequestCreateArgs args(aChannelCookie, aNewStyle, aMaxTransferSize);
 		TPckgC<TRequestCreateArgs> package(args);
 		return DoControl(ERequestOpen, &package, &aRequestCookie);
 		}
-	
+
 	struct TRequestCreateArgs
 		{
 		TRequestCreateArgs(TUint aChannelCookie, TBool aNewStyle, TUint aMaxFragmentSize)
@@ -661,8 +693,10 @@ private:
 		TFragmentArgs()
 			:iRequestCookie(0), iTransferArgs(), iDurationMicroSecs(NULL)
 			{}
-		TFragmentArgs(TUint aRequestCookie, const TDmaTransferArgs& aTransferArgs, TUint64* aDurationMicroSecs = NULL)
-			:iRequestCookie(aRequestCookie), iTransferArgs(aTransferArgs), iDurationMicroSecs(aDurationMicroSecs)
+		TFragmentArgs(TUint aRequestCookie, const TDmaTransferArgs& aTransferArgs,
+					  TUint64* aDurationMicroSecs = NULL)
+			:iRequestCookie(aRequestCookie), iTransferArgs(aTransferArgs),
+			 iDurationMicroSecs(aDurationMicroSecs)
 			{}
 
 		const TUint iRequestCookie;
@@ -672,8 +706,10 @@ private:
 
 	struct TQueueArgs
 		{
-		TQueueArgs(TUint aRequestCookie=0, TRequestStatus* aStatus=NULL, TCallbackRecord* aCallbackRecord=NULL, TUint64* aDurationMicroSecs=NULL)
-			:iRequestCookie(aRequestCookie), iStatus(aStatus), iCallbackRecord(aCallbackRecord), iDurationMicroSecs(aDurationMicroSecs)
+		TQueueArgs(TUint aRequestCookie=0, TRequestStatus* aStatus=NULL,
+				   TCallbackRecord* aCallbackRecord=NULL, TUint64* aDurationMicroSecs=NULL)
+			:iRequestCookie(aRequestCookie), iStatus(aStatus), iCallbackRecord(aCallbackRecord),
+			 iDurationMicroSecs(aDurationMicroSecs)
 			{}
 		TUint iRequestCookie;
 		TRequestStatus* iStatus;
@@ -688,8 +724,10 @@ private:
 	struct TQueueArgsWithReque : public TQueueArgs
 		{
 		TQueueArgsWithReque(TIsrRequeArgs* aRequeueArgs=NULL, TInt aCount=0,
-				TUint aRequestCookie=0, TRequestStatus* aStatus=NULL, TCallbackRecord* aCallbackRecord=NULL, TUint64* aDurationMicroSecs=NULL)
-			:TQueueArgs(aRequestCookie, aStatus, aCallbackRecord, aDurationMicroSecs), iRequeSet(aRequeueArgs, aCount)
+							TUint aRequestCookie=0, TRequestStatus* aStatus=NULL,
+							TCallbackRecord* aCallbackRecord=NULL, TUint64* aDurationMicroSecs=NULL)
+			:TQueueArgs(aRequestCookie, aStatus, aCallbackRecord, aDurationMicroSecs),
+			 iRequeSet(aRequeueArgs, aCount)
 			{
 			}
 
@@ -727,4 +765,5 @@ private:
 		ETotalNumSrcElementsTransferred,
 		};
 	};
+
 #endif // __D_DMA2_H__

@@ -572,6 +572,13 @@ void CDmaBmFragmentation::PrintTestType() const
 
 void CDmaBmFragmentation::RunTest()
 	{
+	// This HAL call is here to make sure the chunk that was used for the
+	// previous test iteration has been freed by the time the next one gets
+	// created. (This was put in after T_DMA2INV OOM failures during the
+	// Fragmentation Benchmark tests.)
+	const TInt r = UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, (TAny*)5000, 0);
+	TEST_ASSERT(r == KErrNone);
+
 	OpenDmaSession();
 
 	OpenChannel();
@@ -1048,9 +1055,11 @@ TBool COpenCloseTest::Result()
 		{
 		RDebug::Printf("Open/Close test sequence failed"); 
 		}
-			
+
 	return iOpenCloseResult;
 	}
+
+
 //////////////////////////////////////////////////////////////////////
 // CDmaBmTransfer
 //////////////////////////////////////////////////////////////////////
@@ -2240,7 +2249,12 @@ TBool TDmaCapability::TestValue(TUint aValue) const
 	return EFalse;
 	}
 
-static RTest test(_L("DMAv2 test"));
+#if defined(DMA_INVERTED_THREAD_PRIORITIES)
+static RTest test(_L("T_DMA2INV"));
+#else
+static RTest test(_L("T_DMA2"));
+#endif
+
 
 //////////////////////////////////////////////////////////////////////
 // TTestRunner
@@ -2347,10 +2361,11 @@ void TTestRunner::RunTests()
 			default:
 				TEST_FAULT;
 				}
-			//Depending on the value of iConcurrentTest the test runner will either block until the thread has completed or
-			//alternatively run the current test case on the next channel:
-
-			//if the test case has been run on all channels it will then  wait for all threads to complete.
+			//Depending on the value of iConcurrentTest the test runner will
+			//either block until the thread has completed or alternatively run
+			//the current test case on the next channel: if the test case has
+			//been run on all channels it will then wait for all threads to
+			//complete.
 			}
 
 		// Run the tests which should happen concurrently
@@ -2699,14 +2714,14 @@ void RunSimDMATests()
 		test.Start(_L("Open channel"));
 		TUint channelCookie=0;
 		r = session.ChannelOpen(pslId, channelCookie);
-		test.Printf(_L("Open channel %d, cookie recived = 0x%08x\n"), pslId, channelCookie);
+		test.Printf(_L("Open channel %d, cookie received = 0x%08x\n"), pslId, channelCookie);
 		test_KErrNone(r);
 
 		test.Next(_L("Create Dma request"));
 
 		TUint reqCookie=0;
 		r = session.RequestCreate(channelCookie, reqCookie);
-		test.Printf(_L("cookie recived = 0x%08x\n"), reqCookie );
+		test.Printf(_L("cookie received = 0x%08x\n"), reqCookie );
 		test_KErrNone(r);
 
 		if(doFrag)
@@ -2736,6 +2751,7 @@ void RunSimDMATests()
 
 TInt E32Main()
 	{
+	COMPLETE_POST_BOOT_SYSTEM_TASKS();
 	__UHEAP_MARK;
 	test.Title();
 
@@ -2762,6 +2778,19 @@ TInt E32Main()
 		PrintUsage();
 		User::Leave(-2);	// nothing to do!
 		}
+
+	RProcess p;
+	RThread t;
+#if defined(DMA_INVERTED_THREAD_PRIORITIES)
+	// Set the process priority to the maximum value allowed for normal apps.
+	// This will increase the system's interpretation of the thread priority.
+	test(p.SetPriority(EPriorityHigh) == KErrNone);
+	t.SetPriority(EPriorityRealTime);
+#else
+	t.SetPriority(EPriorityLess);
+#endif	// #if defined(DMA_INVERTED_THREAD_PRIORITIES)
+	RDebug::Printf("Process priority:  %d", p.Priority());
+
 	test.Start(_L("Loading test LDD"));
 	//load either the new test ldd, d_dma2.ldd,
 	//or d_dma2_compat.ldd - an ldd linked against
@@ -2807,12 +2836,6 @@ TInt E32Main()
 		test.Printf(_L("Failed to load %S, r=%d\n"), &KDma2Sim, r);
 		test(EFalse);
 		}
-
-	// Turn off evil lazy dll unloading
-	RLoader l;
-	test(l.Connect()==KErrNone);
-	test(l.CancelLazyDllUnload()==KErrNone);
-	RTest::CloseHandleAndWaitForDestruction(l);
 
 	__KHEAP_MARK;
 

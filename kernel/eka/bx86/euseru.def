@@ -2181,7 +2181,7 @@ EXPORTS
 	?SetReadOnly@TChunkCreateInfo@@QAEXXZ @ 2180 NONAME ; public: void __thiscall TChunkCreateInfo::SetReadOnly(void)
 	?RandomL@Math@@SAXAAVTDes8@@@Z @ 2181 NONAME ; void Math::RandomL(class TDes8 &)
 	?Random@Math@@SAXAAVTDes8@@@Z @ 2182 NONAME ; void Math::Random(class TDes8 &)
- 	?RandomL@Math@@SAKXZ @ 2183 NONAME ; unsigned long Math::RandomL(void)
+	?RandomL@Math@@SAKXZ @ 2183 NONAME ; unsigned long Math::RandomL(void)
 	?Append2@TDes16@@QAEXVTChar@@@Z @ 2184 NONAME ; void TDes16::Append2(class TChar)
 	?CopyC2@TDes16@@QAEXABVTDesC16@@@Z @ 2185 NONAME ; void TDes16::CopyC2(class TDesC16 const &)
 	?Collate2@TDes16@@QAEXXZ @ 2186 NONAME ; void TDes16::Collate2(void)
@@ -2215,9 +2215,12 @@ EXPORTS
 	?Size@RAllocator@@QBEHXZ @ 2214 NONAME ; public: int __thiscall RAllocator::Size(void)const 
 	?__DbgGetAllocFail@RAllocator@@QAE?AW4TAllocFail@1@XZ @ 2215 NONAME ; enum RAllocator::TAllocFail RAllocator::__DbgGetAllocFail(void)
 	?__DbgGetAllocFail@User@@SA?AW4TAllocFail@RAllocator@@H@Z @ 2216 NONAME ; enum RAllocator::TAllocFail User::__DbgGetAllocFail(int)
-	?SetKeyOffset@RArrayBase@@IAEXH@Z @ 2217  NONAME ; void RArrayBase::SetKeyOffset(int)
+	?SetKeyOffset@RArrayBase@@IAEXH@Z @ 2217 NONAME ; void RArrayBase::SetKeyOffset(int)
 	?Poll@RFastLock@@QAEHXZ @ 2218 NONAME ; public: int __thiscall RFastLock::Poll(void)
 	?Poll@RMutex@@QAEHXZ @ 2219 NONAME ; public: int __thiscall RMutex::Poll(void)
 	?Poll@RSemaphore@@QAEHXZ @ 2220 NONAME ; public: int __thiscall RSemaphore::Poll(void)
 	?Wait@RMutex@@QAEHH@Z @ 2221 NONAME ; public: int __thiscall RMutex::Wait(int)
 	?Wait@RFastLock@@QAEHH@Z @ 2222 NONAME ; public: int __thiscall RFastLock::Wait(int)
+	?CompletePostBootSystemTasks@RTest@@QAEHXZ @ 2223 NONAME ; public: int __thiscall RTest::CompletePostBootSystemTasks(void)
+	?RunReaper@RLoader@@QAEHXZ @ 2224 NONAME ; public: int __thiscall RLoader::RunReaper(void)
+

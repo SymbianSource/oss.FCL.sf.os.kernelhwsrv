@@ -1,3 +1,11 @@
+Version 2.00.4007
+=================
+(Made by fadhliM 15/10/2010)
+
+1.	vfebvre
+	1.	ou1cimx1#613596 ENV Incorrect/missing copyright notices in f32test/loader
+
+
 Version 2.00.4006
 =================
 (Made by fadhliM 13/10/2010)

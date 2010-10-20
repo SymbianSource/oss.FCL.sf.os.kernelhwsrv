@@ -1,4 +1,4 @@
-// Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2010-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -11,11 +11,22 @@
 // Contributors:
 //
 // Description:
+// e32test/group/t_propclose.mmp
+// 
 //
 
-SECTION_COMMANDS
+TARGET			t_propclose.exe
+TARGETTYPE		EXE
+SOURCEPATH		../property
+SOURCE			t_propclose.cpp
+LIBRARY			euser.lib
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 
-oneoff \os\kernelhwsrv\kerneltest\f32test\loader bldmake bldfiles
-oneoff \os\kernelhwsrv\kerneltest\f32test\loader abld test makefile
-oneoff \os\kernelhwsrv\kerneltest\f32test\loader abld test library
-oneoff \os\kernelhwsrv\kerneltest\f32test\loader abld -k test target
+
+capability		all
+
+VENDORID		0x70000001
+UID				0x00000000 0xbaadbeef
+SMPSAFE
+
+library efsrv.lib 

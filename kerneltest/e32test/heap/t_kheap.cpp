@@ -1,4 +1,4 @@
-// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -55,7 +55,6 @@
 #include "d_kheap.h"
 
 RTest test(_L("T_KHEAP"));
-RLoader LoaderSession;
 
 #ifdef _DEBUG
 _LIT(KTestLdd0FileName, "D_LDD.LDD");
@@ -194,7 +193,6 @@ TInt TestLogicalDevice(TInt aDevice)
 			test(0);
 		}
 	TInt r = User::LoadLogicalDevice(*fileName);
-	test_KErrNone(LoaderSession.CancelLazyDllUnload());	// make sure transient loader session has been destroyed
 	if (r==KErrNone)
 		{
 		r = User::FreeLogicalDevice(*objName);
@@ -420,6 +418,7 @@ GLDEF_C TInt E32Main()
 // Test kernel alloc heaven with all out of memory possibilities
 //
 	{
+	COMPLETE_POST_BOOT_SYSTEM_TASKS();
 
 /*	Objects
  *	Thread	       tested here
@@ -455,11 +454,6 @@ GLDEF_C TInt E32Main()
 
 	// Keep a session to the loader
 	TInt r;
-	r = LoaderSession.Connect();
-	test_KErrNone(r);
-
-	// Turn off lazy dll unloading
-	test_KErrNone(LoaderSession.CancelLazyDllUnload());
 
 	if (TestChunk(KLargeChunk) == KErrNone)
 		{
@@ -562,7 +556,6 @@ GLDEF_C TInt E32Main()
 	test.Next(_L("Close/unload d_kheap test driver"));
 	KHeapDevice.Close();
 	User::FreeLogicalDevice(KHeapTestDriverName);
-	LoaderSession.Close();
 	test.End();
 	return 0;
 	}
@@ -572,6 +565,7 @@ GLDEF_C TInt E32Main()
 // _KHEAP_SETFAIL etc. not available in release mode, so don't test
 //
 	{
+	COMPLETE_POST_BOOT_SYSTEM_TASKS();
 
 	test.Title();
 	test.Start(_L("No tests in release mode"));

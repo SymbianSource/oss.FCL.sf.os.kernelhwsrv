@@ -1,4 +1,4 @@
-// Copyright (c) 1994-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1994-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -455,15 +455,7 @@ void TestSecondaryProcess()
 	RMutex m;
 	RCondVar cv;
 
-	//cancel lazy dll unloading
-	RLoader loader;
-	TInt r = loader.Connect();
-	test(r==KErrNone);
-	r = loader.CancelLazyDllUnload();
-	test(r==KErrNone);
-	loader.Close();
-
-	r = c.CreateGlobal(KNullDesC, 0x1000, 0x1000);
+	TInt r = c.CreateGlobal(KNullDesC, 0x1000, 0x1000);
 	test(r==KErrNone);
 	volatile TInt& x = *(volatile TInt*)c.Base();
 	x = 0;
@@ -528,6 +520,7 @@ TInt SecondaryProcess(RCondVar aCV)
 
 TInt E32Main()
 	{
+	COMPLETE_POST_BOOT_SYSTEM_TASKS();
 	TInt cpus = UserSvr::HalFunction(EHalGroupKernel, EKernelHalNumLogicalCpus, 0, 0);
 	if (cpus != 1)
 		{

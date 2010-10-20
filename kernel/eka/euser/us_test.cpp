@@ -1,4 +1,4 @@
-// Copyright (c) 1994-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1994-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -560,4 +560,49 @@ EXPORT_C TInt RTest::CloseHandleAndWaitForDestruction(RHandleBase& aH)
 	return r;
 	}
 
+
+/**
+This should be called before using the __KHEAP_MARK macro in tests that check for
+kernel heap leaks.
+
+It will complete deferred background tasks that would ordinarily run at some point after boot
+and that would lead to kernel heap allocs/deallocs. For example, unload of lazily loaded DLLs
+and running the reaper.
+*/
+EXPORT_C TInt RTest::CompletePostBootSystemTasks()
+	{
+	RLoader l;
+	TInt r = l.Connect();
+	if(r != KErrNone)
+		{
+		Printf(_L("RTEST: Error %d while connecting to loader.\n"), r);
+		return r;
+		}
+
+	r = l.CancelLazyDllUnload();
+	if(r != KErrNone)
+		{
+		l.Close();
+		Printf(_L("RTEST: Error %d while canceling Lazy Dll unloading.\n"), r);
+		return r;
+		}
+
+	r = l.RunReaper();
+	l.Close();
+
+	if(r != KErrNone)
+		{
+		Printf(_L("RTEST: Error %d while running the reaper.\n"),r);
+		return r;
+		}
+
+	// Ensure that any kernel objects asynchronously deleted after the
+	// above get fully deleted.
+	r = UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, 0, 0);
+	if(r != KErrNone)
+		{
+		Printf(_L("RTEST: Error %d while attempting to asynchronously delete kernel objects.\n"),r);
+		}
+	return r;
+	}
 

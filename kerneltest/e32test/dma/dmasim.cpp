@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -23,9 +23,9 @@
 
 const char KDmaPanicCat[] = "DMASIM";
 
-const TInt KMaxTransferSize = 0x1FFF;
+const TInt KMaxTransferSize = 0x4000;
 const TInt KMemAlignMask = 3; // memory addresses passed to DMAC must be multiple of 4
-const TInt KBurstSize = 0x800;
+const TInt KBurstSize = KMaxTransferSize;
 
 typedef void (*TPseudoIsr)();
 
@@ -390,19 +390,32 @@ void DmacSim::StopEmulation()
 
 void DmacSim::TickCB(TAny*)
 	{
-	TInt orig = (TInt)__e32_atomic_ior_acq32(&StartStop, EDmaSimInISR);
-	if (orig >= 0)
+	// On the emulator do a transfer for every channel
+	// each tick. This speeds up t_dmasim significantly, since on the
+	// emulator, ticks are less frequent than on real hardware.
+#ifdef __EPOC32__
+	const TInt transfersPerTick = 1;
+#else
+	const TInt transfersPerTick = KChannelCount;
+#endif
+
+	for(TInt i = 0; i < transfersPerTick; i++)
 		{
-		DmacSb::DoTransfer();
-		DmacDb::DoTransfer();
-		DmacSg::DoTransfer();
+		TInt orig = (TInt)__e32_atomic_ior_acq32(&StartStop, EDmaSimInISR);
+		if (orig >= 0)
+			{
+			DmacSb::DoTransfer();
+			DmacDb::DoTransfer();
+			DmacSg::DoTransfer();
+			}
+		orig = (TInt)__e32_atomic_and_rel32(&StartStop, (TUint32)~EDmaSimInISR);
+		if (orig < 0)
+			{
+			__e32_atomic_store_rel32(&StartStop, EDmaSimIdle);
+			return;
+			}
 		}
-	orig = (TInt)__e32_atomic_and_rel32(&StartStop, (TUint32)~EDmaSimInISR);
-	if (orig < 0)
-		{
-		__e32_atomic_store_rel32(&StartStop, EDmaSimIdle);
-		return;
-		}
+
 	TInt r = Timer.Again(KPeriod);
 	if (r == KErrArgument)
 		r = Timer.OneShot(KPeriod);

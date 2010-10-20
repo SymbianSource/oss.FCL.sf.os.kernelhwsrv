@@ -2543,3 +2543,6 @@ EXPORTS
 	_ZN6RMutex4PollEv @ 2542 NONAME ; RMutex::Poll()
 	_ZN9RFastLock4PollEv @ 2543 NONAME ; RFastLock::Poll()
 	_ZN9RFastLock4WaitEi @ 2544 NONAME ; RFastLock::Wait(int)
+	_ZN5RTest27CompletePostBootSystemTasksEv @ 2545 NONAME
+	_ZN7RLoader9RunReaperEv @ 2546 NONAME
+

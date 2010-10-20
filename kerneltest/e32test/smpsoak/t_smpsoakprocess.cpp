@@ -298,7 +298,8 @@ TInt CSMPSoakProcess::FileThread(TAny* aSoakThread)
                     {	
                     filename.Format(KFile,iThreadData.dirID,i);
                     PRINT((_L("File = %S Write\n"),&filename));
-                    test_KErrNone(file.Create(fs,filename,EFileWrite));
+					r = file.Create(fs,filename,EFileWrite);
+					test(r == KErrNone || r == KErrAlreadyExists);
                     test_KErrNone(file.Write(fileData));
                     file.Close();
                     }

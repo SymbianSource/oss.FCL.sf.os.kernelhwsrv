@@ -22,7 +22,6 @@
 
 _LIT(KClientPanicCat, "D_DMA");
 _LIT(KDFCThreadName,"D_DMA_DFC_THREAD");
-const TInt KDFCThreadPriority=26;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -242,13 +241,14 @@ TInt DDmaTestChannel::DoCreate(TInt /*aUnit*/, const TDesC8* aInfo, const TVersi
 		{
 		if (!iDfcQ)
  			{
- 			r = Kern::DynamicDfcQCreate(iDfcQ, KDFCThreadPriority, KDFCThreadName);
+			const TInt dfcThreadPrio = infoBuf().U.iOpen.iDfcThreadPriority;
+ 			r = Kern::DynamicDfcQCreate(iDfcQ, dfcThreadPrio, KDFCThreadName);
 			if (r != KErrNone)
  				return r;
 #ifdef CPU_AFFINITY_ANY
-			NKern::ThreadSetCpuAffinity((NThread*)(iDfcQ->iThread), KCpuAffinityAny);			
+			NKern::ThreadSetCpuAffinity((NThread*)(iDfcQ->iThread), KCpuAffinityAny);
 #endif
- 			}	
+ 			}
 
 		iMemMemPslInfo = DmaTestInfo().iMemMemPslInfo;
 		iCookie = infoBuf().U.iOpen.iId;

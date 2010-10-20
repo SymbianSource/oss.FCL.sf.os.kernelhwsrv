@@ -1,4 +1,4 @@
-// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -933,6 +933,12 @@ void CSessionLoader::ServiceL(const RMessage2& aMessage)
 #ifdef __LAZY_DLL_UNLOAD
 		CLazyUnloadTimer::Finish();
 #endif
+		msg.Complete(KErrNone);
+		return;
+		}
+	if(mid==ELoaderRunReaper)
+		{
+		CReaperCleanupTimer::Complete();
 		msg.Complete(KErrNone);
 		return;
 		}

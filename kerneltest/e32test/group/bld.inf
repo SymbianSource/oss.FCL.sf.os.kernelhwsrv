@@ -754,6 +754,7 @@ t_prop_define1  support
 t_prop_define2  support
 t_prop_define3  support
 t_stress_property   support
+t_propclose
 
 // /E32TEST/REALTIME tests
 t_frag      support
@@ -915,9 +916,11 @@ t_debugapi      manual
 t_context
 #endif
 
-// /E32TEST/DMA tests
+// DMA tests
 t_dma       // user-side test harness for real DMA framework
-t_dma2       // user-side test harness for DMAv2 framework
+t_dma2      // user-side test harness for DMAv2 framework
+t_dmainv    // T_DMA with inverted thread priorities
+t_dma2inv   // T_DMA2 with inverted thread priorities
 
 // Example RTOS personality
 ../personality/example/t_expers support

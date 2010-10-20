@@ -1,4 +1,4 @@
-// Copyright (c) 1996-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1996-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -249,14 +249,6 @@ GLDEF_C TInt E32Main(void)
 	test_NotNull(rHeap);
 	__RHEAP_RESET(rHeap);
 	__RHEAP_MARK(rHeap);
-
-
-	// Prepare for __KHEAP tests by:
-	// Turning off lazy dll unloading
-	RLoader l;
-	test(l.Connect()==KErrNone);
-	test(l.CancelLazyDllUnload()==KErrNone);
-	l.Close();
 
 	// Loading the kernel heap test driver
 	test.Next(_L("Load/open d_kheap test driver"));
@@ -653,7 +645,8 @@ GLDEF_C TInt E32Main()
 //
 // __KHEAP_SETFAIL etc. not available in release mode, so don't test
 //
-	{	 
+	{
+	COMPLETE_POST_BOOT_SYSTEM_TASKS();
 
 	test.Title();
 	test.Start(_L("No tests in release mode"));

@@ -4524,7 +4524,7 @@ TBool DemandPaging::ReserveLock(DThread* aThread, TLinAddr aStart,TInt aSize, DD
 		aLock.iLockedStart = aStart;
 		aLock.iLockedPageCount = numPages;
 		aLock.iProcess = process;
-		aLock.iProcess->Open();
+		aLock.iProcess->CheckedOpen();
 		}
 
 	NKern::UnlockSystem();

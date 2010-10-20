@@ -402,7 +402,7 @@ namespace ISR_Reque
 namespace Multipart
 	{
 	// need long transfer, to try and force adjacent
-	// requests to be concatinated
+	// requests to be concatenated
 	const TInt size = 2 * KMega;
 	const TDmaTransferArgs transferArgArray[] = {
 		TDmaTransferArgs(0, size, size, KDmaMemAddr),
@@ -416,7 +416,7 @@ namespace Multipart
 		};
 
 	CMultiTransferTest multipart =
-		CMultiTransferTest(_L("Sg request concatination"), 1, transferArgArray, expected, ARRAY_LENGTH(transferArgArray))
+		CMultiTransferTest(_L("Sg request concatenation"), 1, transferArgArray, expected, ARRAY_LENGTH(transferArgArray))
 			.SetPreTransferTest(&KPreTransferIncrBytes)
 			.SetPostTransferTest(&KCompareSrcDst);
 

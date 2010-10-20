@@ -1500,7 +1500,8 @@ GLDEF_C TInt E32Main()
 //
 // Main
 //
-	{	
+	{
+	COMPLETE_POST_BOOT_SYSTEM_TASKS();
  
 	// don't want just in time debugging as we trap panics
 	TBool justInTime=User::JustInTime(); 

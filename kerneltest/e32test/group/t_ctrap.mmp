@@ -28,3 +28,5 @@ capability		all
 VENDORID 0x70000001
 
 SMPSAFE
+
+epocstacksize        0x4000
