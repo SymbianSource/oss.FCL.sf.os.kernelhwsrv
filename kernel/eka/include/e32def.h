@@ -446,7 +446,7 @@ the link object from the start of a list element.
 #if __GNUC__ < 4
 #define _FOFF(c,f)			(((TInt)&(((c *)0x1000)->f))-0x1000)
 #else
-#define _FOFF(c,f)			__builtin_offsetof(c,f)
+#define _FOFF(c,f)			(__builtin_offsetof(c,f))
 #endif
 #endif
 

@@ -70,11 +70,11 @@ void RunThread(TBool aNotFirst, SThreadCreateInfo& aInfo)
 	}
 }
 
-#elif defined(__ARMCC__)
+#elif defined(__EABI__)
 
 TInt CallThrdProcEntry(TInt (*aFn)(void*), void* aPtr, TInt aNotFirst);
 
-__weak void run_static_dtors(void);
+__WEAK__ void run_static_dtors(void);
 
 void globalDestructorFunc()
 	{
