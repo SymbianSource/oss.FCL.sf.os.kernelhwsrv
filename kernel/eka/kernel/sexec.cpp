@@ -938,9 +938,9 @@ TBool ExecHandler::ProcessDefaultDataPaged(DProcess* aProcess)
 
 TInt ExecHandler::OpenObject(TObjectType aObjType, const TDesC8& aName, TOwnerType aType)
 	{
-	__KTRACE_OPT(KTHREAD,Kern::Printf("Exec::OpenObject %lS",&aName));
 	TFullName n;
 	Kern::KUDesGet(n,aName);
+	__KTRACE_OPT(KTHREAD,Kern::Printf("Exec::OpenObject %lS",&n));
 	if (Kern::ValidateFullName(n)!=KErrNone)
 		K::PanicKernExec(EBadName);
 	if ((TUint)aObjType>=(TUint)ENumObjectTypes)
@@ -1012,12 +1012,12 @@ TInt ExecHandler::MutexCreate(const TDesC8* aName, TOwnerType aType)
 		{
 		Kern::KUDesGet(n,*aName);
 		pN=&n;
+		__KTRACE_OPT(KSEMAPHORE,Kern::Printf("Exec::MutexCreate %lS",pN));
 		}
 	else if (aType==EOwnerThread)
 		pO=TheCurrentThread;
 	else
 		pO=TheCurrentThread->iOwningProcess;
-	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("Exec::MutexCreate %lS",aName));
 	NKern::ThreadEnterCS();
 	DMutex* pM;
 	TInt r=K::MutexCreate(pM, *pN, pO, ETrue, KMutexOrdUser);
@@ -1036,7 +1036,6 @@ TInt ExecHandler::MutexCreate(const TDesC8* aName, TOwnerType aType)
 
 TInt ExecHandler::SemaphoreCreate(const TDesC8* aName, TInt aCount, TOwnerType aType)
 	{
-	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("Exec::SemaphoreCreate %lS",aName));
 	TKName n;
 	DObject* pO=NULL;
 	const TDesC* pN=NULL;
@@ -1044,6 +1043,7 @@ TInt ExecHandler::SemaphoreCreate(const TDesC8* aName, TInt aCount, TOwnerType a
 		{
 		Kern::KUDesGet(n,*aName);
 		pN=&n;
+		__KTRACE_OPT(KSEMAPHORE,Kern::Printf("Exec::SemaphoreCreate %lS",pN));
 		}
 	else if (aType==EOwnerThread)
 		pO=TheCurrentThread;
