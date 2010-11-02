@@ -26,13 +26,12 @@
 #include "rusbhostsession.h"
 #include "rusbotgsession.h"
 #include "cmsdrive.h"
-#include "tmslog.h"
 
 /*
-OTG Platform configuration 
-Define for H4 and undefine for Navi Engine 
+OTG Platform configuration
+Define for H4 and undefine for Navi Engine
 */
-#define _OTG_CONFIG 
+#define _OTG_CONFIG
 
 extern RTest test;
 extern RFs fsSession;
@@ -44,8 +43,6 @@ extern void CallTestsL();
 
 GLDEF_C void MainL()
     {
-    __MSFNSLOG
-
     TInt err;
     CleanupClosePushL(fsSession);
     User::LeaveIfError(fsSession.Connect());
@@ -70,7 +67,7 @@ GLDEF_C void MainL()
         TRequestStatus status;
         test.Printf(_L("Waiting for hub inserted event...\n"));
         usbOtgSession.NotifyChange(change, status);
-    
+
         User::WaitForRequest(status);
         User::LeaveIfError(status.Int());
 
@@ -135,7 +132,7 @@ GLDEF_C void MainL()
         test(EFalse);
         }
 
-    
+
     test.Printf(_L("Destroying sessions...\n"));
     test.Printf(_L("Destroying USB Host session...\n"));
     CleanupStack::PopAndDestroy(&usbHostSession);
@@ -154,16 +151,16 @@ GLDEF_C void MainL()
 
 
 GLDEF_C TInt E32Main()
-	{
+    {
     CTrapCleanup* cleanup = CTrapCleanup::New();
-	__UHEAP_MARK;
+    __UHEAP_MARK;
     test.Title();
     test.Start(_L("Starting tests..."));
 
-	TTime timerC;
-	timerC.HomeTime();
+    TTime timerC;
+    timerC.HomeTime();
 
-	TRAPD(err, MainL());
+    TRAPD(err, MainL());
     test(err == KErrNone);
 
     TTime endTimeC;
@@ -173,10 +170,10 @@ GLDEF_C TInt E32Main()
     test(err == KErrNone);
     test.Printf(_L("Time taken for test = %d seconds\n"),timeTakenC.Int());
 
-	test.End();
-	test.Close();
-	__UHEAP_MARKEND;
-	delete cleanup;
-	return KErrNone;
-	}
+    test.End();
+    test.Close();
+    __UHEAP_MARKEND;
+    delete cleanup;
+    return KErrNone;
+    }
 

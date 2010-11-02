@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -34,76 +34,81 @@
 #include "cbulkonlytransport.h"
 #include "cusbmssuspendresume.h"
 
-#include "msdebug.h"
-#include "debug.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "cusbmssuspendresumeTraces.h"
+#endif
 
 
 void CUsbMsIfaceSuspendResume::RunL()
     {
-    __MSFNLOG
-	iDevice->ResumeCompletedL();
-	if(iCancelSuspend)
-		{
-		User::RequestComplete(iDeviceStatus, iStatus.Int());
-		iDeviceStatus = NULL;
-		}
-	else
-		{
-		iDevice->DoHandleRemoteWakeupL();
-		}
+    iDevice->ResumeCompletedL();
+    if(iCancelSuspend)
+        {
+        OstTrace0(TRACE_SHOSTMASSSTORAGE_SUSPEND, CUSBMSSUSPENDRESUME_10,
+                  "SUSPEND/RESUME completed.");
+        User::RequestComplete(iDeviceStatus, iStatus.Int());
+        iDeviceStatus = NULL;
+        }
+    else
+        {
+        OstTrace0(TRACE_SHOSTMASSSTORAGE_SUSPEND, CUSBMSSUSPENDRESUME_11,
+                  "REMOTE WAKEUP");
+        iDevice->DoHandleRemoteWakeupL();
+        }
     }
 
 /**
 Cancellation of outstanding request
 */
 void CUsbMsIfaceSuspendResume::DoCancel()
-	{
-    __MSFNLOG
-	}
+    {
+    }
 
 TInt CUsbMsIfaceSuspendResume::RunError(TInt aError)
-	{
-    __MSFNLOG
+    {
+    OstTrace1(TRACE_SHOSTMASSSTORAGE_SUSPEND, CUSBMSSUSPENDRESUME_12,
+                  "Error = %d", aError);
     return KErrNone;
-	}
+    }
 
 
 void CUsbMsIfaceSuspendResume::Resume(TRequestStatus& aStatus)
-	{
-    __MSFNLOG
-	iCancelSuspend = ETrue;
+    {
+    OstTrace0(TRACE_SHOSTMASSSTORAGE_SUSPEND, CUSBMSSUSPENDRESUME_13,
+                  "RESUME");
+    iCancelSuspend = ETrue;
     aStatus = KRequestPending;
-	iDeviceStatus = &aStatus;
-	iTransport->Resume();
-	}
+    iDeviceStatus = &aStatus;
+    iTransport->Resume();
+    }
 
 void CUsbMsIfaceSuspendResume::Suspend()
-	{
-    __MSFNLOG
-	if(!IsActive())
-		SetActive();
-	iCancelSuspend = EFalse;
-	iTransport->Suspend(iStatus);
-	}
+    {
+    OstTrace0(TRACE_SHOSTMASSSTORAGE_SUSPEND, CUSBMSSUSPENDRESUME_14,
+                  "SUSPEND");
+    if(!IsActive())
+        SetActive();
+    iCancelSuspend = EFalse;
+    iTransport->Suspend(iStatus);
+    }
 
 CUsbMsIfaceSuspendResume* CUsbMsIfaceSuspendResume::NewL(MTransport *aTransport, CUsbHostMsDevice *aDevice)
-	{
-	return new (ELeave) CUsbMsIfaceSuspendResume(aTransport, aDevice);
-	}
+    {
+    return new (ELeave) CUsbMsIfaceSuspendResume(aTransport, aDevice);
+    }
 
 CUsbMsIfaceSuspendResume::CUsbMsIfaceSuspendResume(MTransport* aTransport, CUsbHostMsDevice* aDevice)
-:	CActive(EPriorityHigh),
+:   CActive(EPriorityHigh),
     iTransport(aTransport),
     iDevice(aDevice),
     iCancelSuspend(EFalse)
-	{
-    __MSFNLOG
-	CActiveScheduler::Add(this);
-	}
+    {
+    CActiveScheduler::Add(this);
+    }
 
 CUsbMsIfaceSuspendResume::~CUsbMsIfaceSuspendResume()
-	{
-    __MSFNLOG
-	Cancel();
-	}
+    {
+    Cancel();
+    }
 

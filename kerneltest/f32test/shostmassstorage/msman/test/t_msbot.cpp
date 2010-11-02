@@ -1,4 +1,4 @@
-// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -28,7 +28,6 @@
 #include "cmsdrive.h"
 #include "tmsprintdrive.h"
 #include "ttestutils.h"
-#include "tmslog.h"
 
 extern CMsDrive* msDrive;
 
@@ -164,19 +163,17 @@ _LIT(KDiResidue,        "DiResidue");
 
 CTestBot* CTestBot::NewL()
     {
-    __MSFNSLOG
-	CTestBot* r = new (ELeave) CTestBot();
-	CleanupStack::PushL(r);
+    CTestBot* r = new (ELeave) CTestBot();
+    CleanupStack::PushL(r);
 
-	r->ConstructL();
-	CleanupStack::Pop();
-	return r;
+    r->ConstructL();
+    CleanupStack::Pop();
+    return r;
     }
 
 
 void CTestBot::ConstructL()
     {
-    __MSFNLOG
     TInt driveNumber = msDrive->DriveNumber();
     iBotTester = CBotTester::NewL(driveNumber);
     }
@@ -184,14 +181,12 @@ void CTestBot::ConstructL()
 
 CTestBot::CTestBot()
     {
-    __MSFNLOG
     }
 
 
 
 CTestBot::~CTestBot()
     {
-    __MSFNLOG
     delete iBotTester;
     }
 
@@ -206,7 +201,6 @@ CTestBot::~CTestBot()
  */
 void CTestBot::CswResetRecovery(CBotTester::TTestCase aTestCase, const TDesC& aTestName)
     {
-    __MSFNLOG
     TInt res;
     test.Start(aTestName);
 
@@ -237,7 +231,6 @@ void CTestBot::CswResetRecovery(CBotTester::TTestCase aTestCase, const TDesC& aT
 
 void CTestBot::NoDataResetRecovery(CBotTester::TTestCase aTestCase, const TDesC& aTestName)
     {
-    __MSFNLOG
     TInt res;
     test.Start(aTestName);
 
@@ -264,7 +257,6 @@ void CTestBot::NoDataResetRecovery(CBotTester::TTestCase aTestCase, const TDesC&
 
 void CTestBot::NoDataClearStall(CBotTester::TTestCase aTestCase, const TDesC& aTestName)
     {
-    __MSFNLOG
     TInt res;
     test.Start(aTestName);
 
@@ -303,7 +295,6 @@ void CTestBot::NoDataClearStall(CBotTester::TTestCase aTestCase, const TDesC& aT
 
 void CTestBot::DataOutClearStall(CBotTester::TTestCase aTestCase, const TDesC& aTestName)
     {
-    __MSFNLOG
     TInt res;
     test.Start(aTestName);
 
@@ -342,7 +333,6 @@ void CTestBot::DataOutClearStall(CBotTester::TTestCase aTestCase, const TDesC& a
 
 void CTestBot::DataInClearStall(CBotTester::TTestCase aTestCase, const TDesC& aTestName)
     {
-    __MSFNLOG
     TInt res;
     test.Start(aTestName);
 
@@ -393,7 +383,6 @@ Tag Mismatch:
 */
 void CTestBot::tTagMismatch()
     {
-    __MSFNLOG
     CswResetRecovery(CBotTester::ETestCaseTagMismatch, KTagMismatch);
     }
 
@@ -406,7 +395,6 @@ Invalid Signature:
 */
 void CTestBot::tInvalidSignature()
     {
-    __MSFNLOG
     CswResetRecovery(CBotTester::ETestCaseInvalidSignature, KInvalidSignature);
     }
 
@@ -419,7 +407,6 @@ Hn CSW stall condition
 */
 void CTestBot::tNoDataStallCsw()
     {
-    __MSFNLOG
     NoDataClearStall(CBotTester::ETestCaseNoDataStallCsw, KNoDataStallCsw);
     }
 
@@ -430,35 +417,30 @@ Hn CSW Phase Error status
 */
 void CTestBot::tNoDataPhaseError()
     {
-    __MSFNLOG
     NoDataResetRecovery(CBotTester::ETestCaseNoDataPhaseError, KNoDataPhaseError);
     }
 
 
 void CTestBot::tDoStallCsw()
     {
-    __MSFNLOG
     DataOutClearStall(CBotTester::ETestCaseDoStallCsw, KDoStallCsw);
     }
 
 
 void CTestBot::tDoStallData()
     {
-    __MSFNLOG
     DataOutClearStall(CBotTester::ETestCaseDoStallData, KDoStallData);
     }
 
 
 void CTestBot::tDoPhaseError()
     {
-    __MSFNLOG
     CswResetRecovery(CBotTester::ETestCaseDoPhaseError, KDoPhaseError);
     }
 
 
 void CTestBot::tDoResidue()
     {
-    __MSFNLOG
     TInt res;
     test.Start(KDoResidue);
     res = iBotTester->SetTest(CBotTester::ETestCaseDoResidue);
@@ -484,28 +466,24 @@ void CTestBot::tDoResidue()
 
 void CTestBot::tDiStallCsw()
     {
-    __MSFNLOG
     DataInClearStall(CBotTester::ETestCaseDiStallCsw, KDiStallCsw);
     }
 
 
 void CTestBot::tDiStallData()
     {
-    __MSFNLOG
     DataInClearStall(CBotTester::ETestCaseDiStallData, KDiStallData);
     }
 
 
 void CTestBot::tDiPhaseError()
     {
-    __MSFNLOG
     CswResetRecovery(CBotTester::ETestCaseDiPhaseError, KDiPhaseError);
     }
 
 
 void CTestBot::tDiResidue()
     {
-    __MSFNLOG
     TInt res;
     test.Start(KDiResidue);
 

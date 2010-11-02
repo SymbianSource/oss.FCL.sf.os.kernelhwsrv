@@ -1,378 +1,380 @@
 EXPORTS
-    ??0CDir@@IAE@XZ @ 1 NONAME ; protected: __thiscall CDir::CDir(void)
-    ??0CFileBase@@IAE@AAVRFs@@@Z @ 2 NONAME ; protected: __thiscall CFileBase::CFileBase(class RFs &)
-    ??0TDriveUnit@@QAE@ABVTDesC16@@@Z @ 3 NONAME ; public: __thiscall TDriveUnit::TDriveUnit(class TDesC16 const &)
-    ??0TDriveUnit@@QAE@H@Z @ 4 NONAME ; public: __thiscall TDriveUnit::TDriveUnit(int)
-    ??0TEntryArray@@QAE@XZ @ 5 NONAME ; public: __thiscall TEntryArray::TEntryArray(void)
-    ??0TFileText@@QAE@XZ @ 6 NONAME ; public: __thiscall TFileText::TFileText(void)
-    ??0TFindFile@@QAE@AAVRFs@@@Z @ 7 NONAME ; public: __thiscall TFindFile::TFindFile(class RFs &)
-    ??0TOpenFileScan@@QAE@AAVRFs@@@Z @ 8 NONAME ; public: __thiscall TOpenFileScan::TOpenFileScan(class RFs &)
-    ??0TParseBase@@QAE@XZ @ 9 NONAME ; public: __thiscall TParseBase::TParseBase(void)
-    ??0TParsePtr@@QAE@AAVTDes16@@@Z @ 10 NONAME ; public: __thiscall TParsePtr::TParsePtr(class TDes16 &)
-    ??0TParsePtrC@@QAE@ABVTDesC16@@@Z @ 11 NONAME ; public: __thiscall TParsePtrC::TParsePtrC(class TDesC16 const &)
-    ??0TVolumeInfo@@QAE@XZ @ 12 NONAME ; public: __thiscall TVolumeInfo::TVolumeInfo(void)
-    ??1CDir@@UAE@XZ @ 13 NONAME ; public: virtual __thiscall CDir::~CDir(void)
-    ??1CDirScan@@UAE@XZ @ 14 NONAME ; public: virtual __thiscall CDirScan::~CDirScan(void)
-    ??1CFileBase@@MAE@XZ @ 15 NONAME ; protected: virtual __thiscall CFileBase::~CFileBase(void)
-    ??4TDriveUnit@@QAEAAV0@ABVTDesC16@@@Z @ 16 NONAME ; public: class TDriveUnit & __thiscall TDriveUnit::operator=(class TDesC16 const &)
-    ??4TDriveUnit@@QAEAAV0@H@Z @ 17 NONAME ; public: class TDriveUnit & __thiscall TDriveUnit::operator=(int)
-    ??ACDir@@QBEABVTEntry@@H@Z @ 18 NONAME ; public: class TEntry const & __thiscall CDir::operator[](int)const 
-    ??ATEntryArray@@QBEABVTEntry@@H@Z @ 19 NONAME ; public: class TEntry const & __thiscall TEntryArray::operator[](int)const 
-    ?AbbreviatedPath@CDirScan@@QAE?AVTPtrC16@@XZ @ 20 NONAME ; public: class TPtrC16  __thiscall CDirScan::AbbreviatedPath(void)
-    ?AbbreviatedPath@CFileBase@@QAE?AVTPtrC16@@XZ @ 21 NONAME ; public: class TPtrC16  __thiscall CFileBase::AbbreviatedPath(void)
-    ?AddDir@TParseBase@@QAEHABVTDesC16@@@Z @ 22 NONAME ; public: int __thiscall TParseBase::AddDir(class TDesC16 const &)
-    ?AddFileSystem@RFs@@QBEHABVTDesC16@@@Z @ 23 NONAME ; public: int __thiscall RFs::AddFileSystem(class TDesC16 const &)const 
-    ?AddL@CDir@@IAEXABVTEntry@@@Z @ 24 NONAME ; protected: void __thiscall CDir::AddL(class TEntry const &)
-    ?Att@RFile@@QBEHAAI@Z @ 25 NONAME ; public: int __thiscall RFile::Att(unsigned int &)const 
-    ?Att@RFs@@QBEHABVTDesC16@@AAI@Z @ 26 NONAME ; public: int __thiscall RFs::Att(class TDesC16 const &,unsigned int &)const 
-    ?Attribs@CFileMan@@QAEHABVTDesC16@@IIABVTTime@@I@Z @ 27 NONAME ; public: int __thiscall CFileMan::Attribs(class TDesC16 const &,unsigned int,unsigned int,class TTime const &,unsigned int)
-    ?Attribs@CFileMan@@QAEHABVTDesC16@@IIABVTTime@@IAAVTRequestStatus@@@Z @ 28 NONAME ; public: int __thiscall CFileMan::Attribs(class TDesC16 const &,unsigned int,unsigned int,class TTime const &,unsigned int,class TRequestStatus &)
-    ?BytesTransferredByCopyStep@CFileMan@@QAEHXZ @ 29 NONAME ; public: int __thiscall CFileMan::BytesTransferredByCopyStep(void)
-    ?ChangeMode@RFile@@QAEHW4TFileMode@@@Z @ 30 NONAME ; public: int __thiscall RFile::ChangeMode(enum TFileMode)
-    ?CharToDrive@RFs@@SAHVTChar@@AAH@Z @ 31 NONAME ; public: static int __cdecl RFs::CharToDrive(class TChar,int &)
-    ?CheckDisk@RFs@@QBEHABVTDesC16@@@Z @ 32 NONAME ; public: int __thiscall RFs::CheckDisk(class TDesC16 const &)const 
-    ?ClearPassword@RFs@@QAEHHABV?$TBuf8@$0BA@@@@Z @ 33 NONAME ; public: int __thiscall RFs::ClearPassword(int,class TBuf8<16> const &)
-    ?Duplicate@RFile@@QAEHABV1@W4TOwnerType@@@Z @ 34 NONAME ; public: int __thiscall RFile::Duplicate(class RFile const &,enum TOwnerType)
-    ?Close@RRawDisk@@QAEXXZ @ 35 NONAME ; public: void __thiscall RRawDisk::Close(void)
-    ?Compress@CDir@@IAEXXZ @ 36 NONAME ; protected: void __thiscall CDir::Compress(void)
-    ?Connect@RFs@@QAEHH@Z @ 37 NONAME ; public: int __thiscall RFs::Connect(int)
-    ?ConstructL@CFileBase@@IAEXXZ @ 38 NONAME ; protected: void __thiscall CFileBase::ConstructL(void)
-    ?ControlIo@RFs@@QAEHHHPAX0@Z @ 39 NONAME ; public: int __thiscall RFs::ControlIo(int,int,void *,void *)
-    ?Copy@CFileMan@@QAEHABVTDesC16@@0I@Z @ 40 NONAME ; public: int __thiscall CFileMan::Copy(class TDesC16 const &,class TDesC16 const &,unsigned int)
-    ?Copy@CFileMan@@QAEHABVTDesC16@@0IAAVTRequestStatus@@@Z @ 41 NONAME ; public: int __thiscall CFileMan::Copy(class TDesC16 const &,class TDesC16 const &,unsigned int,class TRequestStatus &)
-    ?Count@CDir@@QBEHXZ @ 42 NONAME ; public: int __thiscall CDir::Count(void)const 
-    ?Count@TEntryArray@@QBEHXZ @ 43 NONAME ; public: int __thiscall TEntryArray::Count(void)const 
-    ?Create@RFile@@QAEHAAVRFs@@ABVTDesC16@@I@Z @ 44 NONAME ; public: int __thiscall RFile::Create(class RFs &,class TDesC16 const &,unsigned int)
-    ?CurrentAction@CFileMan@@QAE?AW4TAction@1@XZ @ 45 NONAME ; public: enum CFileMan::TAction  __thiscall CFileMan::CurrentAction(void)
-    ?CurrentEntry@CFileBase@@QAEABVTEntry@@XZ @ 46 NONAME ; public: class TEntry const & __thiscall CFileBase::CurrentEntry(void)
-    ?DefaultPath@RFs@@QBEHAAVTDes16@@@Z @ 47 NONAME ; public: int __thiscall RFs::DefaultPath(class TDes16 &)const 
-    ?Delete@CFileMan@@QAEHABVTDesC16@@I@Z @ 48 NONAME ; public: int __thiscall CFileMan::Delete(class TDesC16 const &,unsigned int)
-    ?Delete@CFileMan@@QAEHABVTDesC16@@IAAVTRequestStatus@@@Z @ 49 NONAME ; public: int __thiscall CFileMan::Delete(class TDesC16 const &,unsigned int,class TRequestStatus &)
-    ?Delete@RFs@@QAEHABVTDesC16@@@Z @ 50 NONAME ; public: int __thiscall RFs::Delete(class TDesC16 const &)
-    ?DismountFileSystem@RFs@@QBEHABVTDesC16@@H@Z @ 51 NONAME ; public: int __thiscall RFs::DismountFileSystem(class TDesC16 const &,int)const 
-    ?Drive@RFs@@QBEHAAVTDriveInfo@@H@Z @ 52 NONAME ; public: int __thiscall RFs::Drive(class TDriveInfo &,int)const 
-    ?Drive@TParseBase@@QBE?AVTPtrC16@@XZ @ 53 NONAME ; public: class TPtrC16  __thiscall TParseBase::Drive(void)const 
-    ?DriveAndPath@TParseBase@@QBE?AVTPtrC16@@XZ @ 54 NONAME ; public: class TPtrC16  __thiscall TParseBase::DriveAndPath(void)const 
-    ?DriveList@RFs@@QBEHAAV?$TBuf8@$0BK@@@@Z @ 55 NONAME ; public: int __thiscall RFs::DriveList(class TBuf8<26> &)const 
-    ?DrivePresent@TParseBase@@QBEHXZ @ 56 NONAME ; public: int __thiscall TParseBase::DrivePresent(void)const 
-    ?DriveToChar@RFs@@SAHHAAVTChar@@@Z @ 57 NONAME ; public: static int __cdecl RFs::DriveToChar(int,class TChar &)
-    ?Entry@RFs@@QBEHABVTDesC16@@AAVTEntry@@@Z @ 58 NONAME ; public: int __thiscall RFs::Entry(class TDesC16 const &,class TEntry &)const 
-    ?Ext@TParseBase@@QBE?AVTPtrC16@@XZ @ 59 NONAME ; public: class TPtrC16  __thiscall TParseBase::Ext(void)const 
-    ?ExtPresent@TParseBase@@QBEHXZ @ 60 NONAME ; public: int __thiscall TParseBase::ExtPresent(void)const 
-    ?ExtractL@CDir@@IAEXHAAPAV1@@Z @ 61 NONAME ; protected: void __thiscall CDir::ExtractL(int,class CDir * &)
-    ?FileSystemName@RFs@@QBEHAAVTDes16@@H@Z @ 62 NONAME ; public: int __thiscall RFs::FileSystemName(class TDes16 &,int)const 
-    ?Find@TFindFile@@QAEHXZ @ 63 NONAME ; public: int __thiscall TFindFile::Find(void)
-    ?FindByDir@TFindFile@@QAEHABVTDesC16@@0@Z @ 64 NONAME ; public: int __thiscall TFindFile::FindByDir(class TDesC16 const &,class TDesC16 const &)
-    ?FindByPath@TFindFile@@QAEHABVTDesC16@@PBV2@@Z @ 65 NONAME ; public: int __thiscall TFindFile::FindByPath(class TDesC16 const &,class TDesC16 const *)
-    ?FindWild@TFindFile@@QAEHAAPAVCDir@@@Z @ 66 NONAME ; public: int __thiscall TFindFile::FindWild(class CDir * &)
-    ?FindWildByDir@TFindFile@@QAEHABVTDesC16@@0AAPAVCDir@@@Z @ 67 NONAME ; public: int __thiscall TFindFile::FindWildByDir(class TDesC16 const &,class TDesC16 const &,class CDir * &)
-    ?FindWildByPath@TFindFile@@QAEHABVTDesC16@@PBV2@AAPAVCDir@@@Z @ 68 NONAME ; public: int __thiscall TFindFile::FindWildByPath(class TDesC16 const &,class TDesC16 const *,class CDir * &)
-    ?Flush@RFile@@QAEHXZ @ 69 NONAME ; public: int __thiscall RFile::Flush(void)
-    ?FullName@TParseBase@@QBEABVTDesC16@@XZ @ 70 NONAME ; public: class TDesC16 const & __thiscall TParseBase::FullName(void)const 
-    ?FullPath@CDirScan@@QAE?AVTPtrC16@@XZ @ 71 NONAME ; public: class TPtrC16  __thiscall CDirScan::FullPath(void)
-    ?FullPath@CFileBase@@QAE?AVTPtrC16@@XZ @ 72 NONAME ; public: class TPtrC16  __thiscall CFileBase::FullPath(void)
-    ?GetCurrentSource@CFileMan@@QAEXAAV?$TBuf@$0BAA@@@@Z @ 73 NONAME ; public: void __thiscall CFileMan::GetCurrentSource(class TBuf<256> &)
-    ?GetCurrentTarget@CFileMan@@QAEXAAV?$TBuf@$0BAA@@@@Z @ 74 NONAME ; public: void __thiscall CFileMan::GetCurrentTarget(class TBuf<256> &)
-    ?GetDir@RFs@@QBEHABVTDesC16@@ABVTUidType@@IAAPAVCDir@@@Z @ 75 NONAME ; public: int __thiscall RFs::GetDir(class TDesC16 const &,class TUidType const &,unsigned int,class CDir * &)const 
-    ?GetDir@RFs@@QBEHABVTDesC16@@IIAAPAVCDir@@1@Z @ 76 NONAME ; public: int __thiscall RFs::GetDir(class TDesC16 const &,unsigned int,unsigned int,class CDir * &,class CDir * &)const 
-    ?GetDir@RFs@@QBEHABVTDesC16@@IIAAPAVCDir@@@Z @ 77 NONAME ; public: int __thiscall RFs::GetDir(class TDesC16 const &,unsigned int,unsigned int,class CDir * &)const 
-    ?GetDriveName@RFs@@QBEHHAAVTDes16@@@Z @ 78 NONAME ; public: int __thiscall RFs::GetDriveName(int,class TDes16 &)const 
-    ?GetLastError@CFileBase@@QAEHXZ @ 79 NONAME ; public: int __thiscall CFileBase::GetLastError(void)
-    ?GetLongName@RFs@@QBEHABVTDesC16@@AAVTDes16@@@Z @ 80 NONAME ; public: int __thiscall RFs::GetLongName(class TDesC16 const &,class TDes16 &)const 
-    ?GetMoreInfoAboutError@CFileBase@@QAE?AW4TFileManError@@XZ @ 81 NONAME ; public: enum TFileManError  __thiscall CFileBase::GetMoreInfoAboutError(void)
-    ?GetNotifyUser@RFs@@QAEHXZ @ 82 NONAME ; public: int __thiscall RFs::GetNotifyUser(void)
-    ?GetShortName@RFs@@QBEHABVTDesC16@@AAVTDes16@@@Z @ 83 NONAME ; public: int __thiscall RFs::GetShortName(class TDesC16 const &,class TDes16 &)const 
-    ?IsArchive@TEntry@@QBEHXZ @ 84 NONAME ; public: int __thiscall TEntry::IsArchive(void)const 
-    ?IsDir@TEntry@@QBEHXZ @ 85 NONAME ; public: int __thiscall TEntry::IsDir(void)const 
-    ?IsExtWild@TParseBase@@QBEHXZ @ 86 NONAME ; public: int __thiscall TParseBase::IsExtWild(void)const 
-    ?IsFileInRom@RFs@@QBEPAEABVTDesC16@@@Z @ 87 NONAME ; public: unsigned char * __thiscall RFs::IsFileInRom(class TDesC16 const &)const 
-    ?IsFileOpen@RFs@@QBEHABVTDesC16@@AAH@Z @ 88 NONAME ; public: int __thiscall RFs::IsFileOpen(class TDesC16 const &,int &)const 
-    ?IsHidden@TEntry@@QBEHXZ @ 89 NONAME ; public: int __thiscall TEntry::IsHidden(void)const 
-    ?IsKMatchAny@TParseBase@@QBEHXZ @ 90 NONAME ; public: int __thiscall TParseBase::IsKMatchAny(void)const 
-    ?IsKMatchOne@TParseBase@@QBEHXZ @ 91 NONAME ; public: int __thiscall TParseBase::IsKMatchOne(void)const 
-    ?IsNameWild@TParseBase@@QBEHXZ @ 92 NONAME ; public: int __thiscall TParseBase::IsNameWild(void)const 
-    ?IsReadOnly@TEntry@@QBEHXZ @ 93 NONAME ; public: int __thiscall TEntry::IsReadOnly(void)const 
-    ?IsRomAddress@RFs@@SAHPAX@Z @ 94 NONAME ; public: static int __cdecl RFs::IsRomAddress(void *)
-    ?IsRoot@TParseBase@@QBEHXZ @ 95 NONAME ; public: int __thiscall TParseBase::IsRoot(void)const 
-    ?IsSystem@TEntry@@QBEHXZ @ 96 NONAME ; public: int __thiscall TEntry::IsSystem(void)const 
-    ?IsValidDrive@RFs@@SAHH@Z @ 97 NONAME ; public: static int __cdecl RFs::IsValidDrive(int)
-    ?IsValidName@RFs@@QBEHABVTDesC16@@@Z @ 98 NONAME ; public: int __thiscall RFs::IsValidName(class TDesC16 const &)const 
-    ?IsValidName@RFs@@QBEHABVTDesC16@@AAG@Z @ 99 NONAME ; public: int __thiscall RFs::IsValidName(class TDesC16 const &,unsigned short &)const 
-    ?IsWild@TParseBase@@QBEHXZ @ 100 NONAME ; public: int __thiscall TParseBase::IsWild(void)const 
-    ?LoaderHeapFunction@RFs@@QAEHHPAX0@Z @ 101 NONAME ; public: int __thiscall RFs::LoaderHeapFunction(int,void *,void *)
-    ?Lock@RFile@@QBEHHH@Z @ 102 NONAME ; public: int __thiscall RFile::Lock(int,int)const 
-    ?LockDrive@RFs@@QAEHHABV?$TBuf8@$0BA@@@0H@Z @ 103 NONAME ; public: int __thiscall RFs::LockDrive(int,class TBuf8<16> const &,class TBuf8<16> const &,int)
-    ?MkDir@RFs@@QAEHABVTDesC16@@@Z @ 104 NONAME ; public: int __thiscall RFs::MkDir(class TDesC16 const &)
-    ?MkDirAll@RFs@@QAEHABVTDesC16@@@Z @ 105 NONAME ; public: int __thiscall RFs::MkDirAll(class TDesC16 const &)
-    ?Modified@RFile@@QBEHAAVTTime@@@Z @ 106 NONAME ; public: int __thiscall RFile::Modified(class TTime &)const 
-    ?Modified@RFs@@QBEHABVTDesC16@@AAVTTime@@@Z @ 107 NONAME ; public: int __thiscall RFs::Modified(class TDesC16 const &,class TTime &)const 
-    ?MountFileSystem@RFs@@QBEHABVTDesC16@@H@Z @ 108 NONAME ; public: int __thiscall RFs::MountFileSystem(class TDesC16 const &,int)const 
-    ?Move@CFileMan@@QAEHABVTDesC16@@0I@Z @ 109 NONAME ; public: int __thiscall CFileMan::Move(class TDesC16 const &,class TDesC16 const &,unsigned int)
-    ?Move@CFileMan@@QAEHABVTDesC16@@0IAAVTRequestStatus@@@Z @ 110 NONAME ; public: int __thiscall CFileMan::Move(class TDesC16 const &,class TDesC16 const &,unsigned int,class TRequestStatus &)
-    ?Name@TDriveUnit@@QBE?AV?$TBuf@$01@@XZ @ 111 NONAME ; public: class TBuf<2>  __thiscall TDriveUnit::Name(void)const 
-    ?Name@TParseBase@@QBE?AVTPtrC16@@XZ @ 112 NONAME ; public: class TPtrC16  __thiscall TParseBase::Name(void)const 
-    ?NameAndExt@TParseBase@@QBE?AVTPtrC16@@XZ @ 113 NONAME ; public: class TPtrC16  __thiscall TParseBase::NameAndExt(void)const 
-    ?NameBuf@TParse@@MAEAAVTDes16@@XZ @ 114 NONAME ; protected: virtual class TDes16 & __thiscall TParse::NameBuf(void)
-    ?NameBuf@TParsePtr@@MAEAAVTDes16@@XZ @ 115 NONAME ; protected: virtual class TDes16 & __thiscall TParsePtr::NameBuf(void)
-    ?NameBuf@TParsePtrC@@MAEAAVTDes16@@XZ @ 116 NONAME ; protected: virtual class TDes16 & __thiscall TParsePtrC::NameBuf(void)
-    ?NameBufC@TParse@@MBEABVTDesC16@@XZ @ 117 NONAME ; protected: virtual class TDesC16 const & __thiscall TParse::NameBufC(void)const 
-    ?NameBufC@TParsePtr@@MBEABVTDesC16@@XZ @ 118 NONAME ; protected: virtual class TDesC16 const & __thiscall TParsePtr::NameBufC(void)const 
-    ?NameBufC@TParsePtrC@@MBEABVTDesC16@@XZ @ 119 NONAME ; protected: virtual class TDesC16 const & __thiscall TParsePtrC::NameBufC(void)const 
-    ?NameOrExtPresent@TParseBase@@QBEHXZ @ 120 NONAME ; public: int __thiscall TParseBase::NameOrExtPresent(void)const 
-    ?NamePresent@TParseBase@@QBEHXZ @ 121 NONAME ; public: int __thiscall TParseBase::NamePresent(void)const 
-    ?NewL@CDir@@KAPAV1@XZ @ 122 NONAME ; protected: static class CDir * __cdecl CDir::NewL(void)
-    ?NewL@CDirScan@@SAPAV1@AAVRFs@@@Z @ 123 NONAME ; public: static class CDirScan * __cdecl CDirScan::NewL(class RFs &)
-    ?NewL@CFileMan@@SAPAV1@AAVRFs@@@Z @ 124 NONAME ; public: static class CFileMan * __cdecl CFileMan::NewL(class RFs &)
-    ?NewL@CFileMan@@SAPAV1@AAVRFs@@PAVMFileManObserver@@@Z @ 125 NONAME ; public: static class CFileMan * __cdecl CFileMan::NewL(class RFs &,class MFileManObserver *)
-    ?NewLC@CDirScan@@SAPAV1@AAVRFs@@@Z @ 126 NONAME ; public: static class CDirScan * __cdecl CDirScan::NewLC(class RFs &)
-    ?Next@RFormat@@QAEHAAH@Z @ 127 NONAME ; public: int __thiscall RFormat::Next(int &)
-    ?Next@RFormat@@QAEXAAV?$TPckgBuf@H@@AAVTRequestStatus@@@Z @ 128 NONAME ; public: void __thiscall RFormat::Next(class TPckgBuf<int> &,class TRequestStatus &)
-    ?NextL@CDirScan@@QAEXAAPAVCDir@@@Z @ 129 NONAME ; public: void __thiscall CDirScan::NextL(class CDir * &)
-    ?NextL@TOpenFileScan@@QAEXAAPAVCDir@@@Z @ 130 NONAME ; public: void __thiscall TOpenFileScan::NextL(class CDir * &)
-    ?NotifyChange@RFs@@QAEXW4TNotifyType@@AAVTRequestStatus@@@Z @ 131 NONAME ; public: void __thiscall RFs::NotifyChange(enum TNotifyType,class TRequestStatus &)
-    ?NotifyChange@RFs@@QAEXW4TNotifyType@@AAVTRequestStatus@@ABVTDesC16@@@Z @ 132 NONAME ; public: void __thiscall RFs::NotifyChange(enum TNotifyType,class TRequestStatus &,class TDesC16 const &)
-    ?NotifyChangeCancel@RFs@@QAEXAAVTRequestStatus@@@Z @ 133 NONAME ; public: void __thiscall RFs::NotifyChangeCancel(class TRequestStatus &)
-    ?NotifyChangeCancel@RFs@@QAEXXZ @ 134 NONAME ; public: void __thiscall RFs::NotifyChangeCancel(void)
-    ?NotifyFileManEnded@MFileManObserver@@UAE?AW4TControl@1@XZ @ 135 NONAME ; public: virtual enum MFileManObserver::TControl  __thiscall MFileManObserver::NotifyFileManEnded(void)
-    ?NotifyFileManOperation@MFileManObserver@@UAE?AW4TControl@1@XZ @ 136 NONAME ; public: virtual enum MFileManObserver::TControl  __thiscall MFileManObserver::NotifyFileManOperation(void)
-    ?NotifyFileManStarted@MFileManObserver@@UAE?AW4TControl@1@XZ @ 137 NONAME ; public: virtual enum MFileManObserver::TControl  __thiscall MFileManObserver::NotifyFileManStarted(void)
-    ?Open@RDir@@QAEHAAVRFs@@ABVTDesC16@@ABVTUidType@@@Z @ 138 NONAME ; public: int __thiscall RDir::Open(class RFs &,class TDesC16 const &,class TUidType const &)
-    ?Open@RDir@@QAEHAAVRFs@@ABVTDesC16@@I@Z @ 139 NONAME ; public: int __thiscall RDir::Open(class RFs &,class TDesC16 const &,unsigned int)
-    ?Open@RFile@@QAEHAAVRFs@@ABVTDesC16@@I@Z @ 140 NONAME ; public: int __thiscall RFile::Open(class RFs &,class TDesC16 const &,unsigned int)
-    ?Open@RFormat@@QAEHAAVRFs@@ABVTDesC16@@IAAH@Z @ 141 NONAME ; public: int __thiscall RFormat::Open(class RFs &,class TDesC16 const &,unsigned int,int &)
-    ?Open@RRawDisk@@QAEHAAVRFs@@H@Z @ 142 NONAME ; public: int __thiscall RRawDisk::Open(class RFs &,int)
-    ?Parse@RFs@@QBEHABVTDesC16@@0AAVTParse@@@Z @ 143 NONAME ; public: int __thiscall RFs::Parse(class TDesC16 const &,class TDesC16 const &,class TParse &)const 
-    ?Parse@RFs@@QBEHABVTDesC16@@AAVTParse@@@Z @ 144 NONAME ; public: int __thiscall RFs::Parse(class TDesC16 const &,class TParse &)const 
-    ?Path@TParseBase@@QBE?AVTPtrC16@@XZ @ 145 NONAME ; public: class TPtrC16  __thiscall TParseBase::Path(void)const 
-    ?PathPresent@TParseBase@@QBEHXZ @ 146 NONAME ; public: int __thiscall TParseBase::PathPresent(void)const 
-    ?PopDir@TParseBase@@QAEHXZ @ 147 NONAME ; public: int __thiscall TParseBase::PopDir(void)
-    ?Read@RDir@@QBEHAAVTEntry@@@Z @ 148 NONAME ; public: int __thiscall RDir::Read(class TEntry &)const 
-    ?Read@RDir@@QBEHAAVTEntryArray@@@Z @ 149 NONAME ; public: int __thiscall RDir::Read(class TEntryArray &)const 
-    ?Read@RDir@@QBEXAAV?$TPckg@VTEntry@@@@AAVTRequestStatus@@@Z @ 150 NONAME ; public: void __thiscall RDir::Read(class TPckg<class TEntry> &,class TRequestStatus &)const 
-    ?Read@RDir@@QBEXAAVTEntryArray@@AAVTRequestStatus@@@Z @ 151 NONAME ; public: void __thiscall RDir::Read(class TEntryArray &,class TRequestStatus &)const 
-    ?Read@RFile@@QBEHAAVTDes8@@@Z @ 152 NONAME ; public: int __thiscall RFile::Read(class TDes8 &)const 
-    ?Read@RFile@@QBEHAAVTDes8@@H@Z @ 153 NONAME ; public: int __thiscall RFile::Read(class TDes8 &,int)const 
-    ?Read@RFile@@QBEHHAAVTDes8@@@Z @ 154 NONAME ; public: int __thiscall RFile::Read(int,class TDes8 &)const 
-    ?Read@RFile@@QBEHHAAVTDes8@@H@Z @ 155 NONAME ; public: int __thiscall RFile::Read(int,class TDes8 &,int)const 
-    ?Read@RFile@@QBEXAAVTDes8@@AAVTRequestStatus@@@Z @ 156 NONAME ; public: void __thiscall RFile::Read(class TDes8 &,class TRequestStatus &)const 
-    ?Read@RFile@@QBEXAAVTDes8@@HAAVTRequestStatus@@@Z @ 157 NONAME ; public: void __thiscall RFile::Read(class TDes8 &,int,class TRequestStatus &)const 
-    ?Read@RFile@@QBEXHAAVTDes8@@AAVTRequestStatus@@@Z @ 158 NONAME ; public: void __thiscall RFile::Read(int,class TDes8 &,class TRequestStatus &)const 
-    ?Read@RFile@@QBEXHAAVTDes8@@HAAVTRequestStatus@@@Z @ 159 NONAME ; public: void __thiscall RFile::Read(int,class TDes8 &,int,class TRequestStatus &)const 
-    ?Read@_RRawDisk@@QAEHHAAVTDes8@@@Z @ 160 NONAME ; public: int __thiscall _RRawDisk::Read(int,class TDes8 &)
-    ?Read@TFileText@@QAEHAAVTDes16@@@Z @ 161 NONAME ; public: int __thiscall TFileText::Read(class TDes16 &)
-    ?ReadFileSection_RESERVED@RFs@@ABEHABVTDesC16@@HAAVTDes8@@H@Z @ 162 NONAME ; public: int __thiscall RFs::ReadFileSection_RESERVED(class TDesC16 const &,int,class TDes8 &,int)const 
-    ?RealName@RFs@@QBEHABVTDesC16@@AAVTDes16@@@Z @ 163 NONAME ; public: int __thiscall RFs::RealName(class TDesC16 const &,class TDes16 &)const 
-    ?RemoveFileSystem@RFs@@QBEHABVTDesC16@@@Z @ 164 NONAME ; public: int __thiscall RFs::RemoveFileSystem(class TDesC16 const &)const 
-    ?Rename@CFileMan@@QAEHABVTDesC16@@0I@Z @ 165 NONAME ; public: int __thiscall CFileMan::Rename(class TDesC16 const &,class TDesC16 const &,unsigned int)
-    ?Rename@CFileMan@@QAEHABVTDesC16@@0IAAVTRequestStatus@@@Z @ 166 NONAME ; public: int __thiscall CFileMan::Rename(class TDesC16 const &,class TDesC16 const &,unsigned int,class TRequestStatus &)
-    ?Rename@RFile@@QAEHABVTDesC16@@@Z @ 167 NONAME ; public: int __thiscall RFile::Rename(class TDesC16 const &)
-    ?Rename@RFs@@QAEHABVTDesC16@@0@Z @ 168 NONAME ; public: int __thiscall RFs::Rename(class TDesC16 const &,class TDesC16 const &)
-    ?Replace@RFile@@QAEHAAVRFs@@ABVTDesC16@@I@Z @ 169 NONAME ; public: int __thiscall RFile::Replace(class RFs &,class TDesC16 const &,unsigned int)
-    ?Replace@RFs@@QAEHABVTDesC16@@0@Z @ 170 NONAME ; public: int __thiscall RFs::Replace(class TDesC16 const &,class TDesC16 const &)
-    ?ResourceCount@RFs@@QBEHXZ @ 171 NONAME ; public: int __thiscall RFs::ResourceCount(void)const 
-    ?ResourceCountMarkEnd@RFs@@QBEXXZ @ 172 NONAME ; public: void __thiscall RFs::ResourceCountMarkEnd(void)const 
-    ?ResourceCountMarkStart@RFs@@QBEXXZ @ 173 NONAME ; public: void __thiscall RFs::ResourceCountMarkStart(void)const 
-    ?RmDir@CFileMan@@QAEHABVTDesC16@@@Z @ 174 NONAME ; public: int __thiscall CFileMan::RmDir(class TDesC16 const &)
-    ?RmDir@CFileMan@@QAEHABVTDesC16@@AAVTRequestStatus@@@Z @ 175 NONAME ; public: int __thiscall CFileMan::RmDir(class TDesC16 const &,class TRequestStatus &)
-    ?RmDir@RFs@@QAEHABVTDesC16@@@Z @ 176 NONAME ; public: int __thiscall RFs::RmDir(class TDesC16 const &)
-    ?RunInSeparateThreadL@CFileBase@@IAEXP6AHPAX@Z@Z @ 177 NONAME ; protected: void __thiscall CFileBase::RunInSeparateThreadL(int (__cdecl*)(void *))
-    ?RunL@CFileBase@@IAEXXZ @ 178 NONAME ; protected: void __thiscall CFileBase::RunL(void)
-    ?ScanDrive@RFs@@QBEHABVTDesC16@@@Z @ 179 NONAME ; public: int __thiscall RFs::ScanDrive(class TDesC16 const &)const 
-    ?Seek@RFile@@QBEHW4TSeek@@AAH@Z @ 180 NONAME ; public: int __thiscall RFile::Seek(enum TSeek,int &)const 
-    ?Seek@TFileText@@QAEHW4TSeek@@@Z @ 181 NONAME ; public: int __thiscall TFileText::Seek(enum TSeek)
-    ?SessionPath@RFs@@QBEHAAVTDes16@@@Z @ 182 NONAME ; public: int __thiscall RFs::SessionPath(class TDes16 &)const 
-    ?Set@RFile@@QAEHABVTTime@@II@Z @ 183 NONAME ; public: int __thiscall RFile::Set(class TTime const &,unsigned int,unsigned int)
-    ?Set@TFileText@@QAEXAAVRFile@@@Z @ 184 NONAME ; public: void __thiscall TFileText::Set(class RFile &)
-    ?Set@TParse@@QAEHABVTDesC16@@PBV2@1@Z @ 185 NONAME ; public: int __thiscall TParse::Set(class TDesC16 const &,class TDesC16 const *,class TDesC16 const *)
-    ?SetAllocFailure@RFs@@QAEHH@Z @ 186 NONAME ; public: int __thiscall RFs::SetAllocFailure(int)
-    ?SetAtt@RFile@@QAEHII@Z @ 187 NONAME ; public: int __thiscall RFile::SetAtt(unsigned int,unsigned int)
-    ?SetAtt@RFs@@QAEHABVTDesC16@@II@Z @ 188 NONAME ; public: int __thiscall RFs::SetAtt(class TDesC16 const &,unsigned int,unsigned int)
-    ?SetDebugRegister@RFs@@QAEHH@Z @ 189 NONAME ; public: int __thiscall RFs::SetDebugRegister(int)
-    ?SetDefaultPath@RFs@@QAEHABVTDesC16@@@Z @ 190 NONAME ; public: int __thiscall RFs::SetDefaultPath(class TDesC16 const &)
-    ?SetDriveName@RFs@@QAEHHABVTDesC16@@@Z @ 191 NONAME ; public: int __thiscall RFs::SetDriveName(int,class TDesC16 const &)
-    ?SetEntry@RFs@@QAEHABVTDesC16@@ABVTTime@@II@Z @ 192 NONAME ; public: int __thiscall RFs::SetEntry(class TDesC16 const &,class TTime const &,unsigned int,unsigned int)
-    ?SetErrorCondition@RFs@@QAEHHH@Z @ 193 NONAME ; public: int __thiscall RFs::SetErrorCondition(int,int)
-    ?SetModified@RFile@@QAEHABVTTime@@@Z @ 194 NONAME ; public: int __thiscall RFile::SetModified(class TTime const &)
-    ?SetModified@RFs@@QAEHABVTDesC16@@ABVTTime@@@Z @ 195 NONAME ; public: int __thiscall RFs::SetModified(class TDesC16 const &,class TTime const &)
-    ?SetNoWild@TParse@@QAEHABVTDesC16@@PBV2@1@Z @ 196 NONAME ; public: int __thiscall TParse::SetNoWild(class TDesC16 const &,class TDesC16 const *,class TDesC16 const *)
-    ?SetNotifyUser@RFs@@QAEXH@Z @ 197 NONAME ; public: void __thiscall RFs::SetNotifyUser(int)
-    ?SetObserver@CFileBase@@QAEXPAVMFileManObserver@@@Z @ 198 NONAME ; public: void __thiscall CFileBase::SetObserver(class MFileManObserver *)
-    ?SetScanDataL@CDirScan@@QAEXABVTDesC16@@IIW4TScanDirection@1@@Z @ 199 NONAME ; public: void __thiscall CDirScan::SetScanDataL(class TDesC16 const &,unsigned int,unsigned int,enum CDirScan::TScanDirection)
-    ?SetSessionPath@RFs@@QAEHABVTDesC16@@@Z @ 200 NONAME ; public: int __thiscall RFs::SetSessionPath(class TDesC16 const &)
-    ?SetSize@RFile@@QAEHH@Z @ 201 NONAME ; public: int __thiscall RFile::SetSize(int)
-    ?SetSubst@RFs@@QAEHABVTDesC16@@H@Z @ 202 NONAME ; public: int __thiscall RFs::SetSubst(class TDesC16 const &,int)
-    ?SetVolumeLabel@RFs@@QAEHABVTDesC16@@H@Z @ 203 NONAME ; public: int __thiscall RFs::SetVolumeLabel(class TDesC16 const &,int)
-    ?Size@RFile@@QBEHAAH@Z @ 204 NONAME ; public: int __thiscall RFile::Size(int &)const 
-    ?Sort@CDir@@QAEHI@Z @ 205 NONAME ; public: int __thiscall CDir::Sort(unsigned int)
-    ?Subst@RFs@@QBEHAAVTDes16@@H@Z @ 206 NONAME ; public: int __thiscall RFs::Subst(class TDes16 &,int)const 
-    ?Temp@RFile@@QAEHAAVRFs@@ABVTDesC16@@AAV?$TBuf@$0BAA@@@I@Z @ 207 NONAME ; public: int __thiscall RFile::Temp(class RFs &,class TDesC16 const &,class TBuf<256> &,unsigned int)
-    ?ThreadId@TOpenFileScan@@QBE?AVTThreadId@@XZ @ 208 NONAME ; public: class TThreadId  __thiscall TOpenFileScan::ThreadId(void)const 
-    ?UnLock@RFile@@QBEHHH@Z @ 209 NONAME ; public: int __thiscall RFile::UnLock(int,int)const 
-    ?UnlockDrive@RFs@@QAEHHABV?$TBuf8@$0BA@@@H@Z @ 210 NONAME ; public: int __thiscall RFs::UnlockDrive(int,class TBuf8<16> const &,int)
-    ?Version@RFs@@QBE?AVTVersion@@XZ @ 211 NONAME ; public: class TVersion  __thiscall RFs::Version(void)const 
-    ?Volume@RFs@@QBEHAAVTVolumeInfo@@H@Z @ 212 NONAME ; public: int __thiscall RFs::Volume(class TVolumeInfo &,int)const 
-    ?Write@RFile@@QAEHABVTDesC8@@@Z @ 213 NONAME ; public: int __thiscall RFile::Write(class TDesC8 const &)
-    ?Write@RFile@@QAEHABVTDesC8@@H@Z @ 214 NONAME ; public: int __thiscall RFile::Write(class TDesC8 const &,int)
-    ?Write@RFile@@QAEHHABVTDesC8@@@Z @ 215 NONAME ; public: int __thiscall RFile::Write(int,class TDesC8 const &)
-    ?Write@RFile@@QAEHHABVTDesC8@@H@Z @ 216 NONAME ; public: int __thiscall RFile::Write(int,class TDesC8 const &,int)
-    ?Write@RFile@@QAEXABVTDesC8@@AAVTRequestStatus@@@Z @ 217 NONAME ; public: void __thiscall RFile::Write(class TDesC8 const &,class TRequestStatus &)
-    ?Write@RFile@@QAEXABVTDesC8@@HAAVTRequestStatus@@@Z @ 218 NONAME ; public: void __thiscall RFile::Write(class TDesC8 const &,int,class TRequestStatus &)
-    ?Write@RFile@@QAEXHABVTDesC8@@AAVTRequestStatus@@@Z @ 219 NONAME ; public: void __thiscall RFile::Write(int,class TDesC8 const &,class TRequestStatus &)
-    ?Write@RFile@@QAEXHABVTDesC8@@HAAVTRequestStatus@@@Z @ 220 NONAME ; public: void __thiscall RFile::Write(int,class TDesC8 const &,int,class TRequestStatus &)
-    ?Write@_RRawDisk@@QAEHHAAVTDesC8@@@Z @ 221 NONAME ; public: int __thiscall _RRawDisk::Write(int,class TDesC8 &)
-    ?Write@TFileText@@QAEHABVTDesC16@@@Z @ 222 NONAME ; public: int __thiscall TFileText::Write(class TDesC16 const &)
-    ?DebugNotify@RFs@@QAEXHIAAVTRequestStatus@@@Z @ 223 NONAME ; public: void __thiscall RFs::DebugNotify(int,unsigned int,class TRequestStatus &)
-    ?NotifyDiskSpace@RFs@@QAEX_JHAAVTRequestStatus@@@Z @ 224 NONAME ; public: void __thiscall RFs::NotifyDiskSpace(__int64,int,class TRequestStatus &)
-    ?NotifyDiskSpaceCancel@RFs@@QAEXAAVTRequestStatus@@@Z @ 225 NONAME ; public: void __thiscall RFs::NotifyDiskSpaceCancel(class TRequestStatus &)
-    ?NotifyDiskSpaceCancel@RFs@@QAEXXZ @ 226 NONAME ; public: void __thiscall RFs::NotifyDiskSpaceCancel(void)
-    ??0TEntry@@QAE@ABV0@@Z @ 227 NONAME ; public: __thiscall TEntry::TEntry(class TEntry const &)
-    ??0TEntry@@QAE@XZ @ 228 NONAME ; public: __thiscall TEntry::TEntry(void)
-    ??4TEntry@@QAEAAV0@ABV0@@Z @ 229 NONAME ; public: class TEntry & __thiscall TEntry::operator=(class TEntry const &)
-    ??0TParse@@QAE@XZ @ 230 NONAME ; public: __thiscall TParse::TParse(void)
-    ?Drive@RFile@@QBEHAAHAAVTDriveInfo@@@Z @ 231 NONAME ; public: int __thiscall RFile::Drive(int &,class TDriveInfo &)const 
-    ?RemountDrive@RFs@@QAEHHPBVTDesC8@@I@Z @ 232 NONAME ; public: int __thiscall RFs::RemountDrive(int,class TDesC8 const *,unsigned int)
-    ?MountFileSystemAndScan@RFs@@QBEHABVTDesC16@@HAAH@Z @ 233 NONAME ; public: int __thiscall RFs::MountFileSystemAndScan(class TDesC16 const &,int,int &)const 
-    ?CreatePrivatePath@RFs@@QAEHH@Z @ 234 NONAME ; public: int __thiscall RFs::CreatePrivatePath(int)
-    ?PrivatePath@RFs@@QAEHAAVTDes16@@@Z @ 235 NONAME ; public: int __thiscall RFs::PrivatePath(class TDes16 &)
-    ?SetSessionToPrivate@RFs@@QAEHH@Z @ 236 NONAME ; public: int __thiscall RFs::SetSessionToPrivate(int)
-    ?FileNamesIdentical@@YAHABVTDesC16@@0@Z @ 237 NONAME ; int __cdecl FileNamesIdentical(class TDesC16 const &,class TDesC16 const &)
-    ?AddExtension@RFs@@QAEHABVTDesC16@@@Z @ 238 NONAME ; public: int __thiscall RFs::AddExtension(class TDesC16 const &)
-    ?DismountExtension@RFs@@QAEHABVTDesC16@@H@Z @ 239 NONAME ; public: int __thiscall RFs::DismountExtension(class TDesC16 const &,int)
-    ?ExtensionName@RFs@@QAEHAAVTDes16@@HH@Z @ 240 NONAME ; public: int __thiscall RFs::ExtensionName(class TDes16 &,int,int)
-    ?MountExtension@RFs@@QAEHABVTDesC16@@H@Z @ 241 NONAME ; public: int __thiscall RFs::MountExtension(class TDesC16 const &,int)
-    ?MountFileSystem@RFs@@QAEHABVTDesC16@@0H@Z @ 242 NONAME ; public: int __thiscall RFs::MountFileSystem(class TDesC16 const &,class TDesC16 const &,int)
-    ?RemoveExtension@RFs@@QAEHABVTDesC16@@@Z @ 243 NONAME ; public: int __thiscall RFs::RemoveExtension(class TDesC16 const &)
-    ?StartupInitComplete@RFs@@QAEXAAVTRequestStatus@@@Z @ 244 NONAME ; public: void __thiscall RFs::StartupInitComplete(class TRequestStatus &)
-    ?SetLocalDriveMapping@RFs@@QAEHABVTDesC8@@@Z @ 245 NONAME ; public: int __thiscall RFs::SetLocalDriveMapping(class TDesC8 const &)
-    ?ControlIo@RFs@@QAEHHH@Z @ 246 NONAME ; public: int __thiscall RFs::ControlIo(int,int)
-    ?ControlIo@RFs@@QAEHHHAAVTDes8@@@Z @ 247 NONAME ; public: int __thiscall RFs::ControlIo(int,int,class TDes8&)   ?Adopt@RFile@@QAEHAAVRFs@@AAH@Z @ 246 NONAME ; public: int __thiscall RFile::Adopt(class RFs &,int &)
-    ?ControlIo@RFs@@QAEHHHAAVTDes8@@0@Z @ 248 NONAME ; public: int __thiscall RFs::ControlIo(int,int,class TDes8&,class TDes8&)
-    ?Adopt@RFile@@QAEHAAVRFs@@H@Z @ 249 NONAME ; public: int __thiscall RFile::Adopt(class RFs &,int)
-    ?MountFileSystem@RFs@@QAEHABVTDesC16@@0HH@Z @ 250 NONAME ; public: int __thiscall RFs::MountFileSystem(class TDesC16 const &,class TDesC16 const &,int,int)
-    ?MountFileSystem@RFs@@QBEHABVTDesC16@@HH@Z @ 251 NONAME ; public: int __thiscall RFs::MountFileSystem(class TDesC16 const &,int,int)const 
-    ?Read@RRawDisk@@QAEH_JAAVTDes8@@@Z @ 252 NONAME ; public: int __thiscall RRawDisk::Read(__int64,class TDes8 &)
-    ?Write@RRawDisk@@QAEH_JAAVTDesC8@@@Z @ 253 NONAME ; public: int __thiscall RRawDisk::Write(__int64,class TDesC8 &)
-    ?FinaliseDrives@RFs@@QAEHXZ @ 254 NONAME ; public: int __thiscall RFs::FinaliseDrives(void)
-    ?SwapFileSystem@RFs@@QBEHABVTDesC16@@0H@Z @ 255 NONAME ; public: int __thiscall RFs::SwapFileSystem(class TDesC16 const &,class TDesC16 const &,int)const 
-    ?ErasePassword@RFs@@QAEHH@Z @ 256 NONAME ; public: int __thiscall RFs::ErasePassword(int)
-    ?GetReserveAccess@RFs@@QAEHH@Z @ 257 NONAME ; public: int __thiscall RFs::GetReserveAccess(int)
-    ?ReleaseReserveAccess@RFs@@QAEHH@Z @ 258 NONAME ; public: int __thiscall RFs::ReleaseReserveAccess(int)
-    ?ReserveDriveSpace@RFs@@QAEHHH@Z @ 259 NONAME ; public: int __thiscall RFs::ReserveDriveSpace(int,int)
-    ?AdoptFromClient@RFile@@QAEHABVRMessage2@@HH@Z @ 260 NONAME ; public: int __thiscall RFile::AdoptFromClient(class RMessage2 const &,int,int)
-    ?AdoptFromCreator@RFile@@QAEHHH@Z @ 261 NONAME ; public: int __thiscall RFile::AdoptFromCreator(int,int)
-    ?AdoptFromServer@RFile@@QAEHHH@Z @ 262 NONAME ; public: int __thiscall RFile::AdoptFromServer(int,int)
-    ?TransferToClient@RFile@@QBEHABVRMessage2@@H@Z @ 263 NONAME ; public: int __thiscall RFile::TransferToClient(class RMessage2 const &,int)const 
-    ?TransferToProcess@RFile@@QBEHAAVRProcess@@HH@Z @ 264 NONAME ; public: int __thiscall RFile::TransferToProcess(class RProcess &,int,int)const 
-    ?TransferToServer@RFile@@QBEHAAVTIpcArgs@@HH@Z @ 265 NONAME ; public: int __thiscall RFile::TransferToServer(class TIpcArgs &,int,int)const 
-    ?Name@RFile@@QBEHAAVTDes16@@@Z @ 266 NONAME ; public: int __thiscall RFile::Name(class TDes16 &)const 
-    ?Close@RDir@@QAEXXZ @ 267 NONAME ; public: void __thiscall RDir::Close(void)
-    ?Close@RFile@@QAEXXZ @ 268 NONAME ; public: void __thiscall RFile::Close(void)
-    ?Close@RFormat@@QAEXXZ @ 269 NONAME ; public: void __thiscall RFormat::Close(void)
-    ?GetMediaSerialNumber@RFs@@QAEHAAV?$TBuf8@$0EA@@@H@Z @ 270 NONAME ; public: int __thiscall RFs::GetMediaSerialNumber(class TBuf8<64> &,int)
-    ?Copy@CFileMan@@QAEHABVRFile@@ABVTDesC16@@I@Z @ 271 NONAME ; public: int __thiscall CFileMan::Copy(class RFile const &,class TDesC16 const &,unsigned int)
-    ?Copy@CFileMan@@QAEHABVRFile@@ABVTDesC16@@IAAVTRequestStatus@@@Z @ 272 NONAME ; public: int __thiscall CFileMan::Copy(class RFile const &,class TDesC16 const &,unsigned int,class TRequestStatus &)
-    ?FullName@RFile@@QBEHAAVTDes16@@@Z @ 273 NONAME ; public: int __thiscall RFile::FullName(class TDes16 &)const 
-    ?AddPlugin@RFs@@QBEHABVTDesC16@@@Z @ 274 NONAME ; public: int __thiscall RFs::AddPlugin(class TDesC16 const &)const 
-    ?Close@RPlugin@@QAEXXZ @ 275 NONAME ; public: void __thiscall RPlugin::Close(void)
-    ?DismountPlugin@RFs@@QBEHABVTDesC16@@@Z @ 276 NONAME ; public: int __thiscall RFs::DismountPlugin(class TDesC16 const &)const 
-    ?DismountPlugin@RFs@@QBEHABVTDesC16@@H@Z @ 277 NONAME ; public: int __thiscall RFs::DismountPlugin(class TDesC16 const &,int)const 
-    ?DismountPlugin@RFs@@QBEHABVTDesC16@@HH@Z @ 278 NONAME ; public: int __thiscall RFs::DismountPlugin(class TDesC16 const &,int,int)const 
-    ?DoCancel@RPlugin@@IBEXI@Z @ 279 NONAME ; protected: void __thiscall RPlugin::DoCancel(unsigned int)const 
-    ?DoControl@RPlugin@@IBEHH@Z @ 280 NONAME ; protected: int __thiscall RPlugin::DoControl(int)const 
-    ?DoControl@RPlugin@@IBEHHAAVTDes8@@0@Z @ 281 NONAME ; protected: int __thiscall RPlugin::DoControl(int,class TDes8 &,class TDes8 &)const 
-    ?DoControl@RPlugin@@IBEHHAAVTDes8@@@Z @ 282 NONAME ; protected: int __thiscall RPlugin::DoControl(int,class TDes8 &)const 
-    ?DoRequest@RPlugin@@IBEXHAAVTRequestStatus@@@Z @ 283 NONAME ; protected: void __thiscall RPlugin::DoRequest(int,class TRequestStatus &)const 
-    ?DoRequest@RPlugin@@IBEXHAAVTRequestStatus@@AAVTDes8@@1@Z @ 284 NONAME ; protected: void __thiscall RPlugin::DoRequest(int,class TRequestStatus &,class TDes8 &,class TDes8 &)const 
-    ?DoRequest@RPlugin@@IBEXHAAVTRequestStatus@@AAVTDes8@@@Z @ 285 NONAME ; protected: void __thiscall RPlugin::DoRequest(int,class TRequestStatus &,class TDes8 &)const 
-    ?MountPlugin@RFs@@QBEHABVTDesC16@@@Z @ 286 NONAME ; public: int __thiscall RFs::MountPlugin(class TDesC16 const &)const 
-    ?MountPlugin@RFs@@QBEHABVTDesC16@@H@Z @ 287 NONAME ; public: int __thiscall RFs::MountPlugin(class TDesC16 const &,int)const 
-    ?MountPlugin@RFs@@QBEHABVTDesC16@@HH@Z @ 288 NONAME ; public: int __thiscall RFs::MountPlugin(class TDesC16 const &,int,int)const 
-    ?Open@RPlugin@@QAEHAAVRFs@@H@Z @ 289 NONAME ; public: int __thiscall RPlugin::Open(class RFs &,int)
-    ?PluginName@RFs@@QAEHAAVTDes16@@HH@Z @ 290 NONAME ; public: int __thiscall RFs::PluginName(class TDes16 &,int,int)
-    ?RemovePlugin@RFs@@QBEHABVTDesC16@@@Z @ 291 NONAME ; public: int __thiscall RFs::RemovePlugin(class TDesC16 const &)const 
-    ?AllowDismount@RFs@@QBEHH@Z @ 292 NONAME ; public: int __thiscall RFs::AllowDismount(int)const 
-    ?NotifyDismount@RFs@@QBEXHAAVTRequestStatus@@W4TNotifyDismountMode@@@Z @ 293 NONAME ; public: void __thiscall RFs::NotifyDismount(int,class TRequestStatus &,enum TNotifyDismountMode)const 
-    ?NotifyDismountCancel@RFs@@QBEXAAVTRequestStatus@@@Z @ 294 NONAME ; public: void __thiscall RFs::NotifyDismountCancel(class TRequestStatus &)const 
-    ?NotifyDismountCancel@RFs@@QBEXXZ @ 295 NONAME ; public: void __thiscall RFs::NotifyDismountCancel(void)const 
-    ?Open@RFormat@@QAEHAAVRFs@@ABVTDesC16@@IAAHABVTDesC8@@@Z @ 296 NONAME ; public: int __thiscall RFormat::Open(class RFs &,class TDesC16 const &,unsigned int,int &,class TDesC8 const &)
-    ?SetStartupConfiguration@RFs@@QBEHHPAX0@Z @ 297 NONAME ; public: int __thiscall RFs::SetStartupConfiguration(int,void *,void *)const 
-    ?ReadCancel@RFile@@QBEXAAVTRequestStatus@@@Z @ 298 NONAME ; public: void __thiscall RFile::ReadCancel(class TRequestStatus &)const 
-    ?ReadCancel@RFile@@QBEXXZ @ 299 NONAME ; public: void __thiscall RFile::ReadCancel(void)const 
-    ?MountFileSystemAndScan@RFs@@QBEHABVTDesC16@@0HAAH@Z @ 300 NONAME ; public: int __thiscall RFs::MountFileSystemAndScan(class TDesC16 const &,class TDesC16 const &,int,int &)const 
-    ?SetNotifyChange@RFs@@QAEHH@Z @ 301 NONAME ; public: int __thiscall RFs::SetNotifyChange(int)
-    ?AddCompositeMount@RFs@@QBEHABVTDesC16@@HHH@Z @ 302 NONAME ; int RFs::AddCompositeMount(class TDesC16 const &, int, int, int) const
-    ?Flush@RFile@@QAEXAAVTRequestStatus@@@Z @ 303 NONAME ; public: void __thiscall RFile::Flush(class TRequestStatus &)
-    ?GetSystemDrive@RFs@@SA?AW4TDriveNumber@@XZ @ 304 NONAME ; public: static enum TDriveNumber  __cdecl RFs::GetSystemDrive(void)
-    ??0TBlockMapEntry@@QAE@XZ @ 305 NONAME ; public: __thiscall TBlockMapEntry::TBlockMapEntry(void)
-    ?BlockMap@RFile@@QBEHAAUSBlockMapInfo@@AA_J_JH@Z @ 306 NONAME ; public: int __thiscall RFile::BlockMap(struct SBlockMapInfo &,__int64 &,__int64,int)const 
-    ?SetNumberOfBlocks@TBlockMapEntry@@QAEXI@Z @ 307 NONAME ; public: void __thiscall TBlockMapEntry::SetNumberOfBlocks(unsigned int)
-    ?SetStartBlock@TBlockMapEntry@@QAEXI@Z @ 308 NONAME ; public: void __thiscall TBlockMapEntry::SetStartBlock(unsigned int)
-    ?Clamp@RFileClamp@@QAEHAAVRFile@@@Z @ 309 NONAME ; public: int __thiscall RFileClamp::Clamp(class RFile &)
-    ?Close@RFileClamp@@QAEHAAVRFs@@@Z @ 310 NONAME ; public: int __thiscall RFileClamp::Close(class RFs &)
-    ?FileSystemSubType@RFs@@QBEHHAAVTDes16@@@Z @ 311 NONAME ; public: int __thiscall RFs::FileSystemSubType(int,class TDes16 &)const 
-    ?InitialisePropertiesFile@RFs@@QBEHABVTPtrC8@@@Z @ 312 NONAME ; public: int __thiscall RFs::InitialisePropertiesFile(class TPtrC8 const &)const 
-    ?QueryVolumeInfoExt@RFs@@QBEHHW4TQueryVolumeInfoExtCmd@@AAVTDes8@@@Z @ 313 NONAME ; public: int __thiscall RFs::QueryVolumeInfoExt(int,enum TQueryVolumeInfoExtCmd,class TDes8 &)const 
-    ?VolumeIOParam@RFs@@QBEHHAAVTVolumeIOParamInfo@@@Z @ 314 NONAME ; public: int __thiscall RFs::VolumeIOParam(int,class TVolumeIOParamInfo &)const 
-    ?GetSystemDriveChar@RFs@@SA?AVTChar@@XZ @ 315 NONAME ; public: static class TChar  __cdecl RFs::GetSystemDriveChar(void)
-    ?SetSystemDrive@RFs@@QAEHW4TDriveNumber@@@Z @ 316 NONAME ; public: int __thiscall RFs::SetSystemDrive(enum TDriveNumber)
-    ?DriveList@RFs@@QBEHAAV?$TBuf8@$0BK@@@I@Z @ 317 NONAME ; public: int __thiscall RFs::DriveList(class TBuf8<26> &,unsigned int)const 
-    ?SetFindMask@TFindFile@@QAEHI@Z @ 318 NONAME ; public: int __thiscall TFindFile::SetFindMask(unsigned int)
-    ?FinaliseDrive@RFs@@QBEHHW4TFinaliseDrvMode@1@@Z @ 319 NONAME ; public: int __thiscall RFs::FinaliseDrive(int,enum RFs::TFinaliseDrvMode)const 
-    ?Volume@RFs@@QBEXAAVTVolumeInfo@@HAAVTRequestStatus@@@Z @ 320 NONAME ; public: void __thiscall RFs::Volume(class TVolumeInfo &,int,class TRequestStatus &)const 
-    ?AddProxyDrive@RFs@@QAEHABVTDesC16@@@Z @ 321 NONAME ; public: int __thiscall RFs::AddProxyDrive(class TDesC16 const &)
-    ?Caps@RRawDisk@@QAEHAAVTDes8@@@Z @ 322 NONAME ABSENT ; public: int __thiscall RRawDisk::Caps(class TDes8 &)
-    ?DismountProxyDrive@RFs@@QAEHI@Z @ 323 NONAME ; public: int __thiscall RFs::DismountProxyDrive(unsigned int)
-    ?DoMountProxyDrive@RFs@@AAEHABVTIpcArgs@@@Z @ 324 NONAME ; private: int __thiscall RFs::DoMountProxyDrive(class TIpcArgs const &)
-    ?RemoveProxyDrive@RFs@@QAEHABVTDesC16@@@Z @ 325 NONAME ; public: int __thiscall RFs::RemoveProxyDrive(class TDesC16 const &)
-    ?ReadFileSection@RFs@@QBEHABVTDesC16@@_JAAVTDes8@@H@Z @ 326 NONAME ; public: int __thiscall RFs::ReadFileSection(class TDesC16 const &,__int64,class TDes8 &,int)const 
-    ?AdoptFromClient@RFile64@@QAEHABVRMessage2@@HH@Z @ 327 NONAME ; public: int __thiscall RFile64::AdoptFromClient(class RMessage2 const &,int,int)
-    ?AdoptFromCreator@RFile64@@QAEHHH@Z @ 328 NONAME ; public: int __thiscall RFile64::AdoptFromCreator(int,int)
-    ?AdoptFromServer@RFile64@@QAEHHH@Z @ 329 NONAME ; public: int __thiscall RFile64::AdoptFromServer(int,int)
-    ?Create@RFile64@@QAEHAAVRFs@@ABVTDesC16@@I@Z @ 330 NONAME ; public: int __thiscall RFile64::Create(class RFs &,class TDesC16 const &,unsigned int)
-    ?FileSize@TEntry@@QBE_JXZ @ 331 NONAME ; public: __int64 __thiscall TEntry::FileSize(void)const 
-    ?Lock@RFile64@@QBEH_J0@Z @ 332 NONAME ; public: int __thiscall RFile64::Lock(__int64,__int64)const 
-    ?Open@RFile64@@QAEHAAVRFs@@ABVTDesC16@@I@Z @ 333 NONAME ; public: int __thiscall RFile64::Open(class RFs &,class TDesC16 const &,unsigned int)
-    ?Read@RFile64@@QBEHIAAVTDes8@@@Z @ 334 NONAME ; public: int __thiscall RFile64::Read(unsigned int,class TDes8 &)const 
-    ?Read@RFile64@@QBEHIAAVTDes8@@H@Z @ 335 NONAME ; public: int __thiscall RFile64::Read(unsigned int,class TDes8 &,int)const 
-    ?Read@RFile64@@QBEH_JAAVTDes8@@@Z @ 336 NONAME ; public: int __thiscall RFile64::Read(__int64,class TDes8 &)const 
-    ?Read@RFile64@@QBEH_JAAVTDes8@@H@Z @ 337 NONAME ; public: int __thiscall RFile64::Read(__int64,class TDes8 &,int)const 
-    ?Read@RFile64@@QBEXIAAVTDes8@@AAVTRequestStatus@@@Z @ 338 NONAME ; public: void __thiscall RFile64::Read(unsigned int,class TDes8 &,class TRequestStatus &)const 
-    ?Read@RFile64@@QBEXIAAVTDes8@@HAAVTRequestStatus@@@Z @ 339 NONAME ; public: void __thiscall RFile64::Read(unsigned int,class TDes8 &,int,class TRequestStatus &)const 
-    ?Read@RFile64@@QBEX_JAAVTDes8@@AAVTRequestStatus@@@Z @ 340 NONAME ; public: void __thiscall RFile64::Read(__int64,class TDes8 &,class TRequestStatus &)const 
-    ?Read@RFile64@@QBEX_JAAVTDes8@@HAAVTRequestStatus@@@Z @ 341 NONAME ; public: void __thiscall RFile64::Read(__int64,class TDes8 &,int,class TRequestStatus &)const 
-    ?Replace@RFile64@@QAEHAAVRFs@@ABVTDesC16@@I@Z @ 342 NONAME ; public: int __thiscall RFile64::Replace(class RFs &,class TDesC16 const &,unsigned int)
-    ?Seek@RFile64@@QBEHW4TSeek@@AA_J@Z @ 343 NONAME ; public: int __thiscall RFile64::Seek(enum TSeek,__int64 &)const 
-    ?SetSize@RFile64@@QAEH_J@Z @ 344 NONAME ; public: int __thiscall RFile64::SetSize(__int64)
-    ?Size@RFile64@@QBEHAA_J@Z @ 345 NONAME ; public: int __thiscall RFile64::Size(__int64 &)const 
-    ?Temp@RFile64@@QAEHAAVRFs@@ABVTDesC16@@AAV?$TBuf@$0BAA@@@I@Z @ 346 NONAME ; public: int __thiscall RFile64::Temp(class RFs &,class TDesC16 const &,class TBuf<256> &,unsigned int)
-    ?UnLock@RFile64@@QBEH_J0@Z @ 347 NONAME ; public: int __thiscall RFile64::UnLock(__int64,__int64)const 
-    ?Write@RFile64@@QAEHIABVTDesC8@@@Z @ 348 NONAME ; public: int __thiscall RFile64::Write(unsigned int,class TDesC8 const &)
-    ?Write@RFile64@@QAEHIABVTDesC8@@H@Z @ 349 NONAME ; public: int __thiscall RFile64::Write(unsigned int,class TDesC8 const &,int)
-    ?Write@RFile64@@QAEH_JABVTDesC8@@@Z @ 350 NONAME ; public: int __thiscall RFile64::Write(__int64,class TDesC8 const &)
-    ?Write@RFile64@@QAEH_JABVTDesC8@@H@Z @ 351 NONAME ; public: int __thiscall RFile64::Write(__int64,class TDesC8 const &,int)
-    ?Write@RFile64@@QAEXIABVTDesC8@@AAVTRequestStatus@@@Z @ 352 NONAME ; public: void __thiscall RFile64::Write(unsigned int,class TDesC8 const &,class TRequestStatus &)
-    ?Write@RFile64@@QAEXIABVTDesC8@@HAAVTRequestStatus@@@Z @ 353 NONAME ; public: void __thiscall RFile64::Write(unsigned int,class TDesC8 const &,int,class TRequestStatus &)
-    ?Write@RFile64@@QAEX_JABVTDesC8@@AAVTRequestStatus@@@Z @ 354 NONAME ; public: void __thiscall RFile64::Write(__int64,class TDesC8 const &,class TRequestStatus &)
-    ?Write@RFile64@@QAEX_JABVTDesC8@@HAAVTRequestStatus@@@Z @ 355 NONAME ; public: void __thiscall RFile64::Write(__int64,class TDesC8 const &,int,class TRequestStatus &)
-    ?IsValidName@RFs@@QAEHABVTDesC16@@AAVTNameValidParam@1@@Z @ 356 NONAME ; public: int __thiscall RFs::IsValidName(class TDesC16 const &,class RFs::TNameValidParam &)
-    ?Close@RFs@@QAEXXZ @ 357 NONAME ; public: void __thiscall RFs::Close(void)
-    ??1CFsNotify@@UAE@XZ @ 358 NONAME ; public: virtual __thiscall CFsNotify::~CFsNotify(void)
-    ?AddNotification@CFsNotify@@QAEHIABVTDesC16@@0@Z @ 359 NONAME ; public: int __thiscall CFsNotify::AddNotification(unsigned int,class TDesC16 const &,class TDesC16 const &)
-    ?Attributes@TFsNotification@@QBEHAAI0@Z @ 360 NONAME ; public: int __thiscall TFsNotification::Attributes(unsigned int &,unsigned int &)const 
-    ?CancelNotifications@CFsNotify@@QAEHAAVTRequestStatus@@@Z @ 361 NONAME ; public: int __thiscall CFsNotify::CancelNotifications(class TRequestStatus &)
-    ?FileSize@TFsNotification@@QBEHAA_J@Z @ 362 NONAME ; public: int __thiscall TFsNotification::FileSize(__int64 &)const 
-    ?NewL@CFsNotify@@SAPAV1@AAVRFs@@H@Z @ 363 NONAME ; public: static class CFsNotify * __cdecl CFsNotify::NewL(class RFs &,int)
-    ?NewName@TFsNotification@@QBEHAAVTPtrC16@@@Z @ 364 NONAME ; public: int __thiscall TFsNotification::NewName(class TPtrC16 &)const 
-    ?NextNotification@CFsNotify@@QAEPBVTFsNotification@@XZ @ 365 NONAME ; public: class TFsNotification const * __thiscall CFsNotify::NextNotification(void)
-    ?NotificationType@TFsNotification@@QBE?AW4TFsNotificationType@1@XZ @ 366 NONAME ; public: enum TFsNotification::TFsNotificationType __thiscall TFsNotification::NotificationType(void)const 
-    ?Path@TFsNotification@@QBEHAAVTPtrC16@@@Z @ 367 NONAME ; public: int __thiscall TFsNotification::Path(class TPtrC16 &)const 
-    ?RemoveNotifications@CFsNotify@@QAEHXZ @ 368 NONAME ; public: int __thiscall CFsNotify::RemoveNotifications(void)
-    ?RequestNotifications@CFsNotify@@QAEHAAVTRequestStatus@@@Z @ 369 NONAME ; public: int __thiscall CFsNotify::RequestNotifications(class TRequestStatus &)
-    ?SupportedFileSystemName@RFs@@QBEHAAVTDes16@@HH@Z @ 370 NONAME ; public: int __thiscall RFs::SupportedFileSystemName(class TDes16 &,int,int)const 
+	??0CDir@@IAE@XZ @ 1 NONAME ; protected: __thiscall CDir::CDir(void)
+	??0CFileBase@@IAE@AAVRFs@@@Z @ 2 NONAME ; protected: __thiscall CFileBase::CFileBase(class RFs &)
+	??0TDriveUnit@@QAE@ABVTDesC16@@@Z @ 3 NONAME ; public: __thiscall TDriveUnit::TDriveUnit(class TDesC16 const &)
+	??0TDriveUnit@@QAE@H@Z @ 4 NONAME ; public: __thiscall TDriveUnit::TDriveUnit(int)
+	??0TEntryArray@@QAE@XZ @ 5 NONAME ; public: __thiscall TEntryArray::TEntryArray(void)
+	??0TFileText@@QAE@XZ @ 6 NONAME ; public: __thiscall TFileText::TFileText(void)
+	??0TFindFile@@QAE@AAVRFs@@@Z @ 7 NONAME ; public: __thiscall TFindFile::TFindFile(class RFs &)
+	??0TOpenFileScan@@QAE@AAVRFs@@@Z @ 8 NONAME ; public: __thiscall TOpenFileScan::TOpenFileScan(class RFs &)
+	??0TParseBase@@QAE@XZ @ 9 NONAME ; public: __thiscall TParseBase::TParseBase(void)
+	??0TParsePtr@@QAE@AAVTDes16@@@Z @ 10 NONAME ; public: __thiscall TParsePtr::TParsePtr(class TDes16 &)
+	??0TParsePtrC@@QAE@ABVTDesC16@@@Z @ 11 NONAME ; public: __thiscall TParsePtrC::TParsePtrC(class TDesC16 const &)
+	??0TVolumeInfo@@QAE@XZ @ 12 NONAME ; public: __thiscall TVolumeInfo::TVolumeInfo(void)
+	??1CDir@@UAE@XZ @ 13 NONAME ; public: virtual __thiscall CDir::~CDir(void)
+	??1CDirScan@@UAE@XZ @ 14 NONAME ; public: virtual __thiscall CDirScan::~CDirScan(void)
+	??1CFileBase@@MAE@XZ @ 15 NONAME ; protected: virtual __thiscall CFileBase::~CFileBase(void)
+	??4TDriveUnit@@QAEAAV0@ABVTDesC16@@@Z @ 16 NONAME ; public: class TDriveUnit & __thiscall TDriveUnit::operator=(class TDesC16 const &)
+	??4TDriveUnit@@QAEAAV0@H@Z @ 17 NONAME ; public: class TDriveUnit & __thiscall TDriveUnit::operator=(int)
+	??ACDir@@QBEABVTEntry@@H@Z @ 18 NONAME ; public: class TEntry const & __thiscall CDir::operator[](int)const 
+	??ATEntryArray@@QBEABVTEntry@@H@Z @ 19 NONAME ; public: class TEntry const & __thiscall TEntryArray::operator[](int)const 
+	?AbbreviatedPath@CDirScan@@QAE?AVTPtrC16@@XZ @ 20 NONAME ; public: class TPtrC16  __thiscall CDirScan::AbbreviatedPath(void)
+	?AbbreviatedPath@CFileBase@@QAE?AVTPtrC16@@XZ @ 21 NONAME ; public: class TPtrC16  __thiscall CFileBase::AbbreviatedPath(void)
+	?AddDir@TParseBase@@QAEHABVTDesC16@@@Z @ 22 NONAME ; public: int __thiscall TParseBase::AddDir(class TDesC16 const &)
+	?AddFileSystem@RFs@@QBEHABVTDesC16@@@Z @ 23 NONAME ; public: int __thiscall RFs::AddFileSystem(class TDesC16 const &)const 
+	?AddL@CDir@@IAEXABVTEntry@@@Z @ 24 NONAME ; protected: void __thiscall CDir::AddL(class TEntry const &)
+	?Att@RFile@@QBEHAAI@Z @ 25 NONAME ; public: int __thiscall RFile::Att(unsigned int &)const 
+	?Att@RFs@@QBEHABVTDesC16@@AAI@Z @ 26 NONAME ; public: int __thiscall RFs::Att(class TDesC16 const &,unsigned int &)const 
+	?Attribs@CFileMan@@QAEHABVTDesC16@@IIABVTTime@@I@Z @ 27 NONAME ; public: int __thiscall CFileMan::Attribs(class TDesC16 const &,unsigned int,unsigned int,class TTime const &,unsigned int)
+	?Attribs@CFileMan@@QAEHABVTDesC16@@IIABVTTime@@IAAVTRequestStatus@@@Z @ 28 NONAME ; public: int __thiscall CFileMan::Attribs(class TDesC16 const &,unsigned int,unsigned int,class TTime const &,unsigned int,class TRequestStatus &)
+	?BytesTransferredByCopyStep@CFileMan@@QAEHXZ @ 29 NONAME ; public: int __thiscall CFileMan::BytesTransferredByCopyStep(void)
+	?ChangeMode@RFile@@QAEHW4TFileMode@@@Z @ 30 NONAME ; public: int __thiscall RFile::ChangeMode(enum TFileMode)
+	?CharToDrive@RFs@@SAHVTChar@@AAH@Z @ 31 NONAME ; public: static int __cdecl RFs::CharToDrive(class TChar,int &)
+	?CheckDisk@RFs@@QBEHABVTDesC16@@@Z @ 32 NONAME ; public: int __thiscall RFs::CheckDisk(class TDesC16 const &)const 
+	?ClearPassword@RFs@@QAEHHABV?$TBuf8@$0BA@@@@Z @ 33 NONAME ; public: int __thiscall RFs::ClearPassword(int,class TBuf8<16> const &)
+	?Duplicate@RFile@@QAEHABV1@W4TOwnerType@@@Z @ 34 NONAME ; public: int __thiscall RFile::Duplicate(class RFile const &,enum TOwnerType)
+	?Close@RRawDisk@@QAEXXZ @ 35 NONAME ; public: void __thiscall RRawDisk::Close(void)
+	?Compress@CDir@@IAEXXZ @ 36 NONAME ; protected: void __thiscall CDir::Compress(void)
+	?Connect@RFs@@QAEHH@Z @ 37 NONAME ; public: int __thiscall RFs::Connect(int)
+	?ConstructL@CFileBase@@IAEXXZ @ 38 NONAME ; protected: void __thiscall CFileBase::ConstructL(void)
+	?ControlIo@RFs@@QAEHHHPAX0@Z @ 39 NONAME ; public: int __thiscall RFs::ControlIo(int,int,void *,void *)
+	?Copy@CFileMan@@QAEHABVTDesC16@@0I@Z @ 40 NONAME ; public: int __thiscall CFileMan::Copy(class TDesC16 const &,class TDesC16 const &,unsigned int)
+	?Copy@CFileMan@@QAEHABVTDesC16@@0IAAVTRequestStatus@@@Z @ 41 NONAME ; public: int __thiscall CFileMan::Copy(class TDesC16 const &,class TDesC16 const &,unsigned int,class TRequestStatus &)
+	?Count@CDir@@QBEHXZ @ 42 NONAME ; public: int __thiscall CDir::Count(void)const 
+	?Count@TEntryArray@@QBEHXZ @ 43 NONAME ; public: int __thiscall TEntryArray::Count(void)const 
+	?Create@RFile@@QAEHAAVRFs@@ABVTDesC16@@I@Z @ 44 NONAME ; public: int __thiscall RFile::Create(class RFs &,class TDesC16 const &,unsigned int)
+	?CurrentAction@CFileMan@@QAE?AW4TAction@1@XZ @ 45 NONAME ; public: enum CFileMan::TAction  __thiscall CFileMan::CurrentAction(void)
+	?CurrentEntry@CFileBase@@QAEABVTEntry@@XZ @ 46 NONAME ; public: class TEntry const & __thiscall CFileBase::CurrentEntry(void)
+	?DefaultPath@RFs@@QBEHAAVTDes16@@@Z @ 47 NONAME ; public: int __thiscall RFs::DefaultPath(class TDes16 &)const 
+	?Delete@CFileMan@@QAEHABVTDesC16@@I@Z @ 48 NONAME ; public: int __thiscall CFileMan::Delete(class TDesC16 const &,unsigned int)
+	?Delete@CFileMan@@QAEHABVTDesC16@@IAAVTRequestStatus@@@Z @ 49 NONAME ; public: int __thiscall CFileMan::Delete(class TDesC16 const &,unsigned int,class TRequestStatus &)
+	?Delete@RFs@@QAEHABVTDesC16@@@Z @ 50 NONAME ; public: int __thiscall RFs::Delete(class TDesC16 const &)
+	?DismountFileSystem@RFs@@QBEHABVTDesC16@@H@Z @ 51 NONAME ; public: int __thiscall RFs::DismountFileSystem(class TDesC16 const &,int)const 
+	?Drive@RFs@@QBEHAAVTDriveInfo@@H@Z @ 52 NONAME ; public: int __thiscall RFs::Drive(class TDriveInfo &,int)const 
+	?Drive@TParseBase@@QBE?AVTPtrC16@@XZ @ 53 NONAME ; public: class TPtrC16  __thiscall TParseBase::Drive(void)const 
+	?DriveAndPath@TParseBase@@QBE?AVTPtrC16@@XZ @ 54 NONAME ; public: class TPtrC16  __thiscall TParseBase::DriveAndPath(void)const 
+	?DriveList@RFs@@QBEHAAV?$TBuf8@$0BK@@@@Z @ 55 NONAME ; public: int __thiscall RFs::DriveList(class TBuf8<26> &)const 
+	?DrivePresent@TParseBase@@QBEHXZ @ 56 NONAME ; public: int __thiscall TParseBase::DrivePresent(void)const 
+	?DriveToChar@RFs@@SAHHAAVTChar@@@Z @ 57 NONAME ; public: static int __cdecl RFs::DriveToChar(int,class TChar &)
+	?Entry@RFs@@QBEHABVTDesC16@@AAVTEntry@@@Z @ 58 NONAME ; public: int __thiscall RFs::Entry(class TDesC16 const &,class TEntry &)const 
+	?Ext@TParseBase@@QBE?AVTPtrC16@@XZ @ 59 NONAME ; public: class TPtrC16  __thiscall TParseBase::Ext(void)const 
+	?ExtPresent@TParseBase@@QBEHXZ @ 60 NONAME ; public: int __thiscall TParseBase::ExtPresent(void)const 
+	?ExtractL@CDir@@IAEXHAAPAV1@@Z @ 61 NONAME ; protected: void __thiscall CDir::ExtractL(int,class CDir * &)
+	?FileSystemName@RFs@@QBEHAAVTDes16@@H@Z @ 62 NONAME ; public: int __thiscall RFs::FileSystemName(class TDes16 &,int)const 
+	?Find@TFindFile@@QAEHXZ @ 63 NONAME ; public: int __thiscall TFindFile::Find(void)
+	?FindByDir@TFindFile@@QAEHABVTDesC16@@0@Z @ 64 NONAME ; public: int __thiscall TFindFile::FindByDir(class TDesC16 const &,class TDesC16 const &)
+	?FindByPath@TFindFile@@QAEHABVTDesC16@@PBV2@@Z @ 65 NONAME ; public: int __thiscall TFindFile::FindByPath(class TDesC16 const &,class TDesC16 const *)
+	?FindWild@TFindFile@@QAEHAAPAVCDir@@@Z @ 66 NONAME ; public: int __thiscall TFindFile::FindWild(class CDir * &)
+	?FindWildByDir@TFindFile@@QAEHABVTDesC16@@0AAPAVCDir@@@Z @ 67 NONAME ; public: int __thiscall TFindFile::FindWildByDir(class TDesC16 const &,class TDesC16 const &,class CDir * &)
+	?FindWildByPath@TFindFile@@QAEHABVTDesC16@@PBV2@AAPAVCDir@@@Z @ 68 NONAME ; public: int __thiscall TFindFile::FindWildByPath(class TDesC16 const &,class TDesC16 const *,class CDir * &)
+	?Flush@RFile@@QAEHXZ @ 69 NONAME ; public: int __thiscall RFile::Flush(void)
+	?FullName@TParseBase@@QBEABVTDesC16@@XZ @ 70 NONAME ; public: class TDesC16 const & __thiscall TParseBase::FullName(void)const 
+	?FullPath@CDirScan@@QAE?AVTPtrC16@@XZ @ 71 NONAME ; public: class TPtrC16  __thiscall CDirScan::FullPath(void)
+	?FullPath@CFileBase@@QAE?AVTPtrC16@@XZ @ 72 NONAME ; public: class TPtrC16  __thiscall CFileBase::FullPath(void)
+	?GetCurrentSource@CFileMan@@QAEXAAV?$TBuf@$0BAA@@@@Z @ 73 NONAME ; public: void __thiscall CFileMan::GetCurrentSource(class TBuf<256> &)
+	?GetCurrentTarget@CFileMan@@QAEXAAV?$TBuf@$0BAA@@@@Z @ 74 NONAME ; public: void __thiscall CFileMan::GetCurrentTarget(class TBuf<256> &)
+	?GetDir@RFs@@QBEHABVTDesC16@@ABVTUidType@@IAAPAVCDir@@@Z @ 75 NONAME ; public: int __thiscall RFs::GetDir(class TDesC16 const &,class TUidType const &,unsigned int,class CDir * &)const 
+	?GetDir@RFs@@QBEHABVTDesC16@@IIAAPAVCDir@@1@Z @ 76 NONAME ; public: int __thiscall RFs::GetDir(class TDesC16 const &,unsigned int,unsigned int,class CDir * &,class CDir * &)const 
+	?GetDir@RFs@@QBEHABVTDesC16@@IIAAPAVCDir@@@Z @ 77 NONAME ; public: int __thiscall RFs::GetDir(class TDesC16 const &,unsigned int,unsigned int,class CDir * &)const 
+	?GetDriveName@RFs@@QBEHHAAVTDes16@@@Z @ 78 NONAME ; public: int __thiscall RFs::GetDriveName(int,class TDes16 &)const 
+	?GetLastError@CFileBase@@QAEHXZ @ 79 NONAME ; public: int __thiscall CFileBase::GetLastError(void)
+	?GetLongName@RFs@@QBEHABVTDesC16@@AAVTDes16@@@Z @ 80 NONAME ; public: int __thiscall RFs::GetLongName(class TDesC16 const &,class TDes16 &)const 
+	?GetMoreInfoAboutError@CFileBase@@QAE?AW4TFileManError@@XZ @ 81 NONAME ; public: enum TFileManError  __thiscall CFileBase::GetMoreInfoAboutError(void)
+	?GetNotifyUser@RFs@@QAEHXZ @ 82 NONAME ; public: int __thiscall RFs::GetNotifyUser(void)
+	?GetShortName@RFs@@QBEHABVTDesC16@@AAVTDes16@@@Z @ 83 NONAME ; public: int __thiscall RFs::GetShortName(class TDesC16 const &,class TDes16 &)const 
+	?IsArchive@TEntry@@QBEHXZ @ 84 NONAME ; public: int __thiscall TEntry::IsArchive(void)const 
+	?IsDir@TEntry@@QBEHXZ @ 85 NONAME ; public: int __thiscall TEntry::IsDir(void)const 
+	?IsExtWild@TParseBase@@QBEHXZ @ 86 NONAME ; public: int __thiscall TParseBase::IsExtWild(void)const 
+	?IsFileInRom@RFs@@QBEPAEABVTDesC16@@@Z @ 87 NONAME ; public: unsigned char * __thiscall RFs::IsFileInRom(class TDesC16 const &)const 
+	?IsFileOpen@RFs@@QBEHABVTDesC16@@AAH@Z @ 88 NONAME ; public: int __thiscall RFs::IsFileOpen(class TDesC16 const &,int &)const 
+	?IsHidden@TEntry@@QBEHXZ @ 89 NONAME ; public: int __thiscall TEntry::IsHidden(void)const 
+	?IsKMatchAny@TParseBase@@QBEHXZ @ 90 NONAME ; public: int __thiscall TParseBase::IsKMatchAny(void)const 
+	?IsKMatchOne@TParseBase@@QBEHXZ @ 91 NONAME ; public: int __thiscall TParseBase::IsKMatchOne(void)const 
+	?IsNameWild@TParseBase@@QBEHXZ @ 92 NONAME ; public: int __thiscall TParseBase::IsNameWild(void)const 
+	?IsReadOnly@TEntry@@QBEHXZ @ 93 NONAME ; public: int __thiscall TEntry::IsReadOnly(void)const 
+	?IsRomAddress@RFs@@SAHPAX@Z @ 94 NONAME ; public: static int __cdecl RFs::IsRomAddress(void *)
+	?IsRoot@TParseBase@@QBEHXZ @ 95 NONAME ; public: int __thiscall TParseBase::IsRoot(void)const 
+	?IsSystem@TEntry@@QBEHXZ @ 96 NONAME ; public: int __thiscall TEntry::IsSystem(void)const 
+	?IsValidDrive@RFs@@SAHH@Z @ 97 NONAME ; public: static int __cdecl RFs::IsValidDrive(int)
+	?IsValidName@RFs@@QBEHABVTDesC16@@@Z @ 98 NONAME ; public: int __thiscall RFs::IsValidName(class TDesC16 const &)const 
+	?IsValidName@RFs@@QBEHABVTDesC16@@AAG@Z @ 99 NONAME ; public: int __thiscall RFs::IsValidName(class TDesC16 const &,unsigned short &)const 
+	?IsWild@TParseBase@@QBEHXZ @ 100 NONAME ; public: int __thiscall TParseBase::IsWild(void)const 
+	?LoaderHeapFunction@RFs@@QAEHHPAX0@Z @ 101 NONAME ; public: int __thiscall RFs::LoaderHeapFunction(int,void *,void *)
+	?Lock@RFile@@QBEHHH@Z @ 102 NONAME ; public: int __thiscall RFile::Lock(int,int)const 
+	?LockDrive@RFs@@QAEHHABV?$TBuf8@$0BA@@@0H@Z @ 103 NONAME ; public: int __thiscall RFs::LockDrive(int,class TBuf8<16> const &,class TBuf8<16> const &,int)
+	?MkDir@RFs@@QAEHABVTDesC16@@@Z @ 104 NONAME ; public: int __thiscall RFs::MkDir(class TDesC16 const &)
+	?MkDirAll@RFs@@QAEHABVTDesC16@@@Z @ 105 NONAME ; public: int __thiscall RFs::MkDirAll(class TDesC16 const &)
+	?Modified@RFile@@QBEHAAVTTime@@@Z @ 106 NONAME ; public: int __thiscall RFile::Modified(class TTime &)const 
+	?Modified@RFs@@QBEHABVTDesC16@@AAVTTime@@@Z @ 107 NONAME ; public: int __thiscall RFs::Modified(class TDesC16 const &,class TTime &)const 
+	?MountFileSystem@RFs@@QBEHABVTDesC16@@H@Z @ 108 NONAME ; public: int __thiscall RFs::MountFileSystem(class TDesC16 const &,int)const 
+	?Move@CFileMan@@QAEHABVTDesC16@@0I@Z @ 109 NONAME ; public: int __thiscall CFileMan::Move(class TDesC16 const &,class TDesC16 const &,unsigned int)
+	?Move@CFileMan@@QAEHABVTDesC16@@0IAAVTRequestStatus@@@Z @ 110 NONAME ; public: int __thiscall CFileMan::Move(class TDesC16 const &,class TDesC16 const &,unsigned int,class TRequestStatus &)
+	?Name@TDriveUnit@@QBE?AV?$TBuf@$01@@XZ @ 111 NONAME ; public: class TBuf<2>  __thiscall TDriveUnit::Name(void)const 
+	?Name@TParseBase@@QBE?AVTPtrC16@@XZ @ 112 NONAME ; public: class TPtrC16  __thiscall TParseBase::Name(void)const 
+	?NameAndExt@TParseBase@@QBE?AVTPtrC16@@XZ @ 113 NONAME ; public: class TPtrC16  __thiscall TParseBase::NameAndExt(void)const 
+	?NameBuf@TParse@@MAEAAVTDes16@@XZ @ 114 NONAME ; protected: virtual class TDes16 & __thiscall TParse::NameBuf(void)
+	?NameBuf@TParsePtr@@MAEAAVTDes16@@XZ @ 115 NONAME ; protected: virtual class TDes16 & __thiscall TParsePtr::NameBuf(void)
+	?NameBuf@TParsePtrC@@MAEAAVTDes16@@XZ @ 116 NONAME ; protected: virtual class TDes16 & __thiscall TParsePtrC::NameBuf(void)
+	?NameBufC@TParse@@MBEABVTDesC16@@XZ @ 117 NONAME ; protected: virtual class TDesC16 const & __thiscall TParse::NameBufC(void)const 
+	?NameBufC@TParsePtr@@MBEABVTDesC16@@XZ @ 118 NONAME ; protected: virtual class TDesC16 const & __thiscall TParsePtr::NameBufC(void)const 
+	?NameBufC@TParsePtrC@@MBEABVTDesC16@@XZ @ 119 NONAME ; protected: virtual class TDesC16 const & __thiscall TParsePtrC::NameBufC(void)const 
+	?NameOrExtPresent@TParseBase@@QBEHXZ @ 120 NONAME ; public: int __thiscall TParseBase::NameOrExtPresent(void)const 
+	?NamePresent@TParseBase@@QBEHXZ @ 121 NONAME ; public: int __thiscall TParseBase::NamePresent(void)const 
+	?NewL@CDir@@KAPAV1@XZ @ 122 NONAME ; protected: static class CDir * __cdecl CDir::NewL(void)
+	?NewL@CDirScan@@SAPAV1@AAVRFs@@@Z @ 123 NONAME ; public: static class CDirScan * __cdecl CDirScan::NewL(class RFs &)
+	?NewL@CFileMan@@SAPAV1@AAVRFs@@@Z @ 124 NONAME ; public: static class CFileMan * __cdecl CFileMan::NewL(class RFs &)
+	?NewL@CFileMan@@SAPAV1@AAVRFs@@PAVMFileManObserver@@@Z @ 125 NONAME ; public: static class CFileMan * __cdecl CFileMan::NewL(class RFs &,class MFileManObserver *)
+	?NewLC@CDirScan@@SAPAV1@AAVRFs@@@Z @ 126 NONAME ; public: static class CDirScan * __cdecl CDirScan::NewLC(class RFs &)
+	?Next@RFormat@@QAEHAAH@Z @ 127 NONAME ; public: int __thiscall RFormat::Next(int &)
+	?Next@RFormat@@QAEXAAV?$TPckgBuf@H@@AAVTRequestStatus@@@Z @ 128 NONAME ; public: void __thiscall RFormat::Next(class TPckgBuf<int> &,class TRequestStatus &)
+	?NextL@CDirScan@@QAEXAAPAVCDir@@@Z @ 129 NONAME ; public: void __thiscall CDirScan::NextL(class CDir * &)
+	?NextL@TOpenFileScan@@QAEXAAPAVCDir@@@Z @ 130 NONAME ; public: void __thiscall TOpenFileScan::NextL(class CDir * &)
+	?NotifyChange@RFs@@QAEXW4TNotifyType@@AAVTRequestStatus@@@Z @ 131 NONAME ; public: void __thiscall RFs::NotifyChange(enum TNotifyType,class TRequestStatus &)
+	?NotifyChange@RFs@@QAEXW4TNotifyType@@AAVTRequestStatus@@ABVTDesC16@@@Z @ 132 NONAME ; public: void __thiscall RFs::NotifyChange(enum TNotifyType,class TRequestStatus &,class TDesC16 const &)
+	?NotifyChangeCancel@RFs@@QAEXAAVTRequestStatus@@@Z @ 133 NONAME ; public: void __thiscall RFs::NotifyChangeCancel(class TRequestStatus &)
+	?NotifyChangeCancel@RFs@@QAEXXZ @ 134 NONAME ; public: void __thiscall RFs::NotifyChangeCancel(void)
+	?NotifyFileManEnded@MFileManObserver@@UAE?AW4TControl@1@XZ @ 135 NONAME ; public: virtual enum MFileManObserver::TControl  __thiscall MFileManObserver::NotifyFileManEnded(void)
+	?NotifyFileManOperation@MFileManObserver@@UAE?AW4TControl@1@XZ @ 136 NONAME ; public: virtual enum MFileManObserver::TControl  __thiscall MFileManObserver::NotifyFileManOperation(void)
+	?NotifyFileManStarted@MFileManObserver@@UAE?AW4TControl@1@XZ @ 137 NONAME ; public: virtual enum MFileManObserver::TControl  __thiscall MFileManObserver::NotifyFileManStarted(void)
+	?Open@RDir@@QAEHAAVRFs@@ABVTDesC16@@ABVTUidType@@@Z @ 138 NONAME ; public: int __thiscall RDir::Open(class RFs &,class TDesC16 const &,class TUidType const &)
+	?Open@RDir@@QAEHAAVRFs@@ABVTDesC16@@I@Z @ 139 NONAME ; public: int __thiscall RDir::Open(class RFs &,class TDesC16 const &,unsigned int)
+	?Open@RFile@@QAEHAAVRFs@@ABVTDesC16@@I@Z @ 140 NONAME ; public: int __thiscall RFile::Open(class RFs &,class TDesC16 const &,unsigned int)
+	?Open@RFormat@@QAEHAAVRFs@@ABVTDesC16@@IAAH@Z @ 141 NONAME ; public: int __thiscall RFormat::Open(class RFs &,class TDesC16 const &,unsigned int,int &)
+	?Open@RRawDisk@@QAEHAAVRFs@@H@Z @ 142 NONAME ; public: int __thiscall RRawDisk::Open(class RFs &,int)
+	?Parse@RFs@@QBEHABVTDesC16@@0AAVTParse@@@Z @ 143 NONAME ; public: int __thiscall RFs::Parse(class TDesC16 const &,class TDesC16 const &,class TParse &)const 
+	?Parse@RFs@@QBEHABVTDesC16@@AAVTParse@@@Z @ 144 NONAME ; public: int __thiscall RFs::Parse(class TDesC16 const &,class TParse &)const 
+	?Path@TParseBase@@QBE?AVTPtrC16@@XZ @ 145 NONAME ; public: class TPtrC16  __thiscall TParseBase::Path(void)const 
+	?PathPresent@TParseBase@@QBEHXZ @ 146 NONAME ; public: int __thiscall TParseBase::PathPresent(void)const 
+	?PopDir@TParseBase@@QAEHXZ @ 147 NONAME ; public: int __thiscall TParseBase::PopDir(void)
+	?Read@RDir@@QBEHAAVTEntry@@@Z @ 148 NONAME ; public: int __thiscall RDir::Read(class TEntry &)const 
+	?Read@RDir@@QBEHAAVTEntryArray@@@Z @ 149 NONAME ; public: int __thiscall RDir::Read(class TEntryArray &)const 
+	?Read@RDir@@QBEXAAV?$TPckg@VTEntry@@@@AAVTRequestStatus@@@Z @ 150 NONAME ; public: void __thiscall RDir::Read(class TPckg<class TEntry> &,class TRequestStatus &)const 
+	?Read@RDir@@QBEXAAVTEntryArray@@AAVTRequestStatus@@@Z @ 151 NONAME ; public: void __thiscall RDir::Read(class TEntryArray &,class TRequestStatus &)const 
+	?Read@RFile@@QBEHAAVTDes8@@@Z @ 152 NONAME ; public: int __thiscall RFile::Read(class TDes8 &)const 
+	?Read@RFile@@QBEHAAVTDes8@@H@Z @ 153 NONAME ; public: int __thiscall RFile::Read(class TDes8 &,int)const 
+	?Read@RFile@@QBEHHAAVTDes8@@@Z @ 154 NONAME ; public: int __thiscall RFile::Read(int,class TDes8 &)const 
+	?Read@RFile@@QBEHHAAVTDes8@@H@Z @ 155 NONAME ; public: int __thiscall RFile::Read(int,class TDes8 &,int)const 
+	?Read@RFile@@QBEXAAVTDes8@@AAVTRequestStatus@@@Z @ 156 NONAME ; public: void __thiscall RFile::Read(class TDes8 &,class TRequestStatus &)const 
+	?Read@RFile@@QBEXAAVTDes8@@HAAVTRequestStatus@@@Z @ 157 NONAME ; public: void __thiscall RFile::Read(class TDes8 &,int,class TRequestStatus &)const 
+	?Read@RFile@@QBEXHAAVTDes8@@AAVTRequestStatus@@@Z @ 158 NONAME ; public: void __thiscall RFile::Read(int,class TDes8 &,class TRequestStatus &)const 
+	?Read@RFile@@QBEXHAAVTDes8@@HAAVTRequestStatus@@@Z @ 159 NONAME ; public: void __thiscall RFile::Read(int,class TDes8 &,int,class TRequestStatus &)const 
+	?Read@_RRawDisk@@QAEHHAAVTDes8@@@Z @ 160 NONAME ; public: int __thiscall _RRawDisk::Read(int,class TDes8 &)
+	?Read@TFileText@@QAEHAAVTDes16@@@Z @ 161 NONAME ; public: int __thiscall TFileText::Read(class TDes16 &)
+	?ReadFileSection_RESERVED@RFs@@ABEHABVTDesC16@@HAAVTDes8@@H@Z @ 162 NONAME ; public: int __thiscall RFs::ReadFileSection_RESERVED(class TDesC16 const &,int,class TDes8 &,int)const 
+	?RealName@RFs@@QBEHABVTDesC16@@AAVTDes16@@@Z @ 163 NONAME ; public: int __thiscall RFs::RealName(class TDesC16 const &,class TDes16 &)const 
+	?RemoveFileSystem@RFs@@QBEHABVTDesC16@@@Z @ 164 NONAME ; public: int __thiscall RFs::RemoveFileSystem(class TDesC16 const &)const 
+	?Rename@CFileMan@@QAEHABVTDesC16@@0I@Z @ 165 NONAME ; public: int __thiscall CFileMan::Rename(class TDesC16 const &,class TDesC16 const &,unsigned int)
+	?Rename@CFileMan@@QAEHABVTDesC16@@0IAAVTRequestStatus@@@Z @ 166 NONAME ; public: int __thiscall CFileMan::Rename(class TDesC16 const &,class TDesC16 const &,unsigned int,class TRequestStatus &)
+	?Rename@RFile@@QAEHABVTDesC16@@@Z @ 167 NONAME ; public: int __thiscall RFile::Rename(class TDesC16 const &)
+	?Rename@RFs@@QAEHABVTDesC16@@0@Z @ 168 NONAME ; public: int __thiscall RFs::Rename(class TDesC16 const &,class TDesC16 const &)
+	?Replace@RFile@@QAEHAAVRFs@@ABVTDesC16@@I@Z @ 169 NONAME ; public: int __thiscall RFile::Replace(class RFs &,class TDesC16 const &,unsigned int)
+	?Replace@RFs@@QAEHABVTDesC16@@0@Z @ 170 NONAME ; public: int __thiscall RFs::Replace(class TDesC16 const &,class TDesC16 const &)
+	?ResourceCount@RFs@@QBEHXZ @ 171 NONAME ; public: int __thiscall RFs::ResourceCount(void)const 
+	?ResourceCountMarkEnd@RFs@@QBEXXZ @ 172 NONAME ; public: void __thiscall RFs::ResourceCountMarkEnd(void)const 
+	?ResourceCountMarkStart@RFs@@QBEXXZ @ 173 NONAME ; public: void __thiscall RFs::ResourceCountMarkStart(void)const 
+	?RmDir@CFileMan@@QAEHABVTDesC16@@@Z @ 174 NONAME ; public: int __thiscall CFileMan::RmDir(class TDesC16 const &)
+	?RmDir@CFileMan@@QAEHABVTDesC16@@AAVTRequestStatus@@@Z @ 175 NONAME ; public: int __thiscall CFileMan::RmDir(class TDesC16 const &,class TRequestStatus &)
+	?RmDir@RFs@@QAEHABVTDesC16@@@Z @ 176 NONAME ; public: int __thiscall RFs::RmDir(class TDesC16 const &)
+	?RunInSeparateThreadL@CFileBase@@IAEXP6AHPAX@Z@Z @ 177 NONAME ; protected: void __thiscall CFileBase::RunInSeparateThreadL(int (__cdecl*)(void *))
+	?RunL@CFileBase@@IAEXXZ @ 178 NONAME ; protected: void __thiscall CFileBase::RunL(void)
+	?ScanDrive@RFs@@QBEHABVTDesC16@@@Z @ 179 NONAME ; public: int __thiscall RFs::ScanDrive(class TDesC16 const &)const 
+	?Seek@RFile@@QBEHW4TSeek@@AAH@Z @ 180 NONAME ; public: int __thiscall RFile::Seek(enum TSeek,int &)const 
+	?Seek@TFileText@@QAEHW4TSeek@@@Z @ 181 NONAME ; public: int __thiscall TFileText::Seek(enum TSeek)
+	?SessionPath@RFs@@QBEHAAVTDes16@@@Z @ 182 NONAME ; public: int __thiscall RFs::SessionPath(class TDes16 &)const 
+	?Set@RFile@@QAEHABVTTime@@II@Z @ 183 NONAME ; public: int __thiscall RFile::Set(class TTime const &,unsigned int,unsigned int)
+	?Set@TFileText@@QAEXAAVRFile@@@Z @ 184 NONAME ; public: void __thiscall TFileText::Set(class RFile &)
+	?Set@TParse@@QAEHABVTDesC16@@PBV2@1@Z @ 185 NONAME ; public: int __thiscall TParse::Set(class TDesC16 const &,class TDesC16 const *,class TDesC16 const *)
+	?SetAllocFailure@RFs@@QAEHH@Z @ 186 NONAME ; public: int __thiscall RFs::SetAllocFailure(int)
+	?SetAtt@RFile@@QAEHII@Z @ 187 NONAME ; public: int __thiscall RFile::SetAtt(unsigned int,unsigned int)
+	?SetAtt@RFs@@QAEHABVTDesC16@@II@Z @ 188 NONAME ; public: int __thiscall RFs::SetAtt(class TDesC16 const &,unsigned int,unsigned int)
+	?SetDebugRegister@RFs@@QAEHH@Z @ 189 NONAME ; public: int __thiscall RFs::SetDebugRegister(int)
+	?SetDefaultPath@RFs@@QAEHABVTDesC16@@@Z @ 190 NONAME ; public: int __thiscall RFs::SetDefaultPath(class TDesC16 const &)
+	?SetDriveName@RFs@@QAEHHABVTDesC16@@@Z @ 191 NONAME ; public: int __thiscall RFs::SetDriveName(int,class TDesC16 const &)
+	?SetEntry@RFs@@QAEHABVTDesC16@@ABVTTime@@II@Z @ 192 NONAME ; public: int __thiscall RFs::SetEntry(class TDesC16 const &,class TTime const &,unsigned int,unsigned int)
+	?SetErrorCondition@RFs@@QAEHHH@Z @ 193 NONAME ; public: int __thiscall RFs::SetErrorCondition(int,int)
+	?SetModified@RFile@@QAEHABVTTime@@@Z @ 194 NONAME ; public: int __thiscall RFile::SetModified(class TTime const &)
+	?SetModified@RFs@@QAEHABVTDesC16@@ABVTTime@@@Z @ 195 NONAME ; public: int __thiscall RFs::SetModified(class TDesC16 const &,class TTime const &)
+	?SetNoWild@TParse@@QAEHABVTDesC16@@PBV2@1@Z @ 196 NONAME ; public: int __thiscall TParse::SetNoWild(class TDesC16 const &,class TDesC16 const *,class TDesC16 const *)
+	?SetNotifyUser@RFs@@QAEXH@Z @ 197 NONAME ; public: void __thiscall RFs::SetNotifyUser(int)
+	?SetObserver@CFileBase@@QAEXPAVMFileManObserver@@@Z @ 198 NONAME ; public: void __thiscall CFileBase::SetObserver(class MFileManObserver *)
+	?SetScanDataL@CDirScan@@QAEXABVTDesC16@@IIW4TScanDirection@1@@Z @ 199 NONAME ; public: void __thiscall CDirScan::SetScanDataL(class TDesC16 const &,unsigned int,unsigned int,enum CDirScan::TScanDirection)
+	?SetSessionPath@RFs@@QAEHABVTDesC16@@@Z @ 200 NONAME ; public: int __thiscall RFs::SetSessionPath(class TDesC16 const &)
+	?SetSize@RFile@@QAEHH@Z @ 201 NONAME ; public: int __thiscall RFile::SetSize(int)
+	?SetSubst@RFs@@QAEHABVTDesC16@@H@Z @ 202 NONAME ; public: int __thiscall RFs::SetSubst(class TDesC16 const &,int)
+	?SetVolumeLabel@RFs@@QAEHABVTDesC16@@H@Z @ 203 NONAME ; public: int __thiscall RFs::SetVolumeLabel(class TDesC16 const &,int)
+	?Size@RFile@@QBEHAAH@Z @ 204 NONAME ; public: int __thiscall RFile::Size(int &)const 
+	?Sort@CDir@@QAEHI@Z @ 205 NONAME ; public: int __thiscall CDir::Sort(unsigned int)
+	?Subst@RFs@@QBEHAAVTDes16@@H@Z @ 206 NONAME ; public: int __thiscall RFs::Subst(class TDes16 &,int)const 
+	?Temp@RFile@@QAEHAAVRFs@@ABVTDesC16@@AAV?$TBuf@$0BAA@@@I@Z @ 207 NONAME ; public: int __thiscall RFile::Temp(class RFs &,class TDesC16 const &,class TBuf<256> &,unsigned int)
+	?ThreadId@TOpenFileScan@@QBE?AVTThreadId@@XZ @ 208 NONAME ; public: class TThreadId  __thiscall TOpenFileScan::ThreadId(void)const 
+	?UnLock@RFile@@QBEHHH@Z @ 209 NONAME ; public: int __thiscall RFile::UnLock(int,int)const 
+	?UnlockDrive@RFs@@QAEHHABV?$TBuf8@$0BA@@@H@Z @ 210 NONAME ; public: int __thiscall RFs::UnlockDrive(int,class TBuf8<16> const &,int)
+	?Version@RFs@@QBE?AVTVersion@@XZ @ 211 NONAME ; public: class TVersion  __thiscall RFs::Version(void)const 
+	?Volume@RFs@@QBEHAAVTVolumeInfo@@H@Z @ 212 NONAME ; public: int __thiscall RFs::Volume(class TVolumeInfo &,int)const 
+	?Write@RFile@@QAEHABVTDesC8@@@Z @ 213 NONAME ; public: int __thiscall RFile::Write(class TDesC8 const &)
+	?Write@RFile@@QAEHABVTDesC8@@H@Z @ 214 NONAME ; public: int __thiscall RFile::Write(class TDesC8 const &,int)
+	?Write@RFile@@QAEHHABVTDesC8@@@Z @ 215 NONAME ; public: int __thiscall RFile::Write(int,class TDesC8 const &)
+	?Write@RFile@@QAEHHABVTDesC8@@H@Z @ 216 NONAME ; public: int __thiscall RFile::Write(int,class TDesC8 const &,int)
+	?Write@RFile@@QAEXABVTDesC8@@AAVTRequestStatus@@@Z @ 217 NONAME ; public: void __thiscall RFile::Write(class TDesC8 const &,class TRequestStatus &)
+	?Write@RFile@@QAEXABVTDesC8@@HAAVTRequestStatus@@@Z @ 218 NONAME ; public: void __thiscall RFile::Write(class TDesC8 const &,int,class TRequestStatus &)
+	?Write@RFile@@QAEXHABVTDesC8@@AAVTRequestStatus@@@Z @ 219 NONAME ; public: void __thiscall RFile::Write(int,class TDesC8 const &,class TRequestStatus &)
+	?Write@RFile@@QAEXHABVTDesC8@@HAAVTRequestStatus@@@Z @ 220 NONAME ; public: void __thiscall RFile::Write(int,class TDesC8 const &,int,class TRequestStatus &)
+	?Write@_RRawDisk@@QAEHHAAVTDesC8@@@Z @ 221 NONAME ; public: int __thiscall _RRawDisk::Write(int,class TDesC8 &)
+	?Write@TFileText@@QAEHABVTDesC16@@@Z @ 222 NONAME ; public: int __thiscall TFileText::Write(class TDesC16 const &)
+	?DebugNotify@RFs@@QAEXHIAAVTRequestStatus@@@Z @ 223 NONAME ; public: void __thiscall RFs::DebugNotify(int,unsigned int,class TRequestStatus &)
+	?NotifyDiskSpace@RFs@@QAEX_JHAAVTRequestStatus@@@Z @ 224 NONAME ; public: void __thiscall RFs::NotifyDiskSpace(__int64,int,class TRequestStatus &)
+	?NotifyDiskSpaceCancel@RFs@@QAEXAAVTRequestStatus@@@Z @ 225 NONAME ; public: void __thiscall RFs::NotifyDiskSpaceCancel(class TRequestStatus &)
+	?NotifyDiskSpaceCancel@RFs@@QAEXXZ @ 226 NONAME ; public: void __thiscall RFs::NotifyDiskSpaceCancel(void)
+	??0TEntry@@QAE@ABV0@@Z @ 227 NONAME ; public: __thiscall TEntry::TEntry(class TEntry const &)
+	??0TEntry@@QAE@XZ @ 228 NONAME ; public: __thiscall TEntry::TEntry(void)
+	??4TEntry@@QAEAAV0@ABV0@@Z @ 229 NONAME ; public: class TEntry & __thiscall TEntry::operator=(class TEntry const &)
+	??0TParse@@QAE@XZ @ 230 NONAME ; public: __thiscall TParse::TParse(void)
+	?Drive@RFile@@QBEHAAHAAVTDriveInfo@@@Z @ 231 NONAME ; public: int __thiscall RFile::Drive(int &,class TDriveInfo &)const 
+	?RemountDrive@RFs@@QAEHHPBVTDesC8@@I@Z @ 232 NONAME ; public: int __thiscall RFs::RemountDrive(int,class TDesC8 const *,unsigned int)
+	?MountFileSystemAndScan@RFs@@QBEHABVTDesC16@@HAAH@Z @ 233 NONAME ; public: int __thiscall RFs::MountFileSystemAndScan(class TDesC16 const &,int,int &)const 
+	?CreatePrivatePath@RFs@@QAEHH@Z @ 234 NONAME ; public: int __thiscall RFs::CreatePrivatePath(int)
+	?PrivatePath@RFs@@QAEHAAVTDes16@@@Z @ 235 NONAME ; public: int __thiscall RFs::PrivatePath(class TDes16 &)
+	?SetSessionToPrivate@RFs@@QAEHH@Z @ 236 NONAME ; public: int __thiscall RFs::SetSessionToPrivate(int)
+	?FileNamesIdentical@@YAHABVTDesC16@@0@Z @ 237 NONAME ; int __cdecl FileNamesIdentical(class TDesC16 const &,class TDesC16 const &)
+	?AddExtension@RFs@@QAEHABVTDesC16@@@Z @ 238 NONAME ; public: int __thiscall RFs::AddExtension(class TDesC16 const &)
+	?DismountExtension@RFs@@QAEHABVTDesC16@@H@Z @ 239 NONAME ; public: int __thiscall RFs::DismountExtension(class TDesC16 const &,int)
+	?ExtensionName@RFs@@QAEHAAVTDes16@@HH@Z @ 240 NONAME ; public: int __thiscall RFs::ExtensionName(class TDes16 &,int,int)
+	?MountExtension@RFs@@QAEHABVTDesC16@@H@Z @ 241 NONAME ; public: int __thiscall RFs::MountExtension(class TDesC16 const &,int)
+	?MountFileSystem@RFs@@QAEHABVTDesC16@@0H@Z @ 242 NONAME ; public: int __thiscall RFs::MountFileSystem(class TDesC16 const &,class TDesC16 const &,int)
+	?RemoveExtension@RFs@@QAEHABVTDesC16@@@Z @ 243 NONAME ; public: int __thiscall RFs::RemoveExtension(class TDesC16 const &)
+	?StartupInitComplete@RFs@@QAEXAAVTRequestStatus@@@Z @ 244 NONAME ; public: void __thiscall RFs::StartupInitComplete(class TRequestStatus &)
+	?SetLocalDriveMapping@RFs@@QAEHABVTDesC8@@@Z @ 245 NONAME ; public: int __thiscall RFs::SetLocalDriveMapping(class TDesC8 const &)
+	?ControlIo@RFs@@QAEHHH@Z @ 246 NONAME ; public: int __thiscall RFs::ControlIo(int,int)
+	?ControlIo@RFs@@QAEHHHAAVTDes8@@@Z @ 247 NONAME ; public: int __thiscall RFs::ControlIo(int,int,class TDes8&)   ?Adopt@RFile@@QAEHAAVRFs@@AAH@Z @ 246 NONAME ; public: int __thiscall RFile::Adopt(class RFs &,int &)
+	?ControlIo@RFs@@QAEHHHAAVTDes8@@0@Z @ 248 NONAME ; public: int __thiscall RFs::ControlIo(int,int,class TDes8&,class TDes8&)
+	?Adopt@RFile@@QAEHAAVRFs@@H@Z @ 249 NONAME ; public: int __thiscall RFile::Adopt(class RFs &,int)
+	?MountFileSystem@RFs@@QAEHABVTDesC16@@0HH@Z @ 250 NONAME ; public: int __thiscall RFs::MountFileSystem(class TDesC16 const &,class TDesC16 const &,int,int)
+	?MountFileSystem@RFs@@QBEHABVTDesC16@@HH@Z @ 251 NONAME ; public: int __thiscall RFs::MountFileSystem(class TDesC16 const &,int,int)const 
+	?Read@RRawDisk@@QAEH_JAAVTDes8@@@Z @ 252 NONAME ; public: int __thiscall RRawDisk::Read(__int64,class TDes8 &)
+	?Write@RRawDisk@@QAEH_JAAVTDesC8@@@Z @ 253 NONAME ; public: int __thiscall RRawDisk::Write(__int64,class TDesC8 &)
+	?FinaliseDrives@RFs@@QAEHXZ @ 254 NONAME ; public: int __thiscall RFs::FinaliseDrives(void)
+	?SwapFileSystem@RFs@@QBEHABVTDesC16@@0H@Z @ 255 NONAME ; public: int __thiscall RFs::SwapFileSystem(class TDesC16 const &,class TDesC16 const &,int)const 
+	?ErasePassword@RFs@@QAEHH@Z @ 256 NONAME ; public: int __thiscall RFs::ErasePassword(int)
+	?GetReserveAccess@RFs@@QAEHH@Z @ 257 NONAME ; public: int __thiscall RFs::GetReserveAccess(int)
+	?ReleaseReserveAccess@RFs@@QAEHH@Z @ 258 NONAME ; public: int __thiscall RFs::ReleaseReserveAccess(int)
+	?ReserveDriveSpace@RFs@@QAEHHH@Z @ 259 NONAME ; public: int __thiscall RFs::ReserveDriveSpace(int,int)
+	?AdoptFromClient@RFile@@QAEHABVRMessage2@@HH@Z @ 260 NONAME ; public: int __thiscall RFile::AdoptFromClient(class RMessage2 const &,int,int)
+	?AdoptFromCreator@RFile@@QAEHHH@Z @ 261 NONAME ; public: int __thiscall RFile::AdoptFromCreator(int,int)
+	?AdoptFromServer@RFile@@QAEHHH@Z @ 262 NONAME ; public: int __thiscall RFile::AdoptFromServer(int,int)
+	?TransferToClient@RFile@@QBEHABVRMessage2@@H@Z @ 263 NONAME ; public: int __thiscall RFile::TransferToClient(class RMessage2 const &,int)const 
+	?TransferToProcess@RFile@@QBEHAAVRProcess@@HH@Z @ 264 NONAME ; public: int __thiscall RFile::TransferToProcess(class RProcess &,int,int)const 
+	?TransferToServer@RFile@@QBEHAAVTIpcArgs@@HH@Z @ 265 NONAME ; public: int __thiscall RFile::TransferToServer(class TIpcArgs &,int,int)const 
+	?Name@RFile@@QBEHAAVTDes16@@@Z @ 266 NONAME ; public: int __thiscall RFile::Name(class TDes16 &)const 
+	?Close@RDir@@QAEXXZ @ 267 NONAME ; public: void __thiscall RDir::Close(void)
+	?Close@RFile@@QAEXXZ @ 268 NONAME ; public: void __thiscall RFile::Close(void)
+	?Close@RFormat@@QAEXXZ @ 269 NONAME ; public: void __thiscall RFormat::Close(void)
+	?GetMediaSerialNumber@RFs@@QAEHAAV?$TBuf8@$0EA@@@H@Z @ 270 NONAME ; public: int __thiscall RFs::GetMediaSerialNumber(class TBuf8<64> &,int)
+	?Copy@CFileMan@@QAEHABVRFile@@ABVTDesC16@@I@Z @ 271 NONAME ; public: int __thiscall CFileMan::Copy(class RFile const &,class TDesC16 const &,unsigned int)
+	?Copy@CFileMan@@QAEHABVRFile@@ABVTDesC16@@IAAVTRequestStatus@@@Z @ 272 NONAME ; public: int __thiscall CFileMan::Copy(class RFile const &,class TDesC16 const &,unsigned int,class TRequestStatus &)
+	?FullName@RFile@@QBEHAAVTDes16@@@Z @ 273 NONAME ; public: int __thiscall RFile::FullName(class TDes16 &)const 
+	?AddPlugin@RFs@@QBEHABVTDesC16@@@Z @ 274 NONAME ; public: int __thiscall RFs::AddPlugin(class TDesC16 const &)const 
+	?Close@RPlugin@@QAEXXZ @ 275 NONAME ; public: void __thiscall RPlugin::Close(void)
+	?DismountPlugin@RFs@@QBEHABVTDesC16@@@Z @ 276 NONAME ; public: int __thiscall RFs::DismountPlugin(class TDesC16 const &)const 
+	?DismountPlugin@RFs@@QBEHABVTDesC16@@H@Z @ 277 NONAME ; public: int __thiscall RFs::DismountPlugin(class TDesC16 const &,int)const 
+	?DismountPlugin@RFs@@QBEHABVTDesC16@@HH@Z @ 278 NONAME ; public: int __thiscall RFs::DismountPlugin(class TDesC16 const &,int,int)const 
+	?DoCancel@RPlugin@@IBEXI@Z @ 279 NONAME ; protected: void __thiscall RPlugin::DoCancel(unsigned int)const 
+	?DoControl@RPlugin@@IBEHH@Z @ 280 NONAME ; protected: int __thiscall RPlugin::DoControl(int)const 
+	?DoControl@RPlugin@@IBEHHAAVTDes8@@0@Z @ 281 NONAME ; protected: int __thiscall RPlugin::DoControl(int,class TDes8 &,class TDes8 &)const 
+	?DoControl@RPlugin@@IBEHHAAVTDes8@@@Z @ 282 NONAME ; protected: int __thiscall RPlugin::DoControl(int,class TDes8 &)const 
+	?DoRequest@RPlugin@@IBEXHAAVTRequestStatus@@@Z @ 283 NONAME ; protected: void __thiscall RPlugin::DoRequest(int,class TRequestStatus &)const 
+	?DoRequest@RPlugin@@IBEXHAAVTRequestStatus@@AAVTDes8@@1@Z @ 284 NONAME ; protected: void __thiscall RPlugin::DoRequest(int,class TRequestStatus &,class TDes8 &,class TDes8 &)const 
+	?DoRequest@RPlugin@@IBEXHAAVTRequestStatus@@AAVTDes8@@@Z @ 285 NONAME ; protected: void __thiscall RPlugin::DoRequest(int,class TRequestStatus &,class TDes8 &)const 
+	?MountPlugin@RFs@@QBEHABVTDesC16@@@Z @ 286 NONAME ; public: int __thiscall RFs::MountPlugin(class TDesC16 const &)const 
+	?MountPlugin@RFs@@QBEHABVTDesC16@@H@Z @ 287 NONAME ; public: int __thiscall RFs::MountPlugin(class TDesC16 const &,int)const 
+	?MountPlugin@RFs@@QBEHABVTDesC16@@HH@Z @ 288 NONAME ; public: int __thiscall RFs::MountPlugin(class TDesC16 const &,int,int)const 
+	?Open@RPlugin@@QAEHAAVRFs@@H@Z @ 289 NONAME ; public: int __thiscall RPlugin::Open(class RFs &,int)
+	?PluginName@RFs@@QAEHAAVTDes16@@HH@Z @ 290 NONAME ; public: int __thiscall RFs::PluginName(class TDes16 &,int,int)
+	?RemovePlugin@RFs@@QBEHABVTDesC16@@@Z @ 291 NONAME ; public: int __thiscall RFs::RemovePlugin(class TDesC16 const &)const 
+	?AllowDismount@RFs@@QBEHH@Z @ 292 NONAME ; public: int __thiscall RFs::AllowDismount(int)const 
+	?NotifyDismount@RFs@@QBEXHAAVTRequestStatus@@W4TNotifyDismountMode@@@Z @ 293 NONAME ; public: void __thiscall RFs::NotifyDismount(int,class TRequestStatus &,enum TNotifyDismountMode)const 
+	?NotifyDismountCancel@RFs@@QBEXAAVTRequestStatus@@@Z @ 294 NONAME ; public: void __thiscall RFs::NotifyDismountCancel(class TRequestStatus &)const 
+	?NotifyDismountCancel@RFs@@QBEXXZ @ 295 NONAME ; public: void __thiscall RFs::NotifyDismountCancel(void)const 
+	?Open@RFormat@@QAEHAAVRFs@@ABVTDesC16@@IAAHABVTDesC8@@@Z @ 296 NONAME ; public: int __thiscall RFormat::Open(class RFs &,class TDesC16 const &,unsigned int,int &,class TDesC8 const &)
+	?SetStartupConfiguration@RFs@@QBEHHPAX0@Z @ 297 NONAME ; public: int __thiscall RFs::SetStartupConfiguration(int,void *,void *)const 
+	?ReadCancel@RFile@@QBEXAAVTRequestStatus@@@Z @ 298 NONAME ; public: void __thiscall RFile::ReadCancel(class TRequestStatus &)const 
+	?ReadCancel@RFile@@QBEXXZ @ 299 NONAME ; public: void __thiscall RFile::ReadCancel(void)const 
+	?MountFileSystemAndScan@RFs@@QBEHABVTDesC16@@0HAAH@Z @ 300 NONAME ; public: int __thiscall RFs::MountFileSystemAndScan(class TDesC16 const &,class TDesC16 const &,int,int &)const 
+	?SetNotifyChange@RFs@@QAEHH@Z @ 301 NONAME ; public: int __thiscall RFs::SetNotifyChange(int)
+	?AddCompositeMount@RFs@@QBEHABVTDesC16@@HHH@Z @ 302 NONAME ; int RFs::AddCompositeMount(class TDesC16 const &, int, int, int) const
+	?Flush@RFile@@QAEXAAVTRequestStatus@@@Z @ 303 NONAME ; public: void __thiscall RFile::Flush(class TRequestStatus &)
+	?GetSystemDrive@RFs@@SA?AW4TDriveNumber@@XZ @ 304 NONAME ; public: static enum TDriveNumber  __cdecl RFs::GetSystemDrive(void)
+	??0TBlockMapEntry@@QAE@XZ @ 305 NONAME ; public: __thiscall TBlockMapEntry::TBlockMapEntry(void)
+	?BlockMap@RFile@@QBEHAAUSBlockMapInfo@@AA_J_JH@Z @ 306 NONAME ; public: int __thiscall RFile::BlockMap(struct SBlockMapInfo &,__int64 &,__int64,int)const 
+	?SetNumberOfBlocks@TBlockMapEntry@@QAEXI@Z @ 307 NONAME ; public: void __thiscall TBlockMapEntry::SetNumberOfBlocks(unsigned int)
+	?SetStartBlock@TBlockMapEntry@@QAEXI@Z @ 308 NONAME ; public: void __thiscall TBlockMapEntry::SetStartBlock(unsigned int)
+	?Clamp@RFileClamp@@QAEHAAVRFile@@@Z @ 309 NONAME ; public: int __thiscall RFileClamp::Clamp(class RFile &)
+	?Close@RFileClamp@@QAEHAAVRFs@@@Z @ 310 NONAME ; public: int __thiscall RFileClamp::Close(class RFs &)
+	?FileSystemSubType@RFs@@QBEHHAAVTDes16@@@Z @ 311 NONAME ; public: int __thiscall RFs::FileSystemSubType(int,class TDes16 &)const 
+	?InitialisePropertiesFile@RFs@@QBEHABVTPtrC8@@@Z @ 312 NONAME ; public: int __thiscall RFs::InitialisePropertiesFile(class TPtrC8 const &)const 
+	?QueryVolumeInfoExt@RFs@@QBEHHW4TQueryVolumeInfoExtCmd@@AAVTDes8@@@Z @ 313 NONAME ; public: int __thiscall RFs::QueryVolumeInfoExt(int,enum TQueryVolumeInfoExtCmd,class TDes8 &)const 
+	?VolumeIOParam@RFs@@QBEHHAAVTVolumeIOParamInfo@@@Z @ 314 NONAME ; public: int __thiscall RFs::VolumeIOParam(int,class TVolumeIOParamInfo &)const 
+	?GetSystemDriveChar@RFs@@SA?AVTChar@@XZ @ 315 NONAME ; public: static class TChar  __cdecl RFs::GetSystemDriveChar(void)
+	?SetSystemDrive@RFs@@QAEHW4TDriveNumber@@@Z @ 316 NONAME ; public: int __thiscall RFs::SetSystemDrive(enum TDriveNumber)
+	?DriveList@RFs@@QBEHAAV?$TBuf8@$0BK@@@I@Z @ 317 NONAME ; public: int __thiscall RFs::DriveList(class TBuf8<26> &,unsigned int)const 
+	?SetFindMask@TFindFile@@QAEHI@Z @ 318 NONAME ; public: int __thiscall TFindFile::SetFindMask(unsigned int)
+	?FinaliseDrive@RFs@@QBEHHW4TFinaliseDrvMode@1@@Z @ 319 NONAME ; public: int __thiscall RFs::FinaliseDrive(int,enum RFs::TFinaliseDrvMode)const 
+	?Volume@RFs@@QBEXAAVTVolumeInfo@@HAAVTRequestStatus@@@Z @ 320 NONAME ; public: void __thiscall RFs::Volume(class TVolumeInfo &,int,class TRequestStatus &)const 
+	?AddProxyDrive@RFs@@QAEHABVTDesC16@@@Z @ 321 NONAME ; public: int __thiscall RFs::AddProxyDrive(class TDesC16 const &)
+	?Caps@RRawDisk@@QAEHAAVTDes8@@@Z @ 322 NONAME ABSENT ; public: int __thiscall RRawDisk::Caps(class TDes8 &)
+	?DismountProxyDrive@RFs@@QAEHI@Z @ 323 NONAME ; public: int __thiscall RFs::DismountProxyDrive(unsigned int)
+	?DoMountProxyDrive@RFs@@AAEHABVTIpcArgs@@@Z @ 324 NONAME ; private: int __thiscall RFs::DoMountProxyDrive(class TIpcArgs const &)
+	?RemoveProxyDrive@RFs@@QAEHABVTDesC16@@@Z @ 325 NONAME ; public: int __thiscall RFs::RemoveProxyDrive(class TDesC16 const &)
+	?ReadFileSection@RFs@@QBEHABVTDesC16@@_JAAVTDes8@@H@Z @ 326 NONAME ; public: int __thiscall RFs::ReadFileSection(class TDesC16 const &,__int64,class TDes8 &,int)const 
+	?AdoptFromClient@RFile64@@QAEHABVRMessage2@@HH@Z @ 327 NONAME ; public: int __thiscall RFile64::AdoptFromClient(class RMessage2 const &,int,int)
+	?AdoptFromCreator@RFile64@@QAEHHH@Z @ 328 NONAME ; public: int __thiscall RFile64::AdoptFromCreator(int,int)
+	?AdoptFromServer@RFile64@@QAEHHH@Z @ 329 NONAME ; public: int __thiscall RFile64::AdoptFromServer(int,int)
+	?Create@RFile64@@QAEHAAVRFs@@ABVTDesC16@@I@Z @ 330 NONAME ; public: int __thiscall RFile64::Create(class RFs &,class TDesC16 const &,unsigned int)
+	?FileSize@TEntry@@QBE_JXZ @ 331 NONAME ; public: __int64 __thiscall TEntry::FileSize(void)const 
+	?Lock@RFile64@@QBEH_J0@Z @ 332 NONAME ; public: int __thiscall RFile64::Lock(__int64,__int64)const 
+	?Open@RFile64@@QAEHAAVRFs@@ABVTDesC16@@I@Z @ 333 NONAME ; public: int __thiscall RFile64::Open(class RFs &,class TDesC16 const &,unsigned int)
+	?Read@RFile64@@QBEHIAAVTDes8@@@Z @ 334 NONAME ; public: int __thiscall RFile64::Read(unsigned int,class TDes8 &)const 
+	?Read@RFile64@@QBEHIAAVTDes8@@H@Z @ 335 NONAME ; public: int __thiscall RFile64::Read(unsigned int,class TDes8 &,int)const 
+	?Read@RFile64@@QBEH_JAAVTDes8@@@Z @ 336 NONAME ; public: int __thiscall RFile64::Read(__int64,class TDes8 &)const 
+	?Read@RFile64@@QBEH_JAAVTDes8@@H@Z @ 337 NONAME ; public: int __thiscall RFile64::Read(__int64,class TDes8 &,int)const 
+	?Read@RFile64@@QBEXIAAVTDes8@@AAVTRequestStatus@@@Z @ 338 NONAME ; public: void __thiscall RFile64::Read(unsigned int,class TDes8 &,class TRequestStatus &)const 
+	?Read@RFile64@@QBEXIAAVTDes8@@HAAVTRequestStatus@@@Z @ 339 NONAME ; public: void __thiscall RFile64::Read(unsigned int,class TDes8 &,int,class TRequestStatus &)const 
+	?Read@RFile64@@QBEX_JAAVTDes8@@AAVTRequestStatus@@@Z @ 340 NONAME ; public: void __thiscall RFile64::Read(__int64,class TDes8 &,class TRequestStatus &)const 
+	?Read@RFile64@@QBEX_JAAVTDes8@@HAAVTRequestStatus@@@Z @ 341 NONAME ; public: void __thiscall RFile64::Read(__int64,class TDes8 &,int,class TRequestStatus &)const 
+	?Replace@RFile64@@QAEHAAVRFs@@ABVTDesC16@@I@Z @ 342 NONAME ; public: int __thiscall RFile64::Replace(class RFs &,class TDesC16 const &,unsigned int)
+	?Seek@RFile64@@QBEHW4TSeek@@AA_J@Z @ 343 NONAME ; public: int __thiscall RFile64::Seek(enum TSeek,__int64 &)const 
+	?SetSize@RFile64@@QAEH_J@Z @ 344 NONAME ; public: int __thiscall RFile64::SetSize(__int64)
+	?Size@RFile64@@QBEHAA_J@Z @ 345 NONAME ; public: int __thiscall RFile64::Size(__int64 &)const 
+	?Temp@RFile64@@QAEHAAVRFs@@ABVTDesC16@@AAV?$TBuf@$0BAA@@@I@Z @ 346 NONAME ; public: int __thiscall RFile64::Temp(class RFs &,class TDesC16 const &,class TBuf<256> &,unsigned int)
+	?UnLock@RFile64@@QBEH_J0@Z @ 347 NONAME ; public: int __thiscall RFile64::UnLock(__int64,__int64)const 
+	?Write@RFile64@@QAEHIABVTDesC8@@@Z @ 348 NONAME ; public: int __thiscall RFile64::Write(unsigned int,class TDesC8 const &)
+	?Write@RFile64@@QAEHIABVTDesC8@@H@Z @ 349 NONAME ; public: int __thiscall RFile64::Write(unsigned int,class TDesC8 const &,int)
+	?Write@RFile64@@QAEH_JABVTDesC8@@@Z @ 350 NONAME ; public: int __thiscall RFile64::Write(__int64,class TDesC8 const &)
+	?Write@RFile64@@QAEH_JABVTDesC8@@H@Z @ 351 NONAME ; public: int __thiscall RFile64::Write(__int64,class TDesC8 const &,int)
+	?Write@RFile64@@QAEXIABVTDesC8@@AAVTRequestStatus@@@Z @ 352 NONAME ; public: void __thiscall RFile64::Write(unsigned int,class TDesC8 const &,class TRequestStatus &)
+	?Write@RFile64@@QAEXIABVTDesC8@@HAAVTRequestStatus@@@Z @ 353 NONAME ; public: void __thiscall RFile64::Write(unsigned int,class TDesC8 const &,int,class TRequestStatus &)
+	?Write@RFile64@@QAEX_JABVTDesC8@@AAVTRequestStatus@@@Z @ 354 NONAME ; public: void __thiscall RFile64::Write(__int64,class TDesC8 const &,class TRequestStatus &)
+	?Write@RFile64@@QAEX_JABVTDesC8@@HAAVTRequestStatus@@@Z @ 355 NONAME ; public: void __thiscall RFile64::Write(__int64,class TDesC8 const &,int,class TRequestStatus &)
+	?IsValidName@RFs@@QAEHABVTDesC16@@AAVTNameValidParam@1@@Z @ 356 NONAME ; public: int __thiscall RFs::IsValidName(class TDesC16 const &,class RFs::TNameValidParam &)
+	?Close@RFs@@QAEXXZ @ 357 NONAME ; public: void __thiscall RFs::Close(void)
+	??1CFsNotify@@UAE@XZ @ 358 NONAME ; public: virtual __thiscall CFsNotify::~CFsNotify(void)
+	?AddNotification@CFsNotify@@QAEHIABVTDesC16@@0@Z @ 359 NONAME ; public: int __thiscall CFsNotify::AddNotification(unsigned int,class TDesC16 const &,class TDesC16 const &)
+	?Attributes@TFsNotification@@QBEHAAI0@Z @ 360 NONAME ; public: int __thiscall TFsNotification::Attributes(unsigned int &,unsigned int &)const 
+	?CancelNotifications@CFsNotify@@QAEHAAVTRequestStatus@@@Z @ 361 NONAME ; public: int __thiscall CFsNotify::CancelNotifications(class TRequestStatus &)
+	?FileSize@TFsNotification@@QBEHAA_J@Z @ 362 NONAME ; public: int __thiscall TFsNotification::FileSize(__int64 &)const 
+	?NewL@CFsNotify@@SAPAV1@AAVRFs@@H@Z @ 363 NONAME ; public: static class CFsNotify * __cdecl CFsNotify::NewL(class RFs &,int)
+	?NewName@TFsNotification@@QBEHAAVTPtrC16@@@Z @ 364 NONAME ; public: int __thiscall TFsNotification::NewName(class TPtrC16 &)const 
+	?NextNotification@CFsNotify@@QAEPBVTFsNotification@@XZ @ 365 NONAME ; public: class TFsNotification const * __thiscall CFsNotify::NextNotification(void)
+	?NotificationType@TFsNotification@@QBE?AW4TFsNotificationType@1@XZ @ 366 NONAME ; public: enum TFsNotification::TFsNotificationType __thiscall TFsNotification::NotificationType(void)const 
+	?Path@TFsNotification@@QBEHAAVTPtrC16@@@Z @ 367 NONAME ; public: int __thiscall TFsNotification::Path(class TPtrC16 &)const 
+	?RemoveNotifications@CFsNotify@@QAEHXZ @ 368 NONAME ; public: int __thiscall CFsNotify::RemoveNotifications(void)
+	?RequestNotifications@CFsNotify@@QAEHAAVTRequestStatus@@@Z @ 369 NONAME ; public: int __thiscall CFsNotify::RequestNotifications(class TRequestStatus &)
+	?SupportedFileSystemName@RFs@@QBEHAAVTDes16@@HH@Z @ 370 NONAME ; public: int __thiscall RFs::SupportedFileSystemName(class TDes16 &,int,int)const 
 	??1CFsMountHelper@@UAE@XZ @ 371 NONAME ; public: virtual __thiscall CFsMountHelper::~CFsMountHelper(void)
 	?DismountFileSystem@CFsMountHelper@@QBEHXZ @ 372 NONAME ; public: int __thiscall CFsMountHelper::DismountFileSystem(void)const 
 	?DismountFileSystem@CFsMountHelper@@QBEXAAVTRequestStatus@@W4TFsDismountMode@1@@Z @ 373 NONAME ; public: void __thiscall CFsMountHelper::DismountFileSystem(class TRequestStatus &,enum CFsMountHelper::TFsDismountMode)const 
 	?GetMountProperties@CFsMountHelper@@QAEHXZ @ 374 NONAME ; public: int __thiscall CFsMountHelper::GetMountProperties(void)
 	?MountFileSystem@CFsMountHelper@@QBEHXZ @ 375 NONAME ; public: int __thiscall CFsMountHelper::MountFileSystem(void)const 
 	?New@CFsMountHelper@@SAPAV1@AAVRFs@@H@Z @ 376 NONAME ; public: static class CFsMountHelper * __cdecl CFsMountHelper::New(class RFs &,int)
+	?DriveNumber@TFsNotification@@QBEHAAH@Z @ 377 NONAME ; public: int __thiscall TFsNotification::DriveNumber(int &)const 
+	?UID@TFsNotification@@QBEHAAVTUid@@@Z @ 378 NONAME ; public: int __thiscall TFsNotification::UID(class TUid &)const 
 

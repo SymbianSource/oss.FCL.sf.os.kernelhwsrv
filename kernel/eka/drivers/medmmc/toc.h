@@ -65,6 +65,73 @@ const TText8  KTocRofs6Generic[]    = "ROFS6";
 const TUint   KNoOfROFSPartitions   = 6;
 
 const TInt    KSectorShift          = 9;
+
+// Version Info const and enums
+
+enum
+     {
+     EHalGroupNandMedia = 28
+     };
+ 
+ 
+ /**
+     The number of nand media attributes.
+ 
+     It is simply defined by its position in the enumeration.
+ */ 
+ enum TNandMediaHalFunction
+     {
+     EEraseBlockSize=1,           /// nand device block size
+     EIsEraseNeedBeforeWrite,     /// erase command is mandatory before write
+     EAtomicWriteSize,            /// minimal size of data what can be written
+     
+     EGetVersionInfoItems=0x10,   ///  total amount of items in version info structure
+     EGetVersionInfo              ///  get version info structure array from media driver
+     };
+ 
+ 
+ /**
+     The nand media devices enumeration.
+ 
+ */ 
+ enum 
+     {
+     ENandMediaDevice1=1          /// nand device1
+     };
+
+
+const TUint8  KMaxSectionItems     = 32;
+const TUint8  KMaxSectionNameLen   = 12;
+const TUint8  KMaxVersionInfoLen   = 28;
+
+const TUint32 KImageHeaderMagic    = 0x31DEEAE8UL;
+
+// Image header always located after BB5_CommonHeader
+const TUint32  KImageHeaderOffset  = 0x3D0;
+
+struct TVersionInfoItem
+     {
+     TText8  iSectionName[KMaxSectionNameLen];
+     TUint32 iSectionMaxSize;
+     TUint32 iImageCompressedSize;
+     TUint32 iImageSize;
+     TText8  iVersion[KMaxVersionInfoLen];
+     };
+
+
+// Image header
+// It is added after BB5_Common_Header
+struct TImageHeader
+     {
+     TUint32 iMagic;
+     TUint32 iImageCompressedSize;
+     TUint32 iImageSize;
+     TUint32 iLoadAddress;
+     TUint32 iReserved;
+     TText8  iVersion[KMaxVersionInfoLen];
+     };
+
+
 /**
 TOC access for kernel side clients.
 */

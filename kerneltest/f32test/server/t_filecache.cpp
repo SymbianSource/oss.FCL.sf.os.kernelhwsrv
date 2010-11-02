@@ -591,7 +591,7 @@ LOCAL_C void UnitTests()
 		test(fileCacheStats.iLockedSegmentCount >= maxLockedSegmentCount);
 		maxLockedSegmentCount = Max(maxLockedSegmentCount, fileCacheStats.iLockedSegmentCount);
 		// wrap to start of file
-		if (pos >= gFileCacheConfig.iCacheSize)	
+		if (pos >= gFileCacheConfig.iCacheSize || pos >= KBufSize)	
 			pos = 0;
 		}
 	timer.Close();
@@ -1017,13 +1017,10 @@ LOCAL_C void UnitTests()
 	test_Value(r, r==KErrArgument);
 	//**********************************
 	// Test that continuously appending to a file yields the correct size...
-	// NB: Must have lock failure more ON in debug mode for this test to pass
+	// NB: Must have lock failure mode ON in debug mode for this test to pass
 	//**********************************
 	test.Next(_L("Test appending to a file & checking the file size..."));
 	gBufPtr.SetLength(KBufSize);
-
-	r = f.Replace(TheFs, testFile, EFileWrite | EFileWriteBuffered);
-	test_KErrNone(r);
 
 	const TInt KWriteLen = KSegmentSize+1;
 	writePtr.Set(gBuf->Des().Ptr(), KWriteLen);
@@ -1039,6 +1036,9 @@ LOCAL_C void UnitTests()
 	TInt fileSize = 0;
 	for (TInt i=0; i<4; i++)
 		{
+		r = f.Replace(TheFs, testFile, EFileWrite | EFileWriteBuffered);
+		test_KErrNone(r);
+
 		fileSize = 0;
 		r = f.SetSize(fileSize);
 		test_KErrNone(r);
@@ -1080,6 +1080,13 @@ LOCAL_C void UnitTests()
 #endif
 
 			}
+		// Close & delete the file after filling it - to ensure all pages are decomitted
+		// otherwise we may never again get a simulated lock failure
+		r = f.Flush();
+		test_KErrNone(r);
+		f.Close();
+		r = TheFs.Delete(testFile);
+		test_KErrNone(r);
 		}
 
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)

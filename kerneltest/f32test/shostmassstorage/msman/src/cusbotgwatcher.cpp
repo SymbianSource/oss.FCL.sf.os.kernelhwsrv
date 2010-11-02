@@ -1,4 +1,4 @@
-// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -22,36 +22,31 @@
 #include "cusbotg.h"
 #include "cusbotgwatcher.h"
 
-#include "tmslog.h"
 #include "debug.h"
 
 
 CUsbOtgBaseWatcher::CUsbOtgBaseWatcher(RUsbOtgDriver& aLdd)
 :   CActive(CActive::EPriorityStandard),
     iLdd(aLdd)
-	{
-    __MSFNLOG
-	CActiveScheduler::Add(this);
-	}
+    {
+    CActiveScheduler::Add(this);
+    }
 
 
 CUsbOtgBaseWatcher::~CUsbOtgBaseWatcher()
-	{
-    __MSFNLOG
-	Cancel();
-	}
+    {
+    Cancel();
+    }
 
 void CUsbOtgBaseWatcher::Start()
-	{
-    __MSFNLOG
-	Post();
-	}
+    {
+    Post();
+    }
 
 
 
 CRequestSessionWatcher* CRequestSessionWatcher::NewL(MUsbRequestSessionObserver& aObserver)
     {
-    __MSFNSLOG
     CRequestSessionWatcher* r = new (ELeave) CRequestSessionWatcher(aObserver);
     r->ConstructL();
     return r;
@@ -61,31 +56,27 @@ CRequestSessionWatcher::CRequestSessionWatcher(MUsbRequestSessionObserver& aObse
 :   CActive(EPriorityStandard),
     iObserver(aObserver)
     {
-    __MSFNLOG
     }
 
 void CRequestSessionWatcher::ConstructL()
     {
-    __MSFNLOG
     User::LeaveIfError(iProperty.Define(KUidUsbManCategory, KUsbRequestSessionProperty, RProperty::EInt));
     User::LeaveIfError(iProperty.Attach(KUidUsbManCategory, KUsbRequestSessionProperty));
     CActiveScheduler::Add(this);
 
     // initial subscription and process current property value
-	RunL();
+    RunL();
     }
 
 
 void CRequestSessionWatcher::DoCancel()
-	{
-    __MSFNLOG
-	iProperty.Cancel();
-	}
+    {
+    iProperty.Cancel();
+    }
 
 
 CRequestSessionWatcher::~CRequestSessionWatcher()
     {
-    __MSFNLOG
     Cancel();
     iProperty.Close();
     iProperty.Delete(KUidUsbManCategory, KUsbRequestSessionProperty);
@@ -94,10 +85,9 @@ CRequestSessionWatcher::~CRequestSessionWatcher()
 
 void CRequestSessionWatcher::RunL()
     {
-    __MSFNLOG
-	// resubscribe before processing new value to prevent missing updates
-	iProperty.Subscribe(iStatus);
-	SetActive();
+    // resubscribe before processing new value to prevent missing updates
+    iProperty.Subscribe(iStatus);
+    SetActive();
     TInt val;
     User::LeaveIfError(iProperty.Get(KUidUsbManCategory, KUsbRequestSessionProperty, val));
     __USBOTGPRINT1(_L(">> CUsbRequestSessionWatcher[%d]"), val);
@@ -117,7 +107,6 @@ void CRequestSessionWatcher::RunL()
 
 TInt CRequestSessionWatcher::RunError(TInt aError)
     {
-    __MSFNLOG
     __USBOTGPRINT1(_L("CUsbRequestSessionWatcher::RunError[%d]"), aError);
     return KErrNone;
     }
@@ -133,7 +122,6 @@ TInt CRequestSessionWatcher::RunError(TInt aError)
 CUsbOtgEventWatcher* CUsbOtgEventWatcher::NewL(RUsbOtgDriver& aLdd,
                                                CUsbOtg& aUsbOtg)
     {
-    __MSFNSLOG
     CUsbOtgEventWatcher* r = new (ELeave) CUsbOtgEventWatcher(aLdd, aUsbOtg);
     r->ConstructL();
     return r;
@@ -144,40 +132,33 @@ CUsbOtgEventWatcher::CUsbOtgEventWatcher(RUsbOtgDriver& aLdd,
 :   CUsbOtgBaseWatcher(aLdd),
     iUsbOtg(aUsbOtg)
     {
-    __MSFNLOG
     }
 
 
 void CUsbOtgEventWatcher::ConstructL()
     {
-    __MSFNLOG
     }
 
 
 void CUsbOtgEventWatcher::DoCancel()
-	{
-    __MSFNLOG
+    {
     iLdd.CancelOtgEventRequest();
-	}
+    }
 
 
 CUsbOtgEventWatcher::~CUsbOtgEventWatcher()
     {
-    __MSFNLOG
     }
 
 
 void CUsbOtgEventWatcher::Post()
     {
-    __MSFNLOG
     iLdd.QueueOtgEventRequest(iEvent, iStatus);
     SetActive();
     }
 
 void CUsbOtgEventWatcher::RunL()
     {
-    __MSFNLOG
-
     TInt r = iStatus.Int();
     User::LeaveIfError(r);
 
@@ -190,7 +171,6 @@ void CUsbOtgEventWatcher::RunL()
 
 TInt CUsbOtgEventWatcher::RunError(TInt aError)
     {
-    __MSFNLOG
     __USBOTGPRINT1(_L("CUsbRequestSessionWatcher::RunError[%d]"), aError);
     return KErrNone;
     }

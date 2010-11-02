@@ -15,6 +15,7 @@
 // 
 //
 
+#include "us_std.h"
 #include "up_std.h"
 #include <e32uid.h>
 #include "u32std.h"
@@ -230,19 +231,14 @@ TInt RLibrary::InitL()
 // Initialise any static data following a DLL load
 //
 	{
-	TLinAddr ep[KMaxLibraryEntryPoints];
-	TInt numEps=KMaxLibraryEntryPoints;
-	E32Loader::LibraryAttach(iHandle, numEps, ep);
-	if (numEps==0)
+	TEntryPointList eplist;
+	eplist.iNumEPs=KMaxLibraryEntryPoints;
+	E32Loader::LibraryAttach(iHandle, eplist.iNumEPs, eplist.iEPs);
+	if (eplist.iNumEPs==0)
 		return KErrNone;
-	TInt i;
-	for (i=0; i<numEps; ++i)
-		{
-		TLibraryEntry f=(TLibraryEntry)ep[i];
-		TInt r = (*f)(KModuleEntryReasonProcessAttach);
-		if (r != KErrNone)
-			return r;
-		}
+	TInt r = eplist.CallEPs();
+	if (r != KErrNone)
+		return r;
 	return E32Loader::LibraryAttached(iHandle);
 	}
 

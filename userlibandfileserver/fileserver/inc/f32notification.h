@@ -115,13 +115,16 @@ public:
 
 	/*
 	 * @returns The Drive Number associated with the Path.
-	IMPORT_C TInt DriveNumber(TInt& aDriveNumber) const;
 	 */
-	
+	IMPORT_C TInt DriveNumber(TInt& aDriveNumber) const;
+
 	/*
 	 * @returns the UID of the process that caused this change.
-	IMPORT_C TInt UID(TUid& aUID) const;
+	 *          NB, the UID of the process causing the change is not always available
+	 *			such as when memory cards are physically removed.
 	 */
+	IMPORT_C TInt UID(TUid& aUID) const;
+	 
 private:
 	//Declared private to prevent construction
 	TFsNotification();
@@ -182,7 +185,7 @@ class CFsNotify : public CBase
 		 * CFsNotify stores notifications in a buffer. 
 		 * Clients of CFsNotify must specify how large this buffer should be.
 		 * 
-		 * As a guideline: Notification objects in the buffer typically have a 8byte header,
+		 * As a guideline: Notification objects in the buffer typically have a 12-byte header,
 		 * followed by a word aligned string containing the fullname of the file that has changed.
 		 * In the case of a rename notification both the original and the new fullnames are stored.
 		 *

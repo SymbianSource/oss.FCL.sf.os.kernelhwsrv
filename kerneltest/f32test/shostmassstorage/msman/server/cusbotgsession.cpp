@@ -1,4 +1,4 @@
-// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -12,7 +12,7 @@
 //
 // Description:
 // Implements a Session of a Symbian OS server for the RUsbMassStorage API
-// 
+//
 //
 
 
@@ -25,7 +25,6 @@
 #include <e32cmn.h>
 #include <e32base.h>
 
-#include "tmslog.h"
 #include "msmanclientserver.h"
 
 #include <f32file.h>
@@ -40,56 +39,48 @@
 
 
 CUsbOtgSession* CUsbOtgSession::NewL()
-	{
-    __MSFNSLOG
-	CUsbOtgSession* r = new (ELeave) CUsbOtgSession();
-	CleanupStack::PushL(r);
-	r->ConstructL();
-	CleanupStack::Pop();
-	return r;
-	}
+    {
+    CUsbOtgSession* r = new (ELeave) CUsbOtgSession();
+    CleanupStack::PushL(r);
+    r->ConstructL();
+    CleanupStack::Pop();
+    return r;
+    }
 
 
 CUsbOtgSession::CUsbOtgSession()
-	{
-    __MSFNSLOG
-
-	}
+    {
+    }
 
 void CUsbOtgSession::ConstructL()
-	{
-    __MSFNSLOG
- 	}
+    {
+    }
 
 
 void CUsbOtgSession::CreateL()
-	{
-    __MSFNSLOG
+    {
     Server().AddSession();
-	}
+    }
 
 
 CUsbOtgSession::~CUsbOtgSession()
-	{
-    __MSFNSLOG
+    {
     Server().RemoveSession();
-	}
+    }
 
 
 void CUsbOtgSession::ServiceL(const RMessage2& aMessage)
-	{
-    __MSFNSLOG
-	DispatchMessageL(aMessage);
-	}
+    {
+    DispatchMessageL(aMessage);
+    }
 
 
 void CUsbOtgSession::DispatchMessageL(const RMessage2& aMessage)
-	{
-    __MSFNSLOG
-	TInt ret = KErrNone;
+    {
+    TInt ret = KErrNone;
 
-	switch (aMessage.Function())
-		{
+    switch (aMessage.Function())
+        {
     case EUsbOtgDeviceInserted:
         DeviceInsertedL(aMessage);
         break;
@@ -99,21 +90,20 @@ void CUsbOtgSession::DispatchMessageL(const RMessage2& aMessage)
     case EUsbOtgNotifyChangeCancel:
         NotifyChangeCancel();
         break;
-	case EUsbOtgBusDrop:
-		ret = BusDrop();
-		break;
-	default:
-		aMessage.Panic(KUsbOtgClientPncCat, EUsbOtgPanicIllegalIPC);
-		break;
-		}
+    case EUsbOtgBusDrop:
+        ret = BusDrop();
+        break;
+    default:
+        aMessage.Panic(KUsbOtgClientPncCat, EUsbOtgPanicIllegalIPC);
+        break;
+        }
 
-	aMessage.Complete(ret);
-	}
+    aMessage.Complete(ret);
+    }
 
 
 void CUsbOtgSession::DeviceInsertedL(const RMessage2& aMessage)
     {
-    __MSFNSLOG
     TBool inserted = Server().iUsbOtg->DeviceInserted();
     TPckgBuf<TBool> p(inserted);
     aMessage.WriteL(0,p);
@@ -121,20 +111,17 @@ void CUsbOtgSession::DeviceInsertedL(const RMessage2& aMessage)
 
 void CUsbOtgSession::NotifyChange(const RMessage2& aMessage)
     {
-    __MSFNSLOG
     Server().iUsbOtg->NotifyChange(aMessage);
     }
 
 
 void CUsbOtgSession::NotifyChangeCancel()
     {
-    __MSFNSLOG
     Server().iUsbOtg->NotifyChangeCancel();
     }
 
 
 TInt CUsbOtgSession::BusDrop()
     {
-    __MSFNSLOG
     return Server().iUsbOtg->BusDrop();
-	}
+    }

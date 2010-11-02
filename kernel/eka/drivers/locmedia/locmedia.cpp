@@ -553,6 +553,26 @@ void DebugDumpDriveCaps(const TLocDrv* aDrive, const TAny* aCaps)
 #endif
 
 /*
+Acquires ownership of the (already opened) client thread object stored in TheCurrentThread::iExtTempObj
+by retrieving and then clearing iExtTempObj
+
+On exit TheCurrentThread::iExtTempObj should be NULL
+
+@see EControlSetMountInfo
+*/
+DThread* AcquireRemoteThread()
+	{
+	NKern::ThreadEnterCS();
+
+	DThread& t = Kern::CurrentThread();
+	DThread* remoteThread = (DThread*)__e32_atomic_swp_ord_ptr(&t.iExtTempObj, 0);
+
+	NKern::ThreadLeaveCS();
+	
+	return remoteThread;
+	}
+
+/*
  * Requests are passed in message as follows:
  * iValue	= request ID
  * iArg[0,1]= Position
@@ -744,6 +764,11 @@ TInt DLocalDrive::Request(TInt aFunction, TAny* a1, TAny* a2)
 			if(!pM || r!=KErrNone)
 				break;
 
+#ifdef __DEMAND_PAGING__
+			// Clear existing mount info
+			UnlockMountInfo(*pM);
+#endif
+			
 			if (pM->iMountInfo.iThread)
 				{
 				NKern::ThreadEnterCS();
@@ -758,17 +783,11 @@ TInt DLocalDrive::Request(TInt aFunction, TAny* a1, TAny* a2)
 						break;
 #endif
 					pM->iMountInfo.iInfo=(TDesC8*)m.RemoteDes();
-					pM->iMountInfo.iThread=m.RemoteThread();
+					pM->iMountInfo.iThread = AcquireRemoteThread();
 					}
 				else
 					{
-					//Clear existing mount info and close setting thread
-
-#ifdef __DEMAND_PAGING__
-					// unlock the mount info if this is a data paging media
-					UnlockMountInfo(*pM);
-#endif
-
+					// Close setting thread
 					pM->iMountInfo.iInfo=NULL;
 					pM->iMountInfo.iThread=NULL;
 					m.CloseRemoteThread();
@@ -794,7 +813,8 @@ TInt DLocalDrive::Request(TInt aFunction, TAny* a1, TAny* a2)
 #endif
 
 				pM->iMountInfo.iInfo=(TDesC8*)m.RemoteDes();
-				pM->iMountInfo.iThread=m.RemoteThread();
+				pM->iMountInfo.iThread = AcquireRemoteThread();
+
 				NKern::ThreadLeaveCS();
 				r=KErrNone;
 				}

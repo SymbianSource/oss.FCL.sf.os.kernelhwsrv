@@ -622,6 +622,14 @@ TInt TFsControlIo::DoRequestL(CFsRequest* aRequest)
             TInt r=aRequest->Write(2,pkgBuf);
             return r;
             }
+
+		case KControlIoHeapCellCount:
+			{
+            TPckgBuf<TInt> pkgBuf(User::Allocator().Count());
+            TInt r=aRequest->Write(2,pkgBuf);
+            return r;
+			}
+
         // Check if the file is in 'file sequential/non-rugged file' mode
         case KControlIoIsFileSequential:
         	{

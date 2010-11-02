@@ -1,4 +1,4 @@
-// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -12,7 +12,7 @@
 //
 // Description:
 // Implements a Symbian OS server that exposes the RUsbMassStorage API
-// 
+//
 //
 
 
@@ -38,74 +38,63 @@
 #include "cusbhostserver.h"
 #include "cusbhostsession.h"
 
-#include "tmslog.h"
-
 CUsbHostServer* CUsbHostServer::NewLC()
-	{
-    __MSFNSLOG
-	CUsbHostServer* r = new (ELeave) CUsbHostServer();
-	CleanupStack::PushL(r);
+    {
+    CUsbHostServer* r = new (ELeave) CUsbHostServer();
+    CleanupStack::PushL(r);
     r->ConstructL();
-	return r;
-	}
+    return r;
+    }
 
 
 CUsbHostServer::CUsbHostServer()
 :   CServer2(EPriorityLow)
-	{
-    __MSFNSLOG
-	}
+    {
+    }
 
 
 void CUsbHostServer::ConstructL()
     {
-    __MSFNSLOG
     iUsbHost = CUsbHost::NewL();
-	StartL(KUsbHostServerName);
+    StartL(KUsbHostServerName);
     }
 
 
 CUsbHostServer::~CUsbHostServer()
-	{
-    __MSFNSLOG
+    {
     delete iUsbHost;
-	}
+    }
 
 
 CSession2* CUsbHostServer::NewSessionL(const TVersion &aVersion, const RMessage2& /*aMessage*/) const
-	{
-    __MSFNSLOG
-	TVersion v(KUsbHostSrvMajorVersionNumber, KUsbHostSrvMinorVersionNumber, KUsbHostSrvBuildVersionNumber);
+    {
+    TVersion v(KUsbHostSrvMajorVersionNumber, KUsbHostSrvMinorVersionNumber, KUsbHostSrvBuildVersionNumber);
 
-	if (!User::QueryVersionSupported(v, aVersion))
-		User::Leave(KErrNotSupported);
+    if (!User::QueryVersionSupported(v, aVersion))
+        User::Leave(KErrNotSupported);
 
-	CUsbHostSession* session = CUsbHostSession::NewL();
+    CUsbHostSession* session = CUsbHostSession::NewL();
 
-	return session;
-	}
+    return session;
+    }
 
 
 
 TInt CUsbHostServer::RunError(TInt aError)
-	{
-    __MSFNSLOG
-
-	Message().Complete(aError);
-	ReStart();
+    {
+    Message().Complete(aError);
+    ReStart();
     return KErrNone;
-	}
+    }
 
 
 void CUsbHostServer::AddSession()
     {
-    __MSFNSLOG
     ++iSessionCount;
     }
 
 void CUsbHostServer::RemoveSession()
     {
-    __MSFNSLOG
     if (--iSessionCount == 0)
         {
         User::After(1000000);

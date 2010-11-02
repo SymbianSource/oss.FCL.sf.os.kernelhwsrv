@@ -13,42 +13,39 @@
 // Description:
 //
 
-TARGET			usbhostserver.exe
+TARGET                  usbhostserver.exe
 
-TARGETTYPE		exe
+TARGETTYPE              exe
 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
-USERINCLUDE	.
-USERINCLUDE	../shared
-USERINCLUDE	../src
+USERINCLUDE     .
+USERINCLUDE     ../shared
+USERINCLUDE     ../src
 
-SOURCEPATH	.
-SOURCE			cusbhostsession.cpp
-SOURCE			cusbhostserver.cpp
-SOURCE			usbhostserver.cpp
+SOURCEPATH      .
+SOURCE                  cusbhostsession.cpp
+SOURCE                  cusbhostserver.cpp
+SOURCE                  usbhostserver.cpp
 
 SOURCEPATH ../src
-SOURCE			cusbhostao.cpp
-SOURCE			cusbhost.cpp
-SOURCE			cusbmsmountmanager.cpp
-SOURCE			rextfilesystem.cpp
+SOURCE                  cusbhostao.cpp
+SOURCE                  cusbhost.cpp
+SOURCE                  cusbmsmountmanager.cpp
+SOURCE                  rextfilesystem.cpp
 
-SOURCEPATH	../shared
-SOURCE			tmslog.cpp
+USERINCLUDE     .
+USERINCLUDE     ../shared
+USERINCLUDE     ../inc
 
-USERINCLUDE	.
-USERINCLUDE	../shared
-USERINCLUDE	../inc
-
-LIBRARY		efsrv.lib euser.lib usbdescriptors.lib usbdi_utils.lib usbhostmsclient.lib
+LIBRARY         efsrv.lib euser.lib usbdescriptors.lib usbdi_utils.lib usbhostmsclient.lib
 
 
-//MACRO		_TESTAPP_DEBUG_PRINT_
+//MACRO         _TESTAPP_DEBUG_PRINT_
 
 //CAPABILITY ALL
 CAPABILITY CommDD PowerMgmt DISKADMIN ALLFILES NetworkControl
 
 
-UID		0	0x10282b48
+UID             0       0x10282b48
 
 SMPSAFE

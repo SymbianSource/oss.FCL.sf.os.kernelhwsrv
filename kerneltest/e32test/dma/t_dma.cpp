@@ -938,7 +938,7 @@ static void TestStreaming(RTestDma aChannel, TInt aFragmentCount, TInt aSize)
 		if(aChannel.CheckBuffer(KDestBuf0, 'A'))
 			break;
 
-		User::After(10000); // Wait 10 milliseconds
+		User::After(100000); // Wait 100 milliseconds
 		}
 	XTEST(aChannel.CheckBuffer(KDestBuf0, 'A'));
 

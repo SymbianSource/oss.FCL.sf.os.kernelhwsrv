@@ -1024,7 +1024,7 @@ public:
 	@return True, if all lists are empty
 	*/
 	inline TBool IsEmpty() const
-		{ return !iPresent[0] && !iPresent[1]; }
+		{ return !NonEmpty();  }
 		
 	/**
 	Tests whether any linked list with priority greater than p is non-empty.

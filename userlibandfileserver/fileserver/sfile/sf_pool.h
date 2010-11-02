@@ -27,13 +27,14 @@ template <class T>
 class CFsPool
 	{
 public:
-	static CFsPool<T>* New(TInt aPoolSize);
+   
+	static CFsPool<T>* New(TInt aPoolSize,T*(*aNewFunction)());
 	~CFsPool();
 	
 	/*
 	 * Allocate returns a pointer of class T.
 	 * The pointer returned is removed from the pool.
-	 * When the pool is empty this function will wait.
+	 * WAITs when the pool is empty.
 	 */
 	T* Allocate();
 	
@@ -44,7 +45,7 @@ public:
 	void Free(T* aBlock);
 private:
 	CFsPool();
-	TInt Construct(TInt aPoolSize);
+	TInt Construct(TInt aPoolSize,T*(*aNewFunction)());
 	
 	void Lock();
 	void Unlock();

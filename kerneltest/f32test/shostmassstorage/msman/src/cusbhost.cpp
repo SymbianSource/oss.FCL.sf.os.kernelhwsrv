@@ -1,4 +1,4 @@
-// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -29,7 +29,6 @@
 #include "mdrivedisplay.h"
 #include "cusbhostao.h"
 #include "cusbhost.h"
-#include "tmslog.h"
 #include "debug.h"
 
 
@@ -40,21 +39,19 @@ _LIT(KUsbdiLddFileName, "usbdi");
 
 CUsbHost* CUsbHost::NewL()
     {
-    __MSFNSLOG
-	CUsbHost* r = new (ELeave) CUsbHost();
-	CleanupStack::PushL(r);
+    CUsbHost* r = new (ELeave) CUsbHost();
+    CleanupStack::PushL(r);
 
-	r->ConstructL();
-	CleanupStack::Pop();
-	return r;
+    r->ConstructL();
+    CleanupStack::Pop();
+    return r;
     }
 
 
 void CUsbHost::ConstructL()
     {
-    __MSFNLOG
     OpenHubL();
-	LoadFileSystemL();
+    LoadFileSystemL();
 
     iUsbHostAo = CUsbHostAo::NewL(iHubDriver, iEvent, *this);
 
@@ -64,13 +61,11 @@ void CUsbHost::ConstructL()
 
 CUsbHost::CUsbHost()
     {
-    __MSFNLOG
     }
 
 
 CUsbHost::~CUsbHost()
     {
-    __MSFNLOG
     delete iUsbHostAo;
 
     DismountAllFileSystemsL();
@@ -83,11 +78,10 @@ CUsbHost::~CUsbHost()
 
 void CUsbHost::LoadFileSystemL()
     {
-    __MSFNLOG
     RFs fs;
     User::LeaveIfError(fs.Connect());
     CleanupClosePushL(fs);
-	_LIT(KFsNm, "elocal");
+    _LIT(KFsNm, "elocal");
 
     TInt err;
     err = fs.AddFileSystem(KFsNm);
@@ -108,7 +102,6 @@ void CUsbHost::LoadFileSystemL()
 
 void CUsbHost::OpenHubL()
     {
-    __MSFNLOG
     TInt err;
     err = User::LoadLogicalDevice(KHubDriverLddFileName);
     if (err != KErrAlreadyExists)
@@ -125,24 +118,22 @@ void CUsbHost::OpenHubL()
 
 void CUsbHost::CloseHubL()
     {
-    __MSFNLOG
-	iHubDriver.StopHost();
-	iHubDriver.Close();
+    iHubDriver.StopHost();
+    iHubDriver.Close();
 
-	TInt err1 = User::FreeLogicalDevice(KUsbdiLddFileName);
-	__ASSERT_DEBUG(err1==KErrNone, User::Panic(KUsbdiLddFileName, err1));
+    TInt err1 = User::FreeLogicalDevice(KUsbdiLddFileName);
+    __ASSERT_DEBUG(err1==KErrNone, User::Panic(KUsbdiLddFileName, err1));
 
-	TInt err2 = User::FreeLogicalDevice(KHubDriverLddFileName);
-	__ASSERT_DEBUG(err2==KErrNone, User::Panic(KHubDriverLddFileName, err2));
+    TInt err2 = User::FreeLogicalDevice(KHubDriverLddFileName);
+    __ASSERT_DEBUG(err2==KErrNone, User::Panic(KHubDriverLddFileName, err2));
 
-	User::LeaveIfError(err1);
-	User::LeaveIfError(err2);
+    User::LeaveIfError(err1);
+    User::LeaveIfError(err2);
     }
 
 
 TToken CUsbHost::OpenDeviceL()
     {
-    __MSFNLOG
     CDevice* device = CDevice::NewL();
 
     TToken token = 0;
@@ -159,7 +150,6 @@ TToken CUsbHost::OpenDeviceL()
 
 void CUsbHost::CloseDeviceL()
     {
-    __MSFNLOG
     CDevice* device = iMountManager->RemoveDeviceL(iDeviceHandle);
     device->CloseDeviceL();
     delete device;
@@ -168,43 +158,36 @@ void CUsbHost::CloseDeviceL()
 
 void CUsbHost::CloseAllDevicesL()
     {
-    __MSFNLOG
     iMountManager->CloseAllDevicesL();
     }
 
 
 void CUsbHost::MountDeviceL()
     {
-    __MSFNLOG
     iMountManager->MountDeviceL(iDeviceHandle);
     }
 
 
 void CUsbHost::DismountDeviceL()
     {
-    __MSFNLOG
     iMountManager->DismountDeviceL(iDeviceHandle);
     }
 
 
 void CUsbHost::DismountAllFileSystemsL()
     {
-    __MSFNLOG
     iMountManager->DismountL();
     }
 
 
 void CUsbHost::Start()
     {
-    __MSFNLOG
     iUsbHostAo->Wait();
     }
 
 
 void CUsbHost::ProcessBusEventL()
     {
-    __MSFNLOG
-
     __USBHOSTPRINT2(_L(">> CUsbHost RUsbHubDriver Event[%d] Device Handle = %d"),
                     iEvent.iEventType, iEvent.iDeviceHandle);
     __USBHOSTPRINT2(_L("Error = %d reason = %x"),
@@ -218,12 +201,12 @@ void CUsbHost::ProcessBusEventL()
         /* Jungo stack has attached the device */
         TUint32 token = OpenDeviceL();
         MountDeviceL();
-	    __USBHOSTPRINT(_L("CUsbHost: device attached"));
+        __USBHOSTPRINT(_L("CUsbHost: device attached"));
         }
     else if (event == RUsbHubDriver::TBusEvent::EDeviceRemoved)
         {
-		TRAPD(err, DismountDeviceL());
-	    CloseDeviceL();
+        TRAPD(err, DismountDeviceL());
+        CloseDeviceL();
         User::LeaveIfError(err);
         __USBHOSTPRINT(_L("CUsbHost: device removed"));
         }
@@ -237,7 +220,6 @@ void CUsbHost::ProcessBusEventL()
 
 RUsbHubDriver::TBusEvent::TEvent CUsbHost::WaitForBusEvent()
     {
-    __MSFNLOG
     TRequestStatus status;
     RUsbHubDriver::TBusEvent event;
     TBool eventReceived = EFalse;
@@ -281,14 +263,12 @@ void CUsbHost::Cancel()
 
 void CUsbHost::DriveMap(TDriveMap& aDriveMap) const
     {
-    __MSFNSLOG
     iMountManager->DriveMap(aDriveMap);
     }
 
 
 void CUsbHost::DeviceMap(TInt aDeviceIndex, TDeviceMap& aDeviceMap) const
     {
-    __MSFNSLOG
     iMountManager->DeviceMap(aDeviceIndex, aDeviceMap);
     }
 
@@ -301,18 +281,16 @@ TInt CUsbHost::DevicesNumber() const
 
 CUsbHostDisp* CUsbHostDisp::NewL(MDriveDisplay& aDriveDisplay)
     {
-    __MSFNSLOG
-	CUsbHostDisp* r = new (ELeave) CUsbHostDisp(aDriveDisplay);
-	CleanupStack::PushL(r);
-	r->ConstructL();
-	CleanupStack::Pop();
-	return r;
+    CUsbHostDisp* r = new (ELeave) CUsbHostDisp(aDriveDisplay);
+    CleanupStack::PushL(r);
+    r->ConstructL();
+    CleanupStack::Pop();
+    return r;
     }
 
 
 void CUsbHostDisp::ConstructL()
     {
-    __MSFNLOG
     CUsbHost::ConstructL();
     }
 
@@ -321,13 +299,11 @@ CUsbHostDisp::CUsbHostDisp(MDriveDisplay& aDriveDisplay)
 :   CUsbHost(),
     iDriveDisplay(aDriveDisplay)
     {
-    __MSFNLOG
     }
 
 
 CUsbHostDisp::~CUsbHostDisp()
     {
-    __MSFNLOG
     }
 
 void CUsbHostDisp::ProcessBusEventL()

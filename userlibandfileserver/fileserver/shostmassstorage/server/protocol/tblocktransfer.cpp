@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -25,8 +25,11 @@
 
 #include "mblocktransferprotocol.h"
 #include "tblocktransfer.h"
-#include "debug.h"
-#include "msdebug.h"
+
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "tblocktransferTraces.h"
+#endif
 
 
 /**
@@ -42,48 +45,51 @@ void TBlockTransfer::ReadL(MBlockTransferProtocol& aProtocol,
                            TInt aLength,
                            TDes8& aBuf)
     {
-    __MSFNLOG
-	__HOSTPRINT1(_L("blocklen = 0%lx"), iBlockLength);
+    OstTrace1(TRACE_SHOSTMASSSTORAGE_HOST, TBLOCKTRANSFER_1,
+              "blocklen = 0%lx", iBlockLength);
 
-	TInt copylen = 0;
+    TInt copylen = 0;
     TInt headlen = 0;
 
-	aBuf.SetLength(0);
+    aBuf.SetLength(0);
     TPos headOffset = GetHeadBlockOffset(aPosition);
-	/**** READ10 HEAD ****/
-	if (headOffset)
+    /**** READ10 HEAD ****/
+    if (headOffset)
         {
-		TPos headpos = aPosition - headOffset;
+        TPos headpos = aPosition - headOffset;
         iHeadbuf->Zero();
-		headlen = ((headOffset + aLength - 1) / iBlockLength) == 0 ? aLength : (iBlockLength - headOffset);
+        headlen = ((headOffset + aLength - 1) / iBlockLength) == 0 ? aLength : (iBlockLength - headOffset);
 
-		__HOSTPRINT2(_L("\tRead head pos = 0%lx length = 0%lx"),
-                     headpos, iBlockLength);
-		aProtocol.BlockReadL(headpos, *iHeadbuf, iBlockLength);
-		aBuf.Append(iHeadbuf->Ptr() + headOffset, headlen);		
+        OstTraceExt3(TRACE_SHOSTMASSSTORAGE_HOST, TBLOCKTRANSFER_10,
+                     "Read head pos = 0%x %x length = 0%lx",
+                    I64HIGH(headpos), I64LOW(headpos), iBlockLength);
+        aProtocol.BlockReadL(headpos, *iHeadbuf, iBlockLength);
+        aBuf.Append(iHeadbuf->Ptr() + headOffset, headlen);
         }
 
-	/**** READ10 BODY ****/
+    /**** READ10 BODY ****/
     TInt blocksInMain = (aLength - headlen)/iBlockLength;
-	if (blocksInMain)
+    if (blocksInMain)
         {
-		copylen = blocksInMain * iBlockLength;
-		__HOSTPRINT2(_L("\tRead main pos = 0%lx length = 0x%x"),
-                     aPosition+headlen, copylen);
-		aProtocol.BlockReadL(aPosition+headlen, (TDes8 &)aBuf, copylen);
+        copylen = blocksInMain * iBlockLength;
+        OstTraceExt3(TRACE_SHOSTMASSSTORAGE_HOST, TBLOCKTRANSFER_11,
+                     "Read main pos = 0%x %x length = 0x%x",
+                     I64HIGH(aPosition+headlen), I64LOW(aPosition+headlen), copylen);
+        aProtocol.BlockReadL(aPosition+headlen, (TDes8 &)aBuf, copylen);
         }
 
-	copylen += headlen;
+    copylen += headlen;
 
-	/**** READ10 TAIL ****/
+    /**** READ10 TAIL ****/
     TInt tailLen = aLength - copylen;
-	if ((tailLen) != 0)
+    if ((tailLen) != 0)
         {
-		__HOSTPRINT2(_L("\tRead tail pos = 0%lx length = 0%lx"),
-                     aPosition+copylen, iBlockLength);
-        iTailbuf->Zero();    
-		aProtocol.BlockReadL(aPosition+copylen, *iTailbuf, iBlockLength);
-		aBuf.Append(iTailbuf->Ptr(), tailLen);
+        OstTraceExt4(TRACE_SHOSTMASSSTORAGE_HOST, TBLOCKTRANSFER_12,
+                     "Read tail pos = 0%x %x length = 0%x %x",
+                     I64HIGH(aPosition+copylen), I64LOW(aPosition+copylen), I64HIGH(iBlockLength), I64LOW(iBlockLength));
+        iTailbuf->Zero();
+        aProtocol.BlockReadL(aPosition+copylen, *iTailbuf, iBlockLength);
+        aBuf.Append(iTailbuf->Ptr(), tailLen);
         }
     }
 
@@ -101,71 +107,75 @@ void TBlockTransfer::WriteL(MBlockTransferProtocol& aProtocol,
                             TInt aLength,
                             TDesC8& aBuf)
     {
-    __MSFNLOG
-	TInt copylen = 0;
+    TInt copylen = 0;
     TInt headlen = 0;
 
     TPos headOffset = GetHeadBlockOffset(aPosition);
-	/**** WRITE10 HEAD ****/
-	if (headOffset)
+    /**** WRITE10 HEAD ****/
+    if (headOffset)
         {
-		TPos headpos = aPosition - headOffset;
+        TPos headpos = aPosition - headOffset;
 
         iHeadbuf->Zero();
 
         RBuf8& buf = *iTailbuf;
         buf.Zero();
 
-		headlen = ((headOffset + aLength - 1) / iBlockLength) == 0 ? aLength : (iBlockLength - headOffset);
+        headlen = ((headOffset + aLength - 1) / iBlockLength) == 0 ? aLength : (iBlockLength - headOffset);
 
-		__HOSTPRINT2(_L("\tWrite-Read head pos = 0%lx length = 0%lx"),
-                     headpos, iBlockLength);
+        OstTraceExt3(TRACE_SHOSTMASSSTORAGE_HOST, TBLOCKTRANSFER_20,
+                     "Write-Read head pos = 0%x %x length = 0%lx",
+                     I64HIGH(headpos), I64LOW(headpos), iBlockLength);
 
-		aProtocol.BlockReadL(headpos, *iHeadbuf, iBlockLength);
-		/* get head */
-		__HOSTPRINT2(_L("\tcopying read data pos = 0%lx offset = 0%lx"),
-                     headpos, headOffset);
-		buf.Append(iHeadbuf->Ptr(), headOffset);
+        aProtocol.BlockReadL(headpos, *iHeadbuf, iBlockLength);
+        /* get head */
+        OstTraceExt3(TRACE_SHOSTMASSSTORAGE_HOST, TBLOCKTRANSFER_21,
+                     "tcopying read data pos = 0%x %x offset = 0%lx",
+                     I64HIGH(headpos), I64LOW(headpos), headOffset);
+        buf.Append(iHeadbuf->Ptr(), headOffset);
 
-		/* get body */
-		buf.Append(aBuf.Ptr(), headlen);
+        /* get body */
+        buf.Append(aBuf.Ptr(), headlen);
 
-		/* Is it a short write and tail exist? */
+        /* Is it a short write and tail exist? */
         TInt headEndOffset = headOffset + headlen;
-		if (headEndOffset != iBlockLength)
+        if (headEndOffset != iBlockLength)
             {
             TInt len = iBlockLength - headEndOffset;
 
-			__HOSTPRINT2(_L("\t(short write) copying read data pos = 0%lx length = %08x"),
-                         (headpos + headEndOffset), len);
-			buf.Append(iHeadbuf->Ptr() + headEndOffset, len);
+            OstTraceExt3(TRACE_SHOSTMASSSTORAGE_HOST, TBLOCKTRANSFER_22,
+                         "(short write) copying read data pos = 0%x %x length = %08x",
+                         I64HIGH(headpos + headEndOffset), I64LOW(headpos + headEndOffset), len);
+            buf.Append(iHeadbuf->Ptr() + headEndOffset, len);
             }
 
-		__HOSTPRINT2(_L("\tWrite head pos = 0%lx length = %08x"),
-                     headpos, headlen);
+        OstTraceExt3(TRACE_SHOSTMASSSTORAGE_HOST, TBLOCKTRANSFER_23,
+                     "Write head pos = 0%x %x length = %08x",
+                     I64HIGH(headpos), I64LOW(headpos), headlen);
 
-		aProtocol.BlockWriteL(headpos, (TDes8 &)buf, 0, iBlockLength);
+        aProtocol.BlockWriteL(headpos, (TDes8 &)buf, 0, iBlockLength);
         }
 
-	/**** WRITE10 BODY ****/
+    /**** WRITE10 BODY ****/
     TPos blocksInMain = (aLength - headlen)/iBlockLength;
-	if (blocksInMain)
+    if (blocksInMain)
         {
-		copylen = blocksInMain * iBlockLength;
+        copylen = blocksInMain * iBlockLength;
 
         const TUint64 pos = aPosition + headlen;
-		__HOSTPRINT2(_L("\tWrite main pos = 0%lx length = %08x"),
-                     pos, copylen);
+        OstTraceExt3(TRACE_SHOSTMASSSTORAGE_HOST, TBLOCKTRANSFER_24,
+                     "Write main pos = 0%x %x length = %08x",
+                     I64HIGH(pos), I64LOW(pos), copylen);
 
-		/* form the body */
-		aProtocol.BlockWriteL(pos, (TDes8 &)aBuf, headlen, copylen);
+        /* form the body */
+        aProtocol.BlockWriteL(pos, (TDes8 &)aBuf, headlen, copylen);
         }
 
-	copylen += headlen;
+    copylen += headlen;
 
-	/**** WRITE10 TAIL ****/
+    /**** WRITE10 TAIL ****/
     TInt tailLen = aLength - copylen;;
-	if (tailLen != 0)
+    if (tailLen != 0)
         {
         RBuf8& buf = *iHeadbuf;
         buf.Zero();
@@ -174,23 +184,23 @@ void TBlockTransfer::WriteL(MBlockTransferProtocol& aProtocol,
 
         const TUint64 pos = aPosition + copylen;
 
-		__HOSTPRINT2(_L("\tWrite-Read tail pos = 0%lx length = %08x"),
-                     pos, iBlockLength);
+        OstTraceExt3(TRACE_SHOSTMASSSTORAGE_HOST, TBLOCKTRANSFER_25,
+                  "Write-Read tail pos = 0%x %x length = %08x",
+                  I64HIGH(pos), I64LOW(pos), iBlockLength);
 
-		aProtocol.BlockReadL(pos, *iTailbuf, iBlockLength);
-		/* get head */
-		buf.Append(aBuf.Ptr() + copylen, tailLen);
-		/* get tail */
-		buf.Append(iTailbuf->Ptr() + tailLen, iBlockLength - tailLen);
+        aProtocol.BlockReadL(pos, *iTailbuf, iBlockLength);
+        /* get head */
+        buf.Append(aBuf.Ptr() + copylen, tailLen);
+        /* get tail */
+        buf.Append(iTailbuf->Ptr() + tailLen, iBlockLength - tailLen);
 
-		aProtocol.BlockWriteL(pos, (TDes8 &)buf, 0, iBlockLength);
+        aProtocol.BlockWriteL(pos, (TDes8 &)buf, 0, iBlockLength);
         }
     }
 
 
 void TBlockTransfer::SetCapacityL(TUint32 aBlockLength, TLba aLastLba)
     {
-    __MSFNLOG
     iBlockLength = static_cast<TInt64>(aBlockLength);
     iLastLba = aLastLba;
 
@@ -201,19 +211,17 @@ void TBlockTransfer::SetCapacityL(TUint32 aBlockLength, TLba aLastLba)
         {
         iHeadbuf->ReAllocL(aBlockLength);
         iTailbuf->ReAllocL(aBlockLength);
-        }    
+        }
     }
 
 
 TPos TBlockTransfer::GetHeadBlockOffset(TPos aPos)
     {
-    __MSFNLOG
-	return (aPos % iBlockLength);
+    return (aPos % iBlockLength);
     }
 
 TLba TBlockTransfer::GetHeadBlockLbaL(TPos aPos)
     {
-    __MSFNLOG
     TLba lba = I64LOW(aPos / iBlockLength);
     if (lba > iLastLba)
         User::Leave(KErrArgument);
@@ -222,13 +230,11 @@ TLba TBlockTransfer::GetHeadBlockLbaL(TPos aPos)
 
 TPos TBlockTransfer::GetTailBlockOffset(TPos aPos, TInt aLen)
     {
-    __MSFNLOG
     return ((aPos + aLen) % iBlockLength);
     }
 
 TLba TBlockTransfer::GetTailBlockLbaL(TPos aPos, TInt aLen)
     {
-    __MSFNLOG
     TLba lba = I64LOW((aPos + aLen) / iBlockLength);
     if (lba > iLastLba)
         User::Leave(KErrArgument);

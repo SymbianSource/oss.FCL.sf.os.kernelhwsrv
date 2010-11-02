@@ -54,7 +54,7 @@
 #include "d_ldd.h"
 
 _LIT(KLddFileName, "D_LDD.LDD");
-_LIT(KLddFileNameBadUid, "D_LDDNS.LDD");
+_LIT(KLddFullNameBadUid, "Z:\\SYS\\BIN\\D_LDDNS.LDD");
 
 #ifdef __EPOC32__
 _LIT(KLddFileNameRam, "D_LDD_RAM.LDD");
@@ -315,14 +315,47 @@ GLDEF_C TInt E32Main()
 	test.Title();
 	test.Start(_L("Test device driver loading and unloading"));
 
+	// Turn off evil lazy dll unloading
+	RLoader l;
+	test(l.Connect() == KErrNone);
+	test(l.CancelLazyDllUnload() == KErrNone);
+	l.Close();
+
+    test.Next(_L("Check that a PDD or DLL cannot be loaded as an LDD"));
+	RLibrary lib;
+	RLibrary::TInfoV2 info;
+	TPckg<RLibrary::TInfoV2> infoPkg(info);
+	r = RLibrary::GetInfo(KLddFullNameBadUid, infoPkg);
+	test.Printf(_L("RLibrary::GetInfo(%S) returned %d\n"), &KLddFullNameBadUid, r);
+	if (r == KErrNone)
+		{
+		const TUidType uids (info.iUids);
+		test.Printf(_L("Info shows UIDs 0x%x, 0x%x, 0x%x\n"), uids[0], uids[1], uids[2]);
+		r = lib.Load(KLddFullNameBadUid, uids);
+		test.Printf(_L("RLibrary::Load(%S, (uids)) returned %d\n"), &KLddFullNameBadUid, r);
+		}
+	else
+		{
+		r = lib.Load(KLddFullNameBadUid);
+		test.Printf(_L("RLibrary::Load(%S) returned %d\n"), &KLddFullNameBadUid, r);
+		}
+	if (r >= 0)
+		{
+		TFileName libname (lib.FileName());
+		TUidType ids2 (lib.Type());
+		test.Printf(_L("Loaded %S as a DLL, UIDs 0x%x, 0x%x, 0x%x\n"), &libname, ids2[0], ids2[1], ids2[2]);
+		lib.Close();
+		}
+
+	r = User::LoadLogicalDevice(KLddFullNameBadUid);
+	test.Printf(_L("RLibrary::LoadLogicalDevice(%S) returned %d\n"), &KLddFullNameBadUid, r);
+	test(r == KErrNotSupported);	// This "LDD" is not valid (wrong UID2)
+
 	DoTest(KLddFileName);
 #ifdef __EPOC32__
 	DoTest(KLddFileNameRam);
 	DoTest2(KLddFileNameRam);
 #endif
-
-	r=User::LoadLogicalDevice(KLddFileNameBadUid);
-	test(r==KErrNotSupported);
 
     test.End();
 	return(KErrNone);

@@ -375,4 +375,6 @@ EXPORTS
 	MountFileSystem__C14CFsMountHelper @ 374 NONAME R3UNUSED ; CFsMountHelper::MountFileSystem(void) const
 	New__14CFsMountHelperR3RFsi @ 375 NONAME R3UNUSED ; CFsMountHelper::New(RFs &, int)
 	"_._14CFsMountHelper" @ 376 NONAME R3UNUSED ; CFsMountHelper::~CFsMountHelper(void)
+	DriveNumber__C15TFsNotificationRi @ 377 NONAME R3UNUSED ; TFsNotification::DriveNumber(int &) const
+	UID__C15TFsNotificationR4TUid @ 378 NONAME R3UNUSED ; TFsNotification::UID(TUid &) const
 

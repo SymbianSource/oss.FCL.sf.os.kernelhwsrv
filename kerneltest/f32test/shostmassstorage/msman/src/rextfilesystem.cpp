@@ -1,4 +1,4 @@
-// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -17,25 +17,22 @@
 
 #include "rusbhostmsdevice.h"
 #include "rextfilesystem.h"
-#include "tmslog.h"
+#include "debug.h"
 
 
 _LIT(KFsNm, "elocal");
 
 RExtFileSystem::RExtFileSystem()
     {
-    __MSFNLOG
     }
 
 RExtFileSystem::~RExtFileSystem()
     {
-    __MSFNLOG
     }
 
 
 void RExtFileSystem::OpenL()
     {
-    __MSFNLOG
     RFs fs;
     User::LeaveIfError(fs.Connect());
     CleanupClosePushL(fs);
@@ -59,7 +56,6 @@ void RExtFileSystem::OpenL()
 
 void RExtFileSystem::CloseL()
     {
-    __MSFNLOG
     RFs fs;
     User::LeaveIfError(fs.Connect());
     CleanupClosePushL(fs);
@@ -73,8 +69,6 @@ void RExtFileSystem::MountL(RUsbHostMsDevice& aDevice,
                             TToken aToken,
                             TLun aLun)
     {
-    __MSFNLOG
-
     TTime start;
     TTime end;
 
@@ -85,13 +79,13 @@ void RExtFileSystem::MountL(RUsbHostMsDevice& aDevice,
     CleanupClosePushL(fs);
 
     TInt err;
-	err = aDevice.MountLun(aLun, aDriveNumber);
-	if (!(KErrAlreadyExists == err || KErrNotReady == err))
-		{
-	    __PRINT1(_L("** Error: MountLun returned %d **"), err);
+    err = aDevice.MountLun(aLun, aDriveNumber);
+    if (!(KErrAlreadyExists == err || KErrNotReady == err))
+        {
+        __PRINT1(_L("** Error: MountLun returned %d **"), err);
         RDebug::Print(_L("** Error: MountLun returned %d **"), err);
         User::LeaveIfError(err);
-		}
+        }
 
     CleanupStack::PopAndDestroy(&fs);
 
@@ -109,11 +103,10 @@ void RExtFileSystem::MountL(RUsbHostMsDevice& aDevice,
 
 void RExtFileSystem::DismountL(RUsbHostMsDevice& aDevice, TDriveNumber aDriveNumber)
     {
-    __MSFNLOG
     RFs fs;
     User::LeaveIfError(fs.Connect());
     __PRINT(_L("DismountFileSystem"));
-	//TInt err = aDevice.DismountLun(aDriveNumber);
+    //TInt err = aDevice.DismountLun(aDriveNumber);
     aDevice.DismountLun(aDriveNumber);
     fs.Close();
     }
@@ -129,7 +122,7 @@ TDriveNumber RExtFileSystem::GetDriveL()
 
     TInt drive;
     for (drive = EDriveG; drive <= EDriveZ; drive++)
-    	{
+        {
         // Skip K drive which is reserved for LFFS but shows as being free
         if (drive == EDriveK)
             {

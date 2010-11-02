@@ -133,14 +133,14 @@ TBool ComparePrivate(const TDesC & aThePath)
 	return ETrue;
 	}
 
-TBool SIDCheck(CFsRequest* aRequest, const TDesC& aThePath)
+TBool SIDCheck(const RMessage2& aMessage, const TDesC& aThePath)
 //
 //	Compare the Private/XXXXXXXX/ portion of a path be accessed to make sure it matches the process SID 
 //
 	{
 	if(aThePath.Length() >= KPrivateLengthCheck)
 		{
-		TSecureId appUID = aRequest->Message().SecureId();
+        TSecureId appUID = aMessage.SecureId();
 		TBuf<KSIDLength+1> dirName;
 		dirName.AppendNumFixedWidth(appUID.iId, EHex, 8);
 	
@@ -155,16 +155,16 @@ TBool SIDCheck(CFsRequest* aRequest, const TDesC& aThePath)
 	}
 
 #ifndef __REMOVE_PLATSEC_DIAGNOSTIC_STRINGS__
-TInt PathCheck(CFsRequest* aRequest, const TDesC& aThePath, const TSecurityPolicy* aSysCap, const TSecurityPolicy* aPriCap, const TSecurityPolicy* aROCap, const char* aDiag)
+TInt PathCheck(const RMessage2& aMessage, const TDesC& aThePath, const TSecurityPolicy* aSysCap, const TSecurityPolicy* aPriCap, const TSecurityPolicy* aROCap, const char* aDiag)
 #else //__REMOVE_PLATSEC_DIAGNOSTIC_STRINGS__
-TInt PathCheck(CFsRequest* aRequest, const TDesC& aThePath, const TSecurityPolicy* aSysCap, const TSecurityPolicy* aPriCap, const TSecurityPolicy* aROCap, OnlyCreateWithNull /*aDiag*/)
+TInt PathCheck(const RMessage2& aMessage, const TDesC& aThePath, const TSecurityPolicy* aSysCap, const TSecurityPolicy* aPriCap, const TSecurityPolicy* aROCap, OnlyCreateWithNull /*aDiag*/)
 #endif //!__REMOVE_PLATSEC_DIAGNOSTIC_STRINGS__
 //
 //	Compare the parsed path with protected path names path must be parsed b4 using
 //
 	{
 
-	if(aRequest->Message().Handle() == KLocalMessageHandle)
+	if(aMessage.Handle() == KLocalMessageHandle)
 		return KErrNone;
 
 #ifndef __REMOVE_PLATSEC_DIAGNOSTIC_STRINGS__
@@ -185,11 +185,11 @@ TInt PathCheck(CFsRequest* aRequest, const TDesC& aThePath, const TSecurityPolic
 
 	if(ComparePrivate(aThePath))
 		{	
-		if(SIDCheck(aRequest, aThePath))
+		if(SIDCheck(aMessage, aThePath))
 			return KErrNone;	
 		else
 			{
-			if(aPriCap->CheckPolicy(aRequest->Message(), __PLATSEC_DIAGNOSTIC_STRING(diagout)))
+			if(aPriCap->CheckPolicy(aMessage, __PLATSEC_DIAGNOSTIC_STRING(diagout)))
 				return KErrNone;
 			else
 				return KErrPermissionDenied;
@@ -197,14 +197,14 @@ TInt PathCheck(CFsRequest* aRequest, const TDesC& aThePath, const TSecurityPolic
 		}
 	else if(CompareSystem(aThePath))
 		{
-		if(aSysCap->CheckPolicy(aRequest->Message(), __PLATSEC_DIAGNOSTIC_STRING(diagout)))
+		if(aSysCap->CheckPolicy(aMessage, __PLATSEC_DIAGNOSTIC_STRING(diagout)))
 			return KErrNone;
 		else
 			return KErrPermissionDenied;
 		}
 	else if(CompareResource(aThePath))
 		{
-		if(aROCap->CheckPolicy(aRequest->Message(), __PLATSEC_DIAGNOSTIC_STRING(diagout)))
+		if(aROCap->CheckPolicy(aMessage, __PLATSEC_DIAGNOSTIC_STRING(diagout)))
 			return KErrNone;
 		else
 			return KErrPermissionDenied;
@@ -214,16 +214,16 @@ TInt PathCheck(CFsRequest* aRequest, const TDesC& aThePath, const TSecurityPolic
  	}
 
 #ifndef __REMOVE_PLATSEC_DIAGNOSTIC_STRINGS__
-TInt PathCheck(CFsRequest* aRequest, const TDesC& aThePath, const TSecurityPolicy* aSysCap, const TSecurityPolicy* aPriCap, const char* aDiag) 
+TInt PathCheck(const RMessage2& aMessage, const TDesC& aThePath, const TSecurityPolicy* aSysCap, const TSecurityPolicy* aPriCap, const char* aDiag) 
 #else //__REMOVE_PLATSEC_DIAGNOSTIC_STRINGS__
-TInt PathCheck(CFsRequest* aRequest, const TDesC& aThePath, const TSecurityPolicy* aSysCap, const TSecurityPolicy* aPriCap, OnlyCreateWithNull /*aDiag*/) 
+TInt PathCheck(const RMessage2& aMessage, const TDesC& aThePath, const TSecurityPolicy* aSysCap, const TSecurityPolicy* aPriCap, OnlyCreateWithNull /*aDiag*/) 
 #endif //!__REMOVE_PLATSEC_DIAGNOSTIC_STRINGS__
 //
 //	Compare the parsed path with protected path names path must be parsed b4 using
 //
 	{
 
-	if(aRequest->Message().Handle() == KLocalMessageHandle)
+	if(aMessage.Handle() == KLocalMessageHandle)
 		return KErrNone;
 
 #ifndef __REMOVE_PLATSEC_DIAGNOSTIC_STRINGS__
@@ -244,11 +244,11 @@ TInt PathCheck(CFsRequest* aRequest, const TDesC& aThePath, const TSecurityPolic
 
 	if(ComparePrivate(aThePath))
 		{	
-		if(SIDCheck(aRequest, aThePath))
+		if(SIDCheck(aMessage, aThePath))
 			return KErrNone;	
 		else
 			{
-			if(aPriCap->CheckPolicy(aRequest->Message(), __PLATSEC_DIAGNOSTIC_STRING(diagout)))
+			if(aPriCap->CheckPolicy(aMessage, __PLATSEC_DIAGNOSTIC_STRING(diagout)))
 				return KErrNone;
 			else
 				return KErrPermissionDenied;
@@ -256,7 +256,7 @@ TInt PathCheck(CFsRequest* aRequest, const TDesC& aThePath, const TSecurityPolic
 		}
 	else if(CompareSystem(aThePath))
 		{
-		if(aSysCap->CheckPolicy(aRequest->Message(), __PLATSEC_DIAGNOSTIC_STRING(diagout)))
+		if(aSysCap->CheckPolicy(aMessage, __PLATSEC_DIAGNOSTIC_STRING(diagout)))
 			return KErrNone;
 		else
 			return KErrPermissionDenied;
@@ -266,16 +266,16 @@ TInt PathCheck(CFsRequest* aRequest, const TDesC& aThePath, const TSecurityPolic
  	}
 
 #ifndef __REMOVE_PLATSEC_DIAGNOSTIC_STRINGS__
-TInt PathCheck(CFsRequest* aRequest, const TDesC& aThePath, const TSecurityPolicy* aCap, const char* aDiag, TBool aExactMatchAllowed) 
+TInt PathCheck(const RMessage2& aMessage, const TDesC& aThePath, const TSecurityPolicy* aCap, const char* aDiag, TBool aExactMatchAllowed) 
 #else //__REMOVE_PLATSEC_DIAGNOSTIC_STRINGS__
-TInt PathCheck(CFsRequest* aRequest, const TDesC& aThePath, const TSecurityPolicy* aCap, OnlyCreateWithNull /*aDiag*/, TBool aExactMatchAllowed) 
+TInt PathCheck(const RMessage2& aMessage, const TDesC& aThePath, const TSecurityPolicy* aCap, OnlyCreateWithNull /*aDiag*/, TBool aExactMatchAllowed) 
 #endif //!__REMOVE_PLATSEC_DIAGNOSTIC_STRINGS__
 //
 //	Compare the parsed path with protected path names path must be parsed b4 using
 //
 	{
 
-	if(aRequest->Message().Handle() == KLocalMessageHandle)
+	if(aMessage.Handle() == KLocalMessageHandle)
 		return KErrNone;
 
 #ifndef __REMOVE_PLATSEC_DIAGNOSTIC_STRINGS__
@@ -296,11 +296,11 @@ TInt PathCheck(CFsRequest* aRequest, const TDesC& aThePath, const TSecurityPolic
 
 	if(ComparePrivate(aThePath))
 		{	
-		if(SIDCheck(aRequest, aThePath))
+		if(SIDCheck(aMessage, aThePath))
 			return KErrNone;	
 		else
 			{
-			if(aCap->CheckPolicy(aRequest->Message(), __PLATSEC_DIAGNOSTIC_STRING(diagout)))
+			if(aCap->CheckPolicy(aMessage, __PLATSEC_DIAGNOSTIC_STRING(diagout)))
 				return KErrNone;
 			else if (aExactMatchAllowed && aThePath.Length() <= KPrivateLength + 1)
 				return KErrNone;
@@ -310,7 +310,7 @@ TInt PathCheck(CFsRequest* aRequest, const TDesC& aThePath, const TSecurityPolic
 		}
 	else if(CompareSystem(aThePath))
 		{
-		if(aCap->CheckPolicy(aRequest->Message(), __PLATSEC_DIAGNOSTIC_STRING(diagout)))
+		if(aCap->CheckPolicy(aMessage, __PLATSEC_DIAGNOSTIC_STRING(diagout)))
 			return KErrNone;
 		else if (aExactMatchAllowed && aThePath.Length() <= KSystemLength + 1)
 			return KErrNone;

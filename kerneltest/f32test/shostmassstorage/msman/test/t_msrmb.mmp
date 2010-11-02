@@ -33,9 +33,6 @@ SOURCE			tmsprintdrive.cpp
 SOURCE			t_msmain.cpp
 SOURCE			t_msrmb.cpp
 
-SOURCEPATH		../shared
-SOURCE			tmslog.cpp
-
 SOURCEPATH		../../../fileutils/src
 SOURCE			f32_test_utils.cpp
 

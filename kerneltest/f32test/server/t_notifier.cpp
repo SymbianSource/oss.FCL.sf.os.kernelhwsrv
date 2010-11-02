@@ -23,6 +23,7 @@
 #include "t_server.h"
 #include "t_chlffs.h"
 #include "t_notify_plugin.h"
+#include "f32_test_utils.h"
 
 const TInt KNotificationHeaderSize = (sizeof(TUint16)*2)+(sizeof(TUint));
 const TInt KMinNotificationBufferSize = 2*KNotificationHeaderSize + 2*KMaxFileName;
@@ -31,12 +32,33 @@ const TInt KMinNotificationBufferSize = 2*KNotificationHeaderSize + 2*KMaxFileNa
 RTest test(_L("T_NOTIFIER"));
 const TInt KMaxHeapSize = 0x800000;
 TInt globalDriveNum;
+TBuf<50> filesystem; //storing original file system name
+_LIT(KTestNotifyFileSystemExeName,"t_tfsys_notify.fsy");
+_LIT(KNotifyTestFileSystem,"CNotifyTestFileSystem");
 
 void DismountPlugin()
 	{
 	TheFs.DismountPlugin(KNotifyPluginName);
 	TheFs.RemovePlugin(KNotifyPluginFileName);
 	}
+
+void RemountOriginalFileSystem()
+    {
+    //Replace old FS.
+    TheFs.DismountFileSystem(KNotifyTestFileSystem,globalDriveNum);
+    TheFs.MountFileSystem(filesystem,globalDriveNum);
+    TheFs.RemoveFileSystem(KNotifyTestFileSystem);
+    }
+
+inline void safe_external_test(RTest& aTest, TInt aError, TInt aLine, TText* aName)
+    {
+    if(aError!=KErrNone)
+        {
+        test.Printf(_L(": ERROR : %d received on line %d\n"),aError,aLine);
+        RemountOriginalFileSystem();
+        aTest.operator()(aError==KErrNone,aLine,(TText*)aName);
+        }
+    }
 
 inline void safe_test(RTest& aTest, TInt aError, TInt aLine, TText* aName)
 	{
@@ -519,7 +541,7 @@ TInt SimpleSingleNotificationTFWatcher(TAny* aAny)
 	if(_path.Match(fullname)!=KErrNone)
 		safe_test(simpleTestWatcher,KErrBadName,__LINE__,(TText*)Expand("t_notifier.cpp"));
 	
-	/*
+	
 	TInt driveNumber = 0;
 	TInt gDriveNum = -1;
 	notification->DriveNumber(driveNumber);
@@ -528,11 +550,11 @@ TInt SimpleSingleNotificationTFWatcher(TAny* aAny)
 		safe_test(simpleTestWatcher,KErrBadHandle,__LINE__,(TText*)Expand("t_notifier.cpp"));
 	
 	TUid uid;
-	TUint32 realUID = 0x76543210;
+	TInt32 realUID = 0x76543210;
 	r = notification->UID(uid);
 	safe_test(simpleTestWatcher,r,__LINE__,(TText*)Expand("t_notifier.cpp"));
-	safe_test(simpleTestWatcher,(realUID == uid.iUid)==1,__LINE__,(TText*)Expand("t_notifier.cpp"));
-	*/
+	safe_test(simpleTestWatcher,((realUID == uid.iUid)?KErrNone:KErrNotFound),__LINE__,(TText*)Expand("t_notifier.cpp"));
+	
 	delete notify;
 	fs.Close();
 	simpleTestWatcher.End();
@@ -3621,6 +3643,138 @@ TInt TestNotificationsWithFServPlugins()
 	return KErrNone;
 	}
 
+_LIT(KPhantomExtendedReplace,"?:\\PhantomExtended_Replaced.txt");
+_LIT(KPhantomExtendedRenamed,"?:\\PhantomExtended_Renamed.txt");
+_LIT(KPhantomExtendedRenameMe,"?:\\PhantomExtended_RenameMe.txt");
+
+TInt DoTestExternalNotificationL()
+    {
+    TRequestStatus statusN, statusT;
+    RTimer timer1;
+    TTimeIntervalMicroSeconds32 time = 10000000;    
+    
+    test.Printf(_L("DoTestExternalNotification"));
+    CFsNotify* notify = CFsNotify::NewL(TheFs,1024);
+    TInt r = notify->AddNotification(TFsNotification::ECreate, _L("?:\\"),_L("PhantomExtended_Replaced.txt"));
+    safe_external_test(test,r,__LINE__,(TText*)Expand("t_notifier.cpp"));
+    r = notify->RequestNotifications(statusN);
+    safe_external_test(test,r,__LINE__,(TText*)Expand("t_notifier.cpp"));
+    
+    RFile file;
+    r = file.Replace(TheFs,_L("\\Extended_Replaced.txt"),EFileWrite);
+    safe_external_test(test,r,__LINE__,(TText*)Expand("t_notifier.cpp"));
+    file.Close();    
+    
+    r = timer1.CreateLocal();
+    safe_external_test(test,r,__LINE__,(TText*)Expand("t_notifier.cpp"));
+    timer1.After(statusT,time);
+    User::WaitForRequest(statusN,statusT);
+    test_Compare(statusN.Int(),!=,KRequestPending)
+    timer1.Cancel();
+    timer1.Close();
+    User::WaitForRequest(statusT);
+    
+    const TFsNotification* notification = notify->NextNotification();
+    if(!notification)
+        safe_external_test(test,KErrUnderflow,__LINE__,(TText*)Expand("t_notifier.cpp"));
+    
+    //Check Path
+    TPtrC path;
+    r = notification->Path(path);
+    safe_external_test(test,r,__LINE__,(TText*)Expand("t_notifier.cpp"));
+    
+    if(path.Match(KPhantomExtendedReplace)==KErrNotFound)
+        {
+        safe_external_test(test,KErrNotFound,__LINE__,(TText*)Expand("t_notifier.cpp"));
+        }
+   
+    //Check NewName
+    TPtrC newName;
+    r = notification->NewName(newName);
+    safe_external_test(test,(r==KErrNotSupported) ? KErrNone : r,__LINE__,(TText*)Expand("t_notifier.cpp"));
+    
+    notify->CancelNotifications(statusN);
+    delete notify;
+    
+    //*************************************************************
+    // Rename:
+    //*************************************************************
+    
+    notify = CFsNotify::NewL(TheFs,1024);
+    r = notify->AddNotification(TFsNotification::ERename, _L("?:\\"),_L("PhantomExtended_Renamed.txt"));
+    safe_external_test(test,r,__LINE__,(TText*)Expand("t_notifier.cpp"));
+    r = notify->RequestNotifications(statusN);
+    safe_external_test(test,r,__LINE__,(TText*)Expand("t_notifier.cpp"));
+
+    r = file.Replace(TheFs,_L("\\Extended_RenameMe.txt"),EFileWrite);
+    safe_external_test(test,r,__LINE__,(TText*)Expand("t_notifier.cpp"));
+    file.Close();    
+
+    r = timer1.CreateLocal();
+    safe_external_test(test,r,__LINE__,(TText*)Expand("t_notifier.cpp"));
+    timer1.After(statusT,time);
+    User::WaitForRequest(statusN,statusT);
+    test_Compare(statusN.Int(),!=,KRequestPending)
+    timer1.Cancel();
+    timer1.Close();
+    User::WaitForRequest(statusT);
+
+    notification = notify->NextNotification();
+    if(!notification)
+        safe_external_test(test,KErrUnderflow,__LINE__,(TText*)Expand("t_notifier.cpp"));
+
+    r = notification->Path(path);
+    safe_external_test(test,r,__LINE__,(TText*)Expand("t_notifier.cpp"));
+
+    if(path.Match(KPhantomExtendedRenameMe)==KErrNotFound)
+        {
+        safe_external_test(test,KErrNotFound,__LINE__,(TText*)Expand("t_notifier.cpp"));
+        }
+    
+    //Check NewName
+    r = notification->NewName(newName);
+    if(newName.Match(KPhantomExtendedRenamed)==KErrNotFound)
+        {
+        safe_external_test(test,KErrNotFound,__LINE__,(TText*)Expand("t_notifier.cpp"));
+        }
+
+    notify->CancelNotifications(statusN);
+    delete notify;
+        
+    return KErrNone;
+    }
+
+void TestExternalNotifications()
+    {
+    test.Printf(_L("Test External Notifications (Load test file system)"));
+
+    if(F32_Test_Utils::Is_SimulatedSystemDrive(TheFs,globalDriveNum))
+        {
+        test.Printf(_L("Not testing External Notifications on SimulatedSystemDrive"));
+        return;
+        }
+
+    TInt r = TheFs.FileSystemName(filesystem,globalDriveNum);
+    safe_external_test(test,r,__LINE__,(TText*)Expand("t_notifier.cpp"));
+    r = TheFs.DismountFileSystem(filesystem,globalDriveNum);
+    safe_external_test(test,r,__LINE__,(TText*)Expand("t_notifier.cpp"));
+    r = TheFs.AddFileSystem(KTestNotifyFileSystemExeName);
+    safe_external_test(test,r,__LINE__,(TText*)Expand("t_notifier.cpp"));
+    r = TheFs.MountFileSystem(KNotifyTestFileSystem,globalDriveNum);
+    safe_external_test(test,r,__LINE__,(TText*)Expand("t_notifier.cpp"));
+    
+    TRAP(r,DoTestExternalNotificationL());
+    safe_external_test(test,r,__LINE__,(TText*)Expand("t_notifier.cpp"));
+        
+    //Replace old FS.
+    r = TheFs.DismountFileSystem(KNotifyTestFileSystem,globalDriveNum);
+    safe_external_test(test,r,__LINE__,(TText*)Expand("t_notifier.cpp"));
+    r = TheFs.MountFileSystem(filesystem,globalDriveNum);
+    safe_external_test(test,r,__LINE__,(TText*)Expand("t_notifier.cpp"));
+    r = TheFs.RemoveFileSystem(KNotifyTestFileSystem);
+    safe_external_test(test,r,__LINE__,(TText*)Expand("t_notifier.cpp"));
+    }
+
 /*
  * This test is testing the use cases
  * and for negative testing of SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION
@@ -4515,6 +4669,10 @@ void CallTestsL()
 	test_KErrNone(r);
 	test.Printf(_L("------- End of Data-Caging Tests -------------------------------------\n"));
 	
+	PrintLine();
+	test.Next(_L("Test TestExternalNotifications()"));
+	TestExternalNotifications();
+	test.Printf(_L("------- End of TestExternalNotifications Tests -------------------------------------\n"));
 	
 	test.End();
 	test.Close();

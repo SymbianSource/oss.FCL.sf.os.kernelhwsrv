@@ -242,3 +242,12 @@ EXPORTS
 	Volume__C9RFsPluginR11TVolumeInfoi @ 241 NONAME R3UNUSED ; RFsPlugin::Volume(TVolumeInfo &, int) const
 	IsSequentialMode__C7CFileCB @ 242 NONAME R3UNUSED ; CFileCB::IsSequentialMode(void) const
 	DirectIOMode__7CFileCBRC12RMessagePtr2 @ 243 NONAME R3UNUSED ; CFileCB::DirectIOMode(RMessagePtr2 const &)
+	Allocate__19CFsNotificationInfoRC8CMountCBi @ 244 NONAME R3UNUSED ; CFsNotificationInfo::Allocate(CMountCB const &, int)
+	Free__19CFsNotificationInfoRP19CFsNotificationInfo @ 245 NONAME R3UNUSED ; CFsNotificationInfo::Free(CFsNotificationInfo *&)
+	IssueNotification__8CMountCBP19CFsNotificationInfo @ 246 NONAME R3UNUSED ; CMountCB::IssueNotification(CFsNotificationInfo *)
+	SetAttributes__19CFsNotificationInfoUiUi @ 247 NONAME R3UNUSED ; CFsNotificationInfo::SetAttributes(unsigned int, unsigned int)
+	SetFilesize__19CFsNotificationInfox @ 248 NONAME ; CFsNotificationInfo::SetFilesize(long long)
+	SetNewName__19CFsNotificationInfoRC7TDesC16 @ 249 NONAME R3UNUSED ; CFsNotificationInfo::SetNewName(TDesC16 const &)
+	SetSourceName__19CFsNotificationInfoRC7TDesC16 @ 250 NONAME R3UNUSED ; CFsNotificationInfo::SetSourceName(TDesC16 const &)
+	SetUid__19CFsNotificationInfoRC4TUid @ 251 NONAME R3UNUSED ; CFsNotificationInfo::SetUid(TUid const &)
+

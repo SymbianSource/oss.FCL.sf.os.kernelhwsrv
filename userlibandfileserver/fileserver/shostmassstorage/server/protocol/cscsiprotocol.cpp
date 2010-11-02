@@ -20,8 +20,11 @@
 
 #include <e32base.h>
 
-#include "debug.h"
-#include "msdebug.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "cscsiprotocolTraces.h"
+#endif
+
 #include "msctypes.h"
 #include "shared.h"
 #include "msgservice.h"
@@ -53,19 +56,17 @@ Create the CScsiProtocol object.
 */
 CScsiProtocol* CScsiProtocol::NewL(TLun aLun, MTransport& aTransport)
     {
-	__MSFNSLOG
-	CScsiProtocol* r = new (ELeave) CScsiProtocol(aTransport);
+    CScsiProtocol* r = new (ELeave) CScsiProtocol(aTransport);
 
-	CleanupStack::PushL(r);
-	r->ConstructL(aLun);
-	CleanupStack::Pop();
-	return r;
+    CleanupStack::PushL(r);
+    r->ConstructL(aLun);
+    CleanupStack::Pop();
+    return r;
     }
 
 void CScsiProtocol::ConstructL(TLun aLun)
     {
-	__MSFNLOG
-	// iState = EEntry;
+    // iState = EEntry;
     iFsm = CMassStorageFsm::NewL(*this);
 
     const TInt blockLength = 0x200;
@@ -79,13 +80,11 @@ CScsiProtocol::CScsiProtocol(MTransport& aTransport)
 :   iSpcInterface(aTransport),
     iSbcInterface(NULL)
     {
-	__MSFNLOG
     }
 
 
 CScsiProtocol::~CScsiProtocol()
     {
-	__MSFNLOG
     delete iFsm;
     iHeadbuf.Close();
     iTailbuf.Close();
@@ -95,11 +94,10 @@ CScsiProtocol::~CScsiProtocol()
 
 void CScsiProtocol::InitialiseUnitL()
     {
-	__MSFNLOG
     iState = EDisconnected;
 
-	// A device may take time to mount the media. If the device fails attempt to
-	// retry the connection for a number of seconds
+    // A device may take time to mount the media. If the device fails attempt to
+    // retry the connection for a number of seconds
     TInt retryCounter = 20;
     do
         {
@@ -117,43 +115,39 @@ void CScsiProtocol::InitialiseUnitL()
         User::After(1000 * 200);    // 200 mS
         }
     while (retryCounter);
-	}
+    }
 
 
 void CScsiProtocol::UninitialiseUnitL()
     {
-	__MSFNLOG
     iFsm->DisconnectLogicalUnitL();
     }
 
 TBool CScsiProtocol::IsConnected()
     {
-	__MSFNLOG
-	return (iState == EConnected)? ETrue : EFalse;
+    return (iState == EConnected)? ETrue : EFalse;
     }
 
 void CScsiProtocol::ReadL(TPos aPos,
                           TDes8& aBuf,
                           TInt aLength)
     {
-	__MSFNLOG
 
     if (!iSbcInterface)
         User::Leave(KErrNotSupported);
 
     if(!IsConnected())
-		User::Leave(KErrNotReady);
+        User::Leave(KErrNotReady);
     iSbcInterface->iBlockTransfer.ReadL(*this, aPos, aLength, aBuf);
     }
 
 
 void CScsiProtocol::BlockReadL(TPos aPos, TDes8& aCopybuf, TInt aLen)
     {
-	__MSFNLOG
     if (!iSbcInterface)
         User::Leave(KErrNotSupported);
 
-	__ASSERT_DEBUG(aPos % iSbcInterface->iBlockTransfer.BlockLength() == 0,
+    __ASSERT_DEBUG(aPos % iSbcInterface->iBlockTransfer.BlockLength() == 0,
                    User::Panic(KUsbMsHostPanicCat, EBlockDevice));
 
     const TInt blockLen = iSbcInterface->iBlockTransfer.BlockLength();
@@ -166,18 +160,21 @@ void CScsiProtocol::BlockReadL(TPos aPos, TDes8& aCopybuf, TInt aLen)
         User::LeaveIfError(KErrOverflow);
         }
 
-	TInt err = iSbcInterface->Read10L(I64LOW(lba), aCopybuf, len);
+    TInt err = iSbcInterface->Read10L(I64LOW(lba), aCopybuf, len);
     if (err)
         {
-        __SCSIPRINT1(_L("READ(10) Err=%d"), err);
+        OstTrace1(TRACE_SHOSTMASSSTORAGE_SCSI, CSCSIPROTOCOL_10,
+                  "READ(10) Err=%d", err);
         User::LeaveIfError(DoCheckConditionL());
         }
 
     // handle residue
     while (len != aLen)
         {
-        __SCSIPRINT2(_L("SCSI Read Residue 0x%x bytes read (0x%x)"), len, aLen);
-        __SCSIPRINT2(_L("Pos=0x%lx Len=0x%x"), aPos, aLen);
+        OstTraceExt2(TRACE_SHOSTMASSSTORAGE_SCSI, CSCSIPROTOCOL_11,
+                  "SCSI Read Residue 0x%x bytes read (0x%x)", len, aLen);
+        OstTraceExt2(TRACE_SHOSTMASSSTORAGE_SCSI, CSCSIPROTOCOL_12,
+                  "Pos=0x%lx Len=0x%x", aPos, aLen);
 
         // read next block
 
@@ -187,8 +184,8 @@ void CScsiProtocol::BlockReadL(TPos aPos, TDes8& aCopybuf, TInt aLen)
         aLen -= bytesRead;
         len = aLen;
 
-        __SCSIPRINT3(_L("New Pos=0x%lx Len=0x%x (bytes read = %x)"),
-                     aPos, aLen, bytesRead);
+        OstTraceExt3(TRACE_SHOSTMASSSTORAGE_SCSI, CSCSIPROTOCOL_13,
+                     "New Pos=0x%lx Len=0x%x (bytes read = %x)", aPos, aLen, bytesRead);
 
         aCopybuf.SetLength(bytesRead);
 
@@ -206,27 +203,25 @@ void CScsiProtocol::WriteL(TPos aPosition,
                            TDesC8& aBuf,
                            TInt aLength)
     {
-	__MSFNLOG
     if (!iSbcInterface)
         User::Leave(KErrNotSupported);
 
     if(!IsConnected())
-		User::Leave(KErrNotReady);
+        User::Leave(KErrNotReady);
     iSbcInterface->iBlockTransfer.WriteL(*this, aPosition, aLength, aBuf);
     }
 
 
 void CScsiProtocol::BlockWriteL(TPos aPos, TDesC8& aCopybuf, TUint aOffset, TInt aLen)
     {
-	__MSFNLOG
     if (!iSbcInterface)
         User::Leave(KErrNotSupported);
 
-	__ASSERT_DEBUG(aPos % iSbcInterface->iBlockTransfer.BlockLength() == 0,
+    __ASSERT_DEBUG(aPos % iSbcInterface->iBlockTransfer.BlockLength() == 0,
                    User::Panic(KUsbMsHostPanicCat, EBlockDevice));
     const TInt blockLen = iSbcInterface->iBlockTransfer.BlockLength();
     TInt len = aLen;
-	TInt err = iSbcInterface->Write10L(aPos/blockLen, aCopybuf, aOffset, len);
+    TInt err = iSbcInterface->Write10L(aPos/blockLen, aCopybuf, aOffset, len);
     if (err)
         {
         User::LeaveIfError(DoCheckConditionL());
@@ -235,8 +230,10 @@ void CScsiProtocol::BlockWriteL(TPos aPos, TDesC8& aCopybuf, TUint aOffset, TInt
     while (len != aLen)
         {
         // handle residue
-        __SCSIPRINT2(_L("SCSI Write Residue 0x%x bytes read (0x%x)"), len, aLen);
-        __SCSIPRINT2(_L("Pos=0x%lx Len=0x%x"), aPos, aLen);
+        OstTraceExt2(TRACE_SHOSTMASSSTORAGE_SCSI, CSCSIPROTOCOL_20,
+                     "SCSI Write Residue 0x%x bytes read (0x%x)", len, aLen);
+        OstTraceExt2(TRACE_SHOSTMASSSTORAGE_SCSI, CSCSIPROTOCOL_21,
+                     "Pos=0x%lx Len=0x%x", aPos, aLen);
 
         // write next block
 
@@ -245,7 +242,8 @@ void CScsiProtocol::BlockWriteL(TPos aPos, TDesC8& aCopybuf, TUint aOffset, TInt
         aPos += bytesWritten;
         aLen -= bytesWritten;
         len = aLen;
-        __SCSIPRINT2(_L("New Pos=0x%lx Len=0x%x"), aPos, aLen);
+        OstTraceExt2(TRACE_SHOSTMASSSTORAGE_SCSI, CSCSIPROTOCOL_22,
+                     "New Pos=0x%lx Len=0x%x", aPos, aLen);
 
         TPtrC8 buf = aCopybuf.Mid(bytesWritten);
 
@@ -261,7 +259,6 @@ void CScsiProtocol::BlockWriteL(TPos aPos, TDesC8& aCopybuf, TUint aOffset, TInt
 
 void CScsiProtocol::GetCapacityL(TCapsInfo& aCapsInfo)
     {
-	__MSFNLOG
     if (!IsConnected())
         {
         if (!DoScsiReadyCheckEventL())
@@ -279,8 +276,8 @@ void CScsiProtocol::GetCapacityL(TCapsInfo& aCapsInfo)
 
     aCapsInfo.iMediaType = EMediaHardDisk;
 
-	TLba lastLba;
-	TUint32 blockLength;
+    TLba lastLba;
+    TUint32 blockLength;
 
     // Retry ReadCapacity10L if stalled
     TInt stallCounter = 4;
@@ -322,15 +319,16 @@ void CScsiProtocol::GetCapacityL(TCapsInfo& aCapsInfo)
                 {
                 User::LeaveIfError(err);
                 }
-            }           
+            }
         }
 
     aCapsInfo.iNumberOfBlocks = lastLba + 1;
     aCapsInfo.iBlockLength = blockLength;
     aCapsInfo.iWriteProtect = iWriteProtect;
 
-	__SCSIPRINT3(_L("numBlock = x%x , blockLength = %x wp = %d"),
-                 lastLba + 1, blockLength, iWriteProtect);
+    OstTraceExt3(TRACE_SHOSTMASSSTORAGE_SCSI, CSCSIPROTOCOL_30,
+                 "numBlock=x%x blockLength=x%x wp=%d",
+                 (TUint32)(lastLba + 1), blockLength, (TInt32)iWriteProtect);
     }
 
 
@@ -343,7 +341,6 @@ device status error
 */
 TInt CScsiProtocol::MsInquiryL()
     {
-	__MSFNLOG
     ResetSbc();
 
    /**
@@ -367,27 +364,39 @@ TInt CScsiProtocol::MsInquiryL()
         }
 
     // print reponse
-    __TESTREPORT1(_L("RMB = %d"), info.iRemovable);
-    __TESTREPORT2(_L("PERIPHERAL DEVICE TYPE = %d PQ = %d"),
-                 info.iPeripheralDeviceType,
-                 info.iPeripheralQualifier);
-    __TESTREPORT1(_L("VERSION = %d"), info.iVersion);
-    __TESTREPORT1(_L("RESPONSE DATA FORMAT = %d"), info.iResponseDataFormat);
-    __TESTREPORT3(_L("VENDOR ID %S PRODUCT ID %S REV %S"),
-                 &info.iIdentification.iVendorId,
-                 &info.iIdentification.iProductId,
-                 &info.iIdentification.iProductRev);
+    OstTrace1(TRACE_SHOSTMASSSTORAGE_DEVICEREPORT, CSCSIPROTOCOL_40,
+              "RMB = %d", info.iRemovable);
+    OstTraceExt2(TRACE_SHOSTMASSSTORAGE_DEVICEREPORT, CSCSIPROTOCOL_41,
+              "PERIPHERAL DEVICE TYPE = %d PQ = %d",
+              info.iPeripheralDeviceType,
+              info.iPeripheralQualifier);
+    OstTrace1(TRACE_SHOSTMASSSTORAGE_DEVICEREPORT, CSCSIPROTOCOL_42,
+              "VERSION = %d", info.iVersion);
+    OstTrace1(TRACE_SHOSTMASSSTORAGE_DEVICEREPORT, CSCSIPROTOCOL_43,
+              "RESPONSE DATA FORMAT = %d",
+              info.iResponseDataFormat);
+
+    OstTraceData(TRACE_SHOSTMASSSTORAGE_DEVICEREPORT, CSCSIPROTOCOL_440,
+              "VENDOR ID %s",
+              info.iIdentification.iVendorId.Ptr(), info.iIdentification.iVendorId.Size() * 2);
+    OstTraceData(TRACE_SHOSTMASSSTORAGE_DEVICEREPORT, CSCSIPROTOCOL_441,
+              "PRODUCT ID %s",
+              info.iIdentification.iProductId.Ptr(), info.iIdentification.iProductId.Size()  * 2);
+    OstTraceData(TRACE_SHOSTMASSSTORAGE_DEVICEREPORT, CSCSIPROTOCOL_442,
+              "REV %s",
+              info.iIdentification.iProductRev.Ptr(), info.iIdentification.iProductRev.Size() * 2);
 
     if (info.iPeripheralQualifier != 0 && info.iPeripheralQualifier != 1)
         {
-        __HOSTPRINT(_L("Peripheral Qualifier[Unknown device type]"))
+        OstTrace0(TRACE_SHOSTMASSSTORAGE_HOST, CSCSIPROTOCOL_45,
+                  "Peripheral Qualifier[Unknown device type]");
         err = KErrUnknown;
         }
     else if (info.iPeripheralDeviceType == 0)
         {
         // SCSI SBC Direct access device
         iRemovableMedia = info.iRemovable;
-    
+
         // SCSI Block device
         iSbcInterface = new (ELeave) TSbcClientInterface(iSpcInterface.Transport());
         iSbcInterface->InitBuffers(&iHeadbuf, &iTailbuf);
@@ -396,10 +405,11 @@ TInt CScsiProtocol::MsInquiryL()
     else if (info.iPeripheralDeviceType == 5)
         {
         // SCSI MMC-2 CD-ROM device
-        __HOSTPRINT(_L("Peripheral Device Type[CD-ROM]"))
+        OstTrace0(TRACE_SHOSTMASSSTORAGE_HOST, CSCSIPROTOCOL_46,
+                  "Peripheral Device Type[CD-ROM]");
         iRemovableMedia = info.iRemovable;
 
-        // MMC-2 is not supported. A SCSI interface call will return 
+        // MMC-2 is not supported. A SCSI interface call will return
         // KErrNotSupported. If SCSI support is extended in future then
         // TSbcInterface class should be replaced with a proper interface class.
         iSbcInterface = NULL;
@@ -407,8 +417,9 @@ TInt CScsiProtocol::MsInquiryL()
         }
     else
         {
-        __HOSTPRINT(_L("Peripheral Device Type[Unsupported device type]"))
-        err = KErrUnknown;    
+        OstTrace0(TRACE_SHOSTMASSSTORAGE_HOST, CSCSIPROTOCOL_47,
+                  "Peripheral Device Type[Unsupported device type]");
+        err = KErrUnknown;
         }
 
     return err;
@@ -424,7 +435,6 @@ device status error
 */
 TInt CScsiProtocol::MsTestUnitReadyL()
     {
-	__MSFNLOG
     /* TestUnitReady */
     return iSpcInterface.TestUnitReadyL();
     }
@@ -443,7 +453,6 @@ device status error, KErrCommandStalled to indicate a device stall
 */
 TInt CScsiProtocol::MsReadCapacityL()
     {
-	__MSFNLOG
     if (!iSbcInterface)
         {
         User::Leave(KErrNotSupported);
@@ -454,7 +463,8 @@ TInt CScsiProtocol::MsReadCapacityL()
     TUint32 lastLba;
     TInt err = iSbcInterface->ReadCapacity10L(lastLba, blockSize);
 
-    __TESTREPORT2(_L("CAPACITY: Block Size=0x%x Last LBA=0x%x"), blockSize, lastLba);
+    OstTraceExt2(TRACE_SHOSTMASSSTORAGE_DEVICEREPORT, CSCSIPROTOCOL_50,
+                 "CAPACITY: Block Size=0x%x Last LBA=0x%x", blockSize, lastLba);
     return err;
     }
 
@@ -468,7 +478,6 @@ device status error, KErrCommandStalled to indicate a device stall
 */
 TInt CScsiProtocol::MsModeSense10L()
     {
-	__MSFNLOG
     if (!iSbcInterface)
         User::Leave(KErrNotSupported);
 
@@ -492,7 +501,6 @@ device status error, KErrCommandStalled to indicate a device stall
 */
 TInt CScsiProtocol::MsModeSense6L()
     {
-	__MSFNLOG
     if (!iSbcInterface)
         User::Leave(KErrNotSupported);
 
@@ -516,7 +524,6 @@ device status error
 */
 TInt CScsiProtocol::MsStartStopUnitL(TBool aStart)
     {
-	__MSFNLOG
     if (!iSbcInterface)
         User::Leave(KErrNotSupported);
 
@@ -533,14 +540,12 @@ device status error
 */
 TInt CScsiProtocol::MsPreventAllowMediaRemovalL(TBool aPrevent)
     {
-	__MSFNLOG
     return iSpcInterface.PreventAllowMediumRemovalL(aPrevent);
     }
 
 
 TInt CScsiProtocol::DoCheckConditionL()
     {
-	__MSFNLOG
     User::LeaveIfError(MsRequestSenseL());
 
     TInt err;
@@ -550,15 +555,15 @@ TInt CScsiProtocol::DoCheckConditionL()
         iSenseInfo.iAdditional == TSenseInfo::EAscLogicalUnitNotReady &&
         iSenseInfo.iQualifier == TSenseInfo::EAscqInitializingCommandRequired)
         {
-		if (iSbcInterface)
-			{
-	        // start unit
-			err = iSbcInterface->StartStopUnitL(ETrue);
-	        if (err)
-		        {
-			    User::LeaveIfError(MsRequestSenseL());
-				}			
-			}
+        if (iSbcInterface)
+            {
+            // start unit
+            err = iSbcInterface->StartStopUnitL(ETrue);
+            if (err)
+                {
+                User::LeaveIfError(MsRequestSenseL());
+                }
+            }
         }
 
     err = GetSystemWideSenseError(iSenseInfo);
@@ -582,7 +587,7 @@ TInt CScsiProtocol::DoCheckConditionL()
         iMediaChangeNotifier.DoNotifyL();
         iState = nextState;
         }
-           
+
     return err;
     }
 
@@ -630,99 +635,97 @@ KErrDisconnected could happen due to any of the following reasons:
     extension will be notified setting the iChanged flag
 */
 TInt CScsiProtocol::GetSystemWideSenseError(const TSenseInfo& aSenseInfo)
-	{
-	__MSFNLOG
-	TInt ret = KErrNone;
-	TInt additionalError = KErrNone;
+    {
+    TInt ret = KErrNone;
+    TInt additionalError = KErrNone;
 
-	switch(aSenseInfo.iSenseCode)
-		{
-		case TSenseInfo::ENoSense:
-		case TSenseInfo::ERecoveredError:
-			ret = KErrNone;
-			break;
-		case TSenseInfo::ENotReady:
+    switch(aSenseInfo.iSenseCode)
+        {
+        case TSenseInfo::ENoSense:
+        case TSenseInfo::ERecoveredError:
+            ret = KErrNone;
+            break;
+        case TSenseInfo::ENotReady:
             ret = KErrNotReady;
-			additionalError = ProcessAsCodes(aSenseInfo);
+            additionalError = ProcessAsCodes(aSenseInfo);
             if (additionalError != KErrNone)
                 {
                 ret = additionalError;
                 }
-			break;
-		case TSenseInfo::EMediumError:
-			ret = KErrCorrupt;
-			additionalError = ProcessAsCodes(aSenseInfo);
+            break;
+        case TSenseInfo::EMediumError:
+            ret = KErrCorrupt;
+            additionalError = ProcessAsCodes(aSenseInfo);
             if (additionalError != KErrNone)
                 {
                 ret = additionalError;
                 }
-			break;
-		case TSenseInfo::EUnitAttention:
-			ret = KErrDisconnected;
-			break;
-		case TSenseInfo::EDataProtection:
-			ret = KErrAccessDenied;
-			break;
-		case TSenseInfo::EIllegalRequest:
-		case TSenseInfo::EHardwareError:
-		case TSenseInfo::EBlankCheck:
-		case TSenseInfo::EVendorSpecific:
-		case TSenseInfo::EMisCompare:
-			ret = KErrUnknown;
-			break;
-		case TSenseInfo::ECopyAborted:
-		case TSenseInfo::EAbortedCommand:
-			ret = KErrAbort;
-			break;
-		case TSenseInfo::EDataOverflow:
-			ret = KErrOverflow;
-			break;
-		default:
-			ret = KErrUnknown;
-			break;
-		}
+            break;
+        case TSenseInfo::EUnitAttention:
+            ret = KErrDisconnected;
+            break;
+        case TSenseInfo::EDataProtection:
+            ret = KErrAccessDenied;
+            break;
+        case TSenseInfo::EIllegalRequest:
+        case TSenseInfo::EHardwareError:
+        case TSenseInfo::EBlankCheck:
+        case TSenseInfo::EVendorSpecific:
+        case TSenseInfo::EMisCompare:
+            ret = KErrUnknown;
+            break;
+        case TSenseInfo::ECopyAborted:
+        case TSenseInfo::EAbortedCommand:
+            ret = KErrAbort;
+            break;
+        case TSenseInfo::EDataOverflow:
+            ret = KErrOverflow;
+            break;
+        default:
+            ret = KErrUnknown;
+            break;
+        }
 
-	return ret;
-	}
+    return ret;
+    }
 
 
 TInt CScsiProtocol::ProcessAsCodes(const TSenseInfo& aSenseInfo)
     {
-	__MSFNLOG
-	TInt ret = KErrNone;
+    TInt ret = KErrNone;
 
-	switch(aSenseInfo.iAdditional)
-		{
+    switch(aSenseInfo.iAdditional)
+        {
         case TSenseInfo::EAscLogicalUnitNotReady:
-		case TSenseInfo::EMediaNotPresent:
+        case TSenseInfo::EMediaNotPresent:
             ret = KErrNotReady;
-			break;
+            break;
 
-		case TSenseInfo::ELbaOutOfRange:
-			ret = KErrOverflow;
-			break;
+        case TSenseInfo::ELbaOutOfRange:
+            ret = KErrOverflow;
+            break;
 
-		case TSenseInfo::EWriteProtected:
-			ret = KErrAccessDenied;
-			break;
+        case TSenseInfo::EWriteProtected:
+            ret = KErrAccessDenied;
+            break;
 
-		case TSenseInfo::ENotReadyToReadyChange:
-			ret = KErrNone;
-			break;
+        case TSenseInfo::ENotReadyToReadyChange:
+            ret = KErrNone;
+            break;
 
-		case TSenseInfo::EAscLogicalUnitDoesNotRespondToSelection:
-		case TSenseInfo::EInvalidCmdCode:
-		case TSenseInfo::EInvalidFieldInCdb:
-		case TSenseInfo::ELuNotSupported:
+        case TSenseInfo::EAscLogicalUnitDoesNotRespondToSelection:
+        case TSenseInfo::EInvalidCmdCode:
+        case TSenseInfo::EInvalidFieldInCdb:
+        case TSenseInfo::ELuNotSupported:
         case TSenseInfo::EInsufficientRes:
             ret = KErrUnknown;
             break;
-		default:
-			ret = KErrNone;
-			break;
-		}
-	return ret;
-	}
+        default:
+            ret = KErrNone;
+            break;
+        }
+    return ret;
+    }
 
 
 /**
@@ -734,14 +737,12 @@ device status error
 */
 TInt CScsiProtocol::MsRequestSenseL()
     {
-	__MSFNLOG
     return iSpcInterface.RequestSenseL(iSenseInfo) ? KErrCommandFailed : KErrNone;
-	}
+    }
 
 
 void CScsiProtocol::CreateSbcInterfaceL(TUint32 aBlockLen, TUint32 aLastLba)
     {
-	__MSFNLOG
     // SCSI Block device
     ASSERT(iSbcInterface == NULL);
     iSbcInterface = new (ELeave) TSbcClientInterface(iSpcInterface.Transport());
@@ -752,7 +753,6 @@ void CScsiProtocol::CreateSbcInterfaceL(TUint32 aBlockLen, TUint32 aLastLba)
 
 void CScsiProtocol::ResetSbc()
     {
-	__MSFNLOG
     if (iSbcInterface)
         {
         delete iSbcInterface;
@@ -762,92 +762,86 @@ void CScsiProtocol::ResetSbc()
 
 
 void CScsiProtocol::NotifyChange(const RMessage2& aMessage)
-	{
-    __MSFNLOG
+    {
     iMediaChangeNotifier.Register(aMessage);
-	}
+    }
 
 
 void CScsiProtocol::ForceCompleteNotifyChangeL()
-	{
-    __MSFNLOG
+    {
     iMediaChangeNotifier.DoNotifyL();
-	}
+    }
 
 
 void CScsiProtocol::CancelChangeNotifierL()
-	{
-    __MSFNLOG
+    {
     iMediaChangeNotifier.DoCancelL();
-	}
+    }
 
 
 void CScsiProtocol::SuspendL()
-	{
-    __MSFNLOG
+    {
     if (iFsm->StartStopUnitRequired())
         {
         iSbcInterface->StartStopUnitL(EFalse);
         }
-	}
+    }
 
 void CScsiProtocol::ResumeL()
-	{
-    __MSFNLOG
+    {
     if (iFsm->StartStopUnitRequired())
         {
         iSbcInterface->StartStopUnitL(ETrue);
         }
-	}
+    }
 
 
 TBool CScsiProtocol::DoScsiReadyCheckEventL()
-	{
-    __MSFNLOG
-	TInt err = KErrNone;
+    {
+    TInt err = KErrNone;
 
-	if(iRemovableMedia || iState != EConnected)
+    if(iRemovableMedia || iState != EConnected)
         {
-		iFsm->SetStatusCheck();
-		TRAP(err, iFsm->ConnectLogicalUnitL());
-		iFsm->ClearStatusCheck();
+        iFsm->SetStatusCheck();
+        TRAP(err, iFsm->ConnectLogicalUnitL());
+        iFsm->ClearStatusCheck();
 
-		User::LeaveIfError(err);
-		err = iFsm->IsConnected() ? KErrNone : KErrNotReady;
+        User::LeaveIfError(err);
+        err = iFsm->IsConnected() ? KErrNone : KErrNotReady;
         }
 
-	if (iState == EConnected)
+    if (iState == EConnected)
         {
-		if (err != KErrNone)
-			{
-			iState = EDisconnected;
-            __SCSIPRINT(_L("** Disconnected Notification **"));
+        if (err != KErrNone)
+            {
+            iState = EDisconnected;
+            OstTrace0(TRACE_SHOSTMASSSTORAGE_SCSI, CSCSIPROTOCOL_60,
+                      "** Disconnected Notification **");
             iMediaChangeNotifier.DoNotifyL();
-			}
+            }
         }
-	else
+    else
         {
-		if (err == KErrNone)
-			{
-			iState = EConnected;
-            __SCSIPRINT(_L("** Connected Notification **"));
+        if (err == KErrNone)
+            {
+            iState = EConnected;
+            OstTrace0(TRACE_SHOSTMASSSTORAGE_SCSI, CSCSIPROTOCOL_61,
+                      "** Connected Notification **");
             iMediaChangeNotifier.DoNotifyL();
-			}
+            }
         }
     return err = KErrNone ? ETrue : EFalse;
-	}
+    }
 
 
 RMediaChangeNotifier::RMediaChangeNotifier()
 :   iRegistered(EFalse)
     {
-    __MSFNSLOG
     }
 
 
 RMediaChangeNotifier::~RMediaChangeNotifier()
     {
-    __MSFNSLOG
     if (iRegistered)
         iNotifier.Complete(KErrDisconnected);
     }
@@ -859,33 +853,29 @@ Initialise notifier to enable media change notfications.
 */
 void RMediaChangeNotifier::Register(const RMessage2& aMessage)
     {
-    __MSFNLOG
-	iRegistered = ETrue;
-	iNotifier = aMessage;
+    iRegistered = ETrue;
+    iNotifier = aMessage;
     }
 
 
 void RMediaChangeNotifier::DoNotifyL()
     {
-	__MSFNLOG
-	CompleteNotifierL(KErrNone);
+    CompleteNotifierL(KErrNone);
     }
 
 void RMediaChangeNotifier::DoCancelL()
     {
-	__MSFNLOG
-	CompleteNotifierL(KErrCancel);
+    CompleteNotifierL(KErrCancel);
     }
 
 void RMediaChangeNotifier::CompleteNotifierL(TInt aReason)
-	{
-    __MSFNLOG
-	if (iRegistered)
+    {
+    if (iRegistered)
         {
-		TBool mediaChanged = ETrue;
-		TPtrC8 pStatus((TUint8*)&mediaChanged,sizeof(TBool));
-		iNotifier.WriteL(0,pStatus);
-		iNotifier.Complete(aReason);
-		iRegistered = EFalse;
+        TBool mediaChanged = ETrue;
+        TPtrC8 pStatus((TUint8*)&mediaChanged,sizeof(TBool));
+        iNotifier.WriteL(0,pStatus);
+        iNotifier.Complete(aReason);
+        iRegistered = EFalse;
         }
-	}
+    }

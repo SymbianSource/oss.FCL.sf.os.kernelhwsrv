@@ -1,4 +1,4 @@
-// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -12,7 +12,7 @@
 //
 // Description:
 // CUsbMassStorageController implementation.
-// 
+//
 //
 
 
@@ -40,19 +40,15 @@
 #include "cusbmassstorageserver.h"
 #include "cusbmassstoragecontroller.h"
 #include "debug.h"
-#include "msdebug.h"
-
-
 
 
 CUsbMassStorageController* CUsbMassStorageController::NewL()
     {
-    __MSFNSLOG
-	CUsbMassStorageController* self = new (ELeave) CUsbMassStorageController();
-	CleanupStack::PushL(self);
-	self->ConstructL();
-	CleanupStack::Pop();
-	return self;
+    CUsbMassStorageController* self = new (ELeave) CUsbMassStorageController();
+    CleanupStack::PushL(self);
+    self->ConstructL();
+    CleanupStack::Pop();
+    return self;
     }
 
 
@@ -62,26 +58,25 @@ CUsbMassStorageController::CUsbMassStorageController()
 
 
 void CUsbMassStorageController::ConstructL()
-	{
+    {
 #ifdef MSDC_TESTMODE
     // TestParser for modifying client behaviour to create  BOT 13 Case device
     // exceptions conditions
     __TESTMODEPRINT("Test Mode is active");
     iTestParser = new (ELeave) TTestParser;
 #endif
-	}
+    }
 
 /**
 Destructor
 */
 CUsbMassStorageController::~CUsbMassStorageController()
-	{
-    __MSFNLOG
-	delete iServer;
-	delete iProtocol;
-	delete iTransport;
-	delete iDriveManager;
-	}
+    {
+    delete iServer;
+    delete iProtocol;
+    delete iTransport;
+    delete iDriveManager;
+    }
 
 /**
 Creates the drive manager, transport, protocol and server
@@ -89,28 +84,27 @@ Creates the drive manager, transport, protocol and server
 @param aMaxDrives Maximum number of Mass Storage drives supported.
 */
 void CUsbMassStorageController::CreateL(const TLunToDriveMap& aDriveMapping)
-	{
-    __MSFNLOG
-	//Create and init drive manager
-	iDriveManager = CDriveManager::NewL(aDriveMapping);
+    {
+    //Create and init drive manager
+    iDriveManager = CDriveManager::NewL(aDriveMapping);
 
-	//Create transport and protocol and initialize them
-	__PRINT(_L("CUsbMassStorageController::CreateL: Creating transport and protocol"));
+    //Create transport and protocol and initialize them
+    __PRINT(_L("CUsbMassStorageController::CreateL: Creating transport and protocol"));
 #ifdef MSDC_TESTMODE
-	iTransport = CBulkOnlyTransport::NewL(aDriveMapping.Count(), *this, iTestParser);
-	iProtocol = CScsiServerProtocol::NewL(*iDriveManager, iTestParser);
+    iTransport = CBulkOnlyTransport::NewL(aDriveMapping.Count(), *this, iTestParser);
+    iProtocol = CScsiServerProtocol::NewL(*iDriveManager, iTestParser);
 #else
-	iTransport = CBulkOnlyTransport::NewL(aDriveMapping.Count(), *this);
-	iProtocol = CScsiServerProtocol::NewL(*iDriveManager);
+    iTransport = CBulkOnlyTransport::NewL(aDriveMapping.Count(), *this);
+    iProtocol = CScsiServerProtocol::NewL(*iDriveManager);
 #endif
-	iTransport->RegisterProtocol(*iProtocol);
-	iProtocol->RegisterTransport(iTransport);
+    iTransport->RegisterProtocol(*iProtocol);
+    iProtocol->RegisterTransport(iTransport);
 
-	//Create and start server
-	__PRINT(_L("CUsbMassStorageController::CreateL: Creating server"));
-	iServer = CUsbMassStorageServer::NewLC(*this);
-	CleanupStack::Pop(iServer);
-	}
+    //Create and start server
+    __PRINT(_L("CUsbMassStorageController::CreateL: Creating server"));
+    iServer = CUsbMassStorageServer::NewLC(*this);
+    CleanupStack::Pop(iServer);
+    }
 
 /**
 Returns a reference to the drive manager
@@ -118,10 +112,9 @@ Returns a reference to the drive manager
 @return A reference to the drive manager
 */
 CDriveManager& CUsbMassStorageController::DriveManager()
-	{
-    __MSFNLOG
-	return *iDriveManager;
-	}
+    {
+    return *iDriveManager;
+    }
 
 /**
 Starts the transport and initializes the protocol.
@@ -129,57 +122,54 @@ Starts the transport and initializes the protocol.
 @param aConfig Reference to Mass Storage configuration data
 */
 TInt CUsbMassStorageController::Start(const TMassStorageConfig& aConfig)
-	{
-    __MSFNLOG
-	//Save this value for use in the Reset method.
-	iConfig = aConfig;
-	TInt err = KErrNotReady;
-	if (iProtocol && iTransport)
-		{
-		__PRINT(_L("CUsbMassStorageController::Start: Starting"));
-		iProtocol->SetParameters(aConfig);
-		err = iTransport->Start();
-		}
-	return err;
-	}
+    {
+    //Save this value for use in the Reset method.
+    iConfig = aConfig;
+    TInt err = KErrNotReady;
+    if (iProtocol && iTransport)
+        {
+        __PRINT(_L("CUsbMassStorageController::Start: Starting"));
+        iProtocol->SetParameters(aConfig);
+        err = iTransport->Start();
+        }
+    return err;
+    }
 
 /**
 Stops the transport.
 */
 TInt CUsbMassStorageController::Stop()
-	{
-    __MSFNLOG
-	TInt err = KErrNotReady;
-	if (iTransport)
-		{
-		__PRINT(_L("CUsbMassStorageController::Stop: Stopping"));
-		err = iTransport->Stop();
-		}
+    {
+    TInt err = KErrNotReady;
+    if (iTransport)
+        {
+        __PRINT(_L("CUsbMassStorageController::Stop: Stopping"));
+        err = iTransport->Stop();
+        }
 
-	iDriveManager->SetCritical(CDriveManager::KAllLuns, EFalse);   //unset critical
-	return err;
-	}
+    iDriveManager->SetCritical(CDriveManager::KAllLuns, EFalse);   //unset critical
+    return err;
+    }
 
 /**
 Delete the transport and protocol and start new ones.
 */
 void CUsbMassStorageController::Reset()
-	{
-    __MSFNLOG
-	delete iProtocol;
-	iProtocol = NULL;
+    {
+    delete iProtocol;
+    iProtocol = NULL;
 
-	//Create transport and protocol and initialize them
-	__PRINT(_L("CUsbMassStorageController::Reset: Creating  protocol"));
+    //Create transport and protocol and initialize them
+    __PRINT(_L("CUsbMassStorageController::Reset: Creating  protocol"));
 
 #ifdef MSDC_TESTMODE
-	TRAPD(err,iProtocol = CScsiServerProtocol::NewL(*iDriveManager, iTestParser));
+    TRAPD(err,iProtocol = CScsiServerProtocol::NewL(*iDriveManager, iTestParser));
 #else
-	TRAPD(err,iProtocol = CScsiServerProtocol::NewL(*iDriveManager));
+    TRAPD(err,iProtocol = CScsiServerProtocol::NewL(*iDriveManager));
 #endif
-	err = err;
-	__ASSERT_DEBUG(err==KErrNone, User::Invariant());
-	iTransport->RegisterProtocol(*iProtocol);
-	iProtocol->RegisterTransport(iTransport);
+    err = err;
+    __ASSERT_DEBUG(err==KErrNone, User::Invariant());
+    iTransport->RegisterProtocol(*iProtocol);
+    iProtocol->RegisterTransport(iTransport);
     iProtocol->SetParameters(iConfig);
-	}
+    }

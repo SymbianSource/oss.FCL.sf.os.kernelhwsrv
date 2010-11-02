@@ -471,6 +471,8 @@ private:
 public:
 	friend class Monitor;
 	friend class Debugger;
+	// Although SCMonitor is outside of the kernel sources, this friend declaration is still required 
+	// so that SCMonitor can collect kernel data at crash time
 	friend class SCMonitor;
 	friend class Debug::StopModeDebug;
 	};
@@ -1694,10 +1696,11 @@ public:
 public:
 	enum TProcessAttributes	{
 							EPrivate		= 0x00000002,
-							ESupervisor		= (TInt)0x80000000,
-							EBeingLoaded	= 0x08000000,
-							EResumed		= 0x00010000,
 							EDataPaged 		= 0x00000004,	// Set when the process is data paged
+							EStaticCallsDone= 0x00000010,   // Set after static constructors are called
+							EResumed		= 0x00010000,
+							EBeingLoaded	= 0x08000000,
+							ESupervisor		= (TInt)0x80000000,
 							};
 	TInt iAttributes;
 	TLinAddr iDataBssRunAddress;

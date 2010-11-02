@@ -19,7 +19,7 @@
 #include "sf_mntTraces.h"
 #endif
 
-
+#include "sf_notifier.h"
 
 
 /**
@@ -453,6 +453,22 @@ CFormatCB* CMountCB::NewFormatL() const
     }
 
 
+EXPORT_C TInt CMountCB::IssueNotification(CFsNotificationInfo* aNotificationInfo)
+    {
+    //Validate Notification
+    TInt r = CFsNotificationInfo::ValidateNotification(*aNotificationInfo);
+    if(r != KErrNone)
+        return r;
+    
+    //Target RFs::NotifyChange
+    FsNotify::HandleChange(*aNotificationInfo);
+    
+#ifdef SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION
+    //Target CFsNotify
+    FsNotificationManager::HandleChange(*aNotificationInfo);
+#endif
+    return KErrNone;
+    }
 
 
 

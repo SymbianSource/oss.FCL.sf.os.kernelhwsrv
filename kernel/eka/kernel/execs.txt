@@ -2444,6 +2444,11 @@ slow {
 	handle = timer
 }
 
+slow {
+	name = StaticCallsDone
+	user = E32Loader
+}
+
 
 /******************************************************************************
  * End of normal executive functions

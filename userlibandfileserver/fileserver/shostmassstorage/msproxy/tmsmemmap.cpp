@@ -28,14 +28,16 @@
 #include <e32err.h>
 
 #include "tmsmemmap.h"
-#include "debug.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "tmsmemmapTraces.h"
+#endif
 
 
 TMsDataMemMap::TMsDataMemMap()
-	{
-	__MSFNSLOG
+    {
     Reset();
-	}
+    }
 
 
 /**
@@ -52,7 +54,6 @@ TMsDataMemMap::TMsDataMemMap()
  */
 TInt TMsDataMemMap::TranslateDataPos(TInt64& aPos, TInt& aLength) const
     {
-	__MSFNSLOG
     // Map to the actual position on the media
     aPos += iDataOffset;
 
@@ -82,7 +83,6 @@ TInt TMsDataMemMap::TranslateDataPos(TInt64& aPos, TInt& aLength) const
  */
 TInt TMsDataMemMap::CheckBlockInRange(TInt64& aPos, TInt aLength) const
     {
-	__MSFNSLOG
     // Map to the actual position on the media
     aPos += iDataOffset;
 
@@ -94,7 +94,8 @@ TInt TMsDataMemMap::CheckBlockInRange(TInt64& aPos, TInt aLength) const
     TInt64 endPos = aPos + aLength;
     if (endPos > iSize)
         {
-        __PXYPRINT2(_L("EOF found 0x%lx x%x"), aPos, aLength);
+        OstTraceExt3(TRACE_SHOSTMASSSTORAGE_PROXY, TMSMEMMAP_1,
+                     "EOF found Pos=0x%x %x Len=0x%x", I64HIGH(aPos), I64LOW(aPos), aLength);
         return KErrEof;
         }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -20,7 +20,6 @@
 #include <e32test.h>
 #include <e32math.h>
 
-#include "tmslog.h"
 #include "cblockdevicetester.h"
 
 extern RTest test;
@@ -38,7 +37,6 @@ _LIT8(KTxtTestConfig,       "C");
 
 void TLocalBuffer::Init()
     {
-    __MSFNSLOG
     TInt64 rndSeed = 123456789;
 
     //-- initialize buffer with random rubbish
@@ -65,34 +63,29 @@ void TLocalBuffer::Update(TInt aPos, TUint aLen)
 RTargetMedia::RTargetMedia(TInt aDriveNumber)
 :   iDriveNumber(aDriveNumber)
     {
-    __MSFNSLOG
     }
 
 
 void RTargetMedia::OpenL()
     {
-    __MSFNSLOG
     User::LeaveIfError(iRawDisk.Open(fsSession, iDriveNumber));
     }
 
 
 void RTargetMedia::Close()
     {
-    __MSFNSLOG
     iRawDisk.Close();
     }
 
 
 TInt RTargetMedia::MediaRawWrite(TPos aPos, const TDesC8& aData)
     {
-    __MSFNSLOG
     return iRawDisk.Write(aPos, (TDesC8&)aData);
     }
 
 
 TInt RTargetMedia::MediaRawRead(TPos aPos, TUint32 aLen, TDes8& aData)
     {
-    __MSFNSLOG
     aData.SetMax();
     TPtr8 ptr = aData.LeftTPtr(aLen);
     TInt err = iRawDisk.Read(aPos, ptr);
@@ -108,7 +101,6 @@ RTargetDrive::RTargetDrive(TInt aDriveNumber)
 
 TInt RTargetDrive::OpenTestAreaL(const TDesC8& aData)
     {
-    __MSFNSLOG
     RTargetMedia::OpenL();
     iStartLba = 0x20;
 
@@ -121,7 +113,6 @@ TInt RTargetDrive::OpenTestAreaL(const TDesC8& aData)
 
 TInt RTargetDrive::Update(TInt aPos, TUint aLen)
     {
-    __MSFNSLOG
     TPtrC8 ptr = iSource.Mid(aPos, aLen);
     TPos targetPos = TargetPos(aPos);
     return MediaRawWrite(targetPos, ptr);
@@ -130,7 +121,6 @@ TInt RTargetDrive::Update(TInt aPos, TUint aLen)
 
 TInt RTargetDrive::Verify()
     {
-    __MSFNLOG
     TInt res = MediaRawRead(StartPos(), iSource.Length(), iTmpBuffer);
     if (res)
         return res;
@@ -141,7 +131,6 @@ TInt RTargetDrive::Verify()
 
 TInt RTargetDrive::Verify(TInt aPos, TUint aLen)
     {
-    __MSFNSLOG
     TPos pos = TargetPos(aPos);
     TInt res = MediaRawRead(pos, aLen, iTmpBuffer);
     if (res)
@@ -157,7 +146,6 @@ TInt RTargetDrive::Verify(TInt aPos, TUint aLen)
 
 TInt RTargetDrive::VerifyBlock(TLba aLba, TLba aBlocks)
     {
-    __MSFNSLOG
     return Verify(TLbaUtils::Pos(aLba), TLbaUtils::Length(aBlocks));
     }
 
@@ -168,12 +156,10 @@ static const TChar KFillChar = 'x';
 TTargetTestArea::TTargetTestArea(RTargetMedia& aMedia)
 :   iTargetMedia(aMedia)
     {
-    __MSFNLOG
     }
 
 void TTargetTestArea::CreateControlFile()
     {
-    __MSFNLOG
     iStartLba = -1;
     static const TInt KBlockSize = 0x200;
     static const TInt KFileSize = KBlockSize * 8;
@@ -196,7 +182,6 @@ void TTargetTestArea::CreateControlFile()
 
 void TTargetTestArea::RemoveControlFile()
     {
-    __MSFNLOG
     TInt err = fsSession.Delete(KTxtControlFile);
     test(err == KErrNone);
     }
@@ -204,7 +189,6 @@ void TTargetTestArea::RemoveControlFile()
 
 void TTargetTestArea::FindBlockStartL()
     {
-    __MSFNLOG
     iTargetMedia.OpenL();
     // search for first block
     TBuf8<KBlockSize> readBlock;
@@ -237,7 +221,6 @@ void TTargetTestArea::FindBlockStartL()
 
 TInt TTargetTestArea::WriteBlockL(TBuf8<KBlockSize>& aBlock)
     {
-    __MSFNLOG
     iTargetMedia.OpenL();
     TInt err = iTargetMedia.MediaRawWrite(iStartLba * KBlockSize, aBlock);
     iTargetMedia.Close();
@@ -247,7 +230,6 @@ TInt TTargetTestArea::WriteBlockL(TBuf8<KBlockSize>& aBlock)
 
 TInt TTargetTestArea::ReadBlockL(TBuf8<KBlockSize>& aBlock)
     {
-    __MSFNLOG
     iTargetMedia.OpenL();
     TInt err = iTargetMedia.MediaRawRead(iStartLba * KBlockSize, KBlockSize, aBlock);
     iTargetMedia.Close();
@@ -258,13 +240,11 @@ TInt TTargetTestArea::ReadBlockL(TBuf8<KBlockSize>& aBlock)
 RBlockTargetMedia::RBlockTargetMedia(TInt aDriveNumber)
 :   RTargetMedia(aDriveNumber)
     {
-    __MSFNSLOG
     }
 
 
 void RBlockTargetMedia::OpenL()
     {
-    __MSFNSLOG
     RTargetMedia::OpenL();
 
     TInt64 rndSeed = 123456789;
@@ -280,7 +260,6 @@ void RBlockTargetMedia::OpenL()
 
 TInt RBlockTargetMedia::WriteBlock(TLba aLba)
     {
-    __MSFNSLOG
     TPos pos = TLbaUtils::Pos(aLba);
     return iRawDisk.Write(pos, (TDesC8&)iBlockData);
     }
@@ -288,7 +267,6 @@ TInt RBlockTargetMedia::WriteBlock(TLba aLba)
 
 TInt RBlockTargetMedia::ReadBlock(TLba aLba)
     {
-    __MSFNSLOG
     TBuf8<KBlockSize> blockData;
     TPos pos = TLbaUtils::Pos(aLba);
     blockData.SetMax();
@@ -299,19 +277,17 @@ TInt RBlockTargetMedia::ReadBlock(TLba aLba)
 
 CBlockDeviceTester* CBlockDeviceTester::NewL(TInt aDriveNumber)
     {
-    __MSFNSLOG
-	CBlockDeviceTester* r = new (ELeave) CBlockDeviceTester(aDriveNumber);
-	CleanupStack::PushL(r);
+    CBlockDeviceTester* r = new (ELeave) CBlockDeviceTester(aDriveNumber);
+    CleanupStack::PushL(r);
 
-	r->ConstructL();
-	CleanupStack::Pop();
-	return r;
+    r->ConstructL();
+    CleanupStack::Pop();
+    return r;
     }
 
 
 void CBlockDeviceTester::ConstructL()
     {
-    __MSFNLOG
     TVolumeInfo volumeInfo;
 
     User::LeaveIfError(fsSession.Volume(volumeInfo, iDriveNumber));
@@ -326,13 +302,11 @@ CBlockDeviceTester::CBlockDeviceTester(TInt aDriveNumber)
 :   iDriveNumber(aDriveNumber),
     iTargetDrive(aDriveNumber)
     {
-    __MSFNLOG
     }
 
 
 CBlockDeviceTester::~CBlockDeviceTester()
     {
-    __MSFNLOG
     iTargetDrive.Close();
     }
 
@@ -351,14 +325,12 @@ void CBlockDeviceTester::CloseDrive()
 
 TInt CBlockDeviceTester::VerifyDrive()
     {
-    __MSFNLOG
     return iTargetDrive.Verify();
     }
 
 
 TInt CBlockDeviceTester::Update(TPos aPos, TUint aLen)
     {
-    __MSFNLOG
     iLocalBuffer.Update(aPos, aLen);
     return iTargetDrive.Update(aPos, aLen);
     }
@@ -366,20 +338,17 @@ TInt CBlockDeviceTester::Update(TPos aPos, TUint aLen)
 
 TInt CBlockDeviceTester::UpdateBlock(TLba aLba, TLba aBlocks)
     {
-    __MSFNLOG
     return Update(TLbaUtils::Pos(aLba), TLbaUtils::Length(aBlocks));
     }
 
 
 TInt CBlockDeviceTester::Verify(TPos aPos, TUint aLen)
     {
-    __MSFNLOG
     return iTargetDrive.Verify(aPos, aLen);
     }
 
 TInt CBlockDeviceTester::VerifyBlock(TLba aLba, TLba aBlocks)
     {
-    __MSFNLOG
     return iTargetDrive.VerifyBlock(aLba, aBlocks);
     }
 
@@ -388,19 +357,17 @@ TInt CBlockDeviceTester::VerifyBlock(TLba aLba, TLba aBlocks)
  */
 CBotTester* CBotTester::NewL(TInt aDriveNumber)
     {
-    __MSFNSLOG
-	CBotTester* r = new (ELeave) CBotTester(aDriveNumber);
-	CleanupStack::PushL(r);
+    CBotTester* r = new (ELeave) CBotTester(aDriveNumber);
+    CleanupStack::PushL(r);
 
-	r->ConstructL();
-	CleanupStack::Pop();
-	return r;
+    r->ConstructL();
+    CleanupStack::Pop();
+    return r;
     }
 
 
 void CBotTester::ConstructL()
     {
-    __MSFNLOG
 
     CBlockDeviceTester::ConstructL();
 
@@ -421,20 +388,17 @@ void CBotTester::ConstructL()
 CBotTester::CBotTester(TInt aDriveNumber)
 :   CBlockDeviceTester(aDriveNumber)
     {
-    __MSFNLOG
     }
 
 
 CBotTester::~CBotTester()
     {
-    __MSFNLOG
     iTargetDrive.Close();
     }
 
 
 TInt CBotTester::SetTest(TTestCase aTestCase)
     {
-    __MSFNLOG
     iCmdBuffer[KTestCaseDataOffset] = static_cast<TUint8>(aTestCase);
 
     TPos pos = KSetTestPos;
@@ -444,7 +408,6 @@ TInt CBotTester::SetTest(TTestCase aTestCase)
 
 TInt CBotTester::WriteEnableFile()
     {
-    __MSFNLOG
     TPos pos = KWriteEnableFilePos;
     return iTargetDrive.MediaRawWrite(pos, iOutEnableBuffer);
     }
@@ -452,7 +415,6 @@ TInt CBotTester::WriteEnableFile()
 
 TInt CBotTester::InitReadEnableFile()
     {
-    __MSFNLOG
     TPos pos = KReadEnableFilePos;
     return iTargetDrive.MediaRawWrite(pos, iInEnableBuffer);
     }
@@ -460,7 +422,6 @@ TInt CBotTester::InitReadEnableFile()
 
 TInt CBotTester::ReadEnableFile()
     {
-    __MSFNLOG
     TBuf8<KInEnableBufferSize> readBuf(KInEnableBufferSize);
     TPos pos = KReadEnableFilePos;
     return iTargetDrive.MediaRawRead(pos, readBuf.Size(), readBuf);
@@ -472,20 +433,17 @@ TInt CBotTester::ReadEnableFile()
  */
 CSbcErrTester* CSbcErrTester::NewL(TInt aDriveNumber)
     {
-    __MSFNSLOG
-	CSbcErrTester* r = new (ELeave) CSbcErrTester(aDriveNumber);
-	CleanupStack::PushL(r);
+    CSbcErrTester* r = new (ELeave) CSbcErrTester(aDriveNumber);
+    CleanupStack::PushL(r);
 
-	r->ConstructL();
-	CleanupStack::Pop();
-	return r;
+    r->ConstructL();
+    CleanupStack::Pop();
+    return r;
     }
 
 
 void CSbcErrTester::ConstructL()
     {
-    __MSFNLOG
-
     CBlockDeviceTester::ConstructL();
 
     iCmdBuffer.Append(KTxtTestCaseOutPreamble);
@@ -505,20 +463,17 @@ void CSbcErrTester::ConstructL()
 CSbcErrTester::CSbcErrTester(TInt aDriveNumber)
 :   CBlockDeviceTester(aDriveNumber)
     {
-    __MSFNLOG
     }
 
 
 CSbcErrTester::~CSbcErrTester()
     {
-    __MSFNLOG
     iTargetDrive.Close();
     }
 
 
 TInt CSbcErrTester::WriteTestFile()
     {
-    __MSFNLOG
     TPos pos = KWriteTestFilePos;
     return iTargetDrive.MediaRawWrite(pos, iEnableBuffer);
     }
@@ -526,7 +481,6 @@ TInt CSbcErrTester::WriteTestFile()
 
 TInt CSbcErrTester::ReadTestFile()
     {
-    __MSFNLOG
     TBuf8<KEnableBufferSize> readBuf(KEnableBufferSize);
     TPos pos = KReadTestFilePos;
     TInt err = iTargetDrive.MediaRawRead(pos, readBuf.Size(), readBuf);
@@ -536,7 +490,6 @@ TInt CSbcErrTester::ReadTestFile()
 
 TInt CSbcErrTester::WriteSenseErrorFile(TTestSenseError aTestSenseError)
     {
-    __MSFNLOG
     iSenseErrorBuffer[KTestCaseDataOffset] = static_cast<TUint8>(aTestSenseError);
     TPos pos = KSenseErrorFile;
     return iTargetDrive.MediaRawWrite(pos, iSenseErrorBuffer);
@@ -545,18 +498,16 @@ TInt CSbcErrTester::WriteSenseErrorFile(TTestSenseError aTestSenseError)
 
 CWrPrTester* CWrPrTester::NewL(TInt aDriveNumber)
     {
-    __MSFNSLOG
-	CWrPrTester* r = new (ELeave) CWrPrTester(aDriveNumber);
-	CleanupStack::PushL(r);
-	r->ConstructL();
-	CleanupStack::Pop();
-	return r;
+    CWrPrTester* r = new (ELeave) CWrPrTester(aDriveNumber);
+    CleanupStack::PushL(r);
+    r->ConstructL();
+    CleanupStack::Pop();
+    return r;
     }
 
 
 void CWrPrTester::ConstructL()
     {
-    __MSFNLOG
     iCmdBuffer.Append(KTxtTestCaseOutPreamble);
     iCmdBuffer.Append(KTxtTestConfig);
     iCmdBuffer.AppendFill('c', iCmdBuffer.MaxLength() - iCmdBuffer.Length());
@@ -574,20 +525,17 @@ CWrPrTester::CWrPrTester(TInt aDriveNumber)
 :   iTargetMedia(aDriveNumber),
     iTargetTestArea(iTargetMedia)
     {
-    __MSFNLOG
     }
 
 
 CWrPrTester::~CWrPrTester()
     {
-    __MSFNLOG
     iTargetTestArea.RemoveControlFile();
     }
 
 
 void CWrPrTester::SetWriteProtectL()
     {
-    __MSFNLOG
     // first write WrPr CLR Control block to media to enable setting to be
     // cleared
     iInCmdBuffer[KTestCaseDataOffset] = ETestConfigMediaWpClr;
@@ -605,7 +553,6 @@ void CWrPrTester::SetWriteProtectL()
 
 void CWrPrTester::ClrWriteProtectL()
     {
-    __MSFNLOG
     test.Printf(_L("Clearing WRITE PROTECT"));
     TInt err = KErrNone;
     // Write protect so read the control file from the drive
@@ -623,7 +570,6 @@ void CWrPrTester::ClrWriteProtectL()
 
 TInt CWrPrTester::SetRemovableL()
     {
-    __MSFNLOG
     iCmdBuffer[KTestCaseDataOffset] = ETestConfigMediaRmbSet;
     iTargetMedia.OpenL();
     TInt err = iTargetMedia.MediaRawWrite(KCmdPos, iCmdBuffer);
@@ -633,7 +579,6 @@ TInt CWrPrTester::SetRemovableL()
 
 TInt CWrPrTester::ClrRemovableL()
     {
-    __MSFNLOG
     iCmdBuffer[KTestCaseDataOffset] = ETestConfigMediaRmbClr;
     iTargetMedia.OpenL();
     TInt err = iTargetMedia.MediaRawWrite(KCmdPos, iCmdBuffer);
@@ -644,7 +589,6 @@ TInt CWrPrTester::ClrRemovableL()
 
 TInt CWrPrTester::WriteReadTestL()
     {
-    __MSFNLOG
     TInt err = KErrNone;
     TBuf8<KCmdBufferSize> wrBuffer;
 

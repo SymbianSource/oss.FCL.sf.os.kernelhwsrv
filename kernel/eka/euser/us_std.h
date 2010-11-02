@@ -15,6 +15,9 @@
 // 
 //
 
+#ifndef __US_STD_H__
+#define __US_STD_H__
+
 #include <e32std.h>
 #include <e32std_private.h>
 #include <e32base.h>
@@ -31,3 +34,18 @@
 
 
 GLREF_C void Panic(TCdtPanic aPanic);
+
+
+class TEntryPointList
+	{
+public:
+	TInt CallEPs();
+	TBool AlreadyCalled(TLinAddr aEP);
+
+	TEntryPointList* iPrevList;
+	TInt iCurrentEP;
+	TInt iNumEPs;
+	TLinAddr iEPs[KMaxLibraryEntryPoints];
+	};
+
+#endif

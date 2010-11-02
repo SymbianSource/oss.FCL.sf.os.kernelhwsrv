@@ -13,9 +13,8 @@
 *
 * Description:
 * e32\include\e32def.h
-* NOTE: THIS FILE SHOULD BE ACCEPTABLE TO A C COMPILER
-* 
 *
+* NOTE: THIS FILE SHOULD BE ACCEPTABLE TO A C COMPILER
 */
 
 
@@ -23,11 +22,21 @@
 #ifndef __E32DEF_H__
 #define __E32DEF_H__
 
+
 /*
  * __LEAVE_EQUALS_THROW__ requires the compiler to support C++ exceptions
  */
 #ifndef __SUPPORT_CPP_EXCEPTIONS__
 #undef __LEAVE_EQUALS_THROW__
+#endif
+
+
+/*
+ * RVCT 3.1 and 4.0 read past the end of arrays when the optimiser rotates loops.
+ * This only happens when using -O3 -Otime, so force to -O2.
+ */
+#if __ARMCC_VERSION >= 310000 && !defined(_DEBUG) && !defined(ARMCC_LOOP_ROTATE_DISABLED)
+#pragma O2
 #endif
 
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -28,7 +28,6 @@
 #include "cmsdrive.h"
 #include "tmsprintdrive.h"
 #include "ttestutils.h"
-#include "tmslog.h"
 
 extern CMsDrive* msDrive;
 
@@ -57,19 +56,17 @@ private:
 
 CTestSbcErr* CTestSbcErr::NewL()
     {
-    __MSFNSLOG
-	CTestSbcErr* r = new (ELeave) CTestSbcErr();
-	CleanupStack::PushL(r);
+    CTestSbcErr* r = new (ELeave) CTestSbcErr();
+    CleanupStack::PushL(r);
 
-	r->ConstructL();
-	CleanupStack::Pop();
-	return r;
+    r->ConstructL();
+    CleanupStack::Pop();
+    return r;
     }
 
 
 void CTestSbcErr::ConstructL()
     {
-    __MSFNLOG
     TInt driveNumber = msDrive->DriveNumber();
     iSbcErrTester = CSbcErrTester::NewL(driveNumber);
     }
@@ -77,21 +74,18 @@ void CTestSbcErr::ConstructL()
 
 CTestSbcErr::CTestSbcErr()
     {
-    __MSFNLOG
     }
 
 
 
 CTestSbcErr::~CTestSbcErr()
     {
-    __MSFNLOG
     delete iSbcErrTester;
     }
 
 
 void CTestSbcErr::tTest1()
     {
-    __MSFNLOG
     TInt res;
     test.Start(_L("tTest1\n"));
 
@@ -109,7 +103,6 @@ void CTestSbcErr::tTest1()
 
 void CTestSbcErr::tTest2()
     {
-    __MSFNLOG
     TInt res;
     test.Start(_L("tTest2\n"));
 
@@ -138,7 +131,6 @@ void CTestSbcErr::tTest2()
 
 void CTestSbcErr::tTest3()
     {
-    __MSFNLOG
     TInt res;
     test.Start(_L("tTest3\n"));
 

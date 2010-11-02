@@ -51,12 +51,13 @@ const TInt KNotificationPoolSize = 1;
 class CFsNotificationPathFilter
 	{
 public:
-	static CFsNotificationPathFilter* NewL(const TDesC& aPath, const TDesC& aFilename);
+	static CFsNotificationPathFilter* NewL(const TDesC& aPath, const TDesC& aFilename, TInt aDriveNum);
 	~CFsNotificationPathFilter();
 private:
-	void ConstructL(const TDesC& aPath, const TDesC& aFilename);
+	void ConstructL(const TDesC& aPath, const TDesC& aFilename, TInt aDriveNum);
 	CFsNotificationPathFilter();
 public:
+	TInt iDriveNum;
 	HBufC* iPath;
 	HBufC* iFilename;
 	};
@@ -119,7 +120,7 @@ public:
 	
 	/*
 	 * Returns the RArray<TFsNotificationFilter> for an index
-	 * as returned from FsNotificationHelper::TypeToIndex()
+	 * as returned from CFsNotificationInfo::TypeToIndex()
 	 */
 	TFsNotificationTypeArray* FilterTypeList(TInt aDrive,TInt aIndex);
 	
@@ -157,11 +158,8 @@ public:
 	 * notification of this operation to the client.
 	 * 
 	 * Calling of this function means that we are notifying about this operation. (all checks passed)
-	 * 
-	 * aRequest can be NULL when the request doesn't come from the file server 
-	 * (such as when a media card is removed)
 	 */
-	TInt NotifyChange(CFsClientMessageRequest* aRequest, const TDesC& aName, TFsNotification::TFsNotificationType aNotificationType, CFsNotificationBlock& aBlock);
+	TInt NotifyChange(CFsNotificationInfo* aRequest, CFsNotificationBlock& aBlock);
 		
 	/*
 	 * This function performs the IPC to the client's buffer.
@@ -173,6 +171,9 @@ public:
 
 	//Simple getter
 	TInt ClientMsgHandle();
+	
+	//Platsec needs to check against the path with a message of the *receiving* client. 
+	const RMessage2& BufferMessage();
 	
 private:
 	CFsNotifyRequest();
@@ -216,15 +217,7 @@ private:
 	 * Each index of the TFsNotificationTypeDriveArray is a TFsNotificationTypeArray
 	 */
 	RHashMap<TInt,TFsNotificationTypeDriveArray> iDrivesTypesFiltersMap;
-	
-	/*
-	 * The iPathFilterList is an RPointerArray of CFsNotificationPathFilters.
-	 * 
-	 * These are normally only accessed via a TFsNotificationTypeFilter (via iDrivesTypesFiltersMap),
-	 * not via this array directly.
-	 */
-	RPointerArray<CFsNotificationPathFilter> iPathFilterList;
-	
+		
 	RMessage2 iBufferMsg; //To update buffer
 	RMessage2 iClientMsg; //client notification request
 	
@@ -270,24 +263,6 @@ private:
 	};
 
 /**
- * Helper class to get certain attributes from or about a particular operation to used in a notification
- * 
- * @internalTechnology
- */
-class FsNotificationHelper
-	{
-public:
-	static void NotificationType(TInt aFunction,TFsNotification::TFsNotificationType& aNotificationType);
-	static void PathName(CFsClientMessageRequest& aRequest, TDes& aName);
-	static void NewPathName(CFsClientMessageRequest& aRequest, TPtrC& aName);
-	static TInt NotificationSize(CFsClientMessageRequest& aRequest, TFsNotification::TFsNotificationType aNotificationType, const TDesC& aName);
-	static TInt TypeToIndex(TFsNotification::TFsNotificationType aType);
-	static TFsNotification::TFsNotificationType NotificationType(TInt& aIndex);
-	static TInt DriveNumber(const TPtrC& aPath);
-	static void Attributes(CFsClientMessageRequest& aRequest, TUint& aSet, TUint& aClear);
-	};
-
-/**
  * The FsNotificationManager is a static object
  * 
  *@internalTechnology
@@ -307,26 +282,8 @@ public:
 	 * Work out which CFsNotifyRequests are interested
 	 * (if any) and call CFsNotifyRequest::NotifyChange.
 	 */
-	static void HandleChange(CFsClientMessageRequest& aRequest);
+	static void HandleChange(CFsNotificationInfo& aRequest);
 	
-	/* A change has occurred represented by this request.
-	 * Work out which CFsNotifyRequests are interested
-	 * (if any) and call CFsNotifyRequest::NotifyChange.
-	 * 
-	 * This override is used directly when we want to force a particular notification type
-	 */
-	static void HandleChange(CFsClientMessageRequest& aRequest, TFsNotification::TFsNotificationType aType);
-	
-	/* 
-	 * This override is used directly when we want to specify the current operation's name (src) and notification type.
-	 * 
-	 * aRequest can be NULL when the request doesn't come from the file server 
-	 * such as when a media card is removed, see LocalDrives::CompleteDriveNotifications
-	 * 
-	 * @See LocalDrives::CompleteDriveNotifications(TInt aDrive)
-	 */
-	static void HandleChange(CFsClientMessageRequest* aRequest, const TDesC& aOperationName, TFsNotification::TFsNotificationType aType);
-
 	//Initialise iNotifyRequests and iStaticNotification
 	static void OpenL();
 	static TBool IsInitialised();
@@ -350,7 +307,7 @@ public:
 	static void SetFilterRegister(TUint aFilter, TBool aAdd, TInt aCount = 1);
 	/*
 	 * Get the number of registers filters set up on a particular type.
-	 * @param aIndex the TFsNotificationType's index as determined from FsNotificationHelper::TypeToIndex
+	 * @param aIndex the TFsNotificationType's index as determined from CFsNotificationInfo::TypeToIndex
 	 */
 	static TInt& FilterRegister(TInt aIndex);
 
@@ -386,13 +343,13 @@ private:
     /*
      * Checks whether aOperation matches the filter name and/or path set in aFilter. 
      */
-    static TFsNotificationFilterMatch DoMatchFilter(CFsClientMessageRequest* aRequest, const TDesC& aOperationName,CFsNotificationPathFilter& aFilter);
+    static TFsNotificationFilterMatch DoMatchFilter(const RMessage2& aMessage, const TDesC& aOperationName,CFsNotificationPathFilter& aFilter);
     
 	/*
 	 * Iterates filters for a particular drive.
 	 * Called from HandleChange
 	 */
-	static void DoHandleChange(TFsNotificationTypeArray* aFilterTypeArray, TInt& aSeenFilter, CFsClientMessageRequest* aRequest, CFsNotifyRequest* aNotifyRequest, const TDesC& aOperationName, TFsNotification::TFsNotificationType& aType);
+	static void DoHandleChange(TFsNotificationTypeArray* aFilterTypeArray, TInt& aSeenFilter, CFsNotificationInfo& aNotificationInfo, CFsNotifyRequest* aNotifyRequest);
 	
 	/*
 	 * Stores the CFsNotifyRequests

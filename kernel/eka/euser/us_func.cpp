@@ -744,26 +744,96 @@ Keep the length of the category name small; it is limited to 16 characters.
 
 
 
+TBool TEntryPointList::AlreadyCalled(TLinAddr aEP)
+	{
+	TInt i;
+
+	// if we find it in the list before the current one
+	// then it was already called, return true
+	for (i=0; i<iCurrentEP; ++i)
+		if (iEPs[i] == aEP)
+			return ETrue;
+
+	// if it *is* the current one (i==iCurrentEP here)
+	// then we're in some kind of hideous cycle. There is no
+	// way to resolve this that isn't wrong, but some people
+	// may depend on it anyway. The safest thing to do is to
+	// just claim the EP is already called and hope that
+	// the constructors aren't actually dependent on each other.
+	if (iEPs[i] == aEP)
+		return ETrue;
+		
+	// if we find it *after* the current one then it's not
+	// already been called, but we need to call it now
+	// rather than when we get that far back up the stack,
+	// so set that copy to -1.
+	for (++i; i<iNumEPs; ++i)
+		if (iEPs[i] == aEP)
+			iEPs[i] = 0xFFFFFFFFU;
+
+	// if this is not the top of the stack recurse, otherwise
+	// return false so the current load will call it
+	if (iPrevList)
+		return iPrevList->AlreadyCalled(aEP);
+	else
+		return EFalse;
+	}
+
+
+TInt TEntryPointList::CallEPs()
+	{
+	// The TLS entry for KNestedEntryPointCallKey is the head
+	// of a linked list of TEntryPointList objects. Add this one
+	// to the front of the list. iPrevList will end up NULL if
+	// there is no nested load yet.
+	// Only one thread per process can be doing a load at a time
+	// because of the DLL lock, so using TLS for this is fine.
+	iPrevList=(TEntryPointList*)UserSvr::DllTls(KNestedEntryPointCallKey, KDllUid_Special);
+	TInt r=UserSvr::DllSetTls(KNestedEntryPointCallKey, KDllUid_Special, this);
+	if (r != KErrNone)
+		return r;
+
+	// call each entry point unless it's already been called higher
+	// in the nested loading process, or it's been set to -1 because
+	// it was called lower in the nested load.
+	for (iCurrentEP=0; iCurrentEP<iNumEPs; ++iCurrentEP)
+		{
+		TLinAddr ep=iEPs[iCurrentEP];
+		if (ep != 0xFFFFFFFFU && (!iPrevList || !iPrevList->AlreadyCalled(ep)))
+			{
+			TLibraryEntry f=(TLibraryEntry)ep;
+			r = (*f)(KModuleEntryReasonProcessAttach);
+			if (r != KErrNone)
+				break;
+			}
+		}
+
+	// Take this object off the list before returning
+	UserSvr::DllSetTls(KNestedEntryPointCallKey, KDllUid_Special, iPrevList);
+
+	return r;
+	}
+
+
+
+
 void CallStaticEntryPoints(TBool aInit)
 	{
-	TLinAddr ep[KMaxLibraryEntryPoints];
-	TInt numEps=KMaxLibraryEntryPoints;
-	TInt r=E32Loader::StaticCallList(numEps, ep);
+	TEntryPointList eplist;
+	eplist.iNumEPs=KMaxLibraryEntryPoints;
+	TInt r=E32Loader::StaticCallList(eplist.iNumEPs, eplist.iEPs);
 	if (r!=KErrNone)
 		return;
+	eplist.iNumEPs -= 1; // last EP is always process entry point
 	if (aInit)
 		{
-		for (TInt i=0; i<numEps-1; ++i)	// last EP is always process entry point
-			{
-			TLibraryEntry f=(TLibraryEntry)ep[i];
-			(*f)(KModuleEntryReasonProcessAttach);
-			}
+		eplist.CallEPs();
 		}
 	else
 		{
-		for (TInt i=numEps-2; i>=0; --i)	// last EP is always process entry point
+		for (TInt i=eplist.iNumEPs-1; i>=0; --i)
 			{
-			TLibraryEntry f=(TLibraryEntry)ep[i];
+			TLibraryEntry f=(TLibraryEntry)eplist.iEPs[i];
 			(*f)(KModuleEntryReasonProcessDetach);
 			}
 		}
@@ -778,6 +848,7 @@ EXPORT_C void User::InitProcess()
 */
 	{
 	CallStaticEntryPoints(ETrue);
+	E32Loader::StaticCallsDone();
 	}
 
 
@@ -2017,13 +2088,6 @@ static const TUint32 CrcTab32[256] =
 	0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 	};
 
-/* RVCT 3.1 and 4.0 read past the end of arrays when unrolling loops.
- * This only happens when using -O3 -Otime, so force to -O2.
- */
-#if __ARMCC_VERSION >= 310000 
-#pragma push
-#pragma O2
-#endif
 
 /**
 Performs a CCITT CRC-32 checksum on the specified data.
@@ -2044,6 +2108,3 @@ EXPORT_C void Mem::Crc32(TUint32& aCrc, const TAny* aPtr, TInt aLength)
 		crc = (crc >> 8) ^ CrcTab32[(crc ^ *p++) & 0xff];
 	aCrc = crc;
 	}
-#if __ARMCC_VERSION >= 310000 
-#pragma pop
-#endif

@@ -1,4 +1,4 @@
-// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -51,18 +51,6 @@
 _LIT(KMsgIn, ">>%S\n");
 _LIT(KMsgOut,"<<%S\n");
 
-class TMSLogFn
-{
-	protected:
-	TBuf<100> iName;
-
-	public:
-	TMSLogFn(const TDesC& aName){iName = aName; RDebug::Print(KMsgIn, &iName);};
-	~TMSLogFn(){RDebug::Print(KMsgOut, &iName);};
-};
-
-#define __FNLOG(name) TMSLogFn __fn_log__(_L(name))
-
 #else
 #define __PRINT(t)
 #define __PRINT1(t,a)
@@ -73,7 +61,6 @@ class TMSLogFn
 #define __PRINT8BIT1(t,a)
 #define __PRINT1TEMP(t,a)
 #define __PRINTERR(txt,err)
-#define __FNLOG(name)
 #endif
 
 

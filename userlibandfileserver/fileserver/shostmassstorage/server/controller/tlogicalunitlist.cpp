@@ -25,19 +25,20 @@
 #include "cusbhostmslogicalunit.h"
 #include "tlogicalunitlist.h"
 
-#include "msdebug.h"
-#include "debug.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "tlogicalunitlistTraces.h"
+#endif
 
 TLogicalUnitList::~TLogicalUnitList()
     {
-    __MSFNLOG
     iLu.ResetAndDestroy();
     }
 
 void TLogicalUnitList::AddLuL(CUsbHostMsLogicalUnit* aLu)
     {
-    __MSFNLOG
-    __HOSTPRINT1(_L("Adding LU 0x%x"), aLu);
+    OstTrace1(TRACE_SHOSTMASSSTORAGE_HOST, TLOGICALUNITLIST_10,
+              "Adding LU 0x%x", aLu);
     TInt r= FindLu(aLu->Lun());
 
     if (r < 0)
@@ -47,18 +48,17 @@ void TLogicalUnitList::AddLuL(CUsbHostMsLogicalUnit* aLu)
             User::Leave(r);
             }
         }
-    else	// If it is able to find the lun already
+    else    // If it is able to find the lun already
         {
         User::Leave(KErrAlreadyExists);
         }
 
-	User::LeaveIfError(iLu.Append(aLu));
+    User::LeaveIfError(iLu.Append(aLu));
     }
 
 
 void TLogicalUnitList::RemoveLuL(TLun aLun)
     {
-    __MSFNLOG
     TInt index = FindLu(aLun);
     User::LeaveIfError(index);
 
@@ -66,23 +66,22 @@ void TLogicalUnitList::RemoveLuL(TLun aLun)
     TRAPD(err, lu->UnInitL());
     delete lu;
     iLu.Remove(index);
-	if(err != KErrNone)
-		User::Leave(err);
+    if(err != KErrNone)
+        User::Leave(err);
     }
 
 
 void TLogicalUnitList::RemoveAllLuL()
     {
-    __MSFNLOG
-	TInt ret = KErrNone;
+    TInt ret = KErrNone;
     for (TInt index = 0; index < iLu.Count(); index++)
         {
         CUsbHostMsLogicalUnit* lu = iLu[index];
         TRAPD(err, lu->UnInitL());
         delete lu;
         // set return flag for first error condition
-		if (ret == KErrNone && err != KErrNone)
-			ret = err;
+        if (ret == KErrNone && err != KErrNone)
+            ret = err;
         }
 
     iLu.Reset();
@@ -91,18 +90,17 @@ void TLogicalUnitList::RemoveAllLuL()
 
 TInt TLogicalUnitList::Count() const
     {
-    __MSFNSLOG
-	return iLu.Count();
-	}
+    return iLu.Count();
+    }
 
 TInt TLogicalUnitList::FindLu(TLun aLun) const
     {
-    __MSFNSLOG
-
     TInt index;
     for (index = 0; index < iLu.Count(); index++)
         {
-        __HOSTPRINT2(_L("search LUN=%d : interface id = %d"), aLun, iLu[index]->Lun());
+        OstTraceExt2(TRACE_SHOSTMASSSTORAGE_HOST, TLOGICALUNITLIST_11,
+                     "search LUN=%d : interface id = %d",
+                     (TInt)aLun, (TInt)iLu[index]->Lun());
         if (iLu[index]->Lun() == aLun)
             {
             break;
@@ -119,7 +117,6 @@ TInt TLogicalUnitList::FindLu(TLun aLun) const
 
 CUsbHostMsLogicalUnit& TLogicalUnitList::GetLuL(TLun aLun) const
     {
-    __MSFNSLOG
     TInt index = FindLu(aLun);
     User::LeaveIfError(index);
     return *iLu[index];
@@ -128,6 +125,5 @@ CUsbHostMsLogicalUnit& TLogicalUnitList::GetLuL(TLun aLun) const
 
 CUsbHostMsLogicalUnit& TLogicalUnitList::GetLu(TInt aIndex) const
     {
-    __MSFNSLOG
     return *iLu[aIndex];
     }

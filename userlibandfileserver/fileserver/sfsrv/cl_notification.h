@@ -61,15 +61,12 @@ const TInt KNotificationValidFiltersMask = (TUint)(
  * All types have the following data and are aligned in the buffer like so:
  * Word1 : Size (TUint16 - upper 2 bytes) , NameLength (TUint16 - lower 2 bytes),
  * Word2 : Type (TUint - 4 bytes)
- * [not yet supported - Word3 : UID (TUint32 - 4 Bytes) ]
+ * Word3 : UID (TUint32 - 4 Bytes) 
  * 
  @internalTechnology
  @released
  */
-const TInt KNotificationHeaderSize = (sizeof(TUint16)*2)+(sizeof(TUint));
-//
-//When UID is added:
-//const TInt KNotificationHeaderSize = (sizeof(TUint16)*2)+(sizeof(TUint))+sizeof(TUint32);
+const TInt KNotificationHeaderSize = (sizeof(TUint16)*2)+sizeof(TUint)+sizeof(TUint32);
 
 /*
  * This is the minimum allowed size of the buffer set by the client that is

@@ -16,24 +16,26 @@
 // 
 //
 
-TARGET			usbhostmsclient.dll
+TARGET		usbhostmsclient.dll
 
-TARGETTYPE		dll
+TARGETTYPE	dll
 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 USERINCLUDE	.
 USERINCLUDE	../shared
+USERINCLUDE	traces
 SOURCEPATH	.
 
-SOURCE	rusbhostmslogicalunit.cpp
-SOURCE	rusbhostmsdevice.cpp
+SOURCE		rusbhostmslogicalunit.cpp
+SOURCE		rusbhostmsdevice.cpp
 
 LIBRARY		efsrv.lib euser.lib hal.lib usbdescriptors.lib usbdi_utils.lib
 
-CAPABILITY TCB  ProtServ DiskAdmin AllFiles PowerMgmt CommDD NetworkControl WriteDeviceData
+CAPABILITY	TCB ProtServ DiskAdmin AllFiles PowerMgmt CommDD NetworkControl WriteDeviceData
 
-//MACRO _USBMS_DEBUG_PRINT_
+deffile		../../~/usbhostms.def
 
-deffile ../../~/usbhostms.def
+UID			0x20036401	
+VENDORID	0x70000001
 
 SMPSAFE

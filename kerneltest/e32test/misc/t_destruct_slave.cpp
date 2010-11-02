@@ -61,6 +61,7 @@ TInt LoopThread(TAny*)
 	// Open handle on dynamic DLL in this thread
 	RLibrary library;
 	test_KErrNone(library.Load(KDynamicDll));
+	RThread().Rendezvous(KErrNone);
 	for (;;)
 		;
 	}
@@ -250,7 +251,11 @@ TInt E32Main()
 			{
 			RThread childThread;
 			test_KErrNone(childThread.Create(_L("ChildThread"), LoopThread, 4096, NULL, (TAny*)type));
+			TRequestStatus status;
+			childThread.Rendezvous(status);
 			childThread.Resume();
+			User::WaitForRequest(status);
+			test_KErrNone(status.Int());
 			childThread.Close();
 			test_KErrNone(messageQueue.Send(EMessagePreDestruct));
 			}

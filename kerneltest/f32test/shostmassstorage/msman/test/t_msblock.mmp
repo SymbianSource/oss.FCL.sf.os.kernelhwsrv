@@ -14,41 +14,37 @@
 // Verify read/write access of block deivce.
 //
 
-TARGET			t_msblock.exe
+TARGET                  t_msblock.exe
 
-TARGETTYPE		exe
+TARGETTYPE              exe
 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
-USERINCLUDE		.
-USERINCLUDE		../shared
-USERINCLUDE		../client
-USERINCLUDE		../../../server
+USERINCLUDE             .
+USERINCLUDE             ../shared
+USERINCLUDE             ../client
+USERINCLUDE             ../../../server
 USERINCLUDE     ../../../fileutils/inc
 
-SOURCEPATH		.
-SOURCE			rfsydebug.cpp
-SOURCE			cblockdevicetester.cpp
-SOURCE			ttestutils.cpp
-SOURCE			cmsdrive.cpp
-SOURCE			tmsprintdrive.cpp
+SOURCEPATH              .
+SOURCE                  rfsydebug.cpp
+SOURCE                  cblockdevicetester.cpp
+SOURCE                  ttestutils.cpp
+SOURCE                  cmsdrive.cpp
+SOURCE                  tmsprintdrive.cpp
 
-SOURCE			t_msmain.cpp
-SOURCE			t_msblock.cpp
+SOURCE                  t_msmain.cpp
+SOURCE                  t_msblock.cpp
 
+SOURCEPATH              ../../../fileutils/src
+SOURCE                  f32_test_utils.cpp
 
-SOURCEPATH		../shared
-SOURCE			tmslog.cpp
-
-SOURCEPATH		../../../fileutils/src
-SOURCE			f32_test_utils.cpp
-
-LIBRARY			msmanclient.lib efsrv.lib euser.lib
+LIBRARY                 msmanclient.lib efsrv.lib euser.lib
 
 
-//MACRO			_TESTAPP_DEBUG_PRINT_
+//MACRO                 _TESTAPP_DEBUG_PRINT_
 
 CAPABILITY ALL
 
-UID			0 0x10285B2E
+UID                     0 0x10285B2E
 
 SMPSAFE

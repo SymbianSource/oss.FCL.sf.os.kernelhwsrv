@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -12,15 +12,15 @@
 //
 // Description:
 // scsiblockcommands.inl
-// 
+//
 //
 
 /**
  @file
  @internalTechnology
- 
+
  Constructor for SCSI MODE SENSE (6) request.
- 
+
  @param aPageControl SCSI PAGE CONTROL field
  @param aPageCode SCSI PAGE CODE field
  @param aSubPageCode SCSI SUB PAGE CODE field
@@ -40,7 +40,6 @@ inline TScsiClientModeSense6Req::TScsiClientModeSense6Req(TPageControl aPageCont
 
 inline TInt TScsiClientModeSense6Req::EncodeRequestL(TDes8& aBuffer) const
     {
-    __SCSIPRINT(_L("<-- SCSI MODE SENSE (6)"));
     TInt length = TScsiClientReq::EncodeRequestL(aBuffer);
 
     // PC
@@ -65,7 +64,6 @@ inline TScsiClientRdWr10Req::TScsiClientRdWr10Req(TOperationCode aOperationCode)
     iBlockTransferLength(0),
     iProtect(0)
     {
-    __MSFNSLOG
     }
 
 
@@ -74,7 +72,6 @@ inline TScsiClientRead10Req::TScsiClientRead10Req()
     :
     TScsiClientRdWr10Req(ERead10)
     {
-    __MSFNSLOG
     }
 
 
@@ -83,7 +80,6 @@ inline TScsiClientReadCapacity10Req::TScsiClientReadCapacity10Req()
 :   TScsiClientReq(EReadCapacity10),
     iLba(0)
     {
-    __MSFNSLOG
     }
 
 
@@ -96,7 +92,6 @@ inline TScsiClientReadCapacity10Req::TScsiClientReadCapacity10Req(TLba aLba)
 :   TScsiClientReq(EReadCapacity10),
     iLba(aLba)
     {
-    __MSFNSLOG
     }
 
 
@@ -105,7 +100,6 @@ inline TScsiClientWrite10Req::TScsiClientWrite10Req()
     :
     TScsiClientRdWr10Req(EWrite10)
     {
-    __MSFNSLOG
     }
 
 
@@ -117,6 +111,5 @@ inline TScsiClientStartStopUnitReq::TScsiClientStartStopUnitReq()
     iStart(EFalse),
     iLoej(EFalse)
     {
-    __MSFNSLOG
     }
 

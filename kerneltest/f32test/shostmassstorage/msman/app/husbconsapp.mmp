@@ -33,9 +33,6 @@ SOURCE			cusbhost.cpp
 SOURCE			cusbmsmountmanager.cpp
 SOURCE			rextfilesystem.cpp
 
-SOURCEPATH	../shared
-SOURCE			tmslog.cpp
-
 SOURCEPATH	.
 SOURCE 	       	husbconsapp.cpp
 SOURCE          cdisplay.cpp

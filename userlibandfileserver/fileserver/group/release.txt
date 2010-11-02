@@ -1,3 +1,42 @@
+Version 2.00.4011
+=================
+(Made by fadhliM 28/10/2010)
+
+1.	stmansfi
+	1.	ou1cimx1#630606 (KHS) 10.1 pre_build: winscw Emulator doesn't boot up with devicesrv-bh1ido#mcl_201041
+
+
+Version 2.00.4010
+=================
+(Made by fadhliM 25/10/2010)
+
+1.	niccox
+	1.	ou1cimx1#614344 Phone reboots when connecting external USB hard disk with two partitions to it
+
+
+Version 2.00.4009
+=================
+(Made by fadhliM 25/10/2010)
+
+1.	michcox
+	1.	Release Plan 590182	Files deployment over Virtual File System to PlatSim from Carbide
+		REQ 428-2409	PlatSim development environment enhancements
+		SUB 417-70025	Files deployment over Virtual File System to PlatSim from Carbide
+
+2.	migubarr
+	1.	ou1cimx1#627410 Atlantisry21x T_NOTIFY F32test case failed on e drive 
+
+
+Version 2.00.4008
+=================
+(Made by fadhliM 25/10/2010)
+
+1.	migubarr, niccox
+	1.	Release Plan 590599 428-1323 Instrument File Server
+		REQ 428-1323	Instrument file server caching, media drivers and USB Mass Storage
+		SUB 417-76706	Instrument File Server caching
+
+
 Version 2.00.4007
 =================
 (Made by fadhliM 15/10/2010)

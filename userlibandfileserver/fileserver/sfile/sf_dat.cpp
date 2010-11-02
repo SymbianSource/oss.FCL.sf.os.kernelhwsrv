@@ -27,6 +27,7 @@ CFsObjectCon* Formats;
 CFsObjectCon* RawDisks;
 CFsObjectCon* Extensions;
 CFsObjectCon* ProxyDrives;
+CFsPool<CFsNotificationInfo>* NotificationInfoPool;
 
 CServerFs* TheFileServer;
 TDrive TheDrives[KMaxDrives];

@@ -16,14 +16,13 @@
 /**
  @file
  @internalTechnology
- 
+
  Sets the StateId to be entered next time the FSM is called.
- 
+
  @param aStateId The State ID
 */
 inline void CMassStorageFsm::SetState(TMassStorageState::TStateId aStateId)
     {
-    __HOSTPRINT1(_L("CMassStorage::SetState[%d]"), aStateId);
     iState = iStateTable[aStateId];
     }
 

@@ -31,6 +31,8 @@ const TInt KHeapSize=0x200;
 const TInt KNotifyChangeAfter=100000;
 const TInt KMediaRemountForceMediaChange = 0x00000001;
 
+TInt gDriveNum = -1;
+
 RTest test(_L("T_NOTIFY"));
 RSemaphore gSleepThread;
 TInt gSocketNumber=0;
@@ -4233,7 +4235,212 @@ void TestRootDirNotifyChange()
 
 }
 
+_LIT(KTestNotifyFileSystemExeName,"t_tfsys_notify.fsy");
+_LIT(KNotifyTestFileSystem,"CNotifyTestFileSystem");
 
+TInt TestExternalNotificationsWellformedness()
+    {
+    //Do Something to cause a notification:
+ 
+    //********************************************
+    //
+    // Opening(Replacing) \\Wellformed_functionWrite, 
+    //             will issue a create notification on file \PhantomFile_functionWrite.txt
+    TRequestStatus status1, status2;
+    TheFs.NotifyChange(ENotifyFile,status1,_L("\\PhantomFile_functionReplace.txt"));
+    RFile file;
+    TInt r = file.Replace(TheFs,_L("\\Wellformed_functionReplace.txt"),EFileWrite);
+    test_KErrNone(r);
+
+    
+    RTimer timer1;
+    r = timer1.CreateLocal();
+    test_KErrNone(r);
+    TTimeIntervalMicroSeconds32 time = 10000000;
+    timer1.After(status2,time);
+    User::WaitForRequest(status1,status2);
+    test_Compare(status1.Int(),!=,KRequestPending)
+    timer1.Cancel();
+    timer1.Close();
+    User::WaitForRequest(status2);
+    
+    //********************************************
+    //
+    // Rename \Wellformed_functionWrite.txt --> \Wellformed_functionRename.txt, 
+    // will issue a rename notification on  \PhantomFile_functionWrite.txt --> \PhantomFile_functionRename.txt
+    TheFs.NotifyChange(ENotifyEntry,status1,_L("\\PhantomFile_functionRename.txt"));
+    r = file.Rename(_L("\\Wellformed_functionWrite.txt"));
+    test_KErrNone(r);
+
+    r = timer1.CreateLocal();
+    test_KErrNone(r);
+    timer1.After(status2,time);
+    User::WaitForRequest(status1,status2);
+    test_Compare(status1.Int(),!=,KRequestPending);
+    timer1.Cancel();
+    timer1.Close();
+    User::WaitForRequest(status2);
+    file.Close();
+    
+    //********************************************
+    //
+    // SetAttributes
+    //
+    TheFs.NotifyChange(ENotifyAttributes,status1,_L("\\PhantomFile_functionAttributes.txt"));
+    r = file.Open(TheFs,_L("\\Wellformed_functionAttributes.txt"),EFileWrite);
+    test_KErrNone(r);
+    r = file.SetAtt(KEntryAttHidden,KEntryAttSystem);
+    test_KErrNone(r);
+    
+    {
+        r = timer1.CreateLocal();
+        test_KErrNone(r);
+        timer1.After(status2,time);
+        User::WaitForRequest(status1,status2);
+        test_Compare(status1.Int(),!=,KRequestPending);
+        timer1.Cancel();
+        timer1.Close();
+        User::WaitForRequest(status2);
+    }
+    file.Close();
+    
+    //********************************************
+    //
+    // File Write
+    // \\Wellformed_functionWrite.txt -> \\PhantomFile_functionWrite.txt
+    //
+    TheFs.NotifyChange(ENotifyWrite,status1,_L("\\PhantomFile_functionWrite.txt"));
+    r = file.Replace(TheFs,_L("\\Wellformed_functionWrite.txt"),EFileWrite);
+    test_KErrNone(r);
+    TBuf8<4> blah;
+    blah.Append(_L("Blah"));
+    r = file.Write(blah);
+    test_KErrNone(r);
+    {
+        r = timer1.CreateLocal();
+        test_KErrNone(r);
+        timer1.After(status2,time);
+        User::WaitForRequest(status1,status2);
+        test_Compare(status1.Int(),!=,KRequestPending);
+        timer1.Cancel();
+        timer1.Close();
+        User::WaitForRequest(status2);
+    }
+    
+    file.Close();
+    return KErrNone;
+    }
+
+TInt TestExternalNotificationsMalformed()
+    {
+
+    TRequestStatus status1, status2;
+    RTimer timer1;
+    TInt r = timer1.CreateLocal();
+    test_KErrNone(r);
+    TTimeIntervalMicroSeconds32 time = 5000000;
+    
+    //********************************************
+    //
+    // Don't set file size
+    //
+    TheFs.NotifyChange(ENotifyWrite,status1,_L("\\PhantomFileMalformed_functionWrite.txt"));
+    RFile file;
+    r = file.Open(TheFs,_L("\\Malformed_functionWrite.txt"),EFileWrite);
+    test_KErrNone(r);
+    r = file.Write(_L8("abcd"));
+    test_Value(KErrArgument,r);
+    {
+        r = timer1.CreateLocal();
+        test_KErrNone(r);
+        timer1.After(status2,time);
+        test.Printf(_L("Wait for timeout.."));
+        User::WaitForRequest(status1,status2);
+        test_Compare(status1.Int(),==,KRequestPending);
+        timer1.Cancel();
+        timer1.Close();
+        TheFs.NotifyChangeCancel(status1);
+        User::WaitForRequest(status1);
+    }
+    
+    //********************************************
+    //
+    // Set new name incorrectly
+    //
+     TheFs.NotifyChange(ENotifyFile,status1,_L("\\PhantomFileMalformed_functionRename.txt"));
+     r = file.Rename(_L("\\Malformed_functionRename.txt"));
+     test_Value(KErrArgument,r);
+     {
+         r = timer1.CreateLocal();
+         test_KErrNone(r);
+         timer1.After(status2,time);
+         test.Printf(_L("Wait for timeout.."));
+         User::WaitForRequest(status1,status2);
+         test_Compare(status1.Int(),==,KRequestPending)
+         timer1.Cancel();
+         timer1.Close();
+         TheFs.NotifyChangeCancel(status1);
+         User::WaitForRequest(status1);
+     }
+    
+    
+    file.Close();
+    return KErrNone;
+    }
+
+void TestExternalNotifications()
+    {
+    test.Printf(_L("Test External Notifications (Load test file system)"));
+    
+    if(F32_Test_Utils::Is_SimulatedSystemDrive(TheFs,gDriveNum))
+        {
+        test.Printf(_L("Not testing External Notifications on SimulatedSystemDrive"));
+        return;
+        }
+    
+    test.Printf(_L("Test External Notifications (get file system name)"));
+    TBuf<50> filesystem;
+    TInt r = TheFs.FileSystemName(filesystem,gDriveNum);
+    test_KErrNone(r);
+    test.Printf(_L("Test External Notifications (add new file system)"));
+    r = TheFs.AddFileSystem(KTestNotifyFileSystemExeName);
+    if(r != KErrNone && r!=KErrAlreadyExists)
+        {
+        test_KErrNone(r);
+        }
+    test.Printf(_L("Test External Notifications (dismount existing file system)"));
+    r = TheFs.DismountFileSystem(filesystem,gDriveNum);
+    test_KErrNone(r);
+    test.Printf(_L("Test External Notifications (mount new file system)"));
+    r = TheFs.MountFileSystem(KNotifyTestFileSystem,gDriveNum);
+    test_KErrNone(r);
+    
+    CHECK_NO_PENDING_REQUESTS;
+    
+    test.Printf(_L("Test External Notifications (Perform tests)"));
+    r = TestExternalNotificationsWellformedness();
+    test_KErrNone(r); 
+    
+    CHECK_NO_PENDING_REQUESTS;
+    
+// only test this in UREL
+// as in DEBUG it PANICS.
+#if !defined _DEBUG
+    test.Printf(_L("Test External Notifications (Perform malformed tests (UREL only))"));
+    r = TestExternalNotificationsMalformed();
+    test_KErrNone(r); 
+    CHECK_NO_PENDING_REQUESTS;
+#endif
+    
+    test.Printf(_L("Test External Notifications (Replace FS)"));
+    //Replace old FS.
+    r = TheFs.DismountFileSystem(KNotifyTestFileSystem,gDriveNum);
+    test_KErrNone(r);
+    r = TheFs.MountFileSystem(filesystem,gDriveNum);
+    test_KErrNone(r);
+    r = TheFs.RemoveFileSystem(KNotifyTestFileSystem);
+    test_KErrNone(r);
+    }
 
 //-----------------------------------------------------------------------
 
@@ -4242,7 +4449,9 @@ void TestRootDirNotifyChange()
 //
 GLDEF_C void CallTestsL()
 	{
-
+    TInt nRes=TheFs.CharToDrive(gDriveToTest, gDriveNum);
+    test_KErrNone(nRes);
+            
 	CreateTestDirectory(_L("\\F32-TST\\NOTIFY\\"));
 
 //	Test RFs::NotifyChange()
@@ -4358,4 +4567,6 @@ GLDEF_C void CallTestsL()
 	CHECK_NO_PENDING_REQUESTS;
     TestRootDirNotifyChange();
 	CHECK_NO_PENDING_REQUESTS;
+    TestExternalNotifications();
+    CHECK_NO_PENDING_REQUESTS;
 	}

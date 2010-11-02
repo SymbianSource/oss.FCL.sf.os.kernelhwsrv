@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -19,8 +19,12 @@
 */
 
 #include <e32base.h>
-#include "debug.h"
-#include "msdebug.h"
+
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "tscsiblockcmdsTraces.h"
+#endif
+
 #include "msctypes.h"
 #include "mscutils.h"
 
@@ -30,12 +34,13 @@
 #include "tscsiblockcmds.h"
 
 
-// ****	MODE SENSE (6) ****
+// **** MODE SENSE (6) ****
 void TScsiClientModeSense6Resp::DecodeL(const TDesC8& aPtr)
-	{
-    __MSFNSLOG
-    __SCSIPRINT(_L("--> SCSI MODE SENSE (6)"));
-    __SCSIPRINT1(_L("len=%d"), aPtr.Length());
+    {
+    OstTrace0(TRACE_SHOSTMASSSTORAGE_SCSI, TSCSIBLOCKCMDS_10,
+              "--> SCSI MODE SENSE (6)");
+    OstTrace1(TRACE_SHOSTMASSSTORAGE_SCSI, TSCSIBLOCKCMDS_11,
+              "len=%d", aPtr.Length());
     // Mode Parameter List
     // SPC-3 7.4.2
     // - Mode Parameter Header
@@ -61,12 +66,13 @@ void TScsiClientModeSense6Resp::DecodeL(const TDesC8& aPtr)
         {
         User::Leave(KErrGeneral);
         }
-   
+
     TInt mediumType = aPtr[1];
     TUint8 deviceSpecificParameter = aPtr[2];
     // TInt blockDescriptorLength = aPtr[3];
 
-    __SCSIPRINT2(_L("Medium Type=%d DSP=0x%x"), mediumType, deviceSpecificParameter);
+    OstTraceExt2(TRACE_SHOSTMASSSTORAGE_SCSI, TSCSIBLOCKCMDS_20,
+                 "Medium Type=%d DSP=0x%x", mediumType, deviceSpecificParameter);
     // [1] Medium Type
     // 0x00 for SBC
     if (mediumType == 0)
@@ -89,15 +95,16 @@ void TScsiClientModeSense6Resp::DecodeL(const TDesC8& aPtr)
 
     // No Mode Pages
 
-	}
+    }
 
 
-// ****	MODE SENSE (10) ****
+// **** MODE SENSE (10) ****
 void TScsiClientModeSense10Resp::DecodeL(const TDesC8& aPtr)
-	{
-    __MSFNSLOG
-    __SCSIPRINT(_L("--> SCSI MODE SENSE (10)"));
-    __SCSIPRINT1(_L("len=%d"), aPtr.Length());
+    {
+    OstTrace0(TRACE_SHOSTMASSSTORAGE_SCSI, TSCSIBLOCKCMDS_30,
+              "--> SCSI MODE SENSE (10)");
+    OstTrace1(TRACE_SHOSTMASSSTORAGE_SCSI, TSCSIBLOCKCMDS_31,
+              "len=%d", aPtr.Length());
     // Mode Parameter List
     // SPC-3 7.4.2
     // - Mode Parameter Header
@@ -120,7 +127,7 @@ void TScsiClientModeSense10Resp::DecodeL(const TDesC8& aPtr)
         {
         User::Leave(KErrGeneral);
         }
-    
+
     TInt modeDataLength = BigEndian::Get16(&aPtr[0]);
     if (aPtr.Length() - 2 > modeDataLength)
         {
@@ -131,7 +138,8 @@ void TScsiClientModeSense10Resp::DecodeL(const TDesC8& aPtr)
     TUint8 deviceSpecificParameter = aPtr[3];
     // TInt blockDescriptorLength = BigEndian::Get32(&aPtr[6]);;
 
-    __SCSIPRINT2(_L("Medium Type=%d DSP=0x%x"), mediumType, deviceSpecificParameter);
+    OstTraceExt2(TRACE_SHOSTMASSSTORAGE_SCSI, TSCSIBLOCKCMDS_40,
+                 "Medium Type=%d DSP=0x%x", mediumType, deviceSpecificParameter);
     // [1] Medium Type
     // 0x00 for SBC
     if (mediumType == 0)
@@ -154,15 +162,15 @@ void TScsiClientModeSense10Resp::DecodeL(const TDesC8& aPtr)
 
     // No Mode Pages
 
-	}
+    }
 
 
 
-// ****	READ CAPACITY (10) ***
+// **** READ CAPACITY (10) ***
 TInt TScsiClientReadCapacity10Req::EncodeRequestL(TDes8& aBuffer) const
     {
-    __MSFNSLOG
-    __SCSIPRINT(_L("<-- READ CAPACITY 10"));
+    OstTrace0(TRACE_SHOSTMASSSTORAGE_SCSI, TSCSIBLOCKCMDS_50,
+              "<-- READ CAPACITY 10");
     TInt length = TScsiClientReq::EncodeRequestL(aBuffer);
 
     if (iLba)
@@ -177,25 +185,25 @@ TInt TScsiClientReadCapacity10Req::EncodeRequestL(TDes8& aBuffer) const
 
 
 void TScsiClientReadCapacity10Resp::DecodeL(const TDesC8& aPtr)
-	{
-    __MSFNSLOG
-    __SCSIPRINT(_L("--> SCSI READ CAPACITY (10)"));
+    {
+    OstTrace0(TRACE_SHOSTMASSSTORAGE_SCSI, TSCSIBLOCKCMDS_60,
+              "--> SCSI READ CAPACITY (10)");
     iLba = BigEndian::Get32(&aPtr[0]);
     iBlockSize = BigEndian::Get32(&aPtr[4]);
-	}
+    }
 
 
-// ****	RdWr10 ****
+// **** RdWr10 ****
 TInt TScsiClientRdWr10Req::EncodeRequestL(TDes8& aBuffer) const
     {
-    __MSFNSLOG
     TInt length = TScsiClientReq::EncodeRequestL(aBuffer);
 
     // PROTECT
     if (iProtect)
         aBuffer[1] = iProtect << 5;
 
-    __SCSIPRINT2(_L("LBA=%08x LEN=%08x"), iLogicalBlockAddress, iBlockTransferLength);
+    OstTraceExt2(TRACE_SHOSTMASSSTORAGE_SCSI, TSCSIBLOCKCMDS_70,
+                 "LBA=%08x LEN=%08x", iLogicalBlockAddress, iBlockTransferLength);
     // LOGICAL BLOCK ADDRESS
     BigEndian::Put32(&aBuffer[2], iLogicalBlockAddress);
     // TRANSFER LENGTH
@@ -203,21 +211,21 @@ TInt TScsiClientRdWr10Req::EncodeRequestL(TDes8& aBuffer) const
     return length;
     }
 
-// ****	READ (10) ****
+// **** READ (10) ****
 TInt TScsiClientRead10Req::EncodeRequestL(TDes8& aBuffer) const
     {
-    __MSFNSLOG
-    __SCSIPRINT(_L("<-- SCSI READ (10)"));
-	TInt length = TScsiClientRdWr10Req::EncodeRequestL(aBuffer);
+    OstTrace0(TRACE_SHOSTMASSSTORAGE_SCSI, TSCSIBLOCKCMDS_80,
+              "<-- SCSI READ (10)");
+    TInt length = TScsiClientRdWr10Req::EncodeRequestL(aBuffer);
     return length;
     }
 
 
-// ****	START STOP UNIT ****
+// **** START STOP UNIT ****
 TInt TScsiClientStartStopUnitReq::EncodeRequestL(TDes8& aBuffer) const
     {
-    __MSFNSLOG
-    __SCSIPRINT(_L("--> SCSI START STOP UNIT"));
+    OstTrace0(TRACE_SHOSTMASSSTORAGE_SCSI, TSCSIBLOCKCMDS_90,
+              "--> SCSI START STOP UNIT");
     TInt length = TScsiClientReq::EncodeRequestL(aBuffer);
 
     // byte 1 mask
@@ -237,11 +245,11 @@ TInt TScsiClientStartStopUnitReq::EncodeRequestL(TDes8& aBuffer) const
     }
 
 
-// ****	WRITE (10) ****
+// **** WRITE (10) ****
 TInt TScsiClientWrite10Req::EncodeRequestL(TDes8& aBuffer) const
     {
-    __MSFNSLOG
-    __SCSIPRINT(_L("<-- SCSI WRITE 10"));
+    OstTrace0(TRACE_SHOSTMASSSTORAGE_SCSI, TSCSIBLOCKCMDS_91,
+              "<-- SCSI WRITE 10");
 
     TInt length = TScsiClientRdWr10Req::EncodeRequestL(aBuffer);
     return length;

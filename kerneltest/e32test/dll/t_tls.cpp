@@ -313,7 +313,6 @@ TInt TestUserSideTls1Thread(TAny*)
 		return __LINE__;
 	TInt newInitSize = HeapSize(newHeap);
 	User::SwitchHeap(newHeap);
-	tlsHeap->Close();
 
 	// Allocate more TLS data
 	for(TInt i = 0 ; i < 100 ; ++i)

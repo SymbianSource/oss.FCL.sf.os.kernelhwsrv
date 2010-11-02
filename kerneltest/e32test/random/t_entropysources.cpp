@@ -26,6 +26,7 @@
 #include <hal.h>
 #include <e32math.h>
 #include "d_entropysources.h"
+#include "testexclusions.h"
 
 //---------------------------------------------------------------------------------------------------------------------
 //! @SYMTestCaseID				KBASE-entropysources-2703
@@ -98,13 +99,36 @@ LOCAL_C void TestReseed()
 LOCAL_C TBool HardwareRNGPresent()
     {
     TInt muid = 0;
-    const TInt r = HAL::Get(HAL::EMachineUid, muid);
-    if (r != KErrNone) return EFalse;;
-    return ((muid != HAL::EMachineUid_X86PC) &&
-            (muid != HAL::EMachineUid_NE1_TB) &&
-            (muid != HAL::EMachineUid_OmapH6) &&
-            (muid != HAL::EMachineUid_OmapZoom) &&
-            (muid != HAL::EMachineUid_Win32Emulator));
+
+    TInt r = HAL::Get(HAL::EMachineUid, muid);
+    if (r != KErrNone)
+		{
+		return EFalse;
+		}
+
+    if ((muid == HAL::EMachineUid_X86PC) || 
+        (muid == HAL::EMachineUid_NE1_TB) ||
+        (muid == HAL::EMachineUid_OmapH6) || 
+        (muid == HAL::EMachineUid_OmapZoom) ||
+        (muid == HAL::EMachineUid_Win32Emulator))
+		{
+		return EFalse;
+		}
+
+	TInt testExclusions = 0;
+
+	r = GetTestExclusionSettings(testExclusions);
+	if (r != KErrNone)
+		{
+		return EFalse;
+		}
+
+	if (testExclusions & KDisableEntropySourceCheck)
+		{
+		return EFalse;
+		}
+
+	return ETrue;
     }
 
 GLDEF_C TInt E32Main()

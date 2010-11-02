@@ -1,4 +1,4 @@
-// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -24,12 +24,10 @@
 #include "tscsiserverreq.h"
 #include "tscsiservercmds.h"
 #include "debug.h"
-#include "msdebug.h"
 
 TScsiServerReq* TScsiServerReq::CreateL(TScsiServerReq::TOperationCode aOperationCode,
                                         TDesC8& aDes)
     {
-    __MSFNSLOG
     TScsiServerReq* req = NULL;
 
     __SCSIPRINT1(_L("SCSI CMD 0x%x"), aOperationCode);
@@ -107,9 +105,8 @@ TScsiServerReq* TScsiServerReq::CreateL(TScsiServerReq::TOperationCode aOperatio
 
 void TScsiServerReq::DecodeL(const TDesC8& aPtr)
     {
-    __MSFNLOG
     // OPERATION CODE
-	iOperationCode = static_cast<TOperationCode>(aPtr[0]);
+    iOperationCode = static_cast<TOperationCode>(aPtr[0]);
 
     // CONTROL byte
     TInt length = 0;

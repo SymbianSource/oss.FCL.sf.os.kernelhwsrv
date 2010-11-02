@@ -34,7 +34,7 @@
 #include "sf_func.h"
 #include <f32plugin.h>
 #include "f32trace.h"
-
+#include "sf_pool.h"
 
 #define __PRINT1TEMP_ALWAYS(t,a) {{TBuf<KMaxFileName>temp(a);RDebug::Print(t,&temp);}}
 #define __PRINT2TEMP_ALWAYS(t,a,b) {{TBuf<KMaxFileName>temp(b);RDebug::Print(t,a,&temp);}}
@@ -455,6 +455,8 @@ enum TFsFault
 	EFsObjectOpen,
 	EContainerHeapCorruptionOnRemove,
 	ESessionOpenError,
+	ENotifyPoolCreation,
+	ENotificationInfoDeletion
 	};
 
 
@@ -1006,7 +1008,6 @@ public:
 	TBool IsChangeNotify() const;
 	TBool IsDiskSpaceNotify() const;
 	TBool IsWrite() const;
-	TUint NotifyType() const;
 	TBool IsCompleted() const;
 	TBool IsOpenSubSess() const; //used to allocate for close as well as open task for subsessions
 	TBool IsCloseSubSess() const;
@@ -1209,8 +1210,10 @@ public:
 	inline TInt FsFunction();
 	void Close();	// close the session & dispatch object this request is using
 
-public:
 	CFsRequest();
+	
+	virtual TUid Uid();
+	
 protected:
 	inline void Set(const TOperation& aOperation,CSessionFs* aSession);
 	inline void Set(CSessionFs* aSession);
@@ -1262,8 +1265,7 @@ NONSHARABLE_CLASS(CFsMessageRequest) : public CFsRequest
 	{
 public:
 	void Set(const RMessage2& aMessage,CSessionFs* aSession);
-	void Set(const RMessage2& aMessage,const TOperation& aOperation,CSessionFs* aSession);
-	void Set(const TOperation& aOperation);
+	void Set(const RMessage2& aMessage,const TOperation& aOperation,CSessionFs* aSession, TUid aUid = TUid::Null());
 	inline void SetPostInitialise(TFsRequestFunc aCacheFunction);
 	//
 	inline void SetMessage(RMessage2& aMessage);
@@ -1305,8 +1307,7 @@ public:
 	TBool IsPluginRequest();
 	static inline CFsMessageRequest* RequestFromMessage(const RMessagePtr2& aMessage);
 	
-   // UID of the process to touching the file. (To be used in notification framework).
-   // TUid iUID;
+	virtual TUid Uid();
 private:
 	void DoNotify(TInt aError);
 	void DoNotifyDiskSpace(TInt aError);
@@ -1327,6 +1328,7 @@ protected:
 private:
 	TMsgOperation* iCurrentOperation;
 	TInt iLastError;
+    TUid iUID;//UID of the process this message belongs to
 	};
 
 
@@ -1486,8 +1488,8 @@ NONSHARABLE_CLASS(CStdChangeInfo) : public CNotifyInfo
 	{
 public:
 	void Initialise(TNotifyType aChangeType,TRequestStatus* aStatus,const RMessagePtr2& aMessage,CSessionFs* aSession);
-	TUint RequestNotifyType(CFsRequest* aRequest);
-	TBool IsMatching(CFsRequest* aRequest);
+	TUint RequestNotifyType(CFsNotificationInfo* aRequest);
+	TBool IsMatching(CFsNotificationInfo* aRequest);
 protected:
 	TNotifyType iChangeType;
 	};
@@ -1496,7 +1498,7 @@ NONSHARABLE_CLASS(CExtChangeInfo) : public CStdChangeInfo
 	{
 public:
 	void Initialise(TNotifyType aChangeType,TRequestStatus* aStatus,const RMessagePtr2& aMessage,CSessionFs* aSession,const TDesC& aName);
-	TBool IsMatching(CFsRequest* aRequest);
+	TBool IsMatching(CFsNotificationInfo* aRequest);
 private:
 	TFileName iName;
 	};
@@ -1557,7 +1559,7 @@ public:
 	TInt AddNotify(CNotifyInfo* aInfo);
 	TBool CancelSession(CSessionFs* aSession,TInt aCompletionCode,TRequestStatus* aStatus=NULL);
 	void CancelAll(TInt aCompletionCode);
-	void CheckChange(CFsRequest* aRequest);
+	void CheckChange(CFsNotificationInfo& aNotificationInfo);
 	TBool IsEmpty();
 	};
 
@@ -1598,6 +1600,30 @@ public:
 	TBool HandlePendingDismount(CSessionFs* aSession, TInt aDrive);
 	};
 
+class CFsNotificationInfo;
+
+class CFsNotificationInfoBody : public CBase
+    {
+public:
+    CFsNotificationInfoBody();
+private:    
+    TParsePtrC iSrc;
+    TBuf<2> iSrcBuf;
+    TParsePtrC iDest;
+    TBool iDestDriveStored;
+    TInt iDriveNumber;
+    TInt iFunction;
+    CFsRequest* iRequest; //Can be NULL
+    
+    //CFsNotify framework
+    TInt64 iData;
+    TNotificationType iNotificationType;
+    TUid iUid;
+    
+    friend class CFsNotificationInfo;
+    };
+
+
 class FsNotify
 	{
 public:
@@ -1607,7 +1633,7 @@ public:
 	static TInt AddDebug(CNotifyInfo* aDebugInfo);
 	static TInt AddDismountNotify(CNotifyInfo* aDismountNotifyInfo);
 	static void DiskChange(TInt aDrive);
-	static void HandleChange(CFsRequest* aRequest,TInt aDrive);
+	static void HandleChange(CFsNotificationInfo& aNotificationInfo);
 	static void HandleDiskSpace(CFsRequest* aRequest,TInt aDrive);
 	static void HandleDiskSpace(TInt aDrive, TInt64& aFreeSpace);
 	static void HandleDebug(TUint aFunction);
@@ -1689,6 +1715,7 @@ extern CFsObjectCon* Formats;
 extern CFsObjectCon* RawDisks;
 extern CFsObjectCon* Extensions;
 extern CFsObjectCon* ProxyDrives;
+extern CFsPool<CFsNotificationInfo>* NotificationInfoPool;
 
 extern CKernEventNotifier* TheKernEventNotifier;
 
@@ -1767,18 +1794,18 @@ extern TBool CompFsSync;
  TBool CompareResource(const TDesC & aThePath);
 
 #ifndef __REMOVE_PLATSEC_DIAGNOSTIC_STRINGS__
- TInt PathCheck(CFsRequest* aRequest, const TDesC& aThePath, const TSecurityPolicy* aSysCap, const TSecurityPolicy* aPriCap, const char* aDiag);
- TInt PathCheck(CFsRequest* aRequest, const TDesC& aThePath, const TSecurityPolicy* aSysCap, const TSecurityPolicy* aPriCap, const TSecurityPolicy* aROCap, const char* aDiag);
- TInt PathCheck(CFsRequest* aRequest, const TDesC& aThePath,const TSecurityPolicy* aCap, const char* aDiag, TBool aExactMatchAllowed = EFalse);
+ TInt PathCheck(const RMessage2& aMessage, const TDesC& aThePath, const TSecurityPolicy* aSysCap, const TSecurityPolicy* aPriCap, const char* aDiag);
+ TInt PathCheck(const RMessage2& aMessage, const TDesC& aThePath, const TSecurityPolicy* aSysCap, const TSecurityPolicy* aPriCap, const TSecurityPolicy* aROCap, const char* aDiag);
+ TInt PathCheck(const RMessage2& aMessage, const TDesC& aThePath,const TSecurityPolicy* aCap, const char* aDiag, TBool aExactMatchAllowed = EFalse);
 #else //__REMOVE_PLATSEC_DIAGNOSTIC_STRINGS__
- TInt PathCheck(CFsRequest* aRequest, const TDesC& aThePath, const TSecurityPolicy* aSysCap, const TSecurityPolicy* aPriCap, OnlyCreateWithNull aDiag);
- TInt PathCheck(CFsRequest* aRequest, const TDesC& aThePath, const TSecurityPolicy* aSysCap, const TSecurityPolicy* aPriCap, const TSecurityPolicy* aROCap, OnlyCreateWithNull aDiag); 
- TInt PathCheck(CFsRequest* aRequest, const TDesC& aThePath,const TSecurityPolicy* aCap, OnlyCreateWithNull aDiag, TBool aExactMatchAllowed = EFalse);
+ TInt PathCheck(const RMessage2& aRequest, const TDesC& aThePath, const TSecurityPolicy* aSysCap, const TSecurityPolicy* aPriCap, OnlyCreateWithNull aDiag);
+ TInt PathCheck(const RMessage2& aRequest, const TDesC& aThePath, const TSecurityPolicy* aSysCap, const TSecurityPolicy* aPriCap, const TSecurityPolicy* aROCap, OnlyCreateWithNull aDiag); 
+ TInt PathCheck(const RMessage2& aRequest, const TDesC& aThePath,const TSecurityPolicy* aCap, OnlyCreateWithNull aDiag, TBool aExactMatchAllowed = EFalse);
 #endif //!__REMOVE_PLATSEC_DIAGNOSTIC_STRINGS__
 
  TBool ComparePrivate(const TDesC & aThePath);
  TBool CompareSystem(const TDesC & aThePath);
- TBool SIDCheck(CFsRequest* aRequest, const TDesC& aThePath);
+ TBool SIDCheck(const RMessage2& aMessage, const TDesC& aThePath);
  TBool ComparePaths(const TDesC& aPath1,const TDesC& aPath2);
  TUint32 CalcNameHash(const TDesC& aName);
 

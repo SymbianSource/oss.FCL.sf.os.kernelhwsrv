@@ -64,13 +64,8 @@ TInt CrashFlashNor::Initialise()
 		return ret;
 		}
 	// start writing after the crash log header	
-	
-#ifdef CDS_CRASH_LOGGER
-	iWritePos = 0;
-#else
 	iWritePos = KCrashLogHeaderSize;
-#endif //CDS_CRASH_LOGGER
-	
+
 	SetReadPos(0);
 	iWriteTotal = 0;
 

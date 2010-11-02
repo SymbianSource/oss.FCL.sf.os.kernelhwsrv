@@ -23,13 +23,13 @@
 //=====CFsPool=============================
 
 template <class T>
-CFsPool<T>* CFsPool<T>::New(TInt aPoolSize)
+CFsPool<T>* CFsPool<T>::New(TInt aPoolSize, T*(*aNewFunction)())
 	{
 	CFsPool<T>* pool = new CFsPool<T>();
 	if(!pool)
 		return NULL;
 	
-	TInt r = pool->Construct(aPoolSize);
+	TInt r = pool->Construct(aPoolSize,aNewFunction);
 	if(r!=KErrNone)
 		{
 		delete pool;
@@ -46,20 +46,20 @@ CFsPool<T>::CFsPool()
 	}
 
 template <class T>
-TInt CFsPool<T>::Construct(TInt aPoolSize)
+TInt CFsPool<T>::Construct(TInt aPoolSize,T*(*aNewFunction)())
 	{
-	TInt r = iPoolLock.CreateLocal(KNotificationPoolSize);
+	TInt r = iPoolLock.CreateLocal(aPoolSize);
 	if(r != KErrNone)
 			return r;
 	
-	r = iFreeList.Reserve(KNotificationPoolSize);
+	r = iFreeList.Reserve(aPoolSize);
 	if(r != KErrNone)
 		return r;
 	
 	TInt i = 0;
 	while(i < aPoolSize)
 		{
-		T* t = T::New();
+		T* t = aNewFunction();
 		if(!t)
 			{
 			return KErrNoMemory;
@@ -120,9 +120,9 @@ void CFsPool<T>::Unlock()
 	iPoolLock.Signal();
 	}
 
-#ifdef SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION	
-//This is needed here because the compiler needs to know which types will be 
+//These are needed here because the compiler needs to know which types will be 
 //instantiating the template (because it's in a separate file)
+#ifdef SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION	
 template class CFsPool<CFsNotificationBlock>;
 #endif //SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION	
-
+template class CFsPool<CFsNotificationInfo>;

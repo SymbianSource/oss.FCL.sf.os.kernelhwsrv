@@ -1,4 +1,4 @@
-// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -36,7 +36,6 @@
 #include "mstypes.h"
 #include "botcontrolinterface.h"
 #include "debug.h"
-#include "msdebug.h"
 #include "cusbmassstorageserver.h"
 #include "cusbmassstoragecontroller.h"
 #include "drivemanager.h"
@@ -55,37 +54,35 @@ Create CBulkOnlyTransport object
 */
 CBulkOnlyTransport* CBulkOnlyTransport::NewL(TInt aNumDrives,
                                              CUsbMassStorageController& aController)
-	{
-    __MSFNSLOG
-	if (aNumDrives <=0 || static_cast<TUint>(aNumDrives) > KUsbMsMaxDrives)
-		{
-		User::Leave(KErrArgument);
-		}
-	CBulkOnlyTransport* self = new(ELeave) CBulkOnlyTransport(aNumDrives, aController);
-	CleanupStack::PushL(self);
-	self->ConstructL();
-	CleanupStack::Pop(self);
-	return self;
-	}
+    {
+    if (aNumDrives <=0 || static_cast<TUint>(aNumDrives) > KUsbMsMaxDrives)
+        {
+        User::Leave(KErrArgument);
+        }
+    CBulkOnlyTransport* self = new(ELeave) CBulkOnlyTransport(aNumDrives, aController);
+    CleanupStack::PushL(self);
+    self->ConstructL();
+    CleanupStack::Pop(self);
+    return self;
+    }
 
 #ifdef MSDC_TESTMODE
 CBulkOnlyTransport* CBulkOnlyTransport::NewL(TInt aNumDrives,
                                              CUsbMassStorageController& aController,
                                              TTestParser* aTestParser)
-	{
-    __MSFNSLOG
-	if (aNumDrives <=0 || static_cast<TUint>(aNumDrives) > KUsbMsMaxDrives)
-		{
-		User::Leave(KErrArgument);
-		}
-	CBulkOnlyTransport* self = new(ELeave) CBulkOnlyTransport(aNumDrives,
+    {
+    if (aNumDrives <=0 || static_cast<TUint>(aNumDrives) > KUsbMsMaxDrives)
+        {
+        User::Leave(KErrArgument);
+        }
+    CBulkOnlyTransport* self = new(ELeave) CBulkOnlyTransport(aNumDrives,
                                                               aController,
                                                               aTestParser);
-	CleanupStack::PushL(self);
-	self->ConstructL();
-	CleanupStack::Pop(self);
-	return self;
-	}
+    CleanupStack::PushL(self);
+    self->ConstructL();
+    CleanupStack::Pop(self);
+    return self;
+    }
 #endif
 
 
@@ -96,26 +93,24 @@ c'tor
 */
 CBulkOnlyTransport::CBulkOnlyTransport(TInt aNumDrives,
                                        CUsbMassStorageController& aController):
-	CActive(EPriorityStandard),
-	iMaxLun(aNumDrives-1),
-	iController(aController),
-	iStallAllowed(ETrue)
-	{
-    __MSFNLOG
-	}
+    CActive(EPriorityStandard),
+    iMaxLun(aNumDrives-1),
+    iController(aController),
+    iStallAllowed(ETrue)
+    {
+    }
 
 #ifdef MSDC_TESTMODE
 CBulkOnlyTransport::CBulkOnlyTransport(TInt aNumDrives,
                                        CUsbMassStorageController& aController,
                                        TTestParser* aTestParser)
 :   CActive(EPriorityStandard),
-	iMaxLun(aNumDrives-1),
-	iController(aController),
-	iStallAllowed(ETrue),
+    iMaxLun(aNumDrives-1),
+    iController(aController),
+    iStallAllowed(ETrue),
     iTestParser(aTestParser)
-	{
-    __MSFNLOG
-	}
+    {
+    }
 #endif
 
 
@@ -123,27 +118,25 @@ CBulkOnlyTransport::CBulkOnlyTransport(TInt aNumDrives,
 Constructs the CBulkOnlyTranspor object
 */
 void CBulkOnlyTransport::ConstructL()
-	{
-    __MSFNLOG
-	iBotControlInterface = CBotControlInterface::NewL(*this);
-	iDeviceStateNotifier = CActiveDeviceStateNotifier::NewL(*this);
-	CActiveScheduler::Add(this);
-	}
+    {
+    iBotControlInterface = CBotControlInterface::NewL(*this);
+    iDeviceStateNotifier = CActiveDeviceStateNotifier::NewL(*this);
+    CActiveScheduler::Add(this);
+    }
 
 
 /**
 Destructor
 */
 CBulkOnlyTransport::~CBulkOnlyTransport()
-	{
-    __MSFNLOG
-	if (iInterfaceConfigured)
-		{
-		Stop();
-		}
-	delete iBotControlInterface;
-	delete iDeviceStateNotifier;
-	}
+    {
+    if (iInterfaceConfigured)
+        {
+        Stop();
+        }
+    delete iBotControlInterface;
+    delete iDeviceStateNotifier;
+    }
 
 
 /**
@@ -153,37 +146,36 @@ Set or unset configuration descriptor for USB MassStorage Bulk Only transport
 @return KErrNone if operation was completed successfully, errorcode otherwise
 */
 TInt CBulkOnlyTransport::SetupConfigurationDescriptor(TBool aUnset)
-	{
-    __MSFNLOG
-	TInt ret(KErrNone);
-	TInt configDescriptorSize(0);
+    {
+    TInt ret(KErrNone);
+    TInt configDescriptorSize(0);
 
-	iLdd.GetConfigurationDescriptorSize(configDescriptorSize);
-	if (static_cast<TUint>(configDescriptorSize) != KUsbDescSize_Config)
-		{
-		return KErrCorrupt;
-		}
+    iLdd.GetConfigurationDescriptorSize(configDescriptorSize);
+    if (static_cast<TUint>(configDescriptorSize) != KUsbDescSize_Config)
+        {
+        return KErrCorrupt;
+        }
 
-	TBuf8<KUsbDescSize_Config> configDescriptor;
-	ret = iLdd.GetConfigurationDescriptor(configDescriptor);
-	if (ret != KErrNone)
-		{
-		return ret;
-		}
+    TBuf8<KUsbDescSize_Config> configDescriptor;
+    ret = iLdd.GetConfigurationDescriptor(configDescriptor);
+    if (ret != KErrNone)
+        {
+        return ret;
+        }
 
-	// I beleive that other fields setted up during LDD initialisation
-	if (aUnset)
-		{
-		--configDescriptor[KUsbNumInterfacesOffset];
-		}
-	else
-		{
-		++configDescriptor[KUsbNumInterfacesOffset];
-		}
-	ret = iLdd.SetConfigurationDescriptor(configDescriptor);
+    // I beleive that other fields setted up during LDD initialisation
+    if (aUnset)
+        {
+        --configDescriptor[KUsbNumInterfacesOffset];
+        }
+    else
+        {
+        ++configDescriptor[KUsbNumInterfacesOffset];
+        }
+    ret = iLdd.SetConfigurationDescriptor(configDescriptor);
 
-	return ret;
-	}
+    return ret;
+    }
 
 
 /**
@@ -192,100 +184,99 @@ Set up interface descriptor
 @return KErrNone if operation was completed successfully, errorcode otherwise
 */
 TInt CBulkOnlyTransport::SetupInterfaceDescriptors()
-	{
-    __MSFNLOG
-	// Device caps
-	TUsbDeviceCaps d_caps;
-	TInt ret = iLdd.DeviceCaps(d_caps);
-	if (ret != KErrNone)
-		{
-		return ret;
-		}
-	TInt totalEndpoints = d_caps().iTotalEndpoints;
-	if (totalEndpoints  < KRequiredNumberOfEndpoints)
-		{
-		return KErrHardwareNotAvailable;
-		}
+    {
+    // Device caps
+    TUsbDeviceCaps d_caps;
+    TInt ret = iLdd.DeviceCaps(d_caps);
+    if (ret != KErrNone)
+        {
+        return ret;
+        }
+    TInt totalEndpoints = d_caps().iTotalEndpoints;
+    if (totalEndpoints  < KRequiredNumberOfEndpoints)
+        {
+        return KErrHardwareNotAvailable;
+        }
 
-	// Endpoint caps
-	TUsbcEndpointData data[KUsbcMaxEndpoints];
-	TPtr8 dataptr(reinterpret_cast<TUint8*>(data), sizeof(data), sizeof(data));
-	ret = iLdd.EndpointCaps(dataptr);
-	if (ret != KErrNone)
-		{
-		return ret;
-		}
+    // Endpoint caps
+    TUsbcEndpointData data[KUsbcMaxEndpoints];
+    TPtr8 dataptr(reinterpret_cast<TUint8*>(data), sizeof(data), sizeof(data));
+    ret = iLdd.EndpointCaps(dataptr);
+    if (ret != KErrNone)
+        {
+        return ret;
+        }
 
-	// Set the active interface
-	TUsbcInterfaceInfoBuf ifc;
-	TInt ep_found = 0;
-	TBool foundBulkIN = EFalse;
-	TBool foundBulkOUT = EFalse;
+    // Set the active interface
+    TUsbcInterfaceInfoBuf ifc;
+    TInt ep_found = 0;
+    TBool foundBulkIN = EFalse;
+    TBool foundBulkOUT = EFalse;
 
-	for (TInt i = 0; i < totalEndpoints ; i++)
-		{
-		const TUsbcEndpointCaps* caps = &data[i].iCaps;
-		const TInt maxPacketSize = caps->MaxPacketSize();
-		if (!foundBulkIN &&
-			(caps->iTypesAndDir & (KUsbEpTypeBulk | KUsbEpDirIn)) == (KUsbEpTypeBulk | KUsbEpDirIn))
-			{
-			// KInEndpoint is going to be our TX (IN, write) endpoint
-			ifc().iEndpointData[0].iType = KUsbEpTypeBulk;
-			if((d_caps().iFeatureWord1 & KUsbDevCapsFeatureWord1_EndpointResourceAllocV2) == KUsbDevCapsFeatureWord1_EndpointResourceAllocV2)
-				ifc().iEndpointData[0].iFeatureWord1  = KUsbcEndpointInfoFeatureWord1_DMA|KUsbcEndpointInfoFeatureWord1_DoubleBuffering;
-			ifc().iEndpointData[0].iDir  = KUsbEpDirIn;
-			ifc().iEndpointData[0].iSize = maxPacketSize;
-			ifc().iEndpointData[0].iInterval_Hs = 0;
-			foundBulkIN = ETrue;
-			if (++ep_found == KRequiredNumberOfEndpoints)
-				{
-				break;
-				}
-			continue;
-			}
-		if (!foundBulkOUT &&
-			(caps->iTypesAndDir & (KUsbEpTypeBulk | KUsbEpDirOut)) == (KUsbEpTypeBulk | KUsbEpDirOut))
-			{
-			// KOutEndpoint is going to be our RX (OUT, read) endpoint
-			ifc().iEndpointData[1].iType = KUsbEpTypeBulk;
-			if((d_caps().iFeatureWord1 & KUsbDevCapsFeatureWord1_EndpointResourceAllocV2) == KUsbDevCapsFeatureWord1_EndpointResourceAllocV2)
-				ifc().iEndpointData[1].iFeatureWord1  = KUsbcEndpointInfoFeatureWord1_DMA|KUsbcEndpointInfoFeatureWord1_DoubleBuffering;
-			ifc().iEndpointData[1].iDir  = KUsbEpDirOut;
-			ifc().iEndpointData[1].iSize = maxPacketSize;
-			ifc().iEndpointData[1].iInterval_Hs = 0;
-			foundBulkOUT = ETrue;
-			if (++ep_found == KRequiredNumberOfEndpoints)
-				{
-				break;
-				}
-			continue;
-			}
-		}
-	if (ep_found != KRequiredNumberOfEndpoints)
-		{
-		return KErrHardwareNotAvailable;
-		}
+    for (TInt i = 0; i < totalEndpoints ; i++)
+        {
+        const TUsbcEndpointCaps* caps = &data[i].iCaps;
+        const TInt maxPacketSize = caps->MaxPacketSize();
+        if (!foundBulkIN &&
+            (caps->iTypesAndDir & (KUsbEpTypeBulk | KUsbEpDirIn)) == (KUsbEpTypeBulk | KUsbEpDirIn))
+            {
+            // KInEndpoint is going to be our TX (IN, write) endpoint
+            ifc().iEndpointData[0].iType = KUsbEpTypeBulk;
+            if((d_caps().iFeatureWord1 & KUsbDevCapsFeatureWord1_EndpointResourceAllocV2) == KUsbDevCapsFeatureWord1_EndpointResourceAllocV2)
+                ifc().iEndpointData[0].iFeatureWord1  = KUsbcEndpointInfoFeatureWord1_DMA|KUsbcEndpointInfoFeatureWord1_DoubleBuffering;
+            ifc().iEndpointData[0].iDir  = KUsbEpDirIn;
+            ifc().iEndpointData[0].iSize = maxPacketSize;
+            ifc().iEndpointData[0].iInterval_Hs = 0;
+            foundBulkIN = ETrue;
+            if (++ep_found == KRequiredNumberOfEndpoints)
+                {
+                break;
+                }
+            continue;
+            }
+        if (!foundBulkOUT &&
+            (caps->iTypesAndDir & (KUsbEpTypeBulk | KUsbEpDirOut)) == (KUsbEpTypeBulk | KUsbEpDirOut))
+            {
+            // KOutEndpoint is going to be our RX (OUT, read) endpoint
+            ifc().iEndpointData[1].iType = KUsbEpTypeBulk;
+            if((d_caps().iFeatureWord1 & KUsbDevCapsFeatureWord1_EndpointResourceAllocV2) == KUsbDevCapsFeatureWord1_EndpointResourceAllocV2)
+                ifc().iEndpointData[1].iFeatureWord1  = KUsbcEndpointInfoFeatureWord1_DMA|KUsbcEndpointInfoFeatureWord1_DoubleBuffering;
+            ifc().iEndpointData[1].iDir  = KUsbEpDirOut;
+            ifc().iEndpointData[1].iSize = maxPacketSize;
+            ifc().iEndpointData[1].iInterval_Hs = 0;
+            foundBulkOUT = ETrue;
+            if (++ep_found == KRequiredNumberOfEndpoints)
+                {
+                break;
+                }
+            continue;
+            }
+        }
+    if (ep_found != KRequiredNumberOfEndpoints)
+        {
+        return KErrHardwareNotAvailable;
+        }
 
-	_LIT16(string, "USB Mass Storage Interface");
-	ifc().iString = const_cast<TDesC16*>(&string);
-	ifc().iTotalEndpointsUsed = KRequiredNumberOfEndpoints;
-	ifc().iClass.iClassNum    = 0x08;	// Mass Storage
-	ifc().iClass.iSubClassNum = 0x06;	// SCSI Transparent Command Set
-	ifc().iClass.iProtocolNum = 0x50;	// Bulk Only Transport
+    _LIT16(string, "USB Mass Storage Interface");
+    ifc().iString = const_cast<TDesC16*>(&string);
+    ifc().iTotalEndpointsUsed = KRequiredNumberOfEndpoints;
+    ifc().iClass.iClassNum    = 0x08;   // Mass Storage
+    ifc().iClass.iSubClassNum = 0x06;   // SCSI Transparent Command Set
+    ifc().iClass.iProtocolNum = 0x50;   // Bulk Only Transport
 
-	TUint bandwidth_priority = (EUsbcBandwidthOUTDefault | EUsbcBandwidthINDefault);
-	if (d_caps().iHighSpeed)
-		{
-		// If this device supports USB High-speed, then we request 64KB buffers
-		// (otherwise the default 4KB ones will do).
-		bandwidth_priority = (EUsbcBandwidthOUTPlus2 | EUsbcBandwidthINPlus2);
-		// Also, tell the Protocol about it, because it might want to do some
-		// optimizing too.
-		iProtocol->ReportHighSpeedDevice();
-		}
-	ret = iLdd.SetInterface(0, ifc, bandwidth_priority);
-	return ret;
-	}
+    TUint bandwidth_priority = (EUsbcBandwidthOUTDefault | EUsbcBandwidthINDefault);
+    if (d_caps().iHighSpeed)
+        {
+        // If this device supports USB High-speed, then we request 64KB buffers
+        // (otherwise the default 4KB ones will do).
+        bandwidth_priority = (EUsbcBandwidthOUTPlus2 | EUsbcBandwidthINPlus2);
+        // Also, tell the Protocol about it, because it might want to do some
+        // optimizing too.
+        iProtocol->ReportHighSpeedDevice();
+        }
+    ret = iLdd.SetInterface(0, ifc, bandwidth_priority);
+    return ret;
+    }
 
 
 /**
@@ -295,7 +286,6 @@ Called by the protocol after processing the packet to indicate that more data is
 */
 void CBulkOnlyTransport::SetupDataOut(TPtr8& aData)
     {
-    __MSFNLOG
     iDataTransferMan.SetModeDataOut(aData);
     }
 
@@ -305,52 +295,49 @@ Called by the protocol after processing the packet to indicate that data should 
 @param aData reference to the data buffer.
 */
 void CBulkOnlyTransport::SetupDataIn(TPtrC8& aData)
-	{
+    {
     iDataTransferMan.SetModeDataIn(aData);
-	}
+    }
 
 
 TInt CBulkOnlyTransport::Start()
-	{
-    __MSFNLOG
-	TInt err = KErrNone;
+    {
+    TInt err = KErrNone;
 
-	if (!iProtocol)
-		{
-		return KErrBadHandle;   //protocol should be set up before start
-		}
+    if (!iProtocol)
+        {
+        return KErrBadHandle;   //protocol should be set up before start
+        }
 
-	if (IsActive())
-		{
-		__PRINT(_L("CBulkOnlyTransport::Start  - active before start!\n"));
-		return KErrInUse;
-		}
+    if (IsActive())
+        {
+        __PRINT(_L("CBulkOnlyTransport::Start  - active before start!\n"));
+        return KErrInUse;
+        }
 
-	if ((err = iLdd.Open(0))					!= KErrNone ||
-		(err = SetupConfigurationDescriptor()) 	!= KErrNone ||
-		(err = SetupInterfaceDescriptors())		!= KErrNone )
-		{
-		__PRINT(_L("CBulkOnlyTransport::Start  - Error during descriptors setup!\n"));
-		return err;
-		}
+    if ((err = iLdd.Open(0))                    != KErrNone ||
+        (err = SetupConfigurationDescriptor())  != KErrNone ||
+        (err = SetupInterfaceDescriptors())     != KErrNone )
+        {
+        __PRINT(_L("CBulkOnlyTransport::Start  - Error during descriptors setup!\n"));
+        return err;
+        }
 
-	iDeviceStateNotifier->Activate();  // activate notifier wich will wait until USB became configured
-	TUsbcDeviceState deviceStatus = EUsbcDeviceStateDefault;
-	err = iLdd.DeviceStatus(deviceStatus);
-	__PRINT1(_L("CBulkOnlyTransport::Start - Device status = %d\n"), deviceStatus);
-	if (err == KErrNone && deviceStatus == EUsbcDeviceStateConfigured)
-		{
-		__PRINT(_L("CBulkOnlyTransport::Start  - Starting bulk only transport\n"));
-		err = HwStart();
-		}
-	iInterfaceConfigured = ETrue;
-	return err;
-	}
+    iDeviceStateNotifier->Activate();  // activate notifier wich will wait until USB became configured
+    TUsbcDeviceState deviceStatus = EUsbcDeviceStateDefault;
+    err = iLdd.DeviceStatus(deviceStatus);
+    __PRINT1(_L("CBulkOnlyTransport::Start - Device status = %d\n"), deviceStatus);
+    if (err == KErrNone && deviceStatus == EUsbcDeviceStateConfigured)
+        {
+        __PRINT(_L("CBulkOnlyTransport::Start  - Starting bulk only transport\n"));
+        err = HwStart();
+        }
+    iInterfaceConfigured = ETrue;
+    return err;
+    }
 
 TInt CBulkOnlyTransport::HwStart(TBool aDiscard)
-	{
-    __MSFNLOG
-
+    {
     TInt lun = MaxLun();
     do
         {
@@ -358,112 +345,108 @@ TInt CBulkOnlyTransport::HwStart(TBool aDiscard)
         }
     while(--lun >= 0);
 
-	TInt res = iBotControlInterface->Start() ;
+    TInt res = iBotControlInterface->Start() ;
 
-	iCurrentState = ENone;
+    iCurrentState = ENone;
     iDataTransferMan.Init();
-	iStarted = ETrue;
+    iStarted = ETrue;
 
-	TUsbDeviceCaps d_caps;
-	TInt ret = iLdd.DeviceCaps(d_caps);
-	if (ret == KErrNone)
-		{
-		if((d_caps().iFeatureWord1 & KUsbDevCapsFeatureWord1_EndpointResourceAllocV2) != KUsbDevCapsFeatureWord1_EndpointResourceAllocV2)
-			{
-			// Set up DMA if possible (errors are non-critical)
-			TInt err = iLdd.AllocateEndpointResource(KOutEndpoint, EUsbcEndpointResourceDMA);
-			if (err != KErrNone)
-				{
-				__PRINT1(_L("Set DMA on OUT endpoint failed with error code: %d"), err);
-				}
-			err = iLdd.AllocateEndpointResource(KInEndpoint, EUsbcEndpointResourceDMA);
-			if (err != KErrNone)
-				{
-				__PRINT1(_L("Set DMA on IN endpoint failed with error code: %d"), err);
-				}
+    TUsbDeviceCaps d_caps;
+    TInt ret = iLdd.DeviceCaps(d_caps);
+    if (ret == KErrNone)
+        {
+        if((d_caps().iFeatureWord1 & KUsbDevCapsFeatureWord1_EndpointResourceAllocV2) != KUsbDevCapsFeatureWord1_EndpointResourceAllocV2)
+            {
+            // Set up DMA if possible (errors are non-critical)
+            TInt err = iLdd.AllocateEndpointResource(KOutEndpoint, EUsbcEndpointResourceDMA);
+            if (err != KErrNone)
+                {
+                __PRINT1(_L("Set DMA on OUT endpoint failed with error code: %d"), err);
+                }
+            err = iLdd.AllocateEndpointResource(KInEndpoint, EUsbcEndpointResourceDMA);
+            if (err != KErrNone)
+                {
+                __PRINT1(_L("Set DMA on IN endpoint failed with error code: %d"), err);
+                }
 
-			// Set up Double Buffering if possible (errors are non-critical)
-			err = iLdd.AllocateEndpointResource(KOutEndpoint, EUsbcEndpointResourceDoubleBuffering);
-			if (err != KErrNone)
-				{
-				__PRINT1(_L("Set Double Buffering on OUT endpoint failed with error code: %d"), err);
-				}
-			err = iLdd.AllocateEndpointResource(KInEndpoint, EUsbcEndpointResourceDoubleBuffering);
-			if (err != KErrNone)
-				{
-				__PRINT1(_L("Set Double Buffering on IN endpoint failed with error code: %d"), err);
-				}
-			}
-		}
+            // Set up Double Buffering if possible (errors are non-critical)
+            err = iLdd.AllocateEndpointResource(KOutEndpoint, EUsbcEndpointResourceDoubleBuffering);
+            if (err != KErrNone)
+                {
+                __PRINT1(_L("Set Double Buffering on OUT endpoint failed with error code: %d"), err);
+                }
+            err = iLdd.AllocateEndpointResource(KInEndpoint, EUsbcEndpointResourceDoubleBuffering);
+            if (err != KErrNone)
+                {
+                __PRINT1(_L("Set Double Buffering on IN endpoint failed with error code: %d"), err);
+                }
+            }
+        }
 
     if (aDiscard)
-		{
-		TInt bytes;
-		const TInt err = iLdd.QueryReceiveBuffer(KOutEndpoint, bytes);
-		if (err != KErrNone || bytes <= 0)
-			{
-			__PRINT1(_L("Error: err=%d bytes=%d"), bytes);
-			}
-		else
-			{
-			__PRINT1(_L("RxBuffer has %d bytes"), bytes);
-			FlushDataOut(bytes);
-			}
-		}
+        {
+        TInt bytes;
+        const TInt err = iLdd.QueryReceiveBuffer(KOutEndpoint, bytes);
+        if (err != KErrNone || bytes <= 0)
+            {
+            __PRINT1(_L("Error: err=%d bytes=%d"), bytes);
+            }
+        else
+            {
+            __PRINT1(_L("RxBuffer has %d bytes"), bytes);
+            FlushDataOut(bytes);
+            }
+        }
 
-	ClientReadCbw();
-	return res;
-	}
+    ClientReadCbw();
+    return res;
+    }
 
 
 void CBulkOnlyTransport::HwStop()
-	{
-    __MSFNLOG
-	if (iStarted)
-		{
+    {
+    if (iStarted)
+        {
         iController.DriveManager().Disconnect();
-		Cancel();
-		iBotControlInterface->Cancel();
-		iProtocol->Cancel();
-		iStarted = EFalse;
-		}
-	}
+        Cancel();
+        iBotControlInterface->Cancel();
+        iProtocol->Cancel();
+        iStarted = EFalse;
+        }
+    }
 
 
 void CBulkOnlyTransport::HwSuspend()
-	{
-    __MSFNLOG
+    {
     iController.DriveManager().Disconnect();
-	}
+    }
 
 
 void CBulkOnlyTransport::HwResume()
-	{
-    __MSFNLOG
+    {
     iController.DriveManager().Connect();
-	}
+    }
 
 
 /**
 Stops the Bulk Only Transport
 */
 TInt CBulkOnlyTransport::Stop()
-	{
-    __MSFNLOG
-	iBotControlInterface->Cancel();
-	iDeviceStateNotifier->Cancel();
-	Cancel();
-	if  (iInterfaceConfigured)
-		{
-		iLdd.ReleaseInterface(0);
-		SetupConfigurationDescriptor(ETrue);
-		iLdd.Close();
-		}
-	iCurrentState = ENone;
-	iInterfaceConfigured = EFalse;
+    {
+    iBotControlInterface->Cancel();
+    iDeviceStateNotifier->Cancel();
+    Cancel();
+    if  (iInterfaceConfigured)
+        {
+        iLdd.ReleaseInterface(0);
+        SetupConfigurationDescriptor(ETrue);
+        iLdd.Close();
+        }
+    iCurrentState = ENone;
+    iInterfaceConfigured = EFalse;
 
-	return KErrNone;
-	}
+    return KErrNone;
+    }
 
 
 /**
@@ -471,40 +454,36 @@ Read aLength bytes of data from the host into the read buffer.
 @param aLength The number of bytes to read from the host.
 */
 void CBulkOnlyTransport::ClientReadCbw()
-	{
-    __MSFNLOG
-	if (IsActive())
-		{
-		__PRINT(_L("Still active\n"));
-		__ASSERT_DEBUG(EFalse, User::Panic(KUsbMsClientPanicCat, EMsBulkOnlyStillActive));
-		return;
-		}
+    {
+    if (IsActive())
+        {
+        __PRINT(_L("Still active\n"));
+        __ASSERT_DEBUG(EFalse, User::Panic(KUsbMsClientPanicCat, EMsBulkOnlyStillActive));
+        return;
+        }
 
     ReadCbw();
     }
 
 
 void CBulkOnlyTransport::ReadCbw()
-	{
-    __MSFNLOG
-	iCbwBuf.SetMax();
-	iLdd.ReadUntilShort(iStatus, KOutEndpoint, iCbwBuf, iCbwBuf.Length());
-	iCurrentState = EWaitForCBW;
-	SetActive();
-	}
+    {
+    iCbwBuf.SetMax();
+    iLdd.ReadUntilShort(iStatus, KOutEndpoint, iCbwBuf, iCbwBuf.Length());
+    iCurrentState = EWaitForCBW;
+    SetActive();
+    }
 
 
 void CBulkOnlyTransport::DoCancel()
-	{
-    __MSFNLOG
-	iLdd.WriteCancel(KInEndpoint);
-	iLdd.ReadCancel(KOutEndpoint);
-	}
+    {
+    iLdd.WriteCancel(KInEndpoint);
+    iLdd.ReadCancel(KOutEndpoint);
+    }
 
 
 void CBulkOnlyTransport::Activate(TInt aReason)
     {
-    __MSFNLOG
     SetActive();
     TRequestStatus* r = &iStatus;
     User::RequestComplete(r, aReason);
@@ -512,17 +491,16 @@ void CBulkOnlyTransport::Activate(TInt aReason)
 
 
 void CBulkOnlyTransport::RunL()
-	{
-    __MSFNLOG
-	if (iStatus != KErrNone)
-		{
-		__PRINT1(_L("Error %d in RunL, halt endpoints \n"), iStatus.Int());
-		SetPermError(); //halt endpoints for reset recovery
-		return;
-		}
+    {
+    if (iStatus != KErrNone)
+        {
+        __PRINT1(_L("Error %d in RunL, halt endpoints \n"), iStatus.Int());
+        SetPermError(); //halt endpoints for reset recovery
+        return;
+        }
 
-	switch (iCurrentState)
-		{
+    switch (iCurrentState)
+        {
         case EWaitForCBW:
             __PRINT(_L("EWaitForCBW"));
             TRAPD(err, DecodeCbwL());
@@ -538,17 +516,17 @@ void CBulkOnlyTransport::RunL()
                 SetPermError();
                 return;
                 }
-			break;
+            break;
 
         case EHandleDataIn:
             {
             __PRINT(_L("EHandleDataIn"));
             iDataTransferMan.SetModeNoData();
 
-			if (iDataTransferMan.iDataResidue && iStallAllowed)
-				{
-				StallEndpointAndWaitForClear(KInEndpoint);
-				}
+            if (iDataTransferMan.iDataResidue && iStallAllowed)
+                {
+                StallEndpointAndWaitForClear(KInEndpoint);
+                }
 #ifdef MSDC_TESTMODE
             if (iTestParser && iTestParser->Enabled())
                 {
@@ -560,17 +538,17 @@ void CBulkOnlyTransport::RunL()
                     }
                 }
 #endif
-			SendCsw(iCbwTag, iDataTransferMan.iDataResidue, iCmdStatus);
+            SendCsw(iCbwTag, iDataTransferMan.iDataResidue, iCmdStatus);
             }
-			break;
+            break;
 
-		case EHandleDataOut:
-			{
+        case EHandleDataOut:
+            {
             TUint bytesWritten;
             TInt ret = iProtocol->MediaWritePacket(bytesWritten);
             iDataTransferMan.iDataResidue -= bytesWritten;
 
-			switch(ret)
+            switch(ret)
                 {
             case KErrCompletion:
                 {
@@ -667,22 +645,22 @@ void CBulkOnlyTransport::RunL()
                 break;  // KErrNone
                 } // switch
             }
-			break;  // EReadingData
+            break;  // EReadingData
 
-		case ESendingCSW:
-			__PRINT(_L("ESendingCSW"));
-			ReadCbw();
-			break;
+        case ESendingCSW:
+            __PRINT(_L("ESendingCSW"));
+            ReadCbw();
+            break;
 
         case EPermErr:
-			__PRINT(_L("EPermErr"));
-			StallEndpointAndWaitForClear(KInEndpoint);
+            __PRINT(_L("EPermErr"));
+            StallEndpointAndWaitForClear(KInEndpoint);
             break;
 
         default:
-			SetPermError();		// unexpected state
-		}
-	}
+            SetPermError();     // unexpected state
+        }
+    }
 
 
 /**
@@ -694,8 +672,7 @@ Decode the CBW received from the host via KOutEndpoint
 
 */
 void CBulkOnlyTransport::DecodeCbwL()
-	{
-    __MSFNLOG
+    {
     TBotServerReq req;
     req.DecodeL(iCbwBuf);
 
@@ -705,10 +682,10 @@ void CBulkOnlyTransport::DecodeCbwL()
         }
 
     TPtrC8 aData(&iCbwBuf[TBotCbw::KCbwCbOffset], TBotCbw::KMaxCbwcbLength);
-	//aData.Set(&iCbwBuf[TBotCbw::KCbwCbOffset], TBotCbw::KMaxCbwcbLength);
+    //aData.Set(&iCbwBuf[TBotCbw::KCbwCbOffset], TBotCbw::KMaxCbwcbLength);
     TUint8 lun = req.Lun();
 
-    iCbwTag  = 	req.Tag();
+    iCbwTag  =  req.Tag();
     TUint32 hostDataLength = req.DataTransferLength();
     iDataTransferMan.SetHostDataLen(hostDataLength);
 
@@ -717,68 +694,68 @@ void CBulkOnlyTransport::DecodeCbwL()
     __PRINT4(_L("lun =%d, hostDataLength=%d, CBWtag = 0x%X\n, dataToHost=%d\n"),
              lun, hostDataLength, iCbwTag, dataToHost);
 
-	//////////////////////////////////////////////
-	TBool ret = iProtocol->DecodePacket(aData, lun);
-	//////////////////////////////////////////////
+    //////////////////////////////////////////////
+    TBool ret = iProtocol->DecodePacket(aData, lun);
+    //////////////////////////////////////////////
 
-	iStallAllowed = ETrue;
+    iStallAllowed = ETrue;
 
-	if (!ret)
-		{
-		__PRINT(_L("Command Failed\n"));
-		iCmdStatus = TBotCsw::ECommandFailed;
-		}
-	else
-		{
-		__PRINT(_L("Command Passed\n"));
-		iCmdStatus = TBotCsw::ECommandPassed;
-		}
+    if (!ret)
+        {
+        __PRINT(_L("Command Failed\n"));
+        iCmdStatus = TBotCsw::ECommandFailed;
+        }
+    else
+        {
+        __PRINT(_L("Command Passed\n"));
+        iCmdStatus = TBotCsw::ECommandPassed;
+        }
 
-	if (hostDataLength)    // Host expected data transfer
-		{
-		if (dataToHost == TBotServerReq::EDataIn)  // send data to host
-			{
+    if (hostDataLength)    // Host expected data transfer
+        {
+        if (dataToHost == TBotServerReq::EDataIn)  // send data to host
+            {
             if (!iDataTransferMan.IsModeDataIn())
-				{
-				__PRINT(_L("Write buffer was not setup\n"));
+                {
+                __PRINT(_L("Write buffer was not setup\n"));
 
-				if (hostDataLength <= KBOTMaxBufSize)
-					{
-					// Case 4 or 8"
-					iBuf.FillZ(hostDataLength);
-					iLdd.Write(iStatus, KInEndpoint, iBuf, hostDataLength);
-					SetActive();
-					iCurrentState = EHandleDataIn;
-					iStallAllowed = EFalse;
-					if (iDataTransferMan.IsModeDataOut())
-						{
+                if (hostDataLength <= KBOTMaxBufSize)
+                    {
+                    // Case 4 or 8"
+                    iBuf.FillZ(hostDataLength);
+                    iLdd.Write(iStatus, KInEndpoint, iBuf, hostDataLength);
+                    SetActive();
+                    iCurrentState = EHandleDataIn;
+                    iStallAllowed = EFalse;
+                    if (iDataTransferMan.IsModeDataOut())
+                        {
                         //read buffer WAS set up - case (8)
-						iCmdStatus = TBotCsw::EPhaseError;
-						}
-					return;
-					}
-				else
-					{
+                        iCmdStatus = TBotCsw::EPhaseError;
+                        }
+                    return;
+                    }
+                else
+                    {
                     // Use next block instead of StallEndpointAndWaitForClear(KInEndpoint);
                     FlushDataIn(hostDataLength);
-					}
+                    }
 
-				if (iDataTransferMan.IsModeDataOut())
-					{
+                if (iDataTransferMan.IsModeDataOut())
+                    {
                     //read buffer WAS set up - case (8)
-					SendCsw(iCbwTag, hostDataLength, TBotCsw::EPhaseError);
-					//don't care to reset any flag - should get reset recovery
-					}
-				else
-					{
+                    SendCsw(iCbwTag, hostDataLength, TBotCsw::EPhaseError);
+                    //don't care to reset any flag - should get reset recovery
+                    }
+                else
+                    {
                     // case (4)
-					SendCsw(iCbwTag, hostDataLength, iCmdStatus);
-					}
-				return;
-				}
+                    SendCsw(iCbwTag, hostDataLength, iCmdStatus);
+                    }
+                return;
+                }
 
 //==================
-			TInt deviceDataLength = iDataTransferMan.iWriteBuf.Length();
+            TInt deviceDataLength = iDataTransferMan.iWriteBuf.Length();
             iDataTransferMan.iDataResidue = hostDataLength - deviceDataLength;
 
 #ifdef MSDC_TESTMODE
@@ -823,8 +800,8 @@ void CBulkOnlyTransport::DecodeCbwL()
                     }
                 }
 #endif
-			if (deviceDataLength < hostDataLength && hostDataLength <= KBOTMaxBufSize)
-				{
+            if (deviceDataLength < hostDataLength && hostDataLength <= KBOTMaxBufSize)
+                {
                 // do not pad
                 // iStallAllowed = ETrue;
                 // __PRINT1(_L("iBuf.Length=%d\n"),iBuf.Length());
@@ -842,11 +819,11 @@ void CBulkOnlyTransport::DecodeCbwL()
                 SetActive();
                 iCurrentState = EHandleDataIn;
 
-				return;
-				}
+                return;
+                }
 
-			if (deviceDataLength == hostDataLength)
-				{
+            if (deviceDataLength == hostDataLength)
+                {
                 //case (6)[==]
 #ifdef MSDC_TESTMODE
                 if (iTestParser && iTestParser->Enabled())
@@ -860,49 +837,49 @@ void CBulkOnlyTransport::DecodeCbwL()
                     }
 #endif
 
-				DataInWriteRequest(deviceDataLength);
-				return;
-				}
-			else if (deviceDataLength < hostDataLength)
-				{
+                DataInWriteRequest(deviceDataLength);
+                return;
+                }
+            else if (deviceDataLength < hostDataLength)
+                {
                 //case (5)[<]
-				DataInWriteRequest(deviceDataLength, ETrue);		// Send ZLP
-				return;
-				}
-			else
-				{
+                DataInWriteRequest(deviceDataLength, ETrue);        // Send ZLP
+                return;
+                }
+            else
+                {
                 // deviceDataLength > hostDataLength - case (7)
-				iCmdStatus = TBotCsw::EPhaseError;
-				iDataTransferMan.iDataResidue = 0;
-				DataInWriteRequest(hostDataLength);
-				return;
-				}
-			}
-		else  // read data from host
-			{
-			if (!iDataTransferMan.IsModeDataOut())
-				{
-				__PRINT(_L("Read buffer was not setup\n"));
+                iCmdStatus = TBotCsw::EPhaseError;
+                iDataTransferMan.iDataResidue = 0;
+                DataInWriteRequest(hostDataLength);
+                return;
+                }
+            }
+        else  // read data from host
+            {
+            if (!iDataTransferMan.IsModeDataOut())
+                {
+                __PRINT(_L("Read buffer was not setup\n"));
 
                 // Use next block instead of StallEndpointAndWaitForClear(KOutEndpoint);
                 FlushDataOut(hostDataLength);
-				if (iDataTransferMan.IsModeDataIn())
-					{
+                if (iDataTransferMan.IsModeDataIn())
+                    {
                     //case (10)
-					SendCsw(iCbwTag, hostDataLength, TBotCsw::EPhaseError);
-					}
-				else
-					{
+                    SendCsw(iCbwTag, hostDataLength, TBotCsw::EPhaseError);
+                    }
+                else
+                    {
                     // case (9)
-					SendCsw(iCbwTag, hostDataLength, iCmdStatus);
-					}
-				return;
-				}
+                    SendCsw(iCbwTag, hostDataLength, iCmdStatus);
+                    }
+                return;
+                }
 
-			TInt deviceDataLength = iDataTransferMan.iReadBuf.Length();
+            TInt deviceDataLength = iDataTransferMan.iReadBuf.Length();
 
-			if (deviceDataLength <= hostDataLength)
-				{
+            if (deviceDataLength <= hostDataLength)
+                {
                 // case (11) and (12)
 #ifdef MSDC_TESTMODE
                 TBool done = EFalse;
@@ -928,12 +905,12 @@ void CBulkOnlyTransport::DecodeCbwL()
                     DataOutReadRequest(deviceDataLength);
                     }
 #else
-				DataOutReadRequest(deviceDataLength);
+                DataOutReadRequest(deviceDataLength);
 #endif
-				return;
-				}
-			else
-				{
+                return;
+                }
+            else
+                {
                 // case  (13)
                 /**
                  * Comment following line in order to pass compliant test.
@@ -941,7 +918,7 @@ void CBulkOnlyTransport::DecodeCbwL()
                  * total of dCBWDataTransferLength."
                  * Here we choose to ignore incoming data.
                  */
-				//StallEndpointAndWaitForClear(KOutEndpoint); //Stall Out endpoint
+                //StallEndpointAndWaitForClear(KOutEndpoint); //Stall Out endpoint
                 if (iDataTransferMan.IsModeDataOut())
                     {
                     iDataTransferMan.SetModeNoData();
@@ -950,21 +927,21 @@ void CBulkOnlyTransport::DecodeCbwL()
                     iProtocol->MediaWriteAbort();
                     }
                 SendCsw(iCbwTag, hostDataLength, TBotCsw::EPhaseError);
-				return;
-				}
-			}
-		}
-	else  // Host expected no data transfer
-		{
-		__PRINT(_L("No data transfer expected\n"));
-		iDataTransferMan.iDataResidue = 0;
-		if (!iDataTransferMan.IsModeNoData())
-			{
+                return;
+                }
+            }
+        }
+    else  // Host expected no data transfer
+        {
+        __PRINT(_L("No data transfer expected\n"));
+        iDataTransferMan.iDataResidue = 0;
+        if (!iDataTransferMan.IsModeNoData())
+            {
             // case (2) and (3)
-			SendCsw(iCbwTag, 0, TBotCsw::EPhaseError);
-			}
-		else
-			{
+            SendCsw(iCbwTag, 0, TBotCsw::EPhaseError);
+            }
+        else
+            {
             //case (1)
 #ifdef MSDC_TESTMODE
             if (iTestParser && iTestParser->Enabled())
@@ -984,10 +961,10 @@ void CBulkOnlyTransport::DecodeCbwL()
                     }
                 }
 #endif
-			SendCsw(iCbwTag, 0, iCmdStatus);
-			}
-		}
-	}
+            SendCsw(iCbwTag, 0, iCmdStatus);
+            }
+        }
+    }
 
 
 /**
@@ -995,11 +972,10 @@ Initiate stalling of bulk IN endpoint.
 Used when protocol wants to force host to initiate a reset recovery.
 */
 void CBulkOnlyTransport::SetPermError()
-	{
-    __MSFNLOG
+    {
     iCurrentState = EPermErr;
     Activate(KErrNone);
-	}
+    }
 
 
 /**
@@ -1008,13 +984,12 @@ Send data provided by protocol to the host
 @param aLength amount of data (in bytes) to be send to host
 */
 void CBulkOnlyTransport::DataInWriteRequest(TUint aLength, TBool aZlpRequired)
-	{
-    __MSFNLOG
-	iLdd.Write(iStatus, KInEndpoint, iDataTransferMan.iWriteBuf, aLength, aZlpRequired);
+    {
+    iLdd.Write(iStatus, KInEndpoint, iDataTransferMan.iWriteBuf, aLength, aZlpRequired);
     iDataTransferMan.iTransportResidue -= aLength;
-	iCurrentState = EHandleDataIn;
-	SetActive();
-	}
+    iCurrentState = EHandleDataIn;
+    SetActive();
+    }
 
 
 /**
@@ -1023,13 +998,12 @@ Request data form the host for the protocol
 @param aLength amount of data (in bytes) to be received from the host
 */
 void CBulkOnlyTransport::DataOutReadRequest(TUint aLength)
-	{
-    __MSFNLOG
-	iLdd.Read(iStatus, KOutEndpoint, iDataTransferMan.iReadBuf, aLength);
-	iDataTransferMan.iTransportResidue -= aLength;
-	iCurrentState = EHandleDataOut;
+    {
+    iLdd.Read(iStatus, KOutEndpoint, iDataTransferMan.iReadBuf, aLength);
+    iDataTransferMan.iTransportResidue -= aLength;
+    iCurrentState = EHandleDataOut;
     SetActive();
-	}
+    }
 
 
 /**
@@ -1041,9 +1015,8 @@ Send Command Status Wrapper to the host
 @param aStatus indicates the success or failure of the command.
 */
 void CBulkOnlyTransport::SendCsw(TUint aTag, TUint32 aDataResidue, TBotCsw::TCswStatus aStatus)
-	{
-    __MSFNLOG
-	__PRINT2(_L("DataResidue = %d, Status = %d \n"), aDataResidue, aStatus);
+    {
+    __PRINT2(_L("DataResidue = %d, Status = %d \n"), aDataResidue, aStatus);
     iCsw.SetLength(TBotCsw::KCswLength);
     TBotServerResp resp(iCbwTag, aDataResidue, aStatus);
 #ifdef MSDC_TESTMODE
@@ -1051,10 +1024,10 @@ void CBulkOnlyTransport::SendCsw(TUint aTag, TUint32 aDataResidue, TBotCsw::TCsw
 #else
     resp.EncodeL(iCsw);
 #endif
-	iLdd.Write(iStatus, KInEndpoint, iCsw, TBotCsw::KCswLength);
-	iCurrentState = ESendingCSW;
-	SetActive();
-	}
+    iLdd.Write(iStatus, KInEndpoint, iCsw, TBotCsw::KCswLength);
+    iCurrentState = ESendingCSW;
+    SetActive();
+    }
 
 
 /**
@@ -1063,10 +1036,9 @@ Associates the transport with the protocol.  Called during initialization of the
 @param aProtocol reference to the protocol
 */
 void CBulkOnlyTransport::RegisterProtocol(MServerProtocol& aProtocol)
-	{
-    __MSFNLOG
-	iProtocol = &aProtocol;
-	}
+    {
+    iProtocol = &aProtocol;
+    }
 
 
 /**
@@ -1075,9 +1047,9 @@ Used by CControlInterface
 @return reference to the controller which instantiate the CBulkOnlyTransport
 */
 CUsbMassStorageController& CBulkOnlyTransport::Controller()
-	{
-	return iController;
-	}
+    {
+    return iController;
+    }
 
 
 /**
@@ -1086,10 +1058,9 @@ Logical Unit Numbers on the device shall be numbered contiguously starting from 
 0 to a maximum LUN of 15 (Fh).
 */
 TInt CBulkOnlyTransport::MaxLun()
-	{
-    __MSFNLOG
-	return iMaxLun;
-	}
+    {
+    return iMaxLun;
+    }
 
 
 /**
@@ -1097,30 +1068,29 @@ Used by CControlInterface
 @return reference to USB logical driver
 */
 RDevUsbcClient& CBulkOnlyTransport::Ldd()
-	{
-	return iLdd;
-	}
+    {
+    return iLdd;
+    }
 
 
 void CBulkOnlyTransport::StallEndpointAndWaitForClear(TEndpointNumber aEndpoint)
-	{
-    __MSFNLOG
-	__ASSERT_DEBUG(aEndpoint != EEndpoint0, User::Panic(KUsbMsClientPanicCat, EMsWrongEndpoint));
+    {
+    __ASSERT_DEBUG(aEndpoint != EEndpoint0, User::Panic(KUsbMsClientPanicCat, EMsWrongEndpoint));
 
-	// Now stall this endpoint
-	__PRINT1(_L("Stalling endpoint %d"), aEndpoint);
-	__TESTMODEPRINT2("CBW Tag=0x%x: Stalling endpoint %d", iCbwTag, aEndpoint);
-	TInt r = iLdd.HaltEndpoint(aEndpoint);
-	if (r != KErrNone)
-		{
-		__PRINT2(_L("Error: stalling ep %d failed: %d"), aEndpoint, r);
-		}
-	TEndpointState ep_state;
-	TInt i = 0;
-	do
-		{
-		// Wait for 10ms before checking the ep status
-		User::After(10000);
+    // Now stall this endpoint
+    __PRINT1(_L("Stalling endpoint %d"), aEndpoint);
+    __TESTMODEPRINT2("CBW Tag=0x%x: Stalling endpoint %d", iCbwTag, aEndpoint);
+    TInt r = iLdd.HaltEndpoint(aEndpoint);
+    if (r != KErrNone)
+        {
+        __PRINT2(_L("Error: stalling ep %d failed: %d"), aEndpoint, r);
+        }
+    TEndpointState ep_state;
+    TInt i = 0;
+    do
+        {
+        // Wait for 10ms before checking the ep status
+        User::After(10000);
 
         if (aEndpoint == KInEndpoint)
             {
@@ -1138,19 +1108,19 @@ void CBulkOnlyTransport::StallEndpointAndWaitForClear(TEndpointNumber aEndpoint)
                 }
             }
 
-		iLdd.EndpointStatus(aEndpoint, ep_state);
-		if (++i >= 550)
-			{
-			// 5.5 secs should be enough (see 9.2.6.1 Request Processing Timing)
-			__PRINT1(_L("Error: Checked for ep %d de-stall for 5.5s - giving up now"), aEndpoint);
+        iLdd.EndpointStatus(aEndpoint, ep_state);
+        if (++i >= 550)
+            {
+            // 5.5 secs should be enough (see 9.2.6.1 Request Processing Timing)
+            __PRINT1(_L("Error: Checked for ep %d de-stall for 5.5s - giving up now"), aEndpoint);
             __TESTMODEPRINT1("Error: Checked for ep %d de-stall for 5.5s - giving up now", aEndpoint);
-			// We can now only hope for a Reset Recovery
-			return;
-			}
-		} while ((ep_state == EEndpointStateStalled) && iStarted);
-	__PRINT2(_L("Checked for ep %d de-stall: %d time(s)"), aEndpoint, i);
+            // We can now only hope for a Reset Recovery
+            return;
+            }
+        } while ((ep_state == EEndpointStateStalled) && iStarted);
+    __PRINT2(_L("Checked for ep %d de-stall: %d time(s)"), aEndpoint, i);
     __TESTMODEPRINT2("Checked for ep %d de-stall: %d time(s)", aEndpoint, i);
-	}
+    }
 
 
 
@@ -1160,56 +1130,54 @@ Called by the protocol to determine how many bytes of data are available in the 
 @return The number of bytes available in the read buffer
 */
 TInt CBulkOnlyTransport::BytesAvailable()
-	{
-    __MSFNLOG
-	TInt bytes = 0;
-	TInt err = iLdd.QueryReceiveBuffer(KOutEndpoint, bytes);
-	if (err != KErrNone)
-		bytes = 0;
-	return bytes;
-	}
+    {
+    TInt bytes = 0;
+    TInt err = iLdd.QueryReceiveBuffer(KOutEndpoint, bytes);
+    if (err != KErrNone)
+        bytes = 0;
+    return bytes;
+    }
 
 
 /**
  * Read out rest data from KOutEndpoint and discard them
  */
 void CBulkOnlyTransport::FlushDataOut(TInt aLength)
-	{
-    __MSFNLOG
-	iBuf.SetMax();
-	TRequestStatus status;
-	while (aLength > 0)
-		{
-		iLdd.ReadOneOrMore(status, KOutEndpoint, iBuf, iBuf.Length());
-		User::WaitForRequest(status);
-		TInt err = status.Int();
-		if (err != KErrNone)
-			{
-			// Bad.
-			break;
-			}
-		aLength -= iBuf.Length();
-		}
-	}
+    {
+    iBuf.SetMax();
+    TRequestStatus status;
+    while (aLength > 0)
+        {
+        iLdd.ReadOneOrMore(status, KOutEndpoint, iBuf, iBuf.Length());
+        User::WaitForRequest(status);
+        TInt err = status.Int();
+        if (err != KErrNone)
+            {
+            // Bad.
+            break;
+            }
+        aLength -= iBuf.Length();
+        }
+    }
 
 
 void CBulkOnlyTransport::FlushDataIn(TInt aLength)
     {
-	iBuf.SetMax();
-	TInt c = 0;
+    iBuf.SetMax();
+    TInt c = 0;
     TInt len;
-	TRequestStatus status;
-	while (c < aLength)
-		{
+    TRequestStatus status;
+    while (c < aLength)
+        {
         len = aLength - c;
-		if (len >  KBOTMaxBufSize)
-			{
-			len = KBOTMaxBufSize;
-			}
-		iLdd.Write(status, KInEndpoint, iBuf, len);
-		User::WaitForRequest(status);
-		c +=  KBOTMaxBufSize;
-		}
+        if (len >  KBOTMaxBufSize)
+            {
+            len = KBOTMaxBufSize;
+            }
+        iLdd.Write(status, KInEndpoint, iBuf, len);
+        User::WaitForRequest(status);
+        c +=  KBOTMaxBufSize;
+        }
     }
 
 //
@@ -1217,126 +1185,119 @@ void CBulkOnlyTransport::FlushDataIn(TInt aLength)
 //
 CActiveDeviceStateNotifier::CActiveDeviceStateNotifier(CBulkOnlyTransport& aParent)
 :   CActive(EPriorityStandard),
-	iParent(aParent),
-	iDeviceState(EUsbcNoState),
-	iOldDeviceState(EUsbcNoState)
-	{
-    __MSFNLOG
-	}
+    iParent(aParent),
+    iDeviceState(EUsbcNoState),
+    iOldDeviceState(EUsbcNoState)
+    {
+    }
 
 
 CActiveDeviceStateNotifier* CActiveDeviceStateNotifier::NewL(CBulkOnlyTransport& aParent)
-	{
-    __MSFNSLOG
-	CActiveDeviceStateNotifier* self = new (ELeave) CActiveDeviceStateNotifier(aParent);
-	CleanupStack::PushL(self);
-	self->ConstructL();
-	CActiveScheduler::Add(self);
-	CleanupStack::Pop();									// self
-	return (self);
-	}
+    {
+    CActiveDeviceStateNotifier* self = new (ELeave) CActiveDeviceStateNotifier(aParent);
+    CleanupStack::PushL(self);
+    self->ConstructL();
+    CActiveScheduler::Add(self);
+    CleanupStack::Pop();                                    // self
+    return (self);
+    }
 
 
 void CActiveDeviceStateNotifier::ConstructL()
-	{
-    __MSFNLOG
-	}
+    {
+    }
 
 
 CActiveDeviceStateNotifier::~CActiveDeviceStateNotifier()
-	{
-    __MSFNLOG
-	Cancel();												// base class
-	}
+    {
+    Cancel();                                               // base class
+    }
 
 
 void CActiveDeviceStateNotifier::DoCancel()
 /**
  *
  */
-	{
-    __MSFNLOG
-	iParent.Ldd().AlternateDeviceStatusNotifyCancel();
-	}
+    {
+    iParent.Ldd().AlternateDeviceStatusNotifyCancel();
+    }
 
 
 void CActiveDeviceStateNotifier::RunL()
 /**
  *
  */
-	{
-    __MSFNLOG
-	// This displays the device state.
-	// In a real world program, the user could take here appropriate action (cancel a
-	// transfer request or whatever).
-	if (!(iDeviceState & KUsbAlternateSetting))
-		{
-		switch (iDeviceState)
-			{
-		case EUsbcDeviceStateUndefined:
-			__PRINT(_L("Device State notifier: Undefined\n"));
-			iParent.HwStop();
-			break;
-		case EUsbcDeviceStateAttached:
-			__PRINT(_L("Device State notifier: Attached\n"));
-			iParent.HwStop();
-			break;
-		case EUsbcDeviceStatePowered:
-			__PRINT(_L("Device State notifier: Powered\n"));
-			iParent.HwStop();
-			break;
-		case EUsbcDeviceStateDefault:
-			__PRINT(_L("Device State notifier: Default\n"));
-			iParent.HwStop();
-			break;
-		case EUsbcDeviceStateAddress:
-			__PRINT(_L("Device State notifier: Address\n"));
-			iParent.HwStop();
-			break;
-		case EUsbcDeviceStateConfigured:
-			__PRINT(_L("Device State notifier: Configured\n"));
-			if (iOldDeviceState == EUsbcDeviceStateSuspended)
-				{
-				iParent.HwResume();
-				}
-			else
-				{
-				iParent.HwStart();
-				}
-			break;
-		case EUsbcDeviceStateSuspended:
-			__PRINT(_L("Device State notifier: Suspended\n"));
-			if (iOldDeviceState == EUsbcDeviceStateConfigured)
-				{
-				iParent.HwSuspend();
-				}
-			break;
-		default:
-			__PRINT(_L("Device State notifier: ***BAD***\n"));
-			iParent.HwStop();
-			break;
-			}
-		iOldDeviceState = iDeviceState;
-		}
-	else if (iDeviceState & KUsbAlternateSetting)
-		{
-		__PRINT1(_L("Device State notifier: Alternate interface setting has changed: now %d\n"), iDeviceState & ~KUsbAlternateSetting);
-		}
-	Activate();
-	}
+    {
+    // This displays the device state.
+    // In a real world program, the user could take here appropriate action (cancel a
+    // transfer request or whatever).
+    if (!(iDeviceState & KUsbAlternateSetting))
+        {
+        switch (iDeviceState)
+            {
+        case EUsbcDeviceStateUndefined:
+            __PRINT(_L("Device State notifier: Undefined\n"));
+            iParent.HwStop();
+            break;
+        case EUsbcDeviceStateAttached:
+            __PRINT(_L("Device State notifier: Attached\n"));
+            iParent.HwStop();
+            break;
+        case EUsbcDeviceStatePowered:
+            __PRINT(_L("Device State notifier: Powered\n"));
+            iParent.HwStop();
+            break;
+        case EUsbcDeviceStateDefault:
+            __PRINT(_L("Device State notifier: Default\n"));
+            iParent.HwStop();
+            break;
+        case EUsbcDeviceStateAddress:
+            __PRINT(_L("Device State notifier: Address\n"));
+            iParent.HwStop();
+            break;
+        case EUsbcDeviceStateConfigured:
+            __PRINT(_L("Device State notifier: Configured\n"));
+            if (iOldDeviceState == EUsbcDeviceStateSuspended)
+                {
+                iParent.HwResume();
+                }
+            else
+                {
+                iParent.HwStart();
+                }
+            break;
+        case EUsbcDeviceStateSuspended:
+            __PRINT(_L("Device State notifier: Suspended\n"));
+            if (iOldDeviceState == EUsbcDeviceStateConfigured)
+                {
+                iParent.HwSuspend();
+                }
+            break;
+        default:
+            __PRINT(_L("Device State notifier: ***BAD***\n"));
+            iParent.HwStop();
+            break;
+            }
+        iOldDeviceState = iDeviceState;
+        }
+    else if (iDeviceState & KUsbAlternateSetting)
+        {
+        __PRINT1(_L("Device State notifier: Alternate interface setting has changed: now %d\n"), iDeviceState & ~KUsbAlternateSetting);
+        }
+    Activate();
+    }
 
 
 void CActiveDeviceStateNotifier::Activate()
 /**
  *
  */
-	{
-    __MSFNLOG
-	if (IsActive())
-		{
-		__PRINT(_L("Still active\n"));
-		return;
-		}
-	iParent.Ldd().AlternateDeviceStatusNotify(iStatus, iDeviceState);
-	SetActive();
-	}
+    {
+    if (IsActive())
+        {
+        __PRINT(_L("Still active\n"));
+        return;
+        }
+    iParent.Ldd().AlternateDeviceStatusNotify(iStatus, iDeviceState);
+    SetActive();
+    }

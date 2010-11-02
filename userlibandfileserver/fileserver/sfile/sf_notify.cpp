@@ -16,13 +16,865 @@
 //
 
 #include "sf_std.h"
+#include "sf_notifier.h"
+#include "sf_pool.h"
 
-
+#ifdef SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION
+#include <f32notification.h>
+#endif
 
 TChangeQue FsNotify::iChangeQues[KMaxNotifyQues];
 TDiskSpaceQue FsNotify::iDiskSpaceQues[KMaxDiskQues];
 TDebugQue FsNotify::iDebugQue;
 TDismountNotifyQue FsNotify::iDismountNotifyQue;
+
+_LIT(KEmptyString,"");
+
+CFsNotificationInfoBody::CFsNotificationInfoBody()
+: iSrc(KEmptyString),
+  iSrcBuf(KEmptyString),
+  iDest(KEmptyString),
+  iDestDriveStored(EFalse),
+  iFunction(KErrNotFound),
+  iData(KErrNotFound), 
+#ifdef SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION
+  iNotificationType(TFsNotification::EOverflow),
+#else
+  iNotificationType(KErrNotFound),
+#endif
+  iUid(TUid::Null())
+    {
+    }
+
+CFsNotificationInfo::CFsNotificationInfo()
+    {
+    }
+
+/*
+ * These do not get deleted, they get Freed via CFsNotificationInfo::Free.
+ */
+CFsNotificationInfo::~CFsNotificationInfo()
+    {
+    Fault(ENotificationInfoDeletion);
+    }
+
+TInt CFsNotificationInfo::Init(TInt aFunction, TInt aDriveNum)
+    {
+    //Clean notification before use
+    CleanNotification();
+    
+    iBody->iFunction = aFunction;
+    TInt err = SetDriveNumber(aDriveNum);
+    if(err != KErrNone)
+        {
+        return err;
+        }
+ 
+    //Set notification type
+#ifdef SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION
+    CFsNotificationInfo::NotificationType(iBody->iFunction, iBody->iNotificationType);
+#else
+    iBody->iNotificationType = KErrNotSupported;
+#endif   
+    return KErrNone;
+    }
+
+void CFsNotificationInfo::CleanNotification()
+    {
+    //Clear all variables 
+    TParsePtrC empty(KEmptyString);
+    memcpy(&iBody->iSrc,&empty,sizeof(TParsePtrC));
+    memcpy(&iBody->iDest,&empty,sizeof(TParsePtrC));
+    iBody->iData = KErrNotFound;
+    iBody->iRequest = NULL;
+    iBody->iDriveNumber = KErrNotFound;
+    iBody->iUid = TUid::Null();
+    iBody->iDestDriveStored = EFalse;
+#ifdef SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION
+    iBody->iNotificationType=TFsNotification::EOverflow;
+#else
+    iBody->iNotificationType=KErrNotFound;
+#endif
+    }
+
+EXPORT_C CFsNotificationInfo* CFsNotificationInfo::Allocate(const CMountCB& aMount, TInt aFunction)
+    {
+    CFsNotificationInfo* info = NotificationInfoPool->Allocate();
+    __ASSERT_DEBUG(info,User::Panic(_L("CFsNotificationInfo::Allocate, Could not allocate"),KErrNotFound));
+    
+    TInt driveNum = aMount.Drive().DriveNumber();
+    __ASSERT_ALWAYS((driveNum >= EDriveA && driveNum <= EDriveZ), User::Panic(_L("CFsNotificationInfo::Allocate - Invalid Drive Num"),KErrArgument));
+    TInt err = info->Init(aFunction,driveNum);
+    if(err != KErrNone)
+        {
+        Free(info);
+        return NULL;
+        }
+    return info;
+    }
+
+
+CFsNotificationInfo* CFsNotificationInfo::Allocate(CFsMessageRequest& aRequest)
+    {
+    //Get a notification Info block from the pool.
+    CFsNotificationInfo* notificationInfo = NotificationInfoPool->Allocate();
+    
+    //Set the function and call Init.
+    TInt function = aRequest.Operation()->Function();
+    notificationInfo->iBody->iFunction = function;
+    TInt err = notificationInfo->Init(function,aRequest.DriveNumber());
+    if(err != KErrNone)
+        {
+        CFsNotificationInfo::Free(notificationInfo);
+        return NULL;
+        }
+
+    //Set request
+    notificationInfo->SetRequest(&aRequest);
+
+	//Set UID
+    notificationInfo->SetUid(aRequest.Uid()); 
+
+    //Set notification type
+#ifdef SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION
+    CFsNotificationInfo::SetData(&aRequest,notificationInfo);
+#endif    
+    
+    CFsClientMessageRequest& msgRequest = (CFsClientMessageRequest&)aRequest;
+    
+    //Get and store Src
+    CFsNotificationInfo::PathName(msgRequest,notificationInfo->Source());
+    
+	//Get and store NewName/Dest
+    switch(function)
+        {
+        case EFsFileRename:
+        case EFsRename:    
+        case EFsReplace:   
+        case EFsSetDriveName:
+        case EFsSetVolume:
+            {
+            CFsNotificationInfo::NewPathName((CFsClientMessageRequest&)aRequest,notificationInfo->NewName());
+            notificationInfo->iBody->iDestDriveStored = ETrue;
+            }
+        default:
+            break;
+        }
+    return notificationInfo;
+    }
+
+CFsNotificationInfo* CFsNotificationInfo::Allocate(TInt aFunction, TInt aDrive)
+    {
+    //Get a notification Info block from the pool.
+    CFsNotificationInfo* notificationInfo = NotificationInfoPool->Allocate();
+    
+    //Set the function and call Init.
+    notificationInfo->iBody->iFunction = aFunction;
+    TInt err = notificationInfo->Init(aFunction,aDrive);
+    if(err != KErrNone)
+        {
+        CFsNotificationInfo::Free(notificationInfo);
+        return NULL;
+        }
+    
+    //Set request (NULL)
+    notificationInfo->SetRequest(NULL);
+	
+	//Set UID (KNullUid)
+    notificationInfo->SetUid(TUid::Null());
+    return notificationInfo;
+    }
+
+EXPORT_C void CFsNotificationInfo::Free(CFsNotificationInfo*& aNotificationInfo)
+    {
+    __ASSERT_DEBUG(aNotificationInfo,User::Panic(_L("CFsNotificationInfo::Free - KErrArgument"), KErrArgument));
+    NotificationInfoPool->Free(aNotificationInfo);    
+    aNotificationInfo = NULL;
+    }
+
+
+TInt CFsNotificationInfo::Initialise()
+    {
+    //Have to trap as sf_main.cpp commonInitialize doesn't.
+    TRAPD(r, NotificationInfoPool = CFsPool<CFsNotificationInfo>::New(KMaxDrives,CFsNotificationInfo::New));
+    if(r != KErrNone)
+        return r;
+    if(!NotificationInfoPool)
+        return KErrNoMemory;
+    return KErrNone;
+    }
+
+CFsNotificationInfo* CFsNotificationInfo::New()
+    {
+    CFsNotificationInfo* info = new CFsNotificationInfo;
+    __ASSERT_ALWAYS(info,Fault(ENotifyPoolCreation));
+    info->iBody = new CFsNotificationInfoBody();
+    __ASSERT_ALWAYS(info->iBody,Fault(ENotifyPoolCreation));
+    return info;
+    }
+
+EXPORT_C TInt CFsNotificationInfo::SetSourceName(const TDesC& aSrc)
+    {
+    //Add the aSrc to a TParsePtrC (no copying the filename)
+    TParsePtrC sourceParsePtr(aSrc);
+    
+    if(sourceParsePtr.DrivePresent() || !sourceParsePtr.FullName().Length())
+        return KErrArgument;
+    
+    switch(iBody->iFunction)
+        {
+
+        case EFsFileWrite:          //EParseSrc | EFileShare
+        case EFsFileSetSize:        //EParseSrc | EFileShare
+        case EFsFileSetAtt:         //EParseDst | EParseSrc, - should not use these; has share.
+        case EFsFileSet:            //EParseSrc | EFileShare
+        case EFsFileSetModified:    //EParseSrc | EFileShare - new
+        case EFsFileWriteDirty:     //EFileShare
+        case EFsFileCreate:         //EParseSrc
+        case EFsFileTemp:           //EParseSrc - new
+        case EFsFileRename:         //EParseDst | EParseSrc,
+        case EFsFileReplace:        //EParseSrc
+            {
+            //Should look like this:  \[path\]filename
+            if(!sourceParsePtr.Name().Length())
+                {
+                return KErrArgument;
+                }
+            break;
+            }
+        case EFsDelete:             //EParseSrc
+        case EFsSetEntry:           //EParseSrc,
+        case EFsRename:             //EParseDst | EParseSrc,
+        case EFsReplace:            //EParseDst | EParseSrc,
+            {
+            if(!sourceParsePtr.PathPresent() && !sourceParsePtr.NamePresent())
+                {
+                return KErrArgument;
+                }
+            break;
+            }
+        case EFsRmDir:              //EParseSrc
+        case EFsMkDir:              //EParseSrc
+            {
+            if(!sourceParsePtr.PathPresent())
+                {
+                return KErrArgument;
+                }
+            break;
+            }
+      /*case EFsFormatNext:         //EParseSrc
+        case EFsDismountFileSystem: //0
+        case EFsMountFileSystem:    //0
+        case EFsSetVolume:          //0
+        case EFsSetDriveName:       //ESync
+        case EFsRawDiskWrite:       //EParseSrc
+        case EFsMountFileSystemScan: */
+        default:
+            {
+            __ASSERT_DEBUG(EFalse,User::Panic(_L("CFsNotificationInfo::SetSourceName Invalid Operation"),KErrArgument));
+            return KErrNotSupported;
+            }
+        }
+    memcpy(&iBody->iSrc,&sourceParsePtr,sizeof(TParsePtrC));
+    return KErrNone;
+    }
+
+EXPORT_C TInt CFsNotificationInfo::SetNewName(const TDesC& aDest)
+    {
+    //Add the aSrc to a TParsePtr for some validation without copying the filename
+    TParsePtrC destParsePtr(aDest);
+    
+    if(destParsePtr.DrivePresent() || !destParsePtr.FullName().Length())
+        return KErrArgument;
+    
+    switch(iBody->iFunction)
+        {
+        case EFsFileRename:         //EParseDst | EParseSrc,
+        case EFsRename:             //EParseDst | EParseSrc,
+        case EFsReplace:            //EParseDst | EParseSrc,
+            {
+            if(!destParsePtr.PathPresent() && !destParsePtr.NamePresent())
+                {
+                return KErrArgument;
+                }
+            break;
+            }
+        case EFsSetDriveName:
+        case EFsSetVolume:
+            {
+            if(!destParsePtr.NamePresent())
+                {
+                return KErrArgument;
+                }
+            break;
+            }            
+        default:
+            {
+            __ASSERT_DEBUG(ETrue,User::Panic(_L("CFsNotificationInfo::SetNewName Invalid Operation"),KErrArgument));
+            }
+        }
+    
+    memcpy(&iBody->iDest,&destParsePtr,sizeof(TParsePtrC));
+    return KErrNone;
+    }
+
+EXPORT_C TInt CFsNotificationInfo::SetFilesize(TInt64 aFilesize)
+    {
+    if(aFilesize<0)
+        return KErrArgument;
+    
+    iBody->iData = aFilesize;
+    return KErrNone;
+    }
+EXPORT_C TInt CFsNotificationInfo::SetAttributes(TUint aSet,TUint aCleared)
+    {
+    iBody->iData = MAKE_TUINT64(aSet,aCleared);
+    return KErrNone;
+    }
+
+EXPORT_C TInt CFsNotificationInfo::SetUid(const TUid& aUid)
+    {
+    iBody->iUid = aUid;
+    return KErrNone;
+    }
+
+
+TInt CFsNotificationInfo::SetDriveNumber(TInt aDriveNumber) 
+    {
+    if(aDriveNumber >= EDriveA && aDriveNumber <= EDriveZ)
+        {
+        iBody->iDriveNumber = aDriveNumber;
+        return KErrNone;
+        }
+    return KErrArgument;    
+    }
+void CFsNotificationInfo::SetRequest(CFsRequest* aRequest)
+    {
+    iBody->iRequest = aRequest;
+    }
+TInt CFsNotificationInfo::Function() 
+    { return iBody->iFunction; }
+TInt CFsNotificationInfo::DriveNumber() 
+    { return iBody->iDriveNumber; }
+TParsePtrC& CFsNotificationInfo::Source() 
+    {
+    switch(iBody->iFunction)
+        {
+        case EFsFormatNext:         //EParseSrc
+        case EFsDismountFileSystem: //0
+        case EFsMountFileSystem:    //0
+        case EFsSetVolume:          //0
+        case EFsSetDriveName:       //ESync
+        case EFsRawDiskWrite:       //EParseSrc
+        case EFsMountFileSystemScan:
+            {
+            _LIT(KFormatDrive,"?:");
+            iBody->iSrcBuf = KFormatDrive;
+            iBody->iSrcBuf[0] = TText(DriveNumber() + 'A');
+            TParsePtrC parse(iBody->iSrcBuf);
+            memcpy(&iBody->iSrc,&parse,sizeof(TParsePtrC));
+            }
+        }
+    return iBody->iSrc;
+    }
+TParsePtrC& CFsNotificationInfo::NewName() 
+    { return iBody->iDest; }
+CFsRequest* CFsNotificationInfo::Request() 
+    { return iBody->iRequest; }
+TInt64* CFsNotificationInfo::Data() 
+    { return &iBody->iData; }
+TUid& CFsNotificationInfo::Uid()
+    { return iBody->iUid; }
+TNotificationType& CFsNotificationInfo::NotificationType()
+    { return iBody->iNotificationType; }
+TBool CFsNotificationInfo::DestDriveIsSet()
+    { return iBody->iDestDriveStored; }
+TInt CFsNotificationInfo::SourceSize()
+    {
+    TInt size = Source().FullName().Size();
+    if(NotificationType()!=TFsNotification::EMediaChange    &&
+       NotificationType()!=TFsNotification::EDriveName      && 
+       NotificationType()!=TFsNotification::EVolumeName)
+        {
+        size += sizeof(TText)*2;
+        }
+    return size;    
+    }
+TInt CFsNotificationInfo::NewNameSize()
+    {
+    TInt size = NewName().FullName().Size();
+    if(!DestDriveIsSet())
+        size += sizeof(TText)*2;
+    return size;  
+    }
+
+//Get the path of the file, folder or drive name based on the TFsMessage function
+void CFsNotificationInfo::PathName(CFsClientMessageRequest& aRequest, TParsePtrC& aPath)
+    {
+    __PRINT(_L("CFsNotificationInfo::PathName"));
+    //Get the notification type
+    TInt function = aRequest.Operation()->Function();
+    
+    //Get the filename(s)
+    switch(function)
+        {
+        case EFsFileWrite:          //EParseSrc | EFileShare
+        case EFsFileSetSize:        //EParseSrc | EFileShare
+        case EFsFileSetAtt:         //EParseDst | EParseSrc, - should not use these; has share.
+        case EFsFileSet:            //EParseSrc | EFileShare
+        case EFsFileSetModified:    //EParseSrc | EFileShare - new
+        case EFsFileWriteDirty:     //EFileShare
+            {
+            CFileShare* share = NULL;
+            CFileCB* file = NULL;
+            GetFileFromScratch(&aRequest,share,file);
+            TParsePtrC ptrC(file->iFileName->Des());
+            memcpy(&aPath,&ptrC,sizeof(TParsePtrC));
+            break;
+            }
+        case EFsFileCreate:         //EParseSrc
+        case EFsFileTemp:           //EParseSrc - new
+        case EFsDelete:             //EParseSrc
+        case EFsSetEntry:           //EParseSrc,
+        case EFsFileRename:         //EParseDst | EParseSrc,
+        case EFsRename:             //EParseDst | EParseSrc,
+        case EFsReplace:            //EParseDst | EParseSrc,
+        case EFsFileReplace:        //EParseSrc
+            {
+            TParsePtrC parsePtrC(aRequest.Src().FullName().Mid(2)); //Don't want drive letter
+            memcpy(&aPath,&parsePtrC,sizeof(TParsePtrC));
+            break;
+            }
+        case EFsRmDir:              //EParseSrc
+        case EFsMkDir:              //EParseSrc
+            {
+            TParsePtrC parsePtrC(aRequest.Src().Path());
+            memcpy(&aPath,&parsePtrC,sizeof(TParsePtrC));
+            break;
+            
+            //aPath.Set(aRequest.Src().DriveAndPath(),NULL,NULL);
+            //break;
+            }
+        case EFsFormatNext:         //EParseSrc
+        case EFsDismountFileSystem: //0
+        case EFsMountFileSystem:    //0
+        case EFsSetVolume:          //0
+        case EFsSetDriveName:       //ESync
+        case EFsRawDiskWrite:       //EParseSrc
+        case EFsLockDrive:
+        case EFsUnlockDrive:
+        case EFsReserveDriveSpace:
+        case EFsMountFileSystemScan:
+            {
+            break;
+            }
+        default:
+            ASSERT(0);
+            break;
+        }
+    }
+
+//Get the new path of the file, folder or drive name based on the TFsMessage function
+void CFsNotificationInfo::NewPathName(CFsClientMessageRequest& aRequest, TParsePtrC& aNewPath)
+    {
+    __PRINT(_L("CFsNotificationInfo::NewPathName"));
+    //Get the notification type
+    TInt function = aRequest.Operation()->Function();
+
+    //Get the filename(s)
+    switch(function)
+        {
+        case EFsFileRename:         //EParseDst | EParseSrc,
+        case EFsRename:             //EParseDst | EParseSrc,
+        case EFsReplace:            //EParseDst | EParseSrc,
+            {
+            //We must provide the drive letter too as in the case
+            //of the file being monitored being renamed to a 
+            //different drive.
+            //In that case we need to provide the new drive letter to the client.
+            TParsePtrC ptrC(aRequest.Dest().FullName());
+            memcpy(&aNewPath,&ptrC,sizeof(TParsePtrC));
+            break;
+            }
+        case EFsSetVolume:          //EParseDst
+        case EFsSetDriveName:       //ESync | EParseDst
+            {
+            TParsePtrC ptrC(aRequest.Dest().FullName());
+            memcpy(&aNewPath,&ptrC,sizeof(TParsePtrC));
+            break;
+            }
+        default:
+            {
+            ASSERT(0);
+            }
+        }
+    }
+
+//Get the size of the notification based on its type
+TInt CFsNotificationInfo::NotificationSize(CFsNotificationInfo& aRequest)
+    {
+    __PRINT(_L("CFsNotificationInfo::NotificationSize"));
+    
+    /*
+     * If there are no new names, the order of the data in the buffer is:
+     * Word1   : NotificationSize (2 bytes) , PathSize (2 bytes)
+     * Word2   : NotificationType (Lower 2 bytes)
+     * Word3   : UID
+     * Word(s) : Path (TText8) , [Any sub-class members]
+     * 
+     * Else for notification types ERename, EVolumeName and EDriveName the order is:
+     * Word1   : NotificationSize (2 bytes) , PathSize (2 bytes)
+     * Word2   : NewNameSize (2 bytes) , NotificationType (2 bytes)
+     * Word3   : UID
+     * Word(s) : Path (TText8) , NewName (TText8)
+     * 
+     * EOverflow size: KNotificationHeaderSize
+     */ 
+    
+    //Size of the filename +(with '<drive>:')
+    TInt size = KNotificationHeaderSize + Align4(aRequest.SourceSize());
+    
+    switch(aRequest.NotificationType())
+        {
+        //NewName
+        case TFsNotification::ERename:
+        case TFsNotification::EVolumeName:
+        case TFsNotification::EDriveName:
+            {
+            if(!aRequest.NewName().FullName().Length())
+                __ASSERT_ALWAYS(false,User::Panic(_L("CFsNotificationInfo::NotificationSize"),KErrArgument));
+            
+            size += Align4(aRequest.NewNameSize());
+            break;
+            }
+        case TFsNotification::EFileChange:
+            {
+            size += sizeof(TInt64);
+            break;
+            }
+        case TFsNotification::EAttribute:
+            {
+            size += sizeof(TUint64);
+            break;
+            }
+        case TFsNotification::ECreate: 
+        case TFsNotification::EDelete:
+        case TFsNotification::EMediaChange:
+            {
+            break;
+            }
+        default:
+            {
+            ASSERT(0);
+            break;
+            }
+        }
+    return (TUint16) size;
+    }
+
+
+TNotificationType CFsNotificationInfo::NotificationType(TInt& aIndex)
+    {
+    __PRINT(_L("CFsNotificationInfo::NotificationType(TInt)"));
+    __ASSERT_DEBUG(aIndex < KNumRegisterableFilters, Fault(ENotificationFault));
+    
+    switch(aIndex) //No break statements here on purpose
+        {
+        case 7 : return TFsNotification::EMediaChange;
+        case 6 : return TFsNotification::EDriveName;
+        case 5 : return TFsNotification::EVolumeName;
+        case 4 : return TFsNotification::EDelete;
+        case 3 : return TFsNotification::EAttribute;
+        case 2 : return TFsNotification::ECreate;
+        case 1 : return TFsNotification::ERename;
+        case 0 : return TFsNotification::EFileChange;
+        default: ASSERT(0); return (TFsNotification::TFsNotificationType) 0;
+        }
+    }
+
+//Get the array index of the notification based on its type
+TInt CFsNotificationInfo::TypeToIndex(TNotificationType aType)
+    {
+    __PRINT(_L("CFsNotificationInfo::ArrayIndex"));
+
+    TInt index = 0; 
+    switch(aType) //No break statements here on purpose
+        {
+        case TFsNotification::EMediaChange: index++;
+        case TFsNotification::EDriveName:   index++;
+        case TFsNotification::EVolumeName:  index++;
+        case TFsNotification::EDelete:      index++;
+        case TFsNotification::EAttribute:   index++;
+        case TFsNotification::ECreate:      index++;
+        case TFsNotification::ERename:      index++;
+        case TFsNotification::EFileChange:  // skip;
+        default: break;
+        }
+    __ASSERT_DEBUG(index < KNumRegisterableFilters, Fault(ENotificationFault));
+    return index;
+    }
+
+TInt CFsNotificationInfo::DriveNumber(const TPtrC& aPath)
+    {
+    if(aPath.Length() >= 1)
+        {
+        TInt drive;
+        TInt r = RFs::CharToDrive(aPath[0],drive);
+        if(r!=KErrNone)
+            return KErrNotFound;
+        return drive;
+        }
+    return KErrNotFound;
+    }
+
+//Get the attributes set and cleared
+void CFsNotificationInfo::Attributes(CFsMessageRequest& aRequest, TUint& aSet, TUint& aClear)
+    {
+    __PRINT(_L("CFsNotificationInfo::Attributes"));
+
+    TInt function = aRequest.Operation()->Function();
+    const RMessage2& msg = aRequest.Message();
+
+    //Client notification
+    switch(function)
+        {
+        case EFsFileSet:
+            {
+            aSet = msg.Int1();
+            aClear = msg.Int2();
+            break;
+            }
+        case EFsFileSetAtt:
+            {
+            aSet = msg.Int0();
+            aClear = msg.Int1();
+            break;
+            }
+        case EFsSetEntry:
+            {
+            aSet = msg.Int2();
+            aClear = msg.Int3();
+            break;
+            }
+        default:
+            {
+            ASSERT(0);
+            break;
+            }
+        }
+    }
+
+TInt64 CFsNotificationInfo::FileSize(CFsMessageRequest& aRequest)
+    {
+    CFileShare* share = NULL;
+    CFileCB* file = NULL;
+    GetFileFromScratch(&aRequest, share, file);
+    TInt64 size = file->CachedSize64();
+    return size;
+    }
+
+
+void CFsNotificationInfo::SetData(CFsMessageRequest* aRequest, CFsNotificationInfo* aNotificationInfo)
+    {
+    TInt function = aRequest->Operation()->Function();
+    
+    switch(function)
+        {
+        case EFsFileWrite:
+        case EFsFileWriteDirty:
+        case EFsFileSetSize:
+            {
+            aNotificationInfo->SetFilesize(FileSize(*aRequest));
+            break;
+            }
+        case EFsSetEntry:
+        case EFsFileSetAtt:
+        case EFsFileSet:
+            {
+            TUint set = 0;
+            TUint clear = 0;
+            Attributes(*aRequest,set,clear);
+            *(aNotificationInfo->Data())= MAKE_TUINT64(set,clear);
+            break;
+            }
+        default:
+            {
+            return;
+            }
+        }
+    }
+
+TInt CFsNotificationInfo::ValidateNotification(CFsNotificationInfo& aNotificationInfo)
+    {
+    //Validate UID
+    if(aNotificationInfo.Uid() == TUid::Null())
+        {
+        __ASSERT_DEBUG(false,User::Panic(_L("::ValidateNotification - Uid not set"),KErrArgument));
+        return KErrArgument;
+        }
+   
+    switch(aNotificationInfo.Function())
+        {
+        case EFsFileWrite:
+        case EFsFileWriteDirty:
+        case EFsFileSetSize:
+            {
+            if(*aNotificationInfo.Data() == -1)
+                {
+                __ASSERT_DEBUG(false,User::Panic(_L("::ValidateNotification - File size not set"),KErrArgument));
+                return KErrArgument;
+                }
+            if(!aNotificationInfo.Source().FullName().Length())
+                {
+                __ASSERT_DEBUG(false,User::Panic(_L("::ValidateNotification - Source Name not set"),KErrArgument));
+                return KErrArgument;
+                }
+            if(aNotificationInfo.NewName().FullName().Length())
+                {
+                __ASSERT_DEBUG(false,User::Panic(_L("::ValidateNotification - New Name set in err"),KErrArgument));
+                return KErrArgument;
+                }
+            break;
+            }
+        case EFsRename:
+        case EFsFileRename:
+        case EFsReplace:
+        case EFsSetVolume:
+        case EFsSetDriveName:
+            {
+            if(!aNotificationInfo.Source().FullName().Length())
+                {
+                __ASSERT_DEBUG(false,User::Panic(_L("::ValidateNotification - Source Name not set"),KErrArgument));
+                return KErrArgument;
+                }
+            if(!aNotificationInfo.NewName().FullName().Length())
+                {
+                __ASSERT_DEBUG(false,User::Panic(_L("::ValidateNotification - New Name not set"),KErrArgument));
+                return KErrArgument;
+                }
+            if(*aNotificationInfo.Data() != -1)
+                {
+                __ASSERT_DEBUG(false,User::Panic(_L("::ValidateNotification - Data set in err"),KErrArgument));
+                return KErrArgument;
+                }
+            break;
+            }
+        case EFsMkDir:
+        case EFsFileCreate:
+        case EFsFileReplace:
+        case EFsDelete:
+        case EFsRmDir:
+            {
+            if(!aNotificationInfo.Source().FullName().Length())
+                {
+                __ASSERT_DEBUG(false,User::Panic(_L("::ValidateNotification - Source Name not set"),KErrArgument));
+                return KErrArgument;
+                }
+            if(aNotificationInfo.NewName().FullName().Length())
+                {
+                __ASSERT_DEBUG(false,User::Panic(_L("::ValidateNotification - New Name set in err"),KErrArgument));
+                return KErrArgument;
+                }
+            if(*aNotificationInfo.Data() != -1)
+                {
+                __ASSERT_DEBUG(false,User::Panic(_L("::ValidateNotification - Data set in err"),KErrArgument));
+                return KErrArgument;
+                }
+            break;
+            }
+        case EFsFileSetAtt:
+        case EFsFileSet:
+        case EFsSetEntry:
+            {
+            if(!aNotificationInfo.Source().FullName().Length())
+                {
+                __ASSERT_DEBUG(false,User::Panic(_L("::ValidateNotification - Source Name not set"),KErrArgument));
+                return KErrArgument;
+                }
+            if(*aNotificationInfo.Data() == -1)
+                {
+                __ASSERT_DEBUG(false,User::Panic(_L("::ValidateNotification - Attributes not set"),KErrArgument));
+                return KErrArgument;
+                }
+            if(aNotificationInfo.NewName().FullName().Length())
+                {
+                __ASSERT_DEBUG(false,User::Panic(_L("::ValidateNotification - New Name set in err"),KErrArgument));
+                return KErrArgument;
+                }               
+            break;
+            }
+        case EFsDismountFileSystem:
+        case EFsMountFileSystem:
+        case EFsFormatNext:
+        case EFsRawDiskWrite:
+        case EFsMountFileSystemScan:
+            {
+            if(aNotificationInfo.NewName().FullName().Length())
+                {
+                __ASSERT_DEBUG(false,User::Panic(_L("::ValidateNotification - New Name set in err"),KErrArgument));
+                return KErrArgument;
+                }               
+            if(aNotificationInfo.Source().FullName().Length())
+                {
+                __ASSERT_DEBUG(false,User::Panic(_L("::ValidateNotification - Source Name set in err"),KErrArgument));
+                return KErrArgument;
+                }
+            if(*aNotificationInfo.Data() != -1)
+                {
+                __ASSERT_DEBUG(false,User::Panic(_L("::ValidateNotification - Data set in err"),KErrArgument));
+                return KErrArgument;
+                }
+            break;
+            }
+        default:
+            {
+            break;
+            }
+        }
+    return KErrNone;
+    }
+
+TUint CFsNotificationInfo::NotifyType(TInt aFunction)
+//
+//  Convert aFunction that caused the notification to a 
+//  value corresponding to the correct TNotifyType enum  
+//
+    {
+    switch (aFunction)
+        {
+        case EFsFileCreate:
+        case EFsFileReplace:
+        case EFsDelete:
+        case EFsReplace:
+        case EFsFileRename:
+            return(ENotifyFile|ENotifyEntry);   
+        case EFsMkDir:
+        case EFsRmDir:
+            return(ENotifyDir|ENotifyEntry);    
+        case EFsRename:                 
+            return(ENotifyDir|ENotifyFile|ENotifyEntry);                    
+        case EFsSetVolume:                  
+            return(ENotifyDisk|ENotifyEntry);   
+        case EFsFileSet:
+        case EFsFileSetAtt:
+        case EFsFileSetModified:
+        case EFsFileSetSize:
+        case EFsSetEntry:
+            return(ENotifyAttributes);  
+        case EFsFileWrite:
+        case EFsFileWriteDirty:
+            return(ENotifyWrite);   
+        case EFsRawDiskWrite:
+        case EFsLockDrive:
+        case EFsUnlockDrive:
+            return(ENotifyDisk);    
+        case EFsFileTemp:       
+        case EFsSetDriveName:
+            return(ENotifyAll); 
+        default:
+            return(0);
+        }
+    }
 
 void CNotifyInfo::Initialise(TInfoType aType,TRequestStatus* aStatus,const RMessagePtr2& aMessage,CSessionFs* aSession)
 //
@@ -67,16 +919,16 @@ void CStdChangeInfo::Initialise(TNotifyType aChangeType,TRequestStatus* aStatus,
 	CNotifyInfo::Initialise(EStdChange,aStatus,aMessage,aSession);
 	}
 
-TUint CStdChangeInfo::RequestNotifyType(CFsRequest* aRequest)
+TUint CStdChangeInfo::RequestNotifyType(CFsNotificationInfo* aRequest)
 //
 // return notification type for the request
 //
 	{
-	TUint notifyType=aRequest->Operation()->NotifyType();
-	if(aRequest->Operation()->Function()==EFsRename)
+    TUint notifyType=CFsNotificationInfo::NotifyType(aRequest->Function());
+    if(aRequest->Function()==EFsRename)
 		{
 		__ASSERT_DEBUG(notifyType==(ENotifyDir|ENotifyFile|ENotifyEntry),Fault(EStdChangeRequestType));
-		if(aRequest->Src().NamePresent())
+        if(aRequest->Source().NamePresent())
 			notifyType=ENotifyFile|ENotifyEntry;
 		else
 			notifyType=ENotifyDir|ENotifyEntry;
@@ -84,12 +936,13 @@ TUint CStdChangeInfo::RequestNotifyType(CFsRequest* aRequest)
 	return(notifyType);						
 	}
 
-TBool CStdChangeInfo::IsMatching(CFsRequest* aRequest)
+
+TBool CStdChangeInfo::IsMatching(CFsNotificationInfo* aNotificationInfo)
 //
 // return ETrue if operation type of request matches that of change notification
 //
-	{
-	if((iChangeType&ENotifyAll) || (iChangeType&aRequest->Operation()->NotifyType()))
+    {
+    if((iChangeType&ENotifyAll) || (iChangeType&CFsNotificationInfo::NotifyType(aNotificationInfo->Function())))
 		return(ETrue);
 	else
 		return(EFalse);
@@ -107,17 +960,17 @@ void CExtChangeInfo::Initialise(TNotifyType aChangeType,TRequestStatus* aStatus,
 	}
 
 
-TBool CExtChangeInfo::IsMatching(CFsRequest* aRequest)
+TBool CExtChangeInfo::IsMatching(CFsNotificationInfo* aRequest)
 //
 // return ETrue if operation notify type of request matches that of change notification
 // and paths match
 //
-	{
-	TInt function=aRequest->Operation()->Function();
+    {
+    TInt function=aRequest->Function();
 	//	if a rename occurred inform any requests if their path has been changed regardless of the notification type
 	if(function==EFsRename)				
 		{		
-		TBuf<KMaxFileName> renamePath=aRequest->Src().FullName().Mid(2);		
+        TBuf<KMaxFileName> renamePath=aRequest->Source().FullName();        
 		renamePath+=_L("*");
 		if (iName.MatchF(renamePath)!=KErrNotFound)	
 			return(ETrue);
@@ -127,18 +980,14 @@ TBool CExtChangeInfo::IsMatching(CFsRequest* aRequest)
 	//Special case where the dir the notifier is setup on has just been created
 	if(function==EFsMkDir)	
 		{		
-		TInt notDrive;
-		RFs::CharToDrive(aRequest->Src().Drive()[0],notDrive);	//can not fail as the drive letter has been parsed already
-		if(aRequest->Src().Path().MatchF(iName) == 0 && aRequest->DriveNumber() == notDrive)
+        if(aRequest->Source().Path().MatchF(iName) == 0)
 			return ETrue;
 		}
 	
-	//Special case where  the File the notifier is setup on has just been created by temp as the name is not known unti it has been created
+	//Special case where  the File the notifier is setup on has just been created by temp as the name is not known until it has been created
 	if(function==EFsRename||function==EFsFileOpen||function==EFsFileCreate||function==EFsFileReplace)
 		{
-		TInt notDrive;
-		RFs::CharToDrive(aRequest->Src().Drive()[0],notDrive);	//can not fail as the drive letter has been parsed already
-		if(aRequest->Src().FullName().Mid(2).MatchF(iName) == 0 && aRequest->DriveNumber() == notDrive)
+        if(aRequest->Source().FullName().MatchF(iName) == 0)
 			return ETrue;
 		}
 	
@@ -162,13 +1011,10 @@ TBool CExtChangeInfo::IsMatching(CFsRequest* aRequest)
 			TBuf<KMaxFileName> root=iName;
 			root+=_L("*");	
 			
-			// NB share may be NULL if file server has initiated a flush of the file cache
-			CFileShare* share;
-			CFileCB* fileCache;
-			GetFileFromScratch(aRequest, share, fileCache);
-			if (share && share->File().FileName().MatchF(root) != KErrNotFound)
-				return(ETrue);
-
+                if (aRequest->Source().FullName().MatchF(root) != KErrNotFound)
+                    {
+                    return(ETrue);
+                    }
 			}
 			break;
 			case EFsSetDriveName:
@@ -186,18 +1032,26 @@ TBool CExtChangeInfo::IsMatching(CFsRequest* aRequest)
 				TBuf<KMaxFileName> root = iName;
 				root+=_L("*");	
 				
-				if(aRequest->Src().FullName().Mid(2).MatchF(root)!=KErrNotFound)
+                if(aRequest->Source().FullName().MatchF(root)!=KErrNotFound)
 					return(ETrue);	
 				else if(function==EFsRename||function==EFsReplace||function==EFsFileRename)
 					{
 					// - rename/replace causes the file/path to disappear
-					if(aRequest->Dest().FullName().Mid(2).MatchF(root)!=KErrNotFound)
+				    TPtrC newName;
+				    if(aRequest->DestDriveIsSet())
+				        newName.Set(aRequest->NewName().FullName().Mid(2));
+				    else
+				        newName.Set(aRequest->NewName().FullName());
+                    if(newName.MatchF(root)!=KErrNotFound)
 						{
 						return(ETrue);
 						}
 
 					// - rename/replace causes the file/path to arrive
-					root=aRequest->Dest().FullName().Mid(2);
+                    if(aRequest->DestDriveIsSet())
+                        root=aRequest->NewName().FullName().Mid(2);
+                    else
+                        root=aRequest->NewName().FullName();
 					root+=_L("*");
 
 					if (iName.MatchF(root)!=KErrNotFound)
@@ -416,7 +1270,7 @@ void TChangeQue::CancelAll(TInt aCompletionCode)
 	iQLock.Signal();
 	}
 
-void TChangeQue::CheckChange(CFsRequest* aRequest)
+void TChangeQue::CheckChange(CFsNotificationInfo& aRequest)
 //
 // complete any notification in que that matches aRequest
 //
@@ -429,9 +1283,9 @@ void TChangeQue::CheckChange(CFsRequest* aRequest)
 		__ASSERT_DEBUG(info->Type()==CNotifyInfo::EStdChange||info->Type()==CNotifyInfo::EExtChange,Fault(EChangeQueType));
 		TBool isMatching;
 		if(info->Type()==CNotifyInfo::EStdChange)
-			isMatching=((CStdChangeInfo*)info)->IsMatching(aRequest);
+			isMatching=((CStdChangeInfo*)info)->IsMatching(&aRequest);
 		else
-			isMatching=((CExtChangeInfo*)info)->IsMatching(aRequest);
+			isMatching=((CExtChangeInfo*)info)->IsMatching(&aRequest);
 		if(isMatching)
 			{
 			__PRINT1(_L("TChangeQue::CheckChange()-Matching info=0x%x"),info);
@@ -842,17 +1696,18 @@ TInt FsNotify::AddDismountNotify(CNotifyInfo* aDismountNotifyInfo)
 	return(KErrNone);
 	}
 
-void FsNotify::HandleChange(CFsRequest* aRequest,TInt aDrive)
+
+void FsNotify::HandleChange(CFsNotificationInfo& aNotificationInfo)
 //
 // Check whether any change notifications need to be completed due to aRequest on aDrive
 //
-	{
-	__PRINT2(_L("FsNotify::HandleChange() aRequest=0x%x, aDrive=%d"),aRequest,aDrive);
-	if(!aRequest->IsChangeNotify())
-		return;
-	iChangeQues[ChangeIndex(aDrive)].CheckChange(aRequest);
-	iChangeQues[ChangeIndex(KDriveInvalid)].CheckChange(aRequest);
-	}
+    {
+    __PRINT1(_L("FsNotify::HandleChange(TFsNotificationInfo) DriveNumber=%d"),aNotificationInfo.DriveNumber());
+    if(aNotificationInfo.Request() && !aNotificationInfo.Request()->IsChangeNotify())
+        return;
+    iChangeQues[ChangeIndex(aNotificationInfo.DriveNumber())].CheckChange(aNotificationInfo);
+    iChangeQues[ChangeIndex(KDriveInvalid)].CheckChange(aNotificationInfo);
+    }
 	
 
 void FsNotify::HandleDiskSpace(CFsRequest* aRequest,TInt aDrive)

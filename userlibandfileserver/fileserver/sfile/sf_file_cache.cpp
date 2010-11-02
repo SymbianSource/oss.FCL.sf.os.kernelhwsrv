@@ -241,6 +241,7 @@ CFileCache* CFileCache::NewL(CFileShare& aShare)
 	CleanupClosePushL(*fileCache);
 	fileCache->ConstructL(aShare);
 	CleanupStack::Pop(1, fileCache);
+
 	return fileCache;
 	}
 
@@ -305,6 +306,8 @@ CFileCache::~CFileCache()
 	delete iCacheClient;
 
 	delete iFileNameF;
+
+	OstTraceExt2(TRACE_FILECACHE, FILECACHE_DELETE, "fileCache %x fileCB %x", (TUint) this, (TUint) iFileCB);
 	}
 
 
@@ -316,6 +319,8 @@ TInt CFileCache::ClosedTimerEvent(TAny* aFileCache)
 
 TInt CFileCache::DirtyTimerEvent(TAny* aFileCache)
 	{
+	OstTrace1(TRACE_FILECACHE, FILECACHE_DIRTY_DATA_TIMER_EXPIRY, "fileCache %x", (TUint) aFileCache);
+
 	// Cannot report errors here
 	// coverity [unchecked_value]
 	(void)((CFileCache*) aFileCache)->FlushDirty();
@@ -340,7 +345,9 @@ void CFileCache::Close()
 		__ASSERT_DEBUG(!iDirtyDataOwner, Fault(EClosingDirtyFile));
 		}
 #endif
-		
+
+	// there should be no dirty data (see assert above) but clean up just in case
+	MarkFileClean();
 		
 	__CACHE_PRINT2(_L("CFileCache::Close() iFileCB %08X IsClosed %d"), 
 		iFileCB, TClosedFileUtils::IsClosed(this));
@@ -350,6 +357,8 @@ void CFileCache::Close()
 		!TClosedFileUtils::IsClosed(this) && 
 		IsDriveThread())
 		{
+		OstTrace1(TRACE_FILECACHE, FILECACHE_MODE_TO_CLOSEQ, "Moving to close queue, fileCache %x", (TUint) this);
+
 		// add to ClosedFiles container
 		__CACHE_PRINT1(_L("CLOSEDFILES: Adding %S\n"), &iFileCB->FileNameF() );
 		TRAP(r, TClosedFileUtils::AddL(this, ETrue));
@@ -566,6 +575,10 @@ void CFileCache::DoReadAhead(CFsMessageRequest& aMsgRequest, TUint aMode)
 	TInt r = AllocateRequest(newRequest, EFalse, aMsgRequest.Session());
 	if (r != KErrNone)
 		return;
+
+	TRACETHREADID(aMsgRequest.Message());
+	OstTraceExt5(TRACE_FILECACHE, FILECACHE_READ_AHEAD, "Issue read ahead, clientThreadId %x fileCache %x pos %x:%x len %d", 
+		 (TUint) threadId, (TUint) this, (TUint) I64HIGH(iReadAheadPos), (TUint) I64LOW(iReadAheadPos), iReadAheadLen);
 
 	r = newRequest->PushOperation(
 		iReadAheadPos, 
@@ -840,6 +853,11 @@ TInt CFileCache::DoReadBuffered(CFsMessageRequest& aMsgRequest, TUint aMode, CFs
 					if (totalLen > iCacheSize)
 						{
 						TInt len = totalLen - iCacheSize;
+
+						TRACETHREADID(aMsgRequest.Message());
+						OstTraceExt5(TRACE_FILECACHE, FILECACHE_READ_UNCACHED1, "Read, media to client, clientThreadId %x fileCache %x pos %x:%x len %d", 
+							 (TUint) threadId, (TUint) this, (TUint) I64HIGH(currentPos), (TUint) I64LOW(currentPos), (TUint) len);
+
 						TInt r = aMsgRequest.PushOperation(
 							currentPos, len, 
 							(TDesC8*) currentOperation->iReadWriteArgs.iData, currentOffset,
@@ -891,6 +909,11 @@ TInt CFileCache::DoReadBuffered(CFsMessageRequest& aMsgRequest, TUint aMode, CFs
 
 					// read into cache segment(s)
 					__CACHE_PRINT2(_L("CACHEFILE: read pos %ld, readLen %d"), segmentStartPos, readLen);
+
+					TRACETHREADID(aMsgRequest.Message());
+					OstTraceExt5(TRACE_FILECACHE, FILECACHE_READ_CACHED1, "Read, media to cache, clientThreadId %x fileCache %x pos %x:%x len %d", 
+						 (TUint) threadId, (TUint) this, (TUint) I64HIGH(segmentStartPos), (TUint) I64LOW(segmentStartPos), (TUint) readLen);
+
 					TInt r = aMsgRequest.PushOperation(
 						segmentStartPos, readLen, addr, 0,
 						CompleteRead, 
@@ -924,6 +947,10 @@ TInt CFileCache::DoReadBuffered(CFsMessageRequest& aMsgRequest, TUint aMode, CFs
 					// if addr is NULL then this is a read ahead request
 					if (currentOperation->iReadWriteArgs.iData != NULL)
 						{
+						TRACETHREADID(aMsgRequest.Message());
+						OstTraceExt5(TRACE_FILECACHE, FILECACHE_READ_COPY, "Read, cache to client, clientThreadId %x fileCache %x pos %x:%x len %d", 
+							 (TUint) threadId, (TUint) this, (TUint) I64HIGH(currentPos), (TUint) I64LOW(currentPos), (TUint) len);
+
 						if (currentOperation->iClientRequest)
 							{
 							__ASSERT_DEBUG (aMsgRequest.Message().Handle() != NULL, Fault(EMsgAlreadyCompleted));
@@ -978,6 +1005,10 @@ TInt CFileCache::DoReadBuffered(CFsMessageRequest& aMsgRequest, TUint aMode, CFs
 				addr = (TUint8*) currentOperation->iScratchValue0;
 				readLen = (TInt) currentOperation->iScratchValue1;
 				
+				TRACETHREADID(aMsgRequest.Message());
+				OstTraceExt3(TRACE_FILECACHE, FILECACHE_READ_COMPLETE, "Read, media to cache, clientThreadId %x fileCache %x r %d", 
+					 (TUint) threadId, (TUint) this, (TUint) (TUint) lastError);
+
 				aMsgRequest.CurrentOperation().iState = EStCopyToClient;
 				}
 				break;
@@ -1027,6 +1058,11 @@ TInt CFileCache::DoReadBuffered(CFsMessageRequest& aMsgRequest, TUint aMode, CFs
 
 				aMsgRequest.ReStart();
 				UpdateSharePosition(aMsgRequest, *currentOperation);
+
+				TRACETHREADID(aMsgRequest.Message());
+				OstTraceExt5(TRACE_FILECACHE, FILECACHE_READ_UNCACHED2, "Read media to client, clientThreadId %x fileCache %x pos %x:%x len %d", 
+					 (TUint) threadId, (TUint) this, (TUint) I64HIGH(currentPos), (TUint) I64LOW(currentPos), (TUint) totalLen);
+
 				return retCode;
 
 
@@ -1205,6 +1241,11 @@ TInt CFileCache::DoWriteBuffered(CFsMessageRequest& aMsgRequest, CFsClientMessag
 					iCacheClient->Purge(ETrue);
 
 					TInt len = totalLen - iCacheSize;
+
+					TRACETHREADID(aMsgRequest.Message());
+					OstTraceExt5(TRACE_FILECACHE, FILECACHE_WRITE_UNCACHED1, "Write, client to media, clientThreadId %x fileCache %x pos %x:%x len %d", 
+						 (TUint) threadId, (TUint) this, (TUint) I64HIGH(currentPos), (TUint) I64LOW(currentPos), (TUint) len);
+
 					TInt r = aMsgRequest.PushOperation(
 						currentPos, len, 
 						(TDesC8*) currentOperation->iReadWriteArgs.iData, currentOffset,
@@ -1394,6 +1435,11 @@ TInt CFileCache::DoWriteBuffered(CFsMessageRequest& aMsgRequest, CFsClientMessag
 #pragma warning( default : 4244 )
 #endif
 				__ASSERT_DEBUG (aMsgRequest.Message().Handle() != NULL, Fault(EMsgAlreadyCompleted));					
+
+				TRACETHREADID(aMsgRequest.Message());
+				OstTraceExt5(TRACE_FILECACHE, FILECACHE_READ_CACHED2, "Read, media to cache, clientThreadId %x fileCache %x pos %x:%x len %d", 
+					 (TUint) threadId, (TUint) this, (TUint) I64HIGH(readPos), (TUint) I64LOW(readPos), (TUint) readLen);
+
 				TInt r = aMsgRequest.PushOperation(
 					readPos, readLen, readAddr, 0, 
 					CompleteWrite,
@@ -1446,6 +1492,11 @@ TInt CFileCache::DoWriteBuffered(CFsMessageRequest& aMsgRequest, CFsClientMessag
 					__ASSERT_DEBUG (aMsgRequest.Message().Handle() != NULL, Fault(EMsgAlreadyCompleted));
 					// copy from user buffer to cache buffer
 					TInt writeError = KErrNone;
+
+					TRACETHREADID(aMsgRequest.Message());
+					OstTraceExt5(TRACE_FILECACHE, FILECACHE_WRITE_COPY, "Write, client to cache, clientThreadId %x fileCache %x pos %x:%x len %d", 
+						 (TUint) threadId, (TUint) this, (TUint) I64HIGH(currentPos), (TUint) I64LOW(currentPos), (TUint) writeLen);
+
 					if (currentOperation->iClientRequest)
 						{
 						TPtr8 ptr(addr+offset, writeLen, writeLen);
@@ -1549,14 +1600,20 @@ TInt CFileCache::DoWriteBuffered(CFsMessageRequest& aMsgRequest, CFsClientMessag
 				currentOperation->iState = EStReStart;
 
 			case EStReStart:
-
+				{
 				__ASSERT_DEBUG(retCode == CFsRequest::EReqActionBusy || retCode == CFsRequest::EReqActionContinue, Fault(EBadRetCode));
 
 				aMsgRequest.ReStart();
 				UpdateSharePosition(aMsgRequest, *currentOperation);
 				if (currentOperation->iClientRequest)
 					currentOperation->iReadWriteArgs.iPos = currentOperation->iClientPosition; // NB maybe KCurrentPosition64
+
+				TRACETHREADID(aMsgRequest.Message());
+				OstTraceExt5(TRACE_FILECACHE, FILECACHE_WRITE_UNCACHED2, "Write, client to media, clientThreadId %x fileCache %x pos %x:%x len %d", 
+					 (TUint) threadId, (TUint) this, (TUint) I64HIGH(currentPos), (TUint) I64LOW(currentPos), (TUint) totalLen);
+
 				return retCode;
+				}
 
 			case EStEnd:
 				return retCode;
@@ -1566,7 +1623,7 @@ TInt CFileCache::DoWriteBuffered(CFsMessageRequest& aMsgRequest, CFsClientMessag
 
 
 
-TInt CFileCache::AllocateRequest(CFsClientMessageRequest*& aNewRequest, TBool aWrite, CSessionFs* aSession)
+TInt CFileCache::AllocateRequest(CFsClientMessageRequest*& aNewRequest, TBool aWrite, CSessionFs* aSession,TUid aUid)
 	{
 
 	RLocalMessage msgNew;
@@ -1575,7 +1632,7 @@ TInt CFileCache::AllocateRequest(CFsClientMessageRequest*& aNewRequest, TBool aW
 	if (r != KErrNone)
 		return r;
 
-	aNewRequest->Set(msgNew, oP, aSession);
+	aNewRequest->Set(msgNew, oP, aSession, aUid);
 	aNewRequest->SetDrive(iDrive);
 	
 	// read-aheads and write-dirty requests should not be posted to plugins
@@ -1604,14 +1661,21 @@ TInt CFileCache::FlushDirty(CFsRequest* aOldRequest)
 
 	CFsClientMessageRequest* newRequest = NULL;
 
+#if defined (OST_TRACE_COMPILER_IN_USE)
+	RMessage2 msgOld;
+	if (aOldRequest)
+		msgOld = const_cast<RMessage2&> (aOldRequest->Message());
+	TRACETHREADID(msgOld);
+	OstTraceExt2(TRACE_FILECACHE, FILECACHE_FLUSH_DIRTY, "clientThreadId %x fileCache %x", (TUint) threadId, (TUint) this);
+#endif	// if defined (OST_TRACE_COMPILER_IN_USE)
+
+
 	TInt r = DoFlushDirty(newRequest, aOldRequest, EFlushAll);
 
 	iLock.Signal();
 
 	if (newRequest)
 	    {
-		//To be used in notification framework.
-	    //newRequest->iUID = aOldRequest->Message().Identity();
 		newRequest->Dispatch();
 	    }
 
@@ -1696,8 +1760,8 @@ TInt CFileCache::DoFlushDirty(CFsClientMessageRequest*& aNewRequest, CFsRequest*
 	CSessionFs* session = aOldRequest && aOldRequest->Session() ? aOldRequest->Session() : iDirtyDataOwner;
 
 	__ASSERT_ALWAYS(session, Fault(EFlushingWithSessionNull));
-
-	TInt r = AllocateRequest(aNewRequest, ETrue, session);
+	
+	TInt r = AllocateRequest(aNewRequest, ETrue, session, (aOldRequest) ? aOldRequest->Uid() : TUid::Null());
 	if (r != KErrNone)
 		return r;
 	
@@ -1883,6 +1947,9 @@ TInt CFileCache::FlushDirtySm(CFsMessageRequest& aMsgRequest)
 				currentOperation->Set(pos, len, addr, 0, EStWriteToDiskComplete);
 				if (pos < iSize64)
 					{
+					OstTraceExt4(TRACE_FILECACHE, FILECACHE_WRITE_DIRTY, "Write, cache to media, fileCache %x pos %x:%x len %d", 
+						 (TUint) this, (TUint) I64HIGH(pos), (TUint) I64LOW(pos), (TUint) len);
+
 					TInt r = aMsgRequest.PushOperation(
 						pos, len, addr, 0,
 						CompleteFlushDirty, 
@@ -1909,6 +1976,10 @@ TInt CFileCache::FlushDirtySm(CFsMessageRequest& aMsgRequest)
 					iDrive->Dismount();
 					}
 #endif
+				TRACETHREADID(aMsgRequest.Message());
+				OstTraceExt3(TRACE_FILECACHE, FILECACHE_FLUSH_DIRTY_COMPLETE, "Write, cache to media, clientThreadId %x fileCache %x r %d", 
+					 (TUint) threadId, (TUint) this, (TUint) lastError);
+
 				pos = currentOperation->iReadWriteArgs.iPos;
 				iCacheClient->UnlockSegments(pos);
 				}
@@ -2129,7 +2200,11 @@ void CFileCache::FileDirty(CFsMessageRequest& aMsgRequest)
 	CDriveThread* driveThread=NULL;
 	TInt r = FsThreadManager::GetDriveThread(iDriveNum, &driveThread);
 	if(r == KErrNone && driveThread != NULL)
+		{
+		OstTrace1(TRACE_FILECACHE, FILECACHE_STARTING_DIRTY_DATA_TIMER, "Starting dirty data timer() fileCache %x", (TUint) this);
+
 		iDirtyTimer.Start(driveThread, iDirtyDataFlushTime);
+		}
 	}
 
 //----------------------------------------------------------------------------
@@ -2294,6 +2369,14 @@ TInt TFileCacheSettings::ReadPropertiesFile(TInt aDriveNumber)
 		driveCacheSettings->iClosedFileKeepAliveTime,
 		driveCacheSettings->iDirtyDataFlushTime);
 	
+	OstTraceExt5(TRACE_FILECACHE, FILECACHE_SETTINGS, 
+		"Drive %d Flags %x CacheSize %d FileCacheReadAsync %d FairSchedulingLen %d ", 
+		(TUint) aDriveNumber,
+		(TUint) driveCacheSettings->iFlags, 
+		(TUint) driveCacheSettings->iCacheSize, 
+		(TUint) driveCacheSettings->iFileCacheReadAsync,
+		(TUint) driveCacheSettings->iFairSchedulingLen);
+
 	return KErrNone;
 	}
 

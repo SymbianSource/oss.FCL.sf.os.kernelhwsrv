@@ -42,6 +42,10 @@
 #include <e32math.h>
 #endif
 
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "sf_cache_manTraces.h"
+#endif
+
 #define CACHE_NUM_TO_ADDR(n) (iBase + (n << iCacheLineSizeLog2))
 #define ADDR_TO_CACHELINE_ADDR(a) ((((a - iBase) >> iCacheLineSizeLog2) << iCacheLineSizeLog2) + iBase)
 #define ADDR_TO_INDEX(a) ((a - iBase) >> iCacheLineSizeLog2)
@@ -189,7 +193,7 @@ void CCacheManager::ConstructL()
 	TInt r = UserHal::MemoryInfo(meminfo);
 	__ASSERT_ALWAYS(r==KErrNone,Fault(EMemoryInfoFailed));
 
-	iLowMemoryThreshold = (meminfo().iTotalRamInBytes * TGlobalFileCacheSettings::LowMemoryThreshold()) / 100;
+	iLowMemoryThreshold = (meminfo().iTotalRamInBytes  / 100) * TGlobalFileCacheSettings::LowMemoryThreshold();
 	__CACHE_PRINT4(_L("CACHEMAN: totalRAM %d freeRAM %d KDefaultLowMemoryThresholdPercent %d iLowMemoryThreshold %d"), 
 		meminfo().iTotalRamInBytes, meminfo().iFreeRamInBytes, KDefaultLowMemoryThreshold, iLowMemoryThreshold);
 	__CACHE_PRINT1(_L("CACHEMAN: iCacheSize %d"), iCacheSize);
@@ -199,6 +203,13 @@ void CCacheManager::ConstructL()
 	r = iChunk.Create(createInfo);
 	User::LeaveIfError(r);
 
+#ifdef	OST_TRACE_COMPILER_IN_USE
+	TName chunkName = iChunk.Name();
+	OstTraceData(TRACE_FILECACHE_MANAGER, FILECACHEMAN_CHUNK_NAME, "Chunk name %S", chunkName.Ptr(), chunkName.Length()<<1);
+	OstTraceExt5(TRACE_FILECACHE_MANAGER, FILECACHEMAN_CHUNK_PARM, 
+		"totalRAM %d freeRAM %d KDefaultLowMemoryThresholdPercent %d iLowMemoryThreshold %d iCacheSize %d", 
+		meminfo().iTotalRamInBytes, meminfo().iFreeRamInBytes, KDefaultLowMemoryThreshold, iLowMemoryThreshold, iCacheSize);
+#endif	// OST_TRACE_COMPILER_IN_USE
 	
 	TInt mm = UserSvr::HalFunction(EHalGroupKernel, EKernelHalMemModelInfo, 0, 0) & EMemModelTypeMask;
 	if (mm < EMemModelTypeFlexible)
@@ -309,6 +320,7 @@ TFileCacheStats& CCacheManager::Stats()
 	iStats.iFreeCount = iFreeQueue.Count();
 	iStats.iUsedCount = iUsedQueue.Count();
 	iStats.iLockedSegmentCount = iLockedSegmentCount;
+	iStats.iAllocatedSegmentCount = iAllocatedSegmentCount;
 	iStats.iFilesOnClosedQueue = TClosedFileUtils::Count();
 	__ASSERT_DEBUG(iStats.iFreeCount >= 0, Fault(EInvalidStats));
 	__ASSERT_DEBUG(iStats.iUsedCount >= 0, Fault(EInvalidStats));
@@ -349,6 +361,7 @@ TInt CCacheManager::AllocateAndLockCacheLine(CCacheClient* aClient, TInt64 aPos,
 	if (iMemoryLow || (meminfo().iFreeRamInBytes < iLowMemoryThreshold))
 		{
 		__CACHE_PRINT(_L("CACHEMAN: free RAM below threshold !!!"));
+		OstTrace0(TRACE_FILECACHE_MANAGER, FILECACHEMAN_LOW_MEM, "Free RAM below threshold");
 		return KErrNoMemory;
 		}
 
@@ -361,6 +374,8 @@ TInt CCacheManager::AllocateAndLockCacheLine(CCacheClient* aClient, TInt64 aPos,
 	if (SimulatedFailure(iAllocFailureCount))
 		{
 		__CACHE_PRINT(_L("CACHEMAN: simulating allocation failure"));
+		OstTrace0(TRACE_FILECACHE_MANAGER, FILECACHEMAN_SIMULATING_ALLOC_FAILURE, "Simulating alloc failure");
+
 		CacheUnlock();
 		return KErrNoMemory;
 		}
@@ -413,6 +428,8 @@ TInt CCacheManager::AllocateAndLockCacheLine(CCacheClient* aClient, TInt64 aPos,
 
 	// Remove from free queue
 	iFreeQueue.Remove(0);
+
+	OstTraceExt2(TRACE_FILECACHE_MANAGER, FILECACHEMAN_ALLOC_CACHELINE, "cachelines: free %d used %d", iFreeQueue.Count(), iUsedQueue.Count());
 
 	// RChunk will lock segments initially unless explicitly unlocked
 
@@ -905,6 +922,7 @@ void CCacheManager::FreeCacheLine(TCacheLine& aCacheLine)
 	__ASSERT_ALWAYS(r == KErrNone, Fault(EAppendToFreeQueueFailed));
 
 	__CACHE_PRINT2(_L("CACHEMAN: FreeCacheLine, iFreeQueue %d iUsedQueue %d"), iFreeQueue.Count(), iUsedQueue.Count());
+	OstTraceExt2(TRACE_FILECACHE_MANAGER, FILECACHEMAN_FREE_CACHELINE, "cachelines: free %d used %d", iFreeQueue.Count(), iUsedQueue.Count());
 	}
 
 
@@ -984,6 +1002,8 @@ TInt CCacheManager::Lock(TUint8* const aAddr, TInt aSegmentCount)
 	if (SimulatedFailure(iLockFailureCount))
 		{
 		__CACHE_PRINT(_L("CACHEMAN: simulating lock failure"));
+		OstTrace0(TRACE_FILECACHE_MANAGER, FILECACHEMAN_SIMULATING_LOCK_FAILURE, "Simulating lock failure");
+
 		r = KErrNotFound;
 		}
 #endif
@@ -991,10 +1011,14 @@ TInt CCacheManager::Lock(TUint8* const aAddr, TInt aSegmentCount)
 	if (r == KErrNone)
 		{
 		iLockedSegmentCount+= aSegmentCount;
+
+		OstTrace1(TRACE_FILECACHE_MANAGER, FILECACHEMAN_LOCK_SEGMENTS, "Locked segments %d", iLockedSegmentCount);
 		}
 	else
 		{
 		__CACHE_PRINT(_L("CACHEMAN: LOCK FAILED"));
+		OstTrace1(TRACE_FILECACHE_MANAGER, FILECACHEMAN_LOCK_FAILURE, "Failure r %d", r);
+
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)
 		iStats.iLockFailureCount++;
 #endif
@@ -1012,6 +1036,8 @@ TInt CCacheManager::Unlock(TUint8* const aAddr, TInt aSegmentCount)
 	if (r == KErrNone)
 		{
 		iLockedSegmentCount-= aSegmentCount;
+
+		OstTrace1(TRACE_FILECACHE_MANAGER, FILECACHEMAN_UNLOCK_SEGMENTS, "Locked segments %d", iLockedSegmentCount);
 		}
 	else
 		{
@@ -1027,6 +1053,8 @@ TInt CCacheManager::Commit(TUint8* const aAddr, TInt aSegmentCount)
 	if (SimulatedFailure(iCommitFailureCount))
 		{
 		__CACHE_PRINT(_L("CACHEMAN: simulating commit failure "));
+		OstTrace0(TRACE_FILECACHE_MANAGER, FILECACHEMAN_SIMULATING_COMMIT_FAILURE, "Simulating commit failure");
+
 		return KErrNoMemory;
 		}
 #endif
@@ -1038,13 +1066,15 @@ TInt CCacheManager::Commit(TUint8* const aAddr, TInt aSegmentCount)
 	if (r == KErrNone)
 		{
 		iLockedSegmentCount+= aSegmentCount;
-#if defined(_DEBUG) || defined(_DEBUG_RELEASE)
-		iStats.iAllocatedSegmentCount+= aSegmentCount;
-#endif
+		iAllocatedSegmentCount+= aSegmentCount;
+
+		OstTrace1(TRACE_FILECACHE_MANAGER, FILECACHEMAN_COMMIT_SEGMENTS, "Allocated segments %d", iAllocatedSegmentCount);
 		}
 	else
 		{
 		__CACHE_PRINT(_L("CACHEMAN: COMMIT FAILED"));
+		OstTrace1(TRACE_FILECACHE_MANAGER, FILECACHEMAN_COMMIT_FAILURE, "Failure r %d", r);
+
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)
 		iStats.iCommitFailureCount++;
 #endif
@@ -1064,9 +1094,9 @@ TInt CCacheManager::Decommit(TUint8* const aAddr, TInt aSegmentCount)
 	__CACHE_PRINT3(_L("CACHEMAN: DECOMMIT: %08X %d %d, "), aAddr, aSegmentCount, r);
 	if (r == KErrNone)
 		{
-#if defined(_DEBUG) || defined(_DEBUG_RELEASE)
-		iStats.iAllocatedSegmentCount-= aSegmentCount;
-#endif
+		iAllocatedSegmentCount-= aSegmentCount;
+
+		OstTrace1(TRACE_FILECACHE_MANAGER, FILECACHEMAN_DECOMMIT_SEGMENTS, "Allocated segments %d", iAllocatedSegmentCount);
 		}
 	else
 		{
@@ -1081,13 +1111,15 @@ TInt CCacheManager::Decommit(TUint8* const aAddr, TInt aSegmentCount)
 void CCacheManager::SimulateLockFailureMode(TBool aEnable)
 	{
 	iSimulateLockFailureMode = aEnable;
-__CACHE_PRINT1(_L("CACHEMAN: SimulateLockFailureMode: %d, "), iSimulateLockFailureMode);
+
+	__CACHE_PRINT1(_L("CACHEMAN: SimulateLockFailureMode: %d, "), iSimulateLockFailureMode);
+	OstTrace1(TRACE_FILECACHE_MANAGER, FILECACHEMAN_SIMULATE_LOCK_FAILURE_MODE, "aEnable %d", aEnable);
 	}
 
 void CCacheManager::AllocateMaxSegments(TBool aEnable)
 	{
 	iAllocateMaxSegments = aEnable;
-__CACHE_PRINT1(_L("CACHEMAN: iAllocateMaxSegments: %d, "), iAllocateMaxSegments);
+	__CACHE_PRINT1(_L("CACHEMAN: iAllocateMaxSegments: %d, "), iAllocateMaxSegments);
 	}
 
 TBool CCacheManager::AllocateMaxSegments()

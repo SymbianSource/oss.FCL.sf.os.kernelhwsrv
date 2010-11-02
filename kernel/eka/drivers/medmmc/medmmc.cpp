@@ -1610,6 +1610,7 @@ mbr_done:
 
 #ifdef _DEBUG
 	TMBRPartitionEntry cPe;
+	memclr(&cPe, sizeof(cPe));
 	if(GetDefaultPartitionInfo(cPe) == KErrNone)
 		{
 		pe = (TMBRPartitionEntry*)(&iIntBuf[0]);

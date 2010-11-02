@@ -418,4 +418,6 @@ EXPORTS
 	_ZNK14CFsMountHelper15MountFileSystemEv @ 417 NONAME
 	_ZNK14CFsMountHelper18DismountFileSystemER14TRequestStatusNS_15TFsDismountModeE @ 418 NONAME
 	_ZNK14CFsMountHelper18DismountFileSystemEv @ 419 NONAME
+	_ZNK15TFsNotification11DriveNumberERi @ 420 NONAME
+	_ZNK15TFsNotification3UIDER4TUid @ 421 NONAME
 

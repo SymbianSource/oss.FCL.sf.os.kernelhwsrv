@@ -24,20 +24,21 @@ TInt FsNotificationManager::iFilterRegister[];
 CFsPool<CFsNotificationBlock>* FsNotificationManager::iPool;
 
 
-CFsNotificationPathFilter* CFsNotificationPathFilter::NewL(const TDesC& aPath, const TDesC& aFilename)
+CFsNotificationPathFilter* CFsNotificationPathFilter::NewL(const TDesC& aPath, const TDesC& aFilename, TInt aDriveNum)
 	{
 	CFsNotificationPathFilter* self = new (ELeave) CFsNotificationPathFilter();
 	CleanupStack::PushL(self);
-	self->ConstructL(aPath,aFilename);
+	self->ConstructL(aPath,aFilename,aDriveNum);
 	CleanupStack::Pop(self);
 	return self;
 	}
 
-void CFsNotificationPathFilter::ConstructL(const TDesC& aPath, const TDesC& aFilename)
+void CFsNotificationPathFilter::ConstructL(const TDesC& aPath, const TDesC& aFilename, TInt aDriveNum)
 	{
 	//Allocate the path and filename
 	iPath = aPath.AllocL();
 	iFilename = aFilename.AllocL();	
+	iDriveNum = aDriveNum;
 	}
 
 CFsNotificationPathFilter::~CFsNotificationPathFilter()
@@ -176,7 +177,7 @@ TInt CFsNotifyRequest::RemoveFilters()
 			if(filterTypeCount)
 				{
 				//Remove this type from the filter register
-				TFsNotification::TFsNotificationType type = FsNotificationHelper::NotificationType(filterType);
+				TFsNotification::TFsNotificationType type = CFsNotificationInfo::NotificationType(filterType);
 				FsNotificationManager::SetFilterRegister(type,EFalse,filterTypeCount);
 				}
 			filterList.Reset();
@@ -188,8 +189,6 @@ TInt CFsNotifyRequest::RemoveFilters()
 		currentDriveFilters = (TFsNotificationTypeDriveArray*)iterator.NextValue();
 		}
 	iDrivesTypesFiltersMap.Close();
-	iPathFilterList.ResetAndDestroy();
-	iPathFilterList.Close();
 	return KErrNone;
 	}
 
@@ -197,10 +196,8 @@ TInt CFsNotifyRequest::AddFilterL(CFsNotificationPathFilter* aFilter, TUint aMas
 	{
 	__PRINT(_L("CFsNotifyRequest::AddFilterL"));
 
-	iPathFilterList.AppendL(aFilter);
-	
 	//Get the drive number to so know which drive array to add the filter(s) to.
-	TInt driveNum = FsNotificationHelper::DriveNumber(aFilter->iPath->Des()); 
+	TInt driveNum = aFilter->iDriveNum; 
 	
 	TInt notifyType = 1; 
 	TInt r = KErrNone;
@@ -213,7 +210,7 @@ TInt CFsNotifyRequest::AddFilterL(CFsNotificationPathFilter* aFilter, TUint aMas
 			TFsNotificationTypeFilter typeFilter;
 			typeFilter.iNotificationType = (TFsNotification::TFsNotificationType) notifyType;
 			typeFilter.iPathFilter = aFilter;
-			TInt index = FsNotificationHelper::TypeToIndex(typeFilter.iNotificationType);
+			TInt index = CFsNotificationInfo::TypeToIndex(typeFilter.iNotificationType);
 			
 			//If the per-drive-filterLists have not
 			//been set up yet then do so now.
@@ -255,6 +252,11 @@ TInt CFsNotifyRequest::ClientMsgHandle()
 	{
 	return iClientMsg.Handle();
 	}
+
+const RMessage2& CFsNotifyRequest::BufferMessage()
+    {
+    return iBufferMsg;
+    }
 
 void CFsNotifyRequest::CloseNotification()
 	{
@@ -328,7 +330,7 @@ void FsNotificationManager::OpenL()
 			User::LeaveIfError(iChainLock.CreateLocal());	
 			}
 		iNotifyRequests = TheContainer->CreateL();
-		iPool = CFsPool<CFsNotificationBlock>::New(KNotificationPoolSize);
+		iPool = CFsPool<CFsNotificationBlock>::New(KNotificationPoolSize,CFsNotificationBlock::New);
 		User::LeaveIfNull(iPool);
 		}
 	}
@@ -336,7 +338,7 @@ void FsNotificationManager::OpenL()
 void FsNotificationManager::SetFilterRegister(TUint aFilter, TBool aAdd, TInt aCount)
 	{
 	__PRINT2(_L("FsNotificationManager::SetFilterRegister(aFilter=%u,aAdd=%d)"),aFilter,aAdd);
-	TInt index = FsNotificationHelper::TypeToIndex((TFsNotification::TFsNotificationType)aFilter);
+	TInt index = CFsNotificationInfo::TypeToIndex((TFsNotification::TFsNotificationType)aFilter);
 	TInt& fr = FsNotificationManager::FilterRegister(index);
 	__ASSERT_DEBUG((aAdd) ? fr >= 0 : fr > 0,Fault(ENotificationFault));
 	fr+= aAdd ? aCount : -aCount; 
@@ -400,9 +402,9 @@ void FsNotificationManager::Unlock()
 	}
 
 //Get the notification type based on the TFsMessage function
-void FsNotificationHelper::NotificationType(TInt aFunction,TFsNotification::TFsNotificationType& aNotificationType)
+void CFsNotificationInfo::NotificationType(TInt aFunction,TNotificationType& aNotificationType)
 	{
-	__PRINT(_L("FsNotificationHelper::NotificationType"));
+	__PRINT(_L("CFsNotificationInfo::NotificationType"));
 	switch(aFunction)
 		{
 		case EFsFileWrite:
@@ -486,258 +488,7 @@ TAny* CFsNotificationBlock::Data()
 	}
 
 
-//=====FsNotificationManager===========================
  
-//Get the path of the file, folder or drive name based on the TFsMessage function
-void FsNotificationHelper::PathName(CFsClientMessageRequest& aRequest, TDes& aPath)
-	{
-	__PRINT(_L("FsNotificationHelper::PathName"));
-	//Get the notification type
-	TInt function = aRequest.Operation()->Function();
-	
-	//Get the filename(s)
-	switch(function)
-		{
-		case EFsFileWrite:			//EParseSrc | EFileShare
-		case EFsFileSetSize:		//EParseSrc | EFileShare
-		case EFsFileSetAtt:			//EParseDst | EParseSrc, - should not use these; has share.
-		case EFsFileSet:
-		case EFsFileWriteDirty:		//EFileShare
-			{
-			CFileShare* share = NULL;
-			CFileCB* file = NULL;
-			GetFileFromScratch(&aRequest,share,file);	
-			aPath.Append(file->DriveNumber() + 'A');
-			aPath.Append(':');
-			aPath.Append(file->FileName().Des());
-			break;
-			}
-		case EFsFileCreate:			//EParseSrc
-		case EFsDelete:				//EParseSrc
-		case EFsSetEntry:			//EParseSrc,
-		case EFsFileRename:			//EParseDst | EParseSrc,
-		case EFsRename:				//EParseDst | EParseSrc,
-		case EFsReplace:			//EParseDst | EParseSrc,
-		case EFsFileReplace:		//EParseSrc
-			{
-			aPath.Copy(aRequest.Src().FullName());
-			break;
-			}
-        case EFsRmDir:              //EParseSrc
-        case EFsMkDir:              //EParseSrc
-            {
-            aPath.Copy(aRequest.Src().DriveAndPath());
-            break;
-            }
-		case EFsFormatNext:			//EParseSrc
-		case EFsDismountFileSystem: //0
-		case EFsMountFileSystem:	//0
-		case EFsSetVolume:			//0
-		case EFsSetDriveName:		//ESync
-		case EFsRawDiskWrite:		//EParseSrc
-		case EFsMountFileSystemScan:
-			{
-			_LIT(KFormatDrive,"?:");
-			TBuf<2> drive;
-			drive.Append(KFormatDrive);
-			drive[0] = TText(aRequest.Drive()->DriveNumber() + 'A');
-			aPath.Copy(drive);
-			break;
-			}
-		default:
-			ASSERT(0);
-			break;
-		}
-	}
-
-//Get the new path of the file, folder or drive name based on the TFsMessage function
-void FsNotificationHelper::NewPathName(CFsClientMessageRequest& aRequest, TPtrC& aNewPath)
-	{
-	__PRINT(_L("FsNotificationHelper::NewPathName"));
-	//Get the notification type
-	TInt function = aRequest.Operation()->Function();
-
-	//Get the filename(s)
-	switch(function)
-		{
-		case EFsFileRename:			//EParseDst | EParseSrc,
-		case EFsRename:				//EParseDst | EParseSrc,
-		case EFsReplace:			//EParseDst | EParseSrc,
-			{
-			aNewPath.Set(aRequest.Dest().FullName());
-			break;
-			}
-		case EFsSetDriveName:		//ESync
-			{
-			TFileName name;
-			aRequest.ReadL(KMsgPtr1, name);
-			aNewPath.Set(name);
-			break;
-			}
-		case EFsSetVolume:			//0
-			{
-			TFileName name;
-			aRequest.ReadL(KMsgPtr0, name);
-			aNewPath.Set(name);
-			break;
-			}
-		default:
-			{
-			ASSERT(0);
-			break;
-			}
-		}
-	}
-
-//Get the size of the notification based on its type
-TInt FsNotificationHelper::NotificationSize(CFsClientMessageRequest& aRequest, TFsNotification::TFsNotificationType aNotificationType, const TDesC& aName)
-	{
-	__PRINT(_L("FsNotificationHelper::NotificationSize"));
-	
-	/*
-	 * If there are no new names, the order of the data in the buffer is:
-	 * Word1   : NotificationSize (2 bytes) , PathSize (2 bytes)
-	 * Word2   : NotificationType (Lower 2 bytes)
-	 * Word(s) : Path (TText8) , [Any sub-class members]
-	 * 
-	 * Else for notification types ERename, EVolumeName and EDriveName the order is:
-	 * Word1   : NotificationSize (2 bytes) , PathSize (2 bytes)
-	 * Word2   : NewNameSize (2 bytes) , NotificationType (2 bytes)
-	 * Word(s) : Path (TText8) , NewName (TText8)
-	 * 
-	 * EOverflow size: KNotificationHeaderSize
-	 */	
-	
-	TInt size = KNotificationHeaderSize + Align4(aName.Size());
-	
-	switch(aNotificationType)
-		{
-		//NewName
- 		case TFsNotification::ERename:
-		case TFsNotification::EVolumeName:
-		case TFsNotification::EDriveName:
-			{
-			TPtrC dest;
-			NewPathName(aRequest,dest);
-			size += Align4(dest.Size()); 
-			break;
-			}
-		case TFsNotification::EFileChange:
-			{
-			size += sizeof(TInt64);
-			break;
-			}
-		case TFsNotification::EAttribute:
-			{
-			size += sizeof(TUint64);
-			break;
-			}
-		case TFsNotification::ECreate: 
-		case TFsNotification::EDelete:
-		case TFsNotification::EMediaChange:
-			{
-			break;
-			}
-		default:
-			{
-			ASSERT(0);
-			break;
-			}
-		}
-	return (TUint16) size;
-	}
-
-TFsNotification::TFsNotificationType FsNotificationHelper::NotificationType(TInt& aIndex)
-	{
-	__PRINT(_L("FsNotificationHelper::NotificationType(TInt)"));
-	__ASSERT_DEBUG(aIndex < KNumRegisterableFilters, Fault(ENotificationFault));
-	
-	switch(aIndex) //No break statements here on purpose
-		{
-		case 7 : return TFsNotification::EMediaChange;
-		case 6 : return TFsNotification::EDriveName;
-		case 5 : return TFsNotification::EVolumeName;
-		case 4 : return TFsNotification::EDelete;
-		case 3 : return TFsNotification::EAttribute;
-		case 2 : return TFsNotification::ECreate;
-		case 1 : return TFsNotification::ERename;
-		case 0 : return TFsNotification::EFileChange;
-		default: ASSERT(0); return (TFsNotification::TFsNotificationType) 0;
-		}
-	}
-
-//Get the array index of the notification based on its type
-TInt FsNotificationHelper::TypeToIndex(TFsNotification::TFsNotificationType aType)
-	{
-	__PRINT(_L("FsNotificationHelper::ArrayIndex"));
-
-	TInt index = 0; 
-	switch(aType) //No break statements here on purpose
-		{
-		case TFsNotification::EMediaChange: index++;
-		case TFsNotification::EDriveName:	index++;
-		case TFsNotification::EVolumeName:	index++;
-		case TFsNotification::EDelete:	 	index++;
-		case TFsNotification::EAttribute:	index++;
-		case TFsNotification::ECreate:	 	index++;
-		case TFsNotification::ERename:	 	index++;
-		case TFsNotification::EFileChange:	// skip;
-		default: break;
-		}
-	__ASSERT_DEBUG(index < KNumRegisterableFilters, Fault(ENotificationFault));
-	return index;
-	}
-
-TInt FsNotificationHelper::DriveNumber(const TPtrC& aPath)
-	{
-	if(aPath.Length() >= 2 && ((TChar)aPath[1])==(TChar)':')
-		{
-		TChar driveChar = ((TChar)aPath[0]);
-		driveChar.UpperCase();
-		TInt driveNum = driveChar-(TChar)'A'; 
-		return driveNum;
-		}
-	else
-		{
-		return KErrNotFound;
-		}
-	}
-
-//Get the attributes set and cleared
-void FsNotificationHelper::Attributes(CFsClientMessageRequest& aRequest, TUint& aSet, TUint& aClear)
-	{
-	__PRINT(_L("FsNotificationHelper::Attributes"));
-
-	TInt function = aRequest.Operation()->Function();
-	const RMessage2& msg = aRequest.Message();
-
-	switch(function)
-		{
-		case EFsFileSet:
-			{
-			aSet = msg.Int1();
-			aClear = msg.Int2();
-			break;
-			}
-		case EFsFileSetAtt:
-			{
-			aSet = msg.Int0();
-			aClear = msg.Int1();
-			break;
-			}
-		case EFsSetEntry:
-			{
-			aSet = msg.Int2();
-			aClear = msg.Int3();
-			break;
-			}
-		default:
-			{
-			ASSERT(0);
-			break;
-			}
-		}
-	}
 
 
 TBool CFsNotifyRequest::ValidateNotification(TInt aNotificationSize, TInt& aServerTail)
@@ -898,7 +649,7 @@ TBool CFsNotifyRequest::ValidateNotification(TInt aNotificationSize, TInt& aServ
 // If there is a iClientMsg then this is the first time this
 // has been called since the client called RequestNotifications.
 // In this situation we complete the client request.
-TInt CFsNotifyRequest::NotifyChange(CFsClientMessageRequest* aRequest,const TDesC& aName, TFsNotification::TFsNotificationType aNotificationType, CFsNotificationBlock& aBlock)
+TInt CFsNotifyRequest::NotifyChange(CFsNotificationInfo* aRequest, CFsNotificationBlock& aBlock)
 	{
 	/*
 	 * Different notification types have different data associated with them.
@@ -920,8 +671,8 @@ TInt CFsNotifyRequest::NotifyChange(CFsClientMessageRequest* aRequest,const TDes
 	
 	__PRINT(_L("CFsNotifyRequest::NotifyChange()"));
 
-	TInt notificationSize = FsNotificationHelper::NotificationSize(*aRequest,aNotificationType,aName);
-	
+    TInt notificationSize = CFsNotificationInfo::NotificationSize(*aRequest);
+    
 	iClientSyncLock.Wait();
 	iTailSemaphore.Wait();
 	
@@ -936,16 +687,23 @@ TInt CFsNotifyRequest::NotifyChange(CFsClientMessageRequest* aRequest,const TDes
 	//We can store the size of the notification 
 	//and the size of the name in the same word.
 	
+	TBuf<2> driveBuf;
+	driveBuf.SetLength(2);
+    TChar driveLetter = 'A';
+    RFs::DriveToChar(aRequest->DriveNumber(),driveLetter);
+    driveBuf[0] = (TText)driveLetter;
+    driveBuf[1] = (TText)':';
+	
 	TUint16 nameLen = 0;	//Overflow has no name
 	TInt notifSize = KNotificationHeaderSize;
 	if(!overflow)
 		{
-		nameLen = (TUint16)aName.Size();
+        nameLen = (TUint16)aRequest->SourceSize();
 		notifSize = notificationSize;
 		}
 	else 
 		{
-		aNotificationType = TFsNotification::EOverflow;
+        aRequest->NotificationType() = TFsNotification::EOverflow;
 		}	
 
 	iServerTail = tail + notifSize;
@@ -958,62 +716,47 @@ TInt CFsNotifyRequest::NotifyChange(CFsClientMessageRequest* aRequest,const TDes
 	memcpy((TText8*)aBlock.Data()+writeOffset,&sizeNameLen,sizeof(TUint));
 	writeOffset+=sizeof(TUint);
 
-	TPtrC newName;
-	
-	if (aNotificationType == TFsNotification::ERename ||
-		aNotificationType == TFsNotification::EVolumeName ||
-		aNotificationType == TFsNotification::EDriveName)
-		{
-		FsNotificationHelper::NewPathName(*aRequest,newName);
-		//Store NewNameSize and notification Type (Word2)
-		TUint typeNewNameLen = ((TUint16)newName.Size() << 16) | (TUint16)aNotificationType;
+    if (aRequest->NotificationType() == TFsNotification::ERename ||
+        aRequest->NotificationType() == TFsNotification::EVolumeName ||
+        aRequest->NotificationType() == TFsNotification::EDriveName)
+        {
+        //Store NewNameSize and notification Type (Word2)
+        TUint typeNewNameLen = ((TUint16)aRequest->NewNameSize() << 16) | (TUint16)aRequest->NotificationType();
 		memcpy((TText8*)aBlock.Data()+writeOffset,&typeNewNameLen,sizeof(TUint));
 		}
 	else
 		{
 		//Store notification Type (Word2)
-		memcpy((TText8*)aBlock.Data()+writeOffset,&aNotificationType,sizeof(TUint));
+        memcpy((TText8*)aBlock.Data()+writeOffset,&aRequest->NotificationType(),sizeof(TUint));
 		}
 	writeOffset+=sizeof(TUint);
 	
-	CFileShare* share = NULL;
-    CFileCB* file = NULL;
-    if(aRequest) //Don't always have a request such as when called from localdrives.
-        {
-        GetFileFromScratch(aRequest, share, file);
-        }
-    
     //
     //Store UID
-    /*
-	TUid uid;
-	uid.iUid = KErrUnknown;
-	if(aRequest && aRequest->Operation()->iFunction == EFsFileWriteDirty)
-	    {
-	    uid = aRequest->iUID;
-	    }
-	else if(aRequest)
-	    {
-	    uid = aRequest->Message().Identity();
-	    }
-	memcpy((TText8*)aBlock.Data()+writeOffset,&uid.iUid,sizeof(TUint32));
+	memcpy((TText8*)aBlock.Data()+writeOffset,&aRequest->Uid().iUid,sizeof(TUint32));
 	writeOffset+=sizeof(TUint32);
-	*/
+	
 	
 	if(!overflow)
 		{
 		//Store Name (Word3)
-		memcpy((TText8*)aBlock.Data()+writeOffset,aName.Ptr(),aName.Size());
-		writeOffset += Align4(aName.Size());
-		
+	    {
+	    //Store driveColon
+	    if(aRequest->NotificationType()!=TFsNotification::EMediaChange)
+	        {
+	        memcpy((TText8*)aBlock.Data()+writeOffset,driveBuf.Ptr(),driveBuf.Size());
+	        writeOffset += driveBuf.Size(); //NB: Not Align4'd deliberately.
+	        }
+	    memcpy((TText8*)aBlock.Data()+writeOffset,aRequest->Source().FullName().Ptr(),aRequest->Source().FullName().Size());
+	    writeOffset += Align4(aRequest->Source().FullName().Size());
+	    }
 
-		switch (aNotificationType)
+        switch (aRequest->NotificationType())
 			{
 			case TFsNotification::EFileChange:
+			case TFsNotification::EAttribute:
 				{
-				TInt64 size = 0;
-				size = file->CachedSize64();
-				memcpy((TText8*)aBlock.Data()+writeOffset,&size,sizeof(TInt64));
+                memcpy((TText8*)aBlock.Data()+writeOffset,aRequest->Data(),sizeof(TInt64));
 				writeOffset += sizeof(TInt64);
 				break;
 				}
@@ -1022,20 +765,19 @@ TInt CFsNotifyRequest::NotifyChange(CFsClientMessageRequest* aRequest,const TDes
 			case TFsNotification::EDriveName:
 				{
 				//Store NewName
-				memcpy((TText8*)aBlock.Data()+writeOffset,newName.Ptr(),newName.Size());
-				writeOffset += Align4(newName.Size());
+				
+				if(!aRequest->DestDriveIsSet())
+				    {
+				    //This means that the notification has come from a Mount rather than from FileServer
+				    //It also means that the new name will have the same drive letter as the source.
+				    memcpy((TText8*)aBlock.Data()+writeOffset,driveBuf.Ptr(),driveBuf.Size());
+				    writeOffset += driveBuf.Size(); //NB: Not Align4'd deliberately.
+				    }
+                memcpy((TText8*)aBlock.Data()+writeOffset,aRequest->NewName().FullName().Ptr(),aRequest->NewName().FullName().Size());
+                writeOffset += Align4(aRequest->NewName().FullName().Size());
 				break;
 				}
-			case TFsNotification::EAttribute:
-				{
-				TUint set=0;
-				TUint clear=0;
-				FsNotificationHelper::Attributes(*aRequest,set,clear);
-				TUint64 att = MAKE_TUINT64(set,clear);
-				memcpy((TText8*)aBlock.Data()+writeOffset,&att,sizeof(TUint64));
-				writeOffset += sizeof(TUint64);
-				break;
-				}
+
 			default:
 				{
 				break;
@@ -1085,107 +827,71 @@ TInt CFsNotifyRequest::NotifyChange(CFsClientMessageRequest* aRequest,const TDes
 //A change has occurred in f32 represented by this
 //request object. Work out which CfsNotify’s are interested
 // (if any) and call CfsNotifyRequest::NotifyChange.
-void FsNotificationManager::HandleChange(CFsClientMessageRequest* aRequest,const TDesC& aOperationName, TFsNotification::TFsNotificationType aType)
-	{
-	__PRINT2(_L("FsNotificationManager::HandleChange() aRequest=0x%x, aType=%d"),&aRequest,aType);
+void FsNotificationManager::HandleChange(CFsNotificationInfo& aRequest)
+    {
+    __PRINT2(_L("FsNotificationManager::HandleChange() aNotificationInfo=0x%x,NotificationType=%d"),&aRequest,aRequest.NotificationType());
+    if(Count())
+        {
+        Lock(); //ToDo: Read Lock (Read/Write Lock) 
+        if(Count())
+            {
+            //Only search while there are filters of this type set up.
+            TInt index = CFsNotificationInfo::TypeToIndex(aRequest.NotificationType());
+            TInt& filterCount = FsNotificationManager::FilterRegister(index);
+            TInt seenFilter = filterCount; //Number of requests set up for this type
+            
+            //Iterate CFsNotifyRequests
+            TInt count = iNotifyRequests->Count();
+            
+            if(aRequest.NotificationType() == TFsNotification::EMediaChange)
+                seenFilter = count;
+            
+            //If there aren't any requests then breakout
+            if(count == 0)
+                {
+                Unlock();
+                return;
+                }
+            
+            //For every notification request(i.e. every CFsNotify client-side).
+            for(TInt i=0; i<count && seenFilter; ++i)
+                {
+                CFsNotifyRequest* notifyRequest = (CFsNotifyRequest*)(*iNotifyRequests)[i];
+                CFsNotifyRequest::TNotifyRequestStatus status = notifyRequest->ActiveStatus();
+                if(! (status==CFsNotifyRequest::EActive || 
+                      status==CFsNotifyRequest::EOutstanding))
+                    {
+                    //Not active; check next notification request
+                    continue;
+                    }
+                
+                //Check whether we are interested in this change.
+                //Get the filters associated with this operation on this drive
+                TFsNotificationTypeArray* filterList = notifyRequest->FilterTypeList(aRequest.DriveNumber(),index);
+                DoHandleChange(filterList,seenFilter,aRequest,notifyRequest);
 
-	Lock(); //ToDo: Read Lock (Read/Write Lock)	
-	if(Count())
-		{
-		//Only search while there are filters of this type set up.
-		TInt index = FsNotificationHelper::TypeToIndex(aType);
-		TInt& filterCount = FsNotificationManager::FilterRegister(index);
-		TInt seenFilter = filterCount; //Number of requests set up for this type
-		
-		//Iterate CFsNotifyRequests
-		TInt count = iNotifyRequests->Count();
-		
-		if(aType == TFsNotification::EMediaChange)
-			seenFilter = count;
-		
-		//If there aren't any requests then breakout
-		if(count == 0)
-			{
-			Unlock();
-			return;
-			}
-		
-		TInt driveNum = FsNotificationHelper::DriveNumber(aOperationName); 
-
-		//For every notification request.
-		for(TInt i=0; i<count && seenFilter; ++i)
-			{
-			CFsNotifyRequest* notifyRequest = (CFsNotifyRequest*)(*iNotifyRequests)[i];
-			CFsNotifyRequest::TNotifyRequestStatus status = notifyRequest->ActiveStatus();
-			if(! (status==CFsNotifyRequest::EActive || 
-				  status==CFsNotifyRequest::EOutstanding))
-				{
-				//Not active; check next notification request
-				continue;
-				}
-			
-			//Check whether we are interested in this change.
-			//Get the filters associated with this operation on this drive
-			TFsNotificationTypeArray* filterList = notifyRequest->FilterTypeList(driveNum,index);
-			DoHandleChange(filterList,seenFilter,aRequest,notifyRequest,aOperationName,aType);
-
-			if(aType==TFsNotification::EMediaChange)
-				continue; //next request
-			
-			//If there are still filters to check
-			if(seenFilter)
-				{
-				//Check changes that are not tied to a particular drive
-				filterList = notifyRequest->FilterTypeList(KErrNotFound,index);
-				DoHandleChange(filterList,seenFilter,aRequest,notifyRequest,aOperationName,aType);
-				}
-			}
-		}
-	Unlock();
-	}
-
-//A change has occurred in f32 represented by this
-//request object. Work out which CfsNotify’s are interested
-// (if any) and call CfsNotifyRequest::NotifyChange.
-void FsNotificationManager::HandleChange(CFsClientMessageRequest& aRequest, TFsNotification::TFsNotificationType aType)
-	{
-	__PRINT(_L("FsNotificationManager::HandleChange"));
-	TFileName currentOperationsName;
-	FsNotificationHelper::PathName(aRequest, currentOperationsName);
-	if(currentOperationsName.Length())
-		HandleChange(&aRequest,currentOperationsName,aType);
-	}
-
-//A change has occurred in f32 represented by this
-//request object. Work out which CfsNotify’s are interested
-// (if any) and call CfsNotifyRequest::NotifyChange.
-void FsNotificationManager::HandleChange(CFsClientMessageRequest& aRequest)
-	{
-	if(Count() && aRequest.Message().Handle() != KLocalMessageHandle)
-		{
-		__PRINT(_L("FsNotificationManager::HandleChange"));
-		TFsNotification::TFsNotificationType operationNotificationType;
-		FsNotificationHelper::NotificationType(aRequest.FsFunction(), operationNotificationType);
-		HandleChange(aRequest,operationNotificationType);
-		}
-	}
+                if(aRequest.NotificationType()==TFsNotification::EMediaChange)
+                    continue; //next request
+                
+                //If there are still filters to check
+                if(seenFilter)
+                    {
+                    //Check changes that are not tied to a particular drive
+                    filterList = notifyRequest->FilterTypeList(KErrNotFound,index);
+                    DoHandleChange(filterList,seenFilter,aRequest,notifyRequest);
+                    }
+                }
+            }
+        Unlock();
+        }
+    }
 
 
 ////
 #else
 ////
 
-void FsNotificationManager::HandleChange(CFsClientMessageRequest* ,const TDesC&, TFsNotification::TFsNotificationType)
-	{
-	return;
-	}
-
-void FsNotificationManager::HandleChange(CFsClientMessageRequest& , TFsNotification::TFsNotificationType)
-	{
-	return;
-	}
-
-void FsNotificationManager::HandleChange(CFsClientMessageRequest&)
+void FsNotificationManager::HandleChange(CFsNotificationInfo&)
 	{
 	return;
 	}
@@ -1193,10 +899,11 @@ void FsNotificationManager::HandleChange(CFsClientMessageRequest&)
 #endif //SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION
 
 //Called from FsNotificationManager::DoHandleChange
-FsNotificationManager::TFsNotificationFilterMatch FsNotificationManager::DoMatchFilter(CFsClientMessageRequest* aRequest, const TDesC& aOperationName,CFsNotificationPathFilter& aFilter)
+FsNotificationManager::TFsNotificationFilterMatch FsNotificationManager::DoMatchFilter(const RMessage2& aMessage, const TDesC& aOperationName,CFsNotificationPathFilter& aFilter)
     {
     TFsNotificationFilterMatch filterMatch = EDifferent;
     TParsePtrC parseOp(aOperationName);
+    
     TPtrC pathOpDes = parseOp.DriveAndPath();
     TPtrC nameOpDes = parseOp.NameAndExt();
     TInt pathLength = aFilter.iPath->Des().Length();
@@ -1210,7 +917,7 @@ FsNotificationManager::TFsNotificationFilterMatch FsNotificationManager::DoMatch
     else //if no path filter was set up
         // then we need to ensure we don't notify on data-caged areas which we shouldn't
         {
-        TInt r = PathCheck(aRequest,aOperationName.Mid(2),&KCapFsSysFileTemp,&KCapFsPriFileTemp,&KCapFsROFileTemp, __PLATSEC_DIAGNOSTIC_STRING("FsNotificationManager::DoHandleChange"));
+        TInt r = PathCheck(aMessage,aOperationName.Mid(2),&KCapFsSysFileTemp,&KCapFsPriFileTemp,&KCapFsROFileTemp, __PLATSEC_DIAGNOSTIC_STRING("FsNotificationManager::DoHandleChange"));
         if(r != KErrNone)
             return EContinue; //next filter
         }
@@ -1228,8 +935,9 @@ FsNotificationManager::TFsNotificationFilterMatch FsNotificationManager::DoMatch
     return filterMatch;
     }
 
-// This is called on a per drive basis.
-void FsNotificationManager::DoHandleChange(TFsNotificationTypeArray* aFilterTypeArray,TInt& aSeenFilter, CFsClientMessageRequest* aRequest, CFsNotifyRequest* aNotifyRequest, const TDesC& aOperationName, TFsNotification::TFsNotificationType& aType)
+// The aFilterTypeArray is an array for the filters that target the current drive (only).
+// This is called on a per client (CFsNotify) basis.
+void FsNotificationManager::DoHandleChange(TFsNotificationTypeArray* aFilterTypeArray,TInt& aSeenFilter, CFsNotificationInfo& aNotificationInfo, CFsNotifyRequest* aNotifyRequest)
 	{		
 	__PRINT(_L("FsNotificationManager::DoHandleChange()"));
 	
@@ -1238,36 +946,39 @@ void FsNotificationManager::DoHandleChange(TFsNotificationTypeArray* aFilterType
 	
 	TInt numFilters = aFilterTypeArray->Count();
 	
-	if(aType == TFsNotification::EMediaChange)
-		numFilters = 1; //Only need to notify once per drive.
-		
-	//For every filter in this request
+    if(aNotificationInfo.NotificationType() == TFsNotification::EMediaChange)
+        numFilters = 1; //Only need to notify once per client for EMediaChange.
+        
+    //For every filter in this request (CFsNotify)
 	for(TInt j = 0; j < numFilters;++j)
 		{
 		//Is the correct notification type
 		aSeenFilter--;
 		
 		TBool filterMatch = EDifferent;
-		if(aType != TFsNotification::EMediaChange)
+        if(aNotificationInfo.NotificationType()  != TFsNotification::EMediaChange)
 			{
 			CFsNotificationPathFilter& filter = *(((*aFilterTypeArray)[j]).iPathFilter);
-			__PRINT2(_L("FsNotificationManager::DoHandleChange() operationName=%S, filterName=%S"),&aOperationName,filter.iPath);
-			
-			filterMatch = DoMatchFilter(aRequest,aOperationName,filter);
+            __PRINT2(_L("FsNotificationManager::DoHandleChange() operationName=%S, filterName=%S"),&aNotificationInfo.Source().FullName(),filter.iPath);
+            
+			//buferMsg here is the message of the client *recieving* the notification
+            const RMessage2& bufferMsg = aNotifyRequest->BufferMessage();
+            filterMatch = DoMatchFilter(bufferMsg,aNotificationInfo.Source().FullName(),filter);
 			if(filterMatch == FsNotificationManager::EContinue)
 			    continue; //triggers for data cages
 			
 			//We need to check for changes coming in to a directory when its rename
-			if(aType == TFsNotification::ERename && filterMatch==FsNotificationManager::EDifferent)  
+            if(aNotificationInfo.NotificationType() == TFsNotification::ERename && filterMatch==FsNotificationManager::EDifferent)  
                 {
-                TPtrC aDestinationNamePtrC;
-                FsNotificationHelper::NewPathName(*aRequest,aDestinationNamePtrC);
-                __PRINT2(_L("FsNotificationManager::DoHandleChange() destinationName=%S, filterName=%S"),&aDestinationNamePtrC,filter.iPath);
-                filterMatch = DoMatchFilter(aRequest,aDestinationNamePtrC,filter);
+                __PRINT2(_L("FsNotificationManager::DoHandleChange() destinationName=%S, filterName=%S"),&aNotificationInfo.NewName().FullName(),filter.iPath);
+                if(aNotificationInfo.DestDriveIsSet())
+                    filterMatch = DoMatchFilter(bufferMsg,aNotificationInfo.NewName().FullName().Mid(2),filter);
+                else
+                    filterMatch = DoMatchFilter(bufferMsg,aNotificationInfo.NewName().FullName(),filter);
                 }
 			}
 
-		if(filterMatch || (aType == TFsNotification::EMediaChange))//Match or MediaChange (report regardless of filters)
+        if(filterMatch || (aNotificationInfo.NotificationType() == TFsNotification::EMediaChange))//Match or MediaChange (report regardless of filters)
 			{
 			//Matching - Handle change
 			
@@ -1275,7 +986,7 @@ void FsNotificationManager::DoHandleChange(TFsNotificationTypeArray* aFilterType
 			//So that we can do IPC from a single place.
 			CFsNotificationBlock* block = iPool->Allocate();
 				
-			TInt r = aNotifyRequest->NotifyChange(aRequest,aOperationName,aType,*block);
+            TInt r = aNotifyRequest->NotifyChange(&aNotificationInfo,*block);
 				
 			//Free block
 			iPool->Free(block);

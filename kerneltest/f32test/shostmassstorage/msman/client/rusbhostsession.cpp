@@ -1,4 +1,4 @@
-// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -26,13 +26,11 @@
 
 #include "msmanclientserver.h"
 #include "rusbhostsession.h"
-#include "tmslog.h"
 #include "debug.h"
 
 
 TVersion RUsbHostSession::Version() const
     {
-    __MSFNSLOG
     return(TVersion(KUsbHostSrvMajorVersionNumber,
                     KUsbHostSrvMinorVersionNumber,
                     KUsbHostSrvBuildVersionNumber));
@@ -41,14 +39,11 @@ TVersion RUsbHostSession::Version() const
 
 EXPORT_C RUsbHostSession::RUsbHostSession()
     {
-    __MSFNSLOG
     }
 
 
 EXPORT_C TInt RUsbHostSession::Connect()
     {
-    __MSFNSLOG
-
     TInt retry = 2;
     for (;;)
         {
@@ -73,8 +68,6 @@ EXPORT_C TInt RUsbHostSession::Connect()
 
 TInt RUsbHostSession::StartServer()
     {
-    __MSFNSLOG
-
     const TUidType serverUid(KNullUid, KNullUid, KUsbHostServerUid3);
 
     // Create the server process
@@ -96,7 +89,7 @@ TInt RUsbHostSession::StartServer()
         return status.Int();
         }
 
-	server.SetPriority(EPriorityHigh);
+    server.SetPriority(EPriorityHigh);
     server.Resume(); // start the server
 
     // Test whether the process has ended and if it has ended, return how it ended.
@@ -115,6 +108,6 @@ TInt RUsbHostSession::StartServer()
 
 
 EXPORT_C TInt RUsbHostSession::Start()
-	{
-	return SendReceive(EUsbHostStart);
-	}
+    {
+    return SendReceive(EUsbHostStart);
+    }

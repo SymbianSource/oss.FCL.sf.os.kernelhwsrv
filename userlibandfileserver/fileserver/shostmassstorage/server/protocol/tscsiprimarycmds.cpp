@@ -12,7 +12,7 @@
 //
 // Description:
 // scsiprimarycmds.cpp
-// 
+//
 //
 
 /**
@@ -22,10 +22,13 @@
 
 #include <e32base.h>
 
-#include "msctypes.h"
-#include "debug.h"
-#include "msdebug.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "tscsiprimarycmdsTraces.h"
+#endif
 
+
+#include "msctypes.h"
 #include "mtransport.h"
 #include "mprotocol.h"
 
@@ -36,8 +39,8 @@
 // **** TEST UNIT READY ****
 TInt TScsiClientTestUnitReadyReq::EncodeRequestL(TDes8& aBuffer) const
     {
-	__MSFNSLOG
-    __SCSIPRINT(_L("<-- SCSI TEST UNIT READY"));
+    OstTrace0(TRACE_SHOSTMASSSTORAGE_SCSI, TSCSIPRIMARYCMDS_10,
+              "<-- SCSI TEST UNIT READY");
     TInt length = TScsiClientReq::EncodeRequestL(aBuffer);
     return length;
     }
@@ -46,7 +49,6 @@ TInt TScsiClientTestUnitReadyReq::EncodeRequestL(TDes8& aBuffer) const
 // **** REQUEST SENSE ****
 void TScsiClientRequestSenseResp::DecodeSenseInfo(const TDesC8& aPtr)
     {
-	__MSFNSLOG
     iResponseCode = static_cast<TResponseCode>(aPtr[0]);
     iSenseInfo.iSenseCode = aPtr[02];
     iSenseInfo.iAdditional = aPtr[12];
@@ -55,9 +57,9 @@ void TScsiClientRequestSenseResp::DecodeSenseInfo(const TDesC8& aPtr)
 
 
 void TScsiClientRequestSenseResp::DecodeL(const TDesC8& aPtr)
-	{
-	__MSFNSLOG
-    __SCSIPRINT(_L("--> SCSI REQUEST SENSE"));
+    {
+    OstTrace0(TRACE_SHOSTMASSSTORAGE_SCSI, TSCSIPRIMARYCMDS_11,
+              "--> SCSI REQUEST SENSE");
     if (aPtr.Length() < KResponseLength)
         {
         // Handle short data.
@@ -77,13 +79,12 @@ void TScsiClientRequestSenseResp::DecodeL(const TDesC8& aPtr)
         {
         DecodeSenseInfo(aPtr);
         }
-	}
+    }
 
 
 // **** INQUIRY ****
 void TScsiClientInquiryResp::DecodeInquiry(const TDesC8& aPtr)
     {
-	__MSFNSLOG
     iPeripheralInfo.iRemovable = (aPtr[1] & 0x80) ? ETrue : EFalse;
 
     iPeripheralInfo.iPeripheralQualifier = aPtr[0] >> 5;
@@ -103,9 +104,9 @@ void TScsiClientInquiryResp::DecodeInquiry(const TDesC8& aPtr)
 
 
 void TScsiClientInquiryResp::DecodeL(const TDesC8& aPtr)
-	{
-    __MSFNSLOG
-    __SCSIPRINT(_L("--> SCSI INQUIRY"));
+    {
+    OstTrace0(TRACE_SHOSTMASSSTORAGE_SCSI, TSCSIPRIMARYCMDS_12,
+              "--> SCSI INQUIRY");
     if (aPtr.Length() < KResponseLength)
         {
         // Handle short data.
@@ -125,16 +126,16 @@ void TScsiClientInquiryResp::DecodeL(const TDesC8& aPtr)
         {
         DecodeInquiry(aPtr);
         }
-	}
+    }
 
 
-// ****	PREVENT MEDIA REMOVAL ****
+// **** PREVENT MEDIA REMOVAL ****
 TInt TScsiClientPreventMediaRemovalReq::EncodeRequestL(TDes8& aBuffer) const
     {
-    __MSFNSLOG
-    __SCSIPRINT(_L("<-- SCSI PREVENT MEDIA REMOVAL"));
+    OstTrace0(TRACE_SHOSTMASSSTORAGE_SCSI, TSCSIPRIMARYCMDS_13,
+              "<-- SCSI PREVENT MEDIA REMOVAL");
     TInt length = TScsiClientReq::EncodeRequestL(aBuffer);
-	if (iPrevent)
+    if (iPrevent)
         aBuffer[4] |= 0x01;
     return length;
     }

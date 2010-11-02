@@ -88,7 +88,21 @@
 #define __USBHOSTPRINT5(t,a,b,c,d,e)
 #endif
 
+#if defined(_USBMS_DEBUG_PRINT_) && (defined(_DEBUG) || defined(_DEBUG_RELEASE))
+#define __PRINT(t) {RDebug::Print(t);}
+#define __PRINT1(t,a) {RDebug::Print(t,a);}
+#define __PRINT2(t,a,b) {RDebug::Print(t,a,b);}
+#define __PRINT3(t,a,b,c) {RDebug::Print(t,a,b,c);}
+#define __PRINT4(t,a,b,c,d) {RDebug::Print(t,a,b,c,d);}
 
 
+#else
+#define __PRINT(t)
+#define __PRINT1(t,a)
+#define __PRINT2(t,a,b)
+#define __PRINT3(t,a,b,c)
+#define __PRINT4(t,a,b,c,d)
+
+#endif
 
 #endif // DEBUG_H

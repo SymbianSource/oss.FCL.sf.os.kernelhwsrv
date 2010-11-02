@@ -415,7 +415,7 @@ EXPORT_C void NKern::RecordThreadLatency(TInt /*aLatency*/)
  */
 EXPORT_C TPriListBase::TPriListBase(TInt aNumPriorities)
 	{
-	memclr(this, sizeof(TPriListBase)+(aNumPriorities-1)*sizeof(SDblQueLink*) );
+	memclr(this, _FOFF(TPriListBase,iQueue[0])+aNumPriorities*sizeof(SDblQueLink*));
 	}
 
 

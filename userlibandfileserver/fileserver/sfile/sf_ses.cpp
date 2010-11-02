@@ -375,13 +375,13 @@ TInt TFsGetDriveName::Initialise(CFsRequest* aRequest)
 TInt TFsSetDriveName::DoRequestL(CFsRequest* aRequest)
 	{
 	TInt driveNum=aRequest->Drive()->DriveNumber();
-	TFileName driveName;
-	aRequest->ReadL(KMsgPtr1,driveName);
+
 
 //	Validate name - return KErrBadName if it contains illegal characters such as
 //	* ? / | > <
 
-	TNameChecker checker(driveName);
+    TPtrC driveName(aRequest->Dest().FullName());
+    TNameChecker checker(driveName);
 	TText badChar;
 	if (checker.IsIllegalName(badChar))
 		return(KErrBadName);
@@ -398,7 +398,7 @@ TInt TFsSetDriveName::DoRequestL(CFsRequest* aRequest)
 		}
 	if (TheDriveNames[driveNum]==NULL || TheDriveNames[driveNum]->Des().MaxLength()<len)
 		return(KErrNoMemory);
-	*TheDriveNames[driveNum]=driveName;
+	*TheDriveNames[driveNum]=aRequest->Dest().FullName();
 	return(KErrNone);
 	}
 
@@ -407,6 +407,13 @@ TInt TFsSetDriveName::Initialise(CFsRequest* aRequest)
 	TInt r=ValidateDrive(aRequest->Message().Int0(),aRequest);
 	if (r!=KErrNone)
 		return(r);
+	
+    TFileName driveName;
+    aRequest->ReadL(KMsgPtr1,driveName);
+	r = aRequest->Dest().Set(driveName,NULL,NULL);
+	if (r!=KErrNone)
+		return(r);
+	
 	if (!KCapFsSetDriveName.CheckPolicy(aRequest->Message(), __PLATSEC_DIAGNOSTIC_STRING("Set Drive Name")))
 		return KErrPermissionDenied;
 	return KErrNone;

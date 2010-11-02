@@ -564,6 +564,169 @@ private:
 	friend class TFsControlIo;			// for access to LocateDrives()
 #endif
 	};
+	
+#ifdef SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION 
+    typedef TFsNotification::TFsNotificationType TNotificationType;
+#else
+    typedef TInt TNotificationType;
+#endif
+__ASSERT_COMPILE(sizeof(TNotificationType) == sizeof(TInt));
+
+class CFsNotificationInfoBody; 	//Forward-declaration
+class CFsClientMessageRequest; 	//Forward-declaration
+class TParsePtrC;				//Forward-declaration
+template <class T> class CFsPool; //Forward-declaration
+
+class CFsNotificationInfo : public CBase
+    {
+public:
+
+    /**
+     * For construction from File systems / CMountCBs
+     * 
+     * Provides a CFsNotificationInfo to populate. Populate with the change information.
+     * Supply this object to CMountCB::IssueNotification.
+     * 
+     * Once CMountCB::IssueNotification has been called,
+     * free the object by passing it to CFsNotificationInfo::Free
+     * (i.e. Do not call delete on the object)
+     * 
+     * @param aMount The mount control block which is issuing this notification
+     * @param aFunction The function as defined in TFsMessage, f32plugin.h, such as EFsFileWrite. 
+     * 
+     * @return  A CFsNotificationInfo* which may be populated with notification info.
+     *          Will return NULL in error conditions.
+     * 
+     * @see CMountCB::IssueNotification
+     * @see CFsNotificationInfo::Free
+     */
+    IMPORT_C static CFsNotificationInfo* Allocate(const CMountCB& aMount, TInt aFunction);
+    
+    /**
+     * Free CFsNotificationInfo objects allocated by CFsNotificationInfo::Allocate with this function.
+     * 
+     * On return aNotificationInfo will be set to NULL.
+     */
+    IMPORT_C static void Free(CFsNotificationInfo*& aNotificationInfo);
+    
+    //Set data:
+    
+    /**
+     * Set the source name for the changes. 
+     * This is the name of the file/directory that has changed.
+     * 
+     * "drive-letter:" is not to be included.
+     * 
+     * e.g.  "x:\\myfile.txt" is incorrect
+     *       "\\myfile.txt"   is correct.
+     */
+    IMPORT_C TInt SetSourceName(const TDesC& aSrc);
+    
+    /**
+     * Set the new name for the file. 
+     * This is the new name of the file in the case of a rename.
+     * 
+     * "drive-letter:" is not to be included.
+     */
+    IMPORT_C TInt SetNewName(const TDesC& aDest);
+    
+    /**
+     * In the case of a File Write or File Set Size operation being notified,
+     * the new file size of the file must be provided.
+     */
+    IMPORT_C TInt SetFilesize(TInt64 aFilesize);
+    
+    /**
+     * In the case of a change of attributes, the set and cleared attributes must be provided.
+     * (If these are not known, then the current attributes can be provided to aSet and
+     * inverse of the current attributes can be provided to aCleared.
+     */
+    IMPORT_C TInt SetAttributes(TUint aSet,TUint aCleared);
+
+    /**
+     * Set the UID of the process that has caused the change.
+     * 
+     */
+    IMPORT_C TInt SetUid(const TUid& aUid);
+    
+
+    
+    //******************************************** 
+    // File server internal :
+    //********************************************
+    
+    static CFsNotificationInfo* Allocate(CFsMessageRequest& aRequest);
+    static CFsNotificationInfo* Allocate(TInt aFunction, TInt aDrive);
+    
+    //Initialise notification object pool
+    static TInt Initialise();
+    
+    //Getters
+    TInt SetDriveNumber(TInt aDriveNumber);
+    void SetRequest(CFsRequest*);
+    TInt Function();
+    TInt DriveNumber();
+    TParsePtrC& Source();
+    TParsePtrC& NewName();
+    CFsRequest* Request();
+    TInt64* Data();    
+    TUid& Uid();
+    TNotificationType& NotificationType();
+    TBool DestDriveIsSet();
+    
+    /*
+     * This is the source length including the drive and colon
+     * which isn't actually saved as part of the stored source
+     */
+    TInt SourceSize();
+    /*
+     * This is the new name length including the drive and colon
+     * which may (or may not (- see below)) be actually part of the stored newname.
+	 *
+	 * "Drive:" is stored when the notification request originates from a
+	 * file server client and the drive could be different to the source's drive.
+	 *
+	 * In the case of a request originating from a CMountCB::IssueNotification call,
+	 * the CMountCB does not know about drive letters and only operates on a single
+	 * drive so in this case the "drive:" is missing.
+     */
+    TInt NewNameSize();
+    
+    static void NotificationType(TInt aFunction,TNotificationType& aNotificationType);
+    static void PathName(CFsClientMessageRequest& aRequest, TParsePtrC& aName);
+    static void NewPathName(CFsClientMessageRequest& aRequest, TParsePtrC& aName);
+    static TInt NotificationSize(CFsNotificationInfo& aRequest);
+    static TInt TypeToIndex(TNotificationType aType);
+    static TNotificationType NotificationType(TInt& aIndex);
+    static TInt DriveNumber(const TPtrC& aPath);
+    static void Attributes(CFsMessageRequest& aRequest, TUint& aSet, TUint& aClear);
+    static TInt64 FileSize(CFsMessageRequest& aRequest);
+    static TInt ValidateNotification(CFsNotificationInfo& aNotificationInfo);
+    static void SetData(CFsMessageRequest* aRequest, CFsNotificationInfo* aNotificationInfo);
+    static TUint NotifyType(TInt aFunction);
+
+private:
+    //Don't delete instances, free them.
+    virtual ~CFsNotificationInfo();
+    CFsNotificationInfo& operator=(CFsNotificationInfo& aNotification); //to prevent copying
+    
+    // called from New
+    CFsNotificationInfo();                  
+    
+    //Used to populate NotificationInfoPool
+    static CFsNotificationInfo* New();
+
+    //Called after construction/allocation from pool
+    TInt Init(TInt aFunction, TInt aDriveNumber);
+    
+    //Resets notification
+    void CleanNotification(); 
+    
+    CFsNotificationInfoBody* iBody;
+    friend class FsNotify;
+    friend class CFsPool<CFsNotificationInfo>; //For access to ~CFsNotificationInfo for compilation purposes
+    };
+
 
 class CFileCB;
 class CDirCB;
@@ -1395,9 +1558,36 @@ protected:
 	// calls GetInterface() with tracepoints added
 	TInt GetInterfaceTraced(TInt aInterfaceId,TAny*& aInterface,TAny* aInput);
 
-
-    
-
+public:
+	/*
+	 * This function is provided for file systems to issue notifications to file server clients
+	 * that have registered for notifications using the RFs::NotifyChange and CFsNotify client-side APIs.
+	 * 
+	 * @param aNotificationInfo This object should contain the relevant Source (and if appropriate, NewName)
+	 *                          as well as any other required information.
+	 *                          
+	 *                          The Source provided should be a fullpath of the form:
+	 *                                 \[path\]directory\      - in the case of changes to a directory
+	 *                                 \[path\]filename.ext    - in the case of changes to a file
+	 *
+	 *                          The drive letter information is not to be included.
+	 *                          
+	 *                          In the case of 'File Write' or 'File Set Size' operations, the resulting file size must be set.
+	 *						    @see CFsNotificationInfo::SetFileSize
+	 *
+	 *                          In the case of a attributes change, the attributes set and cleared must be set.
+	 *						    @see CFsNotificationInfo::SetAttributes
+	 *
+	 *							All CFsNotificationInfo objects must have a Uid set. This is the Uid of the 
+	 *							process which caused the change. i.e. A photo browser may wish to know if it was the camera app
+	 *							or the photo editor which has caused a change. @see CFsNotificationInfo::SetUID							
+	 *
+	 *                          @see class TFsNotification.
+	 *                                     
+	 * @return Symbian Standard error code. KErrNone on success.
+	 */
+	IMPORT_C TInt IssueNotification(CFsNotificationInfo* aNotificationInfo);
+	
 private:
     void SetFileSystem(CFileSystem* aFS);
 
@@ -2041,7 +2231,7 @@ public:
 	void InitL();
 	inline CFileCB& File();
 
-	// For serialising aync requests 
+	// For serialising async requests 
 	TBool RequestStart(CFsMessageRequest* aRequest);
 	void RequestEnd(CFsMessageRequest* aRequest);
 	TBool RequestInProgress() const;

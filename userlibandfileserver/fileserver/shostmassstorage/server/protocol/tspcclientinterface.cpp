@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -19,8 +19,11 @@
 */
 
 #include <e32base.h>
-#include "debug.h"
-#include "msdebug.h"
+
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "tspcclientinterfaceTraces.h"
+#endif
 
 #include "msctypes.h"
 #include "mtransport.h"
@@ -40,7 +43,6 @@ SCSI SPC message
 TSpcClientInterface::TSpcClientInterface(MTransport& aTransport)
 :   iTransport(aTransport)
     {
-	__MSFNLOG
     }
 
 /**
@@ -48,7 +50,6 @@ Destructor.
 */
 TSpcClientInterface::~TSpcClientInterface()
     {
-	__MSFNLOG
     }
 
 /**
@@ -63,13 +64,12 @@ device status error
 */
 TInt TSpcClientInterface::InquiryL(TPeripheralInfo& aInfo)
     {
-	__MSFNLOG
     TScsiClientInquiryReq inquiryReq;
 
     TScsiClientInquiryResp inquiryResp(aInfo);
 
     TInt err = iTransport.SendControlCmdL(&inquiryReq, &inquiryResp);
-	return err;
+    return err;
     }
 
 
@@ -85,17 +85,19 @@ a device status error
 */
 TInt TSpcClientInterface::RequestSenseL(TSenseInfo& aSenseInfo)
     {
-	__MSFNLOG
     TScsiClientRequestSenseReq requestSenseReq;
     TScsiClientRequestSenseResp requestSenseResp;
 
     TInt err = iTransport.SendControlCmdL(&requestSenseReq, &requestSenseResp);
     aSenseInfo = requestSenseResp.iSenseInfo;
 
-    __SCSIPRINT4(_L("SCSI SENSE INFO Response%08x Code=%08x, Qual=%08x Add=%08x"),
-                 requestSenseResp.iResponseCode,
-                 aSenseInfo.iSenseCode, aSenseInfo.iQualifier, aSenseInfo.iAdditional);
-	return err;
+    OstTraceExt2(TRACE_SHOSTMASSSTORAGE_SCSI, TSPCCLIENTINTERFACE_10,
+                 "SCSI SENSE INFO Response %x Code=%x",
+                 (TUint32)requestSenseResp.iResponseCode, (TUint32)aSenseInfo.iSenseCode);
+    OstTraceExt2(TRACE_SHOSTMASSSTORAGE_SCSI, TSPCCLIENTINTERFACE_11,
+                 "                Qual=%08x Add=%08x",
+                 (TUint32)aSenseInfo.iQualifier, (TUint32)aSenseInfo.iAdditional);
+    return err;
     }
 
 
@@ -109,11 +111,10 @@ device status error
 */
 TInt TSpcClientInterface::TestUnitReadyL()
     {
-	__MSFNLOG
     TScsiClientTestUnitReadyReq testUnitReadyReq;
 
     TInt err = iTransport.SendControlCmdL(&testUnitReadyReq);
-	return err;
+    return err;
     }
 
 
@@ -129,10 +130,9 @@ device status error
 */
 TInt TSpcClientInterface::PreventAllowMediumRemovalL(TBool aPrevent)
     {
-	__MSFNLOG
     TScsiClientPreventMediaRemovalReq preventAllowMediaRemovalReq(aPrevent);
     TInt err = iTransport.SendControlCmdL(&preventAllowMediaRemovalReq);
-	return err;
+    return err;
     }
 
 

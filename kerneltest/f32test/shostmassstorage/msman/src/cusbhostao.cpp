@@ -1,4 +1,4 @@
-// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -23,7 +23,6 @@
 #include "cusbmsmountmanager.h"
 //#include "cusbhost.h"
 #include "cusbhostao.h"
-#include "tmslog.h"
 #include "debug.h"
 
 
@@ -33,16 +32,14 @@ CUsbHostAo* CUsbHostAo::NewL(RUsbHubDriver& aHubDriver,
                              RUsbHubDriver::TBusEvent& aEvent,
                              MUsbHostBusEventObserver& aObserver)
     {
-    __MSFNSLOG
     CUsbHostAo* r = new (ELeave) CUsbHostAo(aHubDriver, aEvent, aObserver);
-	r->ConstructL();
-	return r;
+    r->ConstructL();
+    return r;
     }
 
 
 void CUsbHostAo::ConstructL()
     {
-    __MSFNLOG
     }
 
 
@@ -54,78 +51,72 @@ CUsbHostAo::CUsbHostAo(RUsbHubDriver& aHubDriver,
     iEvent(aEvent),
     iObserver(aObserver)
     {
-    __MSFNLOG
     CActiveScheduler::Add(this);
     }
 
 
 CUsbHostAo::~CUsbHostAo()
     {
-    __MSFNLOG
-	Cancel();
+    Cancel();
 
     }
 
 
 void CUsbHostAo::Wait()
     {
-    __MSFNLOG
-	if (IsActive())
-		{
-		__ASSERT_ALWAYS(EFalse, User::Panic(KTxtApp, -1));
-		return;
-		}
+    if (IsActive())
+        {
+        __ASSERT_ALWAYS(EFalse, User::Panic(KTxtApp, -1));
+        return;
+        }
 
     __USBHOSTPRINT(_L("WaitForBusEvent..."));
-	iHubDriver.WaitForBusEvent(iEvent, iStatus);
+    iHubDriver.WaitForBusEvent(iEvent, iStatus);
     __USBHOSTPRINT2(_L("WaitForBusEvent done. Event=%d Status=%d"),
                     iEvent.iEventType, iStatus.Int());
-	SetActive();
+    SetActive();
     }
 
 
 void CUsbHostAo::DoCancel()
-	{
-    __MSFNLOG
+    {
     iHubDriver.CancelWaitForBusEvent();
-	}
+    }
 
 
 void CUsbHostAo::RunL()
-	{
-    __MSFNLOG
+    {
 
     TInt status = iStatus.Int();
-	if (status == KErrNotReady)
-		{
+    if (status == KErrNotReady)
+        {
         const TInt KDelay = 500 * 1000;  // in uSecs
         User::After(KDelay);
         Wait();
-		return;
-		}
+        return;
+        }
 
     // Let RunError handle any other error
     User::LeaveIfError(status);
 
     // Process bus event
     TRAP(status, iObserver.ProcessBusEventL());
-	if(status != KErrNone)
-		{
+    if(status != KErrNone)
+        {
         Wait();
-		return;
-		}
+        return;
+        }
 
     Wait();
-	}
+    }
 
 _LIT(KErrLog, "ERROR %d in CActiveUsbHost");
 
 TInt CUsbHostAo::RunError(TInt aError)
-	{
-	__MSFNLOG
-	RDebug::Print(KErrLog, aError);
-	return KErrNone;
-	}
+    {
+    RDebug::Print(KErrLog, aError);
+    return KErrNone;
+    }
 
 
 

@@ -20,11 +20,13 @@ TARGETTYPE		EXE
 UID 			0x2000A3D2 0xA000D320
 VENDORID		0x70000001
 
+USERINCLUDE		../misc
+
 SOURCEPATH		../random
 SOURCE 	       	t_entropysources.cpp
 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 
-LIBRARY			euser.lib hal.lib
+LIBRARY			euser.lib efsrv.lib hal.lib
 SMPSAFE
 CAPABILITY 		all

@@ -368,7 +368,7 @@ void CreateWithOOMCheck(TInt aSize, TBool aPhysicalAddress)
 		__KHEAP_MARKEND;
 		}
 
-	__KHEAP_RESET;
+	User::__DbgSetAllocFail(ETrue,RAllocator::ENone,1);
 
 	test.Next(_L("Destroy buffer"));
 	if (aPhysicalAddress)

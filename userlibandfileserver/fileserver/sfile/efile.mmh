@@ -48,8 +48,9 @@ SOURCE			 sf_file_cache.cpp
 SOURCE			 sf_memory_man.cpp sf_memory_client.cpp
 SOURCE			 sf_plugin_shim.cpp
 SOURCE			 sf_notifier_handlers.cpp
+SOURCE			 sf_pool.cpp
 #ifdef SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION
-SOURCE			 sf_pool.cpp sf_notifier.cpp
+SOURCE			  sf_notifier.cpp
 #endif
 
 #ifdef WINS

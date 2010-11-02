@@ -1,3 +1,61 @@
+Version 2.00.4015
+=================
+(Made by fadhliM 27/10/2010)
+
+1.	tocosgro
+	1.	ou1cimx1#632070 Workaround required for RVCT3.1/4 compiler optimiser bug
+
+2.	gcochran
+	1.	ou1cimx1#609783 Incompatibility between sizeof and memory allocation in TPriListBase
+
+3.	davegord
+	1.	ou1cimx1#598182 ENV T_TLDD requires building invalid LDD which Raptor does not support
+
+
+Version 2.00.4014
+=================
+(Made by fadhliM 25/10/2010)
+
+1.	niccox
+	1.	ou1cimx1#624302 Change USBMSAPP default configuration to VASCO
+
+2.	mipetzol
+	1.	ou1cimx1#624343 ENV : T_DMAINV Fails TestStreaming() at Line 943
+
+3.	gcochran
+	1.	ou1cimx1#626945 MCL 10.1 Sirocco - File Base_How_To_Configure_Domain_Manager_Policy_DLLs.doc has the old Symbian Foundation License
+
+4.	ricoles
+	1.	ou1cimx1#614099 [mcl] Keep track of which constructors have been called to allow for nested library loading
+
+5.	necliffo
+	1.	ou1cimx1#625724 EHALNANDMEDIA support is missing from Bridge platform
+
+6.	lanerobe
+	1.	ou1cimx1#619956 ENV t_sharedio alloc fail calls do not match on urel
+
+7.	marisood
+	1.	ou1cimx1#623764 ENV t_destruct hangs on Bridge
+
+8.	fagortz
+	1.	ou1cimx1#513437 Coverity errors - media
+
+9.	mmoate
+	1.	ou1cimx1#605561 [mcl]t_entropysources no longer looks for entropy source in MiniBSP
+
+
+Version 2.00.4013
+=================
+(Made by fadhliM 20/10/2010)
+
+1.	lanerobe
+	1.	ou1cimx1#605369 ENV Reduce T_MSTIM output under SMP
+	2.	ou1cimx1#603584 ENV Fix T_TLS heap handling
+
+2.	ferporta
+	1.	ou1cimx1#605542 MCL REQ 428-444, SUB417-65117 SCM outputs RnD system crash Data (MCv1 Data Set) via Kern:Printf on HW110
+
+
 Version 2.00.4012
 =================
 (Made by fadhliM 19/10/2010)

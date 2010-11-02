@@ -1,0 +1,3 @@
+EXPORTS
+	?DataForDLL4@@YAHXZ @ 1 NONAME ; int __cdecl DataForDLL4(void)
+

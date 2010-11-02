@@ -665,12 +665,17 @@ GLDEF_C TInt E32Main()
 	TInt orgSessionCount;
 	r = controlIo(TheFs,theDrive, KControlIoSessionCount, orgSessionCount);
 	test_KErrNone(r);
-	test.Printf(_L("Session count start=%d\n"),orgSessionCount);
+	test.Printf(_L("Session count   start=%d\n"),orgSessionCount);
 
 	TInt orgObjectCount;
 	r = controlIo(TheFs,theDrive, KControlIoObjectCount, orgObjectCount);
 	test_KErrNone(r);
-	test.Printf(_L("Object count start=%d\n"),orgObjectCount);
+	test.Printf(_L("Object count    start=%d\n"),orgObjectCount);
+
+	TInt orgHeapCellCount;
+	r = controlIo(TheFs,theDrive, KControlIoHeapCellCount, orgHeapCellCount);
+	test_KErrNone(r);
+	test.Printf(_L("Heap cell count start=%d\n"),orgHeapCellCount);
 
 
 	TPckgBuf<TIOCacheValues> pkgOrgValues;
@@ -742,11 +747,11 @@ GLDEF_C TInt E32Main()
 
 		r = controlIo(TheFs,theDrive, KControlIoSessionCount, endSessionCount);
 		test_KErrNone(r);
-		test.Printf(_L("Session count end=%d\n"),endSessionCount);
+		test.Printf(_L("Session count   end=%d\n"),endSessionCount);
 
 		r = controlIo(TheFs,theDrive, KControlIoObjectCount, endObjectCount);
 		test_KErrNone(r);
-		test.Printf(_L("Object count end=%d\n"),endObjectCount);
+		test.Printf(_L("Object count    end=%d\n"),endObjectCount);
 
 		if (endSessionCount == orgSessionCount && endObjectCount == orgObjectCount)
 			break;
@@ -754,6 +759,11 @@ GLDEF_C TInt E32Main()
 		test.Printf(_L("Warning: Session/object count leak\n"));
 		User::After(1000000);
 		}
+
+	TInt endHeapCellCount;
+	r = controlIo(TheFs,theDrive, KControlIoHeapCellCount, endHeapCellCount);
+	test_KErrNone(r);
+	test.Printf(_L("Heap cell count end=%d\n"),endHeapCellCount);
 
 	// some tests don't close their sessions, so this test won't work until 
 	// all the tests are fixed :

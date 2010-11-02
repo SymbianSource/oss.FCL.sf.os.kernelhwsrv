@@ -1,4 +1,4 @@
-// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -22,8 +22,6 @@
 #include "cusbotgwatcher.h"
 #include "rusbmspublisher.h"
 
-
-#include "tmslog.h"
 #include "debug.h"
 
 _LIT(KOtgdiLddFileName, "otgdi");
@@ -32,13 +30,11 @@ _LIT(KOtgdiLddFileName, "otgdi");
 ROtgStateChangeNotifier::ROtgStateChangeNotifier()
 :   iRegistered(EFalse)
     {
-    __MSFNSLOG
     }
 
 
 ROtgStateChangeNotifier::~ROtgStateChangeNotifier()
     {
-    __MSFNSLOG
     if (iRegistered)
         iMessage.Complete(KErrDisconnected);
     }
@@ -50,54 +46,48 @@ Initialise notifier to enable media change notfications.
 */
 void ROtgStateChangeNotifier::Register(const RMessage2& aMessage)
     {
-    __MSFNLOG
-	iRegistered = ETrue;
-	iMessage = aMessage;
+    iRegistered = ETrue;
+    iMessage = aMessage;
     }
 
 
 void ROtgStateChangeNotifier::DoNotifyL()
     {
-	__MSFNLOG
-	CompleteNotifierL(KErrNone);
+    CompleteNotifierL(KErrNone);
     }
 
 
 void ROtgStateChangeNotifier::DoCancelL()
     {
-	__MSFNLOG
-	CompleteNotifierL(KErrCancel);
+    CompleteNotifierL(KErrCancel);
     }
 
 
 void ROtgStateChangeNotifier::CompleteNotifierL(TInt aReason)
-	{
-    __MSFNLOG
-	if (iRegistered)
+    {
+    if (iRegistered)
         {
-		TBool changed = ETrue;
+        TBool changed = ETrue;
         TPckgBuf<TBool> p(changed);
-		iMessage.WriteL(0, p);
-		iMessage.Complete(aReason);
-		iRegistered = EFalse;
+        iMessage.WriteL(0, p);
+        iMessage.Complete(aReason);
+        iRegistered = EFalse;
         }
-	}
+    }
 
 
 CUsbOtg* CUsbOtg::NewL()
-	{
-    __MSFNSLOG
-	CUsbOtg* self = new (ELeave) CUsbOtg();
-	CleanupStack::PushL(self);
-	self->ConstructL();
-	CleanupStack::Pop(self);
-	return self;
-	}
+    {
+    CUsbOtg* self = new (ELeave) CUsbOtg();
+    CleanupStack::PushL(self);
+    self->ConstructL();
+    CleanupStack::Pop(self);
+    return self;
+    }
 
 
 void CUsbOtg::ConstructL()
-	{
-    __MSFNLOG
+    {
 
     TInt r = User::LoadLogicalDevice(KOtgdiLddFileName);
 
@@ -126,19 +116,17 @@ void CUsbOtg::ConstructL()
         }
 
     __USBOTGPRINT(_L("   otg stacks successfully started"));
-	}
+    }
 
 
 CUsbOtg::CUsbOtg()
 :   iOtgState(KOtgStateStart)
     {
-    __MSFNLOG
     }
 
 
 CUsbOtg::~CUsbOtg()
-	{
-    __MSFNLOG
+    {
     Stop();
 
     TInt r = iUsbOtgDriver.BusDrop();
@@ -153,15 +141,14 @@ CUsbOtg::~CUsbOtg()
         }
 
     TInt err = User::FreeLogicalDevice(RUsbOtgDriver::Name());
-	}
+    }
 
 
 void CUsbOtg::StartL()
     {
-    __MSFNLOG
-	// Request Otg notifications
+    // Request Otg notifications
     iOtgEventWatcher = CUsbOtgEventWatcher::NewL(iUsbOtgDriver, *this);
-	iOtgEventWatcher->Start();
+    iOtgEventWatcher->Start();
 
     iRequestSessionWatcher = CRequestSessionWatcher::NewL(*this);
     }
@@ -172,8 +159,6 @@ void CUsbOtg::Stop()
  * Stop the USB OTG events watcher
  */
     {
-    __MSFNLOG
-
     if (iOtgEventWatcher)
         {
         iOtgEventWatcher->Cancel();
@@ -191,7 +176,6 @@ void CUsbOtg::Stop()
 
 void CUsbOtg::BusRequestL()
     {
-    __MSFNLOG
     if (iOtgState == KOtgStateAPlugInserted)
         {
         TInt err = iUsbOtgDriver.BusRequest();
@@ -208,8 +192,6 @@ void CUsbOtg::BusRequestL()
 
 void CUsbOtg::HandleUsbOtgEvent(RUsbOtgDriver::TOtgEvent aEvent)
     {
-    __MSFNLOG
-
     switch (aEvent)
         {
         case RUsbOtgDriver::EEventAPlugInserted:
@@ -245,26 +227,22 @@ void CUsbOtg::HandleUsbOtgEvent(RUsbOtgDriver::TOtgEvent aEvent)
 
 TBool CUsbOtg::DeviceInserted()
     {
-    __MSFNLOG
     return iOtgState == KOtgStateAPlugInserted ? ETrue : EFalse;
     }
 
 void CUsbOtg::NotifyChange(const RMessage2& aMessage)
     {
-    __MSFNLOG
     iNotifier.Register(aMessage);
     }
 
 
 void CUsbOtg::NotifyChangeCancel()
     {
-    __MSFNLOG
     iNotifier.DoCancelL();
     }
 
 
 TInt CUsbOtg::BusDrop()
     {
-    __MSFNLOG
     return iUsbOtgDriver.BusDrop();
     }

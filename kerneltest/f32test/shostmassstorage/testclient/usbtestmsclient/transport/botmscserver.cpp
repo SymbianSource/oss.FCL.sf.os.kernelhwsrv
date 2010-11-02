@@ -1,4 +1,4 @@
-// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -26,13 +26,10 @@
 #include "testman.h"
 #include "botmscserver.h"
 #include "debug.h"
-#include "msdebug.h"
-
-
 
 TDataTransferMan::TDataTransferMan()
-:	iReadBuf(NULL, 0),
-	iWriteBuf(NULL, 0)
+:   iReadBuf(NULL, 0),
+    iWriteBuf(NULL, 0)
     {
     }
 
@@ -50,12 +47,11 @@ required.
 @param aData reference to the data buffer.
 */
 void TDataTransferMan::SetModeDataOut(TPtr8& aData)
-	{
-    __MSFNLOG
-	__PRINT1(_L("Length = %d  (bytes)\n"), aData.Length());
-	iReadBuf.Set(aData);
-	iMode = EDataTransferOut;
-	}
+    {
+    __PRINT1(_L("Length = %d  (bytes)\n"), aData.Length());
+    iReadBuf.Set(aData);
+    iMode = EDataTransferOut;
+    }
 
 
 /**
@@ -65,12 +61,11 @@ be written to the host.
 @param aData reference to the data buffer.
 */
 void TDataTransferMan::SetModeDataIn(TPtrC8& aData)
-	{
-    __MSFNLOG
-	__PRINT1(_L("Length = %d  (bytes)\n"), aData.Length());
-	iWriteBuf.Set(aData);
-	iMode = EDataTransferIn;
-	}
+    {
+    __PRINT1(_L("Length = %d  (bytes)\n"), aData.Length());
+    iWriteBuf.Set(aData);
+    iMode = EDataTransferIn;
+    }
 
 
 TBotServerReq::TBotServerReq()
@@ -80,7 +75,6 @@ TBotServerReq::TBotServerReq()
 
 void TBotServerReq::DecodeL(const TDesC8& aPtr)
     {
-    __MSFNLOG
     if (aPtr.Length() != KCbwLength)
         {
         User::Leave(KErrUnderflow);
@@ -88,10 +82,10 @@ void TBotServerReq::DecodeL(const TDesC8& aPtr)
 
     // Check reserved bits (must be zero)
     if ((aPtr[KCbwLunOffset] & 0xF0) || (aPtr[KCbwCbLengthOffset] & 0xE0))
-		{
-		__PRINT(_L("Reserved bits not zero\n"));
+        {
+        __PRINT(_L("Reserved bits not zero\n"));
         User::Leave(KErrArgument);
-		}
+        }
 
     iSignature = LittleEndian::Get32(&aPtr[KCbwSignatureOffset]);
     iTag = LittleEndian::Get32(&aPtr[KCbwTagOffset]);
@@ -103,7 +97,6 @@ void TBotServerReq::DecodeL(const TDesC8& aPtr)
 
 TBool TBotServerReq::IsValidCbw() const
     {
-    __MSFNSLOG
     if (iSignature != 0x43425355)
         {
         return EFalse;
@@ -115,7 +108,6 @@ TBool TBotServerReq::IsValidCbw() const
 
 TBool TBotServerReq::IsMeaningfulCbw(TInt aMaxLun) const
     {
-    __MSFNSLOG
     if (iLun > aMaxLun)
         {
         return EFalse;
@@ -144,7 +136,7 @@ TBotServerResp::TBotServerResp(TUint32 aTag, TUint32 aDataResidue, TCswStatus aS
 
 void TBotServerResp::EncodeL(TDes8& aBuffer) const
     {
-	TUint8* ptr = const_cast<TUint8*>(aBuffer.Ptr());
+    TUint8* ptr = const_cast<TUint8*>(aBuffer.Ptr());
 
     // dCBWSignature
     ptr += KCswSignatureOffset;
@@ -240,32 +232,32 @@ void TBotServerResp::EncodeL(TDes8& aBuffer, TTestParser* aTestParser) const
  */
 TInt TBotServerFunctionReq::Decode(const TDesC8& aBuffer)
 
-	{
-	if (aBuffer.Length() < static_cast<TInt>(KRequestHdrSize))
-		{
+    {
+    if (aBuffer.Length() < static_cast<TInt>(KRequestHdrSize))
+        {
         __PRINT1(_L("TBotServerFunctionReq::Decode buffer invalid length %d"), aBuffer.Length());
-		return KErrGeneral;
-		}
+        return KErrGeneral;
+        }
 
-	iRequestType = aBuffer[0];
-	iRequest = static_cast<TEp0Request>(aBuffer[1]);
-	iValue	 = static_cast<TUint16>(aBuffer[2] + (aBuffer[3] << 8));
-	iIndex	 = static_cast<TUint16>(aBuffer[4] + (aBuffer[5] << 8));
-	iLength  = static_cast<TUint16>(aBuffer[6] + (aBuffer[7] << 8));
+    iRequestType = aBuffer[0];
+    iRequest = static_cast<TEp0Request>(aBuffer[1]);
+    iValue   = static_cast<TUint16>(aBuffer[2] + (aBuffer[3] << 8));
+    iIndex   = static_cast<TUint16>(aBuffer[4] + (aBuffer[5] << 8));
+    iLength  = static_cast<TUint16>(aBuffer[6] + (aBuffer[7] << 8));
     __PRINT5(_L("type=%d request=%d value=%d index=%d length=%d"), iRequestType,iRequest,iValue,iIndex,iLength);
 
-	return KErrNone;
-	}
+    return KErrNone;
+    }
 
 
 /**
 This function determines whether data is required by the host in response
 to a message header.
 
-@return TBool	Flag indicating whether a data response required.
+@return TBool   Flag indicating whether a data response required.
 */
 TBool TBotServerFunctionReq::IsDataResponseRequired() const
 
-	{
-	return (iRequestType & 0x80) ? ETrue : EFalse;
-	}
+    {
+    return (iRequestType & 0x80) ? ETrue : EFalse;
+    }

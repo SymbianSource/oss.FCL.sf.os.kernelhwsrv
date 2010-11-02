@@ -471,6 +471,19 @@ TInt CFsRequest::GetSlot(TFsPluginRequest::TF32ArgType aType)
 	return(-1);
 	}
 
+/*
+ * Gets the UID of the client 
+ */
+TUid CFsRequest::Uid()
+    {
+    return TUid::Null();
+    }
+
+TUid CFsMessageRequest::Uid()
+    {
+    return iUID;
+    }
+
 
 TBool CFsMessageRequest::IsNotifierSpecific() const
 	{
@@ -910,11 +923,12 @@ void CFsMessageRequest::Set(const RMessage2& aMessage,CSessionFs* aSession)
 	}
 
 	
-void CFsMessageRequest::Set(const RMessage2& aMessage,const TOperation& aOperation,CSessionFs* aSession)
+void CFsMessageRequest::Set(const RMessage2& aMessage,const TOperation& aOperation,CSessionFs* aSession, TUid aUid)
 //
 //
 //
 	{
+    iUID = aUid;
 	iCurrentPlugin=NULL;
 	iMessage=aMessage;
 	iDrive=NULL;
@@ -922,11 +936,6 @@ void CFsMessageRequest::Set(const RMessage2& aMessage,const TOperation& aOperati
 	CFsRequest::Set(aOperation,aSession);
 	SetFreeChanged(EFalse);
 	EnablePostIntercept(ETrue);
-	}
-
-void CFsMessageRequest::Set(const TOperation& aOperation)
-	{
-	iOperation=const_cast<TOperation*>(&aOperation);
 	}
 
 void CFsMessageRequest::Process()
@@ -1326,10 +1335,46 @@ void CFsMessageRequest::DoNotify(TInt aError)
 
 	if(aError==KErrNone)
 		{
+	    //Get a notificationInfo block (freed again after notification complete)
+	    CFsNotificationInfo* notificationInfo = NULL; 
+	    
 		if(!(FsNotify::IsChangeQueEmpty(driveNumber)))
-			FsNotify::HandleChange(this,driveNumber);
-	
+		    {
+		    if(CFsNotificationInfo::NotifyType(Operation()->Function()))
+		        {
+		        notificationInfo = CFsNotificationInfo::Allocate(*this); 
+		        if(notificationInfo)
+		            FsNotify::HandleChange(*notificationInfo);
+		        }
+		    }
+
+		
 #ifdef SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION
+		
+		if(!FsNotificationManager::IsInitialised())
+		    {
+	        if(notificationInfo)
+	            {
+	            CFsNotificationInfo::Free(notificationInfo);
+	            }
+		    return;
+		    }
+		
+        if(!notificationInfo)
+            {
+            TFsNotification::TFsNotificationType type;
+            CFsNotificationInfo::NotificationType(Operation()->Function(),type);
+            if(type)
+                {
+                notificationInfo = CFsNotificationInfo::Allocate(*this);
+                if(!notificationInfo)
+                    return;
+                }
+            else
+                {
+                return;
+                }
+            }
 		if 	(iOperation->iFunction == EFsFileWrite)
 			{
 			CFileShare* share = (CFileShare*) this->ScratchValue();
@@ -1339,29 +1384,19 @@ void CFsMessageRequest::DoNotify(TInt aError)
 			// Manage notifications for write with no cache or a write-through
 			if (!fileCache || !fileCache->IsDirty())
 				{
-				FsNotificationManager::HandleChange((CFsClientMessageRequest&)*this);
+				FsNotificationManager::HandleChange(*notificationInfo);
 				}
-			}
-		else if((iOperation->iFunction == EFsFileWriteDirty) && FsNotificationManager::IsInitialised())
-			{
-			CFileShare* share;
-			CFileCB* file;
-			GetFileFromScratch(this, share, file);
-
-			TFileName path;
-			path.Append(file->DriveNumber() + 'A');
-			path.Append(':');
-			path.Append(file->FileName().Des());
-			
-			// Manage notifications for write with caching enabled
-			FsNotificationManager::HandleChange((CFsClientMessageRequest*)this, path, TFsNotification::EFileChange);
 			}
 		else if(IsNotifierSupported())
 			{
-			FsNotificationManager::HandleChange((CFsClientMessageRequest&)*this);
+			FsNotificationManager::HandleChange(*notificationInfo);
 			}
 #endif //SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION
-		}
+		
+		//Free the notificationInfo block
+		if(notificationInfo)
+		    CFsNotificationInfo::Free(notificationInfo);
+		}// Err==KErrNone
 	}
 
 void CFsMessageRequest::DoNotifyDiskSpace(TInt aError)
@@ -1782,7 +1817,7 @@ void CFsMessageRequest::ReStart()
 void CFsMessageRequest::SetOperationFunc(TInt aFunction)
 	{
 	const TOperation& oP = OperationArray[aFunction];
-	Set(oP);
+	iOperation = const_cast<TOperation*>(&oP);
 	// modified because some requests were set to PostInitialise. They are set to DoRequest in Dispatch anyway, so this is possibly ok?
 	//__ASSERT_ALWAYS(iReqState == EReqStateDoRequest, Fault(EInvalidMsgState));
 	}

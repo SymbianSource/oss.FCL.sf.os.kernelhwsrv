@@ -82,7 +82,7 @@ TInt TFsMkDir::Initialise(CFsRequest* aRequest)
 	TInt r=ParseSubstPtr0(aRequest,aRequest->Src());
 	if (r!=KErrNone)
 		return(r);
-	r=PathCheck(aRequest,aRequest->Src().FullName().Mid(2),&KCapFsSysMkDir,&KCapFsPriMkDir,&KCapFsROMkDir, __PLATSEC_DIAGNOSTIC_STRING("Make Directory"));
+	r=PathCheck(aRequest->Message(),aRequest->Src().FullName().Mid(2),&KCapFsSysMkDir,&KCapFsPriMkDir,&KCapFsROMkDir, __PLATSEC_DIAGNOSTIC_STRING("Make Directory"));
 	return(r);
 	}
 
@@ -110,7 +110,7 @@ TInt TFsRmDir::Initialise(CFsRequest* aRequest)
 	TInt r=ParseSubstPtr0(aRequest,aRequest->Src());
 	if (r!=KErrNone)
 		return(r);
-	r=PathCheck(aRequest,aRequest->Src().FullName().Mid(2),&KCapFsSysRmDir,&KCapFsPriRmDir,&KCapFsRORmDir, __PLATSEC_DIAGNOSTIC_STRING("Remove Directory"));
+	r=PathCheck(aRequest->Message(),aRequest->Src().FullName().Mid(2),&KCapFsSysRmDir,&KCapFsPriRmDir,&KCapFsRORmDir, __PLATSEC_DIAGNOSTIC_STRING("Remove Directory"));
 	return(r);
 	}
 
@@ -132,7 +132,7 @@ TInt TFsDelete::Initialise(CFsRequest* aRequest)
 	TInt r=ParseNoWildSubstCheckPtr0(aRequest,aRequest->Src());
 	if (r!=KErrNone)
 		return(r);
-	r=PathCheck(aRequest,aRequest->Src().FullName().Mid(2),&KCapFsSysDelete,&KCapFsPriDelete,&KCapFsRODelete, __PLATSEC_DIAGNOSTIC_STRING("Delete"));
+	r=PathCheck(aRequest->Message(),aRequest->Src().FullName().Mid(2),&KCapFsSysDelete,&KCapFsPriDelete,&KCapFsRODelete, __PLATSEC_DIAGNOSTIC_STRING("Delete"));
 	return(r);
 	}
 
@@ -159,13 +159,13 @@ TInt TFsRename::Initialise(CFsRequest* aRequest)
 	TInt r=ParseNoWildSubstCheckPathPtr0(aRequest,aRequest->Src());
 	if (r!=KErrNone)
 		return(r);
-	r=PathCheck(aRequest,aRequest->Src().FullName().Mid(2),&KCapFsSysRename,&KCapFsPriRename,&KCapFsRORename, __PLATSEC_DIAGNOSTIC_STRING("File Server Rename"));
+	r=PathCheck(aRequest->Message(),aRequest->Src().FullName().Mid(2),&KCapFsSysRename,&KCapFsPriRename,&KCapFsRORename, __PLATSEC_DIAGNOSTIC_STRING("File Server Rename"));
 	if(r!=KErrNone)
 		return(r);
 	TDrive* pOldDrive=aRequest->Drive();
 	if ((r=ParseNoWildSubstCheckPathPtr1(aRequest,aRequest->Dest()))!=KErrNone)
 		return(r);
-	r=PathCheck(aRequest,aRequest->Dest().FullName().Mid(2),&KCapFsSysRename,&KCapFsPriRename,&KCapFsRORename, __PLATSEC_DIAGNOSTIC_STRING("File Server Rename"));	
+	r=PathCheck(aRequest->Message(),aRequest->Dest().FullName().Mid(2),&KCapFsSysRename,&KCapFsPriRename,&KCapFsRORename, __PLATSEC_DIAGNOSTIC_STRING("File Server Rename"));	
 	if(r == KErrNone)
 		{
 		if (pOldDrive!=aRequest->Drive())
@@ -197,13 +197,13 @@ TInt TFsReplace::Initialise(CFsRequest* aRequest)
 	TInt r=ParseNoWildSubstCheckPtr0(aRequest,aRequest->Src());
 	if (r!=KErrNone)
 		return(r);
-	r=PathCheck(aRequest,aRequest->Src().FullName().Mid(2),&KCapFsSysReplace,&KCapFsPriReplace,&KCapFsROReplace, __PLATSEC_DIAGNOSTIC_STRING("File Server Replace"));	
+	r=PathCheck(aRequest->Message(),aRequest->Src().FullName().Mid(2),&KCapFsSysReplace,&KCapFsPriReplace,&KCapFsROReplace, __PLATSEC_DIAGNOSTIC_STRING("File Server Replace"));	
 	if(r!=KErrNone)
 		return(r);
 	TDrive* pOldDrive=aRequest->Drive();
 	if ((r=ParseNoWildSubstCheckPtr1(aRequest,aRequest->Dest()))!=KErrNone)
 		return(r);
-	r=PathCheck(aRequest,aRequest->Dest().FullName().Mid(2),&KCapFsSysReplace,&KCapFsPriReplace,&KCapFsROReplace, __PLATSEC_DIAGNOSTIC_STRING("File Server Replace"));	
+	r=PathCheck(aRequest->Message(),aRequest->Dest().FullName().Mid(2),&KCapFsSysReplace,&KCapFsPriReplace,&KCapFsROReplace, __PLATSEC_DIAGNOSTIC_STRING("File Server Replace"));	
 	if(r == KErrNone)
 		{
 		if (pOldDrive!=aRequest->Drive())
@@ -242,7 +242,7 @@ TInt TFsEntry::Initialise(CFsRequest* aRequest)
 
 	// Check the capabilites but always allow the entry to be read for private, system and 
 	// resource directories as long as there are no sub folders or files specified
-	r=PathCheck(aRequest,aRequest->Src().FullName().Mid(2),&KCapFsEntry, __PLATSEC_DIAGNOSTIC_STRING("Entry"), ETrue);	
+	r=PathCheck(aRequest->Message(),aRequest->Src().FullName().Mid(2),&KCapFsEntry, __PLATSEC_DIAGNOSTIC_STRING("Entry"), ETrue);	
 
 	return(r);
 	}
@@ -277,7 +277,7 @@ TInt TFsSetEntry::Initialise(CFsRequest* aRequest)
 	TInt r=ParseNoWildSubstCheckPathPtr0(aRequest,aRequest->Src());
 	if (r!=KErrNone)
 		return(r);
- 	r=PathCheck(aRequest,aRequest->Src().FullName().Mid(2),&KCapFsSysSetEntry,&KCapFsPriSetEntry,&KCapFsROSetEntry, __PLATSEC_DIAGNOSTIC_STRING("Set Entry"));	
+ 	r=PathCheck(aRequest->Message(),aRequest->Src().FullName().Mid(2),&KCapFsSysSetEntry,&KCapFsPriSetEntry,&KCapFsROSetEntry, __PLATSEC_DIAGNOSTIC_STRING("Set Entry"));	
 	return(r);
 	}
 
@@ -390,7 +390,7 @@ TInt TFsReadFileSection::Initialise(CFsRequest* aRequest)
 	TInt r=ParseNoWildSubstFileCheckPtr1(aRequest,aRequest->Src());
 	if (r!=KErrNone)
 		return(r);
-	r=PathCheck(aRequest,aRequest->Src().FullName().Mid(2),&KCapFsSysReadFileSection,&KCapFsPriReadFileSection, __PLATSEC_DIAGNOSTIC_STRING("Read File Section"));	
+	r=PathCheck(aRequest->Message(),aRequest->Src().FullName().Mid(2),&KCapFsSysReadFileSection,&KCapFsPriReadFileSection, __PLATSEC_DIAGNOSTIC_STRING("Read File Section"));	
 	return(r);
 	}
 
@@ -481,7 +481,7 @@ TInt TFsGetShortName::Initialise(CFsRequest* aRequest)
 	TInt r=ParseNoWildSubstCheckPathPtr0(aRequest,aRequest->Src());	
 	if (r!=KErrNone)
 		return(r);
-	r=PathCheck(aRequest,aRequest->Src().FullName().Mid(2),&KCapFsSysGetShortName,&KCapFsPriGetShortName, __PLATSEC_DIAGNOSTIC_STRING("Get Short Name"));	
+	r=PathCheck(aRequest->Message(),aRequest->Src().FullName().Mid(2),&KCapFsSysGetShortName,&KCapFsPriGetShortName, __PLATSEC_DIAGNOSTIC_STRING("Get Short Name"));	
 	return(r);
 	}
 
@@ -508,7 +508,7 @@ TInt TFsGetLongName::Initialise(CFsRequest* aRequest)
 	TInt r=ParseNoWildSubstCheckPathPtr0(aRequest,aRequest->Src());	
 	if (r!=KErrNone)
 		return(r);
-	r=PathCheck(aRequest,aRequest->Src().FullName().Mid(2),&KCapFsSysGetLongName,&KCapFsPriGetLongName, __PLATSEC_DIAGNOSTIC_STRING("Get Long Name"));	
+	r=PathCheck(aRequest->Message(),aRequest->Src().FullName().Mid(2),&KCapFsSysGetLongName,&KCapFsPriGetLongName, __PLATSEC_DIAGNOSTIC_STRING("Get Long Name"));	
 	return(r);
 	}
 
@@ -537,7 +537,7 @@ TInt TFsIsFileInRom::Initialise(CFsRequest* aRequest)
 	TInt r=ParseNoWildSubstCheckPathPtr0(aRequest,aRequest->Src());	
 	if (r!=KErrNone)
 		return (r);
-	r=PathCheck(aRequest,aRequest->Src().FullName().Mid(2),&KCapFsSysIsFileInRom,&KCapFsPriIsFileInRom, __PLATSEC_DIAGNOSTIC_STRING("Is File In Rom"));	
+	r=PathCheck(aRequest->Message(),aRequest->Src().FullName().Mid(2),&KCapFsSysIsFileInRom,&KCapFsPriIsFileInRom, __PLATSEC_DIAGNOSTIC_STRING("Is File In Rom"));	
 	return(r);
 	}
 

@@ -91,7 +91,7 @@ private:
 	static TInt CompleteFlushDirty(CFsRequest* aMsgRequest);
 	TInt FlushDirtySm(CFsMessageRequest& aMsgRequest);
 
-	TInt AllocateRequest(CFsClientMessageRequest*& aNewRequest, TBool aWrite, CSessionFs* aSession = NULL);
+	TInt AllocateRequest(CFsClientMessageRequest*& aNewRequest, TBool aWrite, CSessionFs* aSession = NULL,TUid aUid = KNullUid);
 
 	void DoReadAhead(CFsMessageRequest& aMsgRequest, TUint aMode);
 

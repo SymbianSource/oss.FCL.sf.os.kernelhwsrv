@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -20,8 +20,11 @@
 
 #include <e32base.h>
 
-#include "msdebug.h"
-#include "debug.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "tsbcclientinterfaceTraces.h"
+#endif
+
 #include "msctypes.h"
 
 #include "mtransport.h"
@@ -34,6 +37,7 @@
 #include "tscsiblockcmds.h"
 #include "tsbcclientinterface.h"
 
+
 /**
 Constructor.
 
@@ -42,13 +46,11 @@ Constructor.
 TSbcClientInterface::TSbcClientInterface(MTransport& aTransport)
 :   iTransport(aTransport)
     {
-    __MSFNLOG
     }
 
 
 TSbcClientInterface::~TSbcClientInterface()
     {
-    __MSFNLOG
     }
 
 
@@ -65,22 +67,21 @@ device status error, KErrCommandStalled to indicate device stall
 */
 TInt TSbcClientInterface::ModeSense6L(TUint aPageCode, TBool& aWriteProtected)
     {
-    __MSFNLOG
     TScsiClientModeSense6Req modeSense6Req(TScsiClientModeSense6Req::ECurrentValues,
                                            aPageCode);
     TScsiClientModeSense6Resp modeSense6Resp;
     TInt err = iTransport.SendControlCmdL(&modeSense6Req, &modeSense6Resp);
     if (!err)
         {
-        __SCSIPRINT1(_L("SCSI MODE SENSE (6) INFO WrProtect=%d"),
-                     modeSense6Resp.iWriteProtected);
+        OstTrace1(TRACE_SHOSTMASSSTORAGE_SCSI, TSBCCLIENTINTERFACE_10,
+                  "SCSI MODE SENSE (6) INFO WrProtect=%d", modeSense6Resp.iWriteProtected);
         aWriteProtected = modeSense6Resp.iWriteProtected;
         }
     else
         {
         aWriteProtected = EFalse;
         }
-	return err;
+    return err;
     }
 
 
@@ -97,7 +98,6 @@ device status error, KErrCommandStalled to indicate a device stall
 */
 TInt TSbcClientInterface::ModeSense10L(TUint aPageCode, TBool& aWriteProtected)
     {
-    __MSFNLOG
     TScsiClientModeSense10Req modeSense10Req(TScsiClientModeSense10Req::ECurrentValues,
                                              aPageCode);
     TScsiClientModeSense10Resp modeSense10Resp;
@@ -105,15 +105,15 @@ TInt TSbcClientInterface::ModeSense10L(TUint aPageCode, TBool& aWriteProtected)
 
     if (!err)
         {
-        __SCSIPRINT1(_L("SCSI MODE SENSE (10) INFO WrProtect=%d"),
-                     modeSense10Resp.iWriteProtected);
+        OstTrace1(TRACE_SHOSTMASSSTORAGE_SCSI, TSBCCLIENTINTERFACE_11,
+                  "SCSI MODE SENSE (10) INFO WrProtect=%d", modeSense10Resp.iWriteProtected);
         aWriteProtected = modeSense10Resp.iWriteProtected;
         }
     else
         {
         aWriteProtected = EFalse;
         }
-	return err;
+    return err;
     }
 
 
@@ -134,14 +134,13 @@ TScsiClientModeSense10Req::TScsiClientModeSense10Req(TPageControl aPageControl,
     iSubPageCode(aSubPageCode),
     iAllocationLength(KResponseLength)
     {
-    __MSFNLOG
     }
 
 
 TInt TScsiClientModeSense10Req::EncodeRequestL(TDes8& aBuffer) const
     {
-    __MSFNSLOG
-    __SCSIPRINT(_L("<-- SCSI MODE SENSE (10)"));
+    OstTrace0(TRACE_SHOSTMASSSTORAGE_SCSI, TSBCCLIENTINTERFACE_12,
+              "<-- SCSI MODE SENSE (10)");
     TInt length = TScsiClientReq::EncodeRequestL(aBuffer);
 
     // PC
@@ -171,8 +170,7 @@ protocol.
 */
 TInt TSbcClientInterface::Read10L(TLba aLba, TDes8& aBuffer, TInt& aLen)
     {
-    __MSFNLOG
-	__ASSERT_DEBUG(iBlockTransfer.BlockLength(), User::Panic(KUsbMsHostPanicCat, EBlockLengthNotSet));
+    __ASSERT_DEBUG(iBlockTransfer.BlockLength(), User::Panic(KUsbMsHostPanicCat, EBlockLengthNotSet));
     __ASSERT_DEBUG(aLen % iBlockTransfer.BlockLength() == 0, User::Panic(KUsbMsHostPanicCat, EBlockDevice));
 
     TScsiClientRead10Req read10Req;
@@ -186,7 +184,7 @@ TInt TSbcClientInterface::Read10L(TLba aLba, TDes8& aBuffer, TInt& aLen)
         }
     read10Req.iBlockTransferLength = static_cast<TUint16>(blockTransferLength);
     TInt err = iTransport.SendDataRxCmdL(&read10Req, aBuffer, aLen);
-	return err;
+    return err;
     }
 
 /**
@@ -203,7 +201,6 @@ device status error, KErrCommandStalled to indicate a device stall
 */
 TInt TSbcClientInterface::ReadCapacity10L(TLba& aLba, TUint32& aBlockSize)
     {
-    __MSFNLOG
     TScsiClientReadCapacity10Req capacity10Req;
     TScsiClientReadCapacity10Resp capacity10Resp;
 
@@ -213,12 +210,12 @@ TInt TSbcClientInterface::ReadCapacity10L(TLba& aLba, TUint32& aBlockSize)
         aLba = capacity10Resp.iLba;
         aBlockSize = capacity10Resp.iBlockSize;
 
-        __SCSIPRINT2(_L("Capacity LBA=0x%08x SIZE=0x%08x"),
-                     aLba, aBlockSize);
+        OstTraceExt2(TRACE_SHOSTMASSSTORAGE_SCSI, TSBCCLIENTINTERFACE__,
+                     "Capacity LBA=0x%08x SIZE=0x%08x", aLba, aBlockSize);
 
         iBlockTransfer.SetCapacityL(aBlockSize, aLba);
         }
-	return err;
+    return err;
     }
 
 
@@ -233,7 +230,6 @@ device status error
 */
 TInt TSbcClientInterface::StartStopUnitL(TBool aStart)
     {
-    __MSFNLOG
     TScsiClientStartStopUnitReq startStopUnitReq;
 
     startStopUnitReq.iImmed = ETrue;
@@ -242,7 +238,7 @@ TInt TSbcClientInterface::StartStopUnitL(TBool aStart)
 
     TInt err = iTransport.SendControlCmdL(&startStopUnitReq);
 
-	return err;
+    return err;
     }
 
 
@@ -264,15 +260,14 @@ protocol.
 */
 TInt TSbcClientInterface::Write10L(TLba aLba, TDesC8& aBuffer, TUint aPos, TInt& aLen)
     {
-    __MSFNLOG
-	__ASSERT_DEBUG(iBlockTransfer.BlockLength(), User::Panic(KUsbMsHostPanicCat, EBlockLengthNotSet));
+    __ASSERT_DEBUG(iBlockTransfer.BlockLength(), User::Panic(KUsbMsHostPanicCat, EBlockLengthNotSet));
     __ASSERT_DEBUG(aLen % iBlockTransfer.BlockLength() == 0, User::Panic(KUsbMsHostPanicCat, EBlockDevice));
 
     // check that buffer size is large enough
-	if (aBuffer.Length() < (aPos + aLen))
-		{
+    if (aBuffer.Length() < (aPos + aLen))
+        {
         User::Leave(KErrArgument);
-		}
+        }
 
     TScsiClientWrite10Req write10Req;
     write10Req.iLogicalBlockAddress = aLba;
@@ -285,6 +280,6 @@ TInt TSbcClientInterface::Write10L(TLba aLba, TDesC8& aBuffer, TUint aPos, TInt&
     write10Req.iBlockTransferLength = static_cast<TUint16>(blockTransferLength);
 
     TInt err = iTransport.SendDataTxCmdL(&write10Req, aBuffer, aPos, aLen);
-	return err;
+    return err;
     }
 

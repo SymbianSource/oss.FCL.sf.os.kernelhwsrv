@@ -261,7 +261,7 @@ TInt TFsNotificationAdd::Initialise(CFsRequest* aRequest)
 		}
 	
 	if(path.Length() >= 2)
-		r=PathCheck(aRequest,path.Mid(2),&KCapFsSysFileTemp,&KCapFsPriFileTemp,&KCapFsROFileTemp, __PLATSEC_DIAGNOSTIC_STRING("Notification Add Filter"));
+		r=PathCheck(aRequest->Message(),path.Mid(2),&KCapFsSysFileTemp,&KCapFsPriFileTemp,&KCapFsROFileTemp, __PLATSEC_DIAGNOSTIC_STRING("Notification Add Filter"));
 	return r;
 	}
 
@@ -284,14 +284,32 @@ TInt TFsNotificationAdd::DoRequestL(CFsRequest* aRequest)
 	__PRINT2(_L("TFsNotificationAdd::AddNotification() path=%S, filename=%S"),&path,&filename);
 	
 	//If this is a path starting with 'drive-letter:'
-	TInt driveNum = FsNotificationHelper::DriveNumber(path);
-	if(path.Length() >= 2 && (driveNum < 0 || driveNum > 25) && ((TChar)driveNum)!=((TChar)'?') && ((TChar)path[1])==(TChar)':')
-		{
-		return KErrPathNotFound;
-		}
+	TInt driveNum = CFsNotificationInfo::DriveNumber(path);
+	if(path.Length() >= 2)
+	    {
+	    if(path[1] != (TText)':')
+	        {
+	        if(path[0]!=(TText)'*')
+	            {
+	            return KErrPathNotFound;
+	            }
+	        }
+	    else // 2nd char is ':' 
+	        {
+	        if(driveNum < EDriveA  || driveNum > EDriveZ)
+	            {
+	            if(path[0]!=(TText)'?')
+	                return KErrPathNotFound;
+	            }
+	        }
+	    }
 
 	CleanupStack::PushL(notifyRequest);
-	CFsNotificationPathFilter* filter = CFsNotificationPathFilter::NewL(path,filename);
+	TPtrC pathPtr(path);
+	if(driveNum!=KErrNotFound || ((path.Length() >=1) && path[0]=='?'))
+	    //Remove the drive: part of the the path if it's got one.
+	    pathPtr.Set(path.Mid(2));
+	CFsNotificationPathFilter* filter = CFsNotificationPathFilter::NewL(pathPtr,filename,driveNum);
 
 	//Bitmask of filter types
 	TUint filterMask = (TUint) aRequest->Message().Int0();

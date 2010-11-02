@@ -43,6 +43,8 @@
 
 #include <e32test.h>
 #include <e32uid.h>
+#include <e32svr.h>
+#include <u32hal.h>
 #include "d_mstim.h"
 
 RTest test(_L("T_MSTIM"));
@@ -92,8 +94,14 @@ GLDEF_C TInt E32Main()
 // Test millisecond timers
 //
     {
+	// RTest::Printf and Next are very high latency under SMP, so suppress them
+	const TBool unicore = (UserSvr::HalFunction(EHalGroupKernel, EKernelHalSmpSupported, 0, 0) == KErrNotSupported);
+
 //	test.SetLogged(EFalse);
 	test.Title();
+
+	if (!unicore)
+		test.Printf(_L("Running on a SMP system - output reduced\n"));
 
 	test.Start(_L("Load test LDD"));
 	TInt r=User::LoadLogicalDevice(KLddFileName);
@@ -117,56 +125,67 @@ GLDEF_C TInt E32Main()
 	r=mstim.StartPeriodicDfc(7,71);
 	CHECK(r);
 
-	test.Next(_L("Start while started"));
+	if (unicore)
+		test.Next(_L("Start while started"));
 	TRequestStatus s;
 	mstim.StartOneShotInt(s,0,100);
 	User::WaitForRequest(s);
 	TEST(s==KErrInUse);
 
-	test.Next(_L("One shot interrupt"));
+	if (unicore)
+		test.Next(_L("One shot interrupt"));
 	mstim.StartOneShotInt(s,2,100);
 	User::WaitForRequest(s);
 	TUint fc1=User::NTickCount();
 	TEST(s==KErrNone);
 	TInt time=GetOneShotTime(2);
-	test.Printf(_L("Took %dms\n"),time);
+	if (unicore)
+		test.Printf(_L("Took %dms\n"),time);
 	TESTTIME(time,100,102);
 
-	test.Next(_L("One shot DFC"));
+	if (unicore)
+		test.Next(_L("One shot DFC"));
 	mstim.StartOneShotDfc(s,3,200);
 	User::WaitForRequest(s);
 	TUint fc3=User::NTickCount();
 	TEST(s==KErrNone);
 	time=GetOneShotTime(3);
-	test.Printf(_L("Took %dms\n"),time);
+	if (unicore)
+		test.Printf(_L("Took %dms\n"),time);
 	TESTTIME(time,200,202);
 
-	test.Next(_L("One shot interrupt again"));
+	if (unicore)
+		test.Next(_L("One shot interrupt again"));
 	TUint fc2=User::NTickCount();
 	mstim.StartOneShotIntAgain(s,2,300);
 	User::WaitForRequest(s);
 	TEST(s==KErrNone);
 	TInt time2=GetOneShotTime(2);
-	test.Printf(_L("Took %dms, delay %dms\n"),time2,fc2-fc1);
+	if (unicore)
+		test.Printf(_L("Took %dms, delay %dms\n"),time2,fc2-fc1);
 	time2+=TInt(fc2-fc1);
 	TESTTIME(time2,295,306);
 
-	test.Next(_L("One shot interrupt again too late"));
+	if (unicore)
+		test.Next(_L("One shot interrupt again too late"));
 	mstim.StartOneShotIntAgain(s,3,10);
 	User::WaitForRequest(s);
 	TEST(s==KErrArgument);
 
-	test.Next(_L("One shot interrupt again"));
+	if (unicore)
+		test.Next(_L("One shot interrupt again"));
 	fc2=User::NTickCount();
 	mstim.StartOneShotIntAgain(s,3,300);
 	User::WaitForRequest(s);
 	TEST(s==KErrNone);
 	time=GetOneShotTime(3);
-	test.Printf(_L("Took %dms, delay %dms\n"),time,fc2-fc3);
+	if (unicore)
+		test.Printf(_L("Took %dms, delay %dms\n"),time,fc2-fc3);
 	time+=TInt(fc2-fc3);
 	TESTTIME(time,295,306);
 
-	test.Printf(_L("Please wait...\n"));
+	if (unicore)
+		test.Printf(_L("Please wait...\n"));
 	User::After(10000000);
 
 	SMsTimerInfo info[8];
@@ -179,7 +198,8 @@ GLDEF_C TInt E32Main()
 
 	TUint final_count=User::NTickCount();
 	TInt elapsed=TInt(final_count-init_count);
-	test.Printf(_L("Elapsed time %dms\n"),elapsed);
+	if (unicore)
+		test.Printf(_L("Elapsed time %dms\n"),elapsed);
 
 	const TInt period[8]={31,32,0,0,7,43,19,71};
 	for (i=0; i<8; i++)
@@ -188,7 +208,8 @@ GLDEF_C TInt E32Main()
 		if (p==0)
 			continue;
 		SMsTimerInfo& z=info[i];
-		test.Printf(_L("%1d: min=%-6d max=%-6d avg=%-6d count=%d\n"),i,z.iMin,z.iMax,z.iAvg,z.iCount);
+		if (unicore)
+			test.Printf(_L("%1d: min=%-6d max=%-6d avg=%-6d count=%d\n"),i,z.iMin,z.iMax,z.iAvg,z.iCount);
 		TInt count=elapsed/p;
 		TInt cdiff=count-z.iCount;
 		TEST(cdiff>=0 && cdiff<=2);
@@ -199,7 +220,8 @@ GLDEF_C TInt E32Main()
 		TEST(Abs(z.iAvg-1000*p)<1000);
 		}
 
-	test.Next(_L("Cancel periodic"));
+	if (unicore)
+		test.Next(_L("Cancel periodic"));
 	r=mstim.StopPeriodic(7);
 	CHECK(r);
 	r=mstim.GetInfo(7,info[7]);
@@ -209,16 +231,19 @@ GLDEF_C TInt E32Main()
 	CHECK(r);
 	TEST(info[6].iCount==info[7].iCount);
 
-	test.Next(_L("Reuse cancelled"));
+	if (unicore)
+		test.Next(_L("Reuse cancelled"));
 	mstim.StartOneShotInt(s,7,128);
 	User::WaitForRequest(s);
 	TEST(s==KErrNone);
 	time=GetOneShotTime(7);
-	test.Printf(_L("Took %dms\n"),time);
+	if (unicore)
+		test.Printf(_L("Took %dms\n"),time);
 	TESTTIME(time,128,130);
 
 	TRequestStatus s2;
-	test.Next(_L("Timed Cancel"));
+	if (unicore)
+		test.Next(_L("Timed Cancel"));
 	mstim.StartOneShotInt(s,2,128);
 	mstim.IntCancel(s2,2,130);
 	User::WaitForRequest(s);
@@ -226,10 +251,12 @@ GLDEF_C TInt E32Main()
 	User::WaitForRequest(s2);
 	TEST(s2==KErrNone);
 	time=GetOneShotTime(2);
-	test.Printf(_L("Took %dms\n"),time);
+	if (unicore)
+		test.Printf(_L("Took %dms\n"),time);
 	TESTTIME(time,128,130);
 	time=GetOneShotTime(7);
-	test.Printf(_L("Cancel Took %dms\n"),time);
+	if (unicore)
+		test.Printf(_L("Cancel Took %dms\n"),time);
 	TESTTIME(time,130,132);
 
 	mstim.StartOneShotInt(s,2,128);
@@ -239,38 +266,46 @@ GLDEF_C TInt E32Main()
 	User::WaitForRequest(s2);
 	TEST(s2==KErrNone);
 	time=GetOneShotTime(7);
-	test.Printf(_L("Cancel Took %dms\n"),time);
+	if (unicore)
+		test.Printf(_L("Cancel Took %dms\n"),time);
 	TESTTIME(time,126,128);
 
-	test.Next(_L("Reuse cancelled"));
+	if (unicore)
+		test.Next(_L("Reuse cancelled"));
 	mstim.StartOneShotInt(s,2,64);
 	User::WaitForRequest(s);
 	TEST(s==KErrNone);
 	time=GetOneShotTime(2);
-	test.Printf(_L("Took %dms\n"),time);
+	if (unicore)
+		test.Printf(_L("Took %dms\n"),time);
 	TESTTIME(time,64,66);
 
 #ifdef _DEBUG
-	test.Next(_L("Random test"));
+	if (unicore)
+		test.Next(_L("Random test"));
 	r=mstim.BeginRandomTest();
 	CHECK(r);
 #endif
 
-	test.Printf(_L("Please wait...\n"));
+	if (unicore)
+		test.Printf(_L("Please wait...\n"));
 	User::After(10000000);
 
 #ifdef _DEBUG
 	r=mstim.EndRandomTest();
 	CHECK(r);
-	SRandomTestInfo rInfo;
-	r=mstim.GetRandomTestInfo(rInfo);
-	test.Printf(_L("min error = %d\n"),rInfo.iMin);
-	test.Printf(_L("max error = %d\n"),rInfo.iMax);
-	test.Printf(_L("xfer cancel = %d\n"),rInfo.iXferC);
-	test.Printf(_L("crit cancel = %d\n"),rInfo.iCritC);
-	test.Printf(_L("start fails = %d\n"),rInfo.iStartFail);
-	test.Printf(_L("debug calls = %d\n"),rInfo.iCallBacks);
-	test.Printf(_L("completions = %d\n"),rInfo.iCompletions);
+	if (unicore)
+		{
+		SRandomTestInfo rInfo;
+		r=mstim.GetRandomTestInfo(rInfo);
+		test.Printf(_L("min error = %d\n"),rInfo.iMin);
+		test.Printf(_L("max error = %d\n"),rInfo.iMax);
+		test.Printf(_L("xfer cancel = %d\n"),rInfo.iXferC);
+		test.Printf(_L("crit cancel = %d\n"),rInfo.iCritC);
+		test.Printf(_L("start fails = %d\n"),rInfo.iStartFail);
+		test.Printf(_L("debug calls = %d\n"),rInfo.iCallBacks);
+		test.Printf(_L("completions = %d\n"),rInfo.iCompletions);
+		}
 #endif
 
 	for (i=0; i<8; i++)
@@ -281,7 +316,8 @@ GLDEF_C TInt E32Main()
 
 	final_count=User::NTickCount();
 	elapsed=TInt(final_count-init_count);
-	test.Printf(_L("Elapsed time %dms\n"),elapsed);
+	if (unicore)
+		test.Printf(_L("Elapsed time %dms\n"),elapsed);
 
 	const TInt period2[8]={31,32,0,0,7,43,19,0};
 	for (i=0; i<8; i++)
@@ -292,7 +328,8 @@ GLDEF_C TInt E32Main()
 		r=mstim.StopPeriodic(i);
 		CHECK(r);
 		SMsTimerInfo& z=info[i];
-		test.Printf(_L("%1d: min=%-6d max=%-6d avg=%-6d count=%d\n"),i,z.iMin,z.iMax,z.iAvg,z.iCount);
+		if (unicore)
+			test.Printf(_L("%1d: min=%-6d max=%-6d avg=%-6d count=%d\n"),i,z.iMin,z.iMax,z.iAvg,z.iCount);
 		TInt count=elapsed/p;
 		TInt cdiff=count-z.iCount;
 		TEST(cdiff>=0 && cdiff<=2);

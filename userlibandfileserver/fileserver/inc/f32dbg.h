@@ -195,6 +195,8 @@ const TInt KControlIoDirCacheInfo=KMaxTInt-27;
 const TInt KControlIoSimulateMemoryLow=KMaxTInt-28;
 const TInt KControlIoStopSimulateMemoryLow=KMaxTInt-29;
 
+const TInt KControlIoHeapCellCount=KMaxTInt-30;
+
 const TInt KNCDebugNotifierValue=-500000;	// between 0 and 1 second
 
 GLREF_D TInt DebugNCNotifier;

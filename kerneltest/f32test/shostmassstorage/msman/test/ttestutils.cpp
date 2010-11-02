@@ -1,4 +1,4 @@
-// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -12,7 +12,7 @@
 //
 // Description:
 // USB Host Mass Storage
-// 
+//
 //
 
 
@@ -26,7 +26,6 @@
 
 
 #include "ttestutils.h"
-#include "tmslog.h"
 #include "e32test.h"
 #include "e32debug.h"
 
@@ -46,7 +45,6 @@ extern RTest test;
 
 void TTestUtils::WaitForBusEventL()
     {
-    __MSFNSLOG
     _LIT_SECURITY_POLICY_PASS(KMsAllowAllPolicy);
     _LIT_SECURITY_POLICY_S0(KMsWritePolicy, KUsbmanSvrSid.iUid);
 
@@ -74,7 +72,6 @@ void TTestUtils::WaitForBusEventL()
 
 TBool TTestUtils::WaitForConnectionStateEventL()
     {
-    __MSFNSLOG
     _LIT_SECURITY_POLICY_PASS(KMsAllowAllPolicy);
     _LIT_SECURITY_POLICY_S0(KMsWritePolicy, KUsbmanSvrSid.iUid);
 

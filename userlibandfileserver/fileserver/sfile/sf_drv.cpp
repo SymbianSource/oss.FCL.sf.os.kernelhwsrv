@@ -1452,10 +1452,16 @@ void TDrive::FileOpenL(CFsRequest* aRequest,TInt& aHandle,const TDesC& aName,TUi
 			if (pFileCache)
 				{
 				pFileCache = pFileCache->ReNewL(*pFileShare);	// NB may return NULL if caching not enabled
+
+				OstTraceExt3(TRACE_FILECACHE, FILECACHE_RENEW_FILE_CACHE1, "ReNew FileCache %x File %x drive %u", (TUint) pFileCache, (TUint) &pFileShare->File(), (TUint) DriveNumber());
+				OstTraceData(TRACE_FILECACHE, FILECACHE_RENEW_FILE_CACHE2, "Name %S", pFileShare->File().iFileNameF->Ptr(), pFileShare->File().iFileNameF->Length()<<1);
 				}
 			else
 				{
 				pFileCache = CFileCache::NewL(*pFileShare);		// NB may return NULL if caching not enabled
+
+				OstTraceExt3(TRACE_FILECACHE, FILECACHE_NEW_FILE_CACHE1, "New FileCache %x FileCB %x drive %u", (TUint) pFileCache, (TUint) &pFileShare->File(), (TUint) DriveNumber());
+				OstTraceData(TRACE_FILECACHE, FILECACHE_NEW_FILE_CACHE2, "Name %S", pFileShare->File().iFileNameF->Ptr(), pFileShare->File().iFileNameF->Length()<<1);
 				}
 			if (pFileCache)
 				// Set the cached size to be the same as the uncached size

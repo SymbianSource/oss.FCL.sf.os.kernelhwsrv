@@ -211,7 +211,7 @@ TInt TFsNotifyChangeEx::Initialise(CFsRequest* aRequest)
 			return(ret);
 		}
 	aRequest->SetScratchValue(monitorAllDrives);
-	ret = PathCheck(aRequest,aRequest->Src().FullName().Mid(2),&KCapFsNotifyChangeEx, __PLATSEC_DIAGNOSTIC_STRING("Extended Change Notifier"));		
+	ret = PathCheck(aRequest->Message(),aRequest->Src().FullName().Mid(2),&KCapFsNotifyChangeEx, __PLATSEC_DIAGNOSTIC_STRING("Extended Change Notifier"));		
 	return(ret);
 	}
 
@@ -594,13 +594,9 @@ TInt TFsSetVolume::DoRequestL(CFsRequest* aRequest)
     if(r != KErrNone)
         return r;
 
-	TFileName volumeName;
-	aRequest->ReadL(KMsgPtr0,volumeName);
-	if (volumeName.Length()>KMaxVolumeNameLength)	//	KMaxVolumeNameLength = 11 
-		return(KErrBadName);
-	
     //	Validate name - return KErrBadName if it contains illegal characters such as * ? / | > <
-	TNameChecker checker(volumeName);
+    TPtrC volumeName(aRequest->Dest().FullName());
+    TNameChecker checker(volumeName);
 	TText badChar;
 	if (checker.IsIllegalName(badChar))
 		return(KErrBadName);
@@ -617,6 +613,17 @@ TInt TFsSetVolume::Initialise(CFsRequest* aRequest)
 	TInt r=ValidateDriveDoSubst(aRequest->Message().Int1(),aRequest);
 	if (r!=KErrNone)
 		return(r);
+	TFileName volumeName;
+	TRAP(r,aRequest->ReadL(KMsgPtr0,volumeName));
+	if(r!=KErrNone)
+	    return r;
+    if (volumeName.Length()>KMaxVolumeNameLength)   //  KMaxVolumeNameLength = 11 
+        return(KErrBadName);
+    
+	r = aRequest->Dest().Set(volumeName,NULL,NULL);
+	if(r!=KErrNone)
+	    return r;
+	
 	if (!KCapFsSetVolume.CheckPolicy(aRequest->Message(), __PLATSEC_DIAGNOSTIC_STRING("Set Volume")))
 		return KErrPermissionDenied;
 	return KErrNone;
@@ -671,7 +678,7 @@ TInt TFsSetSubst::DoRequestL(CFsRequest* aRequest)
 		pD->SetSubstedDrive(NULL);
 		return(KErrNone);
 		}
-	r=PathCheck(aRequest,aRequest->Src().FullName().Mid(2),&KCapFsSysSetSubst,&KCapFsPriSetSubst,&KCapFsROSetSubst, __PLATSEC_DIAGNOSTIC_STRING("Set Subst"));
+	r=PathCheck(aRequest->Message(),aRequest->Src().FullName().Mid(2),&KCapFsSysSetSubst,&KCapFsPriSetSubst,&KCapFsROSetSubst, __PLATSEC_DIAGNOSTIC_STRING("Set Subst"));
 	if (r!=KErrNone)
 		return(r);
 	if (pD->Att()&(KDriveAttLocal|KDriveAttRom|KDriveAttRedirected|KDriveAttSubsted))
@@ -710,7 +717,7 @@ TInt TFsRealName::DoRequestL(CFsRequest* aRequest)
 	TInt r=ParseSubstPtr0(aRequest,aRequest->Src());
 	if (r!=KErrNone)
 		return(r);
-	r=PathCheck(aRequest,aRequest->Src().FullName().Mid(2),&KCapFsSysRealName,&KCapFsPriRealName, __PLATSEC_DIAGNOSTIC_STRING("Real Name"));
+	r=PathCheck(aRequest->Message(),aRequest->Src().FullName().Mid(2),&KCapFsSysRealName,&KCapFsPriRealName, __PLATSEC_DIAGNOSTIC_STRING("Real Name"));
 	if (r!=KErrNone)
 		return(r);
 	TFileName substName;
@@ -869,7 +876,7 @@ TInt TFsSetSessionPath::DoRequestL(CFsRequest* aRequest)
 	TInt r=ParsePathPtr0(aRequest,parse);	
 	if (r!=KErrNone && r!=KErrInUse)
 		return(r);
-	r=PathCheck(aRequest,parse.FullName().Mid(2),&KCapFsSysSetSessionPath,&KCapFsPriSetSessionPath, __PLATSEC_DIAGNOSTIC_STRING("Set Session Path"));
+	r=PathCheck(aRequest->Message(),parse.FullName().Mid(2),&KCapFsSysSetSessionPath,&KCapFsPriSetSessionPath, __PLATSEC_DIAGNOSTIC_STRING("Set Session Path"));
 	if (r!=KErrNone)
 		return(r);
 	if (IsIllegalFullName(parse.FullName()))

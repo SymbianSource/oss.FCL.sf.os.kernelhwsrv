@@ -13,24 +13,21 @@
 // Description:
 //
 
-TARGET			msmanclient.dll
+TARGET                  msmanclient.dll
 
-TARGETTYPE		dll
+TARGETTYPE              dll
 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
-USERINCLUDE	.
-USERINCLUDE	../shared
+USERINCLUDE     .
+USERINCLUDE     ../shared
 
-SOURCEPATH	.
-SOURCE	rusbhostsession.cpp
-SOURCE	rusbotgsession.cpp
+SOURCEPATH      .
+SOURCE  rusbhostsession.cpp
+SOURCE  rusbotgsession.cpp
 
-SOURCEPATH	../shared
-SOURCE	tmslog.cpp
+LIBRARY         efsrv.lib euser.lib
 
-LIBRARY		efsrv.lib euser.lib
-
-// MACRO			_TESTAPP_DEBUG_PRINT_
+// MACRO                        _TESTAPP_DEBUG_PRINT_
 
 CAPABILITY ALL
 

@@ -20,16 +20,19 @@
 
 #include <e32base.h>
 
-#include "usbmshostpanic.h"
-#include "debug.h"
-#include "msdebug.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "cmassstoragefsmTraces.h"
+#endif
 
+#include "usbmshostpanic.h"
 #include "msctypes.h"
 #include "mprotocol.h"
 #include "mblocktransferprotocol.h"
 #include "tspcclientinterface.h"
 #include "cscsiprotocol.h"
 #include "cmassstoragefsm.h"
+
 
 
 /**
@@ -40,7 +43,6 @@ Constructor
 TMassStorage::TMassStorage(CScsiProtocol& aScsiProtocol)
 :   iScsiProtocol(aScsiProtocol)
     {
-	__MSFNLOG
     }
 
 
@@ -49,8 +51,7 @@ Clear StatusCheck flag. Periodic status checking is used for removable media.
 */
 void CMassStorageFsm::ClearStatusCheck()
 {
-	__MSFNLOG
-	iStatusCheck = EFalse;
+    iStatusCheck = EFalse;
 }
 
 
@@ -59,8 +60,7 @@ Set StatusCheck flag. Periodic status checking is used for removable media.
 */
 void CMassStorageFsm::SetStatusCheck()
 {
-	__MSFNLOG
-	iStatusCheck = ETrue;
+    iStatusCheck = ETrue;
 }
 
 
@@ -71,8 +71,7 @@ Get the boolean state of StatusCheck flag.
 */
 TBool CMassStorageFsm::IsStatusCheck() const
 {
-	__MSFNSLOG
-	return iStatusCheck;
+    return iStatusCheck;
 }
 
 
@@ -83,7 +82,6 @@ Device supports SCSI BLOCK COMMANDS.
 */
 TBool TMassStorage::IsSbcSet() const
     {
-	__MSFNSLOG
     return iScsiProtocol.MsIsSbcSet();
     }
 
@@ -94,7 +92,6 @@ Device is removable media
 */
 TBool TMassStorage::IsRemovableMedia() const
     {
-	__MSFNSLOG
     return iScsiProtocol.MsIsRemovableMedia();
     }
 
@@ -105,7 +102,6 @@ Retrieve the sense info returned by a call to SenseL
 */
 const TSenseInfo& TMassStorage::MsSenseInfo() const
     {
-	__MSFNSLOG
     return iScsiProtocol.MsSenseInfo();
     }
 
@@ -113,7 +109,6 @@ const TSenseInfo& TMassStorage::MsSenseInfo() const
 /** SCSI Request */
 TMassStorage::TEvent TMassStorage::InquiryL()
     {
-	__MSFNLOG
     TEvent event = EEvCommandFailed;
 
     switch (iScsiProtocol.MsInquiryL())
@@ -125,11 +120,13 @@ TMassStorage::TEvent TMassStorage::InquiryL()
         event = EEvCommandFailed;
         break;
     case KErrNotSupported:
-        __SCSIPRINT(_L("INQUIRY Command returned NOT SUPPORTED"));
+        OstTrace0(TRACE_SHOSTMASSSTORAGE_SCSI, CMASSSTORAGEFSM_10,
+                  "INQUIRY Command returned NOT SUPPORTED");
         User::Leave(KErrNotSupported);
         break;
     default:
-        __SCSIPRINT(_L("INQUIRY Command returned KErrUnknown"));
+        OstTrace0(TRACE_SHOSTMASSSTORAGE_SCSI, CMASSSTORAGEFSM_11,
+                  "INQUIRY Command returned KErrUnknown");
         User::Leave(KErrUnknown);
         break;
         }
@@ -140,18 +137,19 @@ TMassStorage::TEvent TMassStorage::InquiryL()
 /** SCSI Request */
 TMassStorage::TEvent TMassStorage::SenseL()
     {
-	__MSFNLOG
     TEvent event = EEvCommandPassed;
     switch (iScsiProtocol.MsRequestSenseL())
         {
     case KErrNone:
         break;
     case KErrCommandFailed:
-        __SCSIPRINT(_L("REQUEST SENSE Command Failed"));
+        OstTrace0(TRACE_SHOSTMASSSTORAGE_SCSI, CMASSSTORAGEFSM_12,
+                  "REQUEST SENSE Command Failed");
         User::Leave(KErrNotSupported);
         break;
     default:
-        __SCSIPRINT(_L("INQUIRY Command returned KErrUnknown"));
+        OstTrace0(TRACE_SHOSTMASSSTORAGE_SCSI, CMASSSTORAGEFSM_13,
+                  "INQUIRY Command returned KErrUnknown");
         User::Leave(KErrUnknown);
         break;
         }
@@ -162,7 +160,6 @@ TMassStorage::TEvent TMassStorage::SenseL()
 /** SCSI Request */
 TMassStorage::TEvent TMassStorage::TestUnitReadyL()
     {
-	__MSFNLOG
     // KErrCommandFailed indictates that device is NOT READY
     TInt err = iScsiProtocol.MsTestUnitReadyL();
     return (err == KErrNone) ? EEvCommandPassed : EEvCommandFailed;
@@ -172,7 +169,6 @@ TMassStorage::TEvent TMassStorage::TestUnitReadyL()
 /** SCSI Request */
 TMassStorage::TEvent TMassStorage::StartStopUnitL(TBool aStart)
     {
-	__MSFNLOG
     TInt err = iScsiProtocol.MsStartStopUnitL(aStart);
     return (err == KErrNone) ? EEvCommandPassed : EEvCommandFailed;
     }
@@ -181,7 +177,6 @@ TMassStorage::TEvent TMassStorage::StartStopUnitL(TBool aStart)
 /** SCSI Request */
 TMassStorage::TEvent TMassStorage::PreventAllowMediumRemovalL(TBool aPrevent)
     {
-	__MSFNLOG
     // KErrCommandFailed indictates that device is NOT READY
     TInt err = iScsiProtocol.MsPreventAllowMediaRemovalL(aPrevent);
     return (err == KErrNone) ? EEvCommandPassed : EEvCommandFailed;
@@ -191,7 +186,6 @@ TMassStorage::TEvent TMassStorage::PreventAllowMediumRemovalL(TBool aPrevent)
 /** SCSI Request */
 TMassStorage::TEvent TMassStorage::ReadCapacityL()
     {
-	__MSFNLOG
     TInt err = iScsiProtocol.MsReadCapacityL();
     return ErrToEvent(err);
     }
@@ -200,7 +194,6 @@ TMassStorage::TEvent TMassStorage::ReadCapacityL()
 /** SCSI Request */
 TMassStorage::TEvent TMassStorage::ModeSense10L()
     {
-	__MSFNLOG
     TInt err = iScsiProtocol.MsModeSense10L();
     return ErrToEvent(err);
     }
@@ -209,7 +202,6 @@ TMassStorage::TEvent TMassStorage::ModeSense10L()
 /** SCSI Request */
 TMassStorage::TEvent TMassStorage::ModeSense6L()
     {
-	__MSFNLOG
     TInt err = iScsiProtocol.MsModeSense6L();
     return ErrToEvent(err);
     }
@@ -225,18 +217,16 @@ mass storage device.
 */
 CMassStorageFsm* CMassStorageFsm::NewL(CScsiProtocol& aScsiProtocol)
 {
-	__MSFNSLOG
-	CMassStorageFsm* r = new (ELeave) CMassStorageFsm(aScsiProtocol);
+    CMassStorageFsm* r = new (ELeave) CMassStorageFsm(aScsiProtocol);
 
-	CleanupStack::PushL(r);
-	r->ConstructL();
-	CleanupStack::Pop();
-	return r;
+    CleanupStack::PushL(r);
+    r->ConstructL();
+    CleanupStack::Pop();
+    return r;
 }
 
 void CMassStorageFsm::ConstructL()
     {
-	__MSFNLOG
     TInt i = 0;
     // EInquiryState,
     iStateTable[i++] = new (ELeave) TInquiryState;
@@ -291,13 +281,10 @@ CMassStorageFsm::CMassStorageFsm(CScsiProtocol& aScsiProtocol)
 :   TMassStorage(aScsiProtocol),
     iStartStopUnitRequired(EFalse)
     {
-	__MSFNLOG
     }
 
 CMassStorageFsm::~CMassStorageFsm()
     {
-	__MSFNLOG
-
     for (TInt i = 0; i < iStateTable.Count(); i++)
         {
         delete iStateTable[i];
@@ -307,8 +294,6 @@ CMassStorageFsm::~CMassStorageFsm()
 
 TMassStorage::TEvent CMassStorageFsm::EntryL()
     {
-	__MSFNLOG
-
     return iState->EntryL(*this);
     }
 
@@ -320,8 +305,8 @@ Run FSM to connect device.
 */
 TInt CMassStorageFsm::ConnectLogicalUnitL()
     {
-	__MSFNLOG
-    __HOSTPRINT(_L("CMassStorageFsm::ConnectLogicalUnitL()"));        
+    OstTrace0(TRACE_SHOSTMASSSTORAGE_HOST, CMASSSTORAGEFSM_14,
+              "Connect Logical Unit");
     TInt err = KErrNone;
     for (;;)
          {
@@ -340,8 +325,8 @@ Run FSM to disconnect the device.
 */
 TInt CMassStorageFsm::DisconnectLogicalUnitL()
     {
-	__MSFNLOG
-    __HOSTPRINT(_L("CMassStorageFsm::DisconnectLogicalUnitL()"));
+    OstTrace0(TRACE_SHOSTMASSSTORAGE_HOST, CMASSSTORAGEFSM_15,
+              "Disconnect Logical Unit");
     TInt err = KErrNone;
     for (;;)
          {
@@ -360,24 +345,24 @@ Return current FSM state.
 */
 TBool CMassStorageFsm::IsConnected() const
     {
-	__MSFNSLOG
     return iState->iStateId == TMassStorageState::EConnectedState ? ETrue : EFalse;
     }
 
 
 TInt CMassStorageFsm::ProcessStateL()
     {
-	__MSFNLOG
     TMassStorage::TEvent event = TMassStorage::EEvCommandFailed;
     TRAPD(err,  event = EntryL());
     if (err == KErrNotSupported)
         {
-        __HOSTPRINT(_L("FSM ProcessState returning with KErrNotSupported"));
+        OstTrace0(TRACE_SHOSTMASSSTORAGE_HOST, CMASSSTORAGEFSM_16,
+                  "FSM ProcessState returning with KErrNotSupported");
         return KErrNotSupported;
         }
     User::LeaveIfError(err);
 
-    __HOSTPRINT1(_L("FSM event=%d"), event);
+    OstTrace1(TRACE_SHOSTMASSSTORAGE_HOST, CMASSSTORAGEFSM_17,
+              "FSM event=%d", event);
     switch (event)
         {
     case TMassStorage::EEvCommandPassed:
@@ -394,28 +379,26 @@ TInt CMassStorageFsm::ProcessStateL()
         break;
         }
 
-    __HOSTPRINT1(_L("FSM ProcessState completed=%d"), err);
+    OstTrace1(TRACE_SHOSTMASSSTORAGE_HOST, CMASSSTORAGEFSM_18,
+              "FSM ProcessState completed=%d", err);
     return err;
     }
 
 
 TInt CMassStorageFsm::ScsiCommandPassed()
     {
-	__MSFNLOG
     return iState->ScsiCommandPassed(*this);
     }
 
 
 TInt CMassStorageFsm::ScsiCommandFailed()
     {
-	__MSFNLOG
     return iState->ScsiCommandFailed(*this);
     }
 
 
 TInt CMassStorageFsm::ScsiCommandError()
     {
-	__MSFNLOG
     return iState->ScsiCommandError(*this);
     }
 
@@ -428,16 +411,15 @@ Constructor
 TMassStorageState::TMassStorageState(TStateId aStateId)
 :   iStateId(aStateId)
     {
-	__MSFNLOG
     }
 
 
-/** 
-   Default state does nothing. Used by states where the stalled event is not 
-   applicable 
-   
+/**
+   Default state does nothing. Used by states where the stalled event is not
+   applicable
+
    @param aFsm
-   
+
    @return TInt
  */
 TInt TMassStorageState::ScsiCommandError(CMassStorageFsm& /* aFsm */)
@@ -448,7 +430,6 @@ TInt TMassStorageState::ScsiCommandError(CMassStorageFsm& /* aFsm */)
 
 TInt TMassStorageState::SenseError(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     TInt ret = KErrNone;
     const TSenseInfo& senseInfo = aFsm.MsSenseInfo();
 
@@ -471,20 +452,17 @@ TInt TMassStorageState::SenseError(CMassStorageFsm& aFsm)
 TInquiryState::TInquiryState()
 :   TMassStorageState(EInquiryState)
     {
-	__MSFNLOG
     }
 
 
 TMassStorage::TEvent TInquiryState::EntryL(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     return aFsm.InquiryL();
     };
 
 
 TInt TInquiryState::ScsiCommandPassed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(ENotReadyState);
     return KErrNone;
     };
@@ -492,7 +470,6 @@ TInt TInquiryState::ScsiCommandPassed(CMassStorageFsm& aFsm)
 
 TInt TInquiryState::ScsiCommandFailed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(EInquirySenseState);
     return KErrNone;
     }
@@ -504,20 +481,17 @@ TInt TInquiryState::ScsiCommandFailed(CMassStorageFsm& aFsm)
 TInquirySenseState::TInquirySenseState()
 :   TMassStorageState(EInquirySenseState)
     {
-	__MSFNLOG
     }
 
 
 TMassStorage::TEvent TInquirySenseState::EntryL(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     return aFsm.SenseL();
     };
 
 
 TInt TInquirySenseState::ScsiCommandPassed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     // SENSE ERROR
     aFsm.SetState(TMassStorageState::EInquiryState);
     return KErrCompletion;
@@ -526,7 +500,6 @@ TInt TInquirySenseState::ScsiCommandPassed(CMassStorageFsm& aFsm)
 
 TInt TInquirySenseState::ScsiCommandFailed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(TMassStorageState::EInquiryState);
     return KErrCompletion;
     }
@@ -538,20 +511,17 @@ TInt TInquirySenseState::ScsiCommandFailed(CMassStorageFsm& aFsm)
 TNotReadyState::TNotReadyState()
 :   TMassStorageState(ENotReadyState)
     {
-	__MSFNLOG
     }
 
 
 TMassStorage::TEvent TNotReadyState::EntryL(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     return aFsm.TestUnitReadyL();
     }
 
 
 TInt TNotReadyState::ScsiCommandPassed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     if (aFsm.IsSbcSet())
         {
         if (aFsm.IsRemovableMedia())
@@ -561,17 +531,17 @@ TInt TNotReadyState::ScsiCommandPassed(CMassStorageFsm& aFsm)
         }
     else
         {
-        __HOSTPRINT(_L("SBC is not set !!"));
+        OstTrace0(TRACE_SHOSTMASSSTORAGE_HOST, CMASSSTORAGEFSM_19,
+                  "SBC is not set !!");
         aFsm.SetState(TMassStorageState::EReadCapacityState);
         }
-        
+
     return KErrNone;
     }
 
 
 TInt TNotReadyState::ScsiCommandFailed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(TMassStorageState::ENotReadySenseState);
     return KErrNone;
     }
@@ -583,20 +553,17 @@ TInt TNotReadyState::ScsiCommandFailed(CMassStorageFsm& aFsm)
 TNotReadySenseState::TNotReadySenseState()
 :   TMassStorageState(ENotReadySenseState)
     {
-	__MSFNLOG
     }
 
 
 TMassStorage::TEvent TNotReadySenseState::EntryL(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     return aFsm.SenseL();
     }
 
 
 TInt TNotReadySenseState::ScsiCommandPassed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     const TSenseInfo& senseInfo = aFsm.MsSenseInfo();
     TInt ret = KErrNone;
 
@@ -618,7 +585,6 @@ TInt TNotReadySenseState::ScsiCommandPassed(CMassStorageFsm& aFsm)
 
 TInt TNotReadySenseState::ScsiCommandFailed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     return TMassStorageState::SenseError(aFsm);
     }
 
@@ -629,20 +595,17 @@ TInt TNotReadySenseState::ScsiCommandFailed(CMassStorageFsm& aFsm)
 TStartUnitState::TStartUnitState()
 :   TMassStorageState(EPreventRemovalState)
     {
-	__MSFNLOG
     }
 
 
 TMassStorage::TEvent TStartUnitState::EntryL(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     return aFsm.StartStopUnitL(ETrue);
     }
 
 
 TInt TStartUnitState::ScsiCommandPassed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     if (aFsm.IsRemovableMedia())
         aFsm.SetState(TMassStorageState::EPreventRemovalState);
     else
@@ -653,7 +616,6 @@ TInt TStartUnitState::ScsiCommandPassed(CMassStorageFsm& aFsm)
 
 TInt TStartUnitState::ScsiCommandFailed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(TMassStorageState::EPreventRemovalSenseState);
     return KErrNone;
     }
@@ -664,20 +626,17 @@ TInt TStartUnitState::ScsiCommandFailed(CMassStorageFsm& aFsm)
 TStartUnitSenseState::TStartUnitSenseState()
 :   TMassStorageState(EPreventRemovalSenseState)
     {
-	__MSFNLOG
     }
 
 
 TMassStorage::TEvent TStartUnitSenseState::EntryL(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     return aFsm.SenseL();
     }
 
 
 TInt TStartUnitSenseState::ScsiCommandPassed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     if (aFsm.IsRemovableMedia())
         aFsm.SetState(TMassStorageState::EPreventRemovalState);
     else
@@ -689,7 +648,6 @@ TInt TStartUnitSenseState::ScsiCommandPassed(CMassStorageFsm& aFsm)
 
 TInt TStartUnitSenseState::ScsiCommandFailed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     TInt ret = KErrCompletion;
     const TSenseInfo& senseInfo = aFsm.MsSenseInfo();
 
@@ -714,20 +672,17 @@ TInt TStartUnitSenseState::ScsiCommandFailed(CMassStorageFsm& aFsm)
 TPreventMediumRemovalState::TPreventMediumRemovalState()
 :   TMassStorageState(EPreventRemovalState)
     {
-	__MSFNLOG
     }
 
 
 TMassStorage::TEvent TPreventMediumRemovalState::EntryL(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     return aFsm.PreventAllowMediumRemovalL(ETrue);
     }
 
 
 TInt TPreventMediumRemovalState::ScsiCommandPassed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(TMassStorageState::EReadCapacityState);
     return KErrNone;
     }
@@ -735,7 +690,6 @@ TInt TPreventMediumRemovalState::ScsiCommandPassed(CMassStorageFsm& aFsm)
 
 TInt TPreventMediumRemovalState::ScsiCommandFailed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(TMassStorageState::EPreventRemovalSenseState);
     return KErrNone;
     }
@@ -746,20 +700,17 @@ TInt TPreventMediumRemovalState::ScsiCommandFailed(CMassStorageFsm& aFsm)
 TPreventMediumRemovalSenseState::TPreventMediumRemovalSenseState()
 :   TMassStorageState(EPreventRemovalSenseState)
     {
-	__MSFNLOG
     }
 
 
 TMassStorage::TEvent TPreventMediumRemovalSenseState::EntryL(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     return aFsm.SenseL();
     }
 
 
 TInt TPreventMediumRemovalSenseState::ScsiCommandPassed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(TMassStorageState::EReadCapacityState);
     return KErrNone;
     }
@@ -769,7 +720,6 @@ TInt TPreventMediumRemovalSenseState::ScsiCommandPassed(CMassStorageFsm& aFsm)
 
 TInt TPreventMediumRemovalSenseState::ScsiCommandFailed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     TInt ret = KErrCompletion;
     const TSenseInfo& senseInfo = aFsm.MsSenseInfo();
 
@@ -792,20 +742,17 @@ TInt TPreventMediumRemovalSenseState::ScsiCommandFailed(CMassStorageFsm& aFsm)
 TReadCapacity10State::TReadCapacity10State()
 :   TMassStorageState(EReadCapacityState)
     {
-	__MSFNLOG
     }
 
 
 TMassStorage::TEvent TReadCapacity10State::EntryL(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     return aFsm.ReadCapacityL();
     };
 
 
 TInt TReadCapacity10State::ScsiCommandPassed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(EModeSense10State);
     return KErrNone;
     };
@@ -813,7 +760,6 @@ TInt TReadCapacity10State::ScsiCommandPassed(CMassStorageFsm& aFsm)
 
 TInt TReadCapacity10State::ScsiCommandFailed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(TMassStorageState::ESenseState);
     return KErrCompletion;
     }
@@ -821,7 +767,6 @@ TInt TReadCapacity10State::ScsiCommandFailed(CMassStorageFsm& aFsm)
 
 TInt TReadCapacity10State::ScsiCommandError(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(TMassStorageState::ENotReadyState);
     return KErrCompletion;
     }
@@ -833,20 +778,17 @@ TInt TReadCapacity10State::ScsiCommandError(CMassStorageFsm& aFsm)
 TModeSense10State::TModeSense10State()
 :   TMassStorageState(EModeSense10State)
     {
-	__MSFNLOG
     }
 
 
 TMassStorage::TEvent TModeSense10State::EntryL(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     return aFsm.ModeSense10L();
     };
 
 
 TInt TModeSense10State::ScsiCommandPassed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(EConnectedState);
     return KErrCompletion;
     };
@@ -854,7 +796,6 @@ TInt TModeSense10State::ScsiCommandPassed(CMassStorageFsm& aFsm)
 
 TInt TModeSense10State::ScsiCommandFailed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(EModeSense10SenseState);
     return KErrNone;
     }
@@ -862,7 +803,6 @@ TInt TModeSense10State::ScsiCommandFailed(CMassStorageFsm& aFsm)
 
 TInt TModeSense10State::ScsiCommandError(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(EModeSense6State);
     return KErrNone;
     }
@@ -873,20 +813,17 @@ TInt TModeSense10State::ScsiCommandError(CMassStorageFsm& aFsm)
 TModeSense10SenseState::TModeSense10SenseState()
 :   TMassStorageState(EModeSense10SenseState)
     {
-	__MSFNLOG
     }
 
 
 TMassStorage::TEvent TModeSense10SenseState::EntryL(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     return aFsm.SenseL();
     };
 
 
 TInt TModeSense10SenseState::ScsiCommandPassed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     TInt ret = KErrCompletion;
     const TSenseInfo& senseInfo = aFsm.MsSenseInfo();
 
@@ -906,7 +843,6 @@ TInt TModeSense10SenseState::ScsiCommandPassed(CMassStorageFsm& aFsm)
 
 TInt TModeSense10SenseState::ScsiCommandFailed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(EInquirySenseState);
     return KErrCompletion;
     }
@@ -917,20 +853,17 @@ TInt TModeSense10SenseState::ScsiCommandFailed(CMassStorageFsm& aFsm)
 TModeSense6State::TModeSense6State()
 :   TMassStorageState(EModeSense6State)
     {
-	__MSFNLOG
     }
 
 
 TMassStorage::TEvent TModeSense6State::EntryL(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     return aFsm.ModeSense6L();
     };
 
 
 TInt TModeSense6State::ScsiCommandPassed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(EConnectedState);
     return KErrCompletion;
     };
@@ -938,7 +871,6 @@ TInt TModeSense6State::ScsiCommandPassed(CMassStorageFsm& aFsm)
 
 TInt TModeSense6State::ScsiCommandFailed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(EModeSense6SenseState);
     return KErrNone;
     }
@@ -946,7 +878,6 @@ TInt TModeSense6State::ScsiCommandFailed(CMassStorageFsm& aFsm)
 
 TInt TModeSense6State::ScsiCommandError(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     // If device responds with protocol error, ignore the error and assume the
     // device is not write protected
     aFsm.SetState(EConnectedState);
@@ -960,20 +891,17 @@ TInt TModeSense6State::ScsiCommandError(CMassStorageFsm& aFsm)
 TModeSense6SenseState::TModeSense6SenseState()
 :   TMassStorageState(EModeSense6SenseState)
     {
-	__MSFNLOG
     }
 
 
 TMassStorage::TEvent TModeSense6SenseState::EntryL(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     return aFsm.SenseL();
     };
 
 
 TInt TModeSense6SenseState::ScsiCommandPassed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     TInt ret = KErrCompletion;
     const TSenseInfo& senseInfo = aFsm.MsSenseInfo();
 
@@ -992,7 +920,6 @@ TInt TModeSense6SenseState::ScsiCommandPassed(CMassStorageFsm& aFsm)
 
 TInt TModeSense6SenseState::ScsiCommandFailed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(EInquirySenseState);
     return KErrCompletion;
     }
@@ -1005,29 +932,26 @@ TInt TModeSense6SenseState::ScsiCommandFailed(CMassStorageFsm& aFsm)
 TConnectedState::TConnectedState()
 :   TMassStorageState(EConnectedState)
     {
-	__MSFNLOG
     }
 
 
 TMassStorage::TEvent TConnectedState::EntryL(CMassStorageFsm& /* aFsm */)
     {
-	__MSFNLOG
     return TMassStorage::EEvCommandPassed;
     };
 
 
 TInt TConnectedState::ScsiCommandPassed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     TInt ret = KErrNone;
 
     if (aFsm.IsRemovableMedia())
         {
-		if(aFsm.IsStatusCheck())
-			{
-			aFsm.SetState(TMassStorageState::EStatusCheckState);
-			}
-		else
+        if(aFsm.IsStatusCheck())
+            {
+            aFsm.SetState(TMassStorageState::EStatusCheckState);
+            }
+        else
             {
             aFsm.SetState(TMassStorageState::EAllowRemovalState);
             }
@@ -1038,8 +962,8 @@ TInt TConnectedState::ScsiCommandPassed(CMassStorageFsm& aFsm)
         }
     else
         {
-		aFsm.SetState(TMassStorageState::ENotReadyState);
-		ret = KErrCompletion;
+        aFsm.SetState(TMassStorageState::ENotReadyState);
+        ret = KErrCompletion;
         }
     return ret;
     };
@@ -1047,7 +971,6 @@ TInt TConnectedState::ScsiCommandPassed(CMassStorageFsm& aFsm)
 
 TInt TConnectedState::ScsiCommandFailed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(TMassStorageState::EInquiryState);
     return KErrCompletion;
     }
@@ -1059,20 +982,17 @@ TInt TConnectedState::ScsiCommandFailed(CMassStorageFsm& aFsm)
 TStatusCheckState::TStatusCheckState()
 :   TMassStorageState(EStatusCheckState)
     {
-	__MSFNLOG
     }
 
 
 TMassStorage::TEvent TStatusCheckState::EntryL(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     return aFsm.TestUnitReadyL();
     };
 
 
 TInt TStatusCheckState::ScsiCommandPassed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(EConnectedState);
     return KErrCompletion;
     };
@@ -1080,8 +1000,7 @@ TInt TStatusCheckState::ScsiCommandPassed(CMassStorageFsm& aFsm)
 
 TInt TStatusCheckState::ScsiCommandFailed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
-	aFsm.SetState(ESenseState);
+    aFsm.SetState(ESenseState);
     return KErrNone;
     }
 
@@ -1092,20 +1011,17 @@ TInt TStatusCheckState::ScsiCommandFailed(CMassStorageFsm& aFsm)
 TAllowMediumRemovalState::TAllowMediumRemovalState()
 :   TMassStorageState(EAllowRemovalState)
     {
-	__MSFNLOG
     }
 
 
 TMassStorage::TEvent TAllowMediumRemovalState::EntryL(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     return aFsm.PreventAllowMediumRemovalL(EFalse);
     }
 
 
 TInt TAllowMediumRemovalState::ScsiCommandPassed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     TInt ret = KErrNone;
     if (aFsm.StartStopUnitRequired())
         {
@@ -1122,7 +1038,6 @@ TInt TAllowMediumRemovalState::ScsiCommandPassed(CMassStorageFsm& aFsm)
 
 TInt TAllowMediumRemovalState::ScsiCommandFailed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(TMassStorageState::EInquiryState);
     return KErrCompletion;
     }
@@ -1134,20 +1049,17 @@ TInt TAllowMediumRemovalState::ScsiCommandFailed(CMassStorageFsm& aFsm)
 TStopUnitState::TStopUnitState()
 :   TMassStorageState(EStopUnitState)
     {
-	__MSFNLOG
     }
 
 
 TMassStorage::TEvent TStopUnitState::EntryL(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     return aFsm.StartStopUnitL(EFalse);
     }
 
 
 TInt TStopUnitState::ScsiCommandPassed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(ENotReadyState);
     return KErrCompletion;
     };
@@ -1155,7 +1067,6 @@ TInt TStopUnitState::ScsiCommandPassed(CMassStorageFsm& aFsm)
 
 TInt TStopUnitState::ScsiCommandFailed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(TMassStorageState::EInquiryState);
     return KErrCompletion;
     }
@@ -1167,20 +1078,17 @@ TInt TStopUnitState::ScsiCommandFailed(CMassStorageFsm& aFsm)
 TSenseState::TSenseState()
 :   TMassStorageState(EConnectedState)
     {
-	__MSFNLOG
     }
 
 
 TMassStorage::TEvent TSenseState::EntryL(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     return aFsm.SenseL();
     };
 
 
 TInt TSenseState::ScsiCommandPassed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     aFsm.SetState(ENotReadyState);
     return KErrCompletion;
     };
@@ -1188,7 +1096,6 @@ TInt TSenseState::ScsiCommandPassed(CMassStorageFsm& aFsm)
 
 TInt TSenseState::ScsiCommandFailed(CMassStorageFsm& aFsm)
     {
-	__MSFNLOG
     // This event should not happen
     aFsm.SetState(EInquiryState);
     return KErrCompletion;

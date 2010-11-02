@@ -36,6 +36,10 @@ PRJ_EXPORTS
 ../bwins/domainpolicyu.def	/epoc32/include/def/bwins/domainpolicyu.def
 ../eabi/domainpolicyu.def	/epoc32/include/def/eabi/domainpolicyu.def
 
+../bmarm/domainpolicy_v2u.def	/epoc32/include/def/bmarm/domainpolicy_v2u.def
+../bwins/domainpolicy_v2u.def	/epoc32/include/def/bwins/domainpolicy_v2u.def
+../eabi/domainpolicy_v2u.def	/epoc32/include/def/eabi/domainpolicy_v2u.def
+
 PRJ_MMPFILES
 
 domaincli.mmp

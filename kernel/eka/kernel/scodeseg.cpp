@@ -1038,11 +1038,21 @@ EXPORT_C TInt DProcess::TraverseCodeSegs(SDblQue* aQ, DCodeSeg* aExclude, TUint3
 		DCodeSeg* pS=(i<0)?iCodeSeg:iDynamicCode[i].iSeg;
 		if (pS && pS!=aExclude)
 			{
-			if ((aFlags & ETraverseFlagRestrict) && i>=0)
+			if (aFlags & ETraverseFlagRestrict)
 				{
-				DLibrary* pL=iDynamicCode[i].iLib;
-				if (pL && pL->iState!=DLibrary::EAttached)
-					continue;
+				if (i>=0)
+					{
+					// Codeseg is a dynamic dependency
+					DLibrary* pL=iDynamicCode[i].iLib;
+					if (pL && pL->iState!=DLibrary::EAttached)
+						continue;
+					}
+				else
+					{
+					// Static dependencies of process
+					if (!(iAttributes&EStaticCallsDone))
+						continue;
+					}
 				}
 			if (aFlags & ETraverseFlagAdd)
 				n+=pS->ListDeps(aQ,aMark);
@@ -2076,6 +2086,18 @@ TInt ExecHandler::StaticCallList(TInt& aNumEps, TLinAddr* aEpList)
 	kumemput32(&aNumEps,&numEps,sizeof(TInt));
 	__KTRACE_OPT2(KEXEC,KDLL,Kern::Printf("<Exec::StaticCallList numEps=%d",numEps));
 	return KErrNone;
+	}
+
+// Mark the process after implicit DLL entry points have been called
+void ExecHandler::StaticCallsDone()
+	{
+	__KTRACE_OPT2(KEXEC,KDLL,Kern::Printf(">Exec::StaticCallsDone"));
+	DThread& t=*TheCurrentThread;
+	DProcess& p=*t.iOwningProcess;
+	NKern::LockSystem();
+	p.iAttributes|=DProcess::EStaticCallsDone;
+	NKern::UnlockSystem();
+	__KTRACE_OPT2(KEXEC,KDLL,Kern::Printf("<Exec::StaticCallsDone"));
 	}
 
 // Extract a list of DLL entry points for a closing DLL

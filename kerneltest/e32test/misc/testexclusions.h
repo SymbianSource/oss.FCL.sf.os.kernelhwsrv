@@ -32,6 +32,8 @@ _LIT(KLitPlatformTestExclusionFile, "Z:\\sys\\data\\platformtestexclusion.txt");
 
 // To disable invoking PowerController::PowerDown  
 const TUint KDisableControllerShutdown = 0x1;
+// To disable test t_entropysources on platforms/configurations known to have no entropy source
+const TUint KDisableEntropySourceCheck = 0x2;
 
 TInt GetExclusionFromFile(TUint& aTestExclusion)
 	{

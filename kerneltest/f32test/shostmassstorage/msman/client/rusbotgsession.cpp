@@ -1,4 +1,4 @@
-// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -28,13 +28,11 @@
 
 #include "msmanclientserver.h"
 #include "rusbotgsession.h"
-#include "tmslog.h"
 #include "debug.h"
 
 
 TVersion RUsbOtgSession::Version() const
     {
-    __MSFNSLOG
     return(TVersion(KUsbOtgSrvMajorVersionNumber,
                     KUsbOtgSrvMinorVersionNumber,
                     KUsbOtgSrvBuildVersionNumber));
@@ -43,19 +41,15 @@ TVersion RUsbOtgSession::Version() const
 
 EXPORT_C RUsbOtgSession::RUsbOtgSession()
     {
-    __MSFNSLOG
     }
 
 
 EXPORT_C RUsbOtgSession::RUsbOtgSession(TInt /* aParam */)
     {
-    __MSFNSLOG
     }
 
 EXPORT_C TInt RUsbOtgSession::Connect()
     {
-    __MSFNSLOG
-
     TInt retry = 2;
     for (;;)
         {
@@ -80,8 +74,6 @@ EXPORT_C TInt RUsbOtgSession::Connect()
 
 TInt RUsbOtgSession::StartServer()
     {
-    __MSFNSLOG
-
     const TUidType serverUid(KNullUid, KNullUid, KUsbOtgServerUid3);
 
     // Create the server process
@@ -103,7 +95,7 @@ TInt RUsbOtgSession::StartServer()
         return status.Int();
         }
 
-	server.SetPriority(EPriorityHigh);
+    server.SetPriority(EPriorityHigh);
     server.Resume(); // start the server
 
     // Test whether the process has ended and if it has ended, return how it ended.
@@ -122,7 +114,6 @@ TInt RUsbOtgSession::StartServer()
 
 EXPORT_C TBool RUsbOtgSession::DeviceInserted()
     {
-    __MSFNSLOG
     TPckgBuf<TBool> pckg;
     TIpcArgs args(&pckg);
 
@@ -134,7 +125,6 @@ EXPORT_C TBool RUsbOtgSession::DeviceInserted()
 
 EXPORT_C void RUsbOtgSession::NotifyChange(TBool& /* aChanged */, TRequestStatus& aStatus)
     {
-    __MSFNSLOG
     TPckgBuf<TBool> pckg;
     TIpcArgs args(&pckg);
 
@@ -144,13 +134,11 @@ EXPORT_C void RUsbOtgSession::NotifyChange(TBool& /* aChanged */, TRequestStatus
 
 EXPORT_C TInt RUsbOtgSession::NotifyChangeCancel()
     {
-    __MSFNSLOG
     return SendReceive(EUsbOtgNotifyChangeCancel);
     }
 
 
 EXPORT_C TInt RUsbOtgSession::BusDrop()
-	{
-    __MSFNSLOG
-	return SendReceive(EUsbOtgBusDrop);
-	}
+    {
+    return SendReceive(EUsbOtgBusDrop);
+    }

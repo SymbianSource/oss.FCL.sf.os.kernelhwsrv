@@ -22,14 +22,18 @@
 #include <f32file.h>
 
 #include "rusbhostmsdevice.h"
-#include "debug.h"
 #include "msgservice.h"
+
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "rusbhostmsdeviceTraces.h"
+#endif
+
 
 _LIT(KFileSystem, "FAT");
 
 TVersion RUsbHostMsDevice::Version() const
     {
-	__FNLOG("RUsbHostMsDevice::Version");
     return(TVersion(KUsbHostMsSrvMajorVersionNumber,
                     KUsbHostMsSrvMinorVersionNumber,
                     KUsbHostMsSrvBuildVersionNumber));
@@ -38,7 +42,6 @@ TVersion RUsbHostMsDevice::Version() const
 
 TInt RUsbHostMsDevice::StartServer()
     {
-	__FNLOG("RUsbHostMsDevice::StartServer");
     TInt r;
     RProcess server;
 
@@ -48,7 +51,8 @@ TInt RUsbHostMsDevice::StartServer()
     // Create the server process
     if((r=server.Create(KUsbHostMsServerName,KNullDesC,serverUid)) != KErrNone)
         {
-        __PRINT1(_L("Server process create = %d\n"), r);
+        OstTrace1(TRACE_SHOSTMASSSTORAGE_HOST, RUSBHOSTMSDEVICE_10,
+                  "Server process create = %d", r);
         return r;
         }
 
@@ -61,7 +65,7 @@ TInt RUsbHostMsDevice::StartServer()
         }
     else
         {
-		server.SetPriority(EPriorityHigh);
+        server.SetPriority(EPriorityHigh);
         server.Resume(); // start the server
         }
 
@@ -96,7 +100,6 @@ asynchronous API will complete the pending request notification with KErrCancel.
 */
 EXPORT_C void RUsbHostMsDevice::Add(const THostMassStorageConfig& aConfig, TRequestStatus& aStatus)
     {
-	__FNLOG("RUsbHostMsDevice::Add");
     TInt err = KErrNone;
 
     err = CreateSession(KUsbHostMsServerName, Version(), 128, EIpcSession_GlobalSharable);
@@ -119,39 +122,41 @@ EXPORT_C void RUsbHostMsDevice::Add(const THostMassStorageConfig& aConfig, TRequ
             }
         }
 
-	TRequestStatus* statusPtr = &aStatus;
+    TRequestStatus* statusPtr = &aStatus;
     if(err == KErrNone)
         {
         // Create a session handle that can be passed via IPC to another process
         // (also being shared by other threads in the current process)
-		err = ShareProtected();
+        err = ShareProtected();
         if(err == KErrNone)
             {
             // synchronous call to register the interface
-			TPckg<THostMassStorageConfig> pckg(aConfig);
-	        err = SendReceive(EUsbHostMsRegisterInterface, TIpcArgs(&pckg));
-			if(err != KErrNone)
-				{
-		        User::RequestComplete(statusPtr, err);
-				}
-			else
-				{
-	            // Asynchronous call to initialise the interface
-				SendReceive(EUsbHostMsInitialiseInterface, TIpcArgs(NULL), aStatus);
-				}
-			}
+            TPckg<THostMassStorageConfig> pckg(aConfig);
+            err = SendReceive(EUsbHostMsRegisterInterface, TIpcArgs(&pckg));
+            if(err != KErrNone)
+                {
+                User::RequestComplete(statusPtr, err);
+                }
+            else
+                {
+                // Asynchronous call to initialise the interface
+                SendReceive(EUsbHostMsInitialiseInterface, TIpcArgs(NULL), aStatus);
+                }
+            }
         else
             {
             Close(); // Close the session handle
-            __PRINT1(_L("Could not create a sharable session handle %d\n"), err);
+            OstTrace1(TRACE_SHOSTMASSSTORAGE_HOST, RUSBHOSTMSDEVICE_11,
+                      "Could not create a sharable session handle %d", err);
             User::RequestComplete(statusPtr, err);
             }
         }
     else
         {
-		// Check whether the error is in starting the server or in creating the
+        // Check whether the error is in starting the server or in creating the
         // session
-        __PRINT1(_L("Creating server/session failed with %d\n"), err);
+        OstTrace1(TRACE_SHOSTMASSSTORAGE_HOST, RUSBHOSTMSDEVICE_12,
+                  "Creating server/session failed with %d", err);
         User::RequestComplete(statusPtr, err);
         }
     }
@@ -165,18 +170,17 @@ Remove the Mass Storage device from the MSC server.
 */
 EXPORT_C void RUsbHostMsDevice::Remove()
     {
-	// Note: Here, at present we use only the interface token. But we still take
+    // Note: Here, at present we use only the interface token. But we still take
     // THostMassStorageConfig as parameter for future needs
-	__FNLOG("RUsbHostMsDevice::Remove");
-	_LIT(KUsbHostMsClientPanicCat, "usbhostmsclient");
+    _LIT(KUsbHostMsClientPanicCat, "usbhostmsclient");
 
-	TInt r = SendReceive(EUsbHostMsUnRegisterInterface);
+    TInt r = SendReceive(EUsbHostMsUnRegisterInterface);
 
-	r = SendReceive(EUsbHostMsFinalCleanup);
-	if(r != KErrNone)
-		{
-		User::Panic(KUsbHostMsClientPanicCat ,KErrCouldNotDisconnect);
-		}
+    r = SendReceive(EUsbHostMsFinalCleanup);
+    if(r != KErrNone)
+        {
+        User::Panic(KUsbHostMsClientPanicCat ,KErrCouldNotDisconnect);
+        }
     Close(); // Close the session handle
     }
 
@@ -195,63 +199,64 @@ Get the number of logical units suppoted by the device.
 */
 EXPORT_C TInt RUsbHostMsDevice::GetNumLun(TUint32& aNumLuns)
     {
-	__FNLOG("RUsbHostMsDevice::GetNumLun");
     TPckg<TUint32> pckg(aNumLuns);
     return SendReceive(EUsbHostMsGetNumLun,TIpcArgs(&pckg));
     }
 
 
 EXPORT_C TInt RUsbHostMsDevice::MountLun(TUint32 aLunId, TInt aDriveNum)
-	{
-	__FNLOG("RUsbHostMsDevice::MountLun");
-    __MSDEVPRINT2(_L(">>> RUsbHostMsDevice::MountLun Drv=%d LUN=%d"), aDriveNum, aLunId);
-	RFs TheFs;
-	TInt r = TheFs.Connect();
-	if(r == KErrNone)
-		{
-		TPckgBuf<TMassStorageUnitInfo> unitPkg;
-		unitPkg().iLunID = aLunId;
+    {
+    OstTraceExt2(TRACE_SHOSTMASSSTORAGE_MSDEV, RUSBHOSTMSDEVICE_13,
+              ">>> RUsbHostMsDevice::MountLun Drv=%d LUN=%d", aDriveNum, aLunId);
+    RFs TheFs;
+    TInt r = TheFs.Connect();
+    if(r == KErrNone)
+        {
+        TPckgBuf<TMassStorageUnitInfo> unitPkg;
+        unitPkg().iLunID = aLunId;
 
-		r = TheFs.MountProxyDrive(aDriveNum, _L("usbhostms"), &unitPkg, *this);
-        __MSDEVPRINT1(_L("MountProxyDrive %d"), r);
-		if(r >= KErrNone)
-			{
-			r = TheFs.MountFileSystem(KFileSystem, aDriveNum);
-            __MSDEVPRINT1(_L("MountFileSystem %d"), r);
-			if(r != KErrNone && r != KErrNotReady && r != KErrCorrupt && r != KErrNotSupported)
-				{
-				TheFs.DismountFileSystem(KFileSystem, aDriveNum);
-				TheFs.DismountProxyDrive(aDriveNum);
-				}
-			}
-		TheFs.Close();
-		}
-	return r;
-	}
+        r = TheFs.MountProxyDrive(aDriveNum, _L("usbhostms"), &unitPkg, *this);
+        OstTrace1(TRACE_SHOSTMASSSTORAGE_MSDEV, RUSBHOSTMSDEVICE_14,
+                  "MountProxyDrive %d", r);
+        if(r >= KErrNone)
+            {
+            r = TheFs.MountFileSystem(KFileSystem, aDriveNum);
+            OstTrace1(TRACE_SHOSTMASSSTORAGE_MSDEV, RUSBHOSTMSDEVICE_15,
+                      "MountFileSystem %d", r);
+            if(r != KErrNone && r != KErrNotReady && r != KErrCorrupt && r != KErrNotSupported)
+                {
+                TheFs.DismountFileSystem(KFileSystem, aDriveNum);
+                TheFs.DismountProxyDrive(aDriveNum);
+                }
+            }
+        TheFs.Close();
+        }
+    return r;
+    }
 
 EXPORT_C TInt RUsbHostMsDevice::DismountLun(TInt aDriveNum)
-	{
-	__FNLOG("RUsbHostMsDevice::DismountLun");
-    __MSDEVPRINT1(_L(">>> RUsbHostMsDevice::DismountLun Drv=%d"), aDriveNum);
-	RFs TheFs;
-	TInt r;
-	r = TheFs.Connect();
-	if(r == KErrNone)
-		{
-		r = TheFs.DismountFileSystem(KFileSystem, aDriveNum);
-		if(r != KErrNone)
-			{
-			// dismount failed - attempt a forced dismount
-			TRequestStatus stat;
-			TheFs.NotifyDismount(aDriveNum, stat, EFsDismountForceDismount);
-			User::WaitForRequest(stat);
-			r = stat.Int();
-			}
-		if(r == KErrNone)
-			{
-			r = TheFs.DismountProxyDrive(aDriveNum);
-			}
-		TheFs.Close();
-		}
-	return r;
-	}
+    {
+    OstTrace1(TRACE_SHOSTMASSSTORAGE_MSDEV, RUSBHOSTMSDEVICE_20,
+              ">>> RUsbHostMsDevice::DismountLun Drv=%d", aDriveNum);
+    RFs TheFs;
+    TInt r;
+    r = TheFs.Connect();
+    if(r == KErrNone)
+        {
+        r = TheFs.DismountFileSystem(KFileSystem, aDriveNum);
+        if(r != KErrNone)
+            {
+            // dismount failed - attempt a forced dismount
+            TRequestStatus stat;
+            TheFs.NotifyDismount(aDriveNum, stat, EFsDismountForceDismount);
+            User::WaitForRequest(stat);
+            r = stat.Int();
+            }
+        if(r == KErrNone)
+            {
+            r = TheFs.DismountProxyDrive(aDriveNum);
+            }
+        TheFs.Close();
+        }
+    return r;
+    }

@@ -354,6 +354,7 @@ public:
 	static TInt LibraryAttach(TInt aHandle, TInt& aNumEps, TLinAddr* aEpList);
 	static TInt LibraryAttached(TInt aHandle);
 	static TInt StaticCallList(TInt& aNumEps, TLinAddr* aEpList);
+	static void StaticCallsDone();
 	static TInt LibraryDetach(TInt& aNumEps, TLinAddr* aEpList);
 	static TInt LibraryDetached();
 	};

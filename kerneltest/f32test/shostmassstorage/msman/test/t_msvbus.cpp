@@ -30,7 +30,6 @@
 #include "cmsdrive.h"
 #include "tmsprintdrive.h"
 #include "ttestutils.h"
-#include "tmslog.h"
 
 RTest test(_L("T_MSVBUS"));
 RFs fsSession;
@@ -96,8 +95,6 @@ void CallTestsL()
 
 GLDEF_C void MainL()
     {
-    __MSFNSLOG
-
     TInt err;
 
     RUsbHostSession usbHostSession;
@@ -132,16 +129,16 @@ GLDEF_C void MainL()
 
 
 GLDEF_C TInt E32Main()
-	{
+    {
     CTrapCleanup* cleanup = CTrapCleanup::New();
-	__UHEAP_MARK;
+    __UHEAP_MARK;
     test.Title();
     test.Start(_L("Starting tests..."));
 
-	TTime timerC;
-	timerC.HomeTime();
+    TTime timerC;
+    timerC.HomeTime();
 
-	TRAPD(err, MainL());
+    TRAPD(err, MainL());
 
     if (err != KErrNone)
        {
@@ -155,9 +152,9 @@ GLDEF_C TInt E32Main()
     test(err == KErrNone);
     test.Printf(_L("Time taken for test = %d seconds\n"),timeTakenC.Int());
 
-	test.End();
-	test.Close();
-	__UHEAP_MARKEND;
-	delete cleanup;
-	return KErrNone;
-	}
+    test.End();
+    test.Close();
+    __UHEAP_MARKEND;
+    delete cleanup;
+    return KErrNone;
+    }

@@ -1,4 +1,4 @@
-// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -31,22 +31,20 @@
 #include "testman.h"
 #include "cscsiserverprotocol.h"
 #include "debug.h"
-#include "msdebug.h"
 
 
 TMediaWriteMan::TMediaWriteMan()
 :   iActive(EFalse),
     iOffset(0),
-	iMediaWriteSize(KDefaultMediaWriteSize)
+    iMediaWriteSize(KDefaultMediaWriteSize)
     {
     }
 
 void TMediaWriteMan::ReportHighSpeedDevice()
-	{
-    __MSFNLOG
-	iMediaWriteSize = KHsMediaWriteSize;
-	__PRINT1(_L("HS Device reported: SCSI will use %d bytes disk write size"), iMediaWriteSize);
-	}
+    {
+    iMediaWriteSize = KHsMediaWriteSize;
+    __PRINT1(_L("HS Device reported: SCSI will use %d bytes disk write size"), iMediaWriteSize);
+    }
 
 
 TInt64 TMediaWriteMan::Start(TUint32 aLba, TUint32 aLength, TUint32 aBlockSize)
@@ -55,7 +53,7 @@ TInt64 TMediaWriteMan::Start(TUint32 aLba, TUint32 aLength, TUint32 aBlockSize)
     iOffset = static_cast<TInt64>(aLba) * aBlockSize;
     iBytesRemain = aLength * aBlockSize;
 
-	TInt64 theEnd = iOffset + iBytesRemain;
+    TInt64 theEnd = iOffset + iBytesRemain;
     return theEnd;
     }
 
@@ -81,8 +79,8 @@ void TMediaWriteMan::SetOffset(const TInt64& aOffset, TUint aLength)
 TUint32 TMediaWriteMan::GetPacketLength() const
     {
     // KMaxBufSize or the MediaWriteSize, whichever is smallest.
-	TUint32 thisLength = (iBytesRemain > KMaxBufSize) ? KMaxBufSize : iBytesRemain;
-	thisLength = (thisLength > iMediaWriteSize) ? iMediaWriteSize : thisLength;
+    TUint32 thisLength = (iBytesRemain > KMaxBufSize) ? KMaxBufSize : iBytesRemain;
+    thisLength = (thisLength > iMediaWriteSize) ? iMediaWriteSize : thisLength;
     return thisLength;
     }
 
@@ -93,25 +91,23 @@ Creates the CScsiProtocol object.  Called during controller initialisation.
 @param aDriveManager reference to the drive manager object
 */
 CScsiServerProtocol* CScsiServerProtocol::NewL(CDriveManager& aDriveManager)
-	{
-    __MSFNSLOG
-	CScsiServerProtocol* self = new (ELeave) CScsiServerProtocol(aDriveManager);
-	CleanupStack::PushL(self);
-	self->ConstructL();
-	CleanupStack::Pop();
-	return self;
-	}
+    {
+    CScsiServerProtocol* self = new (ELeave) CScsiServerProtocol(aDriveManager);
+    CleanupStack::PushL(self);
+    self->ConstructL();
+    CleanupStack::Pop();
+    return self;
+    }
 
 #ifdef MSDC_TESTMODE
 CScsiServerProtocol* CScsiServerProtocol::NewL(CDriveManager& aDriveManager, TTestParser* aTestParser)
-	{
-    __MSFNSLOG
-	CScsiServerProtocol* self = new (ELeave) CScsiServerProtocol(aDriveManager, aTestParser);
-	CleanupStack::PushL(self);
-	self->ConstructL();
-	CleanupStack::Pop();
-	return self;
-	}
+    {
+    CScsiServerProtocol* self = new (ELeave) CScsiServerProtocol(aDriveManager, aTestParser);
+    CleanupStack::PushL(self);
+    self->ConstructL();
+    CleanupStack::Pop();
+    return self;
+    }
 #endif
 
 
@@ -122,51 +118,45 @@ c'tor
 */
 CScsiServerProtocol::CScsiServerProtocol(CDriveManager& aDriveManager)
 :   iDriveManager(aDriveManager)
-	{
-    __MSFNLOG
+    {
+    iWriteTransferPublisher = CUsbWriteTransferPublisher::NewL(iBytesWritten);
+    iReadTransferPublisher = CUsbReadTransferPublisher::NewL(iBytesRead);
 
-	iWriteTransferPublisher = CUsbWriteTransferPublisher::NewL(iBytesWritten);
-	iReadTransferPublisher = CUsbReadTransferPublisher::NewL(iBytesRead);
-
-	for (TUint i = 0; i < KUsbMsMaxDrives; i++)
-		{
-		iBytesRead[i] = 0;
-		iBytesWritten[i] = 0;
-		}
-	}
+    for (TUint i = 0; i < KUsbMsMaxDrives; i++)
+        {
+        iBytesRead[i] = 0;
+        iBytesWritten[i] = 0;
+        }
+    }
 
 #ifdef MSDC_TESTMODE
 CScsiServerProtocol::CScsiServerProtocol(CDriveManager& aDriveManager, TTestParser* aTestParser)
 :   iDriveManager(aDriveManager),
     iTestParser(aTestParser)
-	{
-    __MSFNLOG
+    {
+    iWriteTransferPublisher = CUsbWriteTransferPublisher::NewL(iBytesWritten);
+    iReadTransferPublisher = CUsbReadTransferPublisher::NewL(iBytesRead);
 
-	iWriteTransferPublisher = CUsbWriteTransferPublisher::NewL(iBytesWritten);
-	iReadTransferPublisher = CUsbReadTransferPublisher::NewL(iBytesRead);
-
-	for (TUint i = 0; i < KUsbMsMaxDrives; i++)
-		{
-		iBytesRead[i] = 0;
-		iBytesWritten[i] = 0;
-		}
-	}
+    for (TUint i = 0; i < KUsbMsMaxDrives; i++)
+        {
+        iBytesRead[i] = 0;
+        iBytesWritten[i] = 0;
+        }
+    }
 #endif
 
 
 CScsiServerProtocol::~CScsiServerProtocol()
-	{
-    __MSFNLOG
+    {
     iDataBuf.Close();
-	delete iWriteTransferPublisher;
-	delete iReadTransferPublisher;
-	}
+    delete iWriteTransferPublisher;
+    delete iReadTransferPublisher;
+    }
 
 
 void CScsiServerProtocol::ConstructL()
-	{
-    __MSFNLOG
-	}
+    {
+    }
 
 
 /**
@@ -175,10 +165,9 @@ Associates the transport with the protocol. Called during initialisation of the 
 @param aTransport pointer to the transport object
 */
 void CScsiServerProtocol::RegisterTransport(MDeviceTransport* aTransport)
-	{
-    __MSFNLOG
-	iTransport = aTransport;
-	}
+    {
+    iTransport = aTransport;
+    }
 
 
 /**
@@ -191,17 +180,15 @@ starts, and usually only once.
 
 */
 void CScsiServerProtocol::ReportHighSpeedDevice()
-	{
-    __MSFNLOG
+    {
     iMediaWriteMan.ReportHighSpeedDevice();
-	}
+    }
 
 
 void CScsiServerProtocol::SetParameters(const TMassStorageConfig& aConfig)
-	{
-    __MSFNLOG
-	iConfig = aConfig;
-	}
+    {
+    iConfig = aConfig;
+    }
 
 
 /**
@@ -213,18 +200,17 @@ If an error occurs, the sense code is updated and EFalse is returned.
 @return  ETrue if command was decoded and executed successfully
 */
 TBool CScsiServerProtocol::DecodePacket(TPtrC8& aData, TUint8 aLun)
-	{
-    __MSFNLOG
+    {
     TScsiServerReq* cdb = NULL;
     TRAPD(err, cdb = cdb->CreateL(static_cast<TScsiServerReq::TOperationCode>(aData[0]), aData));
 
     TBool decodeGood = EFalse;
     if (err == KErrNotSupported)
-    	iSenseInfo.SetSense(TSenseInfo::EIllegalRequest, TSenseInfo::EInvalidCmdCode);
-	else if (err != KErrNone)
-		iSenseInfo.SetSense(TSenseInfo::EAbortedCommand, TSenseInfo::EInsufficientRes);
+        iSenseInfo.SetSense(TSenseInfo::EIllegalRequest, TSenseInfo::EInvalidCmdCode);
+    else if (err != KErrNone)
+        iSenseInfo.SetSense(TSenseInfo::EAbortedCommand, TSenseInfo::EInsufficientRes);
     else if (cdb->iNaca) // Check the CONTROL byte
-		iSenseInfo.SetSense(TSenseInfo::EIllegalRequest, TSenseInfo::EInvalidFieldInCdb);
+        iSenseInfo.SetSense(TSenseInfo::EIllegalRequest, TSenseInfo::EInvalidFieldInCdb);
     else if (cdb->iLink)
         iSenseInfo.SetSense(TSenseInfo::EIllegalRequest, TSenseInfo::EInvalidFieldInCdb);
     else
@@ -291,12 +277,12 @@ TBool CScsiServerProtocol::DecodePacket(TPtrC8& aData, TUint8 aLun)
                 }
             }
         __PRINT1(_L("DecodePacket result = %d"), iSenseInfo.SenseOk());
-    	decodeGood = iSenseInfo.SenseOk();
+        decodeGood = iSenseInfo.SenseOk();
         }
 
     delete cdb;
     return decodeGood;
-	}
+    }
 
 
 /**
@@ -306,8 +292,7 @@ Checks if drive ready
 @return pointer to drive correspondent to LUN if drive mounted and ready, NULL otherwise
 */
 CMassStorageDrive* CScsiServerProtocol::GetCheckDrive()
-	{
-    __MSFNLOG
+    {
 #ifdef MSDC_TESTMODE
     if (iTestParser && iTestParser->SenseError() != TTestParser::ETestSenseErrorNoSense)
         {
@@ -332,44 +317,44 @@ CMassStorageDrive* CScsiServerProtocol::GetCheckDrive()
         }
 #endif
 
-	CMassStorageDrive* drive = iDriveManager.Drive(iLun);
-	CMassStorageDrive::TMountState mountState = drive->MountState();
+    CMassStorageDrive* drive = iDriveManager.Drive(iLun);
+    CMassStorageDrive::TMountState mountState = drive->MountState();
 
-	if (mountState == CMassStorageDrive::EDisconnected || mountState == CMassStorageDrive::EConnecting)
-		{
-		__PRINT(_L("Drive disconnected\n"));
-		iSenseInfo.SetSense(TSenseInfo::ENotReady,
-							TSenseInfo::EMediaNotPresent);
-		return NULL;
-		}
+    if (mountState == CMassStorageDrive::EDisconnected || mountState == CMassStorageDrive::EConnecting)
+        {
+        __PRINT(_L("Drive disconnected\n"));
+        iSenseInfo.SetSense(TSenseInfo::ENotReady,
+                            TSenseInfo::EMediaNotPresent);
+        return NULL;
+        }
 
-	TLocalDriveRef::TDriveState state = drive->CheckDriveState();
-	if (state == TLocalDriveRef::EMediaNotPresent || state == TLocalDriveRef::ELocked)
-		{
-		__PRINT1(_L("Media not present or locked. (state =0x%X)\n"),state);
-		iSenseInfo.SetSense(TSenseInfo::ENotReady, TSenseInfo::EMediaNotPresent);
-		return NULL;
-		}
+    TLocalDriveRef::TDriveState state = drive->CheckDriveState();
+    if (state == TLocalDriveRef::EMediaNotPresent || state == TLocalDriveRef::ELocked)
+        {
+        __PRINT1(_L("Media not present or locked. (state =0x%X)\n"),state);
+        iSenseInfo.SetSense(TSenseInfo::ENotReady, TSenseInfo::EMediaNotPresent);
+        return NULL;
+        }
 
-	if (drive->IsMediaChanged(ETrue))  //reset "media changed" status
-		{
-		__PRINT(_L("Media was changed\n"));
-		// SAM-2 Section 5.9.5 Unit Attention Condition
-		iSenseInfo.SetSense(TSenseInfo::EUnitAttention, TSenseInfo::ENotReadyToReadyChange);
-		iDriveManager.Connect(iLun);   //publish event to USB app
-		return NULL;
-		}
+    if (drive->IsMediaChanged(ETrue))  //reset "media changed" status
+        {
+        __PRINT(_L("Media was changed\n"));
+        // SAM-2 Section 5.9.5 Unit Attention Condition
+        iSenseInfo.SetSense(TSenseInfo::EUnitAttention, TSenseInfo::ENotReadyToReadyChange);
+        iDriveManager.Connect(iLun);   //publish event to USB app
+        return NULL;
+        }
 
-	if (mountState == CMassStorageDrive::EDisconnecting)
-		{
-		__PRINT(_L("Drive disconnecting\n"));
-		iSenseInfo.SetSense(TSenseInfo::ENotReady,
-							TSenseInfo::EMediaNotPresent);
-		return NULL;
-		}
+    if (mountState == CMassStorageDrive::EDisconnecting)
+        {
+        __PRINT(_L("Drive disconnecting\n"));
+        iSenseInfo.SetSense(TSenseInfo::ENotReady,
+                            TSenseInfo::EMediaNotPresent);
+        return NULL;
+        }
 
-	return drive;
-	}
+    return drive;
+    }
 
 
 /**
@@ -379,10 +364,9 @@ Command Parser for the UNIT READY command (0x00)
 @return ETrue if successful,
 */
 TBool CScsiServerProtocol::HandleUnitReady()
-	{
-    __MSFNLOG
-	return GetCheckDrive() ? ETrue : EFalse;
-	}
+    {
+    return GetCheckDrive() ? ETrue : EFalse;
+    }
 
 
 /**
@@ -391,10 +375,9 @@ Command Parser for the REQUEST SENSE command (0x03)
 @return ETrue if successful,
 */
 TBool CScsiServerProtocol::HandleRequestSense(const TScsiServerReq& aRequest)
-	{
-    __MSFNLOG
+    {
     const TScsiServerRequestSenseReq request = static_cast<const TScsiServerRequestSenseReq&>(aRequest);
-	__PRINT1(_L("length = %d\n"), request.iAllocationLength);
+    __PRINT1(_L("length = %d\n"), request.iAllocationLength);
 
     TScsiServerRequestSenseResp requestSense;
     requestSense.iAllocationLength = request.iAllocationLength;
@@ -403,16 +386,16 @@ TBool CScsiServerProtocol::HandleRequestSense(const TScsiServerReq& aRequest)
     requestSense.iSensePtr = &iSenseInfo;
     requestSense.Encode(iCommandBuf);
 
-	__PRINT4(_L("Response=0x%x Sense=0x%x, Additional=0x%x, Qualifier=0x%x\n"),
-				iCommandBuf[0], iCommandBuf[02], iCommandBuf[12], iCommandBuf[13]);
+    __PRINT4(_L("Response=0x%x Sense=0x%x, Additional=0x%x, Qualifier=0x%x\n"),
+                iCommandBuf[0], iCommandBuf[02], iCommandBuf[12], iCommandBuf[13]);
 
-	TPtrC8 writeBuf = iCommandBuf.Left(request.iAllocationLength);
-	iTransport->SetupDataIn(writeBuf);
+    TPtrC8 writeBuf = iCommandBuf.Left(request.iAllocationLength);
+    iTransport->SetupDataIn(writeBuf);
 
-	// clear the sense info
-	iSenseInfo.SetSense(TSenseInfo::ENoSense);
-	return ETrue;
-	}
+    // clear the sense info
+    iSenseInfo.SetSense(TSenseInfo::ENoSense);
+    return ETrue;
+    }
 
 
 /**
@@ -422,15 +405,14 @@ Command Parser for the INQUIRY command (0x12)
 @return ETrue if successful,
 */
 TBool CScsiServerProtocol::HandleInquiry(const TScsiServerReq& aRequest)
-	{
-    __MSFNLOG
+    {
     const TScsiServerInquiryReq request = static_cast<const TScsiServerInquiryReq&>(aRequest);
 
-	if (request.iCmdDt || request.iEvpd || request.iPage || iLun >= KUsbMsMaxDrives)
-		{
-		iSenseInfo.SetSense(TSenseInfo::EIllegalRequest, TSenseInfo::EInvalidFieldInCdb);
-		return EFalse;
-		}
+    if (request.iCmdDt || request.iEvpd || request.iPage || iLun >= KUsbMsMaxDrives)
+        {
+        iSenseInfo.SetSense(TSenseInfo::EIllegalRequest, TSenseInfo::EInvalidFieldInCdb);
+        return EFalse;
+        }
 
     TScsiServerInquiryResp inquiry(iConfig);
 
@@ -448,12 +430,12 @@ TBool CScsiServerProtocol::HandleInquiry(const TScsiServerReq& aRequest)
 
     TUint length = inquiry.Length();
 
-	TPtrC8 writeBuf = iCommandBuf.Left(length);
-	iTransport->SetupDataIn(writeBuf);
+    TPtrC8 writeBuf = iCommandBuf.Left(length);
+    iTransport->SetupDataIn(writeBuf);
 
-	iSenseInfo.SetSense(TSenseInfo::ENoSense);
-	return ETrue;
-	}
+    iSenseInfo.SetSense(TSenseInfo::ENoSense);
+    return ETrue;
+    }
 
 
 /**
@@ -464,65 +446,63 @@ TBool CScsiServerProtocol::HandleInquiry(const TScsiServerReq& aRequest)
  @return ETrue if successful, TFalse otherwise
  */
 TBool CScsiServerProtocol::HandleStartStopUnit(const TScsiServerReq& aRequest)
-	{
-    __MSFNLOG
+    {
+    const TScsiServerStartStopUnitReq request = static_cast<const TScsiServerStartStopUnitReq&>(aRequest);
 
-	const TScsiServerStartStopUnitReq request = static_cast<const TScsiServerStartStopUnitReq&>(aRequest);
-
-	if (request.iLoej)
-		{
-		if(request.iStart)	//Start unit
-			{
-			iDriveManager.Connect(iLun);
-			__PRINT(_L("Load media\n"));
+    if (request.iLoej)
+        {
+        if(request.iStart)  //Start unit
+            {
+            iDriveManager.Connect(iLun);
+            __PRINT(_L("Load media\n"));
 
             // rd/wr publisher
-			iBytesRead[iLun] = 0;
-			iBytesWritten[iLun] = 0;
+            iBytesRead[iLun] = 0;
+            iBytesWritten[iLun] = 0;
 
-			// publish the initial values
-			iWriteTransferPublisher->DoPublishDataTransferredEvent();
-			iReadTransferPublisher->DoPublishDataTransferredEvent();
-			}
-		else		//Stop unit
-			{
-			iDriveManager.SetCritical(iLun, EFalse);
-			iDriveManager.Disconnect(iLun);
-			__PRINT(_L("Unload media\n"));
-			}
-		}
+            // publish the initial values
+            iWriteTransferPublisher->DoPublishDataTransferredEvent();
+            iReadTransferPublisher->DoPublishDataTransferredEvent();
+            }
+        else        //Stop unit
+            {
+            iDriveManager.SetCritical(iLun, EFalse);
+            iDriveManager.Disconnect(iLun);
+            __PRINT(_L("Unload media\n"));
+            }
+        }
 
-	if (request.iImmed)
-		{
-		return ETrue;
-		}
+    if (request.iImmed)
+        {
+        return ETrue;
+        }
 
-	CMassStorageDrive* drive = iDriveManager.Drive(iLun);
+    CMassStorageDrive* drive = iDriveManager.Drive(iLun);
 
-	TInt  timeLeft (20);   // 1 sec timeout
-	CMassStorageDrive::TMountState mountState;
+    TInt  timeLeft (20);   // 1 sec timeout
+    CMassStorageDrive::TMountState mountState;
 
-	do
-		{
-		User::After(1000 * 50);		// 50 mSec
-		--timeLeft;
-		mountState = drive->MountState();
+    do
+        {
+        User::After(1000 * 50);     // 50 mSec
+        --timeLeft;
+        mountState = drive->MountState();
 
-		if ((!request.iStart && mountState != CMassStorageDrive::EConnected)
-			 ||
-			 (request.iStart &&
-				(mountState == CMassStorageDrive::EDisconnecting ||
+        if ((!request.iStart && mountState != CMassStorageDrive::EConnected)
+             ||
+             (request.iStart &&
+                (mountState == CMassStorageDrive::EDisconnecting ||
                mountState == CMassStorageDrive::EConnected)))
-			{
-			return ETrue;
-			}
-		} while (timeLeft>0);
+            {
+            return ETrue;
+            }
+        } while (timeLeft>0);
 
-	//timeout happend
-	iSenseInfo.SetSense(TSenseInfo::ENotReady,
-						TSenseInfo::EAscLogicalUnitDoesNotRespondToSelection);
-	return EFalse;
-	}
+    //timeout happend
+    iSenseInfo.SetSense(TSenseInfo::ENotReady,
+                        TSenseInfo::EAscLogicalUnitDoesNotRespondToSelection);
+    return EFalse;
+    }
 
 
 /**
@@ -533,28 +513,25 @@ Command Parser for the PREVENT/ALLOW MEDIA REMOVAL command (0x1E)
 @return ETrue if successful.
 */
 TBool CScsiServerProtocol::HandlePreventMediaRemoval(const TScsiServerReq& aRequest)
-	{
-    __MSFNLOG
-	const TScsiServerPreventMediaRemovalReq& request = static_cast<const TScsiServerPreventMediaRemovalReq&>(aRequest);
-	__FNLOG("CScsiProtocol::HandlePreventMediaRemoval");
-	CMassStorageDrive* drive = GetCheckDrive();
+    {
+    const TScsiServerPreventMediaRemovalReq& request = static_cast<const TScsiServerPreventMediaRemovalReq&>(aRequest);
+    CMassStorageDrive* drive = GetCheckDrive();
 
-	if (drive == NULL)
-		{
-		return EFalse;
-		}
-	iDriveManager.SetCritical(iLun, request.iPrevent);
-	return ETrue;
-	}
+    if (drive == NULL)
+        {
+        return EFalse;
+        }
+    iDriveManager.SetCritical(iLun, request.iPrevent);
+    return ETrue;
+    }
 
 
 /** Cancel active state, Invoked by transnport when it stops */
 TInt CScsiServerProtocol::Cancel()
-	{
-    __MSFNLOG
-	iDriveManager.SetCritical(CDriveManager::KAllLuns, EFalse);
-	return KErrNone;
-	}
+    {
+    iDriveManager.SetCritical(CDriveManager::KAllLuns, EFalse);
+    return KErrNone;
+    }
 
 
 TBool CScsiServerProtocol::HandleReadFormatCapacities(const TScsiServerReq& aRequest)
@@ -563,9 +540,8 @@ TBool CScsiServerProtocol::HandleReadFormatCapacities(const TScsiServerReq& aReq
  *
  * @return ETrue if successful, else a standard Symbian OS error code.
  */
-	{
-    __MSFNLOG
-	const TScsiServerReadFormatCapacitiesReq& request = static_cast<const TScsiServerReadFormatCapacitiesReq&>(aRequest);
+    {
+    const TScsiServerReadFormatCapacitiesReq& request = static_cast<const TScsiServerReadFormatCapacitiesReq&>(aRequest);
 
     CMassStorageDrive* drive = NULL;
     for (TInt i = 0; i < 10; i++)
@@ -578,21 +554,21 @@ TBool CScsiServerProtocol::HandleReadFormatCapacities(const TScsiServerReq& aReq
         User::After(100000);
         }
 
-	if (!drive)
-		{
+    if (!drive)
+        {
         return EFalse;
-		}
+        }
 
-	TUint32 numBlocks = I64LOW(drive->MediaParams().NumBlocks());
+    TUint32 numBlocks = I64LOW(drive->MediaParams().NumBlocks());
 
     TScsiServerReadFormatCapacitiesResp response(request.AllocationLength());
     response.SetNumberBlocks(numBlocks);
 
     response.Encode(iCommandBuf);
-	TPtrC8 writeBuf = iCommandBuf;
-	iTransport->SetupDataIn(writeBuf);
-	return ETrue;
-	}
+    TPtrC8 writeBuf = iCommandBuf;
+    iTransport->SetupDataIn(writeBuf);
+    return ETrue;
+    }
 
 
 /**
@@ -603,30 +579,29 @@ Command Parser for the READ CAPACITY(10) command (0x25)
 @return ETrue if successful.
 */
 TBool CScsiServerProtocol::HandleReadCapacity10(const TScsiServerReq& aRequest)
-	{
-    __MSFNLOG
-	const TScsiServerReadCapacity10Req& request = static_cast<const TScsiServerReadCapacity10Req&>(aRequest);
-	CMassStorageDrive* drive = GetCheckDrive();
-	if (drive == NULL)
-		{
-		return EFalse;
-		}
+    {
+    const TScsiServerReadCapacity10Req& request = static_cast<const TScsiServerReadCapacity10Req&>(aRequest);
+    CMassStorageDrive* drive = GetCheckDrive();
+    if (drive == NULL)
+        {
+        return EFalse;
+        }
 
-	if (request.iPmi || request.iLogicalBlockAddress)   //do not support partial medium indicator
-		{
-		iSenseInfo.SetSense(TSenseInfo::EIllegalRequest, TSenseInfo::EInvalidFieldInCdb);
-		return EFalse;
-		}
+    if (request.iPmi || request.iLogicalBlockAddress)   //do not support partial medium indicator
+        {
+        iSenseInfo.SetSense(TSenseInfo::EIllegalRequest, TSenseInfo::EInvalidFieldInCdb);
+        return EFalse;
+        }
 
     TScsiServerReadCapacity10Resp response;
     response.Set(drive->MediaParams().BlockSize(), drive->MediaParams().NumBlocks());
     response.Encode(iCommandBuf);
 
-	TPtrC8 writeBuf = iCommandBuf;
-	iTransport->SetupDataIn(writeBuf);
+    TPtrC8 writeBuf = iCommandBuf;
+    iTransport->SetupDataIn(writeBuf);
 
-	return KErrNone;
-	}
+    return KErrNone;
+    }
 
 
 /**
@@ -637,42 +612,41 @@ Command Parser for the READ10 command (0x28)
 @return ETrue if successful.
 */
 TBool CScsiServerProtocol::HandleRead10(const TScsiServerReq& aRequest)
-	{
-    __MSFNLOG
-	const TScsiServerRead10Req& request = static_cast<const TScsiServerRead10Req&>(aRequest);
-	CMassStorageDrive* drive = GetCheckDrive();
-	if (drive == NULL)
-		{
-		return EFalse;
-		}
+    {
+    const TScsiServerRead10Req& request = static_cast<const TScsiServerRead10Req&>(aRequest);
+    CMassStorageDrive* drive = GetCheckDrive();
+    if (drive == NULL)
+        {
+        return EFalse;
+        }
 
-	if (request.iProtect)
-		{
-		iSenseInfo.SetSense(TSenseInfo::EIllegalRequest, TSenseInfo::EInvalidFieldInCdb);
-		return EFalse;
-		}
+    if (request.iProtect)
+        {
+        iSenseInfo.SetSense(TSenseInfo::EIllegalRequest, TSenseInfo::EInvalidFieldInCdb);
+        return EFalse;
+        }
 
-	if (!request.iTransferLength)
-		{
-		return ETrue; // do nothing - this is not an error
-		}
+    if (!request.iTransferLength)
+        {
+        return ETrue; // do nothing - this is not an error
+        }
 
     TUint32 blockSize = drive->MediaParams().BlockSize();
 
-	const TInt64 bOffset = static_cast<TInt64>(request.iLogicalBlockAddress) * blockSize;
-	const TInt bLength = request.iTransferLength * blockSize;
-	const TInt64 theEnd = bOffset + bLength;
+    const TInt64 bOffset = static_cast<TInt64>(request.iLogicalBlockAddress) * blockSize;
+    const TInt bLength = request.iTransferLength * blockSize;
+    const TInt64 theEnd = bOffset + bLength;
 
-	if (theEnd > drive->MediaParams().Size())  //check if media big enough for this request
-		{
-		__PRINT(_L("err - Request ends out of media\n"));
-		iSenseInfo.SetSense(TSenseInfo::EIllegalRequest, TSenseInfo::ELbaOutOfRange);
-		return EFalse;
-		}
+    if (theEnd > drive->MediaParams().Size())  //check if media big enough for this request
+        {
+        __PRINT(_L("err - Request ends out of media\n"));
+        iSenseInfo.SetSense(TSenseInfo::EIllegalRequest, TSenseInfo::ELbaOutOfRange);
+        return EFalse;
+        }
 
-	// check if our buffer can hold requested data
-	if (iDataBuf.MaxLength() < bLength)
-		{
+    // check if our buffer can hold requested data
+    if (iDataBuf.MaxLength() < bLength)
+        {
         TRAPD(err,iDataBuf.ReAllocL(bLength));
         if (err)
             {
@@ -680,33 +654,33 @@ TBool CScsiServerProtocol::HandleRead10(const TScsiServerReq& aRequest)
             iSenseInfo.SetSense(TSenseInfo::EIllegalRequest, TSenseInfo::EInvalidFieldInCdb);
             return EFalse;
             }
-		}
+        }
 
     iDataBuf.SetLength(bLength);
-	TInt err = drive->Read(bOffset, bLength, iDataBuf);
-	if (err != KErrNone)
-		{
-		__PRINT1(_L("Read failed, err=%d\n"), err);
-		iSenseInfo.SetSense(TSenseInfo::ENotReady, TSenseInfo::EMediaNotPresent);
-		return EFalse;
-		}
+    TInt err = drive->Read(bOffset, bLength, iDataBuf);
+    if (err != KErrNone)
+        {
+        __PRINT1(_L("Read failed, err=%d\n"), err);
+        iSenseInfo.SetSense(TSenseInfo::ENotReady, TSenseInfo::EMediaNotPresent);
+        return EFalse;
+        }
 
-	TPtrC8 writeBuf = iDataBuf;
+    TPtrC8 writeBuf = iDataBuf;
 
     // rd publisher
-	iBytesRead[iLun] += writeBuf.Length();
-	iReadTransferPublisher->StartTimer();
+    iBytesRead[iLun] += writeBuf.Length();
+    iReadTransferPublisher->StartTimer();
 
-	// Set up data write to the host
+    // Set up data write to the host
 #ifdef MSDC_TESTMODE
     if (iTestParser)
         {
         TBool test = iTestParser->DInSearch(writeBuf);
         }
 #endif
-	iTransport->SetupDataIn(writeBuf);
-	return ETrue;
-	}
+    iTransport->SetupDataIn(writeBuf);
+    return ETrue;
+    }
 
 
 /**
@@ -717,41 +691,40 @@ Command Parser for the WRITE(10) command (0x2A)
 @return ETrue if successful.
 */
 TBool CScsiServerProtocol::HandleWrite10(const TScsiServerReq& aRequest)
-	{
-    __MSFNLOG
-	const TScsiServerWrite10Req& request = static_cast<const TScsiServerWrite10Req&>(aRequest);
-	CMassStorageDrive* drive = GetCheckDrive();
-	if (drive == NULL)
-		{
-		return EFalse;
-		}
-	if (request.iProtect)
-		{
-		iSenseInfo.SetSense(TSenseInfo::EIllegalRequest, TSenseInfo::EInvalidFieldInCdb);
-		return EFalse;
-		}
+    {
+    const TScsiServerWrite10Req& request = static_cast<const TScsiServerWrite10Req&>(aRequest);
+    CMassStorageDrive* drive = GetCheckDrive();
+    if (drive == NULL)
+        {
+        return EFalse;
+        }
+    if (request.iProtect)
+        {
+        iSenseInfo.SetSense(TSenseInfo::EIllegalRequest, TSenseInfo::EInvalidFieldInCdb);
+        return EFalse;
+        }
 
-	if (!request.iTransferLength)
-		{
-		return ETrue; // do nothing - this is not an error
-		}
+    if (!request.iTransferLength)
+        {
+        return ETrue; // do nothing - this is not an error
+        }
 
     const TMediaParams& params = drive->MediaParams();
 
-	if (params.IsWriteProtected() ||
-		params.IsLocked())
-		{
-		iSenseInfo.SetSense(TSenseInfo::EDataProtection, TSenseInfo::EWriteProtected);
-		return EFalse;
-		}
+    if (params.IsWriteProtected() ||
+        params.IsLocked())
+        {
+        iSenseInfo.SetSense(TSenseInfo::EDataProtection, TSenseInfo::EWriteProtected);
+        return EFalse;
+        }
 
     TInt64 theEnd = iMediaWriteMan.Start(request.iLogicalBlockAddress, request.iTransferLength, params.BlockSize());
-	if (theEnd > params.Size())  //check if media big enough for this request
-		{
-		__PRINT(_L("err - Request ends out of media\n"));
-		iSenseInfo.SetSense(TSenseInfo::EIllegalRequest, TSenseInfo::ELbaOutOfRange);
-		return EFalse;
-		}
+    if (theEnd > params.Size())  //check if media big enough for this request
+        {
+        __PRINT(_L("err - Request ends out of media\n"));
+        iSenseInfo.SetSense(TSenseInfo::EIllegalRequest, TSenseInfo::ELbaOutOfRange);
+        return EFalse;
+        }
 
     TUint32 thisLength = iMediaWriteMan.GetPacketLength();
 
@@ -767,20 +740,19 @@ TBool CScsiServerProtocol::HandleWrite10(const TScsiServerReq& aRequest)
             }
         }
 
-	iDataBuf.SetLength(thisLength);
-	TPtr8 readBuf = iDataBuf.LeftTPtr(iDataBuf.Length());
+    iDataBuf.SetLength(thisLength);
+    TPtr8 readBuf = iDataBuf.LeftTPtr(iDataBuf.Length());
 
     // wr publisher
-	iBytesWritten[iLun] += readBuf.Length();
-	iWriteTransferPublisher->StartTimer();
-	iTransport->SetupDataOut(readBuf);
-	return ETrue;
-	}
+    iBytesWritten[iLun] += readBuf.Length();
+    iWriteTransferPublisher->StartTimer();
+    iTransport->SetupDataOut(readBuf);
+    return ETrue;
+    }
 
 
 void CScsiServerProtocol::MediaWriteAbort()
     {
-    __MSFNLOG
     iMediaWriteMan.Reset();
     iSenseInfo.SetSense(TSenseInfo::EAbortedCommand);
     }
@@ -797,8 +769,7 @@ occurred during the read.
         KErrNone if command processing is complete and was successful.
 */
 TInt CScsiServerProtocol::MediaWritePacket(TUint& aBytesWritten)
-	{
-    __MSFNLOG
+    {
     aBytesWritten = 0;
     if (iMediaWriteMan.Active() == EFalse)
         {
@@ -867,10 +838,10 @@ TInt CScsiServerProtocol::MediaWritePacket(TUint& aBytesWritten)
         }
 #endif
 
-	const TInt64 bOffset = iMediaWriteMan.Offset();
+    const TInt64 bOffset = iMediaWriteMan.Offset();
     iMediaWriteMan.Reset();
 
-   	__PRINT1(_L("SCSI: writing %d bytes\n"), iDataBuf.Length());
+    __PRINT1(_L("SCSI: writing %d bytes\n"), iDataBuf.Length());
 
     TInt err = KErrNone;
 #ifdef MSDC_TESTMODE
@@ -889,30 +860,30 @@ TInt CScsiServerProtocol::MediaWritePacket(TUint& aBytesWritten)
         }
 #else
     // ********* Write data to the drive ********
-   	err = drive->Write(bOffset, iDataBuf);
+    err = drive->Write(bOffset, iDataBuf);
 #endif
-   	if (err != KErrNone)
-   		{
-   		__PRINT1(_L("Error after write = 0x%X \n"), err);
-   		iSenseInfo.SetSense(TSenseInfo::EAbortedCommand);
-   		return KErrAbort;
-   		}
+    if (err != KErrNone)
+        {
+        __PRINT1(_L("Error after write = 0x%X \n"), err);
+        iSenseInfo.SetSense(TSenseInfo::EAbortedCommand);
+        return KErrAbort;
+        }
 
-   	TUint thisLength = iDataBuf.Length();
+    TUint thisLength = iDataBuf.Length();
     aBytesWritten = thisLength;
 
     iMediaWriteMan.SetOffset(bOffset, thisLength);
 
-   	if (iMediaWriteMan.BytesRemain() == 0)
+    if (iMediaWriteMan.BytesRemain() == 0)
         {
         return iSenseInfo.SenseOk() ? KErrNone : KErrAbort;
         }
 
     // More data is expected - set up another request to read from the host
     const TUint32 nextPacketLength = iMediaWriteMan.NextPacket();
- 	TUint bytesAvail = iTransport->BytesAvailable() & ~(drive->MediaParams().BlockSize()-1);
+    TUint bytesAvail = iTransport->BytesAvailable() & ~(drive->MediaParams().BlockSize()-1);
 
- 	TBool wait = EFalse;
+    TBool wait = EFalse;
 
     thisLength = nextPacketLength;
     if (bytesAvail)
@@ -927,13 +898,13 @@ TInt CScsiServerProtocol::MediaWritePacket(TUint& aBytesWritten)
             }
         }
 
- 	thisLength = (thisLength > KMaxBufSize) ? KMaxBufSize : thisLength;
+    thisLength = (thisLength > KMaxBufSize) ? KMaxBufSize : thisLength;
 
-   	iDataBuf.SetLength(thisLength);
-   	TPtr8 readBuf = iDataBuf.LeftTPtr(iDataBuf.Length());
+    iDataBuf.SetLength(thisLength);
+    TPtr8 readBuf = iDataBuf.LeftTPtr(iDataBuf.Length());
     iTransport->SetupDataOut(readBuf);
     return wait ? KErrNotReady : KErrCompletion;
-	}
+    }
 
 
 /**
@@ -942,29 +913,28 @@ Command Parser for the MODE SENSE(06) command (0x1A)
 @return ETrue if successful.
 */
 TBool CScsiServerProtocol::HandleModeSense6(const TScsiServerReq& aRequest)
-	{
-    __MSFNLOG
-	const TScsiServerModeSense6Req& request = static_cast<const TScsiServerModeSense6Req&>(aRequest);
+    {
+    const TScsiServerModeSense6Req& request = static_cast<const TScsiServerModeSense6Req&>(aRequest);
 
-	TScsiServerModeSense6Resp response;
+    TScsiServerModeSense6Resp response;
     response.SetAllocationLength(request.iAllocationLength);
 
-	if (request.iPageCode != TScsiServerModeSense6Req::KAllPages ||
+    if (request.iPageCode != TScsiServerModeSense6Req::KAllPages ||
         request.iPageControl == TScsiServerModeSense6Req::EChangeableValues)
-		{
-		__PRINT(_L("TSenseInfo::EIllegalRequest,TSenseInfo::EInvalidFieldInCdb"));
-		iSenseInfo.SetSense(TSenseInfo::EIllegalRequest,TSenseInfo::EInvalidFieldInCdb);
-		return EFalse;
-		}
-	if (request.iPageControl != TScsiServerModeSense6Req::EDefaultValues)
-		{
-		//check if drive write protected
-		CMassStorageDrive* drive = GetCheckDrive();
-		if (drive == NULL)
-			{
-			__PRINT(_L("drive == null"));
-			return EFalse;
-			}
+        {
+        __PRINT(_L("TSenseInfo::EIllegalRequest,TSenseInfo::EInvalidFieldInCdb"));
+        iSenseInfo.SetSense(TSenseInfo::EIllegalRequest,TSenseInfo::EInvalidFieldInCdb);
+        return EFalse;
+        }
+    if (request.iPageControl != TScsiServerModeSense6Req::EDefaultValues)
+        {
+        //check if drive write protected
+        CMassStorageDrive* drive = GetCheckDrive();
+        if (drive == NULL)
+            {
+            __PRINT(_L("drive == null"));
+            return EFalse;
+            }
 
 #ifdef MSDC_TESTMODE
     if (iTestParser)
@@ -978,7 +948,7 @@ TBool CScsiServerProtocol::HandleModeSense6(const TScsiServerReq& aRequest)
 
     response.Encode(iCommandBuf);
 
-	TPtrC8 writeBuf = iCommandBuf;
-	iTransport->SetupDataIn(writeBuf);
-	return iSenseInfo.SenseOk();
-	}
+    TPtrC8 writeBuf = iCommandBuf;
+    iTransport->SetupDataIn(writeBuf);
+    return iSenseInfo.SenseOk();
+    }

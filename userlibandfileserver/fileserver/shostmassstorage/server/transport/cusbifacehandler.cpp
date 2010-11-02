@@ -30,98 +30,99 @@
 #include "mprotocol.h"
 #include "cusbifacehandler.h"
 #include "cbulkonlytransport.h"
-#include "debug.h"
-#include "msdebug.h"
+
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "cusbifacehandlerTraces.h"
+#endif
 
 CUsbInterfaceHandler* CUsbInterfaceHandler::NewL(RUsbInterface &aInterface, RUsbPipe& aBulkPipeIn)
-	{
-	return new (ELeave) CUsbInterfaceHandler(aInterface, aBulkPipeIn);
-	}
+    {
+    return new (ELeave) CUsbInterfaceHandler(aInterface, aBulkPipeIn);
+    }
 
 CUsbInterfaceHandler::CUsbInterfaceHandler(RUsbInterface &aInterface, RUsbPipe& aBulkPipeIn)
-:	CActive(EPriorityStandard),
-	iInterface(aInterface),
+:   CActive(EPriorityStandard),
+    iInterface(aInterface),
     iBulkPipeIn(aBulkPipeIn)
-	{
-    __MSFNLOG
-	CActiveScheduler::Add(this);
-	}
+    {
+    CActiveScheduler::Add(this);
+    }
 
 CUsbInterfaceHandler::~CUsbInterfaceHandler()
-	{
-    __MSFNLOG
-	if (iState != ENone)
-		{
-		iState = ENone;
-		iBotGetMaxLun.Complete(KErrCancel);
-		Cancel();
-		}
-	}
+    {
+    if (iState != ENone)
+        {
+        iState = ENone;
+        iBotGetMaxLun.Complete(KErrCancel);
+        Cancel();
+        }
+    }
 
 /**
 Cancellation of outstanding request
 */
 void CUsbInterfaceHandler::DoCancel()
-	{
-    __MSFNLOG
-	}
+    {
+    }
 
 /**
 Completion of USB transport request.
 */
 void CUsbInterfaceHandler::RunL()
     {
-    __MSFNLOG
-	TInt error = iStatus.Int();
+    TInt error = iStatus.Int();
 
-	if (error == KErrUsbStalled && iState == EGetMaxLun)
+    if (error == KErrUsbStalled && iState == EGetMaxLun)
         {
         // Devices that do not support multiple LUNs may STALL this command
-		__BOTPRINT(_L("...KErrUsbStalled"));		
+        OstTrace0(TRACE_SHOSTMASSSTORAGE_BOT, CUSBIFACEHANLDER_10,
+                  "...KErrUsbStalled");
         iBulkPipeIn.ClearRemoteStall();
-        error = KErrNone;     
+        error = KErrNone;
         }
 
-	else if (error == KErrNone)
+    else if (error == KErrNone)
         {
-		__BOTPRINT(_L("...KErrNone"));
-		if (iState == EGetMaxLun)
+        OstTrace0(TRACE_SHOSTMASSSTORAGE_BOT, CUSBIFACEHANLDER_11,
+                  "...KErrNone");
+        if (iState == EGetMaxLun)
             {
-			__BOTPRINT(_L("...sending GetMaxLun response"));
-			*ipGetMaxLun = iBuffer[0];
+            OstTrace0(TRACE_SHOSTMASSSTORAGE_BOT, CUSBIFACEHANLDER_12,
+                      "...sending GetMaxLun response");
+            *ipGetMaxLun = iBuffer[0];
             }
         }
     else
         {
-        __BOTPRINT(_L("...completeing with KErrGeneral"));
+        OstTrace0(TRACE_SHOSTMASSSTORAGE_BOT, CUSBIFACEHANLDER_13,
+                  "...completeing with KErrGeneral");
         error = KErrGeneral;
         }
 
     iState = ENone;
-	iBotGetMaxLun.Complete(error);
+    iBotGetMaxLun.Complete(error);
     }
 
 
 void CUsbInterfaceHandler::GetMaxLun(TLun* aMaxLun, const RMessage2& aMessage)
-	{
-    __MSFNLOG
-
-	/* Send the Get max lun command in the ep0 */
-	RUsbInterface::TUsbTransferRequestDetails reqDetails;
-	_LIT8(KNullDesC8,"");
-	iBotGetMaxLun = aMessage;
-	iState = EGetMaxLun;
-	ipGetMaxLun = aMaxLun;
+    {
+    /* Send the Get max lun command in the ep0 */
+    RUsbInterface::TUsbTransferRequestDetails reqDetails;
+    _LIT8(KNullDesC8,"");
+    iBotGetMaxLun = aMessage;
+    iState = EGetMaxLun;
+    ipGetMaxLun = aMaxLun;
     *ipGetMaxLun = 0;       // default response is MaxLUN=0
 
-	reqDetails.iRequestType = 0xA1;
-	reqDetails.iRequest = 0xFE;
-	reqDetails.iValue = 0x0000;
-	reqDetails.iIndex = 0x0000;
-	reqDetails.iFlags = 0x04;		// Short transfer OK
+    reqDetails.iRequestType = 0xA1;
+    reqDetails.iRequest = 0xFE;
+    reqDetails.iValue = 0x0000;
+    reqDetails.iIndex = 0x0000;
+    reqDetails.iFlags = 0x04;       // Short transfer OK
 
-	iBuffer.SetLength(1);
-	iInterface.Ep0Transfer(reqDetails, KNullDesC8, iBuffer, iStatus);
-	SetActive();
-	}
+    iBuffer.SetLength(1);
+    iInterface.Ep0Transfer(reqDetails, KNullDesC8, iBuffer, iStatus);
+    SetActive();
+    }
 

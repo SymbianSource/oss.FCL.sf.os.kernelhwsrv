@@ -34,23 +34,23 @@ inline TUint32 TMsDataMemMap::BlockLength() const
 
 inline TUint64 TMsDataMemMap::DataSize() const
     {
-    return iSize - iDataOffset;
+    return iSize;
     }
 
 inline void TMsDataMemMap::InitDataArea(TUint32 aFirstDataSector, TUint32 aNumSectors, TUint32 aSectorSize)
-	{
-	iSectorSize = aSectorSize;
+    {
+    iSectorSize = aSectorSize;
 
-	iFormatSectorShift = 0;
+    iFormatSectorShift = 0;
 
     while(aSectorSize >>= 1)
         {
         ++iFormatSectorShift;
         }
 
-	iDataOffset = static_cast<TInt64>(aFirstDataSector) * iSectorSize;
-	iSize = static_cast<TInt64>(aNumSectors) * iSectorSize;
-	}
+    iDataOffset = static_cast<TInt64>(aFirstDataSector) * iSectorSize;
+    iSize = static_cast<TInt64>(aNumSectors) * iSectorSize;
+    }
 
 
 inline void TMsDataMemMap::InitDataArea(TUint64 aSize)
@@ -65,7 +65,7 @@ inline TInt64 TMsDataMemMap::GetDataPos(TInt64 aPos) const
     }
 
 inline TInt TMsDataMemMap::FormatSectorShift() const
-	{
-	return iFormatSectorShift;
-	}
+    {
+    return iFormatSectorShift;
+    }
 

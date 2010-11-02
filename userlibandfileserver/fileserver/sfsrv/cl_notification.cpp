@@ -179,7 +179,7 @@ EXPORT_C TInt TFsNotification::FileSize(TInt64& aSize) const
  * Word2   : NewNameSize (2 bytes) , NotificationType (2 bytes)
  * Word3   : UID
  * Word(s) : Path (TText8) , [Any sub-class members]
-
+ */
 EXPORT_C TInt TFsNotification::DriveNumber(TInt& aDriveNumber) const
 	{
 	TPtrC path(NULL,0);
@@ -193,7 +193,7 @@ EXPORT_C TInt TFsNotification::DriveNumber(TInt& aDriveNumber) const
 		}
 	return r;
 	}
-	*/
+	
 
 /*
  * The order of the data in the buffer is:
@@ -201,14 +201,14 @@ EXPORT_C TInt TFsNotification::DriveNumber(TInt& aDriveNumber) const
  * Word2   : NewNameSize (2 bytes) , NotificationType (2 bytes)
  * Word3   : UID
  * Word(s) : Path (TText8) , [Any sub-class members]
-
+ */
 EXPORT_C TInt TFsNotification::UID(TUid& aUID) const
     {
     TUint* word3 = PtrAdd((TUint*)this, sizeof(TUint)*2);
     aUID.iUid = *word3;
     return KErrNone; 
     }
-	*/
+	
 
 
 CFsNotificationList* CFsNotificationList::NewL(TInt aBufferSize)
@@ -321,12 +321,34 @@ CFsNotifyBody::~CFsNotifyBody()
 	}
 
 EXPORT_C TInt CFsNotify::AddNotification(TUint aNotificationType, const TDesC& aPath, const TDesC& aFilename)
-	{
-	if(aNotificationType == 0 || (aPath.Length() <= 0 && aFilename.Length() <= 0))
-		return KErrArgument;
+    {
+    TInt pathLength = aPath.Length();
+    if(aNotificationType == 0 || (pathLength <= 0 && aFilename.Length() <= 0))
+        return KErrArgument;
 
-	return iBody->iFsNotify.AddNotification(aNotificationType, aPath, aFilename);
-	}
+    //Validate path.
+    //Paths must be fully formed. i.e. with a valid or wild drive letter.
+    if(pathLength)
+        {
+        if(aPath[0] != '*' && aPath[0] != '?')
+            {
+            TInt drive = KErrNotFound;
+            TInt r = RFs::CharToDrive(aPath[0],drive);
+
+            if(r!=KErrNone)
+                return KErrPathNotFound;
+            if(drive < EDriveA || drive > EDriveZ)
+                return KErrPathNotFound;
+            if(pathLength < 2)
+                return KErrPathNotFound;
+            else if(aPath[1] != ':')
+                return KErrPathNotFound;
+            }
+        }
+
+
+    return iBody->iFsNotify.AddNotification(aNotificationType, aPath, aFilename);
+    }
 
 //Removes notification request, does not close session
 EXPORT_C TInt CFsNotify::RemoveNotifications()
@@ -450,19 +472,17 @@ EXPORT_C TInt TFsNotification::FileSize(TInt64&) const
 	return KErrNotSupported;
 	}
 
-/*
 EXPORT_C TInt TFsNotification::DriveNumber(TInt&) const
 	{
 	Panic(ENotificationPanic);
 	return KErrNotSupported;
 	}
 	
-EXPORT_C TInt TFsNotification::UID(TUid& aUID) const
+EXPORT_C TInt TFsNotification::UID(TUid&) const
     {
  	Panic(ENotificationPanic);
 	return KErrNotSupported;
     }
-*/
 
 EXPORT_C CFsNotify* CFsNotify::NewL(RFs& , TInt)
 	{

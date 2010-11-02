@@ -315,4 +315,14 @@ EXPORTS
 	_ZNK9RFsPlugin6VolumeER11TVolumeInfoi @ 314 NONAME
 	_ZNK7CFileCB16IsSequentialModeEv @ 315 NONAME
 	_ZN7CFileCB12DirectIOModeERK12RMessagePtr2 @ 316 NONAME
+	_ZN19CFsNotificationInfo10SetNewNameERK7TDesC16 @ 317 NONAME
+	_ZN19CFsNotificationInfo11SetFilesizeEx @ 318 NONAME
+	_ZN19CFsNotificationInfo13SetAttributesEjj @ 319 NONAME
+	_ZN19CFsNotificationInfo13SetSourceNameERK7TDesC16 @ 320 NONAME
+	_ZN19CFsNotificationInfo4FreeERPS_ @ 321 NONAME
+	_ZN19CFsNotificationInfo6SetUidERK4TUid @ 322 NONAME
+	_ZN19CFsNotificationInfo8AllocateERK8CMountCBi @ 323 NONAME
+	_ZN8CMountCB17IssueNotificationEP19CFsNotificationInfo @ 324 NONAME
+	_ZTI19CFsNotificationInfo @ 325 NONAME
+	_ZTV19CFsNotificationInfo @ 326 NONAME
 

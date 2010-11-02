@@ -14,33 +14,30 @@
 // Utility to mount connected USB device as a Mass Storage drive.
 //
 
-TARGET			t_msman.exe
+TARGET                  t_msman.exe
 
-TARGETTYPE		exe
+TARGETTYPE              exe
 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
-USERINCLUDE		.
-USERINCLUDE		../shared
-USERINCLUDE		../client
+USERINCLUDE             .
+USERINCLUDE             ../shared
+USERINCLUDE             ../client
 
-SOURCEPATH		.
-SOURCE			rfsydebug.cpp
-SOURCE			ttestutils.cpp
-SOURCE			cmsdrive.cpp
-SOURCE			tmsprintdrive.cpp
-SOURCE			t_msmain.cpp
-SOURCE			t_msman.cpp
+SOURCEPATH              .
+SOURCE                  rfsydebug.cpp
+SOURCE                  ttestutils.cpp
+SOURCE                  cmsdrive.cpp
+SOURCE                  tmsprintdrive.cpp
+SOURCE                  t_msmain.cpp
+SOURCE                  t_msman.cpp
 
-SOURCEPATH		../shared
-SOURCE			tmslog.cpp
-
-LIBRARY			msmanclient.lib efsrv.lib euser.lib
+LIBRARY                 msmanclient.lib efsrv.lib euser.lib
 
 
-// MACRO			_TESTAPP_DEBUG_PRINT_
+// MACRO                        _TESTAPP_DEBUG_PRINT_
 
 CAPABILITY ALL
 
-UID			0 0x10285B2E
+UID                     0 0x10285B2E
 
 SMPSAFE

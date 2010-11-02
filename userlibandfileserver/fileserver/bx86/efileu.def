@@ -243,4 +243,12 @@ EXPORTS
 	?Volume@RFsPlugin@@QBEHAAVTVolumeInfo@@H@Z @ 242 NONAME ; public: int __thiscall RFsPlugin::Volume(class TVolumeInfo &,int)const 
 	?IsSequentialMode@CFileCB@@QBEHXZ @ 243 NONAME ; public: int __thiscall CFileCB::IsSequentialMode(void)const 
 	?DirectIOMode@CFileCB@@QAEHABVRMessagePtr2@@@Z @ 244 NONAME ; int CFileCB::DirectIOMode(class RMessagePtr2 const &)
+	?Allocate@CFsNotificationInfo@@SAPAV1@ABVCMountCB@@H@Z @ 245 NONAME ; public: static class CFsNotificationInfo * __cdecl CFsNotificationInfo::Allocate(class CMountCB const &,int)
+	?Free@CFsNotificationInfo@@SAXAAPAV1@@Z @ 246 NONAME ; public: static void __cdecl CFsNotificationInfo::Free(class CFsNotificationInfo * &)
+	?IssueNotification@CMountCB@@QAEHPAVCFsNotificationInfo@@@Z @ 247 NONAME ; public: int __thiscall CMountCB::IssueNotification(class CFsNotificationInfo *)
+	?SetAttributes@CFsNotificationInfo@@QAEHII@Z @ 248 NONAME ; public: int __thiscall CFsNotificationInfo::SetAttributes(unsigned int,unsigned int)
+	?SetFilesize@CFsNotificationInfo@@QAEH_J@Z @ 249 NONAME ; public: int __thiscall CFsNotificationInfo::SetFilesize(__int64)
+	?SetNewName@CFsNotificationInfo@@QAEHABVTDesC16@@@Z @ 250 NONAME ; public: int __thiscall CFsNotificationInfo::SetNewName(class TDesC16 const &)
+	?SetSourceName@CFsNotificationInfo@@QAEHABVTDesC16@@@Z @ 251 NONAME ; public: int __thiscall CFsNotificationInfo::SetSourceName(class TDesC16 const &)
+	?SetUid@CFsNotificationInfo@@QAEHABVTUid@@@Z @ 252 NONAME ; public: int __thiscall CFsNotificationInfo::SetUid(class TUid const &)
 

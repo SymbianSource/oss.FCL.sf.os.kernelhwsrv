@@ -375,4 +375,6 @@ EXPORTS
 	?GetMountProperties@CFsMountHelper@@QAEHXZ @ 374 NONAME ; public: int __thiscall CFsMountHelper::GetMountProperties(void)
 	?MountFileSystem@CFsMountHelper@@QBEHXZ @ 375 NONAME ; public: int __thiscall CFsMountHelper::MountFileSystem(void)const 
 	?New@CFsMountHelper@@SAPAV1@AAVRFs@@H@Z @ 376 NONAME ; public: static class CFsMountHelper * __cdecl CFsMountHelper::New(class RFs &,int)
+	?DriveNumber@TFsNotification@@QBEHAAH@Z @ 377 NONAME ; int TFsNotification::DriveNumber(int &) const
+	?UID@TFsNotification@@QBEHAAVTUid@@@Z @ 378 NONAME ; int TFsNotification::UID(class TUid &) const
 

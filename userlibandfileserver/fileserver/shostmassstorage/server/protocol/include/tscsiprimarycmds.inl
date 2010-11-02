@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -12,7 +12,7 @@
 //
 // Description:
 // scsiprimarycommands.inl
-// 
+//
 //
 
 /**
@@ -24,7 +24,6 @@
 inline TScsiClientTestUnitReadyReq::TScsiClientTestUnitReadyReq()
 :   TScsiClientReq(ETestUnitReady)
     {
-    __MSFNSLOG
     }
 
 
@@ -33,7 +32,6 @@ inline TScsiClientRequestSenseReq::TScsiClientRequestSenseReq()
 :   TScsiClientReq(ERequestSense),
     iAllocationLength(KResponseLength)
     {
-    __MSFNSLOG
     }
 
 
@@ -44,15 +42,12 @@ Set SCSI ALLOCATION LENGTH value.
 */
 inline void TScsiClientRequestSenseReq::SetAllocationLength(TAllocationLength aAllocationLength)
     {
-    __MSFNSLOG
     iAllocationLength = aAllocationLength;
     }
 
 
 inline TInt TScsiClientRequestSenseReq::EncodeRequestL(TDes8& aBuffer) const
     {
-    __MSFNSLOG
-    __SCSIPRINT(_L("<-- SCSI REQUEST SENSE"));
     TInt length = TScsiClientReq::EncodeRequestL(aBuffer);
 
     aBuffer[4] = iAllocationLength;
@@ -67,7 +62,6 @@ inline TScsiClientInquiryReq::TScsiClientInquiryReq()
     iEvpd(EFalse),
     iAllocationLength(KResponseLength)
     {
-    __MSFNSLOG
     }
 
 
@@ -78,7 +72,6 @@ Set SCSI ALLOCATION LENGTH value.
 */
 inline void TScsiClientInquiryReq::SetAllocationLength(TAllocationLength aAllocationLength)
     {
-    __MSFNSLOG
     iAllocationLength = aAllocationLength;
     }
 
@@ -90,7 +83,6 @@ Set SCSI EVPD and PAGE CODE value.
 */
 inline void TScsiClientInquiryReq::SetEvpd(TUint8 aPageCode)
     {
-    __MSFNSLOG
     iEvpd = ETrue;
     iPage = aPageCode;
     }
@@ -103,7 +95,6 @@ Set SCSI CmdDt and OPERATION CODE.
 */
 inline void TScsiClientInquiryReq::SetCmdDt(TUint8 aOperationCode)
     {
-    __MSFNSLOG
     iCmdDt = ETrue;
     iPage = aOperationCode;
     }
@@ -111,8 +102,6 @@ inline void TScsiClientInquiryReq::SetCmdDt(TUint8 aOperationCode)
 
 inline TInt TScsiClientInquiryReq::EncodeRequestL(TDes8& aBuffer) const
     {
-    __MSFNSLOG
-    __SCSIPRINT(_L("<-- SCSI INQUIRY"));
     TInt length = TScsiClientReq::EncodeRequestL(aBuffer);
 
     if (iEvpd)
@@ -151,7 +140,6 @@ inline TScsiClientPreventMediaRemovalReq::TScsiClientPreventMediaRemovalReq(TPre
 :   TScsiClientReq(EPreventMediaRemoval),
     iPrevent(aPrevent)
     {
-    __MSFNSLOG
     }
 
 

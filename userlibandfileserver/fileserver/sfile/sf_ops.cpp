@@ -165,48 +165,6 @@ TBool TOperation::IsWrite() const
 		}
 	}
 
-TUint TOperation::NotifyType() const
-//
-//	Convert operation that caused the notification to a 
-//	value corresponding to the correct TNotifyType enum  
-//
-	{
-	switch (iFunction)
-		{
-	case EFsFileCreate:
-	case EFsFileReplace:
-	case EFsDelete:
-	case EFsReplace:
-	case EFsFileRename:
-		return(ENotifyFile|ENotifyEntry);	
-	case EFsMkDir:
-	case EFsRmDir:
-		return(ENotifyDir|ENotifyEntry);	
-	case EFsRename:					
-		return(ENotifyDir|ENotifyFile|ENotifyEntry);					
-	case EFsSetVolume:					
-		return(ENotifyDisk|ENotifyEntry);	
-	case EFsFileSet:
-	case EFsFileSetAtt:
-	case EFsFileSetModified:
-	case EFsFileSetSize:
-	case EFsSetEntry:
-		return(ENotifyAttributes);	
-	case EFsFileWrite:
-	case EFsFileWriteDirty:
-		return(ENotifyWrite);	
-	case EFsRawDiskWrite:
-	case EFsLockDrive:
-	case EFsUnlockDrive:
-		return(ENotifyDisk);	
-	case EFsFileTemp:		
-	case EFsSetDriveName:
-		return(ENotifyAll);	
-	default:
-		return(0);
-		}
-	}
-
 TBool TOperation::IsCompleted() const
 //
 //

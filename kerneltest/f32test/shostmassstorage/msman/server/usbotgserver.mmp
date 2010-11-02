@@ -13,51 +13,48 @@
 // Description:
 //
 
-TARGET			usbotgserver.exe
+TARGET                  usbotgserver.exe
 
-TARGETTYPE		exe
+TARGETTYPE              exe
 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
-USERINCLUDE	.
-USERINCLUDE	../shared
-USERINCLUDE	../src
+USERINCLUDE     .
+USERINCLUDE     ../shared
+USERINCLUDE     ../src
 
-SOURCEPATH	.
-SOURCE			cusbotgsession.cpp
-SOURCE			cusbotgserver.cpp
-SOURCE			usbotgserver.cpp
+SOURCEPATH      .
+SOURCE                  cusbotgsession.cpp
+SOURCE                  cusbotgserver.cpp
+SOURCE                  usbotgserver.cpp
 
 SOURCEPATH ../src
-SOURCE			cusbhostao.cpp
-SOURCE			cusbhost.cpp
-SOURCE			cusbmsmountmanager.cpp
-SOURCE			rextfilesystem.cpp
+SOURCE                  cusbhostao.cpp
+SOURCE                  cusbhost.cpp
+SOURCE                  cusbmsmountmanager.cpp
+SOURCE                  rextfilesystem.cpp
 
-SOURCE			rusbmspublisher.cpp
-SOURCE			cusbotgwatcher.cpp
-SOURCE			cusbotg.cpp
+SOURCE                  rusbmspublisher.cpp
+SOURCE                  cusbotgwatcher.cpp
+SOURCE                  cusbotg.cpp
 
-SOURCEPATH	../shared
-SOURCE			tmslog.cpp
+USERINCLUDE             .
+USERINCLUDE             ../inc
+USERINCLUDE             ../shared
+USERINCLUDE             ../client
 
-USERINCLUDE		.
-USERINCLUDE		../inc
-USERINCLUDE		../shared
-USERINCLUDE		../client
-
-LIBRARY		efsrv.lib 
-LIBRARY		euser.lib 
-LIBRARY		usbdescriptors.lib
-LIBRARY		usbdi_utils.lib 
-LIBRARY		usbhostmsclient.lib
+LIBRARY         efsrv.lib
+LIBRARY         euser.lib
+LIBRARY         usbdescriptors.lib
+LIBRARY         usbdi_utils.lib
+LIBRARY         usbhostmsclient.lib
 
 
-//MACRO		_TESTAPP_DEBUG_PRINT_
+//MACRO         _TESTAPP_DEBUG_PRINT_
 
 //CAPABILITY ALL
 CAPABILITY CommDD PowerMgmt DISKADMIN ALLFILES NetworkControl
 
 
-UID		0	0x101fe1db
+UID             0       0x101fe1db
 
 SMPSAFE

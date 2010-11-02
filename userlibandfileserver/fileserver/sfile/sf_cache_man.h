@@ -198,6 +198,7 @@ private:
 	TInt iSegmentsPerCacheLine;
 
 	TInt iLockedSegmentCount;
+	TInt iAllocatedSegmentCount;
 
 	RChunk iChunk;
 	TBool iSimulateLockFailureMode;

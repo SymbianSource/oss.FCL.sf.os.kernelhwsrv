@@ -543,6 +543,7 @@ typedef void (*TGlobalDestructorFunc)(void);
 
 // This must not conflict with any possible valid TLS keys
 const TInt KGlobalDestructorTlsKey = -1;
+const TInt KNestedEntryPointCallKey = -2;
 
 GLREF_C void ExitCurrentThread(TExitType, TInt, const TDesC8*);
 

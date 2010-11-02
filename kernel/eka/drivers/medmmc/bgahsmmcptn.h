@@ -65,4 +65,14 @@ typedef struct
 const TUint32 KBB5HeaderSizeInSectors   = 8;
 const TUint32 KPIOffsetFromMediaEnd     = 1;
 
+// magic value of BB5_COMMON header
+const TUint32 KBB5_CommonHeaderMagic    = 0x809795A3UL;
+ 
+// size of aligned header for NCPx.XX
+const TUint32 KBB5_CommonHeaderSize     = 0x1000; //real size is 0x3d0;
+ 
+// size of aligned header for NCPX.XX in case of DP usage
+const TUint32 KBB5_CommonHeaderSizeDp   = 0x1000; //real size is 0x3d0;
+
+
 #endif /*BGAHSMMCPTN_H*/

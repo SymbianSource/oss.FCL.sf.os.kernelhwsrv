@@ -15,38 +15,33 @@
 //
 
 
-TARGET			t_msbot.exe
+TARGET                  t_msbot.exe
 
-TARGETTYPE		exe
+TARGETTYPE              exe
 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
-USERINCLUDE		.
-USERINCLUDE		../shared
-USERINCLUDE		../client
-USERINCLUDE		../../../server
+USERINCLUDE             .
+USERINCLUDE             ../shared
+USERINCLUDE             ../client
+USERINCLUDE             ../../../server
 
-SOURCEPATH		.
-SOURCE			rfsydebug.cpp
-SOURCE			cblockdevicetester.cpp
-SOURCE			ttestutils.cpp
-SOURCE			cmsdrive.cpp
-SOURCE			tmsprintdrive.cpp
+SOURCEPATH              .
+SOURCE                  rfsydebug.cpp
+SOURCE                  cblockdevicetester.cpp
+SOURCE                  ttestutils.cpp
+SOURCE                  cmsdrive.cpp
+SOURCE                  tmsprintdrive.cpp
 
-SOURCE			t_msmain.cpp
-SOURCE			t_msbot.cpp
+SOURCE                  t_msmain.cpp
+SOURCE                  t_msbot.cpp
 
-
-SOURCEPATH		../shared
-SOURCE			tmslog.cpp
+LIBRARY                 msmanclient.lib efsrv.lib euser.lib
 
 
-LIBRARY			msmanclient.lib efsrv.lib euser.lib
-
-
-// MACRO			_TESTAPP_DEBUG_PRINT_
+// MACRO                        _TESTAPP_DEBUG_PRINT_
 
 CAPABILITY ALL
 
-UID			0 0x10285B2E
+UID                     0 0x10285B2E
 
 SMPSAFE

@@ -149,7 +149,7 @@ TInt TFsDirOpen::Initialise(CFsRequest* aRequest)
 	TInt r=ParseSubstPtr0(aRequest,aRequest->Src());
 	if (r!=KErrNone)
 		return(r);
-	r=PathCheck(aRequest,aRequest->Src().FullName().Mid(2),&KCapFsSysDirOpen,&KCapFsPriDirOpen, __PLATSEC_DIAGNOSTIC_STRING("Dir Open"));
+	r=PathCheck(aRequest->Message(),aRequest->Src().FullName().Mid(2),&KCapFsSysDirOpen,&KCapFsPriDirOpen, __PLATSEC_DIAGNOSTIC_STRING("Dir Open"));
 	if(r != KErrNone)
 		return r;
 	return KErrNone;

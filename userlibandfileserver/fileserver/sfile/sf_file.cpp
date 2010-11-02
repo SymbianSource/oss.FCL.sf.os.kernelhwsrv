@@ -290,7 +290,7 @@ TInt TFsFileCreate::Initialise(CFsRequest* aRequest)
 	TInt r=ParseNoWildSubstCheckPtr0(aRequest,aRequest->Src());
  	if (r!=KErrNone)
 		return(r);
-	r=PathCheck(aRequest,aRequest->Src().FullName().Mid(2),&KCapFsSysFileCreate,&KCapFsPriFileCreate,&KCapFsROFileCreate, __PLATSEC_DIAGNOSTIC_STRING("Create File")); 
+	r=PathCheck(aRequest->Message(),aRequest->Src().FullName().Mid(2),&KCapFsSysFileCreate,&KCapFsPriFileCreate,&KCapFsROFileCreate, __PLATSEC_DIAGNOSTIC_STRING("Create File")); 
 	if (r!=KErrNone)
 		return(r);
 	if (OpenOnDriveZOnly)
@@ -320,7 +320,7 @@ TInt TFsFileReplace::Initialise(CFsRequest* aRequest)
 	TInt r=ParseNoWildSubstCheckPtr0(aRequest,aRequest->Src());
  	if (r!=KErrNone)
 		return(r);
-	r=PathCheck(aRequest,aRequest->Src().FullName().Mid(2),&KCapFsSysFileReplace,&KCapFsPriFileReplace,&KCapFsROFileReplace, __PLATSEC_DIAGNOSTIC_STRING("Replace File")); 
+	r=PathCheck(aRequest->Message(),aRequest->Src().FullName().Mid(2),&KCapFsSysFileReplace,&KCapFsPriFileReplace,&KCapFsROFileReplace, __PLATSEC_DIAGNOSTIC_STRING("Replace File")); 
 	if (r!=KErrNone)
 		return(r);
 
@@ -419,7 +419,7 @@ TInt TFsFileOpen::Initialise(CFsRequest* aRequest)
 
 	if(ComparePrivate(thisPath))
 		{
-		if(! SIDCheck(aRequest,thisPath))
+		if(! SIDCheck(aRequest->Message(),thisPath))
 			{
 			if(!KCapFsPriFileOpen.CheckPolicy(aRequest->Message(), __PLATSEC_DIAGNOSTIC_MESSAGE("File Open in private path")))
 				return KErrPermissionDenied;
@@ -492,7 +492,7 @@ TInt TFsIsFileOpen::Initialise(CFsRequest* aRequest)
 	TInt r=ParseNoWildSubstCheckPtr0(aRequest,aRequest->Src());
 	if (r!=KErrNone)
 		return(r);
-	r=PathCheck(aRequest,aRequest->Src().FullName().Mid(2),&KCapFsSysIsFileOpen,&KCapFsPriIsFileOpen, __PLATSEC_DIAGNOSTIC_STRING("Is File Open")); 
+	r=PathCheck(aRequest->Message(),aRequest->Src().FullName().Mid(2),&KCapFsSysIsFileOpen,&KCapFsPriIsFileOpen, __PLATSEC_DIAGNOSTIC_STRING("Is File Open")); 
 	return(r);
 	}
 
@@ -628,7 +628,7 @@ TInt TFsFileTemp::Initialise(CFsRequest* aRequest)
 	TInt r=ParseNoWildSubstPtr0(aRequest,aRequest->Src());
 	if (r!=KErrNone)
 		return(r);
-	r=PathCheck(aRequest,aRequest->Src().FullName().Mid(2),&KCapFsSysFileTemp,&KCapFsPriFileTemp,&KCapFsROFileTemp, __PLATSEC_DIAGNOSTIC_STRING("Temp File")); 
+	r=PathCheck(aRequest->Message(),aRequest->Src().FullName().Mid(2),&KCapFsSysFileTemp,&KCapFsPriFileTemp,&KCapFsROFileTemp, __PLATSEC_DIAGNOSTIC_STRING("Temp File")); 
 	if (r!=KErrNone)
 		return(r);
 	if (aRequest->Src().NameOrExtPresent())
@@ -1496,9 +1496,6 @@ TInt TFsFileFlush::DoRequestL(CFsRequest* aRequest)
 	CFileCache* fileCache = share->File().FileCache();
 	if (fileCache && (r = fileCache->FlushDirty(aRequest)) != CFsRequest::EReqActionComplete)
 	    {
-		//To be used in notification framework
-	    //CFsMessageRequest& msgRequest = (CFsMessageRequest&)*aRequest;
-	    //msgRequest.iUID = msgRequest.Message().Identity();
 		return r;
 	    }
 
@@ -1950,7 +1947,7 @@ TInt TFsFileRename::Initialise(CFsRequest* aRequest)
 		return(KErrBadName);
 	if (IsIllegalFullName(aRequest->Dest().FullName().Mid(2)))
 		return(KErrBadName);
-	r=PathCheck(aRequest,aRequest->Dest().FullName().Mid(2),&KCapFsSysFileRename,&KCapFsPriFileRename,&KCapFsROFileRename, __PLATSEC_DIAGNOSTIC_STRING("File Rename"));
+	r=PathCheck(aRequest->Message(),aRequest->Dest().FullName().Mid(2),&KCapFsSysFileRename,&KCapFsPriFileRename,&KCapFsROFileRename, __PLATSEC_DIAGNOSTIC_STRING("File Rename"));
 	return(r);
 	}
 

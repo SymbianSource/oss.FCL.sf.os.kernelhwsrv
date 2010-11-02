@@ -166,7 +166,7 @@ void CSessionFs::ServiceL(const RMessage2& aMessage)
 		aMessage.Complete(r);
 		return;
 		}
-	pR->Set(aMessage, oP, this);
+	pR->Set(aMessage, oP, this, aMessage.Identity());
 	__PRINT4TEMP(_L("***** Received Message sess %08x req %08x func 0x%x - %S"), this, pR, ipcFunction, GetFunctionName(ipcFunction));
 	pR->Dispatch();
 	}
@@ -485,6 +485,11 @@ void commonInitialize()
 
 	// initialise notification information
 	FsNotify::Initialise();
+	
+	// initialise notification pool
+	r = CFsNotificationInfo::Initialise();
+	__ASSERT_ALWAYS(r==KErrNone,Fault(ENotifyPoolCreation));
+	
 	// initialise local drive specific information
 	LocalDrives::Initialise();
 

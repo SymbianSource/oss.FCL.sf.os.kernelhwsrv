@@ -1,4 +1,4 @@
-// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -40,7 +40,7 @@
 
 #include "cdisplay.h"
 #include "husbconsapp.h"
-#include "tmslog.h"
+#include "debug.h"
 
 
 _LIT(KTxtApp,"HOST USB CONSOLE APP");
@@ -48,59 +48,58 @@ _LIT(KTxtApp,"HOST USB CONSOLE APP");
 
 
 CHeartBeat* CHeartBeat::NewLC(CDisplay& aDisplay)
-	{
-	CHeartBeat* me = new(ELeave) CHeartBeat(aDisplay);
-	CleanupStack::PushL(me);
-	me->ConstructL();
-	return me;
-	}
+    {
+    CHeartBeat* me = new(ELeave) CHeartBeat(aDisplay);
+    CleanupStack::PushL(me);
+    me->ConstructL();
+    return me;
+    }
 
 
 CHeartBeat::CHeartBeat(CDisplay& aDisplay)
 :   CActive(0),
     iDisplay(aDisplay)
-	{}
+    {}
 
 
 void CHeartBeat::ConstructL()
-	{
-	CActiveScheduler::Add(this);
-	iTimer.CreateLocal();
-	RunL();
-	}
+    {
+    CActiveScheduler::Add(this);
+    iTimer.CreateLocal();
+    RunL();
+    }
 
 
 CHeartBeat::~CHeartBeat()
-	{
-	Cancel();
-	}
+    {
+    Cancel();
+    }
 
 
 void CHeartBeat::DoCancel()
-	{
+    {
     iTimer.Cancel();
-	}
+    }
 
 
 void CHeartBeat::RunL()
-	{
-	SetActive();
-	// Print RAM usage & up time
-	iUpTime++;
+    {
+    SetActive();
+    // Print RAM usage & up time
+    iUpTime++;
     iDisplay.UpTime(iUpTime);
 
-	TInt mem=0;
-	if (HAL::Get(HALData::EMemoryRAMFree, mem)==KErrNone)
-		{
+    TInt mem=0;
+    if (HAL::Get(HALData::EMemoryRAMFree, mem)==KErrNone)
+        {
         iDisplay.MemoryFree(mem);
-		}
-	iTimer.After(iStatus, 1000000);
-	}
+        }
+    iTimer.After(iStatus, 1000000);
+    }
 
 
 GLDEF_C void RunAppL()
     {
-    __MSFNSLOG
     CActiveScheduler* sched = new(ELeave) CActiveScheduler;
     CleanupStack::PushL(sched);
     CActiveScheduler::Install(sched);
@@ -114,11 +113,11 @@ GLDEF_C void RunAppL()
     User::LeaveIfError(err);
 
     CConsoleBase* console;
-	console = Console::NewL(KTxtApp, TSize(KConsFullScreen,KConsFullScreen));
-	CleanupStack::PushL(console);
+    console = Console::NewL(KTxtApp, TSize(KConsFullScreen,KConsFullScreen));
+    CleanupStack::PushL(console);
 
     CDisplay* display = CDisplay::NewLC(fs, *console);
-	CMessageKeyProcessor::NewLC(*display, usbOtgSession);
+    CMessageKeyProcessor::NewLC(*display, usbOtgSession);
     CHeartBeat::NewLC(*display);
 
     display->Menu();
@@ -135,8 +134,8 @@ GLDEF_C void RunAppL()
     // *************************************************************************
     CActiveScheduler::Start();
 
-	// 1 sec delay for sessions to stop
-	User::After(1000000);
+    // 1 sec delay for sessions to stop
+    User::After(1000000);
     CleanupStack::PopAndDestroy(usbHost);
     CleanupStack::PopAndDestroy();  // CPeriodUpdate
     CleanupStack::PopAndDestroy();  // CMessageKeyProcessor
@@ -149,12 +148,12 @@ GLDEF_C void RunAppL()
 
 
 GLDEF_C TInt E32Main()
-	{
-	__UHEAP_MARK;
-	CTrapCleanup* cleanup = CTrapCleanup::New();
-	TRAPD(error, RunAppL());
-	__ASSERT_ALWAYS(!error, User::Panic(KTxtApp, error));
-	delete cleanup;
-	__UHEAP_MARKEND;
-	return 0;
-	}
+    {
+    __UHEAP_MARK;
+    CTrapCleanup* cleanup = CTrapCleanup::New();
+    TRAPD(error, RunAppL());
+    __ASSERT_ALWAYS(!error, User::Panic(KTxtApp, error));
+    delete cleanup;
+    __UHEAP_MARKEND;
+    return 0;
+    }

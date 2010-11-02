@@ -500,11 +500,14 @@ void LocalDrives::CompleteDriveNotifications(TInt aDrive)
 #ifdef SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION	
 		if(FsNotificationManager::IsInitialised())
 			{
+		    CFsNotificationInfo* notificationInfo = CFsNotificationInfo::Allocate(EFsDismountFileSystem,aDrive);
 			__PRINT3(_L("LocalDrives::CompleteDriveNotifications() Initialised=%d, Count=%d, Drive=%d"),FsNotificationManager::IsInitialised(),FsNotificationManager::Count(), aDrive);
 			TBuf<2> driveDes;
 			driveDes.Append((TChar)aDrive+(TChar)'A');
 			driveDes.Append((TChar)':');
-			FsNotificationManager::HandleChange(NULL,driveDes,TFsNotification::EMediaChange);
+			notificationInfo->SetSourceName(driveDes);
+			FsNotificationManager::HandleChange(*notificationInfo);
+			CFsNotificationInfo::Free(notificationInfo);
 			}
 #endif //SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION		
 

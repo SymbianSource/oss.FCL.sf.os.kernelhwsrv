@@ -521,6 +521,15 @@ t_wsd_dl1_cu	support
 t_wsd_tst_cp
 t_wsd_tst_cu
 
+t_nestdll1		support
+t_nestdll2		support
+t_nestdll3		support
+t_nestdll4		support
+t_nestdll5		support
+t_nestdll6		support
+t_nestdll7		support
+t_nestedload
+
 // /e32test/ethernet
 ../ethernet/pump/etherpump  manual
 ../ethernet/macset/macset   manual
@@ -719,6 +728,7 @@ t_pccdsr    support
 t_mmcdrv    manual
 t_med_writebm   manual
 t_mmcinfo
+t_halnandmedia 
 
 #ifdef EPOC32
 t_crrdrv    support
@@ -1036,10 +1046,6 @@ t_oeexport2
 
 #if defined(MARM_ARMV5) || defined(MARM_ARMV4)
 ../rm_debug/group/t_trkdummyapp
-#endif
-
-#if defined(MARM_ARMV5)
-../rm_debug/group/t_crashmonitor_lib
 #endif
 
 t_stacksize

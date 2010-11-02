@@ -1,4 +1,4 @@
-// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -12,7 +12,7 @@
 //
 // Description:
 // Implements a Symbian OS server that exposes the RUsbMassStorage API
-// 
+//
 //
 
 
@@ -35,75 +35,63 @@
 #include "cusbotgserver.h"
 #include "cusbotgsession.h"
 
-#include "tmslog.h"
-
 CUsbOtgServer* CUsbOtgServer::NewLC()
-	{
-    __MSFNSLOG
-	CUsbOtgServer* r = new (ELeave) CUsbOtgServer();
-	CleanupStack::PushL(r);
+    {
+    CUsbOtgServer* r = new (ELeave) CUsbOtgServer();
+    CleanupStack::PushL(r);
     r->ConstructL();
-	return r;
-	}
+    return r;
+    }
 
 
 CUsbOtgServer::CUsbOtgServer()
 :   CServer2(EPriorityLow)
-	{
-    __MSFNSLOG
-	}
+    {
+    }
 
 
 void CUsbOtgServer::ConstructL()
     {
-    __MSFNSLOG
-
-	iUsbOtg = CUsbOtg::NewL();
-	StartL(KUsbOtgServerName);
+    iUsbOtg = CUsbOtg::NewL();
+    StartL(KUsbOtgServerName);
     }
 
 
 CUsbOtgServer::~CUsbOtgServer()
-	{
-    __MSFNSLOG
+    {
     delete iUsbOtg;
-	}
+    }
 
 
 CSession2* CUsbOtgServer::NewSessionL(const TVersion &aVersion, const RMessage2& /*aMessage*/) const
-	{
-    __MSFNSLOG
-	TVersion v(KUsbOtgSrvMajorVersionNumber, KUsbOtgSrvMinorVersionNumber, KUsbOtgSrvBuildVersionNumber);
+    {
+    TVersion v(KUsbOtgSrvMajorVersionNumber, KUsbOtgSrvMinorVersionNumber, KUsbOtgSrvBuildVersionNumber);
 
-	if (!User::QueryVersionSupported(v, aVersion))
-		User::Leave(KErrNotSupported);
+    if (!User::QueryVersionSupported(v, aVersion))
+        User::Leave(KErrNotSupported);
 
-	CUsbOtgSession* session = CUsbOtgSession::NewL();
+    CUsbOtgSession* session = CUsbOtgSession::NewL();
 
-	return session;
-	}
+    return session;
+    }
 
 
 
 TInt CUsbOtgServer::RunError(TInt aError)
-	{
-    __MSFNSLOG
-
-	Message().Complete(aError);
-	ReStart();
+    {
+    Message().Complete(aError);
+    ReStart();
     return KErrNone;
-	}
+    }
 
 
 void CUsbOtgServer::AddSession()
     {
-    __MSFNSLOG
     ++iSessionCount;
     }
 
 void CUsbOtgServer::RemoveSession()
     {
-    __MSFNSLOG
     if (--iSessionCount == 0)
         {
         User::After(1000000);

@@ -13,58 +13,57 @@
 // Description:
 // f32/group/hostmsserver.mmp
 // Host mass storage client/server mmp file
-// 
+//
 //
 
-TARGET			usbhostmssrv.exe
+TARGET                  usbhostmssrv.exe
 
-TARGETTYPE		exe
+TARGETTYPE              exe
 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
-USERINCLUDE	../shared
-USERINCLUDE	./src/include
-USERINCLUDE	./controller/include
-USERINCLUDE	./transport/include
-USERINCLUDE	./protocol/include
-USERINCLUDE	./shared
+USERINCLUDE     ../shared
+USERINCLUDE     ./src/include
+USERINCLUDE     ./controller/include
+USERINCLUDE     ./transport/include
+USERINCLUDE     ./protocol/include
+USERINCLUDE     ./shared
+USERINCLUDE     ./traces
 
-SOURCEPATH	./src
-SOURCE		cusbhostmssession.cpp
-SOURCE		cusbhostmsserver.cpp
-SOURCE		entry.cpp
+SOURCEPATH      ./src
+SOURCE          cusbhostmssession.cpp
+SOURCE          cusbhostmsserver.cpp
+SOURCE          entry.cpp
 
-SOURCEPATH	./controller
-SOURCE		cusbhostmsdevice.cpp
+SOURCEPATH      ./controller
+SOURCE          cusbhostmsdevice.cpp
 SOURCE      tlogicalunitlist.cpp
-SOURCE		cusbmssuspendresume.cpp
-SOURCE		cusbhostmsdevicethread.cpp
-SOURCE		cusbhostmslogicalunit.cpp
+SOURCE          cusbmssuspendresume.cpp
+SOURCE          cusbhostmsdevicethread.cpp
+SOURCE          cusbhostmslogicalunit.cpp
 
-SOURCEPATH	./transport
-SOURCE		cbulkonlytransport.cpp
-SOURCE		cusbifacehandler.cpp
+SOURCEPATH      ./transport
+SOURCE          cbulkonlytransport.cpp
+SOURCE          cusbifacehandler.cpp
 
-SOURCEPATH	./protocol
-SOURCE		cmassstoragefsm.cpp
-SOURCE		cscsiprotocol.cpp
-SOURCE		tspcclientinterface.cpp
-SOURCE		tsbcclientinterface.cpp
-SOURCE		tscsiclientreq.cpp
-SOURCE		tscsiprimarycmds.cpp
-SOURCE		tscsiblockcmds.cpp
-SOURCE		tblocktransfer.cpp
+SOURCEPATH      ./protocol
+SOURCE          cmassstoragefsm.cpp
+SOURCE          cscsiprotocol.cpp
+SOURCE          tspcclientinterface.cpp
+SOURCE          tsbcclientinterface.cpp
+SOURCE          tscsiclientreq.cpp
+SOURCE          tscsiprimarycmds.cpp
+SOURCE          tscsiblockcmds.cpp
+SOURCE          tblocktransfer.cpp
 
-SOURCEPATH	./shared
-SOURCE		msdebug.cpp
 
-LIBRARY		efsrv.lib euser.lib hal.lib usbdescriptors.lib usbdi_utils.lib
+LIBRARY         efsrv.lib euser.lib hal.lib usbdescriptors.lib usbdi_utils.lib
 START WINS
-BASEADDRESS		0x61000000 
+BASEADDRESS             0x61000000
 END
 
 CAPABILITY AllFiles CommDD
 
-UID		0 0x10286A83 
+UID             0 0x10286A83
 
 // **** Enable for Host MS testing ****
 //MACRO _TESTREPORT_PRINT_

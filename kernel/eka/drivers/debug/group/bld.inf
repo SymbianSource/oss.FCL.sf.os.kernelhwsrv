@@ -25,18 +25,6 @@ PRJ_PLATFORMS
 
 BASEDEFAULT
 
-PRJ_EXPORTS
-
-../../../debug/crashMonitor/inc/scmonitor.h              SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmonitor.h)				
-../../../debug/crashMonitor/inc/scmdatatypes.h           SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmdatatypes.h)
-../../../debug/crashMonitor/inc/scmbytestreamutil.h      SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmbytestreamutil.h)
-../../../debug/crashMonitor/inc/scmbytestreamutil.inl    SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmbytestreamutil.inl)
-../../../debug/crashMonitor/inc/crashlogwalker.h         SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(crashlogwalker.h)
-../../../debug/crashMonitor/inc/scmconfig.h              SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmconfig.h)
-../../../debug/crashMonitor/inc/scmconfigitem.h          SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmconfigitem.h)
-../../../debug/crashMonitor/inc/scmdatasave.h            SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmdatasave.h)
-../../../debug/crashMonitor/inc/scmtrace.h               SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmtrace.h)
-
 PRJ_MMPFILES
 
 ../../../debug/trkdummyapp/group/trkdummyapp
@@ -52,11 +40,6 @@ PRJ_MMPFILES
 #if defined(MARM_ARMV5) || defined(MARM_ARMV4)
 
 sm_debug_kerneldriver
-
-#if defined(GENERIC_MARM) 
-../../../debug/crashMonitor/group/scmusr_lib
-../../../debug/crashMonitor/group/scmkern_lib
-#endif
 
 #endif
 
