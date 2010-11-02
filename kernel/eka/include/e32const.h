@@ -1397,14 +1397,16 @@ enum TFalse {
 @publishedAll
 @released
 
-An enumerator with a single enumeration value that defines the Boolean value 
-true in Symbian OS.
+An enumerator with a single enumeration value that defines a default true
+value in Symbian OS.
+
+In general, this value should not be used for comparisons (see TBool for more information).
 
 @see TBool
 */
 enum TTrue {
            /**
-           Defines the value true that is passed to a TBool type.
+           Defines a value true that can be passed to a TBool type.
            */
            ETrue=TRUE
            };

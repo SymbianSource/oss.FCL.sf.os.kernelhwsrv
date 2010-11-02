@@ -1,3 +1,14 @@
+Version 2.00.4016
+=================
+(Made by fadhliM 01/11/2010)
+
+1.	stmansfi
+	1.	ou1cimx1#633842 (KHS) HCR shai in-source documentation not crystal clear
+
+2.	tocosgro
+	1.	ou1cimx1#630148 TBool Documentation is incorrect
+
+
 Version 2.00.4015
 =================
 (Made by fadhliM 27/10/2010)

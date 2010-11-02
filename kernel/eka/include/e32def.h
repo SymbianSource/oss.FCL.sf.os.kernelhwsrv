@@ -311,11 +311,11 @@ Symbolic definition for a true value.
 Symbolic definition for a false value.
 */
 #define FALSE 0
+
+
+
+
 #ifndef NULL
-
-
-
-
 /**
 @publishedAll
 @released
@@ -754,12 +754,81 @@ typedef unsigned short int TText16;
 @publishedAll
 @released
 
-Boolean type which takes the value either ETrue or EFalse.
+Integer type representing true or false.
 
-Although only a single bit would theoretically be necessary to represent a 
-Boolean, a machine word is used instead, so that these quantities can be easily 
-passed. Also, TBool must map onto int because of C++'s interpretation of 
-operands in conditional expressions.
+False is always represented by 0; any non-zero value is true.
+
+Values of type TBool must never be compared against ETrue; so instead of
+
+@code
+TBool foo(void);
+
+if (foo() == ETrue) bar();
+@endcode
+
+use
+
+@code
+TBool foo(void);
+
+if (foo()) bar();
+@endcode
+
+And, instead of '!= ETrue' use '== EFalse' or the following (preferred):
+
+@code
+TBool this(void);
+
+if (!this()) that();
+@endcode
+
+When returning a TBool, rather than
+
+@code
+TBool List::IsEmpty(void)
+	{
+	return iAnchor == NULL ? ETrue : EFalse;
+	}
+@endcode
+
+use
+
+@code
+TBool List::IsEmpty(void)
+	{
+	return iAnchor == NULL;
+	}
+@endcode
+
+and rather than
+
+@code
+TBool SerialPort::DataPresent(void)
+	{
+	// Fictitious example
+	volatile TUint *statusReg = (TUint *)0x1000;
+
+	if ((*statusReg & 0x00FF0000) != 0)
+		return ETrue;
+	else
+		return EFalse;
+	}
+@endcode
+
+use
+
+@code
+TBool SerialPort::DataPresent(void)
+	{
+	// Fictitious example
+	volatile TUint *statusReg = (TUint *)0x1000;
+
+	return *statusReg & 0x00FF0000;
+	}
+@endcode
+
+@see EFalse
+@see ETrue
 */
 typedef int TBool;
 
@@ -1281,7 +1350,7 @@ raises a panic.
 Note that the macro definition is, in effect, equivalent to: 
 
 @code
-if !(c)p;
+if (!c)p;
 @endcode
 
 @param c a conditional expression which results in true or false.

@@ -22,7 +22,6 @@ Kernel side definitions for the HCR Symbian Hardware Abstraction
 Interface (SHAI) for variants to implement when creating a HCR.dll binary.
 
 @publishedPartner
-@prototype
 */
 
 #ifndef HCR_HAI_H
@@ -74,11 +73,12 @@ namespace HCR
         
         
     	/**
-        This method returns the address of the compile time setting repository 
-        built into the variant HCR.dll project/binary. This repository is 
-        optional and may be absent in which case 0 should be returned in aAddr. 
+        This method returns the virtual address of the compile time setting 
+		repository built into the variant HCR.dll project/binary. This 
+		repository is optional and may be absent in which case 0 should be 
+		returned in aAddr. 
          
-        @param aAddr out: a pointer to a HCR::SRepositoryCompiled 
+        @param aAddr out: the virtual address of a HCR::SRepositoryCompiled 
     	@return	KErrNone if successful, output parameters valid,
     	        KErrNotSupported if a compile time repository is not supported,
     	        Any other system wide error code.
@@ -98,17 +98,25 @@ namespace HCR
         virtual TBool IgnoreCoreImgRepository () = 0;
         
     	/**
-        This method returns the address of the override repository that 
-        provides override values for the variant. Typically this repository
-        is held in local media and shadowed in RAM by the OS loader. It is
-        a read-only settings repository. This repository is optional and may 
-        be absent in which case 0 should be returned in aAddr.
+        This method returns the virtual address of the override repository that 
+        provides override read-only values for the variant. Typically this 
+		repository is held in local media and shadowed into physical RAM by
+		the OS loader and later reserved by the OS bootstrap.
+		The implementation will find the physical address of the reserved RAM 
+		containing the HCR payload in the SSmrBank entry of the SSuperPageBase 
+		object. It will need to map this RAM into a DChunk to return a valid 
+		virtual address pointer. 
+		This repository is optional and may be absent in which case 0 should
+		be returned in aAddr.
          
-        @param aAddr out: a pointer to a HCR::SRepositoryFile
+        @param aAddr out: the virtual address of the HCR::SRepositoryFile 
+                          object inside the DChunk. 
     	@return	KErrNone if successful, output parameters valid,
-    	        KErrNotSupported if a compile time repository is not supported,
+    	        KErrNotSupported if a override repository is not supported,
     	        Any other system wide error code.
         @see HCR::SRepositoryFile
+        @see SSuperPageBase
+        @see SSmrBank
        	*/
         virtual TInt GetOverrideRepositoryAddress(TAny* & aAddr) = 0;
         
