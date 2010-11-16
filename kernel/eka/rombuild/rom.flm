@@ -2,6 +2,10 @@
 # Copyright (c) 2009 Symbian.  All rights reserved.
 #
 
+ifdef ROM_DEFS
+ROMBUILD_FLAGS := --define="$(ROM_DEFS)"
+endif
+
 ifeq ($(OSTYPE),unix)
 	rombuilder := $(EPOCROOT)/epoc32/rom/tools/romnibus.pl
 else
@@ -13,7 +17,7 @@ define rom
 
 FINAL::	
 	$(call startrule,rom) \
-	$(PERL) $(rombuilder) --variant=$(REE_TARGET) --inst=$(PLATFORM) --build=$(CFG) --type=$(TYPE) --clean --name=$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG).img \
+	$(PERL) $(rombuilder) $(ROMBUILD_FLAGS) --variant=$(REE_TARGET) --inst=$(PLATFORM) --build=$(CFG) --type=$(TYPE) --clean --name=$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG).img \
 	$(call endrule,rom)
 
 FINAL::	
