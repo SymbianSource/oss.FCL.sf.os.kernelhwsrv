@@ -6,11 +6,7 @@ ifdef ROM_DEFS
 ROMBUILD_FLAGS := --define="$(ROM_DEFS)"
 endif
 
-ifeq ($(OSTYPE),unix)
-	rombuilder := $(EPOCROOT)/epoc32/rom/tools/romnibus.pl
-else
-	rombuilder := $(EPOCROOT)/sf/os/kernelhwsrv/kernel/eka/rombuild/rom_sbs.pl 
-endif
+rombuilder := $(EPOCROOT)/epoc32/rom/tools/romnibus.pl
 
 # macro for all the rules
 define rom
