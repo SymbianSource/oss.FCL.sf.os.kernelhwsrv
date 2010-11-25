@@ -13,7 +13,7 @@ define rom
 
 FINAL::	
 	$(call startrule,rom) \
-	$(PERL) $(rombuilder) $(ROMBUILD_FLAGS) --variant=$(REE_TARGET) --inst=$(PLATFORM) --build=$(CFG) --type=$(TYPE) --clean --name=$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG).img \
+	$(PERL) $(rombuilder) $(ROMBUILD_FLAGS) --symbol --variant=$(REE_TARGET) --inst=$(PLATFORM) --build=$(CFG) --type=$(TYPE) --clean --name=$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG).img \
 	$(call endrule,rom)
 
 FINAL::	
@@ -21,6 +21,7 @@ FINAL::
 	mv rom.oby $(EPOCROOT)/epoc32/rom/$(REE_TARGET)/$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG)_rom.oby; \
 	mv ROMBUILD.LOG $(EPOCROOT)/epoc32/rom/$(REE_TARGET)/$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG)_ROMBUILD.LOG; \
 	mv $(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG).img $(EPOCROOT)/epoc32/rom/$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG).img; \
+	mv $(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG).symbol $(EPOCROOT)/epoc32/rom/$(REE_TARGET)/$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG).symbol; \
 	$(call endrule,copy)
 
 endef
