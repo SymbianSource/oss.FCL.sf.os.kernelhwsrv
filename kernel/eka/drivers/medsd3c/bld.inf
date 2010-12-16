@@ -1,0 +1,36 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This material, including documentation and any related computer
+// programs, is protected by copyright controlled by Nokia. All
+// rights are reserved. Copying, including reproducing, storing
+// adapting or translating, any or all of this material requires the
+// prior written consent of Nokia. This material also contains
+// confidential information which may not be disclosed to others
+// without the prior written consent of Nokia.
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/drivers/pbus/mmc/sdcard/sdcard3c/bld.inf
+// 
+//
+
+PRJ_PLATFORMS
+ARM4 ARM4T ARMV4 ARMV5
+ARM4SMP ARMV4SMP ARMV5SMP ARMV6SMP
+
+// To build for WINS/WINSCW comment out the following line - if this is required, 
+// need to delete medmmc.pdd to stop the fileserver startup thread from attempting
+// to load both
+// WINS WINSCW
+
+PRJ_MMPFILES
+
+medsd
+../sdio/medcsa/medcsa
+../sdio/SdioUart/sdiouart
+
+PRJ_EXPORTS

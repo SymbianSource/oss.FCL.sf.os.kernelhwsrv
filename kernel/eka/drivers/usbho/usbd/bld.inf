@@ -1,0 +1,52 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+//
+// This material, including documentation and any related computer
+// programs, is protected by copyright controlled by Nokia. All
+// rights are reserved. Copying, including reproducing, storing
+// adapting or translating, any or all of this material requires the
+// prior written consent of Nokia. This material also contains
+// confidential information which may not be disclosed to others
+// without the prior written consent of Nokia.
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Description:
+// e32/drivers/usbho/usbd/bld.inf
+// Usbhost and OTG stack
+// 
+//
+
+/**
+ @file
+*/
+
+
+PRJ_PLATFORMS
+
+ARMV5 ARMV5SMP
+
+PRJ_EXPORTS
+
+./usbware_config.mmh			SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(drivers/)
+
+
+PRJ_MMPFILES
+#ifndef GCCXML
+#if defined(GENERIC_MARM) || !defined(WINS) || defined(GENERIC_X86)
+#if !defined(MARM_THUMB) && !defined(MARM_ARMI)
+
+#if !defined(WINS) 
+#if !defined(X86)
+#if defined(SYMBIAN_ENABLE_USB_OTG_HOST)
+
+usbd
+usbhost_lib
+
+#endif
+#endif
+#endif
+
+#endif
+#endif
+#endif

@@ -1,3 +1,11 @@
+Version 2.00.2147
+=================
+(Made by fadhliM 29/10/2010)
+
+1.	gcochran
+	1.	ou1cimx1#631494 [92ps1] Incompatibility between sizeof and memory allocation in TPriListBase
+
+
 Version 2.00.2146
 =================
 (Made by vfebvre 21/09/2010)

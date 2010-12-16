@@ -1,0 +1,61 @@
+// Copyright (c) 1999-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This material, including documentation and any related computer
+// programs, is protected by copyright controlled by Nokia. All
+// rights are reserved. Copying, including reproducing, storing
+// adapting or translating, any or all of this material requires the
+// prior written consent of Nokia. This material also contains
+// confidential information which may not be disclosed to others
+// without the prior written consent of Nokia.
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Restricted development and test tools (e.g. mmcloader)
+// 
+//
+
+/**
+ @file
+*/
+
+PRJ_PLATFORMS
+
+BASEDEFAULT
+
+#include "../../mmcloader/mmcloader.inf"
+
+PRJ_EXPORTS
+
+../../nandboot/coreldr/bootstrap_smrif.h 		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(bootstrap_smrif.h)
+../../nandboot/nandloader/autoexec.bat			/epoc32/rom/nandloader/autoexec.bat	//
+../../nandboot/rebootdrv/rebootdrv_ldd.h 		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+../../nandboot/rebootdrv/rebootdrv.h			SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(rebootdrv.h)
+
+../../pccd/d_pccdif.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d_pccdif.h)
+
+../../nandboot/mednand/generic/nanddefs.h		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nanddefs.h)
+
+PRJ_MMPFILES
+
+#if defined(GENERIC_MARM) || defined(WINS)
+
+//PCTEST
+#ifndef SMP
+mmctest
+sdpartition
+#endif
+d_mmcif
+
+#if defined(WINS) || defined(MISA) || defined(MEIG)
+//D_PCCDIF	
+#endif
+
+#if defined(MISA)
+//D_MEDATP
+#endif
+
+#endif

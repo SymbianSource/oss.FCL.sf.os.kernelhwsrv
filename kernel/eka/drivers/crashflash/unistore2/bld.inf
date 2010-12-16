@@ -1,0 +1,26 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This material, including documentation and any related computer
+// programs, is protected by copyright controlled by Nokia. All
+// rights are reserved. Copying, including reproducing, storing
+// adapting or translating, any or all of this material requires the
+// prior written consent of Nokia. This material also contains
+// confidential information which may not be disclosed to others
+// without the prior written consent of Nokia.
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/drivers/crashflash/unistore2/bld.inf
+// 
+//
+
+PRJ_PLATFORMS
+ARM4 ARMV4 ARM4T ARMV5
+
+PRJ_EXPORTS
+
+crashflashnand2.h		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/unistore2/)

@@ -1,0 +1,75 @@
+// Copyright (c) 2005-2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/drivers/UniStore2/bld.inf
+// Unistore2 Drivers
+// 
+//
+
+/**
+ @file
+*/
+
+
+PRJ_PLATFORMS
+ARM4 ARM4SMP ARM4T ARMV4 ARMV4SMP ARMV5 ARMV5SMP ARMV7 WINS WINSCW 
+
+PRJ_EXPORTS
+src/md/nanddefs2.h		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/unistore2/)
+
+PRJ_TESTMMPFILES
+// Allow customers to build:
+// Unistore-II / XSR 1.4 NAND media driver library for acceptance testing.
+// Unistore-II / XSR 1.5.2p2 NAND media driver library for acceptance testing
+// Moved medusiit and medusiiot from PRJ_TESTMMPFILES to PRJ_MMPFILES.
+
+// Build the NAND acceptance tests
+t_nanddrv.mmp support
+t_blockrep.mmp support
+t_freespace.mmp support
+t_nandmisc.mmp support
+t_npfail.mmp support
+t_wearlvl.mmp support
+t_xferbm.mmp support
+t_readdist.mmp support
+
+PRJ_MMPFILES
+
+// Unistore-II / XSR 1.4 NAND media driver library for standard retail/debug builds
+medusii
+
+// Unistore-II / XSR 1.4 NAND media driver library for nandloader
+medusiis
+
+// Unistore-II / XSR 1.5.2p2 NAND media driver library for standard retail/debug builds
+medusiio
+// Unistore-II / XSR 1.5.2p2 NAND media driver library for nandloader
+medusiios
+
+// Unistore-II / XSR 1.4 NAND media driver library for acceptance testing
+medusiit
+
+// Unistore-II / XSR 1.5.2p2 NAND media driver library for acceptance testing
+medusiiot
+
+
+#ifdef EPOC32
+// XSR NAND media driver library for crash logger
+medusii_crashlog
+#endif // #ifdef EPOC32
+
+
+#ifdef EPOC32
+// XSR 1.5.2p2 NAND driver library for crash logger
+medusiio_crashlog
+// XSR NBL2 library for OneNAND core loader
+nbl2
+
+#endif // #ifdef EPOC32
+

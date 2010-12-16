@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SystemDefinition xmlns:sf="http://www.symbian.org/system-definition" schema="3.0.0" id-namespace="http://www.nokia.com/schema/drd/system-definition">
+ <package id="sf:kernelhwsrv" name="Kernel and Hardware Services" levels="hw-if adaptation framework test">
+    <collection id="unistore2" name="UniStore2 Flash Translation Layer" level="hw-if" before="sf:bsptemplate">
+     <component id="uiidrivers" name="UniStore2 Drivers" filter="gt" introduced="9.1" purpose="optional">
+      <unit bldFile="../../kernel/eka/drivers/unistore2" mrp="../../kernel/eka/drivers/unistore2/base_drivers_unistore2.mrp"/>
+     </component>
+     <component id="uiicore" name="UniStore2 Core" filter="gt,test" introduced="9.1" purpose="optional">
+      <unit mrp="../../kernel/eka/drivers/unistore2/base_drivers_unistore2_undeliverable.mrp" bldFile="../../kernel/eka/drivers/unistore2"/>
+     </component>
+     <component id="uiicrashlogger" name="UniStore2 Crash Logger" filter="gt" introduced="9.1" purpose="optional">
+      <unit bldFile="../../kernel/eka/drivers/crashflash/unistore2" mrp="../../kernel/eka/drivers/crashflash/unistore2/base_crashflash_unistore2.mrp"/>
+     </component>
+     <component id="uiibootsupport" name="UniStore2 Boot Support" filter="gt" introduced="9.1" purpose="optional">
+      <unit bldFile="../../unistore2/uiibootsupport" mrp="../../unistore2/uiibootsupport/base_nandboot_unistore2.mrp"/>
+     </component>
+    </collection>
+    <collection id="sf:kerneltest" name="Kernel Test" level="hw-if">
+     <component id="sdiotest" name="SDIO Tests" filter="gt" introduced="9.2" purpose="development" before="sf:e32utils">
+      <unit bldFile="../../kerneltest/sdiotest" mrp="../../kerneltest/sdiotest/base_sdiotests.mrp"/>
+     </component>
+     <component id="e32utils_restricted" name="Restricted E32 Utilities" purpose="development" before="sf:f32test">
+      <unit bldFile="../../kerneltest/e32utils/group/restricted" mrp="../../kerneltest/e32utils/group/restricted/base_e32utils_restricted.mrp"/>
+     </component>
+    </collection>
+    <collection id="sf:driversupport" name="Generic Driver Support" level="hw-if">
+     <component id="sdcard3c" name="SD Card 3C Driver" filter="gt" introduced="9.1" purpose="optional" before="sf:mediadrivers">
+      <unit bldFile="../../kernel/eka/drivers/medsd3c" mrp="../../kernel/eka/drivers/medsd3c/base_e32_sd3c.mrp"/>
+     </component>
+     <component id="sdcard4c" name="SD Card 4C Driver" filter="gt" introduced="9.1" purpose="optional" before="sf:mediadrivers">
+      <unit bldFile="../../kernel/eka/drivers/pbus/mmc/sdcard/sdcard4c" mrp="../../kernel/eka/drivers/pbus/mmc/sdcard/sdcard4c/base_e32_sd4c.mrp"/>
+     </component>
+    </collection>
+    <collection id="sf:userlibandfileserver" name="User Library and File Server" level="framework">
+     <component id="basedocs" name="Base Documentation" purpose="development" class="doc">
+      <unit mrp="../../userlibandfileserver/basedocs/base_documentation.mrp"/>
+     </component>
+    </collection>
+    <collection id="sf:filesystems" name="File Systems" level="framework">
+     <component id="ntfs" name="NTFS" filter="gt" purpose="optional" class="plugin">
+      <unit bldFile="../../userlibandfileserver/fileserver/ntfs" mrp="../../userlibandfileserver/fileserver/ntfs/base_f32_sntfs.mrp"/>
+     </component>
+     <component id="iso9660fs" name="ISO9660 File System" filter="gt" introduced="8.1b" purpose="optional" class="plugin">
+      <unit bldFile="../../userlibandfileserver/fileserver/iso9660" mrp="../../userlibandfileserver/fileserver/iso9660/base_f32_siso9660.mrp"/>
+     </component>
+     <component id="exfatfs" name="exFAT File System" filter="gt" introduced="^3" purpose="optional" class="plugin">
+        <unit bldFile="../../userlibandfileserver/fileserver/internal/exfat" mrp="../../userlibandfileserver/fileserver/internal/exfat/base_f32_exfat.mrp"/>
+     </component>
+     <component id="automounter" name="Automounter" filter="gt" purpose="optional" class="plugin">
+        <unit bldFile="../../userlibandfileserver/fileserver/automounter" mrp="../../userlibandfileserver/fileserver/automounter/base_f32_automounter.mrp"/>
+     </component>
+    </collection>
+   <collection id="sf:kernelhwsrv_info" name="Kernel and Hardware Services Info" level="test">
+   <component id="nokia_kernelhwsrv_metadata" name="Nokia Kernel and Hardware Services Metadata" class="config" introduced="^2" purpose="development" target="desktop">
+    <unit mrp="nokia_kernelhwsrv_metadata.mrp"/>
+   </component>
+  </collection>
+ </package>
+</SystemDefinition>
